@@ -156,7 +156,7 @@
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
-            card-prompts (filter #(= (get-in % [:card :title]) (:title c) ) (get-in @state [side :prompt]))
+            card-prompts (filter #(same-card? :title % c) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
                        (system-msg state side (str verb " " label from-str
                                                    (when (seq text)
