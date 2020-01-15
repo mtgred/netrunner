@@ -3203,11 +3203,9 @@
                {:msg "prevent the Runner from using a chosen program for the remainder of this run"})))
 
 (define-card "Whirlpool"
-  {:subroutines [{:msg "prevent the Runner from jacking out"
-                  :effect (req (when (and (is-remote? (second (:zone card)))
-                                          (> (count (concat (:ices (card->server state card))
-                                                            (:content (card->server state card)))) 1))
-                                 (prevent-jack-out state side))
+  {:subroutines [{:label "The Runner cannot jack out for the remainder of this run. Trash Whirlpool."
+                  :msg "prevent the Runner from jacking out"
+                  :effect (req (prevent-jack-out state side)
                                (when current-ice
                                  (no-action state side nil)
                                  (continue state side nil))

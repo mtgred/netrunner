@@ -3850,6 +3850,58 @@
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
+(deftest whirlpool
+  ;; Whirlpool
+  (testing "Basic test - whirlpool on remote"
+    (do-game
+      (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Border Control" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Whirlpool" "Server 1")
+      (take-credits state :corp)
+      (let [wp (get-ice state :remote1 2)]
+        (run-on state :remote1)
+        (core/rez state :corp wp)
+        (run-continue state)
+        (fire-subs state wp)
+        (is (get-in @state [:run :cannot-jack-out]))
+        (is (nil? (refresh wp)) "Whirlpool is trashed")))))
+  (testing "Basic test - whirlpool on hq"
+    (do-game
+      (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Border Control" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Whirlpool" "HQ")
+      (take-credits state :corp)
+      (let [wp (get-ice state :hq 2)]
+        (run-on state :hq)
+        (core/rez state :corp wp)
+        (run-continue state)
+        (fire-subs state wp)
+        (is (get-in @state [:run :cannot-jack-out]))
+        (is (nil? (refresh wp)) "Whirlpool is trashed"))))
+  (testing "Basic test - whirlpool not trashed when broken"
+    (do-game
+      (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Aumakua"]}})
+      (play-from-hand state :corp "Border Control" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Whirlpool" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state :archives) ;;gain 1 virus counter
+      (let [wp (get-ice state :hq 2)
+            au (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp wp)
+        (run-continue state)
+        (card-ability state :runner au 0)
+        (click-prompt state :runner "The Runner cannot jack out for the remainder of this run. Trash Whirlpool.")
+        (is (refresh wp) "Whirlpool not trashed")))))
+
 (deftest winchester
   ;; Winchester
   (testing "Basic test - 3 sub on HQ"
