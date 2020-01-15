@@ -1490,6 +1490,63 @@
       (core/lose-tags state :runner 2)
       (is (zero? (count (:subroutines (refresh io))))))))
 
+(deftest inazuma
+  ;;Inazuma
+  (testing "basic jack out test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
+                        :credits 30}
+               :runner {:hand [(qty "Sure Gamble" 5)]
+                        :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Cortex Lock" "HQ")
+      (play-from-hand state :corp "Inazuma" "HQ")
+      (take-credits state :corp)
+      (let [inazuma (get-ice state :hq 2)
+            cl (get-ice state :hq 1)]
+        (run-on state "HQ")
+        (core/rez state :corp inazuma)
+        (run-continue state)
+        (fire-subs state (refresh inazuma))
+        (run-continue state)
+        (core/rez state :corp cl)
+        (run-continue state)
+        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
+        (fire-subs state cl)
+        (run-continue state)
+        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out")))))
+;TODO: prepared test for nonbreakable subs
+;  (testing "basic unbreakable subs test"
+;    (do-game
+;      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+;                        :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
+;                        :credits 30}
+;               :runner {:hand [(qty "Sure Gamble" 5) "Bukhgalter"]
+;                        :credits 20}})
+;      (play-from-hand state :corp "Ice Wall" "HQ")
+;      (play-from-hand state :corp "Cortex Lock" "HQ")
+;      (play-from-hand state :corp "Inazuma" "HQ")
+;      (take-credits state :corp)
+;      (play-from-hand state :runner "Bukhgalter")
+;      (let [inazuma (get-ice state :hq 2)
+;            cl (get-ice state :hq 1)
+;            buk (get-program state 0)]
+;        (run-on state "HQ")
+;        (core/rez state :corp inazuma)
+;        (run-continue state)
+;        (fire-subs state (refresh inazuma))
+;        (run-continue state)
+;        (core/rez state :corp cl)
+;        (run-continue state)
+;        ;;should be blocked
+;        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh buk)})
+;        ;;Inazuma subs prevented break on next ice
+;        (is (second-last-log-contains? state "cannot break?") "Runner couldn't break sub")
+;        (changes-val-macro -3 (count (:hand (get-runner)))
+;                                  "3 net damage from Cortex Lock"
+;                                  (fire-subs state (refresh cl)))))))
+
 (deftest interrupt-0
   ;; Interrupt 0
   (do-game
@@ -3456,6 +3513,33 @@
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
+(deftest susanoo-no-mikoto
+  ;;Susanoo-no-Mikoto
+  (testing "basic deflection test"
+    (do-game
+      (new-game {:corp {:deck ["Susanoo-no-Mikoto" "Cortex Lock" "Anansi"]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Anansi" "Archives")
+      (play-from-hand state :corp "Cortex Lock" "Archives")
+      (play-from-hand state :corp "Susanoo-no-Mikoto" "HQ")
+      (take-credits state :corp)
+      (let [susanoo (get-ice state :hq 0)
+            cl (get-ice state :archives 1)]
+        (run-on state "HQ")
+        (core/rez state :corp susanoo)
+        (run-continue state)
+        (fire-subs state susanoo)
+        (is (= :archives (get-in @state [:run :server 0])) "Deflected to archives")
+        (run-next-phase state)
+        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
+        (core/rez state :corp cl)
+        (run-continue state)
+        (fire-subs state cl)
+        (run-continue state)
+        (run-continue state)
+        (is (not (get-in @state [:run :cannot-jack-out]))"Runner can jack out again")))))
+
 (deftest swarm
   ;; Swarm
   (do-game
@@ -3866,7 +3950,7 @@
         (run-continue state)
         (fire-subs state wp)
         (is (get-in @state [:run :cannot-jack-out]))
-        (is (nil? (refresh wp)) "Whirlpool is trashed")))))
+        (is (nil? (refresh wp)) "Whirlpool is trashed"))))
   (testing "Basic test - whirlpool on hq"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}

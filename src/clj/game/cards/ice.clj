@@ -1646,7 +1646,7 @@
                                                [{:event :encounter-ice-ends
                                                  :duration :end-of-encounter
                                                  :unregister-once-resolved true
-                                                 :effect (req (swap! state update :run dissoc :prevent-jack-out))}]))}]))}]})
+                                                 :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
 
 (define-card "Information Overload"
   (let [ef (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))
@@ -2866,6 +2866,20 @@
   {:subroutines [{:req (req (not= (:server run) [:discard]))
                   :msg "make the Runner continue the run on Archives"
                   :effect (req (let [n (count (get-in corp [:servers :archives :ices]))]
+                                  (register-events
+                                    state side card
+                                    [{:event :approach-ice
+                                      :duration :end-of-run
+                                      :unregister-once-resolved true
+                                      :msg "prevent the runner from jacking out"
+                                      :effect (req (prevent-jack-out state side)
+                                                  (register-events
+                                                    state side card
+                                                    [{:event :encounter-ice-ends
+                                                      :duration :end-of-encounter
+                                                      :unregister-once-resolved true
+                                                      :effect (req (swap! state update :run dissoc :cannot-jack-out))
+                                                      }]))}])
                                  (swap! state update :run assoc :position n :server [:archives])
                                  (set-next-phase state (if (pos? n) :approach-ice :approach-server))))}]})
 
