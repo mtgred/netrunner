@@ -3,7 +3,8 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp? faceup?]]
+            [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
+                                    faceup? installed? same-card?]]
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -69,6 +70,8 @@
   (toast text severity nil))
 
 (def zoom-channel (chan))
+
+(def button-channel (chan))
 
 (defn check-lock?
   "Check if we can clear client lock based on action-id"
@@ -294,6 +297,18 @@
 (defn card-preview-mouse-out [e channel]
   (.preventDefault e)
   (when-let [code (get-card-code e)]
+    (put! channel false))
+  nil)
+
+(defn card-highlight-mouse-over [e value channel]
+  (.preventDefault e)
+  (when (:cid value)
+    (put! channel value))
+  nil)
+
+(defn card-highlight-mouse-out [e value channel]
+  (.preventDefault e)
+  (when (:cid value)
     (put! channel false))
   nil)
 
@@ -733,7 +748,9 @@
                  flipped]
   (r/with-let [c-state (r/atom {})]
     [:div.card-frame
-     [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
+     [:div.blue-shade.card {:class (str (when selected "selected")
+                                        (when new " new")
+                                        (when (same-card? card (:button @app-state)) " hovered"))
                             :draggable (when (not-spectator?) true)
                             :on-touch-start #(handle-touchstart % card)
                             :on-touch-end   #(handle-touchend %)
@@ -1699,6 +1716,10 @@
                              (when (not= value "Hide")
                                [:button {:key i
                                          :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                         :on-mouse-over
+                                         #(card-highlight-mouse-over % value button-channel)
+                                         :on-mouse-out
+                                         #(card-highlight-mouse-out % value button-channel)
                                          :id {:code value}}
                                 (render-message
                                   (if-let [title (:title value)]
@@ -1783,8 +1804,12 @@
         background (r/cursor app-state [:options :background])]
 
   (go (while true
-        (let [card (<! zoom-channel)]
-          (swap! app-state assoc :zoom card))))
+        (let [zoom (<! zoom-channel)]
+          (swap! app-state assoc :zoom zoom))))
+
+  (go (while true
+        (let [button (<! button-channel)]
+          (swap! app-state assoc :button button))))
 
     (r/create-class
       {:display-name "gameboard"
