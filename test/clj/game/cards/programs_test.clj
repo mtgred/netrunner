@@ -1655,7 +1655,29 @@
       (changes-val-macro -2 (:credit (get-runner))
                          "Broke Enigma for 2c"
                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
-                         (core/no-action state :corp nil)))))
+                         (core/no-action state :corp nil))))
+  (testing "Correct log test"
+    (do-game
+      (new-game {:runner {:hand ["Euler"]
+                          :credits 20}
+                 :corp {:hand ["Enigma"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Euler")
+      (run-on state :hq)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (is (second-last-log-contains? state "Runner pays 0 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct log with correct cost")
+      (core/no-action state :corp nil)
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
+      (core/no-action state :corp nil))))
 
 (deftest faerie
   (testing "Trash after encounter is over, not before"
