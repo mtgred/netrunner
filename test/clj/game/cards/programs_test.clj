@@ -2360,6 +2360,70 @@
         (is (= (+ starting-creds 2) (:credit (get-runner)))
             "Only gained 2 credits for passing Eli")))))
 
+(deftest laamb
+  ;; Laamb
+  (testing "Ability gives an card Barrier subtype"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:hand ["Laamb"]
+                          :credits 30}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Laamb")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (has-subtype? (get-ice state :hq 0) "Barrier") "Enigma has been given Barrier")))
+  (testing "Ability only lasts until end of encounter"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:hand ["Laamb"]
+                          :credits 30}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Laamb")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma no longer has Barrier subtype")))
+  (testing "Returning the ice to hand after using ability resets subtype. Issue #3193"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:hand ["Laamb" "Ankusa"]
+                          :credits 30}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Laamb")
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (let [laamb (get-program state 0)
+            ankusa (get-program state 1)]
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "End the run")
+        (is (nil? (get-ice state :hq 0)) "Enigma has been returned to HQ")
+        (is (find-card "Enigma" (:hand (get-corp))) "Enigma has been returned to HQ")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Enigma" "HQ")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma doesn't has Barrier subtype")
+        (is (prompt-is-card? state :runner laamb) "Laamb opens the prompt a second time")))))
+
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
   (do-game
