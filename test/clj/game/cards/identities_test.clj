@@ -845,7 +845,21 @@
       (play-from-hand state :runner "Divide and Conquer")
       (run-continue state)
       (run-successful state)
-      (is (= 1 (count (:discard (get-corp)))) "Still only Hedge Fund in archives"))))
+      (is (= 1 (count (:discard (get-corp)))) "Still only Hedge Fund in archives")))
+  (testing "Trashing an operation not during a run won't create a run. Issue #3399"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"
+                          :hand ["Gang Sign"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :runner "Card from hand")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))))
+      (is (nil? (:run @state)) "No run has been created"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net
   ;; Ele "Smoke" Scovak: Cynosure of the Net
