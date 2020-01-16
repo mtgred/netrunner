@@ -1719,7 +1719,7 @@
   (testing "Basic test"
     (do-game
       (new-game {:runner {:deck ["Emergent Creativity" "Paperclip"
-                                "Heartbeat" "Gordian Blade" "Test Run"]}})
+                                 "Heartbeat" "Gordian Blade" "Test Run"]}})
       (starting-hand state :runner ["Emergent Creativity" "Heartbeat" "Gordian Blade" "Test Run"])
       (take-credits state :corp)
       (play-from-hand state :runner "Emergent Creativity")
@@ -1740,7 +1740,27 @@
       (click-card state :runner "Heartbeat")
       (click-card state :runner "Gordian Blade")
       (is (= ["Cancel"] (prompt-buttons :runner)) "Liberated Account shouldn't be shown in prompt (only Cancel)")
-      (click-prompt state :runner "Cancel"))))
+      (click-prompt state :runner "Cancel")))
+  (testing "Should trash cards before choosing which to install. Issue #4939"
+    (do-game
+      (new-game {:runner {:hand ["Emergent Creativity" "Buffer Drive" "Engolo"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Emergent Creativity")
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Installing Engolo costs no credits"
+        (is (= "Emergent Creativity" (:title (:card (prompt-map :runner))))
+            "Trash prompt from Emergent Creativity")
+        (click-card state :runner "Engolo")
+        (is (= "Buffer Drive" (:title (:card (prompt-map :runner))))
+            "Buffer Drive prompt interrupts Emergent Creativity")
+        (click-prompt state :runner "Engolo")
+        (is (= "Emergent Creativity" (:title (:card (prompt-map :runner))))
+            "Install prompt from Emergent Creativity")
+        (click-prompt state :runner "Engolo")
+        (is (= "Engolo" (:title (get-program state 0))) "Engolo is installed")))))
 
 (deftest employee-strike
   ;; Employee Strike
