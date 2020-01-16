@@ -852,9 +852,8 @@
                                                 (:deck runner)) :sorted))
              :effect (req (trigger-event state side :searched-stack nil)
                           (shuffle! state side :deck)
-                          (wait-for (trash-cards state side to-trash {:unpreventable true})
-                                    (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                    target {:cost-bonus (- trash-cost)})))})]
+                          (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                          target {:cost-bonus (- trash-cost)}))})]
     {:prompt "Choose Hardware and Programs to trash from your Grip"
      :choices {:card #(and (or (hardware? %)
                                (program? %))
@@ -864,7 +863,8 @@
      :async true
      :effect (req (let [trash-cost (apply + (map :cost targets))
                         to-trash targets]
-                    (continue-ability state side (ec trash-cost to-trash) card nil)))}))
+                    (wait-for (trash-cards state side to-trash {:unpreventable true})
+                              (continue-ability state side (ec trash-cost to-trash) card nil))))}))
 
 (define-card "Employee Strike"
   {:msg "disable the Corp's identity"
