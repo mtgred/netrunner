@@ -1808,7 +1808,24 @@
         (is (empty? (:discard (get-runner))) "DDoS not trashed")
         (changes-val-macro -4 (:credit (get-runner))
                            "Paid 3+1 to break Fire Wall with Corroder"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)}))))))
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})))))
+  (testing "Navi Mumbai City Grid blocks only runner abilities test"
+    (do-game
+      (new-game {:corp {:hand ["Navi Mumbai City Grid" "NGO Front"]
+                        :credits 5}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Navi Mumbai City Grid" "New remote")
+      (play-from-hand state :corp "NGO Front" "Server 1")
+      (let [navi (get-content state :remote1 0)
+            ngo  (get-content state :remote1 1)]
+        (core/add-counter state :corp ngo :advancement 2)
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (core/rez state :corp navi)
+        (core/rez state :corp ngo)
+        (changes-val-macro 5 (:credit (get-corp))
+                           "+5 credits from NGO"
+                           (card-ability state :corp (refresh ngo) 0))))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
