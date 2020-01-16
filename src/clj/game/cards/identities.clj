@@ -422,13 +422,15 @@
 
 (define-card "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
+             :async true
              :once :per-turn
              :req (req (and (operation? target)
                             (turn-flag? state side card :can-trash-operation)))
-             :effect (req (trash state side target)
-                          (swap! state assoc-in [:run :did-trash] true)
+             :effect (req (when run
+                            (swap! state assoc-in [:run :did-trash] true))
                           (swap! state assoc-in [:runner :register :trashed-card] true)
-                          (register-turn-flag! state side card :can-trash-operation (constantly false)))
+                          (register-turn-flag! state side card :can-trash-operation (constantly false))
+                          (trash state side eid target nil))
              :msg (msg "trash " (:title target))}
             {:event :end-access-phase
              :req (req (and (= :archives (:from-server target))
