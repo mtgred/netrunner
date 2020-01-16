@@ -1207,9 +1207,9 @@
 
 (define-card "Guinea Pig"
   {:msg "trash all cards in the grip and gain 10 [Credits]"
-   :effect (req (doseq [c (:hand runner)]
-                  (trash state :runner c {:unpreventable true}))
-                (gain-credits state :runner 10))})
+   :effect (req (wait-for (trash-cards state side (:hand runner) {:unpreventable true})
+                          (gain-credits state :runner 10)
+                          (effect-completed state side eid)))})
 
 (define-card "Hacktivist Meeting"
   {:constant-effects [{:type :rez-additional-cost
