@@ -105,5 +105,6 @@
                 :cost [:click 1 :credit 2]
                 :msg "remove 1 tag"
                 :req (req tagged)
-                :effect (effect (lose-tags 1)
-                                (play-sfx "click-remove-tag"))}]})
+                :async true
+                :effect (effect (play-sfx "click-remove-tag")
+                                (lose-tags eid 1))}]})

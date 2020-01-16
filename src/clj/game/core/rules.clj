@@ -324,10 +324,9 @@
       (max 0)))
 
 (defn tag-prevent
-  ([state side n] (tag-prevent state side (make-eid state) n))
   ([state side eid n]
    (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n))))
+   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n))))
 
 (defn tag-remove-bonus
   "Applies a cost increase of n to removing tags with the click action. (SYNC.)"
@@ -350,34 +349,33 @@
   ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
-   (trigger-event state side :pre-tag card)
-   (let [n (tag-count state side n args)
-         prevent (get-prevent-list state :runner :tag)]
-     (if (and (pos? n)
-              (not unpreventable)
-              (cards-can-prevent? state :runner prevent :tag))
-       (do (system-msg state :runner "has the option to avoid tags")
-           (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
-           (swap! state assoc-in [:prevent :current] :tag)
-           (show-prompt
-             state :runner nil
-             (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
-             (fn [_]
-               (let [prevent (get-in @state [:tag :tag-prevent])
-                     prevent-msg (if prevent
-                                   (str "avoids "
-                                        (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                        (if (< 1 prevent) " tags" " tag"))
-                                   "will not avoid tags")]
-                 (system-msg state :runner prevent-msg)
-                 (clear-wait-prompt state :corp)
-                 (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
-             {:priority 10}))
-       (resolve-tag state side eid n args)))))
+   (wait-for (trigger-event-simult state side :pre-tag nil card)
+             (let [n (tag-count state side n args)
+                   prevent (get-prevent-list state :runner :tag)]
+               (if (and (pos? n)
+                        (not unpreventable)
+                        (cards-can-prevent? state :runner prevent :tag))
+                 (do (system-msg state :runner "has the option to avoid tags")
+                     (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
+                     (swap! state assoc-in [:prevent :current] :tag)
+                     (show-prompt
+                       state :runner nil
+                       (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
+                       (fn [_]
+                         (let [prevent (get-in @state [:tag :tag-prevent])
+                               prevent-msg (if prevent
+                                             (str "avoids "
+                                                  (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                                  (if (< 1 prevent) " tags" " tag"))
+                                             "will not avoid tags")]
+                           (system-msg state :runner prevent-msg)
+                           (clear-wait-prompt state :corp)
+                           (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
+                       {:priority 10}))
+                 (resolve-tag state side eid n args))))))
 
 (defn lose-tags
   "Always removes `:base` tags"
-  ([state side n] (lose-tags state side (make-eid state) n))
   ([state side eid n]
    (if (= n :all)
      (lose-tags state side eid (get-in @state [:runner :tag :base]))

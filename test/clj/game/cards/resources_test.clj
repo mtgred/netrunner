@@ -4614,7 +4614,23 @@
                            (click-card state :runner "Darwin")
                            (click-card state :runner rara)
                            (click-card state :runner rara))
-        (is (= 0 (count (:hand (get-runner)))) "Installed Darwin")))))
+        (is (= 0 (count (:hand (get-runner)))) "Installed Darwin"))))
+  (testing "Correct prompts with Jesminder #3860"
+    (do-game
+      (new-game {:runner {:id "Jesminder Sareen: Girl Behind the Curtain"
+                          :hand ["Thunder Art Gallery" "Hot Pursuit" "Datasucker"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Hot Pursuit")
+      (run-successful state)
+      (click-card state :runner "Datasucker")
+      (click-prompt state :runner "No action")
+      (is (nil? (:run @state)) "Run has correctly ended")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Datasucker didn't duplicate effects")
+      (is (zero? (count-tags state)) "Jesminder avoided Hot Pursuit tag"))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed

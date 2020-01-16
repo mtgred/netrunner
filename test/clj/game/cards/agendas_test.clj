@@ -1016,7 +1016,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (core/lose state :corp :credit (:credit (get-corp)))
-        (core/lose-tags state :runner tag)))))
+        (core/lose-tags state :runner (game.core.eid/make-eid state) tag)))))
 
 (deftest executive-retreat
   ;; Executive Retreat

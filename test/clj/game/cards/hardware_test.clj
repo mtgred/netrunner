@@ -2242,7 +2242,7 @@
         (play-from-hand state :runner "Obelus")
         (core/gain-tags state :runner 1)
         (is (= 6 (hand-size :runner)) "Max hand size is 6")
-        (core/lose-tags state :runner 1)
+        (core/lose-tags state :runner (game.core.eid/make-eid state) 1)
         (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
