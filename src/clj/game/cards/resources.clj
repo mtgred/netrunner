@@ -840,7 +840,8 @@
                                                              (:faction %))
                                                        (not (is-draft-id? %))))
                                          (sort-by :title)))
-        fenris-effect {:prompt "Choose a g-mod identity to host on DJ Fenris"
+        fenris-effect {:async true
+                       :prompt "Choose a g-mod identity to host on DJ Fenris"
                        :choices (req (sorted-id-list runner))
                        :msg (msg "host " (:title target))
                        :effect (req (let [card (assoc-host-zones card)
