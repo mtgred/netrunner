@@ -1754,9 +1754,9 @@
                       (wait-for (mill state :corp :runner num-to-trash)
                                 (system-msg state side
                                             (str "uses Reverse Infection to purge "
-                                                 num-virus-purged (quantify num-virus-purged "virus counter")
+                                                 (quantify num-virus-purged "virus counter")
                                                  " and trash "
-                                                 num-to-trash (quantify num-to-trash "card")
+                                                 (quantify num-to-trash "card")
                                                  " from the top of the stack"))
                                 (effect-completed state side eid))))))})
 
