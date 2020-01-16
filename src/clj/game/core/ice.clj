@@ -479,7 +479,14 @@
                              (when (not= "All" subtype) (str " " subtype))
                              (pluralize " subroutine" n))))
         :effect (effect (continue-ability
-                          (break-subroutines current-ice card cost n args)
+                          (when (can-pay? state side
+                                          (assoc eid :source-type :ability)
+                                          card nil
+                                          (break-sub-ability-cost
+                                            state side
+                                            (assoc args :cost cost :broken-subs (take n (:subroutines current-ice)))
+                                            card current-ice))
+                            (break-subroutines current-ice card cost n args))
                           card nil))}))))
 
 (defn strength-pump

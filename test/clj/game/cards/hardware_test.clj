@@ -1565,7 +1565,8 @@
   (testing "Doesn't fire on partial break"
     (do-game
       (new-game {:corp {:deck ["Battlement"]}
-                 :runner {:deck ["Corroder" "Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]
+                          :credits 10}})
       (play-from-hand state :corp "Battlement" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
@@ -1578,6 +1579,8 @@
       (card-ability state :runner (get-program state 0) 1)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Done")
+      (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (empty? (:prompt (get-runner))) "no prompt")))
   (testing "Can't be used after first ice. Issue #4792"
