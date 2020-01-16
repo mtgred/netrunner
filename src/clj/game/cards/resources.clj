@@ -1791,6 +1791,7 @@
                                                                          (quantify target "cop" "y" "ies")
                                                                          " of " title)))))}}})]
     {:events [{:event :runner-install
+               :interactive (req true)
                :req (req (first-event? state side :runner-install))
                :async true
                :effect (effect (continue-ability

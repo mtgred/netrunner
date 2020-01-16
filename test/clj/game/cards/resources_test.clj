@@ -2926,7 +2926,35 @@
       (click-prompt state :runner "Ninja")
       (is (= 2 (count (get-program state))) "Installed Ninja")
       (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
-      (is (= 2 (:credit (get-runner))) "No charge to install Ninja"))))
+      (is (= 2 (:credit (get-runner))) "No charge to install Ninja")))
+  (testing "interaction with Rolodex. Issue #2694"
+    (do-game
+      (new-game {:runner {:deck [(qty "Gordian Blade" 2)
+                                 (qty "Bank Job" 3)
+                                 (qty "Rolodex" 2)]
+                          :hand ["Paige Piper" "Rolodex"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paige Piper")
+      (click-prompt state :runner "No")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rolodex")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner)))
+          "Runner has simultaneous resolution prompt")
+      (is (= ["Rolodex" "Paige Piper"] (prompt-titles :runner))
+          "Both Rolodex and Paige Piper can be chosen")
+      (click-prompt state :runner "Paige Piper")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "2")
+      (is (= ["Rolodex" "Rolodex"] (map :title (:discard (get-runner)))) "Both Rolodex are now in the discard")
+      (click-prompt state :runner "Gordian Blade")
+      (click-prompt state :runner "Bank Job")
+      (click-prompt state :runner "Bank Job")
+      (click-prompt state :runner "Gordian Blade")
+      (click-prompt state :runner "Bank Job")
+      (click-prompt state :runner "Done")
+      (is (empty? (:prompt (get-corp))) "Corp has no wait prompts")
+      (is (empty? (:prompt (get-runner))) "Runner has no ability prompts"))))
 
 (deftest paladin-poemu
   ;; Paladin Poemu
