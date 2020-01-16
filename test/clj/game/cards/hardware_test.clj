@@ -1205,7 +1205,7 @@
       (let [flip (get-hardware state 0)]
         (card-ability state :runner flip 1)
         (is (refresh flip) "Flip Switch hasn't been trashed")
-        (core/gain-tags state :runner 1)
+        (gain-tags state :runner 1)
         (is (= 1 (count-tags state)) "Runner starts with 0 tags")
         (card-ability state :runner flip 1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
@@ -2240,7 +2240,7 @@
         (is (= 1 (get-counters (refresh nerve) :virus)) "1 virus counter on Nerve Agent")
         (click-prompt state :runner "No action")
         (play-from-hand state :runner "Obelus")
-        (core/gain-tags state :runner 1)
+        (gain-tags state :runner 1)
         (is (= 6 (hand-size :runner)) "Max hand size is 6")
         (core/lose-tags state :runner (game.core.eid/make-eid state) 1)
         (is (= 5 (hand-size :runner)) "Max hand size is 5")
@@ -2321,7 +2321,7 @@
     (do-game
       (new-game {:runner {:deck ["Obelus" "Paper Tripping"]}})
       (take-credits state :corp)
-      (core/gain-tags state :runner 3)
+      (gain-tags state :runner 3)
       (is (= 3 (count-tags state)) "Runner starts with 3 tags")
       (play-from-hand state :runner "Obelus")
       (take-credits state :runner)
@@ -2462,7 +2462,7 @@
     (let [plas (get-hardware state 0)]
       (is (= 4 (get-counters (refresh plas) :power)) "4 counters on install")
       (take-credits state :runner)
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (card-ability state :runner plas 0)
       (card-ability state :runner plas 0)

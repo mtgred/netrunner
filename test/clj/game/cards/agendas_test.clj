@@ -653,7 +653,7 @@
     (take-credits state :runner)
     (is (= 3 (count (:hand (get-runner)))) "No damage done, Runner not tagged")
     (take-credits state :corp)
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
 
@@ -1010,7 +1010,7 @@
       (dotimes [tag 10]
         (is (zero? (count-tags state)) "Should start with 0 tags")
         (is (zero? (:credit (get-corp))) "Should start with 0 credits")
-        (core/gain-tags state :runner tag)
+        (gain-tags state :runner tag)
         (card-ability state :corp ev-scored 0)
         (is (= tag (:credit (get-corp))) (str "Should gain " tag " credits"))
         (take-credits state :corp)
@@ -1766,7 +1766,7 @@
       (play-and-score state "Market Research")
       (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points"))
     (testing "Runner is tagged"
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (play-and-score state "Market Research")
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
@@ -1866,7 +1866,7 @@
                 (starting-hand state :runner (repeat 7 "Sure Gamble"))
                 (let [credits (:credit (get-corp))
                       grip (count (:hand (get-runner)))]
-                  (core/gain-tags state :runner tags)
+                  (gain-tags state :runner tags)
                   (play-and-score state "Meteor Mining")
                   (is (= num-choices (count (prompt-buttons :corp))))
                   (click-prompt state :corp pick)
@@ -2187,7 +2187,7 @@
   ;; Private Security Force
   (do-game
     (new-game {:corp {:deck [(qty "Private Security Force" 10)]}})
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (play-and-score state "Private Security Force")
     (let [psf-scored (get-scored state :corp 0)]
       (card-ability state :corp psf-scored 0)
@@ -2602,7 +2602,7 @@
       (run-empty-server state :rd)
       (click-prompt state :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Runner should steal"))
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (testing "Access intalled with tag"
       (run-empty-server state :remote2)
       (click-prompt state :runner "OK") ;; this is now a prompt that QPM was added to Corp score area
@@ -3001,7 +3001,7 @@
       (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
       (click-prompt state :corp "Yes")
       (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (click-card state :corp (find-card "SSL Endorsement" (:scored (get-runner))))
       (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
@@ -3146,7 +3146,7 @@
       (new-game {:corp {:deck ["The Cleaners" "Scorched Earth"]}
                  :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
       (play-and-score state "The Cleaners")
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:hand (get-runner)))) "5 damage dealt to Runner")))
   (testing "No bonus damage when runner 'suffers' damage, ie Cybernetics"

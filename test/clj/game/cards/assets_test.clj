@@ -1105,7 +1105,7 @@
       (take-credits state :corp)
       (run-empty-server state :rd)
       (is (empty? (:discard (get-runner))) "Not tagged, no damage done")
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (run-on state :rd)
       (run-jack-out state)
       (is (empty? (:discard (get-runner))) "Tagged but run unsuccessful, no damage done")
@@ -2188,7 +2188,7 @@
     (take-credits state :corp)
     (take-credits state :runner)
     ;; trash 3 resources
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (core/trash-resource state :corp nil)
     (click-card state :corp (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))))
@@ -2456,7 +2456,7 @@
       (is (= 3 (:click (get-runner))) "Runner still has 3 clicks after Beckman is unblanked")
       (core/rez state :corp malia1)
       (click-card state :corp (get-resource state 1))
-      (core/gain-tags state :corp 1)
+      (gain-tags state :corp 1)
       (is (and (= 1 (count-tags state))
                (zero? (count (:discard (get-runner))))) "Runner has 1 tag, but Rachel Beckman not trashed")
       (take-credits state :runner)
@@ -2628,9 +2628,9 @@
     (play-from-hand state :corp "Mr. Stone" "New remote")
     (let [stone (get-content state :remote1 0)]
       (core/rez state :corp stone)
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 1 tag")
-      (core/gain-tags state :corp 5)
+      (gain-tags state :corp 5)
       (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 5 tags"))))
 
 (deftest mumba-temple
@@ -2798,7 +2798,7 @@
       (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (click-prompt state :runner "Done") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
@@ -3550,7 +3550,7 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit")
       (take-credits state :corp)
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (take-credits state :runner)
       (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
 
@@ -4936,7 +4936,7 @@
           wrap (get-ice state :hq 0)]
       (take-credits state :corp)
       (is (= 4 (:credit (get-corp))))
-      (core/gain-tags state :runner 2)
+      (gain-tags state :runner 2)
       (run-on state "HQ")
       (core/rez state :corp wd)
       (core/rez state :corp arch)
@@ -5025,7 +5025,7 @@
     (let [judge (get-content state :remote1 0)]
       (core/rez state :corp judge)
       (is (not (rezzed? (refresh judge))) "Zealous Judge can't be rezzed until Runner is tagged")
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (core/rez state :corp judge)
       (is (rezzed? (refresh judge)) "Zealous Judge can be rezzed while the Runner is tagged")
       (card-ability state :corp judge 0)

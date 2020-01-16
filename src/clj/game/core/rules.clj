@@ -345,7 +345,6 @@
 
 (defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
-  ([state side n] (gain-tags state side (make-eid state) n nil))
   ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)

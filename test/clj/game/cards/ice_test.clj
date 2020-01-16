@@ -1442,7 +1442,7 @@
           (core/lose-tags state :runner (game.core.eid/make-eid state) 1)))
       (testing "Hydra subroutines do their effect if the Runner is tagged"
         ;; Gain 1 tag to turn on main effect of subroutines
-        (core/gain-tags state :runner 1)
+        (gain-tags state :runner 1)
         (is (is-tagged? state) "Runner is tagged")
         (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
         (card-subroutine state :corp hydra 0)
@@ -1485,7 +1485,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count (:subroutines (refresh io)))))
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (is (= 2 (count (:subroutines (refresh io)))))
       (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
       (is (zero? (count (:subroutines (refresh io))))))))
@@ -2706,7 +2706,7 @@
                         :hand ["Pachinko"]}})
       (play-from-hand state :corp "Pachinko" "HQ")
       (take-credits state :corp)
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (run-on state "HQ")
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
@@ -2764,7 +2764,7 @@
       (let [resistor (get-ice state :hq 0)]
         (core/rez state :corp resistor)
         (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
-        (core/gain-tags state :runner 2)
+        (gain-tags state :runner 2)
         (is (= 2 (count-tags state)))
         (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
         (take-credits state :corp)
