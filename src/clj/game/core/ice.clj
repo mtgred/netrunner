@@ -464,7 +464,8 @@
      (merge
        (when (some #(= :trash (first %)) (merge-costs cost))
          {:trash-icon true})
-       {:req (req (and (break-req state side eid card targets)
+       {:async true
+        :req (req (and (break-req state side eid card targets)
                        (strength-req state side eid card targets)))
         :break-req break-req
         :break n
