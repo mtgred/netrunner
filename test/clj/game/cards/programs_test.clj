@@ -505,24 +505,78 @@
         (click-prompt state :runner "Trace 3 - Trash a virus")
         (is (= 2 (count (filter :broken (:subroutines (get-ice state :hq 0)))))))))
   (testing "auto-pump"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Macrophage"]
-                        :credits 10}
-                 :runner {:hand ["Black Orchestra"]
-                          :credits 100}})
-      (play-from-hand state :corp "Macrophage" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
-      (take-credits state :corp)
-      (play-from-hand state :runner "Black Orchestra")
-      (let [bo (get-program state 0)]
-        (run-on state :hq)
-        (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)})
-        (println (prompt-fmt :runner))
-        (println (clojure.string/join "\n" (map :text (:log @state))))
-        )))
-  )
+    (testing "Pumping more than once, breaking more than once"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Macrophage"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (play-from-hand state :corp "Macrophage" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Black Orchestra")
+        (let [bo (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -12 (:credit (get-runner))
+                             "Paid 12 to fully break Macrophage with Black Orchestra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+          (is (= 10 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "No pumping, breaking more than once"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Aiki"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (play-from-hand state :corp "Aiki" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Black Orchestra")
+        (let [bo (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -6 (:credit (get-runner))
+                             "Paid 6 to fully break Aiki with Black Orchestra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+          (is (= 6 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "Pumping and breaking once"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Enigma"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (play-from-hand state :corp "Enigma" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Black Orchestra")
+        (let [bo (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -3 (:credit (get-runner))
+                             "Paid 3 to fully break Enigma with Black Orchestra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+          (is (= 4 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "No auto-break on unbreakable subs"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Afshar"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (play-from-hand state :corp "Afshar" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Black Orchestra")
+        (let [bo (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar"))))))
 
 (deftest brahman
   ;; Brahman

@@ -87,6 +87,7 @@
                  " subroutines")
      :heap-breaker-pump strength ; strength gained
      :heap-breaker-break strength ; number of subs broken
+     :req (req true)
      :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
@@ -121,30 +122,28 @@
                                         (get-strength card))))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
               no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
-                                                     (if (= :unrestricted ((:breakable %) current-ice)) false true) ; breakable is a 1-fn
+                                                     (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
               x-number (when (and strength-diff unbroken-subs)
                          (max strength-diff unbroken-subs))
               x-breaker (= :x pump-strength-at-once)
-              pumps-needed (when (and x-breaker strength-diff pump-strength-at-once)
+              pumps-needed (when (and strength-diff pump-strength-at-once)
                              (if x-breaker
                                1
                                (int (Math/ceil (/ strength-diff pump-strength-at-once)))))
-              breaks-needed (when (and x-breaker unbroken-subs subs-broken-at-once)
+              breaks-needed (when (and unbroken-subs subs-broken-at-once)
                               (if x-breaker
                                 1
                                 (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))))
-              ability-uses-needed (when (and x-breaker pumps-needed breaks-needed)
+              ability-uses-needed (when (and pumps-needed breaks-needed)
                                     (if x-breaker
                                       1
                                       (+ pumps-needed
                                          breaks-needed
                                          (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
               total-cost (when (and breaker-ability
-                                    ability-uses-needed
-                                    x-breaker
-                                    x-number)
+                                    ability-uses-needed)
                                  (if x-breaker
                                    [:credit x-number]
                                    (repeat ability-uses-needed (:cost breaker-ability))))]

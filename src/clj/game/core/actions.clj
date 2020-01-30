@@ -9,7 +9,8 @@
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
          update-all-ice update-all-icebreakers continue play-ability
-         play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones)
+         play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones
+         pump)
 
 ;;; Neutral actions
 (defn play
@@ -460,37 +461,38 @@
                                   (get-strength card))))
         unbroken-subs (count (remove :broken (:subroutines current-ice)))
         no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
-                                               (if (= :unrestricted ((:breakable %) current-ice)) false true) ; breakable is a 1-fn
+                                               (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                (not (:breakable % true))) ; breakable is a bool
                                             (:subroutines current-ice)))
         x-number (when (and strength-diff unbroken-subs)
                    (max strength-diff unbroken-subs))
         x-breaker (= :x pump-strength-at-once)
-        pumps-needed (when (and x-breaker strength-diff pump-strength-at-once)
+        pumps-needed (when (and strength-diff pump-strength-at-once)
                        (if x-breaker
                          1
                          (int (Math/ceil (/ strength-diff pump-strength-at-once)))))
-        breaks-needed (when (and x-breaker unbroken-subs subs-broken-at-once)
+        breaks-needed (when (and unbroken-subs subs-broken-at-once)
                         (if x-breaker
                           1
                           (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))))
-        ability-uses-needed (when (and x-breaker pumps-needed breaks-needed)
+        ability-uses-needed (when (and pumps-needed breaks-needed)
                               (if x-breaker
                                 1
                                 (+ pumps-needed
                                    breaks-needed
                                    (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
         total-cost (when (and breaker-ability
-                              ability-uses-needed
-                              x-breaker
-                              x-number)
+                              ability-uses-needed)
                      (if x-breaker
                        [:credit x-number]
                        (repeat ability-uses-needed (:cost breaker-ability))))]
+    (println "pumps-needed:" pumps-needed)
+    (println "breaks-needed:" breaks-needed)
+    (println "ability-uses-needed:" ability-uses-needed)
+    (println "total-cost:" total-cost)
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
-                ; (dotimes [n times-pump]
-                  ; (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
+                (pump state side (get-card state card) (* 2 ability-uses-needed))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
                   (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
