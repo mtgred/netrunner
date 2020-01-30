@@ -9,7 +9,7 @@
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
          update-all-ice update-all-icebreakers continue play-ability
-         installable-servers get-runnable-zones)
+         installable-servers get-runnable-zones pump no-action)
 
 ;;; Neutral actions
 (defn play
@@ -519,7 +519,7 @@
    (rez state side (make-eid state) card args))
   ([state side eid {:keys [disabled] :as card}
     {:keys [ignore-cost no-warning force declined-alternative-cost alternative-cost no-msg
-            cost-bonus] :as args}]
+            cost-bonus press-no-action] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :rez)
          card (get-card state card)
          alternative-cost (when (and card
@@ -575,7 +575,9 @@
                                  (play-sfx state side "rez-ice"))
                              (play-sfx state side "rez-other"))
                            (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                           (trigger-event-sync state side eid :rez (get-card state card)))
+                           (trigger-event-sync state side eid :rez (get-card state card))
+                           (when press-no-action
+                             (no-action state side nil)))
                        (effect-completed state side eid)))))
        (effect-completed state side eid)))))
 

@@ -40,7 +40,7 @@
    "play" core/play
    "purge" core/do-purge
    "remove-tag" core/remove-tag
-   "rez" #(core/rez %1 %2 (:card %3) nil)
+   "rez" #(core/rez %1 %2 (:card %3) (dissoc %3 :card))
    "run" core/click-run
    "runner-ability" core/play-runner-ability
    "score" #(core/score %1 %2 (get-card %1 (:card %3)))
