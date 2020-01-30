@@ -448,7 +448,7 @@
         ;; match strength
         can-pump (fn [ability]
                    (when (:heap-breaker-pump ability)
-                     ((:req ability) state side eid card nil)))
+                     ((:req ability (req true)) state side eid card nil)))
         breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
         pump-strength-at-once (when breaker-ability
                                 (:heap-breaker-pump breaker-ability))
@@ -486,13 +486,11 @@
                      (if x-breaker
                        [:credit x-number]
                        (repeat ability-uses-needed (:cost breaker-ability))))]
-    (println "pumps-needed:" pumps-needed)
-    (println "breaks-needed:" breaks-needed)
-    (println "ability-uses-needed:" ability-uses-needed)
-    (println "total-cost:" total-cost)
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
-                (pump state side (get-card state card) (* 2 ability-uses-needed))
+                (if x-breaker
+                  (pump state side (get-card state card) x-number)
+                  (pump state side (get-card state card) (* 2 ability-uses-needed)))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
                   (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
@@ -509,8 +507,7 @@
                                 (str (build-spend-msg cost-str "increase")
                                      "the strength of " (:title card)
                                      " to " (get-strength (get-card state card))
-                                     " and break all " (when (< 1 unbroken-subs) unbroken-subs)
-                                     " subroutines on " (:title current-ice)))
+                                     " and break all subroutines on " (:title current-ice)))
                     (continue state side nil)))))))
 
 (defn play-copy-ability

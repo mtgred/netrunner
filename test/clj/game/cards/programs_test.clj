@@ -481,7 +481,7 @@
       (run-continue state)
       (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
-(deftest ^:test-refresh/focus black-orchestra
+(deftest black-orchestra
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2817,6 +2817,29 @@
           (click-card state :runner multi))
         (is (zero? (count-tags state)) "Runner has lost both tags")))))
 
+(deftest mkultra
+  ;; MKUltra
+  (testing "auto-pump"
+    (testing "Pumping and breaking for 1"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Rototurret"]
+                          :credits 10}
+                   :runner {:hand ["MKUltra"]
+                            :credits 100}})
+        (play-from-hand state :corp "Rototurret" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "MKUltra")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -3 (:credit (get-runner))
+                             "Paid 3 to fully break Rototurret with MKUltra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+          (is (= 3 (core/get-strength (refresh pc))) "Pumped MKUltra up to str 3")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))))
+
 (deftest multithreader
   ;; Multithreader
   (testing "Pay-credits prompt"
@@ -3096,7 +3119,102 @@
       (run-on state "Archives")
       (run-continue state)
       (click-prompt state :runner "No")
-      (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip"))))
+      (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")))
+  (testing "auto-pump"
+    (testing "Pumping and breaking for 1"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vanilla"]
+                          :credits 10}
+                   :runner {:hand ["Paperclip"]
+                            :credits 100}})
+        (play-from-hand state :corp "Vanilla" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paperclip")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -1 (:credit (get-runner))
+                             "Paid 1 to fully break Vanilla with Paperclip"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+          (is (= 2 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 2")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "Pumping for >1 and breaking for 1"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Fire Wall"]
+                          :credits 10}
+                   :runner {:hand ["Paperclip"]
+                            :credits 100}})
+        (play-from-hand state :corp "Fire Wall" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paperclip")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -4 (:credit (get-runner))
+                             "Paid 4 to fully break Fire Wall with Paperclip"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+          (is (= 5 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 5")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "Pumping for 1 and breaking for >1"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Spiderweb"]
+                          :credits 10}
+                   :runner {:hand ["Paperclip"]
+                            :credits 100}})
+        (play-from-hand state :corp "Spiderweb" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paperclip")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -3 (:credit (get-runner))
+                             "Paid 3 to fully break Spiderweb with Paperclip"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+          (is (= 4 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 4")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "Pumping for >1 and breaking for >1"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Chiyashi"]
+                          :credits 12}
+                   :runner {:hand ["Paperclip"]
+                            :credits 100}})
+        (play-from-hand state :corp "Chiyashi" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paperclip")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (changes-val-macro -7 (:credit (get-runner))
+                             "Paid 7 to fully break Chiyashi with Paperclip"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+          (is (= 8 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 8")
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
+    (testing "No auto-pump on unbreakable subs"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Akhet"]
+                          :credits 10}
+                   :runner {:hand ["Paperclip"]
+                            :credits 100}})
+        (core/gain state :corp :click 1)
+        (play-from-hand state :corp "Akhet" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (dotimes [n 3]
+          (advance state (get-ice state :hq 0)))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paperclip")
+        (let [pc (get-program state 0)]
+          (run-on state :hq)
+          (run-continue state)
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh pc)))) "No auto-pumping option for Akhet"))))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"

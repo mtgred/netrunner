@@ -87,7 +87,6 @@
                  " subroutines")
      :heap-breaker-pump strength ; strength gained
      :heap-breaker-break strength ; number of subs broken
-     :req (req true)
      :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
@@ -109,7 +108,7 @@
               ;; match strength
               can-pump (fn [ability]
                          (when (:heap-breaker-pump ability)
-                           ((:req ability) state side eid card nil)))
+                           ((:req ability (req true)) state side eid card nil)))
               breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
               pump-strength-at-once (when breaker-ability
                                       (:heap-breaker-pump breaker-ability))
@@ -1740,8 +1739,13 @@
                                            (effect-completed state side eid)))))}]})
 
 (define-card "MKUltra"
-  (install-from-heap "MKUltra" "Sentry"
-                     [(pump-and-break [:credit 3] 2 "Sentry")]))
+  (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
+                            :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                            :subroutines-changed]]
+                 (assoc heap-breaker-auto-pump-and-break :event event))
+        cdef (install-from-heap "MKUltra" "Sentry"
+                                [(pump-and-break [:credit 3] 2 "Sentry")])]
+    (assoc cdef :events (apply conj events (:events cdef)))))
 
 (define-card "Mongoose"
   (auto-icebreaker {:implementation "Usage restriction is not implemented"
@@ -1918,15 +1922,20 @@
                                          (update-all-ice state side)))}])))}}}]})
 
 (define-card "Paperclip"
-  (install-from-heap "Paperclip" "Barrier"
-                     [{:label "X [Credits]: +X strength, break X subroutines"
-                       :choices {:number (req (total-available-credits state :runner eid card))}
-                       :prompt "How many credits?"
-                       :heap-breaker-pump :x ; strength gained
-                       :heap-breaker-break :x ; number of subs broken
-                       :effect (effect (continue-ability
-                                         (pump-and-break [:credit target] target "Barrier")
-                                         card nil))}]))
+  (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
+                            :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                            :subroutines-changed]]
+                 (assoc heap-breaker-auto-pump-and-break :event event))
+        cdef (install-from-heap "Paperclip" "Barrier"
+                                [{:label "X [Credits]: +X strength, break X subroutines"
+                                  :choices {:number (req (total-available-credits state :runner eid card))}
+                                  :prompt "How many credits?"
+                                  :heap-breaker-pump :x ; strength gained
+                                  :heap-breaker-break :x ; number of subs broken
+                                  :effect (effect (continue-ability
+                                                    (pump-and-break [:credit target] target "Barrier")
+                                                    card nil))}])]
+    (assoc cdef :events (apply conj events (:events cdef)))))
 
 (define-card "Parasite"
   {:hosting {:card #(and (ice? %)
