@@ -490,7 +490,7 @@
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
                 (if x-breaker
                   (pump state side (get-card state card) x-number)
-                  (pump state side (get-card state card) (* 2 ability-uses-needed)))
+                  (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
                   (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
