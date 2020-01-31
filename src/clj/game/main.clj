@@ -51,6 +51,7 @@
    "successful-run" core/successful-run
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
+   "toggle-auto-no-action" core/toggle-auto-no-action
    "trash-resource" core/trash-resource
    "unbroken-subroutines" core/play-unbroken-subroutines
    "view-deck" core/view-deck})

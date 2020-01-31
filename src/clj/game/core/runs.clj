@@ -3,7 +3,7 @@
 (declare any-flag-fn? clear-run-register! run-cleanup gain-run-credits
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
-         update-all-agenda-points reset-all-ice)
+         update-all-agenda-points reset-all-ice no-action)
 
 (defn add-run-effect
   [state side run-effect]
@@ -23,6 +23,10 @@
          [click-run-cost
           cost
           additional-costs])))))
+
+(defn toggle-auto-no-action
+  [state side args]
+  (swap! state update-in [:run :corp-auto-no-action] not))
 
 (declare make-run encounter-ends pass-ice)
 
@@ -92,6 +96,7 @@
                                 :run {:server s
                                       :position n
                                       :access-bonus []
+                                      :corp-auto-no-action false
                                       :jack-out false
                                       :phase :initiation
                                       :next-phase :initiation
@@ -162,7 +167,10 @@
           :else
           (pass-ice state side)))
     (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action"))))
+        (system-msg state side "has no further action")
+        (when (and (rezzed? (get-current-ice state))
+                   (:corp-auto-no-action (:run @state)))
+          (no-action state :corp nil)))))
 
 (defn bypass-ice
   [state]
@@ -226,7 +234,10 @@
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
     (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action"))))
+        (system-msg state side "has no further action")
+        (when (and (:corp-auto-no-action (:run @state))
+                   (empty? (remove :broken (:subroutines (get-current-ice state)))))
+          (no-action state :corp nil)))))
 
 (defn pass-ice
   [state side]
