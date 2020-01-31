@@ -26,7 +26,8 @@
 
 (defn toggle-auto-no-action
   [state side args]
-  (swap! state update-in [:run :corp-auto-no-action] not))
+  (swap! state update-in [:run :corp-auto-no-action] not)
+  (no-action state :corp nil))
 
 (declare make-run encounter-ends pass-ice)
 
