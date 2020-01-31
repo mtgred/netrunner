@@ -161,8 +161,7 @@
               (start-next-phase state side nil))
           :else
           (pass-ice state side)))
-    (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action"))))
+    (swap! state assoc-in [:run :no-action] :runner)))
 
 (defn bypass-ice
   [state]
@@ -298,12 +297,13 @@
   [state side args] nil)
 
 (defn no-action
-  "The corp indicates they have no more actions for the encounter."
+  "The corp indicates they have no more actions for this window."
   [state side args]
   (if (get-in @state [:run :no-action])
     (continue state :runner args)
     (do (swap! state assoc-in [:run :no-action] :corp)
-        (system-msg state side "has no further action"))))
+        (when (= :approach-ice (get-in @state [:run :phase]))
+          (system-msg state side "has no further action")))))
 
 ;; Non timing stuff
 (defn gain-run-credits

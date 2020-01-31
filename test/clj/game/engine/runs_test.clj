@@ -220,3 +220,53 @@
         (core/continue state :runner nil)
         (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))))
+
+(deftest hide-continue-msg
+  (testing "No message for Runner on approach"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
+        (core/continue state :runner nil)
+        (is (not (last-log-contains? state "Runner has no further action.")) "Message is not shown for Runner on approach"))))
+  (testing "Message for Corp on approach"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
+        (core/no-action state :corp nil)
+        (is (last-log-contains? state "Corp has no further action.") "Message is shown for Corp on approach"))))
+  (testing "Message for Runner on encounter"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (core/rez state :corp iw)
+        (run-continue state)
+        (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
+        (core/continue state :runner nil)
+        (is (last-log-contains? state "Runner has no further action.") "Message is shown for Runner on encounter"))))
+  (testing "No message for Corp on encounter"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (core/rez state :corp iw)
+        (run-continue state)
+        (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
+        (core/no-action state :corp nil)
+        (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter")))))
