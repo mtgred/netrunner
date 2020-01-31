@@ -2663,10 +2663,10 @@
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
              :effect (req (access-bonus state side server 1))})
           (ttw-bounce [name server]
-            {:label (str "Bounce " name)
+            {:label (str "Shortcut: Bounce " name)
              :cost [:click 1]
-             :effect (req (add-counter state side card :power 1)
-                          (system-msg state :runner (str "places a power counter on " (:title card))))})]
+             :msg (msg "bounce off of " name " for a token (shortcut)")
+             :effect (effect (add-counter card :power 1))})]
     {:events [{:event :agenda-stolen
                :effect (effect (update! (assoc card :agenda-stolen true)))
                :silent (req true)}
