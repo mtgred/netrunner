@@ -24,11 +24,6 @@
           cost
           additional-costs])))))
 
-(defn toggle-auto-no-action
-  [state side args]
-  (swap! state update-in [:run :corp-auto-no-action] not)
-  (no-action state :corp nil))
-
 (declare make-run encounter-ends pass-ice)
 
 (defn set-current-ice
@@ -45,6 +40,12 @@
 (defn get-current-ice
   [state]
    (get-card state (get-in @state [:run :current-ice])))
+
+(defn toggle-auto-no-action
+  [state side args]
+  (swap! state update-in [:run :corp-auto-no-action] not)
+  (when (rezzed? (get-current-ice state))
+    (no-action state :corp nil)))
 
 (defn set-phase
   [state phase]
