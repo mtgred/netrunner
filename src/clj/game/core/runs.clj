@@ -260,18 +260,17 @@
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (reset-all-ice state side)
-              (if (get-in @state [:run :jack-out-after-pass])
-                (wait-for (jack-out state :runner {:eid -1})
-                          (handle-end-run state :runner))
-                (cond
-                  (:ended (:run @state))
-                  (handle-end-run state side)
-                  (not (get-in @state [:run :next-phase]))
-                  (if (pos? (get-in @state [:run :position]))
-                    (do (set-next-phase state :approach-ice)
-                        (start-next-phase state side nil))
-                    (do (set-next-phase state :approach-server)
-                        (start-next-phase state side nil))))))))
+              (cond
+                (get-in @state [:run :jack-out-after-pass])
+                (jack-out state :runner (make-eid state))
+                (:ended (:run @state))
+                (handle-end-run state side)
+                (not (get-in @state [:run :next-phase]))
+                (if (pos? (get-in @state [:run :position]))
+                  (do (set-next-phase state :approach-ice)
+                      (start-next-phase state side nil))
+                  (do (set-next-phase state :approach-server)
+                      (start-next-phase state side nil)))))))
 
 (defmethod continue :pass-ice
   [state side args]
