@@ -158,12 +158,13 @@
                            "3 net damage from passing Anansi"
                            (run-continue state))
         (core/rez state :corp border)
+        (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (core/no-action state :corp nil)
         (changes-val-macro 0 (count (:hand (get-runner)))
-                           "3 net damage from passing Anansi"
+                           "No further net damage"
                            (card-ability state :corp (refresh border) 0))
-        (is (nil? (get-run)))))))
+        (is (nil? (get-run)) "Run ended")))))
 
 (deftest akhet
   ;; Akhet
