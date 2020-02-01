@@ -104,7 +104,7 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck")
       (is (nil? (refresh aim)) "Aimor is trashed"))))
 
-(deftest anansi
+(deftest ^:test-refresh/focus anansi
   ;; Anansi
   (testing "3 net damage when bypassing"
     (do-game
@@ -1265,10 +1265,57 @@
 
 (deftest gold-farmer
   ;; Gold Farmer
-  (do-game
-    (new-game {:corp {:hand ["Gold Farmer"]}})
-    )
-  )
+  (testing "Subroutine test"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (let [gf (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -3 (:credit (get-runner))
+                                 "Paid 3c for subroutine"
+                                 (card-subroutine state :corp gf 0)
+                                 (click-prompt state :runner "Pay 3 [Credits]")))))
+  (testing "Lose credit for breaking"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [gf (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -2 (:credit (get-runner))
+                                 "Paid 1c + 1c for breaking"
+                                 (card-ability state :runner cor 0)
+                                 (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
+                                 (click-prompt state :runner "Done")
+                                 (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+                                     "Correct message")))))
+  (testing "Message on auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [gf (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -4 (:credit (get-runner))
+                                 "Paid 2c + 2c for breaking"
+                                 (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+                                 (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 2 \\[Credits\\] for breaking printed subs")
+                                     "Correct message"))))))
 
 (deftest hagen
   ;; Hagen
