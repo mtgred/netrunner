@@ -10,7 +10,7 @@
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
          update-all-ice update-all-icebreakers continue play-ability
          play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones
-         pump)
+         pump get-current-ice)
 
 ;;; Neutral actions
 (defn play
@@ -430,6 +430,23 @@
                                          (:title current-ice))))
                       (continue state side nil))))))))
 
+(defn play-heap-breaker-auto-pump-and-break-impl
+  [state side sub-groups-to-break current-ice]
+  {:async true
+   :effect (req
+             (let [subs-to-break (first sub-groups-to-break)
+                   sub-groups-to-break (rest sub-groups-to-break)]
+               (doseq [sub subs-to-break]
+                 (break-subroutine! state (get-card state current-ice) sub card))
+               (let [ice (get-card state current-ice)
+                     on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                     event-args (when on-break-subs
+                                  {:card-abilities (ability-as-handler ice on-break-subs)})]
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                           (if (empty? sub-groups-to-break)
+                             (effect-completed state side eid)
+                             (continue-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil))))))})
+
 (defn play-heap-breaker-auto-pump-and-break
   "Play auto-pump-and-break for heap breakers"
   [state side args]
@@ -491,24 +508,17 @@
                 (if x-breaker
                   (pump state side (get-card state card) x-number)
                   (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
-                (doseq [sub (remove :broken (:subroutines current-ice))]
-                  (break-subroutine! state (get-card state current-ice) sub card)
-                  (resolve-ability state side (make-eid state {:source card :source-type :ability})
-                                   (:additional-ability breaker-ability) (get-card state card) nil))
-                (let [ice (get-card state current-ice)
-                      cost-str async-result
-                      broken-subs (remove :broken (:subroutines current-ice))
-                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
-                      event-args (when on-break-subs
-                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
-                  (wait-for
-                    (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
-                    (system-msg state side
-                                (str (build-spend-msg cost-str "increase")
-                                     "the strength of " (:title card)
-                                     " to " (get-strength (get-card state card))
-                                     " and break all subroutines on " (:title current-ice)))
-                    (continue state side nil)))))))
+                (let [cost-str async-result
+                      sub-groups-to-break (if (and (number? subs-broken-at-once) (pos? subs-broken-at-once))
+                                        (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
+                                        [(remove :broken (:subroutines current-ice))])]
+                  (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
+                            (system-msg state side
+                                        (str (build-spend-msg cost-str "increase")
+                                             "the strength of " (:title card)
+                                             " to " (get-strength (get-card state card))
+                                             " and break all subroutines on " (:title current-ice)))
+                            (continue state side nil)))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
