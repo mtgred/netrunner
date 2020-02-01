@@ -104,7 +104,7 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck")
       (is (nil? (refresh aim)) "Aimor is trashed"))))
 
-(deftest ^:test-refresh/focus anansi
+(deftest anansi
   ;; Anansi
   (testing "3 net damage when bypassing"
     (do-game
