@@ -11,7 +11,7 @@
             [game.core.effects :refer :all]
             [clj-time.core :as t]
             [clj-uuid :as uuid]
-            [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with? blank?]]
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]

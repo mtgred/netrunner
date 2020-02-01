@@ -508,12 +508,12 @@
         ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
-                    (if (not (string/blank? cost-strs))
+                    (if (not (blank? cost-strs))
                       ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
-        prompt-str (if (not (string/blank? cost-strs))
+        prompt-str (if (not (blank? cost-strs))
                      (str " " cost-strs " to steal?")
                      "")
         prompt-str (str "You accessed " (:title card) "." prompt-str)
@@ -1298,7 +1298,7 @@
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
                                                 (resolve-jack-out state side eid))))
                                         {:priority 10}))
-                       (do (system-msg state :runner (str cost-str " to jack out"))
+                       (do (when (not (blank? cost-str)) (system-msg state :runner (str cost-str " to jack out")))
                            (resolve-jack-out state side eid)
                            (effect-completed state side (make-result eid false)))))
                    (effect-completed state side (make-result eid false))))
