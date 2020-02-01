@@ -1317,7 +1317,7 @@
                                  (is (and (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
                                           (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs"))
                                      "Correct messages")))))
-  (testing "Hippo interaction"
+  (testing "Hippo interaction with Corroder"
     (do-game
       (new-game {:corp {:hand ["Gold Farmer"]}
                  :runner {:hand ["Corroder" "Hippo"]
@@ -1331,12 +1331,28 @@
         (run-on state "HQ")
         (core/rez state :corp gf)
         (run-continue state)
-        (changes-val-macro -4 (:credit (get-runner))
-                                 "Paid 2c + 2c for breaking"
+        (changes-val-macro -3 (:credit (get-runner))
+                                 "Only got taxed once by Gold Farmer"
                                  (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
-                                 (println (prompt-fmt :runner))
-                                 (println (clojure.string/join "\n" (map :text (:log @state))))
-                                     )))))
+                                 (click-prompt state :runner "Yes")))))
+  (testing "Hippo interaction with Laamb"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Laamb" "Hippo"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Laamb")
+      (play-from-hand state :runner "Hippo")
+      (let [gf (get-ice state :hq 0)
+            lam (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -2 (:credit (get-runner))
+                                 "Never got taxed by Gold Farmer"
+                                 (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lam)})
+                                 (click-prompt state :runner "Yes"))))))
 
 (deftest hagen
   ;; Hagen
