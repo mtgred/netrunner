@@ -220,3 +220,102 @@
         (core/continue state :runner nil)
         (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))))
+
+(deftest auto-no-action
+  (testing "tower of rezzed ice, runner breaks everything and automatically continues until approaching server"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 3)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Corroder"]}})
+      (dotimes [_ 2] (play-from-hand state :corp "Vanilla" "HQ"))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [v0 (get-ice state :hq 0)
+            v1 (get-ice state :hq 1)
+            cor (get-program state 0)]
+        (core/rez state :corp v0)
+        (core/rez state :corp v1)
+        (run-on state :hq)
+        (core/toggle-auto-no-action state :corp nil)
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (is (= (refresh v1) (core/get-current-ice state)) "Approaching v1")
+        (core/continue state :runner nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
+        (card-ability state :runner cor 0)
+        (click-prompt state :runner "End the run")
+        (core/continue state :runner nil)
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
+        (core/continue state :runner nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (= :approach-server (:phase (:run @state))) "Approaching server")
+        (core/continue state :runner nil)
+        (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Corp")
+        (core/no-action state :corp nil)
+        (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Runner now")
+        (core/successful-run state :runner nil)
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run ended"))))
+  (testing "stop at unrezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 3)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Corroder"]}})
+      (dotimes [_ 2] (play-from-hand state :corp "Vanilla" "HQ"))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [v0 (get-ice state :hq 0)
+            v1 (get-ice state :hq 1)
+            cor (get-program state 0)]
+        (core/rez state :corp v1)
+        (run-on state :hq)
+        (core/toggle-auto-no-action state :corp nil)
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (is (= (refresh v1) (core/get-current-ice state)) "Approaching v1")
+        (core/continue state :runner nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
+        (core/continue state :runner nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
+        (core/rez state :corp v0 {:press-no-action true})
+        (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
+  (testing "auto-no-action on toggling setting"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Corroder"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [v0 (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (core/rez state :corp v0)
+        (run-on state :hq)
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (core/continue state :runner nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
+        (core/toggle-auto-no-action state :corp nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
+  (testing "no auto-no-action on toggling setting on unrezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Corroder"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [v0 (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state :hq)
+        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+        (core/continue state :runner nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
+        (core/toggle-auto-no-action state :corp nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, because ice is unrezzed")))))
