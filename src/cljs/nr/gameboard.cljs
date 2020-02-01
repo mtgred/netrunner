@@ -1592,13 +1592,16 @@
           #(send-command "system-msg"
                          {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
 
-     (when (= "approach-server" (:phase @run))
-       [cond-button "Jack Out"
-        (and (:no-action @run)
-             (:jack-out @run)
-             (not (:cannot-jack-out @run))
-             (not (= "encounter-ice" phase)))
-        #(send-command "jack-out")])
+     (when (or (= "approach-server" (:phase @run))
+               (= "approach-ice" (:phase @run)))
+       [cond-button
+        (if (:jack-out @run) "Jack Out" "Undo click")
+        (and (or (not= "approach-server" (:phase @run))
+                 (:no-action @run))
+             (not (:cannot-jack-out @run)))
+        (if (:jack-out @run)
+          #(send-command "jack-out")
+          #(send-msg (r/atom {:msg "/undo-click"})))])
 
      (when (= "encounter-ice" (:phase @run))
        [cond-button
