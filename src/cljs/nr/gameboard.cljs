@@ -1570,7 +1570,8 @@
         #(send-command "start-next-phase")]
 
        (and (not (:next-phase @run))
-            (not (zero? (:position @run))))
+            (not (zero? (:position @run)))
+            (not= "encounter-ice" (:phase @run)))
        [cond-button
         (str "Continue to " (phase->next-phase-title run))
         (not= "runner" (:no-action @run))
@@ -1590,11 +1591,28 @@
                (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
           #(send-command "system-msg"
                          {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
-     [cond-button "Jack Out"
-      (and (:jack-out @run)
-           (not (:cannot-jack-out @run))
-           (not (= "encounter-ice" phase)))
-      #(send-command "jack-out")]]))
+
+     (when (= "approach-server" (:phase @run))
+       [cond-button "Jack Out"
+        (and (:no-action @run)
+             (:jack-out @run)
+             (not (:cannot-jack-out @run))
+             (not (= "encounter-ice" phase)))
+        #(send-command "jack-out")])
+
+     (when (= "encounter-ice" (:phase @run))
+       [cond-button
+        "Pass ice and jack out"
+        (or (not= "runner" (:no-action @run))
+            (not (:jack-out-after-pass @run)))
+        #(send-command "continue" {:jack-out true})])
+
+     (when (= "encounter-ice" (:phase @run))
+       [cond-button
+        "Pass ice and continue"
+        (or (not= "runner" (:no-action @run))
+            (:jack-out-after-pass @run))
+        #(send-command "continue" {:jack-out false})])]))
 
 (defn run-div
   [side run]

@@ -93,6 +93,7 @@
                                       :position n
                                       :access-bonus []
                                       :jack-out false
+                                      :jack-out-after-pass false
                                       :phase :initiation
                                       :next-phase :initiation
                                       :eid eid})
@@ -220,12 +221,16 @@
               (pass-ice state side))))
 
 (defmethod continue :encounter-ice
-  [state side args]
-  (if (or (get-in @state [:run :no-action])
+  [state side {:keys [jack-out] :as args}]
+  (when (some? jack-out)
+    (swap! state assoc-in [:run :jack-out-after-pass] jack-out)) ;ToDo: Do not transmit this to the Corp (same with :no-action)
+  (if (or (and (get-in @state [:run :no-action])
+               (not= side (get-in @state [:run :no-action]))) ; Other side has pressed continue
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
-    (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action"))))
+    (do (when (not (get-in @state [:run :no-action]))
+          (system-msg state side "has no further action"))
+        (swap! state assoc-in [:run :no-action] :runner))))
 
 (defn pass-ice
   [state side]
@@ -255,15 +260,18 @@
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (reset-all-ice state side)
-              (cond
-                (:ended (:run @state))
-                (handle-end-run state side)
-                (not (get-in @state [:run :next-phase]))
-                (if (pos? (get-in @state [:run :position]))
-                  (do (set-next-phase state :approach-ice)
-                      (start-next-phase state side nil))
-                  (do (set-next-phase state :approach-server)
-                      (start-next-phase state side nil)))))))
+              (if (get-in @state [:run :jack-out-after-pass])
+                (wait-for (jack-out state :runner {:eid -1})
+                          (handle-end-run state :runner))
+                (cond
+                  (:ended (:run @state))
+                  (handle-end-run state side)
+                  (not (get-in @state [:run :next-phase]))
+                  (if (pos? (get-in @state [:run :position]))
+                    (do (set-next-phase state :approach-ice)
+                        (start-next-phase state side nil))
+                    (do (set-next-phase state :approach-server)
+                        (start-next-phase state side nil))))))))
 
 (defmethod continue :pass-ice
   [state side args]
@@ -300,9 +308,10 @@
   "The corp indicates they have no more actions for this window."
   [state side args]
   (if (get-in @state [:run :no-action])
-    (continue state :runner args)
+    (continue state :corp args)
     (do (swap! state assoc-in [:run :no-action] :corp)
-        (when (= :approach-ice (get-in @state [:run :phase]))
+        (when (or (= :approach-ice (get-in @state [:run :phase]))
+                  (= :approach-server (get-in @state [:run :phase])))
           (system-msg state side "has no further action")))))
 
 ;; Non timing stuff
