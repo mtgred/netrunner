@@ -1947,9 +1947,11 @@ nav ul
               top: 0
               bottom: -70px
               width: 16px
-              background-color: transparent-orange
+              background-color: run-arrow
               transform(translateX(-50%))
               border-radius: 0 0 4px 4px
+              -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+              filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
 
               &:before
                 content: ""
@@ -1963,7 +1965,9 @@ nav ul
                 bottom: 100%
                 left: 50%
                 transform(translateX(-50%))
-                border-bottom: 22px solid transparent-orange
+                border-bottom: 22px solid run-arrow
+                -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
 
             > div.approach
               background-color: approach
