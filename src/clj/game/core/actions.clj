@@ -355,6 +355,26 @@
                                             (:current-strength (get-card state card))))
                 (effect-completed state side eid)))))
 
+(defn play-auto-pump-and-break-impl
+  [state side sub-groups-to-break current-ice break-ability]
+  {:async true
+   :effect (req
+             (let [subs-to-break (first sub-groups-to-break)
+                   sub-groups-to-break (rest sub-groups-to-break)]
+               (doseq [sub subs-to-break]
+                 (break-subroutine! state (get-card state current-ice) sub card))
+               (let [ice (get-card state current-ice)
+                     on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                     event-args (when on-break-subs
+                                  {:card-abilities (ability-as-handler ice on-break-subs)})]
+               (wait-for
+                 (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                  (:additional-ability break-ability) (get-card state card) nil)
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                           (if (empty? sub-groups-to-break)
+                             (effect-completed state side eid)
+                             (continue-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)))))))})
+
 (defn play-auto-pump-and-break
   "Use play-auto-pump and then break all available subroutines"
   [state side args]
