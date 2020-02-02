@@ -2592,8 +2592,7 @@
              :msg "do 1 net damage"
              :effect (req (wait-for (damage state side :net 1 {:card card})
                                     (when-let* [choice (get-in card [:special :saisentan])
-                                                cards (some #(when (same-card? (second %) card) (last %))
-                                                            (turn-events state :corp :damage))
+                                                cards (last async-result)
                                                 dmg (some #(when (= (:type %) choice) %) cards)]
                                                (system-msg state :corp "uses Saisentan to deal a second net damage")
                                                (damage state side eid :net 1 {:card card}))))}]

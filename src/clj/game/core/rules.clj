@@ -281,7 +281,7 @@
                               (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                               (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
                               (trigger-event state side :damage type card n cards-trashed)
-                              (effect-completed state side eid))))
+                              (complete-with-result state side eid (seq [type card n cards-trashed])))))
                 (effect-completed state side eid)))))
 
 (defn damage
