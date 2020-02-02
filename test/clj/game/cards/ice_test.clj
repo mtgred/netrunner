@@ -1387,7 +1387,23 @@
                                  ; "Never got taxed by Gold Farmer"
                                  ; (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})
                                  ; (click-prompt state :runner "Yes"))))))
-)
+  (testing "Gold Farmer does not trigger when breaking with Grappling Hook #4975"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Grappling Hook"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (let [gf (get-ice state :hq 0)
+            gh (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -1 (:credit (get-runner))
+                                 "Get taxed 1c for breaking with Grappling Hook"
+                                 (card-ability state :runner gh 0)
+                                 (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
 (deftest hagen
   ;; Hagen

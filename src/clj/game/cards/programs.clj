@@ -1354,6 +1354,7 @@
                                 broken-subs (->> (:subroutines current-ice)
                                                  (remove #(= (:index %) (:index target))))]
                             (break-subroutines-msg current-ice broken-subs card)))
+                :async true
                 :effect (req (let [subroutines (:subroutines current-ice)
                                    target (->> subroutines
                                                (filter #(and (not (:broken %))
@@ -1362,7 +1363,12 @@
                                    broken-subs (->> subroutines
                                                     (remove #(= (:index %) (:index target))))]
                                (doseq [sub broken-subs]
-                                 (break-subroutine! state (get-card state current-ice) sub))))}]})
+                                 (break-subroutine! state (get-card state current-ice) sub))
+                               (let [ice (get-card state current-ice)
+                                     on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                     event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
+                                           (effect-completed state side eid)))))}]})
 
 (define-card "Gravedigger"
   (let [e {:req (req (some #(and (installed? %)
