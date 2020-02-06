@@ -136,7 +136,7 @@
                          "frequently changing to keep the meta exciting and engaging for "
                          "players of all levels. Most official Organised Play events will "
                          "follow the Standard format. "
-                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
             {:id "eternal"
              :title "What is Eternal format?"
              :content [:ul
@@ -144,21 +144,21 @@
                          "stringent Most Wanted List. The largest and most complex format, "
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
-                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
             {:id "core-experience"
              :title "What is the Core Experience format?"
              :content [:ul
                         [:p "The \"core\" of the game experience, and an excellent "
                          "starting point for new or returning players. A single copy of "
                          "System Core 2019 is the only legal product; there is no MWL. "
-                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
            {:id "snapshot"
              :title "What is the Snapshot format?"
              :content [:ul
                         [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
                          "the culmination of FFG Organized Play. It will see minimal "
                          "changes unless strictly necessary. "
-                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
            {:id "snapshot-plus"
              :title "What is the Snapshot Plus format?"
              :content [:ul
@@ -167,7 +167,7 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
            {:id "socr"
              :title "What is the SOCR format?"
              :content [:ul
