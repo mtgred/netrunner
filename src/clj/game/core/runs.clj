@@ -144,8 +144,12 @@
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
-              (when (:ended (:run @state))
-                (handle-end-run state side)))))
+              (if (get-in @state [:run :jack-out-after-pass])
+                (wait-for (jack-out state :runner (make-eid state))
+                          (when (:ended (:run @state))
+                            (handle-end-run state side)))
+                (when (:ended (:run @state))
+                  (handle-end-run state side))))))
 
 (defmethod continue :approach-ice
   [state side args]
@@ -261,8 +265,6 @@
               (update-all-icebreakers state side)
               (reset-all-ice state side)
               (cond
-                (get-in @state [:run :jack-out-after-pass])
-                (jack-out state :runner (make-eid state))
                 (:ended (:run @state))
                 (handle-end-run state side)
                 (not (get-in @state [:run :next-phase]))
@@ -297,8 +299,12 @@
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
-                  (when (:ended (:run @state))
-                    (handle-end-run state side)))))
+                  (if (get-in @state [:run :jack-out-after-pass])
+                    (wait-for (jack-out state :runner (make-eid state))
+                              (when (:ended (:run @state))
+                                (handle-end-run state side)))
+                    (when (:ended (:run @state))
+                      (handle-end-run state side))))))
 
 (defmethod continue :approach-server
   [state side args] nil)
