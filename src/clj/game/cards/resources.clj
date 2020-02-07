@@ -101,7 +101,8 @@
     {:abilities [{:cost [:power 1]
                   :msg "remove 1 tag and draw 1 card"
                   :async true
-                  :effect (effect (lose-tags 1) (draw eid 1 nil))}]
+                  :effect (req (wait-for (lose-tags state side 1)
+                                         (draw state side eid 1 nil)))}]
      :events [(assoc am :event :agenda-scored)
               (assoc am :event :agenda-stolen)]}))
 
@@ -791,9 +792,10 @@
 (define-card "Decoy"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :abilities [{:cost [:trash]
+   :abilities [{:async true
+                :cost [:trash]
                 :msg "avoid 1 tag"
-                :effect (effect (tag-prevent :runner 1))}]})
+                :effect (effect (tag-prevent :runner eid 1))}]})
 
 (define-card "District 99"
   (letfn [(eligible-cards [runner] (filter #(same-card? :faction (:identity runner) %)
@@ -1655,9 +1657,10 @@
    :events [{:event :agenda-stolen
              :msg "trash itself"
              :effect (effect (trash card))}]
-   :abilities [{:cost [:credit 2]
+   :abilities [{:async true
+                :cost [:credit 2]
                 :msg "avoid 1 tag"
-                :effect (effect (tag-prevent :runner 1))}]})
+                :effect (effect (tag-prevent :runner eid 1))}]})
 
 (define-card "No One Home"
   (letfn [(first-chance? [state side]
@@ -1671,10 +1674,12 @@
               {:player :corp
                :label (str "Trace 0 - if unsuccessful, " message)
                :trace {:base 0
-                       :unsuccessful {:msg message
+                       :unsuccessful {:async true
+                                      :msg message
                                       :effect (req (if (= type :net)
-                                                     (damage-prevent state :runner :net Integer/MAX_VALUE)
-                                                     (tag-prevent state :runner Integer/MAX_VALUE)))}}}))]
+                                                     (do (damage-prevent state :runner :net Integer/MAX_VALUE)
+                                                         (effect-completed state side eid))
+                                                     (tag-prevent state :runner eid Integer/MAX_VALUE)))}}}))]
     {:interactions {:prevent [{:type #{:net :tag}
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
@@ -2132,17 +2137,30 @@
   {:interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
    :abilities [{:cost [:trash]
-                :effect (req (doseq [c (concat (get-in runner [:rig :hardware])
-                                               (filter #(not (has-subtype? % "Virtual"))
-                                                       (get-in runner [:rig :resource]))
-                                               (:hand runner))]
-                               (trash state side c))
-                             (lose-credits state side :all)
-                             (lose-tags state side :all)
-                             (lose state side :run-credit :all)
-                             (damage-prevent state side :net Integer/MAX_VALUE)
+                :async true
+                :msg (msg (let [cards (concat (get-in runner [:rig :hardware])
+                                              (filter #(not (has-subtype? % "Virtual"))
+                                                      (get-in runner [:rig :resource]))
+                                              (:hand runner))]
+                            (str "to prevent all damage, trash "
+                                 (quantify (count cards) "card")
+                                 " (" (join ", " (map :title cards)) "),"
+                                 " lose " (quantify (:credit (:runner @state)) "credit")
+                                 ", and lose " (quantify (count-tags state) "tag"))))
+                :effect (req (damage-prevent state side :net Integer/MAX_VALUE)
                              (damage-prevent state side :meat Integer/MAX_VALUE)
-                             (damage-prevent state side :brain Integer/MAX_VALUE))}]})
+                             (damage-prevent state side :brain Integer/MAX_VALUE)
+                             (wait-for
+                               (trash-cards
+                                 state side
+                                 (concat (get-in runner [:rig :hardware])
+                                         (filter #(not (has-subtype? % "Virtual"))
+                                                 (get-in runner [:rig :resource]))
+                                         (:hand runner))
+                                 nil)
+                               (wait-for (lose-credits state side :all nil)
+                                         (lose state side :run-credit :all)
+                                         (lose-tags state side eid :all))))}]})
 
 (define-card "Sacrificial Construct"
   {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
@@ -2697,14 +2715,14 @@
 (define-card "Thunder Art Gallery"
   (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                                    (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-        ability {:choices
+        ability {:async true
+                 :prompt "Select a card to install with Thunder Art Gallery"
+                 :choices
                  {:req (req (and (runner? target)
                                  (in-hand? target)
                                  (not (event? target))
                                  (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
-                 :async true
-                 :prompt (msg "Select a card to install with Thunder Art Gallery")
                  :msg (msg "install " (:title target))
                  :effect (effect (runner-install (assoc eid
                                                         :source card
@@ -2713,10 +2731,12 @@
                  :cancel-effect (effect (effect-completed eid))}]
     {:events [(assoc ability
                      :event :runner-lose-tag
-                     :req (req (and (first-event-check state first-event? no-event?) (= side :runner))))
+                     :req (req (and (first-event-check state first-event? no-event?)
+                                    (= side :runner))))
               (assoc ability
                      :event :runner-prevent
-                     :req (req (and (first-event-check state no-event? first-event?) (seq (filter #(some #{:tag} %) targets)))))]}))
+                     :req (req (and (first-event-check state no-event? first-event?)
+                                    (seq (filter #(some #{:tag} %) targets)))))]}))
 
 (define-card "Trickster Taka"
   (assoc

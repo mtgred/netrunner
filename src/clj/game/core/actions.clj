@@ -9,7 +9,8 @@
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
          update-all-ice update-all-icebreakers continue play-ability
-         installable-servers get-runnable-zones)
+         play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones
+         pump get-current-ice)
 
 ;;; Neutral actions
 (defn play
@@ -156,18 +157,23 @@
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
+            card-prompts (filter #(same-card? :title % c) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
                        (system-msg state side (str verb " " label from-str
                                                    (when (seq text)
                                                      (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
-          (if (= :hand (first (:zone c)))
-            ;; Discard from hand, do not trigger trash
-            (do (move-card-to :discard {:force true})
-                (log-move "discards"))
-            (do (trash state s c {:unpreventable true})
-                (log-move "trashes")))
+          (do (if (not (zero? (count card-prompts)))
+                  ;remove all prompts associated with the trashed card
+                  (do (swap! state update-in [side :prompt] #(filter (fn [p] (not= (get-in p [:card :title]) (:title c))) %))
+                      (map #(effect-completed state side (:eid %)) card-prompts)))
+              (if (= :hand (first (:zone c)))
+                ;; Discard from hand, do not trigger trash
+                (do (move-card-to :discard {:force true})
+                    (log-move "discards"))
+                (do (trash state s c {:unpreventable true})
+                    (log-move "trashes"))))
           ("Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
@@ -352,6 +358,103 @@
 (defn play-auto-pump-and-break
   "Use play-auto-pump and then break all available subroutines"
   [state side args]
+  (if (some #(:heap-breaker-break %) (:abilities (card-def (get-card state (:card args)))))
+    (play-heap-breaker-auto-pump-and-break state side args)
+    (let [run (:run @state)
+          card (get-card state (:card args))
+          eid (make-eid state {:source card :source-type :ability})
+          run-ice (get-run-ices state)
+          ice-cnt (count run-ice)
+          ice-idx (dec (:position run 0))
+          in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+          current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
+          ;; match strength
+          can-pump (fn [ability]
+                     (when (:pump ability)
+                       ((:req ability) state side eid card nil)))
+          pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+          strength-diff (when (and current-ice
+                                   (get-strength current-ice)
+                                   (get-strength card))
+                          (max 0 (- (get-strength current-ice)
+                                    (get-strength card))))
+          times-pump (when strength-diff
+                       (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
+          total-pump-cost (when (and pump-ability
+                                     times-pump)
+                            (repeat times-pump (:cost pump-ability)))
+          ;; break all subs
+          can-break (fn [ability]
+                      (when (:break-req ability)
+                        ((:break-req ability) state side eid card nil)))
+          break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+          subs-broken-at-once (when break-ability
+                                (:break break-ability 1))
+          unbroken-subs (when (:subroutines current-ice)
+                          (count (remove :broken (:subroutines current-ice))))
+          some-already-broken (not= unbroken-subs (count (:subroutines current-ice)))
+          times-break (when (and unbroken-subs
+                                 subs-broken-at-once)
+                        (if (pos? subs-broken-at-once)
+                          (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
+                          1))
+          total-break-cost (when (and break-ability
+                                      times-break)
+                             (repeat times-break (:break-cost break-ability)))
+          total-cost (merge-costs (conj total-pump-cost total-break-cost))]
+      (when (can-pay? state side eid card (:title card) total-cost)
+        (wait-for (pay-sync state side (make-eid state eid) card total-cost)
+                  (dotimes [n times-pump]
+                    (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
+                  (doseq [sub (remove :broken (:subroutines current-ice))]
+                    (break-subroutine! state (get-card state current-ice) sub card)
+                    (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                     (:additional-ability break-ability) (get-card state card) nil))
+                  (let [ice (get-card state current-ice)
+                        cost-str async-result
+                        broken-subs (remove :broken (:subroutines current-ice))
+                        on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                        event-args (when on-break-subs
+                                     {:card-abilities (ability-as-handler ice on-break-subs)})]
+                    (wait-for
+                      (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
+                      (system-msg state side
+                                  (if (pos? times-pump)
+                                    (str (build-spend-msg cost-str "increase")
+                                         "the strength of " (:title card)
+                                         " to " (get-strength (get-card state card))
+                                         " and break all " (when (< 1 unbroken-subs) unbroken-subs)
+                                         " subroutines on " (:title current-ice))
+                                    (str (build-spend-msg cost-str "use")
+                                         (:title card)
+                                         " to break "
+                                         (if some-already-broken
+                                           "the remaining "
+                                           "all ")
+                                         unbroken-subs " subroutines on "
+                                         (:title current-ice))))
+                      (continue state side nil))))))))
+
+(defn play-heap-breaker-auto-pump-and-break-impl
+  [state side sub-groups-to-break current-ice]
+  {:async true
+   :effect (req
+             (let [subs-to-break (first sub-groups-to-break)
+                   sub-groups-to-break (rest sub-groups-to-break)]
+               (doseq [sub subs-to-break]
+                 (break-subroutine! state (get-card state current-ice) sub card))
+               (let [ice (get-card state current-ice)
+                     on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                     event-args (when on-break-subs
+                                  {:card-abilities (ability-as-handler ice on-break-subs)})]
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                           (if (empty? sub-groups-to-break)
+                             (effect-completed state side eid)
+                             (continue-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil))))))})
+
+(defn play-heap-breaker-auto-pump-and-break
+  "Play auto-pump-and-break for heap breakers"
+  [state side args]
   (let [run (:run @state)
         card (get-card state (:card args))
         eid (make-eid state {:source card :source-type :ability})
@@ -360,72 +463,67 @@
         ice-idx (dec (:position run 0))
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
+        ; copied from heap-breaker-auto-pump-and-break
+        abs (remove #(or (= (:dynamic %) :auto-pump)
+                         (= (:dynamic %) :auto-pump-and-break))
+                    (:abilities card))
         ;; match strength
         can-pump (fn [ability]
-                   (when (:pump ability)
-                     ((:req ability) state side eid card nil)))
-        pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+                   (when (:heap-breaker-pump ability)
+                     ((:req ability (req true)) state side eid card nil)))
+        breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+        pump-strength-at-once (when breaker-ability
+                                (:heap-breaker-pump breaker-ability))
+        subs-broken-at-once (when breaker-ability
+                              (:heap-breaker-break breaker-ability))
         strength-diff (when (and current-ice
                                  (get-strength current-ice)
                                  (get-strength card))
                         (max 0 (- (get-strength current-ice)
                                   (get-strength card))))
-        times-pump (when strength-diff
-                     (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
-        total-pump-cost (when (and pump-ability
-                                   times-pump)
-                          (repeat times-pump (:cost pump-ability)))
-        ;; break all subs
-        can-break (fn [ability]
-                    (when (:break-req ability)
-                      ((:break-req ability) state side eid card nil)))
-        break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
-        subs-broken-at-once (when break-ability
-                              (:break break-ability 1))
-        unbroken-subs (when (:subroutines current-ice)
-                        (count (remove :broken (:subroutines current-ice))))
-        some-already-broken (not= unbroken-subs (count (:subroutines current-ice)))
-        times-break (when (and unbroken-subs
-                               subs-broken-at-once)
-                      (if (pos? subs-broken-at-once)
-                        (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
-                        1))
-        total-break-cost (when (and break-ability
-                                    times-break)
-                           (repeat times-break (:break-cost break-ability)))
-        total-cost (merge-costs (conj total-pump-cost total-break-cost))]
+        unbroken-subs (count (remove :broken (:subroutines current-ice)))
+        no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
+                                               (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
+                                               (not (:breakable % true))) ; breakable is a bool
+                                            (:subroutines current-ice)))
+        x-number (when (and strength-diff unbroken-subs)
+                   (max strength-diff unbroken-subs))
+        x-breaker (= :x pump-strength-at-once)
+        pumps-needed (when (and strength-diff pump-strength-at-once)
+                       (if x-breaker
+                         1
+                         (int (Math/ceil (/ strength-diff pump-strength-at-once)))))
+        breaks-needed (when (and unbroken-subs subs-broken-at-once)
+                        (if x-breaker
+                          1
+                          (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))))
+        ability-uses-needed (when (and pumps-needed breaks-needed)
+                              (if x-breaker
+                                1
+                                (+ pumps-needed
+                                   breaks-needed
+                                   (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
+        total-cost (when (and breaker-ability
+                              ability-uses-needed)
+                     (if x-breaker
+                       [:credit x-number]
+                       (repeat ability-uses-needed (:cost breaker-ability))))]
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
-                (dotimes [n (or times-pump 0)]
-                  (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                (doseq [sub (remove :broken (:subroutines current-ice))]
-                  (break-subroutine! state (get-card state current-ice) sub card)
-                  (resolve-ability state side (make-eid state {:source card :source-type :ability})
-                                   (:additional-ability break-ability) (get-card state card) nil))
-                (let [ice (get-card state current-ice)
-                      cost-str async-result
-                      broken-subs (remove :broken (:subroutines current-ice))
-                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
-                      event-args (when on-break-subs
-                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
-                  (wait-for
-                    (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
-                    (system-msg state side
-                                (if (pos? times-pump)
-                                  (str (build-spend-msg cost-str "increase")
-                                       "the strength of " (:title card)
-                                       " to " (get-strength (get-card state card))
-                                       " and break all " (when (< 1 unbroken-subs) unbroken-subs)
-                                       " subroutines on " (:title current-ice))
-                                  (str (build-spend-msg cost-str "use")
-                                       (:title card)
-                                       " to break "
-                                       (if some-already-broken
-                                         "the remaining "
-                                         "all ")
-                                       unbroken-subs " subroutines on "
-                                       (:title current-ice))))
-                    (continue state side nil)))))))
+                (if x-breaker
+                  (pump state side (get-card state card) x-number)
+                  (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
+                (let [cost-str async-result
+                      sub-groups-to-break (if (and (number? subs-broken-at-once) (pos? subs-broken-at-once))
+                                        (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
+                                        [(remove :broken (:subroutines current-ice))])]
+                  (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
+                            (system-msg state side
+                                        (str (build-spend-msg cost-str "increase")
+                                             "the strength of " (:title card)
+                                             " to " (get-strength (get-card state card))
+                                             " and break all subroutines on " (:title current-ice)))
+                            (continue state side nil)))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."

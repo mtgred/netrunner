@@ -642,7 +642,8 @@
              {:async true
               :effect (effect (draw eid 2 nil))
               :msg "draw 2 cards"}
-             {:effect (effect (lose-tags 1))
+             {:async true
+              :effect (effect (lose-tags eid 1))
               :msg "remove 1 tag"}
              {:prompt "Select 1 piece of ice to expose"
               :msg "expose 1 ice and make a run"
@@ -1643,8 +1644,8 @@
 (define-card "Lawyer Up"
   {:msg "remove 2 tags and draw 3 cards"
    :async true
-   :effect (req (wait-for (draw state side 3 nil)
-                          (lose-tags state side eid 2)))})
+   :effect (req (wait-for (lose-tags state side 2)
+                          (draw state side eid 3 nil)))})
 
 (define-card "Lean and Mean"
   {:async true
@@ -1877,15 +1878,16 @@
   {:async true
    :req (req (pos? (count-tags state)))
    :msg "remove 1 tag"
-   :effect (effect (lose-tags 1)
-                   (continue-ability
-                     {:optional
-                      {:prompt "Pay 1 [Credits] to add Networking to Grip?"
-                       :yes-ability
-                       {:cost [:credit 1]
-                        :msg "add it to their Grip"
-                        :effect (effect (move card :hand))}}}
-                     card nil))})
+   :effect (req (wait-for (lose-tags state side 1)
+                          (continue-ability
+                            state side
+                            {:optional
+                             {:prompt "Pay 1 [Credits] to add Networking to Grip?"
+                              :yes-ability
+                              {:cost [:credit 1]
+                               :msg "add it to their Grip"
+                               :effect (effect (move card :hand))}}}
+                            card nil)))})
 
 (define-card "Notoriety"
   {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -1920,8 +1922,9 @@
                              :req (req true)}]}
    :abilities [{:label "Avoid 3 tags"
                 :msg "avoid up to 3 tags"
+                :async true
                 :cost [:trash]
-                :effect (effect (tag-prevent :runner 3))}
+                :effect (effect (tag-prevent :runner eid 3))}
                {:label "Prevent up to 3 damage"
                 :msg "prevent up to 3 damage"
                 :cost [:trash]

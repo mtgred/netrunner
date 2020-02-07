@@ -966,7 +966,7 @@
     (play-from-hand state :corp "Drone Screen" "New remote")
     (let [drone (get-content state :remote1 0)]
       (core/rez state :corp drone)
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (take-credits state :corp)
       (run-on state "Server 1")
       (is (zero? (-> (get-runner) :discard count)) "Heap should start empty")
@@ -1311,7 +1311,7 @@
       (core/rez state :corp keeg)
       (card-ability state :corp keeg 0)
       (is (= 1 (count (get-content state :hq))) "Keegan didn't fire, Runner has no tags")
-      (core/gain-tags state :runner 2)
+      (gain-tags state :runner 2)
       (card-ability state :corp keeg 0)
       (click-card state :corp (get-program state 0))
       (is (= 1 (count-tags state)) "1 tag removed")
