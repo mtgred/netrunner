@@ -426,34 +426,27 @@
         (wait-for (pay-sync state side (make-eid state eid) card total-cost)
                   (dotimes [n times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                  (doseq [sub (remove :broken (:subroutines current-ice))]
-                    (break-subroutine! state (get-card state current-ice) sub card)
-                    (resolve-ability state side (make-eid state {:source card :source-type :ability})
-                                     (:additional-ability break-ability) (get-card state card) nil))
-                  (let [ice (get-card state current-ice)
-                        cost-str async-result
-                        broken-subs (remove :broken (:subroutines current-ice))
-                        on-break-subs (when ice (:on-break-subs (card-def current-ice)))
-                        event-args (when on-break-subs
-                                     {:card-abilities (ability-as-handler ice on-break-subs)})]
-                    (wait-for
-                      (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
-                      (system-msg state side
-                                  (if (pos? times-pump)
-                                    (str (build-spend-msg cost-str "increase")
-                                         "the strength of " (:title card)
-                                         " to " (get-strength (get-card state card))
-                                         " and break all " (when (< 1 unbroken-subs) unbroken-subs)
-                                         " subroutines on " (:title current-ice))
-                                    (str (build-spend-msg cost-str "use")
-                                         (:title card)
-                                         " to break "
-                                         (if some-already-broken
-                                           "the remaining "
-                                           "all ")
-                                         unbroken-subs " subroutines on "
-                                         (:title current-ice))))
-                      (continue state side nil))))))))
+                  (let [cost-str async-result
+                        sub-groups-to-break (if (pos? subs-broken-at-once)
+                                              (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
+                                              [(remove :broken (:subroutines current-ice))])]
+                    (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)
+                              (system-msg state side
+                                          (if (pos? times-pump)
+                                            (str (build-spend-msg cost-str "increase")
+                                                 "the strength of " (:title card)
+                                                 " to " (get-strength (get-card state card))
+                                                 " and break all " (when (< 1 unbroken-subs) unbroken-subs)
+                                                 " subroutines on " (:title current-ice))
+                                            (str (build-spend-msg cost-str "use")
+                                                 (:title card)
+                                                 " to break "
+                                                 (if some-already-broken
+                                                   "the remaining "
+                                                   "all ")
+                                                 unbroken-subs " subroutines on "
+                                                 (:title current-ice))))
+                              (continue state side nil))))))))
 
 (defn play-heap-breaker-auto-pump-and-break-impl
   [state side sub-groups-to-break current-ice]
