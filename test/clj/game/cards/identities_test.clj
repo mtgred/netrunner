@@ -3062,14 +3062,14 @@
                :runner {:deck ["Fan Site"]}
                :options {:start-as :runner}})
     (play-from-hand state :runner "Fan Site")
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (is (= 1 (count-tags state)) "Runner has 1 tag")
     (changes-val-macro -3 (:credit (get-runner))
                        "Paid 3c to remove tag"
                        (core/remove-tag state :runner nil))
     (is (= 0 (count-tags state)) "Runner removed tag")
     (take-credits state :runner)
-    (core/gain-tags state :runner 1)
+    (gain-tags state :runner 1)
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (changes-val-macro 0 (:credit (get-runner))
                        "Paid 0c to trash resource"

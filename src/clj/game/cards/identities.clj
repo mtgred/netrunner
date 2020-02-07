@@ -327,7 +327,8 @@
              :req (req (and (has-most-faction? state :runner "Criminal")
                             (pos? (get-in runner [:tag :base]))))
              :msg "remove 1 tag"
-             :effect (effect (lose-tags 1))}]})
+             :async true
+             :effect (effect (lose-tags eid 1))}]})
 
 (define-card "Cerebral Imaging: Infinite Frontiers"
   {:effect (req (when (> (:turn @state) 1)
@@ -739,10 +740,11 @@
 
 (define-card "Jesminder Sareen: Girl Behind the Curtain"
   {:events [{:event :pre-tag
+             :async true
              :once :per-run
              :req (req (:run @state))
              :msg "avoid the first tag during this run"
-             :effect (effect (tag-prevent :runner 1))}]})
+             :effect (effect (tag-prevent :runner eid 1))}]})
 
 (define-card "Jinteki Biotech: Life Imagined"
   {:events [{:event :pre-first-turn

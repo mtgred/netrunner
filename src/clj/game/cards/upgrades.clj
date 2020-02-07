@@ -738,11 +738,12 @@
              :player :runner
              :prompt "Choose one"
              :choices ["Take 1 tag" "End the run"]
+             :async true
              :effect (req (if (= target "Take 1 tag")
-                            (do (gain-tags state :runner 1)
-                                (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
-                            (do (end-run state side eid card)
-                                (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]})
+                            (do (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag"))
+                                (gain-tags state :runner eid 1))
+                            (do (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run"))
+                                (end-run state side eid card))))}]})
 
 (define-card "La Costa Grid"
   (let [ability {:effect

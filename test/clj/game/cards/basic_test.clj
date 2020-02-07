@@ -66,7 +66,7 @@
       (play-from-hand state :runner "Fan Site")
       (let [fs (get-resource state 0)]
         (take-credits state :runner)
-        (core/gain-tags state :runner 1)
+        (gain-tags state :runner 1)
         (core/trash-resource state :corp nil)
         (click-card state :corp fs)
         (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed"))))
@@ -126,7 +126,7 @@
   (testing "Remove tag"
     (do-game
       (new-game {:options {:start-as :runner}})
-      (core/gain-tags state :runner 1)
+      (gain-tags state :runner 1)
       (is (= 1 (count-tags state)) "Runner has 1 tag")
       (core/remove-tag state :runner nil)
       (is (= 0 (count-tags state)) "Runner removed tag"))))
