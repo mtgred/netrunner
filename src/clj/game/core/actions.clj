@@ -157,18 +157,23 @@
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
+            card-prompts (filter #(same-card? :title % c) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
                        (system-msg state side (str verb " " label from-str
                                                    (when (seq text)
                                                      (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
-          (if (= :hand (first (:zone c)))
-            ;; Discard from hand, do not trigger trash
-            (do (move-card-to :discard {:force true})
-                (log-move "discards"))
-            (do (trash state s c {:unpreventable true})
-                (log-move "trashes")))
+          (do (if (not (zero? (count card-prompts)))
+                  ;remove all prompts associated with the trashed card
+                  (do (swap! state update-in [side :prompt] #(filter (fn [p] (not= (get-in p [:card :title]) (:title c))) %))
+                      (map #(effect-completed state side (:eid %)) card-prompts)))
+              (if (= :hand (first (:zone c)))
+                ;; Discard from hand, do not trigger trash
+                (do (move-card-to :discard {:force true})
+                    (log-move "discards"))
+                (do (trash state s c {:unpreventable true})
+                    (log-move "trashes"))))
           ("Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
