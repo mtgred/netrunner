@@ -40,7 +40,7 @@
    "play" core/play
    "purge" core/do-purge
    "remove-tag" core/remove-tag
-   "rez" #(core/rez %1 %2 (:card %3) nil)
+   "rez" #(core/rez %1 %2 (:card %3) (dissoc %3 :card))
    "run" core/click-run
    "runner-ability" core/play-runner-ability
    "score" #(core/score %1 %2 (get-card %1 (:card %3)))
@@ -51,6 +51,7 @@
    "successful-run" core/successful-run
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
+   "toggle-auto-no-action" core/toggle-auto-no-action
    "trash-resource" core/trash-resource
    "unbroken-subroutines" core/play-unbroken-subroutines
    "view-deck" core/view-deck})

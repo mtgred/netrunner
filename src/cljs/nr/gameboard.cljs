@@ -1272,6 +1272,11 @@
     [:button {:on-click f :key text} text]
     [:button.disabled {:key text} text]))
 
+(defn checkbox-button [on-text off-text on-cond f]
+  (if on-cond
+    [:button.on {:on-click f :key on-text} on-text]
+    [:button.off {:on-click f :key off-text} off-text]))
+
 (defn play-sfx
   "Plays a list of sounds one after another."
   [sfx soundbank]
@@ -1527,7 +1532,7 @@
        [cond-button
         (str "Rez " (:title current-ice))
         (not (rezzed? current-ice))
-        #(send-command "rez" {:card current-ice})])
+        #(send-command "rez" {:card current-ice :press-no-action true})])
 
      (= "encounter-ice" (:phase @run))
      (let [current-ice (get-current-ice)]
@@ -1553,7 +1558,14 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "corp" (:no-action @run)))
-    #(send-command "no-action")]])
+    #(send-command "no-action")]
+
+   (when (not= "approach-server" (:phase @run))
+     [checkbox-button
+      "Stop auto-passing priority"
+      "Auto-pass priority"
+      (:corp-auto-no-action @run)
+      #(send-command "toggle-auto-no-action")])])
 
 (defn runner-run-div
   [run]

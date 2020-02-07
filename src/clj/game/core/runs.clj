@@ -3,7 +3,7 @@
 (declare any-flag-fn? clear-run-register! run-cleanup gain-run-credits
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
-         update-all-agenda-points reset-all-ice)
+         update-all-agenda-points reset-all-ice no-action)
 
 (defn add-run-effect
   [state side run-effect]
@@ -40,6 +40,12 @@
 (defn get-current-ice
   [state]
    (get-card state (get-in @state [:run :current-ice])))
+
+(defn toggle-auto-no-action
+  [state side args]
+  (swap! state update-in [:run :corp-auto-no-action] not)
+  (when (rezzed? (get-current-ice state))
+    (no-action state :corp nil)))
 
 (defn set-phase
   [state phase]
@@ -92,6 +98,7 @@
                                 :run {:server s
                                       :position n
                                       :access-bonus []
+                                      :corp-auto-no-action false
                                       :jack-out false
                                       :jack-out-after-pass false
                                       :phase :initiation
@@ -169,7 +176,11 @@
               (start-next-phase state side nil))
           :else
           (pass-ice state side)))
-    (swap! state assoc-in [:run :no-action] :runner)))
+    (do (swap! state assoc-in [:run :no-action] :runner)
+        (system-msg state side "has no further action")
+        (when (and (rezzed? (get-current-ice state))
+                   (:corp-auto-no-action (:run @state)))
+          (no-action state :corp nil)))))
 
 (defn bypass-ice
   [state]
@@ -237,9 +248,11 @@
                (not= side (get-in @state [:run :no-action]))) ; Other side has pressed continue
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
-    (do (when (not (get-in @state [:run :no-action]))
-          (system-msg state side "has no further action"))
-        (swap! state assoc-in [:run :no-action] :runner))))
+    (do (swap! state assoc-in [:run :no-action] :runner)
+        (system-msg state side "has no further action")
+        (when (and (:corp-auto-no-action (:run @state))
+                   (empty? (remove :broken (:subroutines (get-current-ice state)))))
+          (no-action state :corp nil)))))
 
 (defn pass-ice
   [state side]
