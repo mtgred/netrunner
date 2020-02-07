@@ -1628,104 +1628,113 @@
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
          [:div.panel.blue-shade
+          (when-let [card (:card prompt)]
+            [:div {:style {:text-align "center"}
+                   :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                   :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+             "Card: " (render-message (:title card))])
+          (when (:card prompt)
+            [:hr])
           [:h4 (render-message (:msg prompt))]
-          (if-let [n (get-in prompt [:choices :number])]
+          (cond
+            ;; number prompt
+            (get-in prompt [:choices :number])
+            (let [n (get-in prompt [:choices :number])]
+              [:div
+               [:div.credit-select
+                [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
+                 (doall (for [i (range (inc n))]
+                          [:option {:key i :value i} i]))]]
+               [:button {:on-click #(send-command "choice"
+                                                  {:choice (-> "#credit" js/$ .val str->int)})}
+                "OK"]])
+            ;; trace prompts require their own logic
+            (= (:prompt-type prompt) "trace")
             [:div
+             (when-let [base (:base prompt)]
+               ;; This is the initial trace prompt
+               (if (nil? (:strength prompt))
+                 (if (= "corp" (:player prompt))
+                   ;; This is a trace prompt for the corp, show runner link + credits
+                   [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
+                    " + " (:runner-credits prompt) [:span {:class "anr-icon credit"}]]
+                   ;; Trace in which the runner pays first, showing base trace strength and corp credits
+                   [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
+                    " + " (:corp-credits prompt) [:span {:class "anr-icon credit"}]])
+                 ;; This is a trace prompt for the responder to the trace, show strength
+                 (if (= "corp" (:player prompt))
+                   [:div.info "vs Trace: " (:strength prompt)]
+                   [:div.info "vs Runner: " (:strength prompt) [:span {:class "anr-icon link"}]])))
              [:div.credit-select
-              [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
-               (doall (for [i (range (inc n))]
-                        [:option {:key i :value i} i]))]]
+              ;; Inform user of base trace / link and any bonuses
+              (when-let [base (:base prompt)]
+                (if (nil? (:strength prompt))
+                  (if (= "corp" (:player prompt))
+                    (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                      [:span (str strength " + ")])
+                    [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )])
+                  (if (= "corp" (:player prompt))
+                    [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
+                    (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                      [:span (str strength " + ")]))))
+              [:select#credit
+               (doall (for [i (range (inc (:choices prompt)))]
+                        [:option {:value i :key i} i]))] " credits"]
              [:button {:on-click #(send-command "choice"
                                                 {:choice (-> "#credit" js/$ .val str->int)})}
               "OK"]]
-            (cond
-              ;; trace prompts require their own logic
-              (= (:prompt-type prompt) "trace")
-              [:div
-               (when-let [base (:base prompt)]
-                 ;; This is the initial trace prompt
-                 (if (nil? (:strength prompt))
-                   (if (= "corp" (:player prompt))
-                     ;; This is a trace prompt for the corp, show runner link + credits
-                     [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
-                      " + " (:runner-credits prompt) [:span {:class "anr-icon credit"}]]
-                     ;; Trace in which the runner pays first, showing base trace strength and corp credits
-                     [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
-                      " + " (:corp-credits prompt) [:span {:class "anr-icon credit"}]])
-                   ;; This is a trace prompt for the responder to the trace, show strength
-                   (if (= "corp" (:player prompt))
-                     [:div.info "vs Trace: " (:strength prompt)]
-                     [:div.info "vs Runner: " (:strength prompt) [:span {:class "anr-icon link"}]])))
-               [:div.credit-select
-                ;; Inform user of base trace / link and any bonuses
-                (when-let [base (:base prompt)]
-                  (if (nil? (:strength prompt))
-                    (if (= "corp" (:player prompt))
-                      (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
-                        [:span (str strength " + ")])
-                      [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )])
-                    (if (= "corp" (:player prompt))
-                      [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
-                      (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
-                        [:span (str strength " + ")]))))
-                [:select#credit
-                 (doall (for [i (range (inc (:choices prompt)))]
-                          [:option {:value i :key i} i]))] " credits"]
-               [:button {:on-click #(send-command "choice"
-                                                  {:choice (-> "#credit" js/$ .val str->int)})}
-                "OK"]]
 
-              ;; choice of number of credits
-              (= (:choices prompt) "credit")
+            ;; choice of number of credits
+            (= (:choices prompt) "credit")
+            [:div
+             [:div.credit-select
+              [:select#credit
+               (doall (for [i (range (inc (:credit @me)))]
+                        [:option {:value i :key i} i]))] " credits"]
+             [:button {:on-click #(send-command "choice"
+                                                {:choice (-> "#credit" js/$ .val str->int)})}
+              "OK"]]
+
+            ;; auto-complete text box
+            (:card-title (:choices prompt))
+            [:div
+             [:div.credit-select
+              [:input#card-title {:placeholder "Enter a card title"
+                                  :onKeyUp #(when (= 13 (.-keyCode %))
+                                              (-> "#card-submit" js/$ .click)
+                                              (.stopPropagation %))}]]
+             [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
+              "OK"]]
+
+            ;; choice of specified counters on card
+            (:counter (:choices prompt))
+            (let [counter-type (keyword (:counter (:choices prompt)))
+                  num-counters (get-in prompt [:card :counter counter-type] 0)]
               [:div
                [:div.credit-select
                 [:select#credit
-                 (doall (for [i (range (inc (:credit @me)))]
-                          [:option {:value i :key i} i]))] " credits"]
+                 (doall (for [i (range (inc num-counters))]
+                          [:option {:key i :value i} i]))] " credits"]
                [:button {:on-click #(send-command "choice"
                                                   {:choice (-> "#credit" js/$ .val str->int)})}
-                "OK"]]
+                "OK"]])
 
-              ;; auto-complete text box
-              (:card-title (:choices prompt))
-              [:div
-               [:div.credit-select
-                [:input#card-title {:placeholder "Enter a card title"
-                                    :onKeyUp #(when (= 13 (.-keyCode %))
-                                                (-> "#card-submit" js/$ .click)
-                                                (.stopPropagation %))}]]
-               [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
-                "OK"]]
-
-              ;; choice of specified counters on card
-              (:counter (:choices prompt))
-              (let [counter-type (keyword (:counter (:choices prompt)))
-                    num-counters (get-in prompt [:card :counter counter-type] 0)]
-                [:div
-                 [:div.credit-select
-                  [:select#credit
-                   (doall (for [i (range (inc num-counters))]
-                            [:option {:key i :value i} i]))] " credits"]
-                 [:button {:on-click #(send-command "choice"
-                                                    {:choice (-> "#credit" js/$ .val str->int)})}
-                  "OK"]])
-
-              ;; otherwise choice of all present choices
-              :else
-              (map-indexed (fn [i {:keys [uuid value]}]
-                             (when (not= value "Hide")
-                               [:button {:key i
-                                         :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                         :on-mouse-over
-                                         #(card-highlight-mouse-over % value button-channel)
-                                         :on-mouse-out
-                                         #(card-highlight-mouse-out % value button-channel)
-                                         :id {:code value}}
-                                (render-message
-                                  (if-let [title (:title value)]
-                                    title
-                                    value))]))
-                           (:choices prompt))))]
+            ;; otherwise choice of all present choices
+            :else
+            (map-indexed (fn [i {:keys [uuid value]}]
+                           (when (not= value "Hide")
+                             [:button {:key i
+                                       :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                       :on-mouse-over
+                                       #(card-highlight-mouse-over % value button-channel)
+                                       :on-mouse-out
+                                       #(card-highlight-mouse-out % value button-channel)
+                                       :id {:code value}}
+                              (render-message
+                                (if-let [title (:title value)]
+                                  title
+                                  value))]))
+                         (:choices prompt)))]
          (if @run
            [run-div side run]
            [:div.panel.blue-shade
