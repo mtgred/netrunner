@@ -143,7 +143,8 @@
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
-              (when (:ended (:run @state))
+              (when (or (check-for-empty-server state)
+                        (:ended (:run @state)))
                 (handle-end-run state side)))))
 
 (defmethod continue :approach-ice
@@ -154,7 +155,8 @@
         (swap! state assoc-in [:run :no-action] false)
         (swap! state assoc-in [:run :jack-out] true)
         (cond
-          (:ended (:run @state))
+          (or (check-for-empty-server state)
+              (:ended (:run @state)))
           (handle-end-run state side)
           (rezzed? (get-current-ice state))
           (do (set-next-phase state :encounter-ice)
@@ -197,7 +199,8 @@
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (cond
-                (:ended (:run @state))
+                (or (check-for-empty-server state)
+                    (:ended (:run @state)))
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
                     (not= current-server (:server (:run @state))))
@@ -215,7 +218,8 @@
             (update-all-ice state side)
             (update-all-icebreakers state side)
             (cond
-              (:ended (:run @state))
+              (or (check-for-empty-server state)
+                  (:ended (:run @state)))
               (handle-end-run state side)
               (not (get-in @state [:run :next-phase]))
               (pass-ice state side))))
@@ -257,7 +261,8 @@
               (update-all-icebreakers state side)
               (reset-all-ice state side)
               (cond
-                (:ended (:run @state))
+                (or (check-for-empty-server state)
+                    (:ended (:run @state)))
                 (handle-end-run state side)
                 (not (get-in @state [:run :next-phase]))
                 (if (pos? (get-in @state [:run :position]))
@@ -283,7 +288,8 @@
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
-                  (when (:ended (:run @state))
+                  (when (or (check-for-empty-server state)
+                            (:ended (:run @state)))
                     (handle-end-run state side)))))
 
 (defmethod continue :default
