@@ -287,9 +287,8 @@
                                                              (when tags ["Remove 1 tag"]))
                                             :async true
                                             :effect (req (if (= target "Draw 1 card")
-                                                           (draw state side eid 1 nil)
-                                                           (do (lose-tags state :runner 1)
-                                                               (effect-completed state side eid))))})
+                                                           (draw state :runner eid 1 nil)
+                                                           (lose-tags state :runner eid 1)))})
                                          card nil)))}]})
 
 (define-card "Clone Chip"
@@ -509,8 +508,9 @@
                                   card
                                   [{:event :pre-tag
                                     :duration :end-of-run
+                                    :async true
                                     :msg "avoid all tags during the run"
-                                    :effect (effect (tag-prevent :runner Integer/MAX_VALUE))}])
+                                    :effect (effect (tag-prevent :runner eid Integer/MAX_VALUE))}])
                                 (make-run eid target nil card))}]})
 
 (define-card "Dyson Fractal Generator"
@@ -653,12 +653,14 @@
                                (= :runner (:active-player @state))))
                 :msg "jack out"
                 :cost [:trash]
+                :async true
                 :effect (effect (jack-out eid))}
                {:label "Remove 1 tag"
                 :req (req (and (pos? (count-tags state))
                                (= :runner (:active-player @state))))
                 :msg "remove 1 tag"
                 :cost [:trash]
+                :async true
                 :effect (effect (lose-tags eid 1))}]})
 
 (define-card "Forger"
@@ -667,12 +669,14 @@
    :in-play [:link 1]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
+                :async true
                 :cost [:trash]
-                :effect (effect (tag-prevent :runner 1))}
+                :effect (effect (tag-prevent :runner eid 1))}
                {:msg "remove 1 tag"
                 :label "Remove 1 tag"
                 :cost [:trash]
-                :effect (effect (lose-tags 1))}]})
+                :async true
+                :effect (effect (lose-tags eid 1))}]})
 
 (define-card "Friday Chip"
   (let [ability {:msg (msg "move 1 virus counter to " (:title target))
@@ -1416,10 +1420,11 @@
              :req (req (:qianju-active card))
              :effect (effect (lose :click 1))}
             {:event :pre-tag
+             :async true
              :req (req (:qianju-active card))
              :msg "avoid the first tag received"
-             :effect (effect (tag-prevent :runner 1)
-                             (update! (dissoc card :qianju-active)))}]})
+             :effect (effect (update! (dissoc card :qianju-active))
+                             (tag-prevent :runner eid 1))}]})
 
 (define-card "R&D Interface"
   {:in-play [:rd-access 1]})

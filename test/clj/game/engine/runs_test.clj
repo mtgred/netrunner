@@ -150,7 +150,24 @@
         (core/rez state :corp (get-ice state :remote1 1))
         (card-ability state :corp (get-ice state :remote1 1) 0)
         (is (nil? (:run @state)) "Pressing Done properly handles the ended run")
-        (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth")))))
+        (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth"))))
+  (testing "trashing a solo ice on an empty server #4940"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Corroder" "Knifed"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Knifed")
+      (click-prompt state :runner "Server 1")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
+      (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended"))))
 
 (deftest buffered-continue
   (testing "Buffered continue on approaching ice"

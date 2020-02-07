@@ -547,14 +547,16 @@
 (define-card "Bandwidth"
   {:subroutines [{:msg "give the Runner 1 tag"
                   :async true
-                  :effect (effect (gain-tags :corp eid 1)
-                                  (register-events
-                                    card
-                                    [{:event :successful-run
-                                      :duration :end-of-run
-                                      :unregister-once-resolved true
-                                      :effect (effect (lose-tags :corp 1))
-                                      :msg "make the Runner lose 1 tag"}]))}]})
+                  :effect (req (wait-for (gain-tags state :corp 1)
+                                         (register-events
+                                           state side card
+                                           [{:event :successful-run
+                                             :duration :end-of-run
+                                             :unregister-once-resolved true
+                                             :async true
+                                             :msg "make the Runner lose 1 tag"
+                                             :effect (effect (lose-tags :corp eid 1))}])
+                                         (effect-completed state side eid)))}]})
 
 (define-card "Bastion"
   {:subroutines [end-the-run]})

@@ -85,12 +85,84 @@
                  " break up to " strength
                  " " subtype
                  " subroutines")
+     :heap-breaker-pump strength ; strength gained
+     :heap-breaker-break strength ; number of subs broken
      :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
      :effect (effect (pump card strength)
                      (continue-ability (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil))
      :pump strength}))
+
+(def heap-breaker-auto-pump-and-break
+  "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
+  abilities with a pseudo-ability to trigger the auto-pump routine in core,
+  IF we are encountering a rezzed ice with a subtype we can break."
+  {:effect
+   (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
+                               (= (:dynamic %) :auto-pump-and-break))
+                          (:abilities card))
+              current-ice (when-not (or (get-in @state [:run :ending])
+                                        (get-in @state [:run :ended]))
+                            (get-card state current-ice))
+              ;; match strength
+              can-pump (fn [ability]
+                         (when (:heap-breaker-pump ability)
+                           ((:req ability (req true)) state side eid card nil)))
+              breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              pump-strength-at-once (when breaker-ability
+                                      (:heap-breaker-pump breaker-ability))
+              subs-broken-at-once (when breaker-ability
+                                    (:heap-breaker-break breaker-ability))
+              strength-diff (when (and current-ice
+                                       (get-strength current-ice)
+                                       (get-strength card))
+                              (max 0 (- (get-strength current-ice)
+                                        (get-strength card))))
+              unbroken-subs (count (remove :broken (:subroutines current-ice)))
+              no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
+                                                     (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
+                                                     (not (:breakable % true))) ; breakable is a bool
+                                                  (:subroutines current-ice)))
+              x-number (when (and strength-diff unbroken-subs)
+                         (max strength-diff unbroken-subs))
+              x-breaker (= :x pump-strength-at-once)
+              pumps-needed (when (and strength-diff pump-strength-at-once)
+                             (if x-breaker
+                               1
+                               (int (Math/ceil (/ strength-diff pump-strength-at-once)))))
+              breaks-needed (when (and unbroken-subs subs-broken-at-once)
+                              (if x-breaker
+                                1
+                                (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))))
+              ability-uses-needed (when (and pumps-needed breaks-needed)
+                                    (if x-breaker
+                                      1
+                                      (+ pumps-needed
+                                         breaks-needed
+                                         (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
+              total-cost (when (and breaker-ability
+                                    ability-uses-needed)
+                                 (if x-breaker
+                                   [:credit x-number]
+                                   (repeat ability-uses-needed (:cost breaker-ability))))]
+          (update! state side
+                   (assoc card :abilities
+                          (if (and (seq total-cost)
+                                   (rezzed? current-ice)
+                                   (= :encounter-ice (:phase run))
+                                   breaker-ability)
+                            (vec (concat (when (and breaker-ability
+                                                    no-unbreakable-subs
+                                                    (pos? unbroken-subs)
+                                                    (can-pay? state side eid card total-cost))
+                                           [{:dynamic :auto-pump-and-break
+                                             :label (str (when (seq total-cost)
+                                                           (str (build-cost-label total-cost) ": "))
+                                                         "Match strength and fully break "
+                                                         (:title current-ice))}])
+                                         abs))
+                            abs)))))})
 
 (defn- mu-based-strength
   "Strength depends on available memory units
@@ -503,8 +575,13 @@
                        :value -2}]})
 
 (define-card "Black Orchestra"
-  (install-from-heap "Black Orchestra" "Code Gate"
-                     [(pump-and-break [:credit 3] 2 "Code Gate")]))
+   (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
+                             :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                             :subroutines-changed]]
+                  (assoc heap-breaker-auto-pump-and-break :event event))
+         cdef (install-from-heap "Black Orchestra" "Code Gate"
+                                 [(pump-and-break [:credit 3] 2 "Code Gate")])]
+     (assoc cdef :events (apply conj events (:events cdef)))))
 
 (define-card "BlacKat"
   {:implementation "Stealth credit restriction not enforced"
@@ -1662,8 +1739,13 @@
                                            (effect-completed state side eid)))))}]})
 
 (define-card "MKUltra"
-  (install-from-heap "MKUltra" "Sentry"
-                     [(pump-and-break [:credit 3] 2 "Sentry")]))
+  (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
+                            :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                            :subroutines-changed]]
+                 (assoc heap-breaker-auto-pump-and-break :event event))
+        cdef (install-from-heap "MKUltra" "Sentry"
+                                [(pump-and-break [:credit 3] 2 "Sentry")])]
+    (assoc cdef :events (apply conj events (:events cdef)))))
 
 (define-card "Mongoose"
   (auto-icebreaker {:implementation "Usage restriction is not implemented"
@@ -1840,13 +1922,20 @@
                                          (update-all-ice state side)))}])))}}}]})
 
 (define-card "Paperclip"
-  (install-from-heap "Paperclip" "Barrier"
-                     [{:label "X [Credits]: +X strength, break X subroutines"
-                       :choices {:number (req (total-available-credits state :runner eid card))}
-                       :prompt "How many credits?"
-                       :effect (effect (continue-ability
-                                         (pump-and-break [:credit target] target "Barrier")
-                                         card nil))}]))
+  (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
+                            :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                            :subroutines-changed]]
+                 (assoc heap-breaker-auto-pump-and-break :event event))
+        cdef (install-from-heap "Paperclip" "Barrier"
+                                [{:label "X [Credits]: +X strength, break X subroutines"
+                                  :choices {:number (req (total-available-credits state :runner eid card))}
+                                  :prompt "How many credits?"
+                                  :heap-breaker-pump :x ; strength gained
+                                  :heap-breaker-break :x ; number of subs broken
+                                  :effect (effect (continue-ability
+                                                    (pump-and-break [:credit target] target "Barrier")
+                                                    card nil))}])]
+    (assoc cdef :events (apply conj events (:events cdef)))))
 
 (define-card "Parasite"
   {:hosting {:card #(and (ice? %)

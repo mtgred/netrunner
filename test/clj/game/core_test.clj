@@ -225,6 +225,10 @@
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
 
+(defn gain-tags
+  [state side n]
+  (core/gain-tags state side (eid/make-eid state) n))
+
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
   ([state server]
