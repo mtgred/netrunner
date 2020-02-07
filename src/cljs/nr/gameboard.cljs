@@ -1105,8 +1105,14 @@
            [:div (str (+ base mod) " Max hand size")
             (when me? (controls :hand-size))])]))))
 
-(defn run-arrow []
-  [:div.run-arrow [:div]])
+(defn run-arrow [run]
+  [:div.run-arrow [:div {:class (cond
+                                  (= "approach-ice" (:phase run))
+                                  "approach"
+                                  (= "encounter-ice" (:phase run))
+                                  "encounter"
+                                  :else
+                                  "")}]])
 
 (enable-console-print!)
 
@@ -1132,9 +1138,9 @@
            (let [flipped (not (:rezzed ice))]
              [card-view ice flipped])
            (when (and current-ice (= (:cid current-ice) (:cid ice)))
-             [run-arrow])]))
+             [run-arrow run])]))
       (when (and run (not current-ice))
-        [run-arrow])]
+        [run-arrow run])]
      [:div.content
       (when central-view
         central-view)
@@ -1177,7 +1183,7 @@
       (when-let [run-card (:card (:run-effect run))]
         [:div.run-card [card-img run-card]])
       (when (and run (not current-ice))
-        [run-arrow])]
+        [run-arrow run])]
      [:div.content
       (doall (for [card content]
                (let [is-first (= card (first content))
