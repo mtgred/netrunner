@@ -336,7 +336,7 @@
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
         (core/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, because ice is unrezzed")))))
-=======
+
 (deftest hide-continue-msg
   (testing "No message for Runner on approach"
     (do-game
