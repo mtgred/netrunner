@@ -183,6 +183,7 @@
                                (find-latest state card)
                                (let [server (:server run)]
                                  [{:event :run-ends
+                                   :once :per-run
                                    :duration :end-of-run
                                    :optional
                                    {:req (req (and (:successful target)
