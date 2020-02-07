@@ -2883,7 +2883,6 @@
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
         (run-continue state)
-        (card-ability state :corp sai 0)
         (click-prompt state :corp "Event")
         (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
         (card-subroutine state :corp sai 0)
@@ -2898,11 +2897,52 @@
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
         (run-continue state)
-        (card-ability state :corp sai 0)
         (click-prompt state :corp "Hardware")
         (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
         (card-subroutine state :corp sai 0)
-        (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
+        (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing"))))
+  (testing "Firing subs with play-unbroken-subroutines"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (run-continue state)
+        (click-prompt state :corp "Event")
+        (changes-val-macro -6 (count (:hand (get-runner)))
+          "6 damage in total"
+          (core/play-unbroken-subroutines state :corp {:card (refresh sai)})))))
+  (testing "Preventing damage"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand ["Sure Gamble" "Caldera" "Diesel" "Deuces Wild"]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Caldera")
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)
+            cal (get-resource state 0)]
+        (core/rez state :corp sai)
+        (run-continue state)
+        (click-prompt state :corp "Event")
+        (core/play-unbroken-subroutines state :corp {:card (refresh sai)})
+        (changes-val-macro -1 (count (:hand (get-runner)))
+          "Let through first sub damage"
+          (click-prompt state :runner "Done"))
+        (changes-val-macro 0 (count (:hand (get-runner)))
+          "Prevent special damage"
+          (card-ability state :runner cal 0))
+        (changes-val-macro 0 (count (:hand (get-runner)))
+          "Prevent second sub damage"
+          (card-ability state :runner cal 0))
+        (changes-val-macro 0 (count (:hand (get-runner)))
+          "Prevent third sub damage"
+          (card-ability state :runner cal 0))
+        (is (empty? (:prompt (get-runner))) "No more damage prevention triggers")))))
 
 (deftest salvage
   ;; Salvage
