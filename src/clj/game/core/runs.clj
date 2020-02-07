@@ -100,6 +100,7 @@
                                       :access-bonus []
                                       :corp-auto-no-action false
                                       :jack-out false
+                                      :jack-out-after-pass false
                                       :phase :initiation
                                       :next-phase :initiation
                                       :eid eid})
@@ -150,9 +151,14 @@
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
-              (when (or (check-for-empty-server state)
-                        (:ended (:run @state)))
-                (handle-end-run state side)))))
+              (if (get-in @state [:run :jack-out-after-pass])
+                (wait-for (jack-out state :runner (make-eid state))
+                          (when (or (check-for-empty-server state)
+                                    (:ended (:run @state)))
+                            (handle-end-run state side)))
+                (when (or (check-for-empty-server state)
+                          (:ended (:run @state)))
+                  (handle-end-run state side))))))
 
 (defmethod continue :approach-ice
   [state side args]
@@ -235,8 +241,11 @@
               (pass-ice state side))))
 
 (defmethod continue :encounter-ice
-  [state side args]
-  (if (or (get-in @state [:run :no-action])
+  [state side {:keys [jack-out] :as args}]
+  (when (some? jack-out)
+    (swap! state assoc-in [:run :jack-out-after-pass] jack-out)) ;ToDo: Do not transmit this to the Corp (same with :no-action)
+  (if (or (and (get-in @state [:run :no-action])
+               (not= side (get-in @state [:run :no-action]))) ; Other side has pressed continue
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
     (do (swap! state assoc-in [:run :no-action] :runner)
@@ -301,9 +310,14 @@
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
-                  (when (or (check-for-empty-server state)
-                            (:ended (:run @state)))
-                    (handle-end-run state side)))))
+                  (if (get-in @state [:run :jack-out-after-pass])
+                    (wait-for (jack-out state :runner (make-eid state))
+                              (when (or (check-for-empty-server state)
+                                        (:ended (:run @state)))
+                                (handle-end-run state side)))
+                    (when (or (check-for-empty-server state)
+                              (:ended (:run @state)))
+                      (handle-end-run state side))))))
 
 (defmethod continue :default
   [state side args]
@@ -314,12 +328,14 @@
   (.println *err* (str "Run: " (:run @state) "\n")))
 
 (defn no-action
-  "The corp indicates they have no more actions for the encounter."
+  "The corp indicates they have no more actions for this window."
   [state side args]
   (if (get-in @state [:run :no-action])
-    (continue state :runner args)
+    (continue state :corp args)
     (do (swap! state assoc-in [:run :no-action] :corp)
-        (system-msg state side "has no further action"))))
+        (when (or (= :approach-ice (get-in @state [:run :phase]))
+                  (= :approach-server (get-in @state [:run :phase])))
+          (system-msg state side "has no further action")))))
 
 ;; Non timing stuff
 (defn gain-run-credits
@@ -524,12 +540,12 @@
         ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
-                    (if (not (string/blank? cost-strs))
+                    (if (not (blank? cost-strs))
                       ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
-        prompt-str (if (not (string/blank? cost-strs))
+        prompt-str (if (not (blank? cost-strs))
                      (str " " cost-strs " to steal?")
                      "")
         prompt-str (str "You accessed " (:title card) "." prompt-str)
@@ -1314,7 +1330,7 @@
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
                                                 (resolve-jack-out state side eid))))
                                         {:priority 10}))
-                       (do (system-msg state :runner (str cost-str " to jack out"))
+                       (do (when (not (blank? cost-str)) (system-msg state :runner (str cost-str " to jack out")))
                            (resolve-jack-out state side eid)
                            (effect-completed state side (make-result eid false)))))
                    (effect-completed state side (make-result eid false))))
