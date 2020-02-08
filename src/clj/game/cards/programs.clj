@@ -2335,7 +2335,7 @@
                                                (str "shuffle their Stack")))
                                    :choices (req (conj (filter #(can-pay? state side
                                                                           (assoc eid :source card :source-type :runner-install)
-                                                                          % nil [:credit (install-cost state side % )])
+                                                                          % nil [:credit (install-cost state side %)])
                                                                (vec (sort-by :title (filter program? (:deck runner)))))
                                                        "No install"))
                                    :async true
