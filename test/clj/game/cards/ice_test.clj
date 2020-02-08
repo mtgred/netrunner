@@ -158,12 +158,13 @@
                            "3 net damage from passing Anansi"
                            (run-continue state))
         (core/rez state :corp border)
+        (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (core/no-action state :corp nil)
         (changes-val-macro 0 (count (:hand (get-runner)))
-                           "3 net damage from passing Anansi"
+                           "No further net damage"
                            (card-ability state :corp (refresh border) 0))
-        (is (nil? (get-run)))))))
+        (is (nil? (get-run)) "Run ended")))))
 
 (deftest akhet
   ;; Akhet
@@ -1264,10 +1265,145 @@
 
 (deftest gold-farmer
   ;; Gold Farmer
-  (do-game
-    (new-game {:corp {:hand ["Gold Farmer"]}})
-    )
-  )
+  (testing "Subroutine test"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (let [gf (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -3 (:credit (get-runner))
+                                 "Paid 3c for subroutine"
+                                 (card-subroutine state :corp gf 0)
+                                 (click-prompt state :runner "Pay 3 [Credits]")))))
+  (testing "Lose credit for breaking"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [gf (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -2 (:credit (get-runner))
+                                 "Paid 1c + 1c for breaking"
+                                 (card-ability state :runner cor 0)
+                                 (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
+                                 (click-prompt state :runner "Done")
+                                 (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+                                     "Correct message")))))
+  (testing "Message on auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [gf (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -4 (:credit (get-runner))
+                                 "Paid 2c + 2c for breaking"
+                                 (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+                                 (is (and (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+                                          (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs"))
+                                     "Correct messages")))))
+  ; (testing "Interaction with Paperclip"
+    ; (do-game
+      ; (new-game {:corp {:hand ["Gold Farmer"]}
+                 ; :runner {:hand ["Paperclip"]
+                          ; :credits 100}})
+      ; (play-from-hand state :corp "Gold Farmer" "HQ")
+      ; (take-credits state :corp)
+      ; (play-from-hand state :runner "Paperclip")
+      ; (let [gf (get-ice state :hq 0)
+            ; pc (get-program state 0)]
+        ; (run-on state "HQ")
+        ; (core/rez state :corp gf)
+        ; (run-continue state)
+        ; (changes-val-macro -4 (:credit (get-runner))
+                                 ; "Paid 2c + 2c for breaking"
+                                 ; (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})))))
+  (testing "Hippo interaction with Corroder"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder" "Hippo"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Hippo")
+      (let [gf (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -3 (:credit (get-runner))
+                                 "Only got taxed once by Gold Farmer"
+                                 (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+                                 (click-prompt state :runner "Yes")))))
+  (testing "Hippo interaction with Laamb"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Laamb" "Hippo"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Laamb")
+      (play-from-hand state :runner "Hippo")
+      (let [gf (get-ice state :hq 0)
+            lam (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -2 (:credit (get-runner))
+                                 "Never got taxed by Gold Farmer"
+                                 (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lam)})
+                                 (click-prompt state :runner "Yes")))))
+  ; (testing "Hippo interaction with Paperclip"
+    ; (do-game
+      ; (new-game {:corp {:hand ["Gold Farmer"]}
+                 ; :runner {:hand ["Paperclip" "Hippo"]
+                          ; :credits 100}})
+      ; (play-from-hand state :corp "Gold Farmer" "HQ")
+      ; (take-credits state :corp)
+      ; (play-from-hand state :runner "Paperclip")
+      ; (play-from-hand state :runner "Hippo")
+      ; (let [gf (get-ice state :hq 0)
+            ; pc (get-program state 0)]
+        ; (run-on state "HQ")
+        ; (core/rez state :corp gf)
+        ; (run-continue state)
+        ; (changes-val-macro -2 (:credit (get-runner))
+                                 ; "Never got taxed by Gold Farmer"
+                                 ; (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})
+                                 ; (click-prompt state :runner "Yes"))))))
+  (testing "Gold Farmer does not trigger when breaking with Grappling Hook #4975"
+    (do-game
+      (new-game {:corp {:hand ["Gold Farmer"]}
+                 :runner {:hand ["Grappling Hook"]
+                          :credits 100}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (let [gf (get-ice state :hq 0)
+            gh (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp gf)
+        (run-continue state)
+        (changes-val-macro -1 (:credit (get-runner))
+                                 "Get taxed 1c for breaking with Grappling Hook"
+                                 (card-ability state :runner gh 0)
+                                 (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
 (deftest hagen
   ;; Hagen

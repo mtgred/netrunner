@@ -176,8 +176,8 @@
               (start-next-phase state side nil))
           :else
           (pass-ice state side)))
-    (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action")
+    (do (swap! state assoc-in [:run :no-action] side)
+        (when (= :corp side) (system-msg state side "has no further action"))
         (when (and (rezzed? (get-current-ice state))
                    (:corp-auto-no-action (:run @state)))
           (no-action state :corp nil)))))
@@ -248,8 +248,8 @@
                (not= side (get-in @state [:run :no-action]))) ; Other side has pressed continue
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
-    (do (swap! state assoc-in [:run :no-action] :runner)
-        (system-msg state side "has no further action")
+    (do (swap! state assoc-in [:run :no-action] side)
+        (when (= :runner side) (system-msg state side "has no further action"))
         (when (and (:corp-auto-no-action (:run @state))
                    (empty? (remove :broken (:subroutines (get-current-ice state)))))
           (no-action state :corp nil)))))

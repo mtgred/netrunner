@@ -877,6 +877,7 @@
                          (and (same-card? (last run-ices) target)
                               (every? :broken (:subroutines target))
                               (first-event? state side :subroutines-broken pred))))
+             :async true
              :effect
              (effect
                (continue-ability
