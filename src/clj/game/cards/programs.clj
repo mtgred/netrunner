@@ -2320,7 +2320,7 @@
 
 (define-card "Self-modifying Code"
   {:abilities [{:req (req (not (install-locked? state side)))
-                :cost [:trash]
+                :cost [:trash :credit 2]
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt "Choose a program to install"
@@ -2329,10 +2329,9 @@
                                                (str "shuffle their Stack")))
                                    :choices (req (conj (filter #(can-pay? state side
                                                                           (assoc eid :source card :source-type :runner-install)
-                                                                          % nil [:credit (install-cost state side % {:cost-bonus 2})])
+                                                                          % nil [:credit (install-cost state side % )])
                                                                (vec (sort-by :title (filter program? (:deck runner)))))
                                                        "No install"))
-                                   :cost [:credit 2]
                                    :async true
                                    :effect (req (trigger-event state side :searched-stack nil)
                                                 (shuffle! state side :deck)
