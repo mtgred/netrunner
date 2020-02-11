@@ -1096,7 +1096,7 @@
 
 (define-card "Marilyn Campaign"
   (let [ability {:once :per-turn
-                 :interactive (req true)
+                 :interactive (req (>= 2 (get-counters card :credit)))
                  :req (req (:corp-phase-12 @state))
                  :label (str "Gain 2 [Credits] (start of turn)")
                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
