@@ -839,6 +839,57 @@
       (card-subroutine state :corp dm 0)
       (is (= 1 (count (:discard (get-runner)))) "Runner suffered 1 net damage"))))
 
+(deftest data-ward
+  ;; Data Ward
+  (testing "3 credits on encounter keeps open prompt. Issue #4965"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Data Ward"]}})
+      (play-from-hand state :corp "Data Ward" "HQ")
+      (take-credits state :corp)
+      (let [dw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp dw)
+        (run-continue state)
+        (changes-val-macro -3 (:credit (get-runner))
+              "Runner pays 3 credits on Data Ward encounter"
+              (click-prompt state :runner "Pay 3 [Credits]"))
+        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt"))))
+  (testing "Runner takes 1 tag on encounter"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Data Ward"]}})
+      (play-from-hand state :corp "Data Ward" "HQ")
+      (take-credits state :corp)
+      (let [dw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp dw)
+        (run-continue state)
+        (changes-val-macro 1 (count-tags state)
+              "Runner takes 1 tag on Data Ward encounter"
+              (click-prompt state :runner "Take 1 tag"))
+        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt"))))
+  (testing "Data Ward ends run only if runner is tagged"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Data Ward"]}
+                 :runner {:credis 30}})
+      (play-from-hand state :corp "Data Ward" "HQ")
+      (take-credits state :corp)
+      (let [dw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp dw)
+        (run-continue state)
+        (click-prompt state :runner "Take 1 tag")
+        (fire-subs state (refresh dw))
+        (is (not (:run @state)) "Run ended")
+        (core/remove-tag state :runner nil)
+        (run-on state "HQ")
+        (run-continue state)
+        (click-prompt state :runner "Pay 3 [Credits]")
+        (fire-subs state (refresh dw))
+        (is (:run @state) "Run still ongoing")))))
+
 (deftest drafter
   ;; Drafter
   (testing "Subroutine 1: Add 1 card from Archives to HQ"
