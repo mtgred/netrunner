@@ -978,7 +978,7 @@
                   :async true
                   :effect (req (if (= target "Pay 3 [Credits]")
                                  (do (system-msg state :runner "pays 3 [Credits]")
-                                     (pay-sync state :runner card eid :credit 3)
+                                     (pay-sync state :runner eid card :credit 3)
                                      (effect-completed state side eid))
                                  (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
                                      (gain-tags state :runner eid 1))))}
