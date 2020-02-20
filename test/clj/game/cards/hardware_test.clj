@@ -455,7 +455,29 @@
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in")))))
+        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Surveyor" "Ice Wall"]}
+                 :runner {:deck ["Boomerang"]}})
+      (play-from-hand state :corp "Surveyor" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [surveyor (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner surveyor)
+        (run-on state :hq)
+        (core/rez state :corp surveyor)
+        (run-continue state)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "Trace X - End the run")
+        (click-prompt state :runner "Trace X - Give the Runner 2 tags")
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (is (empty? (:prompt (get-runner))) "No second prompt for shuffling Boomerang in"))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
