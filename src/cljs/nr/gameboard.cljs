@@ -160,7 +160,7 @@
           (cons "advance" %) %))
       (#(if (and (= type "Agenda") (>= advance-counter current-cost))
           (cons "score" %) %))
-      (#(if (= type "ICE")
+      (#(if (#{"ICE" "Program"} type)
           (cons "trash" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
@@ -701,9 +701,7 @@
          (map-indexed
            (fn [i action]
              [:div {:key i
-                    :on-click #(do (if (= action "trash")
-                                       (send-command "move" {:card card :server "Archives"})
-                                       (send-command action {:card card})))}
+                    :on-click #(do (send-command action {:card card}))}
               (capitalize action)])
            actions))
        (when (seq abilities)
