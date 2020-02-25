@@ -160,6 +160,8 @@
           (cons "advance" %) %))
       (#(if (and (= type "Agenda") (>= advance-counter current-cost))
           (cons "score" %) %))
+      (#(if (= type "ICE")
+          (cons "trash" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
@@ -176,7 +178,7 @@
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
                      (count runner-abilities)))
-            (some #{"rez" "derez" "advance"} actions)
+            (some #{"rez" "derez" "advance" "trash"} actions)
             (and (= type "ICE")
                  (not (:run @game-state)))
             (and (corp? card)
@@ -690,7 +692,7 @@
                (or (pos? (+ (count actions)
                             (count abilities)
                             (count subroutines)))
-                   (some #{"derez" "rez" "advance"} actions)
+                   (some #{"derez" "rez" "advance" "trash"} actions)
                    (= type "ICE")))
       [:div.panel.blue-shade.abilities {:style {:display "inline"}}
        (when (seq actions)
@@ -699,7 +701,9 @@
          (map-indexed
            (fn [i action]
              [:div {:key i
-                    :on-click #(do (send-command action {:card card}))}
+                    :on-click #(do (if (= action "trash")
+                                       (send-command "move" {:card card :server "Archives"})
+                                       (send-command action {:card card})))}
               (capitalize action)])
            actions))
        (when (seq abilities)
