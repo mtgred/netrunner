@@ -173,7 +173,7 @@
           (handle-end-run state side)
           (rezzed? (get-current-ice state))
           (do (set-next-phase state :encounter-ice)
-              (start-next-phase state side nil))
+              (start-next-phase state :runner nil))
           :else
           (pass-ice state side)))
     (do (swap! state assoc-in [:run :no-action] side)
@@ -662,13 +662,13 @@
 
 (defn access-cost
   "Gets a vector of costs for accessing the given card."
-  [state side card]
+  [state side]
   (merge-costs (get-in @state [:bonus :access-cost])))
 
 (defn- access-pay
   "Force the runner to pay any costs to access this card, if any, before proceeding with access."
   [state side eid card title]
-  (let [cost (access-cost state side card)
+  (let [cost (access-cost state side)
         cost-str (build-cost-string cost)
         can-pay (when (not-empty cost)
                   (can-pay? state side (make-eid state eid) nil nil cost))
@@ -686,20 +686,21 @@
       (not-empty cost)
       (continue-ability
         state :runner
-        {:async true
-         :prompt prompt-str
-         :choices choices
-         :effect (req (cond
-                        (= "OK" target)
-                        (access-end state side eid card)
-                        (= "No action" target)
-                        (access-end state side eid card)
-                        :else
-                        (wait-for (pay-sync state side card cost)
-                                  (if async-result
-                                    (access-trigger-events state side eid card title async-result)
-                                    (access-end state side eid card)))))}
-        card nil)
+        (let [accessed-card card]
+          {:async true
+           :prompt prompt-str
+           :choices choices
+           :effect (req (cond
+                          (= "OK" target)
+                          (access-end state side eid accessed-card)
+                          (= "No action" target)
+                          (access-end state side eid accessed-card)
+                          :else
+                          (wait-for (pay-sync state side accessed-card cost)
+                                    (if async-result
+                                      (access-trigger-events state side eid accessed-card title async-result)
+                                      (access-end state side eid accessed-card)))))})
+        nil nil)
       ;; There are no access costs
       :else
       (access-trigger-events state side eid card title))))
