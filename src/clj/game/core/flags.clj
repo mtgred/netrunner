@@ -301,9 +301,10 @@
   (and
     (some? card)
     ;; The agenda has enough agenda counters to legally score
-    (<= (or (:current-cost card)
-            (:advancementcost card))
-        (get-counters card :advancement))
+    (let [cost (or (:current-cost card)
+                   (:advancementcost card))]
+      (and cost
+           (<= cost (get-counters card :advancement))))
     ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
     (check-flag-types? state side card :can-score [:current-turn :persistent])
     ;; An effect hasn't set a card as unable to be scored (Clot)

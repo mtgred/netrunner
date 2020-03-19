@@ -191,7 +191,8 @@
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
-  (swap! state assoc-in [side :register] nil)
+  (doseq [s [:runner :corp]]
+    (swap! state assoc-in [s :register] nil))
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)

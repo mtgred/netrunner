@@ -2252,7 +2252,7 @@
                card nil))})
 
 (define-card "Trojan Horse"
-  {:req (req (:accessed-cards runner-reg))
+  {:req (req (:accessed-cards runner-reg-last))
    :trace {:base 4
            :label "Trace 4 - Trash a program"
            :successful {:async true

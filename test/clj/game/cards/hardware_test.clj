@@ -2075,7 +2075,25 @@
       (click-prompt state :runner "No action")
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
-      (is (= 2 (count (:discard (get-corp)))) "Ice Wall and Obokata"))))
+      (is (= 2 (count (:discard (get-corp)))) "Ice Wall and Obokata")))
+  (testing "Gang Sign interaction. #5021"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hostile Takeover" 5)]
+                        :hand ["Hostile Takeover" (qty "Hedge Fund" 2)]}
+                 :runner {:hand ["Maw" "Gang Sign"]
+                          :credits 10}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Maw")
+      (play-from-hand state :runner "Gang Sign")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (= 1 (count (:discard (get-corp)))) "Maw forces a discard")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (is (= 2 (count (:discard (get-corp)))) "Maw forces another discard"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
