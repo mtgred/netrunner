@@ -509,7 +509,8 @@
    :abilities [{:cost [:click 3]
                 :msg "place 1 agenda counter on Domestic Sleepers"
                 :effect (effect (add-counter card :agenda 1)
-                                (update-all-agenda-points))}]})
+                                (update-all-agenda-points)
+                                (check-winner))}]})
 
 (define-card "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost

@@ -719,8 +719,6 @@
       (core/score state :corp {:card (refresh ht)})
       (is (refresh ht) "Hostile Takeover isn't scored because a terminal Operation was played")
       (take-credits state :corp)
-      (core/score state :corp {:card (refresh ht)})
-      (is (refresh ht) "Hostile Takeover isn't scored because it's the Runner's turn")
       (take-credits state :runner)
       (core/score state :corp {:card (refresh ht)})
       (is (nil? (refresh ht)) "Hostile Takeover is scored because it's the Corp's turn again")
