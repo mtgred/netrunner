@@ -1053,8 +1053,9 @@
                               (str "add " (:title c) " to their score area and gain "
                                    (quantify (get-agenda-points state :runner c) "agenda point"))))
                   :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)]
-                                 (as-agenda state :runner eid c points {:register-events true})))}]}))
+                                     points (get-agenda-points state :runner c)
+                                     args {:register-events (card-flag? c :has-events-when-stolen true)}]
+                                 (as-agenda state :runner eid c points args)))}]}))
 
 (define-card "Find the Truth"
   {:events [{:event :post-runner-draw

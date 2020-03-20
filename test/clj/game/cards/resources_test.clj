@@ -1592,7 +1592,20 @@
         (run-empty-server state "HQ")
         (click-prompt state :runner "Yes")
         (is (empty? (:prompt (get-corp))))
-        (is (empty? (:prompt (get-corp))))))))
+        (is (empty? (:prompt (get-corp)))))))
+  (testing "Shouldn't register events unless marked. #5019"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Better Citizen Program"]}
+                 :runner {:hand ["Film Critic" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Film Critic")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (card-ability state :runner (get-resource state 0) 0)
+      (play-from-hand state :runner "Dirty Laundry")
+      (is (zero? (count-tags state)) "Runner doesn't gain a tag from BCP"))))
 
 (deftest find-the-truth
   ;; Find the Truth
