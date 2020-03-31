@@ -63,7 +63,7 @@
              :trace {:base 4
                      :successful
                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                      :effect (effect (set-cards-to-access card)
+                      :effect (effect (set-only-card-to-access card)
                                       (effect-completed eid))}}}]})
 
 (define-card "Awakening Center"
@@ -496,7 +496,7 @@
 
 (define-card "Forced Connection"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not= (first (:zone card)) :discard))
+   :access {:req (req (not (in-discard? card)))
             :interactive (req true)
             :trace {:base 3
                     :successful {:msg "give the Runner 2 tags"
@@ -643,7 +643,7 @@
 
 (define-card "Intake"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not= (first (:zone card)) :discard))
+   :access {:req (req (not (in-discard? card)))
             :interactive (req true)
             :trace {:base 4
                     :label "add an installed program or virtual resource to the Grip"
@@ -1309,7 +1309,7 @@
 
 (define-card "Tempus"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not= (first (:zone card)) :discard))
+   :access {:req (req (not (in-discard? card)))
             :interactive (req true)
             :effect (req (when (= (first (:zone card)) :deck)
                            (system-msg state :runner (str "accesses Tempus"))))
@@ -1471,7 +1471,7 @@
                                       (do (clear-wait-prompt state :corp)
                                           (effect-completed state side eid)))
                                     ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
-                                    (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
+                                    (when (zero? (count (get-in @state [:run :cards-to-access])))
                                       (handle-end-run state side))))})
           (ability [x]
             {:trace {:base 4

@@ -593,6 +593,7 @@
                          card nil))}]})
 
 (define-card "Counter Surveillance"
+  ;; TODO: Fix to use replace-access
   {:implementation "Does not prevent access of cards installed in the root of a server"
    :abilities [{:cost [:click 1 :trash]
                 :makes-run true

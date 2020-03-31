@@ -204,7 +204,7 @@
   [cost ice-type abilities]
   {:abilities abilities
    :events [{:event :encounter-ice
-             :req (req (and (not-used-once? state {:once :per-turn} card)
+             :req (req (println eid) (and (not-used-once? state {:once :per-turn} card)
                             (not (has-subtype? target ice-type))
                             (can-pay? state :runner eid card nil [:credit 2])))
              :async true

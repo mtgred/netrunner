@@ -1586,7 +1586,7 @@
                                     (when revealed
                                       (reveal state side revealed))
                                     (wait-for
-                                      (resolve-ability state side (when (and revealed (empty? (get-cards-to-access state)))
+                                      (resolve-ability state side (when (and revealed (empty? (get-in @state [:run :cards-to-access])))
                                                                     (access-revealed revealed)) card nil)
                                       (shuffle! state :corp :deck)
                                       (system-msg state :runner "shuffles R&D")
@@ -2347,10 +2347,10 @@
                                               (in-discard? %))}
                         :effect (req (doseq [c targets]
                                        (move state side c :hand))
-                                     (do-access state side eid (:server run) {:hq-root-only true}))}
+                                     (effect-completed state side eid))}
                        {:async true
                         :msg (msg "take no cards from their Heap to their Grip")
-                        :effect (req (do-access state side eid (:server run) {:hq-root-only true}))}))
+                        :effect (req (effect-completed state side eid))}))
                    card nil))}}
              card nil))})
 

@@ -97,36 +97,51 @@
   ;; Ash 2X3ZB9CY
   (testing "Ash 2X3ZB9CY"
     (do-game
-     (new-game {:corp {:deck ["Ash 2X3ZB9CY" (qty "Ice Wall" 10)]}})
-     (starting-hand state :corp ["Ash 2X3ZB9CY" "Ice Wall"])
-     (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
-     (take-credits state :corp)
-     (let [ash (get-content state :hq 0)]
-       (core/rez state :corp ash)
-       (run-empty-server state "HQ")
-       (click-prompt state :corp "0")
-       (click-prompt state :runner "0")
-       (is (= "Ash 2X3ZB9CY" (-> (prompt-map :runner) :card :title)) "Should access Ash")
-       (click-prompt state :runner "Pay 3 [Credits] to trash")
-       (is (not (:run @state)) "Accessing Ash then ends the run"))))
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Ash 2X3ZB9CY" "Ice Wall"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+      (take-credits state :corp)
+      (let [ash (get-content state :hq 0)]
+        (core/rez state :corp ash)
+        (run-empty-server state "HQ")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (= "Ash 2X3ZB9CY" (-> (prompt-map :runner) :card :title)) "Should access Ash")
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (not (:run @state)) "Accessing Ash then ends the run"))))
   (testing "Ash+Dirty Laundry interaction"
     (do-game
-     (new-game {:corp {:deck ["Ash 2X3ZB9CY"]}
-                :runner {:deck ["Dirty Laundry"]}})
-     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
-     (core/rez state :corp (get-content state :remote1 0))
-     (take-credits state :corp)
-     (play-from-hand state :runner "Dirty Laundry")
-     (click-prompt state :runner "Server 1")
-     (is (:credit (get-runner) 3) "Runner has 1 credit")
-     (run-successful state)
-     (click-prompt state :corp "0")
-     (click-prompt state :runner "0")
-     (is (:credit (get-runner) 3) "Runner still has 3 credits")
-     (is (:run @state) "Run is not over")
-     (click-prompt state :runner "Pay 3 [Credits] to trash")
-     (is (:credit (get-runner) 5) "Runner got their laundry money")
-     (is (not (:run @state)) "Run not over"))))
+      (new-game {:corp {:deck ["Ash 2X3ZB9CY"]}
+                 :runner {:deck ["Dirty Laundry"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dirty Laundry")
+      (click-prompt state :runner "Server 1")
+      (is (:credit (get-runner) 3) "Runner has 1 credit")
+      (run-successful state)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (:credit (get-runner) 3) "Runner still has 3 credits")
+      (is (:run @state) "Run is not over")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (is (:credit (get-runner) 5) "Runner got their laundry money")
+      (is (not (:run @state)) "Run not over")))
+  (testing "installed in archives"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ash 2X3ZB9CY"]
+                        :discard ["Hostile Takeover"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "Archives")
+      (take-credits state :corp)
+      (let [ash (get-content state :archives 0)]
+        (core/rez state :corp ash)
+        (run-empty-server state "Archives")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (println (map :text (:log @state)))
+        (is (empty? (:prompt (get-runner))) "Runner gets no further access prompts")))))
 
 (deftest awakening-center
   ;; Awakening Center
