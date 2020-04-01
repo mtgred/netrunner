@@ -9,48 +9,137 @@
   (testing "Nothing in R&D, no upgrades"
     (do-game
       (new-game {:corp {:deck ["Hedge Fund"]
-                        :hand [(qty "Hedge Fund" 5)]}})
+                        :hand [(qty "Hedge Fund" 4)]}})
       (core/click-draw state :corp nil)
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (empty? (:prompt (get-corp))))))
   (testing "Something in R&D, no upgrades"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Hedge Fund"]}})
       (take-credits state :corp)
       (run-empty-server state "R&D")
+      (is (= ["Card from deck"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Card from deck")
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (empty? (:prompt (get-corp))))))
   (testing "Nothing in R&D, an unrezzed upgrade"
     (do-game
-      (new-game {:corp {:deck ["Hedge Fund"]
-                        :hand [(qty "Hedge Fund" 4) "Bryan Stinson"]}})
-      (core/click-draw state :corp nil)
+      (new-game {:corp {:deck []
+                        :hand [(qty "Hedge Fund" 5) "Bryan Stinson"]}})
       (play-from-hand state :corp "Bryan Stinson" "R&D")
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (empty? (:prompt (get-corp))))))
   (testing "Something in R&D, an upgrade"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Hedge Fund" "Bryan Stinson"]}})
+                        :hand ["Bryan Stinson"]}})
       (play-from-hand state :corp "Bryan Stinson" "R&D")
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (= ["Card from deck" "Unrezzed upgrade"] (prompt-buttons :runner)))
       (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action")
+      (is (= ["Unrezzed upgrade"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Unrezzed upgrade")
+      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (empty? (:prompt (get-corp))))))
+  )
+
+(deftest hq-access
+  (testing "Nothing in HQ, no upgrades"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand []}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+  (testing "Something in HQ, no upgrades"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (= ["No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+  (testing "Nothing in HQ, an unrezzed upgrade"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Bryan Stinson"]}})
+      (play-from-hand state :corp "Bryan Stinson" "HQ")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+  (testing "Nothing in HQ, multiple unrezzed upgrades"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Bryan Stinson"  "Expo Grid"]}})
+      (play-from-hand state :corp "Bryan Stinson" "HQ")
+      (play-from-hand state :corp "Expo Grid" "HQ")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (= ["Unrezzed upgrade"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Unrezzed upgrade")
+      (click-card state :runner (get-content state :hq 0))
+      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade")
+      (is (= ["Pay 3 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+  (testing "Something in HQ, an upgrade"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund" "Bryan Stinson"]}})
+      (play-from-hand state :corp "Bryan Stinson" "HQ")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (= ["Card from HQ" "Unrezzed upgrade"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Card from HQ")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade")
+      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+  (testing "when access is limited to a single card, access only it"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
+      (play-from-hand state :corp "Bryan Stinson" "HQ")
+      (let [bryan (get-content state :hq 0)]
+        (core/rez state :corp bryan)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (core/set-only-card-to-access state :corp bryan))
+      (run-continue state)
+      (run-successful state)
+      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))))
+      (is (nil? (get-run)))))
   )
 
 (deftest archives-access

@@ -16,6 +16,7 @@
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
+            [clojure.set :as clj-set]
             [jinteki.utils :refer :all]
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]

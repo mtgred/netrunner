@@ -11,6 +11,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
+            [clojure.set :as clj-set]
             [jinteki.utils :refer :all]))
 
 (defn ice-boost-agenda [subtype]
@@ -221,7 +222,7 @@
                                                            " cards to HQ, discard " (count to-trash)
                                                            ", and arrange the top cards of R&D")))
                             (continue-ability state :corp (hq-step
-                                                            (clojure.set/difference (set remaining) (set [target]))
+                                                            (clj-set/difference (set remaining) (set [target]))
                                                             to-trash
                                                             (conj to-hq target)) card nil)))})
           (trash-step [remaining to-trash]
@@ -229,9 +230,9 @@
              :prompt "Select a card to discard"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
-                            (continue-ability state :corp (hq-step remaining to-trash `()) card nil)
+                            (continue-ability state :corp (hq-step remaining to-trash '()) card nil)
                             (continue-ability state :corp (trash-step
-                                                            (clojure.set/difference (set remaining) (set [target]))
+                                                            (clj-set/difference (set remaining) (set [target]))
                                                             (conj to-trash target)) card nil)))})]
     (let [arrange-rd (effect (continue-ability
                                {:optional
@@ -242,7 +243,7 @@
                                                               (when (:run @state)
                                                                 (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                                                               (show-wait-prompt state :runner "Corp to use Bacterial Programming")
-                                                              (continue-ability state :corp (trash-step c `()) card nil)))}}}
+                                                              (continue-ability state :corp (trash-step c '()) card nil)))}}}
                                card nil))]
       {:effect arrange-rd
        :async true
