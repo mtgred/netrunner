@@ -4114,11 +4114,14 @@
     (take-credits state :corp)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
-    (click-prompt state :runner "No action")
-    (run-empty-server state "HQ")
-    (play-from-hand state :runner "Quest Completed")
-    (click-card state :runner "Hostile Takeover")
-    (click-prompt state :runner "Steal")))
+    (println (prompt-fmt :corp))
+    (println (prompt-fmt :runner))
+    ; (click-prompt state :runner "No action")
+    ; (run-empty-server state "HQ")
+    ; (play-from-hand state :runner "Quest Completed")
+    ; (click-card state :runner "Hostile Takeover")
+    ; (click-prompt state :runner "Steal")
+    ))
 
 ;; rebirth
 (let [akiko "Akiko Nisei: Head Case"

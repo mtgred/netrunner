@@ -114,7 +114,6 @@
      :memory (map->Memory {:base 4 :mod 0 :used 0})
      :hand-size (map->HandSize {:base 5 :mod 0})
      :agenda-point 0 :agenda-point-req 7
-     :hq-access 1 :rd-access 1
      :rd-access-fn seq
      :brain-damage 0
      :keep false

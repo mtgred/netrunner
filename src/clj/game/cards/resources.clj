@@ -2838,7 +2838,6 @@
               {:prompt "Name an agenda"
                :choices {:card-title (req (and (corp? target)
                                                (agenda? target)))}
-               :msg (msg "to name " (:title target))
                :effect (effect (system-msg (str "trashes " (:title card)
                                                 " to use " (:title card)
                                                 " to name " (:title target)))

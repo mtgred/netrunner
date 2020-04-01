@@ -36,6 +36,7 @@
 (load "core/installing"); installing and interacting with installed cards and servers
 (load "core/hosting")   ; hosting routines
 (load "core/runs")      ; the run sequence
+(load "core/access")    ; accessing rules
 (load "core/ice")       ; ice and icebreaker interactions
 (load "core/flags")     ; various miscellaneous manipulations of specific effects
 (load "core/io")        ; routines for parsing input or printing to the log

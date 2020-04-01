@@ -58,6 +58,39 @@
       (is (nil? (get-run)))
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
       (is (empty? (:prompt (get-corp))))))
+  (testing "Accessing multiple cards from R&D"
+    (do-game
+      (new-game {:corp {:deck []
+                        :hand [(qty "Hedge Fund" 2) (qty "Hostile Takeover" 2)]}})
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (core/access-bonus state :runner :rd 2)
+      (run-successful state)
+      ;; Hedge Fund #1
+      (is (= ["Card from deck"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Card from deck")
+      (is (= ["No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      ;; Hostile Takeover #1
+      (is (= ["Card from deck"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Card from deck")
+      (println (prompt-fmt :runner))
+      (is (= ["Steal"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Steal")
+      ;; Hedge Fund #2
+      (is (= ["Card from deck"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Card from deck")
+      (is (= ["No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action")
+      ;; No more accesses
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (empty? (:prompt (get-corp))))))
   )
 
 (deftest hq-access
