@@ -1471,7 +1471,7 @@
                                       (do (clear-wait-prompt state :corp)
                                           (effect-completed state side eid)))
                                     ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
-                                    (when (zero? (count (get-in @state [:run :cards-to-access])))
+                                    (when (not (get-only-card-to-access state))
                                       (handle-end-run state side))))})
           (ability [x]
             {:trace {:base 4

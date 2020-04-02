@@ -376,6 +376,11 @@
               (successful-run-effect-impl state side eid (next run-effects)))
     (effect-completed state side eid)))
 
+(defn prevent-access
+  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
+  [state _]
+  (swap! state assoc-in [:run :prevent-access] true))
+
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
   [state side]

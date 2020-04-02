@@ -372,44 +372,6 @@
    (wait-for (trigger-event-sync state side :pre-access-card card)
              (access-pay state side eid card title args))))
 
-(defn prevent-access
-  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
-  [state _]
-  (swap! state assoc-in [:run :prevent-access] true))
-
-(defn max-access
-  "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
-  [state side n]
-  (swap! state assoc-in [:run :max-access] n))
-
-(defn access-bonus
-  "Increase the number of cards to be accessed in server during this run by n.
-  For temporary/per-run effects like Legwork, Maker's Eye.
-  Not for permanent increases like RDI."
-  [state side server bonus]
-  (swap! state update-in [:run :access-bonus] conj [server bonus]))
-
-(defn access-bonus-count
-  [run s]
-  (reduce
-    (fn [acc [server bonus]]
-      (if (= s server)
-        (+ acc bonus)
-        acc))
-    0
-    (:access-bonus run)))
-
-(defn access-count
-  [state side kw]
-  (let [run (:run @state)
-        s (case kw
-           :rd-access :rd
-           :hq-access :hq
-           kw)
-        accesses (access-bonus-count run s)]
-    (if-let [max-access (:max-access run)]
-      (min max-access accesses)
-      accesses)))
 
 
 (defn set-only-card-to-access
@@ -427,14 +389,14 @@
       :only
       (get-server-type (first (:server args))))))
 
-(defmethod must-continue? :only
-  [state already-accessed access-amount {:keys [no-root] :as args}]
-  (and (pos? (:total access-amount))
-       (pos? (->> (when-let [only-card (get-only-card-to-access state)]
-                    (if-not (and no-root (installed? only-card))
-                      [only-card]))
-                  (remove already-accessed)
-                  count))))
+; (defmethod must-continue? :only
+;   [state already-accessed access-amount {:keys [no-root] :as args}]
+;   (and (pos? (:total access-amount))
+;        (pos? (->> (when-let [only-card (get-only-card-to-access state)]
+;                     (if-not (and no-root (installed? only-card))
+;                       [only-card]))
+;                   (remove already-accessed)
+;                   count))))
 
 (defmethod must-continue? :remote
   [state already-accessed access-amount args]
@@ -540,73 +502,92 @@
         choices (concat card-from-button
                         upgrade-buttons
                         unrezzed-cards-button)
+
+        card-from-deck-fn
+        (req
+          (wait-for (access-card state side card-to-access (:title card-to-access))
+                    (let [shuffled-during-run (get-in @state [:run :shuffled-during-access :rd])
+                          ;; if R&D was shuffled because of the access,
+                          ;; the runner "starts over" from the top
+                          idx (if (get-card state card-to-access)
+                                (inc idx)
+                                idx)
+                          args (if shuffled-during-run
+                                 (assoc args :idx 0)
+                                 (assoc args :idx idx))]
+                      (if shuffled-during-run
+                        (swap! state update-in [:run :shuffled-during-access] dissoc :rd))
+                      (continue-ability
+                        state side
+                        (access-helper-rd
+                          state {:base (dec base) :total (dec total)}
+                          already-accessed
+                          args)
+                        nil nil))))
+
+        unrezzed-cards-fn
+        (req
+          (let [unrezzed (filter (complement rezzed?) root)]
+            (if (= 1 (count unrezzed))
+              ;; only one unrezzed upgrade; access it and continue
+              (wait-for (access-card state side (first unrezzed))
+                        (continue-ability
+                          state side
+                          (access-helper-rd
+                            state {:base base :total (dec total)}
+                            (conj already-accessed (first unrezzed)) args)
+                          nil nil))
+              ;; more than one unrezzed upgrade. allow user to select with mouse.
+              (continue-ability
+                state side
+                {:async true
+                 :prompt "Choose an upgrade in root of R&D to access."
+                 :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
+                 :effect (req (wait-for (access-card state side target)
+                                        (continue-ability
+                                          state side
+                                          (access-helper-rd
+                                            state {:base base :total (dec total)}
+                                            (conj already-accessed target) args)
+                                          nil nil)))}
+                nil nil))))
+
         ]
-    (when (and (must-continue? state already-accessed access-amount args)
-               choices)
-      {:async true
-       :prompt "Select a card to access."
-       :choices choices
-       :effect (req (cond
+    (when (and choices (must-continue? state already-accessed access-amount args))
+      (cond
 
-                      ;; accessing a card in deck
-                      (= target card-from)
-                      (wait-for (access-card state side card-to-access (:title card-to-access))
-                                (let [shuffled-during-run (get-in @state [:run :shuffled-during-access :rd])
-                                      ;; if R&D was shuffled because of the access,
-                                      ;; the runner "starts over" from the top
-                                      idx (if (get-card state card-to-access)
-                                            (inc idx)
-                                            idx)
-                                      args (if shuffled-during-run
-                                             (assoc args :idx 0)
-                                             (assoc args :idx idx))]
-                                  (if shuffled-during-run
-                                    (swap! state update-in [:run :shuffled-during-access] dissoc :rd))
-                                  (continue-ability
-                                    state side
-                                    (access-helper-rd
-                                      state {:base (dec base) :total (dec total)}
-                                      already-accessed
-                                      args)
-                                    card nil)))
+        (= choices card-from-button)
+        {:async true
+         :effect card-from-deck-fn}
 
-                      ;; accessing an unrezzed upgrade
-                      (= target unrezzed-card)
-                      (let [unrezzed (filter (complement rezzed?) root)]
-                        (if (= 1 (count unrezzed))
-                          ;; only one unrezzed upgrade; access it and continue
-                          (wait-for (access-card state side (first unrezzed))
+        (= choices unrezzed-cards-button)
+        {:async true
+         :effect unrezzed-cards-fn}
+
+        :else
+        {:async true
+         :prompt "Select a card to access."
+         :choices choices
+         :effect (req (cond
+
+                        ;; accessing a card in deck
+                        (= target card-from)
+                        (card-from-deck-fn state side eid nil nil)
+
+                        ;; accessing an unrezzed upgrade
+                        (= target unrezzed-card)
+                        (unrezzed-cards-fn state side eid nil nil)
+
+                        ;; accessing a rezzed upgrade
+                        :else
+                        (let [accessed (some #(when (= (:title %) target) %) root)]
+                          (wait-for (access-card state side accessed)
                                     (continue-ability
-                                        state side
-                                        (access-helper-rd
-                                          state {:base base :total (dec total)}
-                                          (conj already-accessed (first unrezzed)) args)
-                                        card nil))
-                          ;; more than one unrezzed upgrade. allow user to select with mouse.
-                          (continue-ability
-                            state side
-                            {:async true
-                             :prompt "Choose an upgrade in root of R&D to access."
-                             :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
-                             :effect (req (wait-for (access-card state side target)
-                                                    (continue-ability
-                                                      state side
-                                                      (access-helper-rd
-                                                        state {:base base :total (dec total)}
-                                                        (conj already-accessed target) args)
-                                                      card nil)))}
-                            nil nil)))
-
-                      ;; accessing a rezzed upgrade
-                      :else
-                      (let [accessed (some #(when (= (:title %) target) %) root)]
-                        (wait-for (access-card state side accessed)
-                                  (continue-ability
                                       state side
                                       (access-helper-rd
                                         state {:base base :total (dec total)}
                                         (conj already-accessed accessed) args)
-                                      card nil)))))})))
+                                      card nil)))))}))))
 
 (defmethod choose-access :rd
   [{:keys [base total] :as access-amount} server {:keys [no-root] :as args}]
@@ -614,16 +595,13 @@
    :effect (req (let [only-card (get-only-card-to-access state)
                       total-cards (or (when only-card [only-card])
                                       (concat
-                                        (access-cards-from-rd state)
+                                        (take base (access-cards-from-rd state))
                                         (when-not no-root
                                           (-> @state :corp :servers :rd :content))))
                       total-cards-count (count total-cards)
                       pos-total? (pos? total)
                       pos-total-cards? (pos? total-cards-count)
                       args (assoc args :idx 0)]
-                  ;; There are repeated checks because it's more readable than nested
-                  ;; if-else checks
-
                   (cond
                     ;; Only 1 card to access
                     (and pos-total?
@@ -651,13 +629,14 @@
                   count))))
 
 (defn access-helper-hq
-  [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root] :as args}]
+  [state {:keys [base total] :as access-amount}
+   already-accessed {:keys [no-root access-first] :as args}]
   (let [
         hand (get-in @state [:corp :hand])
         current-available (set (concat hand (get-in @state [:corp :servers :hq :content])))
         already-accessed (clj-set/intersection already-accessed current-available)
 
-        card-from "Card from HQ"
+        card-from "Card from hand"
         card-from-button (when (and (pos? base)
                                     (seq (remove already-accessed hand)))
                            [card-from])
@@ -670,68 +649,99 @@
         unrezzed-cards-button (when (and (not no-root)
                                          (->> root
                                               (filter (complement rezzed?))
-                                              (remove already-accessed)))
+                                              (remove already-accessed)
+                                              seq))
                                 [unrezzed-card])
         choices (concat card-from-button
                         upgrade-buttons
                         unrezzed-cards-button)
-        ]
-    (when (and (must-continue? state already-accessed access-amount args)
-               choices)
-      {:async true
-       :prompt "Select a card to access."
-       :choices choices
-       :effect (req (cond
 
-                      ;; accessing a card in hand
-                      (= target card-from)
-                      (let [accessed (first (drop-while already-accessed
-                                                (shuffle (get-in @state [:corp :hand]))))]
+        card-from-hand-fn
+        (req
+          (let [accessed (first (drop-while already-accessed
+                                            (shuffle (get-in @state [:corp :hand]))))]
+            (wait-for (access-card state side accessed (:title accessed))
+                      (continue-ability
+                        state side
+                        (access-helper-hq
+                          state {:base (dec base) :total (dec total)}
+                          (conj already-accessed accessed) args)
+                        card nil))))
+
+        unrezzed-cards-fn
+        (req
+          (let [unrezzed (filter (complement rezzed?) root)]
+            (if (= 1 (count unrezzed))
+              ;; only one unrezzed upgrade; access it and continue
+              (wait-for (access-card state side (first unrezzed))
+                        (continue-ability
+                          state side
+                          (access-helper-hq
+                            state {:base base :total (dec total)}
+                            (conj already-accessed (first unrezzed)) args)
+                          nil nil))
+              ;; more than one unrezzed upgrade. allow user to select with mouse.
+              (continue-ability
+                state side
+                {:async true
+                 :prompt "Choose an upgrade in root of HQ to access."
+                 :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
+                 :effect (req (wait-for (access-card state side target)
+                                        (continue-ability
+                                          state side
+                                          (access-helper-hq
+                                            state {:base base :total (dec total)}
+                                            (conj already-accessed target) args)
+                                          nil nil)))}
+                nil nil))))
+        ]
+
+    (when (and choices (must-continue? state already-accessed access-amount args))
+      (cond
+        (seq access-first)
+        {:async true
+         :effect (req (let [accessed (first access-first)]
                         (wait-for (access-card state side accessed (:title accessed))
                                   (continue-ability
-                                        state side
-                                        (access-helper-hq
-                                          state {:base (dec base) :total (dec total)}
-                                          (conj already-accessed accessed) args)
-                                        card nil)))
+                                    state side
+                                    (access-helper-hq
+                                      state {:base (dec base) :total (dec total)}
+                                      (conj already-accessed accessed)
+                                      (assoc args :access-first (next access-first)))
+                                    nil nil))))}
 
-                      ;; accessing an unrezzed upgrade
-                      (= target unrezzed-card)
-                      (let [unrezzed (filter (complement rezzed?) root)]
-                        (if (= 1 (count unrezzed))
-                          ;; only one unrezzed upgrade; access it and continue
-                          (wait-for (access-card state side (first unrezzed))
+        (= choices card-from-button)
+        {:async true
+         :effect card-from-hand-fn}
+
+        (= choices unrezzed-cards-button)
+        {:async true
+         :effect unrezzed-cards-fn}
+
+        :else
+        {:async true
+         :prompt "Select a card to access."
+         :choices choices
+         :effect (req (cond
+
+                        ;; accessing a card in hand
+                        (= target card-from)
+                        (card-from-hand-fn state side eid nil nil)
+
+                        ;; accessing an unrezzed upgrade
+                        (= target unrezzed-card)
+                        (unrezzed-cards-fn state side eid nil nil)
+
+                        ;; accessing a rezzed upgrade
+                        :else
+                        (let [accessed (some #(when (= (:title %) target) %) root)]
+                          (wait-for (access-card state side accessed)
                                     (continue-ability
-                                        state side
-                                        (access-helper-hq
-                                          state {:base base :total (dec total)}
-                                          (conj already-accessed (first unrezzed)) args)
-                                        card nil))
-                          ;; more than one unrezzed upgrade. allow user to select with mouse.
-                          (continue-ability
-                            state side
-                            {:async true
-                             :prompt "Choose an upgrade in root of HQ to access."
-                             :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
-                             :effect (req (wait-for (access-card state side target)
-                                                    (continue-ability
-                                                      state side
-                                                      (access-helper-hq
-                                                        state {:base base :total (dec total)}
-                                                        (conj already-accessed target) args)
-                                                      card nil)))}
-                            nil nil)))
-
-                      ;; accessing a rezzed upgrade
-                      :else
-                      (let [accessed (some #(when (= (:title %) target) %) root)]
-                        (wait-for (access-card state side accessed)
-                                  (continue-ability
                                       state side
                                       (access-helper-hq
                                         state {:base base :total (dec total)}
                                         (conj already-accessed accessed) args)
-                                      card nil)))))})))
+                                      card nil)))))}))))
 
 (defmethod choose-access :hq
   [{:keys [base total] :as access-amount} server {:keys [no-root] :as args}]
@@ -741,12 +751,11 @@
                                       (concat
                                         (get-in @state [:corp :hand])
                                         (when-not no-root
-                                          (-> @state :corp :servers :hq :content))))
+                                          (get-in @state [:corp :servers :hq :content]))))
                       total-cards-count (count total-cards)
                       pos-total? (pos? total)
                       pos-total-cards-count? (pos? total-cards-count)]
-                  ;; There are repeated checks because it's more readable than nested
-                  ;; if-else checks
+
                   (cond
                     ;; Only 1 card to access
                     (and pos-total?
@@ -760,20 +769,18 @@
                     (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
                         (continue-ability
                           state :corp
-                          {:prompt (str "Select " (min total (-> @state :corp :hand count))
+                          {:prompt (str "Select " (min base (-> @state :corp :hand count))
                                         " cards in HQ for the Runner to access")
                            :choices {:card #(and (in-hand? %)
                                                  (corp? %))
                                      :all true
-                                     :max (req (min total (-> @state :corp :hand count)))}
+                                     :max (req (min base (-> @state :corp :hand count)))}
                            :async true
                            :effect (req (clear-wait-prompt state :runner)
                                         (continue-ability
                                           state :runner
                                           (access-helper-hq
-                                            state
-                                            {:base (- base (count targets))
-                                             :total (- total (count targets))}
+                                            state access-amount
                                             ; access-helper-hq uses a set to keep track of which cards have already
                                             ; been accessed. Using the set difference we make the runner unable to
                                             ; access non-selected cards from the corp prompt
@@ -983,6 +990,40 @@
                     :else
                     (effect-completed state side eid))))})
 
+(defn max-access
+  "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
+  [state side n]
+  (swap! state assoc-in [:run :max-access] n))
+
+(defn access-bonus
+  "Increase the number of cards to be accessed in server during this run by n.
+  For temporary/per-run effects like Legwork, Maker's Eye.
+  Not for permanent increases like RDI."
+  [state side server bonus]
+  (swap! state update-in [:run :access-bonus] conj [server bonus]))
+
+(defn access-bonus-count
+  [run s]
+  (reduce
+    (fn [acc [server bonus]]
+      (if (= s server)
+        (+ acc bonus)
+        acc))
+    0
+    (:access-bonus run)))
+
+(defn access-count
+  [state side kw]
+  (let [run (:run @state)
+        s (case kw
+           :rd-access :rd
+           :hq-access :hq
+           kw)
+        accesses (access-bonus-count run s)]
+    (if-let [max-access (:max-access run)]
+      (min max-access accesses)
+      accesses)))
+
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]
     (if (empty? hosted-cards)
@@ -1022,12 +1063,11 @@
     {:base sum
      :total total}))
 
-(defmethod num-cards-to-access :rd
-  [state side server {:keys [no-root]}]
-  (let [base 1
-        mod (access-count state side :rd-access)
+(defn num-cards-central
+  [state side base server access-key no-root]
+  (let [mod (access-count state side access-key)
         sum (+ base mod)
-        root (get-in @state [:corp :servers :rd :content])
+        root (get-in @state [:corp :servers server :content])
         installed (count (when-not no-root root))
         total-mod (access-count state side :total)
         total (if-let [max-access (get-in @state [:run :max-access])]
@@ -1035,34 +1075,19 @@
                 (+ sum installed total-mod))]
     {:base sum
      :total total}))
+
+(defmethod num-cards-to-access :rd
+  [state side server {:keys [no-root]}]
+  (num-cards-central state side 1 :rd :rd-access no-root))
 
 (defmethod num-cards-to-access :hq
   [state side server {:keys [no-root]}]
-  (let [base 1
-        mod (access-count state side :hq-access)
-        sum (+ base mod)
-        root (get-in @state [:corp :servers :hq :content])
-        installed (count (when-not no-root root))
-        total-mod (access-count state side :total)
-        total (if-let [max-access (get-in @state [:run :max-access])]
-                (min (+ sum installed total-mod) (+ total-mod max-access))
-                (+ sum installed total-mod))]
-    {:base sum
-     :total total}))
+  (num-cards-central state side 1 :hq :hq-access no-root))
 
 (defmethod num-cards-to-access :archives
   [state side server {:keys [no-root]}]
-  (let [base (count (get-in @state [:corp :discard]))
-        mod (access-count state side :archives)
-        sum (+ base mod)
-        root (get-in @state [:corp :servers :archives :content])
-        installed (count (when-not no-root root))
-        total-mod (access-count state side :total)
-        total (if-let [max-access (get-in @state [:run :max-access])]
-                (min (+ sum installed total-mod) (+ total-mod max-access))
-                (+ sum installed total-mod))]
-    {:base sum
-     :total total}))
+  (let [base (count (get-in @state [:corp :discard]))]
+    (num-cards-central state side base :archives :archives no-root)))
 
 (defn turn-archives-faceup
   [state side server]
@@ -1070,15 +1095,23 @@
     (doseq [card (get-in @state [:corp :discard])]
       (update! state side (assoc card :seen true)))))
 
+(defn clean-access-args
+  [{:keys [access-first] :as args}]
+  (if access-first
+    (assoc args :access-first
+           (if (sequential? access-first)
+             access-first
+             [access-first]))
+    args))
+
 (defn do-access
   "Starts the access routines for the run's server."
-  ([state side server] (do-access state side (make-eid state) server))
   ([state side eid server] (do-access state side eid server nil))
-  ([state side eid server {:keys [no-root] :as args}]
+  ([state side eid server {:keys [no-root access-first] :as args}]
    (wait-for (trigger-event-sync state side :pre-access (first server))
-             (let [access-amount (num-cards-to-access state side (first server) args)]
+             (let [args (clean-access-args args)
+                   access-amount (num-cards-to-access state side (first server) args)]
                (turn-archives-faceup state side server)
-               ;; Make `:did-access` true when reaching the access step (no replacement)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
                (when-not (zero? (:total access-amount))

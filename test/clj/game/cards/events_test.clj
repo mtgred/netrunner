@@ -351,11 +351,8 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "4")
       (run-empty-server state :rd)
-      (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")))
+      (click-prompt state :runner "No action")))
   (testing "Kitsune interaction"
     (do-game
       (new-game {:corp {:deck [(qty "Kitsune" 10)]}
@@ -372,11 +369,10 @@
         (run-on state :rd)
         (run-continue state)
         (card-subroutine state :corp kitsune 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Kitsune" (:hand (get-corp))))
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")))))
 
 (deftest blackmail
@@ -4114,14 +4110,11 @@
     (take-credits state :corp)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
-    (println (prompt-fmt :corp))
-    (println (prompt-fmt :runner))
-    ; (click-prompt state :runner "No action")
-    ; (run-empty-server state "HQ")
-    ; (play-from-hand state :runner "Quest Completed")
-    ; (click-card state :runner "Hostile Takeover")
-    ; (click-prompt state :runner "Steal")
-    ))
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Quest Completed")
+    (click-card state :runner "Hostile Takeover")
+    (click-prompt state :runner "Steal")))
 
 ;; rebirth
 (let [akiko "Akiko Nisei: Head Case"

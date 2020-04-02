@@ -1586,8 +1586,9 @@
                                     (when revealed
                                       (reveal state side revealed))
                                     (wait-for
-                                      (resolve-ability state side (when (and revealed (empty? (get-in @state [:run :cards-to-access])))
-                                                                    (access-revealed revealed)) card nil)
+                                      (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
+                                                                    (access-revealed revealed))
+                                                       card nil)
                                       (shuffle! state :corp :deck)
                                       (system-msg state :runner "shuffles R&D")
                                       (effect-completed state side eid)))))}}
@@ -2143,12 +2144,13 @@
                card nil))})
 
 (define-card "Quest Completed"
-  {:req (req (and (some #{:hq} (:successful-run runner-reg))
+  {:async true
+   :req (req (and (some #{:hq} (:successful-run runner-reg))
                   (some #{:rd} (:successful-run runner-reg))
                   (some #{:archives} (:successful-run runner-reg))))
    :choices {:card installed?}
    :msg (msg "access " (:title target))
-   :effect (effect (access-card target))})
+   :effect (effect (access-card eid target))})
 
 (define-card "Rebirth"
   {:msg "change identities"

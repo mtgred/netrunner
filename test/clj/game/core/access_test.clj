@@ -22,8 +22,6 @@
                         :hand ["Hedge Fund"]}})
       (take-credits state :corp)
       (run-empty-server state "R&D")
-      (is (= ["Card from deck"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Card from deck")
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
@@ -79,7 +77,6 @@
       ;; Hostile Takeover #1
       (is (= ["Card from deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Card from deck")
-      (println (prompt-fmt :runner))
       (is (= ["Steal"] (prompt-buttons :runner)))
       (click-prompt state :runner "Steal")
       ;; Hedge Fund #2
@@ -90,8 +87,7 @@
       ;; No more accesses
       (is (nil? (get-run)))
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
-  )
+      (is (empty? (:prompt (get-corp)))))))
 
 (deftest hq-access
   (testing "Nothing in HQ, no upgrades"
@@ -172,8 +168,7 @@
       (click-prompt state :runner "Pay 5 [Credits] to trash")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
-      (is (nil? (get-run)))))
-  )
+      (is (nil? (get-run))))))
 
 (deftest archives-access
   (testing "Nothing in archives"

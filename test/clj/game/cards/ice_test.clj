@@ -1985,9 +1985,9 @@
       (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
 
 (deftest kitsune
-  (testing "Kitsune - Corp choices card for Runner to access"
+  (testing "Corp choices card for Runner to access"
     (do-game
-      (new-game {:corp {:deck ["Kitsune" "Snare!"]}})
+      (new-game {:corp {:hand ["Kitsune" "Snare!"]}})
       (play-from-hand state :corp "Kitsune" "R&D")
       (take-credits state :corp)
       (run-on state "R&D")
@@ -1995,12 +1995,31 @@
         (core/rez state :corp kitsune)
         (run-continue state)
         (card-subroutine state :corp kitsune 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
         ;; Runner access Snare! corp has prompt
         (is (= :waiting (prompt-type :runner))
             "Runner has prompt to wait for Corp to use Snare!")
         (click-prompt state :corp "Yes")
-        (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use")))))
+        (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
+  (testing ""
+    (do-game
+      (new-game {:corp {:hand ["Kitsune" "Snare!" "Hostile Takeover"]}})
+      (play-from-hand state :corp "Kitsune" "R&D")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (let [kitsune (get-ice state :rd 0)]
+        (core/rez state :corp kitsune)
+        (run-continue state)
+        (card-subroutine state :corp kitsune 0)
+        (click-prompt state :corp "Yes")
+        (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
+        ;; Runner access Snare! corp has prompt
+        (is (= :waiting (prompt-type :runner))
+            "Runner has prompt to wait for Corp to use Snare!")
+        (click-prompt state :corp "Yes")
+        (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
+  )
 
 (deftest komainu
   ;; Komainu
