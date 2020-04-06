@@ -2336,7 +2336,7 @@
                :effect
                (effect
                  (continue-ability
-                   (let [n (min (-> corp :hand count) (access-count state side :hq-access))
+                   (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
                          heap (count (:discard runner))]
                      (if (pos? heap)
                        {:show-discard true

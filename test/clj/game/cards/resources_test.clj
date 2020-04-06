@@ -417,13 +417,13 @@
   (testing "Corp doesn't trash, access HQ"
     (do-game
       (new-game {:runner {:deck ["Climactic Showdown"]}
-                 :corp {:deck [(qty "Kitsune" 10)]}})
-      (play-from-hand state :corp "Kitsune" "Archives")
-      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+                 :corp {:deck [(qty "Vanilla" 10)]}})
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (core/move state :corp (find-card "Vanilla" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (play-from-hand state :runner "Climactic Showdown")
       (take-credits state :runner)
-      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Vanilla" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
       (click-prompt state :runner "Archives")
@@ -432,11 +432,8 @@
       (is (empty? (:prompt (get-runner))) "Corp refused trash and runner prompt is gone")
       (is (empty? (:discard (get-corp))) "Nothing trashed")
       (run-empty-server state "HQ")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
       (is (not (:run @state)) "3 access run over")
@@ -445,7 +442,7 @@
       (is (empty? (:prompt (get-runner))) "Runner done with 2nd run after 1 accesses")
       (is (not (:run @state)) "Single access run over")
       (take-credits state :runner)
-      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Vanilla" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (click-prompt state :runner "No action")
@@ -468,11 +465,10 @@
         (core/rez state :corp (get-ice state :rd 0))
         (run-continue state)
         (card-subroutine state :corp (get-ice state :rd 0) 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Kitsune" (:hand (get-corp))))
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
         (run-continue state)
         (run-continue state)
@@ -590,10 +586,8 @@
         (run-continue state)
         (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
-        (click-prompt state :runner "Card from hand")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
@@ -617,11 +611,9 @@
         (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
-        (click-prompt state :runner "Card from hand")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner did draw cards from Obelus after all accesses are done")
@@ -643,9 +635,7 @@
         (run-continue state)
         (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
-        (click-prompt state :runner "Card from hand")
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
-        (click-prompt state :runner "Card from hand")
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
         (is (zero? (:credit (get-runner))) "Runner has 2 credits")))))
@@ -1675,18 +1665,10 @@
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (click-prompt state :runner "Gang Sign") ; simultaneous effect resolution
-      (let [gs1 (prompt-map :runner)]
-        (is (= ["Card from hand"] (prompt-buttons :runner)) "Gang Sign does not let Runner access upgrade in HQ root")
-        (click-prompt state :runner "Card from hand")
-        (click-prompt state :runner "Steal")
-        (is (= (:card gs1) (:card (prompt-map :runner))) "Second access from first Gang Sign triggered")
-        (click-prompt state :runner "Card from hand")
-        (click-prompt state :runner "Steal")
-        (is (not= (:card gs1) (:card (prompt-map :runner))) "First access from second Gang Sign triggered")
-        (click-prompt state :runner "Card from hand")
-        (click-prompt state :runner "Steal")
-        (click-prompt state :runner "Card from hand")
-        (click-prompt state :runner "Steal"))))
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Steal")))
   (testing "accessing from HQ, not including root. Issue #2113"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Snare!"]}
@@ -1695,7 +1677,6 @@
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
-      (click-prompt state :runner "Card from hand")
       ;; Runner has "wait for Snare, wait for on-access" prompts.
       (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
       ;; Core has "pay for Snare, wait for agenda-scored" prompts.
@@ -2677,9 +2658,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Neutralize All Threats")
     (run-empty-server state "HQ")
-    (click-prompt state :runner "Card from hand")
     (click-prompt state :runner "No action") ; access first Hedge Fund
-    (click-prompt state :runner "Card from hand")
     (click-prompt state :runner "No action") ; access second Hedge Fund
     (run-empty-server state "Server 1")
     (click-prompt state :runner "Pay 2 [Credits] to trash")
@@ -3241,7 +3220,6 @@
         (run-continue state)
         (run-successful state)
         (dotimes [_ 5]
-          (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
       (testing "Regression test for #3828"
@@ -3266,9 +3244,8 @@
       (play-from-hand state :runner "Psych Mike")
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
-        (click-prompt state :runner "Card from deck")
+        (click-prompt state :runner "Unrezzed upgrade")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Unrezzed upgrade in R&D")
         (click-prompt state :runner "No action")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card")))))
 
@@ -3725,7 +3702,7 @@
   ;; Street Magic
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand "Little Engine"}
+                      :hand ["Little Engine"]}
                :runner {:hand ["Street Magic"]}})
     (play-from-hand state :corp "Little Engine" "HQ")
     (take-credits state :corp)
@@ -3735,9 +3712,9 @@
     (card-ability state :runner (get-resource state 0) 0)
     (let [credits (:credit (get-runner))]
       (click-prompt state :runner "Make the Runner gain 5 [Credits]")
-      (is (= (+ 5 credits) (:credit (get-runner))) "Runner gained 5 credits")
-      (click-prompt state :runner "End the run")
-      (is (not (:run @state)) "Run has ended"))))
+      (is (= (+ 5 credits) (:credit (get-runner))) "Runner gained 5 credits"))
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Run has ended")))
 
 (deftest street-peddler
   ;; Street Peddler
@@ -3831,7 +3808,7 @@
       (let [sp (get-resource state 0)]
         (card-ability state :runner sp 0)
         (click-prompt state :runner (first (:hosted sp))) ; choose to install HQ Interface
-        (is (= 2 (:hq-access (get-runner)))
+        (is (= 2 (:total (core/num-cards-to-access state :runner :hq nil)))
             "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
   (testing "Installing Parasite with only 1cr. Issue #491."
     (do-game

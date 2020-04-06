@@ -1747,7 +1747,7 @@
         (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area"))))
   (testing "Corp double-advances a Gene Splicer and fails to use its ability to add to their score area as a 1 point agenda"
     (do-game
-      (new-game {:corp {:hand "Gene Splicer"}
+      (new-game {:corp {:hand ["Gene Splicer"]}
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (let [gs (get-content state :remote1 0)]

@@ -2966,8 +2966,7 @@
     (play-from-hand state :runner "Nyashia")
     (run-empty-server state "R&D")
     (click-prompt state :runner "Yes")
-    (is (= 2 (+ (get-in @state [:runner :rd-access])
-                (core/access-bonus-count (:run @state) :rd))))))
+    (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
 
 (deftest odore
   (testing "Basic test"
@@ -3700,7 +3699,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
-      (click-prompt state :runner "Unrezzed upgrade in HQ")
+      (click-prompt state :runner "Unrezzed upgrade")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
 (deftest sage

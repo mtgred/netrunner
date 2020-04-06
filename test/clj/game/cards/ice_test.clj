@@ -2001,6 +2001,7 @@
         (is (= :waiting (prompt-type :runner))
             "Runner has prompt to wait for Corp to use Snare!")
         (click-prompt state :corp "Yes")
+        (click-prompt state :runner "No action")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
   (testing ""
     (do-game
@@ -2018,6 +2019,7 @@
         (is (= :waiting (prompt-type :runner))
             "Runner has prompt to wait for Corp to use Snare!")
         (click-prompt state :corp "Yes")
+        (click-prompt state :runner "No action")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
   )
 
@@ -3492,7 +3494,7 @@
   (testing "Subroutine 2: The runner accesses the top card of R&D unless the Corp pays 1."
     (testing "The Corp chooses to let the runner access"
       (do-game
-        (new-game {:corp {:deck ["Caprice Nisei" "Quandary" "Jackson Howard"]
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Shiro"]}
                    :runner {:deck ["R&D Interface"]}})
         (play-from-hand state :corp "Shiro" "HQ")
@@ -3504,17 +3506,15 @@
           (run-continue state)
           (card-subroutine state :corp shiro 1)
           (click-prompt state :corp "No")
-          (is (last-log-contains? state "make the Runner access the top card of R&D") "Access is logged")
-          (click-prompt state :runner "Card from deck")
+          (is (second-last-log-contains? state "make the Runner access the top card of R&D") "Access is logged")
           (is (= (:cid (first (:deck (get-corp))))
                  (:cid (:card (prompt-map :runner)))) "Access the top card of R&D")
           (click-prompt state :runner "No action")
-          (click-prompt state :runner "Card from deck")
           (is (= (:cid (second (:deck (get-corp))))
                  (:cid (:card (prompt-map :runner)))) "Access another card due to R&D Interface"))))
     (testing "The Corp chooses to pay to not let the runner access"
       (do-game
-        (new-game {:corp {:deck ["Caprice Nisei" "Quandary" "Jackson Howard"]
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Shiro"]}
                    :runner {:deck ["R&D Interface"]}})
         (play-from-hand state :corp "Shiro" "HQ")
@@ -3552,7 +3552,6 @@
           (click-prompt state :corp "No")
           (is (= 3 (core/access-bonus-count (:run @state) :rd)) "Should access an additional 3 cards")
           (dotimes [_ 5]
-            (click-prompt state :runner "Card from deck")
             (click-prompt state :runner "No action"))
           (run-jack-out state)
           (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once"))))))

@@ -1086,17 +1086,8 @@
   {:events [{:event :agenda-scored
              :async true
              :interactive (req true)
-             :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
-             :effect (req (wait-for
-                            ;; manually trigger the pre-access event to alert Nerve Agent.
-                            (trigger-event-sync state side :pre-access :hq)
-                            (let [from-hq (access-count state side :hq-access)
-                                  ;; access-helper-hq uses a set to keep track of which cards have already
-                                  ;; been accessed. By adding HQ root's contents to this set, we make the runner
-                                  ;; unable to access those cards, as Gang Sign intends.
-                                  accessed-cards (set (get-in @state [:corp :servers :hq :content]))
-                                  ability (access-helper-hq state from-hq accessed-cards)]
-                              (continue-ability state :runner ability card nil))))}]})
+             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
+             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]})
 
 (define-card "Gbahali"
   (bitey-boi 'last))
@@ -2026,14 +2017,9 @@
 
 (define-card "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
-             :effect (req (wait-for
-                            ;; manually trigger the pre-access event to alert Nerve Agent.
-                            (trigger-event-sync state side :pre-access :hq)
-                            (let [from-hq (access-count state side :hq-access)
-                                  ;; see note in Gang Sign
-                                  already-accessed (set (get-in @state [:corp :servers :hq :content]))
-                                  ability (access-helper-hq state from-hq already-accessed)]
-                              (resolve-ability state side ability card nil)))) }]
+             :async true
+             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
+             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]
    :abilities [{:msg "expose 1 card"
                 :label "Expose 1 installed card"
                 :choices {:card installed?}

@@ -706,10 +706,9 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp "Hedge Fund")
       (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Unrezzed upgrade in HQ")
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run completed")))
   (testing "Multiaccess works properly"

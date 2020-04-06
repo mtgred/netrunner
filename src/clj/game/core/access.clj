@@ -356,7 +356,7 @@
 (defn access-card
   "Apply game rules for accessing the given card."
   ([state side eid card] (access-card state side eid card (:title card) nil))
-  ([state side eid card title] (access-card state side eid card :title nil))
+  ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
     ;; Indicate that we are in the access step.
    (swap! state assoc :access card)
@@ -382,12 +382,19 @@
   [state]
   (get-card state (get-in @state [:run :only-card-to-access])))
 
+(defn get-all-hosted-impl [hosts]
+  (let [hosted-cards (mapcat :hosted hosts)]
+    (if (empty? hosted-cards)
+      hosted-cards
+      (concat hosted-cards (get-all-hosted-impl hosted-cards)))))
+
+(defn get-all-hosted [content]
+  (concat content (get-all-hosted-impl content)))
+
 ;;; Methods for allowing user-controlled multi-access in servers.
 (defmulti must-continue?
   (fn [state already-accessed amount-access args]
-    (if (get-only-card-to-access state)
-      :only
-      (get-server-type (first (:server args))))))
+    (get-server-type (first (:server args)))))
 
 ; (defmethod must-continue? :only
 ;   [state already-accessed access-amount {:keys [no-root] :as args}]
@@ -401,14 +408,15 @@
 (defmethod must-continue? :remote
   [state already-accessed access-amount args]
   (and (pos? (:total access-amount))
-       (pos? (->> (get-in @state [:corp :servers (first (:server args)) :content])
+       (pos? (->> (get-all-hosted (get-in @state [:corp :servers (first (:server args)) :content]))
                   (remove already-accessed)
                   count))))
 
 (defn access-helper-remote
   [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root server] :as args}]
   (let [
-        current-available (set (get-in @state [:corp :servers (first server) :content]))
+        content (get-all-hosted (get-in @state [:corp :servers (first server) :content]))
+        current-available (set content)
         already-accessed (clj-set/intersection already-accessed current-available)
         available (clj-set/difference current-available already-accessed)
         ]
@@ -434,8 +442,9 @@
   [{:keys [base total] :as access-amount} server args]
   {:async true
    :effect (req (let [only-card (get-only-card-to-access state)
+                      content (get-in @state [:corp :servers (first server) :content])
                       total-cards (or (when only-card [only-card])
-                                      (get-in @state [:corp :servers (first server) :content]))
+                                      (get-all-hosted content))
                       total-cards-count (count total-cards)
                       pos-total? (pos? total)
                       pos-total-cards? (pos? total-cards-count)]
@@ -505,7 +514,7 @@
 
         card-from-deck-fn
         (req
-          (wait-for (access-card state side card-to-access (:title card-to-access))
+          (wait-for (access-card state side card-to-access "an unseen card")
                     (let [shuffled-during-run (get-in @state [:run :shuffled-during-access :rd])
                           ;; if R&D was shuffled because of the access,
                           ;; the runner "starts over" from the top
@@ -553,7 +562,7 @@
                 nil nil))))
 
         ]
-    (when (and choices (must-continue? state already-accessed access-amount args))
+    (when (and (seq choices) (must-continue? state already-accessed access-amount args))
       (cond
 
         (= choices card-from-button)
@@ -602,10 +611,12 @@
                       pos-total? (pos? total)
                       pos-total-cards? (pos? total-cards-count)
                       args (assoc args :idx 0)]
+
                   (cond
                     ;; Only 1 card to access
                     (and pos-total?
-                         (= 1 total-cards-count))
+                         (= 1 total-cards-count)
+                         only-card)
                     (access-card state side eid (first total-cards))
 
                     ;; Normal access
@@ -696,7 +707,7 @@
                 nil nil))))
         ]
 
-    (when (and choices (must-continue? state already-accessed access-amount args))
+    (when (and (seq choices) (must-continue? state already-accessed access-amount args))
       (cond
         (seq access-first)
         {:async true
@@ -1019,16 +1030,11 @@
            :rd-access :rd
            :hq-access :hq
            kw)
-        accesses (access-bonus-count run s)]
+        accesses (+ (get-in @state [:runner kw] 0)
+                    (access-bonus-count run s))]
     (if-let [max-access (:max-access run)]
       (min max-access accesses)
       accesses)))
-
-(defn get-all-hosted [hosts]
-  (let [hosted-cards (mapcat :hosted hosts)]
-    (if (empty? hosted-cards)
-      hosted-cards
-      (concat hosted-cards (get-all-hosted hosted-cards)))))
 
 (defmulti num-cards-to-access
   "Gets the list of cards to access for the server"
@@ -1051,7 +1057,7 @@
 (defmethod num-cards-to-access :remote
   [state side server args]
   (let [content (get-in @state [:corp :servers server :content])
-        installed (->> (concat content (get-all-hosted content))
+        installed (->> (get-all-hosted content)
                        (filter #(can-access-loud state side %))
                        count)
         mod (access-count state side server)

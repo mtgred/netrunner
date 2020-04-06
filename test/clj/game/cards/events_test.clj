@@ -1257,12 +1257,10 @@
     (take-credits state :corp)
     (play-run-event state "Deep Data Mining" :rd)
     (dotimes [_ 5] ; 1 normal access, 4 extra accesses from DDM
-      (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action"))
     (play-from-hand state :runner "Magnum Opus")
     (play-run-event state "Deep Data Mining" :rd)
     (dotimes [_ 3] ; 1 normal access, 2 extra accesses from DDM because Magnum Opus takes 2 MU
-      (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action"))
     (is (empty? (:prompt (get-runner))) "No more accesses after 3")))
 
@@ -1304,10 +1302,9 @@
     (is (= [:rd] (get-in @state [:run :server])) "Run initiated on R&D")
     (run-continue state)
     (run-successful state)
-    (click-prompt state :runner "Unrezzed upgrade in R&D")
+    (click-prompt state :runner "Unrezzed upgrade")
     (click-prompt state :runner "[Demolition Run] Trash card")
     (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
-    (click-prompt state :runner "Card from deck")
     (click-prompt state :runner "[Demolition Run] Trash card")
     (is (zero? (:agenda-point (get-runner))) "Didn't steal False Lead")
     (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
@@ -1501,11 +1498,9 @@
         (run-successful state)
         ;; HQ
         (dotimes [_ 2]
-          (click-prompt state :runner "Card from hand")
           (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
         ;; R&D
         (dotimes [_ 2]
-          (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
         (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd)))
@@ -1564,10 +1559,8 @@
       (click-prompt state :runner "5")
       (play-run-event state "Divide and Conquer" :archives)
       (dotimes [_ 3]
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
       (dotimes [_ 3]
-        (click-prompt state :runner "Card from deck")
         (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
       (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
       (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed)))))
@@ -3257,7 +3250,6 @@
     (take-credits state :corp)
     (play-run-event state "Legwork" :hq)
     (dotimes [_ 3]
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "Steal"))
     (is (not (:run @state)) "Run has finished")))
   (testing "Doesn't give bonus accesses when unsuccessful"
@@ -5042,13 +5034,10 @@
                :runner {:deck ["The Maker's Eye"]}})
     (take-credits state :corp)
     (play-run-event state "The Maker's Eye" :rd)
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
     (click-prompt state :runner "No action")
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
     (click-prompt state :runner "No action")
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
     (click-prompt state :runner "No action")
     (is (not (:run @state)))))
@@ -5338,6 +5327,7 @@
         (core/rez state :corp kitsune)
         (run-continue state)
         (card-subroutine state :corp kitsune 0)
+        (click-prompt state :corp "Yes")
         (changes-val-macro 0 (count (get-in @state [:corp :rfg]))
                            "HQ Ice Wall not RFGed"
                            (click-card state :corp (find-card "Ice Wall" (:hand (get-corp)))))
