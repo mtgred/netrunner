@@ -1916,7 +1916,7 @@
    :prompt "Choose a resource to host On the Lam"
    :choices {:card #(and (resource? %)
                          (installed? %))}
-   :effect (effect (host target (assoc card :installed true))
+   :effect (effect (host target (assoc card :installed true :condition true))
                    (card-init (find-latest state card) {:resolve-effect false})
                    (system-msg (str "hosts On the Lam on " (:title target))))
    :interactions {:prevent [{:type #{:net :brain :meat :tag}
@@ -2007,7 +2007,7 @@
                        :prompt "Select an agenda to host Political Graffiti"
                        :choices {:card #(in-corp-scored? state side %)}
                        :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                       :effect (effect (host :runner (get-card state target) (assoc card :installed true))
+                       :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
                                        (update-all-agenda-points))}}
                      card))
    :constant-effects [{:type :agenda-value

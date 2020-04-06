@@ -473,7 +473,6 @@
           (is (= 5 (:credit (get-corp))) "Events on Public agenda work; gained 2 credits from advancing")
           (take-credits state :corp)
           (run-empty-server state "Server 2")
-          (click-card state :runner "Oaktown Renovation")
           (click-prompt state :runner "Steal")
           (is (= 2 (count-tags state)) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 

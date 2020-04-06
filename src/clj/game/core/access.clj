@@ -382,40 +382,31 @@
   [state]
   (get-card state (get-in @state [:run :only-card-to-access])))
 
-(defn get-all-hosted-impl [hosts]
+(defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]
     (if (empty? hosted-cards)
       hosted-cards
-      (concat hosted-cards (get-all-hosted-impl hosted-cards)))))
+      (concat hosted-cards (get-all-hosted hosted-cards)))))
 
-(defn get-all-hosted [content]
-  (concat content (get-all-hosted-impl content)))
+(defn get-all-content [content]
+  (remove :condition (concat content (get-all-hosted content))))
 
 ;;; Methods for allowing user-controlled multi-access in servers.
 (defmulti must-continue?
   (fn [state already-accessed amount-access args]
     (get-server-type (first (:server args)))))
 
-; (defmethod must-continue? :only
-;   [state already-accessed access-amount {:keys [no-root] :as args}]
-;   (and (pos? (:total access-amount))
-;        (pos? (->> (when-let [only-card (get-only-card-to-access state)]
-;                     (if-not (and no-root (installed? only-card))
-;                       [only-card]))
-;                   (remove already-accessed)
-;                   count))))
-
 (defmethod must-continue? :remote
   [state already-accessed access-amount args]
   (and (pos? (:total access-amount))
-       (pos? (->> (get-all-hosted (get-in @state [:corp :servers (first (:server args)) :content]))
+       (pos? (->> (get-all-content (get-in @state [:corp :servers (first (:server args)) :content]))
                   (remove already-accessed)
                   count))))
 
 (defn access-helper-remote
   [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root server] :as args}]
   (let [
-        content (get-all-hosted (get-in @state [:corp :servers (first server) :content]))
+        content (get-all-content (get-in @state [:corp :servers (first server) :content]))
         current-available (set content)
         already-accessed (clj-set/intersection already-accessed current-available)
         available (clj-set/difference current-available already-accessed)
@@ -444,7 +435,7 @@
    :effect (req (let [only-card (get-only-card-to-access state)
                       content (get-in @state [:corp :servers (first server) :content])
                       total-cards (or (when only-card [only-card])
-                                      (get-all-hosted content))
+                                      (get-all-content content))
                       total-cards-count (count total-cards)
                       pos-total? (pos? total)
                       pos-total-cards? (pos? total-cards-count)]
@@ -1057,7 +1048,7 @@
 (defmethod num-cards-to-access :remote
   [state side server args]
   (let [content (get-in @state [:corp :servers server :content])
-        installed (->> (get-all-hosted content)
+        installed (->> (get-all-content content)
                        (filter #(can-access-loud state side %))
                        count)
         mod (access-count state side server)
