@@ -359,20 +359,16 @@
 (define-card "Afterimage"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :events [{:event :encounter-ice
-                              :async true
-                              :req (req (and (has-subtype? target "Sentry")
-                                             (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
-                              :effect
-                              (effect
-                                (continue-ability
-                                  {:optional
-                                   {:prompt (str "Pay 2 [Credits] to bypass" (:title target))
-                                    :yes-ability
-                                    {:once :per-run
-                                     :cost [:credit 2]
-                                     :msg (msg "bypass " (:title target))
-                                     :effect (req (bypass-ice state))}}}
-                                  card targets))}]
+                              :optional
+                              {:req (req (and (has-subtype? target "Sentry")
+                                              (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
+                               :once :per-turn
+                               :prompt (msg "Pay 2 [Credits] to bypass" (:title target))
+                               :yes-ability
+                               {:once :per-turn
+                                :cost [:credit 2]
+                                :msg (msg "bypass " (:title target))
+                                :effect (req (bypass-ice state))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 1 2)]}))
 

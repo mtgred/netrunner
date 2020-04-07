@@ -75,7 +75,26 @@
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall"))))
+      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")))
+  (testing "Can only be used once per turn. #5032"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]
+                        :credits 10}
+                 :runner {:hand ["Afterimage"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Afterimage")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "No bypass prompt"))))
 
 (deftest algernon
   ;; Algernon - pay 2 credits to gain a click, trash if no successful run
