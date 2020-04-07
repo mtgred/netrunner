@@ -128,7 +128,7 @@
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (:credit (get-runner) 5) "Runner got their laundry money")
       (is (not (:run @state)) "Run not over")))
-  (testing "installed in archives"
+  (testing "installed in archives #5015"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ash 2X3ZB9CY"]
@@ -2010,10 +2010,12 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect persists after trash"
@@ -2030,10 +2032,12 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect ends after current run"
@@ -2050,6 +2054,7 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
@@ -2075,6 +2080,7 @@
       (run-empty-server state "HQ")
       (core/rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Apocalypse")
+      (is (= {:number 3 :default 0} (:choices (prompt-map :corp))))
       (click-prompt state :corp "3")
       (is (= 3 (count-tags state)) "Overseer Matrix gives the runner 3 tags")))
   (testing "Only works on Corp card trashes. Issue #4739"
