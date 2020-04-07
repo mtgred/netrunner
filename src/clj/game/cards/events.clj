@@ -187,13 +187,14 @@
   ; Bravado only counts distinct pieces of ice that were passed.
   ; That means if a piece of ice was reinstalled and then repassed, it needs to be counted twice.
   ; This is handled by tracking :card-moved and counting them in :special :bravado-moved.
-  (letfn [(iced-servers [state]
-            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))]
+  (letfn [(iced-servers [state side eid card]
+            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?)
+                    (zones->sorted-names (get-runnable-zones state side eid card nil))))]
     {:async true
      :makes-run true
-     :req (req (pos? (count (iced-servers state))))
+     :req (req (pos? (count (iced-servers state side eid card))))
      :prompt "Choose an iced server"
-     :choices (req (iced-servers state))
+     :choices (req (iced-servers state side eid card))
      :effect (effect (register-events
                        card
                        [{:event :pass-ice

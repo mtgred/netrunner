@@ -545,7 +545,24 @@
         (changes-val-macro 6 (:credit (get-runner))
                            "Gained 6 credits from Bravado"
                            (card-subroutine state :corp (refresh icew) 0))
-        (is (not (:run @state)) "Run has ended")))))
+        (is (not (:run @state)) "Run has ended"))))
+  (testing "Only show runnable servers. #5034"
+    (do-game
+      (new-game {:corp {:id "Jinteki: Replicating Perfection"
+                        :deck [(qty "Mental Health Clinic" 3)]
+                        :hand [(qty "Ice Wall" 2)]}
+                 :runner {:hand [(qty "Bravado" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+      (play-from-hand state :runner "Bravado")
+      (is (= ["HQ"] (prompt-buttons :runner)) "Only the iced central server is available")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (run-jack-out state)
+      (play-from-hand state :runner "Bravado")
+      (is (= ["HQ" "Server 1"] (prompt-buttons :runner)) "Now Server 1 is available"))))
 
 (deftest bribery
   ;; Bribery

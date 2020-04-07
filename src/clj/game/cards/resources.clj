@@ -510,8 +510,9 @@
                                                    (shuffle (:hand corp)))))}]})
 
 (define-card "Climactic Showdown"
-  (letfn [(iced-servers [state]
-            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))
+  (letfn [(iced-servers [state side eid card]
+            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?)
+                    (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
              :prompt "Choose a piece of ice to trash or cancel"
@@ -533,9 +534,9 @@
                :effect (req (let [card (move state side card :rfg)]
                               (continue-ability
                                 state side
-                                (if (pos? (count (iced-servers state)))
+                                (if (pos? (count (iced-servers state side eid card)))
                                   {:prompt (msg  "Choose a server")
-                                   :choices (req (iced-servers state))
+                                   :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and removes Climactic Showdown from the game")
                                    :effect (effect (continue-ability
