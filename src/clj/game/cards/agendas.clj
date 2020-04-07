@@ -429,11 +429,9 @@
      :abilities [ability]}))
 
 (define-card "Cyberdex Sandbox"
-  {:effect (effect (continue-ability
-                     {:optional {:prompt "Purge virus counters with Cyberdex Sandbox?"
-                                 :yes-ability {:msg (msg "purge virus counters")
-                                               :effect (effect (purge))}}}
-                     card nil))
+  {:optional {:prompt "Purge virus counters with Cyberdex Sandbox?"
+              :yes-ability {:msg (msg "purge virus counters")
+                            :effect (effect (purge))}}
    :events [{:event :purge
              :once :per-turn
              :msg "gain 4 [Credits]"

@@ -1669,7 +1669,7 @@
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Steal")))
-  (testing "accessing from HQ, not including root. Issue #2113"
+  (testing "Has the correct prompts. Issue #2113"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Snare!"]}
                  :runner {:deck ["Gang Sign"]}})
@@ -1680,7 +1680,21 @@
       ;; Runner has "wait for Snare, wait for on-access" prompts.
       (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
       ;; Core has "pay for Snare, wait for agenda-scored" prompts.
-      (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!"))))
+      (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!")))
+  (testing "Active player gets their prompts first. #5033"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover" "Cyberdex Sandbox"]}
+                 :runner {:hand ["Gang Sign"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (take-credits state :runner)
+      (play-and-score state "Cyberdex Sandbox")
+      (is (= "Purge virus counters with Cyberdex Sandbox?" (:msg (prompt-map :corp)))
+          "Corp has the first ability prompt")
+      (is (= ["Yes" "No"] (prompt-buttons :corp)) "Corp has Cyberdex Sandbox optional")
+      (is (prompt-is-type? state :runner :waiting))
+      (click-prompt state :corp "Yes")
+      (click-prompt state :runner "Steal"))))
 
 (deftest gbahali
   ;; Gbahali
