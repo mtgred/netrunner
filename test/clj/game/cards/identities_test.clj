@@ -3210,7 +3210,28 @@
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-continue state)
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo")))
+  (testing "trashing a solo ice on an empty server still triggers #5025"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Corroder" "Hippo" "Sure Gamble"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (advance state (get-ice state :remote1 0) 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Hippo")
+      (run-on state :remote1)
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
+      (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended")
+      (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard

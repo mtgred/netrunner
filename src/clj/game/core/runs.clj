@@ -38,7 +38,7 @@
 
 (defn get-current-ice
   [state]
-   (get-card state (get-in @state [:run :current-ice])))
+  (get-card state (get-in @state [:run :current-ice])))
 
 (defn toggle-auto-no-action
   [state side args]
@@ -226,18 +226,21 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (swap! state assoc-in [:run :no-action] false)
-  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
-            (swap! state dissoc-in [:run :bypass])
-            (unregister-floating-effects state side :end-of-encounter)
-            (unregister-floating-events state side :end-of-encounter)
-            (update-all-ice state side)
-            (update-all-icebreakers state side)
-            (cond
-              (or (check-for-empty-server state)
-                  (:ended (:run @state)))
-              (handle-end-run state side)
-              (not (get-in @state [:run :next-phase]))
-              (pass-ice state side))))
+  ;; This is necessary for when the current ice is trashed
+  (let [current-ice (or (get-current-ice state)
+                        (get-in @state [:run :current-ice]))]
+    (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil current-ice)
+              (swap! state dissoc-in [:run :bypass])
+              (unregister-floating-effects state side :end-of-encounter)
+              (unregister-floating-events state side :end-of-encounter)
+              (update-all-ice state side)
+              (update-all-icebreakers state side)
+              (cond
+                (or (check-for-empty-server state)
+                    (:ended (:run @state)))
+                (handle-end-run state side)
+                (not (get-in @state [:run :next-phase]))
+                (pass-ice state side)))))
 
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out] :as args}]
@@ -258,8 +261,7 @@
   (let [run-ice (get-run-ices state)
         pos (get-in @state [:run :position])
         ice (get-current-ice state)
-        passed-all-ice (and (pos? (count run-ice))
-                            (zero? (dec pos)))
+        passed-all-ice (zero? (dec pos))
         current-server (:server (:run @state))
         args (assoc
                (when passed-all-ice
@@ -588,9 +590,12 @@
   "Trigger appropriate events for the ending of a run."
   [state side]
   (let [server (-> @state :run :server first)
-        event (when (= :encounter-ice (get-in @state [:run :phase])) :encounter-ice-ends)]
+        event (when (= :encounter-ice (get-in @state [:run :phase])) :encounter-ice-ends)
+        current-ice (when (= :encounter-ice (get-in @state [:run :phase]))
+                      (or (get-current-ice state)
+                          (get-in @state [:run :current-ice])))]
     (swap! state assoc-in [:run :ended] true)
-    (wait-for (trigger-event-simult state side event nil (get-current-ice state))
+    (wait-for (trigger-event-simult state side event nil current-ice)
               (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
               (run-cleanup-2 state side))))

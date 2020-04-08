@@ -30,6 +30,7 @@
 (load "core/cards")     ; retrieving and updating cards
 (load "core/costs")     ; application of costs to play
 (load "core/rules")     ; core game rules
+(load "core/trashing")  ; trashing cards
 (load "core/turns")     ; the turn sequence
 (load "core/actions")   ; functions linked to UI actions
 (load "core/abilities") ; support for card abilities and prompts
