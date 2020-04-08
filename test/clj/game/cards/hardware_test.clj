@@ -2472,7 +2472,18 @@
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
       (is (= 0 (:credit (get-runner))) "Paid 1c for Liberated Account")
-      (is (get-resource state 0) "Installed Liberated Account"))))
+      (is (get-resource state 0) "Installed Liberated Account")))
+  (testing "Patchwork shouldn't give credit back when playing 1c card. Issue #4960"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Film Critic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Patchwork")
+      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+      (play-from-hand state :runner "Film Critic")
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 1 (:credit (get-runner))) "Runner should still have 1c")
+      (is (get-resource state 0) "Installed Film Critic"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

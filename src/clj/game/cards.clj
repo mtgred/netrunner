@@ -326,7 +326,7 @@
                                                                                       (update selected-cards (:cid providing-card)
                                                                                               ;; correct credit count
                                                                                               #(assoc % :card target :number (+ (:number % 0) (dec async-result))))
-                                                                                      (+ counter-count async-result))
+                                                                                      (min (+ counter-count async-result) target-count))
                                                          card targets)))
                            (continue-ability state side
                                              (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
