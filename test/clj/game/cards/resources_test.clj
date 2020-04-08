@@ -3878,7 +3878,18 @@
         (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))
         (play-from-hand state :runner "Diesel")
         (is (= 4 (-> (prompt-map :runner) :choices count)) "Runner gets The Class Act's power on Runner's turn")
-        (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))))))
+        (click-prompt state :runner (find-card "Diesel" (:deck (get-runner)))))))
+  (testing "Trashed hosted cards are logged. #5024"
+    (do-game
+      (new-game {:runner {:deck ["Gordian Blade" "Torch" "Sure Gamble"]
+                          :hand ["Street Peddler"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Street Peddler")
+      (let [sp (get-resource state 0)]
+        (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
+        (card-ability state :runner sp 0)
+        (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp)))
+        (is (second-last-log-contains? state "are trashed as a result") "The two hosted cards are logged")))))
 (deftest-pending street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
   ;; discard should dismiss the choice prompt. Issue #587.

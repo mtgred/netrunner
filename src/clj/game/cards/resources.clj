@@ -2350,13 +2350,13 @@
                                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                           [:credit (install-cost state side target {:cost-bonus -1})])))
                                         (:hosted card))))
-                :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
-                :effect (req (wait-for (trash state side (update-in card [:hosted]
-                                                                    (fn [coll]
-                                                                      (remove-once #(same-card? % target) coll)))
-                                              {:cause :ability-cost})
-                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                       (dissoc target :facedown) {:cost-bonus -1})))}]})
+                :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                          (join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
+                          " are trashed as a result")
+                :effect (req (let [card (update-in card [:hosted] (fn [coll] (remove-once #(same-card? % target) coll)))]
+                               (wait-for (trash state side card {:cause :ability-cost})
+                                         (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                         (dissoc target :facedown) {:cost-bonus -1}))))}]})
 
 (define-card "Symmetrical Visage"
   {:events [{:event :runner-click-draw
@@ -2408,7 +2408,7 @@
                                 (program? target))
                             (not (facedown? target))))
              :effect (effect (add-counter :runner card :credit 1)
-                             (system-msg (str "places 1 [Credits] on Technical Writer")))}]
+                             (system-msg "places 1 [Credits] on Technical Writer"))}]
    :abilities [{:cost [:click 1 :trash]
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :effect (effect (gain-credits (get-counters card :credit)))}]})
