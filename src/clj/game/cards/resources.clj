@@ -498,16 +498,18 @@
                                     :effect (effect (lose-tags :runner eid 1))}}}]})
 
 (define-card "Clan Vengeance"
-  {:events [{:event :pre-resolve-damage
-             :req (req (pos? (last targets)))
+  {:events [{:event :damage
+             :req (req (pos? (nth targets 2 0)))
              :effect (effect (add-counter card :power 1)
-                             (system-msg :runner (str "places 1 power counter on Clan Vengeance")))}]
+                             (system-msg :runner "places 1 power counter on Clan Vengeance"))}]
    :abilities [{:label "Trash 1 random card from HQ for each power counter"
+                :async true
                 :req (req (pos? (get-counters card :power)))
-                :msg (msg "trash " (min (get-counters card :power) (count (:hand corp))) " cards from HQ")
                 :cost [:trash]
-                :effect (effect (trash-cards (take (min (get-counters card :power) (count (:hand corp)))
-                                                   (shuffle (:hand corp)))))}]})
+                :msg (msg "trash " (quantify "card" (min (get-counters card :power) (count (:hand corp))))
+                          " from HQ")
+                :effect (effect (trash-cards eid (take (min (get-counters card :power) (count (:hand corp)))
+                                                       (shuffle (:hand corp)))))}]})
 
 (define-card "Climactic Showdown"
   (letfn [(iced-servers [state side eid card]
