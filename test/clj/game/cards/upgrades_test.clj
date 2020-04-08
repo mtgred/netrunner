@@ -1863,6 +1863,39 @@
       (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
+(deftest nihongai-grid
+  ;; Nihongai Grid
+  (testing "Basic test. #5013"
+    (do-game
+      (new-game {:corp {:deck []
+                        :hand ["Nihongai Grid" "Beanstalk Royalties"
+                                "Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma" "Fire Wall"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (play-from-hand state :corp "Nihongai Grid" "R&D")
+      (core/rez state :corp (get-content state :rd 0))
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (is (= ["Yes" "No"] (prompt-buttons :corp)) "Has Nihongai Grid prompt")
+      (click-prompt state :corp "Yes")
+      (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]
+             (map :title (prompt-buttons :corp)))
+          "Corp sees top 5 cards")
+      (click-prompt state :corp "Accelerated Beta Test")
+      (click-card state :corp "Beanstalk Royalties")
+      (click-prompt state :runner "Card from deck")
+      (is (= "You accessed Beanstalk Royalties." (:msg (prompt-map :runner)))
+          "Runner accesses switched card")
+      (click-prompt state :runner "No action")
+      (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
+      (is (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (take-credits state :runner)
+      (is (find-card "Beanstalk Royalties" (:hand (get-corp)))))))
+
 (deftest oberth-protocol
   ;; Oberth Protocol
   (do-game

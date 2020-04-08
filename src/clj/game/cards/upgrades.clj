@@ -953,47 +953,35 @@
   {:events [{:event :successful-run
              :interactive (req true)
              :async true
-             :req (req (and this-server
-                            (or (< (:credit runner) 6)
-                                (< (count (:hand runner)) 2))
-                            (not-empty (:hand corp))))
-             :effect (req (show-wait-prompt state :runner "Corp to use Nihongai Grid")
-                          (let [top5 (take 5 (:deck corp))]
-                            (if (pos? (count top5))
+             :effect
+             (effect
+               (continue-ability
+                 {:optional
+                  {:req (req (and this-server
+                                  (or (< (:credit runner) 6)
+                                      (< (count (:hand runner)) 2))
+                                  (not-empty (:hand corp))
+                                  (pos? (count (take 5 (:deck corp))))))
+                   :prompt (msg "Use Nihongai Grid to look at the top "
+                                (quantify (count (take 5 (:deck corp))) "card")
+                                " of R&D and swap one with a card from HQ?")
+                   :yes-ability
+                   {:async true
+                    :prompt "Choose a card in R&D"
+                    :choices (take 5 (:deck corp))
+                    :effect (effect
                               (continue-ability
-                                state side
-                                {:optional
-                                 {:prompt "Use Nihongai Grid to look at top 5 cards of R&D and swap one with a card from HQ?"
-                                  :yes-ability
+                                (let [rdc target]
                                   {:async true
-                                   :prompt "Choose a card to swap with a card from HQ"
-                                   :choices top5
-                                   :effect
-                                   (effect
-                                     (continue-ability
-                                       (let [rdc target]
-                                         {:async true
-                                          :prompt (msg "Choose a card in HQ to swap for " (:title rdc))
-                                          :choices {:card in-hand?}
-                                          :msg "swap a card from the top 5 of R&D with a card in HQ"
-                                          :effect
-                                          (req (let [hqc target
-                                                     newrdc (assoc hqc :zone [:deck])
-                                                     deck (vec (get-in @state [:corp :deck]))
-                                                     rdcndx (first (keep-indexed #(when (same-card? %2 rdc) %1) deck))
-                                                     newdeck (seq (apply conj (subvec deck 0 rdcndx) target (subvec deck rdcndx)))]
-                                                 (swap! state assoc-in [:corp :deck] newdeck)
-                                                 (swap! state update-in [:corp :hand]
-                                                        (fn [coll] (remove-once #(same-card? % hqc) coll)))
-                                                 (move state side rdc :hand)
-                                                 (clear-wait-prompt state :runner)
-                                                 (effect-completed state side eid)))})
-                                       card nil))}
-                                  :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                            (effect-completed state side eid))}}}
-                                card nil)
-                              (do (clear-wait-prompt state :runner)
-                                  (effect-completed state side eid)))))}]})
+                                   :prompt "Choose a card in HQ"
+                                   :choices {:card in-hand?}
+                                   :msg "swap a card from the top 5 of R&D with a card in HQ"
+                                   :effect (req (move state side rdc :hand)
+                                                (move state side target :deck {:index (:index rdc)})
+                                                (clear-wait-prompt state :runner)
+                                                (effect-completed state side eid))})
+                                card nil))}}}
+                 card nil))}]})
 
 (define-card "Oaktown Grid"
   {:constant-effects [{:type :trash-cost
