@@ -1,6 +1,7 @@
 (ns game.cards.operations-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.eid :refer [make-eid]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -57,7 +58,7 @@
       (score-agenda state :corp (find-card "Philotic Entanglement" (:hand (get-corp))))
       (take-credits state :corp)
       (play-from-hand state :runner "Turntable")
-      (core/steal state :runner (find-card "Profiteering" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Profiteering" (:hand (get-corp))))
       (click-prompt state :runner "Yes")
       (click-card state :runner (find-card "Philotic Entanglement" (:scored (get-corp))))
       (is (= 2 (:agenda-point (get-corp))))
@@ -472,7 +473,6 @@
           (is (= 5 (:credit (get-corp))) "Events on Public agenda work; gained 2 credits from advancing")
           (take-credits state :corp)
           (run-empty-server state "Server 2")
-          (click-card state :runner oak)
           (click-prompt state :runner "Steal")
           (is (= 2 (count-tags state)) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
@@ -1207,8 +1207,8 @@
       (is (= 2 (count-tags state)) "Runner gained 2 tags")
       (take-credits state :corp)
       (is (zero? (count-tags state)) "Runner lost 2 tags")
-      (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
-      (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Project Beale" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Explode-a-palooza" (:hand (get-corp))))
       (take-credits state :runner)
       (is (= 4 (:agenda-point (get-runner))))
       (is (= 3 (:agenda-point (get-corp))))
@@ -1226,8 +1226,8 @@
                                "Project Beale"
                                "Explode-a-palooza"]}})
       (take-credits state :corp)
-      (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
-      (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Project Beale" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Explode-a-palooza" (:hand (get-corp))))
       (take-credits state :runner)
       (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
       (is (= 2 (count-tags state)) "Runner gained 2 tags")
@@ -1246,7 +1246,7 @@
       (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
       (take-credits state :corp)
       (gain-tags state :runner 1)
-      (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Project Beale" (:hand (get-corp))))
       (take-credits state :runner)
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 2 (:agenda-point (get-runner))))
@@ -1263,7 +1263,7 @@
       (is (zero? (:agenda-point (get-runner))))
       (is (= "15 Minutes" (:title (first (:deck (get-corp))))))
       (take-credits state :corp)
-      (core/steal state :runner (find-card "15 Minutes" (:deck (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "15 Minutes" (:deck (get-corp))))
       (take-credits state :runner)
       (is (= 2 (:agenda-point (get-corp))))
       (is (= 1 (:agenda-point (get-runner))))
@@ -1283,7 +1283,7 @@
       (score-agenda state :corp (find-card "Global Food Initiative" (:hand (get-corp))))
       (take-credits state :corp)
       (gain-tags state :runner 1)
-      (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
+      (core/steal state :runner (make-eid state) (find-card "Mandatory Upgrades" (:hand (get-corp))))
       (take-credits state :runner)
       (is (= 3 (:agenda-point (get-corp))))
       (is (= 2 (:agenda-point (get-runner))))

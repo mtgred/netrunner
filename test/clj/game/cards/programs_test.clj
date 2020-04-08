@@ -75,7 +75,26 @@
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall"))))
+      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")))
+  (testing "Can only be used once per turn. #5032"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]
+                        :credits 10}
+                 :runner {:hand ["Afterimage"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Afterimage")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "No bypass prompt"))))
 
 (deftest algernon
   ;; Algernon - pay 2 credits to gain a click, trash if no successful run
@@ -2966,8 +2985,7 @@
     (play-from-hand state :runner "Nyashia")
     (run-empty-server state "R&D")
     (click-prompt state :runner "Yes")
-    (is (= 2 (+ (get-in @state [:runner :rd-access])
-                (core/access-bonus-count (:run @state) :rd))))))
+    (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
 
 (deftest odore
   (testing "Basic test"
@@ -3700,7 +3718,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
-      (click-prompt state :runner "Unrezzed upgrade in HQ")
+      (click-prompt state :runner "Unrezzed upgrade")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
 (deftest sage

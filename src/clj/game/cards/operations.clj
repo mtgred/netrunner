@@ -325,20 +325,14 @@
   {:choices {:card #(and (agenda? %)
                          (in-hand? %))}
    :async true
-   :effect (effect
-             (continue-ability
-               (let [agenda target]
-                 {:prompt (str "Choose a server to install " (:title agenda))
-                  :choices (installable-servers state agenda)
-                  :effect (req (corp-install state side agenda target {:install-state :face-up})
-                               ; find where the agenda ended up and host on it
-                               (let [agenda (some #(when (same-card? % agenda) %)
-                                                  (all-installed state :corp))]
-                                 (host state side agenda (assoc card
-                                                                :seen true
-                                                                :installed true))
-                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))))})
-               card nil))
+   :effect (req (wait-for (corp-install state side target nil {:install-state :face-up})
+                          (let [agenda async-result]
+                            (host state side agenda (assoc card
+                                                           :seen true
+                                                           :condition true
+                                                           :installed true))
+                            (system-msg state side (str "hosts Casting Call on " (:title agenda)))
+                            (effect-completed state side eid))))
    :events [{:event :access
              :condition :hosted
              :async true
@@ -1216,7 +1210,7 @@
                          (has-subtype? % "Connection")
                          (installed? %))}
    :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
-   :effect (req (host state side (get-card state target) (assoc card :seen true))
+   :effect (req (host state side (get-card state target) (assoc card :seen true :condition true))
                 (swap! state update-in [:runner :tag :additional] inc)
                 (trigger-event state :corp :runner-additional-tag-change 1))
    :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
@@ -2214,9 +2208,7 @@
                                    :seen true
                                    :rezzed true
                                    :subtype (combine-subtypes false (:subtype target) "Public")))
-                   (host (get-card state target) (assoc card
-                                                        :zone [:discard]
-                                                        :seen true))
+                   (host (get-card state target) (assoc card :seen true :condition true))
                    (register-events
                      target
                      [{:event :advance
@@ -2252,7 +2244,7 @@
                card nil))})
 
 (define-card "Trojan Horse"
-  {:req (req (:accessed-cards runner-reg))
+  {:req (req (:accessed-cards runner-reg-last))
    :trace {:base 4
            :label "Trace 4 - Trash a program"
            :successful {:async true

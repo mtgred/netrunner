@@ -1,4 +1,4 @@
-(ns game.engine.runs-test
+(ns game.core.runs-test
   (:require [game.core :as core]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -409,3 +409,17 @@
         (core/continue state :runner {:jack-out true})
         (is (second-last-log-contains? state "Runner approaches") "Approach triggers still happened")
         (is (last-log-contains? state "Runner jacks out") "Runner got jacked out")))))
+
+(deftest continue-no-action
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Ice Wall" 2)]}
+               :runner {:hand ["Devil Charm"]
+                        :discard ["Paperclip"]}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Devil Charm")
+    (run-on state :rd)
+    (core/continue state :runner nil)
+    (core/rez state :corp (get-ice state :rd 0) {:press-no-action true})
+    (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))

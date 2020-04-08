@@ -1,6 +1,7 @@
 (ns game.cards.hardware-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.eid :refer [make-eid]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -1020,13 +1021,10 @@
       (play-from-hand state :runner "The Maker's Eye")
       (run-continue state)
       (run-successful state)
-      (click-prompt state :runner "Card from deck")
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
       (click-prompt state :runner "No action")
       (is (not (:run @state)))
@@ -2051,7 +2049,7 @@
       (play-from-hand state :runner "Imp")
       (run-empty-server state :archives)
       (click-prompt state :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
-      ; (click-prompt state :runner "Cyberdex Virus Suite")
+      (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (run-empty-server state :rd)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
@@ -2075,7 +2073,24 @@
       (click-prompt state :runner "No action")
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
-      (is (= 2 (count (:discard (get-corp)))) "Ice Wall and Obokata"))))
+      (is (= 2 (count (:discard (get-corp)))) "Ice Wall and Obokata")))
+  (testing "Gang Sign interaction. #5021"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hostile Takeover" 5)]
+                        :hand ["Hostile Takeover" (qty "Hedge Fund" 2)]}
+                 :runner {:hand ["Maw" "Gang Sign"]
+                          :credits 10}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Maw")
+      (play-from-hand state :runner "Gang Sign")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (= 1 (count (:discard (get-corp)))) "Maw forces a discard")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :runner "No action")
+      (is (= 2 (count (:discard (get-corp)))) "Maw forces another discard"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
@@ -2122,7 +2137,6 @@
       (let [maya (get-hardware state 0)
             accessed (first (:deck (get-corp)))]
         (run-empty-server state :rd)
-        (click-prompt state :runner "Card from deck")
         (is (= (:cid accessed) (:cid (:card (prompt-map :runner)))) "Accessing the top card of R&D")
         (card-ability state :runner maya 0)
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
@@ -2150,9 +2164,8 @@
         (card-ability state :runner (refresh eye) 0)
         (let [num-creds (:credit (get-runner))]
           (dotimes [_ 2]
-            (click-prompt state :runner "Card from deck")
             (click-prompt state :runner "No action")
-            (click-prompt state :runner "Yes")) ;Aeneas
+            (click-prompt state :runner "Yes")) ; Aeneas
           (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas"))))))
 
 (deftest mu-safecracker
@@ -2193,9 +2206,7 @@
             "Runner has the Mu Safecracker prompt")
         (click-prompt state :runner "Yes")
         (click-card state :runner "Ghost Runner")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended")))
     (testing "Access R&D"
@@ -2213,9 +2224,7 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner "Ghost Runner")
         (click-card state :runner "Ghost Runner")
-        (click-prompt state :runner "Card from deck")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from deck")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended")))))
 
@@ -2251,10 +2260,9 @@
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
   (testing "Basic test"
     (do-game
-      (new-game {:runner {:deck ["Obelus" "Nerve Agent"
-                                 (qty "Sure Gamble" 3) (qty "Cache" 3)]}})
+      (new-game {:runner {:deck [(qty "Sure Gamble" 3) (qty "Cache" 3)]
+                          :hand ["Obelus" "Nerve Agent"]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Obelus" "Nerve Agent"])
       (core/gain state :runner :credit 10 :click 3)
       (play-from-hand state :runner "Nerve Agent")
       (let [nerve (get-program state 0)]
@@ -2269,9 +2277,7 @@
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
         (click-prompt state :runner "1")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
         (is (empty? (:hand (get-runner))) "No cards drawn by Obelus, already had successful HQ run")
         (take-credits state :runner)
@@ -2279,29 +2285,25 @@
         (run-empty-server state :hq)
         (is (= 3 (get-counters (refresh nerve) :virus)) "3 virus counters on Nerve Agent")
         (click-prompt state :runner "2")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
         (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
   (testing "running and trashing Crisium Grid makes run neither successful/unsuccessful"
     (do-game
-      (new-game {:corp {:deck ["Hedge Fund" "Crisium Grid"]}
-                 :runner {:deck ["Obelus" (qty "Sure Gamble" 3)]}})
-      (starting-hand state :corp ["Crisium Grid"])
+      (new-game {:corp {:deck ["Hedge Fund"]
+                        :hand ["Crisium Grid"]}
+                 :runner {:hand ["Obelus"]
+                          :deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Crisium Grid" "R&D")
       (core/rez state :corp (get-content state :rd 0))
       (take-credits state :corp)
-      (starting-hand state :runner ["Obelus"])
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Obelus")
       (is (empty? (:hand (get-runner))) "No cards in hand")
       (run-empty-server state "R&D")
       (click-prompt state :runner "Crisium Grid")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action")
       (is (empty? (:hand (get-runner))) "Crisium Grid blocked successful run")
       (run-empty-server state "R&D")
@@ -2310,13 +2312,12 @@
   (testing "using Hades Shard during run to increase draw"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Restructure" 3)]}
-                 :runner {:deck ["Obelus" "Hades Shard"
-                                 (qty "Sure Gamble" 3) (qty "Cache" 3)]}})
+                 :runner {:hand ["Obelus" "Hades Shard"]
+                          :deck [(qty "Sure Gamble" 3) (qty "Cache" 3)]}})
       (starting-hand state :corp ["Hedge Fund" "Hedge Fund"])
       (trash-from-hand state :corp "Hedge Fund")
       (trash-from-hand state :corp "Hedge Fund")
       (take-credits state :corp)
-      (starting-hand state :runner ["Obelus" "Hades Shard"])
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Obelus")
       (play-from-hand state :runner "Hades Shard")
@@ -2326,12 +2327,12 @@
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
   (testing "running a remote server first doesn't block card draw"
     (do-game
-      (new-game {:corp {:deck ["Urban Renewal" "Hedge Fund"]}
-                 :runner {:deck ["Obelus" (qty "Sure Gamble" 3)]}})
-      (starting-hand state :corp ["Urban Renewal"])
+      (new-game {:corp {:deck ["Hedge Fund"]
+                        :hand ["Urban Renewal"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Obelus"]}})
       (play-from-hand state :corp "Urban Renewal" "New remote")
       (take-credits state :corp)
-      (starting-hand state :runner ["Obelus"])
       (play-from-hand state :runner "Obelus")
       (is (empty? (:hand (get-runner))) "No cards in hand")
       (run-empty-server state "Server 1")
@@ -2996,9 +2997,7 @@
     (click-prompt state :runner "Done")
     (run-continue state)
     (run-successful state)
-    (click-prompt state :runner "Card from deck")
     (click-prompt state :runner "No action") ; First card
-    (click-prompt state :runner "Card from deck")
     (click-prompt state :runner "Steal") ; Second card, due to additional access
     (is (nil? (:run @state)) "Run is over")))
 
@@ -3365,8 +3364,8 @@
       ;; Gang Sign should trigger, without The Gauntlet pop-up
       (let [gs (get-resource state 0)]
         (prompt-is-card? state :runner gs))
-      ;; This will throw error if The Gauntlet triggers.
-      (click-prompt state :runner "Card from hand"))))
+      (is (= ["No action"] (prompt-buttons :runner)))
+      (click-prompt state :runner "No action"))))
 
 (deftest the-personal-touch
   ;; The Personal Touch - Give +1 strength to an icebreaker
@@ -3557,13 +3556,13 @@
       (play-from-hand state :runner "Turntable")
       (let [tt (get-hardware state 0)]
         ;; steal Project Vitruvius and swap for Mandatory Upgrades
-        (core/steal state :runner (find-card "Project Vitruvius" (:hand (get-corp))))
+        (core/steal state :runner (make-eid state) (find-card "Project Vitruvius" (:hand (get-corp))))
         (is (prompt-is-card? state :runner tt))
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
         (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
         ;; steal second Mandatory Upgrades and swap for Project Vitruvius
-        (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
+        (core/steal state :runner (make-eid state) (find-card "Mandatory Upgrades" (:hand (get-corp))))
         (is (prompt-is-card? state :runner tt))
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Project Vitruvius" (:scored (get-corp))))

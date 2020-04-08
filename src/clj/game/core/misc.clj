@@ -109,8 +109,8 @@
 (defn from-same-server?
   "True if the upgrade is in the root of the server that the target is in."
   [upgrade target]
-  (and upgrade
-       target
+  (and (:cid upgrade)
+       (:cid target)
        (= (central->zone (:zone target))
           (butlast (get-nested-zone upgrade)))))
 

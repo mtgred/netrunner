@@ -1793,23 +1793,19 @@
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (define-card "Kitsune"
-  {:subroutines [{:prompt "Select a card in HQ to force access"
-                  :choices {:card in-hand?}
-                  :label "Force the Runner to access a card in HQ"
-                  :msg (msg "force the Runner to access " (:title target))
-                  :effect (req (trash state side card)
-                               (wait-for (trigger-event-sync state side :pre-access :hq)
-                                         (wait-for (access-card state side target)
-                                                   (let [from-hq (dec (access-count state side :hq-access))]
-                                                     (continue-ability
-                                                       state :runner
-                                                       (access-helper-hq
-                                                         state from-hq
-                                                         ;; access-helper-hq uses a set to keep track of which cards have already
-                                                         ;; been accessed. by adding HQ root's contents to this set, we make the runner
-                                                         ;; unable to access those cards, as Kitsune intends.
-                                                         (conj (set (get-in @state [:corp :servers :hq :content])) target))
-                                                       card nil)))))}]})
+  {:subroutines [{:optional
+                  {:req (req (pos? (count (:hand corp))))
+                   :prompt "Force the Runner to access a card in HQ?"
+                   :yes-ability
+                   {:async true
+                    :prompt "Select a card in HQ to force access"
+                    :choices {:card (every-pred in-hand? corp?)
+                              :all true}
+                    :label "Force the Runner to access a card in HQ"
+                    :msg (msg "force the Runner to access " (:title target))
+                    :effect (req (wait-for (do-access state :runner [:hq] {:no-root true
+                                                                        :access-first target})
+                                           (trash state side eid card nil)))}}}]})
 
 (define-card "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
@@ -2914,7 +2910,7 @@
                  (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"
                                    :async true
                                    :msg "reduce cards accessed for this run by 1"
-                                   :effect (effect (access-bonus (-> card :zone second) -1))})]})
+                                   :effect (effect (access-bonus :total -1))})]})
 
 (define-card "Tapestry"
   {:subroutines [runner-loses-click

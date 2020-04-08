@@ -211,8 +211,7 @@
         (let [get-side #(-> % :card :side game.utils/to-keyword)
               is-active-player #(= (:active-player @state) (get-side %))
               handlers (gather-events state side event targets)]
-          (wait-for (trigger-event-sync-next state side (make-eid state eid) handlers event targets)
-                    (effect-completed state side eid))))))
+          (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player
   "Triggers the simultaneous event handlers for the given event trigger and player.

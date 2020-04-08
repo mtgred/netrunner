@@ -498,20 +498,23 @@
                                     :effect (effect (lose-tags :runner eid 1))}}}]})
 
 (define-card "Clan Vengeance"
-  {:events [{:event :pre-resolve-damage
-             :req (req (pos? (last targets)))
+  {:events [{:event :damage
+             :req (req (pos? (nth targets 2 0)))
              :effect (effect (add-counter card :power 1)
-                             (system-msg :runner (str "places 1 power counter on Clan Vengeance")))}]
+                             (system-msg :runner "places 1 power counter on Clan Vengeance"))}]
    :abilities [{:label "Trash 1 random card from HQ for each power counter"
+                :async true
                 :req (req (pos? (get-counters card :power)))
-                :msg (msg "trash " (min (get-counters card :power) (count (:hand corp))) " cards from HQ")
                 :cost [:trash]
-                :effect (effect (trash-cards (take (min (get-counters card :power) (count (:hand corp)))
-                                                   (shuffle (:hand corp)))))}]})
+                :msg (msg "trash " (quantify "card" (min (get-counters card :power) (count (:hand corp))))
+                          " from HQ")
+                :effect (effect (trash-cards eid (take (min (get-counters card :power) (count (:hand corp)))
+                                                       (shuffle (:hand corp)))))}]})
 
 (define-card "Climactic Showdown"
-  (letfn [(iced-servers [state]
-            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))
+  (letfn [(iced-servers [state side eid card]
+            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?)
+                    (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
              :prompt "Choose a piece of ice to trash or cancel"
@@ -533,9 +536,9 @@
                :effect (req (let [card (move state side card :rfg)]
                               (continue-ability
                                 state side
-                                (if (pos? (count (iced-servers state)))
+                                (if (pos? (count (iced-servers state side eid card)))
                                   {:prompt (msg  "Choose a server")
-                                   :choices (req (iced-servers state))
+                                   :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and removes Climactic Showdown from the game")
                                    :effect (effect (continue-ability
@@ -593,6 +596,7 @@
                          card nil))}]})
 
 (define-card "Counter Surveillance"
+  ;; TODO: Fix to use replace-access
   {:implementation "Does not prevent access of cards installed in the root of a server"
    :abilities [{:cost [:click 1 :trash]
                 :makes-run true
@@ -1053,8 +1057,9 @@
                               (str "add " (:title c) " to their score area and gain "
                                    (quantify (get-agenda-points state :runner c) "agenda point"))))
                   :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)]
-                                 (as-agenda state :runner eid c points {:register-events true})))}]}))
+                                     points (get-agenda-points state :runner c)
+                                     args {:register-events (card-flag? c :has-events-when-stolen true)}]
+                                 (as-agenda state :runner eid c points args)))}]}))
 
 (define-card "Find the Truth"
   {:events [{:event :post-runner-draw
@@ -1084,17 +1089,8 @@
   {:events [{:event :agenda-scored
              :async true
              :interactive (req true)
-             :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
-             :effect (req (wait-for
-                            ;; manually trigger the pre-access event to alert Nerve Agent.
-                            (trigger-event-sync state side :pre-access :hq)
-                            (let [from-hq (access-count state side :hq-access)
-                                  ;; access-helper-hq uses a set to keep track of which cards have already
-                                  ;; been accessed. By adding HQ root's contents to this set, we make the runner
-                                  ;; unable to access those cards, as Gang Sign intends.
-                                  accessed-cards (set (get-in @state [:corp :servers :hq :content]))
-                                  ability (access-helper-hq state from-hq accessed-cards)]
-                              (continue-ability state :runner ability card nil))))}]})
+             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
+             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]})
 
 (define-card "Gbahali"
   (bitey-boi 'last))
@@ -2024,14 +2020,9 @@
 
 (define-card "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
-             :effect (req (wait-for
-                            ;; manually trigger the pre-access event to alert Nerve Agent.
-                            (trigger-event-sync state side :pre-access :hq)
-                            (let [from-hq (access-count state side :hq-access)
-                                  ;; see note in Gang Sign
-                                  already-accessed (set (get-in @state [:corp :servers :hq :content]))
-                                  ability (access-helper-hq state from-hq already-accessed)]
-                              (resolve-ability state side ability card nil)))) }]
+             :async true
+             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
+             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]
    :abilities [{:msg "expose 1 card"
                 :label "Expose 1 installed card"
                 :choices {:card installed?}
@@ -2361,13 +2352,13 @@
                                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                           [:credit (install-cost state side target {:cost-bonus -1})])))
                                         (:hosted card))))
-                :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
-                :effect (req (wait-for (trash state side (update-in card [:hosted]
-                                                                    (fn [coll]
-                                                                      (remove-once #(same-card? % target) coll)))
-                                              {:cause :ability-cost})
-                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                       (dissoc target :facedown) {:cost-bonus -1})))}]})
+                :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                          (join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
+                          " are trashed as a result")
+                :effect (req (let [card (update-in card [:hosted] (fn [coll] (remove-once #(same-card? % target) coll)))]
+                               (wait-for (trash state side card {:cause :ability-cost})
+                                         (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                         (dissoc target :facedown) {:cost-bonus -1}))))}]})
 
 (define-card "Symmetrical Visage"
   {:events [{:event :runner-click-draw
@@ -2419,7 +2410,7 @@
                                 (program? target))
                             (not (facedown? target))))
              :effect (effect (add-counter :runner card :credit 1)
-                             (system-msg (str "places 1 [Credits] on Technical Writer")))}]
+                             (system-msg "places 1 [Credits] on Technical Writer"))}]
    :abilities [{:cost [:click 1 :trash]
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :effect (effect (gain-credits (get-counters card :credit)))}]})
@@ -2836,7 +2827,6 @@
               {:prompt "Name an agenda"
                :choices {:card-title (req (and (corp? target)
                                                (agenda? target)))}
-               :msg (msg "to name " (:title target))
                :effect (effect (system-msg (str "trashes " (:title card)
                                                 " to use " (:title card)
                                                 " to name " (:title target)))

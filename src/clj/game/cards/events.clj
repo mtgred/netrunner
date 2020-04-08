@@ -187,13 +187,14 @@
   ; Bravado only counts distinct pieces of ice that were passed.
   ; That means if a piece of ice was reinstalled and then repassed, it needs to be counted twice.
   ; This is handled by tracking :card-moved and counting them in :special :bravado-moved.
-  (letfn [(iced-servers [state]
-            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))]
+  (letfn [(iced-servers [state side eid card]
+            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?)
+                    (zones->sorted-names (get-runnable-zones state side eid card nil))))]
     {:async true
      :makes-run true
-     :req (req (pos? (count (iced-servers state))))
+     :req (req (pos? (count (iced-servers state side eid card))))
      :prompt "Choose an iced server"
-     :choices (req (iced-servers state))
+     :choices (req (iced-servers state side eid card))
      :effect (effect (register-events
                        card
                        [{:event :pass-ice
@@ -1586,8 +1587,9 @@
                                     (when revealed
                                       (reveal state side revealed))
                                     (wait-for
-                                      (resolve-ability state side (when (and revealed (empty? (get-cards-to-access state)))
-                                                                    (access-revealed revealed)) card nil)
+                                      (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
+                                                                    (access-revealed revealed))
+                                                       card nil)
                                       (shuffle! state :corp :deck)
                                       (system-msg state :runner "shuffles R&D")
                                       (effect-completed state side eid)))))}}
@@ -1915,7 +1917,7 @@
    :prompt "Choose a resource to host On the Lam"
    :choices {:card #(and (resource? %)
                          (installed? %))}
-   :effect (effect (host target (assoc card :installed true))
+   :effect (effect (host target (assoc card :installed true :condition true))
                    (card-init (find-latest state card) {:resolve-effect false})
                    (system-msg (str "hosts On the Lam on " (:title target))))
    :interactions {:prevent [{:type #{:net :brain :meat :tag}
@@ -2006,7 +2008,7 @@
                        :prompt "Select an agenda to host Political Graffiti"
                        :choices {:card #(in-corp-scored? state side %)}
                        :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                       :effect (effect (host :runner (get-card state target) (assoc card :installed true))
+                       :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
                                        (update-all-agenda-points))}}
                      card))
    :constant-effects [{:type :agenda-value
@@ -2143,12 +2145,13 @@
                card nil))})
 
 (define-card "Quest Completed"
-  {:req (req (and (some #{:hq} (:successful-run runner-reg))
+  {:async true
+   :req (req (and (some #{:hq} (:successful-run runner-reg))
                   (some #{:rd} (:successful-run runner-reg))
                   (some #{:archives} (:successful-run runner-reg))))
    :choices {:card installed?}
    :msg (msg "access " (:title target))
-   :effect (effect (access-card target))})
+   :effect (effect (access-card eid target))})
 
 (define-card "Rebirth"
   {:msg "change identities"
@@ -2334,7 +2337,7 @@
                :effect
                (effect
                  (continue-ability
-                   (let [n (min (-> corp :hand count) (access-count state side :hq-access))
+                   (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
                          heap (count (:discard runner))]
                      (if (pos? heap)
                        {:show-discard true
@@ -2347,10 +2350,10 @@
                                               (in-discard? %))}
                         :effect (req (doseq [c targets]
                                        (move state side c :hand))
-                                     (do-access state side eid (:server run) {:hq-root-only true}))}
+                                     (effect-completed state side eid))}
                        {:async true
                         :msg (msg "take no cards from their Heap to their Grip")
-                        :effect (req (do-access state side eid (:server run) {:hq-root-only true}))}))
+                        :effect (req (effect-completed state side eid))}))
                    card nil))}}
              card nil))})
 

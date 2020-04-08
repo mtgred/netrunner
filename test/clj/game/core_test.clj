@@ -113,8 +113,10 @@
                                      (:hand corp)
                                      (:discard corp)))
                     (transform (qty "Hedge Fund" 3)))
-          :hand (flatten (:hand corp))
-          :discard (flatten (:discard corp))
+          :hand (when-let [hand (:hand corp)]
+                  (flatten hand))
+          :discard (when-let [discard (:discard corp)]
+                     (flatten discard))
           :identity (when-let [id (:id corp)]
                       (server-card id))
           :credits (:credits corp)
@@ -123,8 +125,10 @@
                                        (:hand runner)
                                        (:discard runner)))
                       (transform (qty "Sure Gamble" 3)))
-            :hand (flatten (:hand runner))
-            :discard (flatten (:discard runner))
+            :hand (when-let [hand (:hand runner)]
+                    (flatten hand))
+            :discard (when-let [discard (:discard runner)]
+                       (flatten discard))
             :identity (when-let [id (:id runner)]
                         (server-card id))
             :credits (:credits runner)
@@ -158,7 +162,7 @@
     ;; Gotta move cards where they need to go
     (doseq [side [:corp :runner]]
       (let [side-map (if (= :corp side) corp runner)]
-        (when-let [hand (seq (:hand side-map))]
+        (when-let [hand (:hand side-map)]
           (starting-hand state side hand))
         (when (seq (:discard side-map))
           (doseq [ctitle (:discard side-map)]
@@ -170,7 +174,8 @@
                              (find-card ctitle (get-in @state [side :hand]))))
                        :discard)))
         (when (:credits side-map)
-          (swap! state assoc-in [side :credit] (:credits side-map)))))
+          (swap! state assoc-in [side :credit] (:credits side-map))))
+      (core/clear-win state side))
     ;; These are side independent so they happen ouside the loop
     (when-let [bad-pub (:bad-pub corp)]
       (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))

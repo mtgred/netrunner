@@ -70,6 +70,24 @@
   [card]
   (= (:zone card) [:deck]))
 
+(defn in-archives-root?
+  [card]
+  (= (:zone card) [:servers :archives :content]))
+
+(defn in-hq-root?
+  [card]
+  (= (:zone card) [:servers :hq :content]))
+
+(defn in-rd-root?
+  [card]
+  (= (:zone card) [:servers :rd :content]))
+
+(defn in-root?
+  [card]
+  (or (in-archives-root? card)
+      (in-hq-root? card)
+      (in-rd-root? card)))
+
 (defn in-play-area?
   "Checks if the specified card is in the play area."
   [card]

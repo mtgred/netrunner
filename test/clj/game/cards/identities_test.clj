@@ -310,17 +310,15 @@
       (run-empty-server state :rd)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "0 [Credits]")
-      (is (= 2 (core/access-count state :runner :rd-access)) "Should access additional card from ability")
-      (click-prompt state :runner "Card from deck")
+      (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")
       (click-prompt state :runner "No action")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state :rd)
       (click-prompt state :corp "1 [Credits]")
       (click-prompt state :runner "0 [Credits]")
-      (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))
+      (is (= 1 (:total (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))
   (testing "Shiro interaction: second sub should give Akiko 2 accesses"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
@@ -339,10 +337,8 @@
         (run-continue state)
         (click-prompt state :corp "0 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (is (= 2 (core/access-count state :runner :rd-access)) "Should access additional card from ability")
-        (click-prompt state :runner "Card from deck")
+        (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Card from deck")
         (click-prompt state :runner "No action")
         (run-successful state)
         (take-credits state :runner)
@@ -353,7 +349,7 @@
         (click-prompt state :corp "No")
         (click-prompt state :corp "1 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))))
+        (is (= 1 (:total (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))))
 
 (deftest alice-merchant-clan-agitator
   ;; Alice Merchant
@@ -856,7 +852,6 @@
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
-      (click-prompt state :runner "Card from hand")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
       (is (nil? (:run @state)) "No run has been created"))))
@@ -1177,7 +1172,6 @@
       (take-credits state :runner)
       (play-from-hand state :corp "15 Minutes" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
   (testing "Interactions with Employee Strike. Issue #1313"
@@ -1925,12 +1919,10 @@
       (click-card state :runner (get-content state :remote2 0))
       (is (find-card "Hostile Takeover" (:hand (get-corp))) "Hostile Takeover returned to hand")
       (click-prompt state :runner "Gang Sign")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "Steal")
       (is (find-card "Hostile Takeover" (:scored (get-runner))) "Hostile Takeover stolen with Gang Sign")
       (click-card state :runner (get-content state :remote3 0))
       (is (find-card "Geothermal Fracking" (:hand (get-corp))) "Geothermal Fracking returned to hand")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "Steal")
       (is (find-card "Hostile Takeover" (:scored (get-runner))) "Geothermal Fracking stolen with Gang Sign")
       (click-prompt state :runner "Done")))
@@ -1994,8 +1986,8 @@
       (take-credits state :runner)
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Simultaneous prompt: Leela or Gang Sign
+      (is (= ["Leela Patel: Trained Pragmatist" "Gang Sign"] (map :title (prompt-buttons :runner))))
       (click-prompt state :runner "Gang Sign")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "Steal")
       (click-card state :runner (get-content state :remote2 0)) ; Bounce from Gang Sign steal
       (click-card state :runner (get-content state :remote3 0)) ; Bounce from Hostile score
@@ -2896,13 +2888,10 @@
     (click-prompt state :corp "Cancel")
     (run-continue state)
     (run-successful state)
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
     (click-prompt state :runner "No action")
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
     (click-prompt state :runner "No action")
-    (click-prompt state :runner "Card from deck")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
     (click-prompt state :runner "No action")
     (is (not (:run @state)))
@@ -3221,7 +3210,28 @@
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-continue state)
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo")))
+  (testing "trashing a solo ice on an empty server still triggers #5025"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Corroder" "Hippo" "Sure Gamble"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (advance state (get-ice state :remote1 0) 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Hippo")
+      (run-on state :remote1)
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
+      (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended")
+      (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard

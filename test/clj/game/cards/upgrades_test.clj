@@ -1,6 +1,7 @@
 (ns game.cards.upgrades-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.eid :refer [make-eid]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -97,36 +98,50 @@
   ;; Ash 2X3ZB9CY
   (testing "Ash 2X3ZB9CY"
     (do-game
-     (new-game {:corp {:deck ["Ash 2X3ZB9CY" (qty "Ice Wall" 10)]}})
-     (starting-hand state :corp ["Ash 2X3ZB9CY" "Ice Wall"])
-     (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
-     (take-credits state :corp)
-     (let [ash (get-content state :hq 0)]
-       (core/rez state :corp ash)
-       (run-empty-server state "HQ")
-       (click-prompt state :corp "0")
-       (click-prompt state :runner "0")
-       (is (= "Ash 2X3ZB9CY" (-> (prompt-map :runner) :card :title)) "Should access Ash")
-       (click-prompt state :runner "Pay 3 [Credits] to trash")
-       (is (not (:run @state)) "Accessing Ash then ends the run"))))
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Ash 2X3ZB9CY" "Ice Wall"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+      (take-credits state :corp)
+      (let [ash (get-content state :hq 0)]
+        (core/rez state :corp ash)
+        (run-empty-server state "HQ")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (= "Ash 2X3ZB9CY" (-> (prompt-map :runner) :card :title)) "Should access Ash")
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (not (:run @state)) "Accessing Ash then ends the run"))))
   (testing "Ash+Dirty Laundry interaction"
     (do-game
-     (new-game {:corp {:deck ["Ash 2X3ZB9CY"]}
-                :runner {:deck ["Dirty Laundry"]}})
-     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
-     (core/rez state :corp (get-content state :remote1 0))
-     (take-credits state :corp)
-     (play-from-hand state :runner "Dirty Laundry")
-     (click-prompt state :runner "Server 1")
-     (is (:credit (get-runner) 3) "Runner has 1 credit")
-     (run-successful state)
-     (click-prompt state :corp "0")
-     (click-prompt state :runner "0")
-     (is (:credit (get-runner) 3) "Runner still has 3 credits")
-     (is (:run @state) "Run is not over")
-     (click-prompt state :runner "Pay 3 [Credits] to trash")
-     (is (:credit (get-runner) 5) "Runner got their laundry money")
-     (is (not (:run @state)) "Run not over"))))
+      (new-game {:corp {:deck ["Ash 2X3ZB9CY"]}
+                 :runner {:deck ["Dirty Laundry"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dirty Laundry")
+      (click-prompt state :runner "Server 1")
+      (is (:credit (get-runner) 3) "Runner has 1 credit")
+      (run-successful state)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (:credit (get-runner) 3) "Runner still has 3 credits")
+      (is (:run @state) "Run is not over")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (is (:credit (get-runner) 5) "Runner got their laundry money")
+      (is (not (:run @state)) "Run not over")))
+  (testing "installed in archives #5015"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ash 2X3ZB9CY"]
+                        :discard ["Hostile Takeover"]}})
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "Archives")
+      (take-credits state :corp)
+      (let [ash (get-content state :archives 0)]
+        (core/rez state :corp ash)
+        (run-empty-server state "Archives")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (empty? (:prompt (get-runner))) "Runner gets no further access prompts")))))
 
 (deftest awakening-center
   ;; Awakening Center
@@ -819,7 +834,6 @@
       (is (not (:successful-run (:register (get-runner)))) "No successful run in register")
       (click-prompt state :runner "Crisium Grid")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from hand")
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run ended")))
   (testing "with Gauntlet, #3082"
@@ -1670,7 +1684,7 @@
       (is (= 3 (:credit (get-runner))) "Runner paid play costs")
       (click-prompt state :runner "R&D")
       (run-successful state)
-      (click-prompt state :runner "Unrezzed upgrade in R&D")
+      (click-prompt state :runner "Unrezzed upgrade")
       (is (= ["[Demolition Run] Trash card"] (prompt-buttons :runner)) "Runner is not given the choice")))
   (testing "not to trash after installing Salsette Slums"
     (do-game
@@ -1683,7 +1697,7 @@
       (play-from-hand state :runner "Salsette Slums")
       (is (= 8 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "R&D")
-      (click-prompt state :runner "Unrezzed upgrade in R&D")
+      (click-prompt state :runner "Unrezzed upgrade")
       (is (= ["Pay 5 [Credits] to trash"] (prompt-buttons :runner)) "Runner is not given the choice"))))
 
 (deftest mwanza-city-grid
@@ -1703,7 +1717,6 @@
         (click-prompt state :runner "Mwanza City Grid")
         (click-prompt state :runner "No action")
         (dotimes [c 4]
-          (click-prompt state :runner "Card from hand")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
@@ -1720,7 +1733,6 @@
         (click-prompt state :runner "Mwanza City Grid")
         (click-prompt state :runner "Pay 5 [Credits] to trash")
         (dotimes [c 4]
-          (click-prompt state :runner "Card from hand")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
@@ -1756,24 +1768,24 @@
         (core/rez state :corp k-hq)
         (run-continue state)
         (card-subroutine state :corp k-hq 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Breached Dome" (:hand (get-corp))))
         (is (= 2 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (click-prompt state :runner "No action")
         ;; Access 3 more cards from HQ
         (dotimes [c 3]
-          (click-prompt state :runner "Card from hand")
           (click-prompt state :runner "No action"))
         (run-jack-out state)
         (run-on state "R&D")
         (core/rez state :corp k-rd)
         (run-continue state)
         (card-subroutine state :corp k-rd 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Breached Dome" (:hand (get-corp))))
         (is (= 1 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (click-prompt state :runner "No action")
         ;; Access 3 more cards from HQ
         (dotimes [c 3]
-          (click-prompt state :runner "Card from hand")
           (click-prompt state :runner "No action"))
         (run-jack-out state)
         (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines")))))
@@ -1851,6 +1863,39 @@
       (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
+(deftest nihongai-grid
+  ;; Nihongai Grid
+  (testing "Basic test. #5013"
+    (do-game
+      (new-game {:corp {:deck []
+                        :hand ["Nihongai Grid" "Beanstalk Royalties"
+                                "Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma" "Fire Wall"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (play-from-hand state :corp "Nihongai Grid" "R&D")
+      (core/rez state :corp (get-content state :rd 0))
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (is (= ["Yes" "No"] (prompt-buttons :corp)) "Has Nihongai Grid prompt")
+      (click-prompt state :corp "Yes")
+      (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]
+             (map :title (prompt-buttons :corp)))
+          "Corp sees top 5 cards")
+      (click-prompt state :corp "Accelerated Beta Test")
+      (click-card state :corp "Beanstalk Royalties")
+      (click-prompt state :runner "Card from deck")
+      (is (= "You accessed Beanstalk Royalties." (:msg (prompt-map :runner)))
+          "Runner accesses switched card")
+      (click-prompt state :runner "No action")
+      (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
+      (is (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (take-credits state :runner)
+      (is (find-card "Beanstalk Royalties" (:hand (get-corp)))))))
+
 (deftest oberth-protocol
   ;; Oberth Protocol
   (do-game
@@ -1907,7 +1952,7 @@
         (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
         (click-card state :runner ohg)
         (click-prompt state :runner "No action")
-        (core/steal state :runner (find-card "House of Knives" (:hand (get-corp))))
+        (core/steal state :runner (make-eid state) (find-card "House of Knives" (:hand (get-corp))))
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
         (click-prompt state :runner "Steal")
@@ -1922,6 +1967,7 @@
         (core/rez state :corp ohg)
         (run-successful state)
         ;; runner now chooses which to access.
+        (is (= ["Card from hand" "Old Hollywood Grid"] (prompt-buttons :runner)))
         (click-prompt state :runner "Card from hand")
         (click-prompt state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
@@ -1942,7 +1988,8 @@
       (core/rez state :corp (get-content state :hq 0))
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Gang sign fires
-      (click-prompt state :runner "Card from hand")
+      (is (= "You accessed Project Beale." (:msg (prompt-map :runner))))
+      (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (zero? (count (:scored (get-runner)))) "No stolen agendas")))
   (testing "Trash order"
@@ -1996,10 +2043,12 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect persists after trash"
@@ -2016,10 +2065,12 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect ends after current run"
@@ -2036,6 +2087,7 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= {:number 1 :default 0} (:choices (prompt-map :corp))))
         (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
@@ -2061,6 +2113,7 @@
       (run-empty-server state "HQ")
       (core/rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Apocalypse")
+      (is (= {:number 3 :default 0} (:choices (prompt-map :corp))))
       (click-prompt state :corp "3")
       (is (= 3 (count-tags state)) "Overseer Matrix gives the runner 3 tags")))
   (testing "Only works on Corp card trashes. Issue #4739"
@@ -2138,12 +2191,12 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (is (:run @state) "Run still active")
-      (click-prompt state :runner "Unrezzed upgrade in Archives")
+      (click-prompt state :runner "Unrezzed upgrade")
       (click-card state :runner (get-content state :archives 0))
       (click-prompt state :corp "Yes") ; corp pay for PriSec
       (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (:run @state) "Run still active")
-      (click-prompt state :runner "Unrezzed upgrade in Archives")
+      (click-prompt state :runner "Unrezzed upgrade")
       (click-prompt state :corp "Yes") ; corp pay for PriSec
       (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (not (:run @state)) "Run ended")
@@ -2908,8 +2961,11 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Dyson Mem Chip")
         (run-empty-server state :hq)
+        (is (= ["Warroid Tracker" "Crisium Grid"] (prompt-buttons :runner)))
         (click-prompt state :runner "Crisium Grid")
         (click-prompt state :runner "Pay 5 [Credits] to trash")
+        (click-prompt state :runner "Warroid Tracker")
+        (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")
         (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
   (testing "Shouldn't trigger when trashed by corp (via Hellion Beta Test). Issue #4941"

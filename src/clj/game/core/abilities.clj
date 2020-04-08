@@ -299,7 +299,6 @@
   "Shows a 'Yes/No' prompt and resolves the given ability's :yes-ability if Yes is chosen, and :no-ability otherwise.
   If ability has an :autoresolve entry, first call it as a 5-function, and if it returns 'Yes' or 'No'
   resolve the ability as if prompt was displayed and Yes/No was chosen."
-  ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
    (letfn [(prompt-fn [prompt-choice]
              (let [yes-ability (:yes-ability ability)

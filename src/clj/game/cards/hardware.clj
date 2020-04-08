@@ -873,23 +873,18 @@
 
 (define-card "Hippo"
   {:events [{:event :subroutines-broken
-             :req (req (let [pred #(and (same-card? (last run-ices) (first %))
-                                        (every? :broken (:subroutines (first %))))]
-                         (and (same-card? (last run-ices) target)
-                              (every? :broken (:subroutines target))
-                              (first-event? state side :subroutines-broken pred))))
-             :async true
-             :effect
-             (effect
-               (continue-ability
-                 {:optional
-                  {:prompt (str "Remove Hippo from the game to trash " (:title target) "?")
-                   :yes-ability
-                   {:async true
-                    :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
-                                    (move card :rfg)
-                                    (trash eid target nil))}}}
-                 card targets))}]})
+             :optional
+             {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
+                                         (every? :broken (:subroutines (first %))))]
+                          (and (same-card? (last run-ices) target)
+                               (every? :broken (:subroutines target))
+                               (first-event? state side :subroutines-broken pred))))
+              :prompt (msg "Remove Hippo from the game to trash " (:title target) "?")
+              :yes-ability
+              {:async true
+               :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
+                               (move card :rfg)
+                               (trash eid target nil))}}}]})
 
 (define-card "HQ Interface"
   {:in-play [:hq-access 1]})
@@ -1885,7 +1880,7 @@
                                    :replace-access
                                    {:mandatory true
                                     :async true
-                                    :effect (req (if (empty? (get-cards-to-access state))
+                                    :effect (req (if (not (get-only-card-to-access state))
                                                    (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")
                                                    (effect-completed state side eid)))}})))}}}
                  card nil))}]})
