@@ -2911,4 +2911,28 @@
         (click-prompt state :runner "Crisium Grid")
         (click-prompt state :runner "Pay 5 [Credits] to trash")
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+  (testing "Shouldn't trigger when trashed by corp (via Hellion Beta Test). Issue #4941"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker" (qty "Marilyn Campaign" 3) "Hellion Beta Test"]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]
+                          :credits 20}})
+      (play-from-hand state :corp "Warroid Tracker" "New remote")
+      (play-from-hand state :corp "Marilyn Campaign" "Remote 1")
+      (play-from-hand state :corp "Marilyn Campaign" "New remote")
+      (take-credits state :corp)
+      (let [war (get-content state :remote1 0)
+            mar1 (get-content state :remote1 1)]
+        (core/rez state :corp war)
+        (run-empty-server state :remote2)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Hellion Beta Test")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp mar1)
+        (click-card state :corp war)
+        (is (empty? (:prompt (get-corp))) "Corp has no prompt")))))

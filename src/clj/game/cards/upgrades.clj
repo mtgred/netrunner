@@ -1490,6 +1490,7 @@
     {:trash-effect
      {:async true
       :req (req (and (corp? target)
+                     (= side :runner)
                      (let [target-zone (:zone target)
                            target-zone (or (central->zone target-zone) target-zone)
                            warroid-zone (:previous-zone card)]
