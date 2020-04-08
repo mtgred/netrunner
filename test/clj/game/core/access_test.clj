@@ -263,8 +263,10 @@
         (play-from-hand state :corp "Bryan Stinson" "Archives")
         (core/rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
-        (run-empty-server state "Archives")
+        (run-on state "Archives")
+        (run-continue state)
         (core/access-bonus state :corp :archives -1)
+        (run-successful state)
         (is (= ["Hostile Takeover" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
         (click-prompt state :runner "No action")
@@ -283,8 +285,10 @@
         (play-from-hand state :corp "Bryan Stinson" "Archives")
         (core/rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
-        (run-empty-server state "Archives")
+        (run-on state "Archives")
+        (run-continue state)
         (core/access-bonus state :corp :archives -2)
+        (run-successful state)
         (is (= ["Hostile Takeover" "Shock!" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
         (click-prompt state :runner "No action")
@@ -295,7 +299,7 @@
         (is (empty? (:prompt (get-corp))))
         (is (empty? (:prompt (get-runner))))
         (is (nil? (get-run))))))
-  (testing "when access is limited to a single card, access only it"
+  (testing "when access is limited to a single card, access only it #5015"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Bryan Stinson"]
@@ -340,4 +344,22 @@
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
+      (is (nil? (get-run))))))
+
+(deftest remote-access
+  (testing "reduced by 1. #5014"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Bryan Stinson"]
+                        :discard ["Hedge Fund" "Hostile Takeover"]}
+                 :runner {:credits 10}})
+      (play-from-hand state :corp "Bryan Stinson" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-continue state)
+      (core/access-bonus state :runner :remote1 -1)
+      (run-successful state)
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
       (is (nil? (get-run))))))
