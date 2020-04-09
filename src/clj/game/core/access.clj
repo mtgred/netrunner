@@ -1060,18 +1060,21 @@
     {:base sum
      :total total}))
 
-(defn num-cards-central
-  [state side base server access-key no-root]
-  (let [mod (access-count state side access-key)
-        sum (+ base mod)
-        root (get-in @state [:corp :servers server :content])
-        installed (count (when-not no-root root))
-        total-mod (access-count state side :total)
-        total (if-let [max-access (get-in @state [:run :max-access])]
-                (min (+ sum installed total-mod) (+ total-mod max-access))
-                (+ sum installed total-mod))]
-    {:base sum
-     :total total}))
+(let [location {:rd :deck
+                :hq :hand
+                :archives :discard}]
+  (defn num-cards-central
+    [state side base server access-key no-root]
+    (let [mod (access-count state side access-key)
+          sum (min (+ base mod) (count (get-in @state [:corp (get location server)])))
+          root (get-in @state [:corp :servers server :content])
+          installed (count (when-not no-root root))
+          total-mod (access-count state side :total)
+          total (if-let [max-access (get-in @state [:run :max-access])]
+                  (min (+ sum installed total-mod) (+ total-mod max-access))
+                  (+ sum installed total-mod))]
+      {:base sum
+       :total total})))
 
 (defmethod num-cards-to-access :rd
   [state side server {:keys [no-root]}]
