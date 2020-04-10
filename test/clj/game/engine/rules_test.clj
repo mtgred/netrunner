@@ -393,63 +393,6 @@
       (take-credits state :corp)
       (is (= 0 (get-counters (refresh iw) :virus)) "Purging removed Ice Wall counters"))))
 
-(deftest multi-access-rd
-  ;; multi-access of R&D sees all cards and upgrades
-  (do-game
-    (new-game {:corp {:deck ["Keegan Lane" "Midway Station Grid"
-                             "Sweeps Week" "Manhunt"
-                             "Hedge Fund" "Big Brother"]}
-               :runner {:deck ["Medium"]}})
-    (play-from-hand state :corp "Keegan Lane" "R&D")
-    (play-from-hand state :corp "Midway Station Grid" "R&D")
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Sweeps Week" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Manhunt" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Big Brother" (:hand (get-corp))) :deck)
-    (core/rez state :corp (get-content state :rd 1))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Medium")
-    (let [keegan (get-content state :rd 0)
-          msg (get-content state :rd 1)
-          med (get-program state 0)]
-      (core/command-counter state :runner ["virus" 2])
-      (click-card state :runner (refresh med))
-      (run-empty-server state :rd)
-      (click-prompt state :runner "2")
-      (click-prompt state :runner "Card from deck")
-      (is (= "Hedge Fund" (-> (get-runner) :prompt first :card :title)))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Unrezzed upgrade")
-      (is (= "Keegan Lane" (-> (get-runner) :prompt first :card :title)))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Card from deck")
-      (is (= "Sweeps Week" (-> (get-runner) :prompt first :card :title)))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Midway Station Grid")
-      (is (= "Midway Station Grid" (-> (get-runner) :prompt first :card :title)))
-      (click-prompt state :runner "No action")
-      (is (= "Manhunt" (-> (get-runner) :prompt first :card :title)))
-      (click-prompt state :runner "No action")
-      (is (not (:run @state)) "Run ended"))))
-
-(deftest multi-steal-archives
-  ;; stealing multiple agendas from archives
-  (do-game
-    (new-game {:corp {:deck [(qty "Breaking News" 3)]}})
-    (trash-from-hand state :corp "Breaking News")
-    (trash-from-hand state :corp "Breaking News")
-    (trash-from-hand state :corp "Breaking News")
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (click-prompt state :runner "Breaking News")
-    (click-prompt state :runner "Steal")
-    (click-prompt state :runner "Breaking News")
-    (click-prompt state :runner "Steal")
-    (click-prompt state :runner "Breaking News")
-    (click-prompt state :runner "Steal")
-    (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
-    (is (empty (:discard (get-corp))) "0 agendas left in archives")))
-
 (deftest virus-counter-flags
   (testing "Set counter flag when virus card enters play with counters"
     (do-game

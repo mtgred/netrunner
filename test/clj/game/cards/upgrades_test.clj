@@ -2191,12 +2191,10 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (is (:run @state) "Run still active")
-      (click-prompt state :runner "Unrezzed upgrade")
       (click-card state :runner (get-content state :archives 0))
       (click-prompt state :corp "Yes") ; corp pay for PriSec
       (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (:run @state) "Run still active")
-      (click-prompt state :runner "Unrezzed upgrade")
       (click-prompt state :corp "Yes") ; corp pay for PriSec
       (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (not (:run @state)) "Run ended")
