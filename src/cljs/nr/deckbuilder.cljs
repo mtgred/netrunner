@@ -597,192 +597,194 @@
 (defn deck-builder
   "Make the deckbuilder view"
   []
-  (let [s (r/atom {:edit false
-                   :old-deck nil
-                   :edit-channel (chan)
-                   :deck nil})
-        decks (r/cursor app-state [:decks])
-        user (r/cursor app-state [:user])
-        decks-loaded (r/cursor app-state [:decks-loaded])
-        card-sets (r/cursor app-state [:sets])]
+  (r/with-let [active (r/cursor app-state [:active-page])]
+    (when (= "/deckbuilder" (first @active))
+      (let [s (r/atom {:edit false
+                       :old-deck nil
+                       :edit-channel (chan)
+                       :deck nil})
+            decks (r/cursor app-state [:decks])
+            user (r/cursor app-state [:user])
+            decks-loaded (r/cursor app-state [:decks-loaded])
+            card-sets (r/cursor app-state [:sets])]
 
-    (r/create-class
-      {:display-name "deck-builder"
+        (r/create-class
+          {:display-name "deck-builder"
 
-       :component-will-mount
-       (fn []
-         (let [edit-channel (:edit-channel @s)]
-           (go (while true
-                 (let [card (<! zoom-channel)]
-                   (swap! s assoc :zoom card))))
-           (go (while true
-                 (let [edit (<! edit-channel)
-                       card (:card edit)
-                       max-qty (:deck-limit card 3)
-                       cards (get-in @s [:deck :cards])
-                       match? #(when (= (get-in % [:card :title]) (:title card)) %)
-                       existing-line (some match? cards)
-                       new-qty (+ (or (:qty existing-line) 0) (:qty edit))
-                       remaining (remove match? cards)
-                       draft-id (decks/draft-id? (get-in @s [:deck :identity]))
-                       new-cards (cond
-                                   (and (not draft-id)
-                                        (> new-qty max-qty))
-                                   (conj remaining (assoc existing-line :qty max-qty))
-                                   (<= new-qty 0)
-                                   remaining
-                                   (empty? existing-line)
-                                   (conj remaining {:qty new-qty :card card})
-                                   :else
-                                   (conj remaining (assoc existing-line :qty new-qty)))]
-                   (swap! s assoc-in [:deck :cards] new-cards)
-                   (deck->str s)))))
-         (go (while true
-               (let [deck (<! select-channel)]
-                 (end-delete s)
-                 (swap! s assoc :deck deck)))))
+           :component-will-mount
+           (fn []
+             (let [edit-channel (:edit-channel @s)]
+               (go (while true
+                     (let [card (<! zoom-channel)]
+                       (swap! s assoc :zoom card))))
+               (go (while true
+                     (let [edit (<! edit-channel)
+                           card (:card edit)
+                           max-qty (:deck-limit card 3)
+                           cards (get-in @s [:deck :cards])
+                           match? #(when (= (get-in % [:card :title]) (:title card)) %)
+                           existing-line (some match? cards)
+                           new-qty (+ (or (:qty existing-line) 0) (:qty edit))
+                           remaining (remove match? cards)
+                           draft-id (decks/draft-id? (get-in @s [:deck :identity]))
+                           new-cards (cond
+                                       (and (not draft-id)
+                                            (> new-qty max-qty))
+                                       (conj remaining (assoc existing-line :qty max-qty))
+                                       (<= new-qty 0)
+                                       remaining
+                                       (empty? existing-line)
+                                       (conj remaining {:qty new-qty :card card})
+                                       :else
+                                       (conj remaining (assoc existing-line :qty new-qty)))]
+                       (swap! s assoc-in [:deck :cards] new-cards)
+                       (deck->str s)))))
+             (go (while true
+                   (let [deck (<! select-channel)]
+                     (end-delete s)
+                     (swap! s assoc :deck deck)))))
 
-       :reagent-render
-       (fn []
-         [:div
-          [:div.deckbuilder.blue-shade.panel
-           [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
-            [:div.decks
-             [:div.button-bar
-              (if @user
-                (list
-                  [:button {:key "corp"
-                            :on-click #(new-deck "Corp" s)} "New Corp deck"]
-                  [:button {:key "runner"
-                            :on-click #(new-deck "Runner" s)} "New Runner deck"])
-                (list
-                  [:button {:key "corp"
-                            :class "disabled"} "New Corp deck"]
-                  [:button {:key "runner"
-                            :class "disabled"} "New Runner deck"]))]
-             [:div.deck-collection
-              (when-not (:edit @s)
-                [deck-collection {:sets card-sets
-                                  :decks decks
-                                  :decks-loaded decks-loaded
-                                  :active-deck (:deck @s)}])]
-             [:div {:class (when (:edit @s) "edit")}
-              (when-let [line (:zoom @s)]
-                (let [art (:art line)
-                      id (:id line)
-                      updated-card (add-params-to-card (:card line) id art)]
-                  [card-view updated-card s]))]]
-
-            [:div.decklist
-             (when-let [deck (:deck @s)]
-               (let [identity (:identity deck)
-                     cards (:cards deck)
-                     edit? (:edit @s)
-                     delete? (:delete @s)]
-                 [:div
-                  (cond
-                    edit? [:div.button-bar
-                           [:button {:on-click #(save-deck s)} "Save"]
-                           [:button {:on-click #(cancel-edit s)} "Cancel"]]
-                    delete? [:div.button-bar
-                             [:button {:on-click #(handle-delete s)} "Confirm Delete"]
-                             [:button {:on-click #(end-delete s)} "Cancel"]]
-                    :else [:div.button-bar
-                           [:button {:on-click #(edit-deck s)} "Edit"]
-                           [:button {:on-click #(delete-deck s)} "Delete"]
-                           (when (and (:stats deck)
-                                      (not= "none" (get-in @app-state [:options :deckstats])))
-                             [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])])
-                  [:h3 (:name deck)]
-                  [:div.header
-                   [:img {:src (image-url identity)
-                          :alt (:title identity)}]
-                   [:h4 {:class (if (= :legal (format-status (:format deck) identity)) "fake-link" "casual")
-                         :on-mouse-enter #(put! zoom-channel {:card identity
-                                                              :art (:art identity)
-                                                              :id (:id identity)})
-                         :on-mouse-leave #(put! zoom-channel false) }
-                    (:title identity)
-                    (case (format-status (:format deck) identity)
-                      :banned banned-span
-                      :restricted restricted-span
-                      :rotated rotated-span
-                      "")]
-                   (let [count (decks/card-count cards)
-                         min-count (decks/min-deck-size identity)]
-                     [:div count " cards"
-                      (when (< count min-count)
-                        [:span.invalid (str " (minimum " min-count ")")])])
-                   (let [inf (decks/influence-count deck)
-                         id-limit (decks/id-inf-limit identity)]
-                     [:div "Influence: "
-                      ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
-                      [:span {:class (if (> inf id-limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
-                      "/" (if (= INFINITY id-limit) "∞" id-limit)
-                      " "
-                      (if (pos? inf)
-                        (deck-influence-html deck))])
-                   (when (= (:side identity) "Corp")
-                     (let [min-point (decks/min-agenda-points deck)
-                           points (decks/agenda-points deck)]
-                       [:div "Agenda points: " points
-                        (when (< points min-point)
-                          [:span.invalid " (minimum " min-point ")"])
-                        (when (> points (inc min-point))
-                          [:span.invalid " (maximum " (inc min-point) ")"])]))
-                   [:div [deck-status-span deck true true false]]]
-                  [:div.cards
-                   (doall
-                     (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
-                       ^{:key (or (first group) "Unknown")}
-                       [:div.group
-                        [:h4 (str (or (first group) "Unknown") " (" (decks/card-count (last group)) ")") ]
-                        (doall
-                          (for [line (sort-by #(get-in % [:card :title]) (last group))]
-                            ^{:key (or (get-in line [:card :code]) line)}
-                            [:div.line
-                             (if (:edit @s)
-                               (let [ch (:edit-channel @s)]
-                                 [:span
-                                  [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
-                                                  :type "button"} "-"]
-                                  [line-qty-span @card-sets deck line]
-                                  [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)})
-                                                  :type "button"} "+"]
-                                  [line-name-span @card-sets deck line]])
-                               [line-span @card-sets deck line])]))]))]]))]
-            [:div.deckedit
+           :reagent-render
+           (fn []
              [:div
-              [:div
-               [:h3 "Deck name"]
-               [:input.deckname {:type "text"
-                                 :placeholder "Deck name"
-                                 :ref #(swap! db-dom assoc :deckname %)
-                                 :value (get-in @s [:deck :name])
-                                 :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]]
-              [:div
-               [:h3 "Format"]
-               [:select.format {:value (get-in @s [:deck :format] "standard")
-                                :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
-                (for [[k v] slug->format]
-                  ^{:key k}
-                  [:option {:value k} v])]]
-              [:div
-               [:h3 "Identity"]
-               [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))
-                                  :on-change #(swap! s assoc-in [:deck :identity] (create-identity s %))}
-                (let [idents (side-identities (get-in @s [:deck :identity :side]))]
-                  (for [card (sort-by :display-name idents)]
-                    ^{:key (:display-name card)}
-                    [:option
-                     {:value (identity-option-string card)}
-                     (:display-name card)]))]]
-              [card-lookup s]
-              [:h3 "Decklist"
-               [:span.small "(Type or paste a decklist, it will be parsed)"]]]
-             [:textarea {:ref #(swap! db-dom assoc :deckedit %)
-                         :value (:deck-edit @s)
-                         :on-change #(handle-edit s)}]]]]])})))
+              [:div.deckbuilder.blue-shade.panel
+               [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
+                [:div.decks
+                 [:div.button-bar
+                  (if @user
+                    (list
+                      [:button {:key "corp"
+                                :on-click #(new-deck "Corp" s)} "New Corp deck"]
+                      [:button {:key "runner"
+                                :on-click #(new-deck "Runner" s)} "New Runner deck"])
+                    (list
+                      [:button {:key "corp"
+                                :class "disabled"} "New Corp deck"]
+                      [:button {:key "runner"
+                                :class "disabled"} "New Runner deck"]))]
+                 [:div.deck-collection
+                  (when-not (:edit @s)
+                    [deck-collection {:sets card-sets
+                                      :decks decks
+                                      :decks-loaded decks-loaded
+                                      :active-deck (:deck @s)}])]
+                 [:div {:class (when (:edit @s) "edit")}
+                  (when-let [line (:zoom @s)]
+                    (let [art (:art line)
+                          id (:id line)
+                          updated-card (add-params-to-card (:card line) id art)]
+                      [card-view updated-card s]))]]
+
+                [:div.decklist
+                 (when-let [deck (:deck @s)]
+                   (let [identity (:identity deck)
+                         cards (:cards deck)
+                         edit? (:edit @s)
+                         delete? (:delete @s)]
+                     [:div
+                      (cond
+                        edit? [:div.button-bar
+                               [:button {:on-click #(save-deck s)} "Save"]
+                               [:button {:on-click #(cancel-edit s)} "Cancel"]]
+                        delete? [:div.button-bar
+                                 [:button {:on-click #(handle-delete s)} "Confirm Delete"]
+                                 [:button {:on-click #(end-delete s)} "Cancel"]]
+                        :else [:div.button-bar
+                               [:button {:on-click #(edit-deck s)} "Edit"]
+                               [:button {:on-click #(delete-deck s)} "Delete"]
+                               (when (and (:stats deck)
+                                          (not= "none" (get-in @app-state [:options :deckstats])))
+                                 [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])])
+                      [:h3 (:name deck)]
+                      [:div.header
+                       [:img {:src (image-url identity)
+                              :alt (:title identity)}]
+                       [:h4 {:class (if (= :legal (format-status (:format deck) identity)) "fake-link" "casual")
+                             :on-mouse-enter #(put! zoom-channel {:card identity
+                                                                  :art (:art identity)
+                                                                  :id (:id identity)})
+                             :on-mouse-leave #(put! zoom-channel false) }
+                        (:title identity)
+                        (case (format-status (:format deck) identity)
+                          :banned banned-span
+                          :restricted restricted-span
+                          :rotated rotated-span
+                          "")]
+                       (let [count (decks/card-count cards)
+                             min-count (decks/min-deck-size identity)]
+                         [:div count " cards"
+                          (when (< count min-count)
+                            [:span.invalid (str " (minimum " min-count ")")])])
+                       (let [inf (decks/influence-count deck)
+                             id-limit (decks/id-inf-limit identity)]
+                         [:div "Influence: "
+                          ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
+                          [:span {:class (if (> inf id-limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
+                          "/" (if (= INFINITY id-limit) "∞" id-limit)
+                          " "
+                          (if (pos? inf)
+                            (deck-influence-html deck))])
+                       (when (= (:side identity) "Corp")
+                         (let [min-point (decks/min-agenda-points deck)
+                               points (decks/agenda-points deck)]
+                           [:div "Agenda points: " points
+                            (when (< points min-point)
+                              [:span.invalid " (minimum " min-point ")"])
+                            (when (> points (inc min-point))
+                              [:span.invalid " (maximum " (inc min-point) ")"])]))
+                       [:div [deck-status-span deck true true false]]]
+                      [:div.cards
+                       (doall
+                         (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
+                           ^{:key (or (first group) "Unknown")}
+                           [:div.group
+                            [:h4 (str (or (first group) "Unknown") " (" (decks/card-count (last group)) ")") ]
+                            (doall
+                              (for [line (sort-by #(get-in % [:card :title]) (last group))]
+                                ^{:key (or (get-in line [:card :code]) line)}
+                                [:div.line
+                                 (if (:edit @s)
+                                   (let [ch (:edit-channel @s)]
+                                     [:span
+                                      [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
+                                                      :type "button"} "-"]
+                                      [line-qty-span @card-sets deck line]
+                                      [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)})
+                                                      :type "button"} "+"]
+                                      [line-name-span @card-sets deck line]])
+                                   [line-span @card-sets deck line])]))]))]]))]
+                [:div.deckedit
+                 [:div
+                  [:div
+                   [:h3 "Deck name"]
+                   [:input.deckname {:type "text"
+                                     :placeholder "Deck name"
+                                     :ref #(swap! db-dom assoc :deckname %)
+                                     :value (get-in @s [:deck :name])
+                                     :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]]
+                  [:div
+                   [:h3 "Format"]
+                   [:select.format {:value (get-in @s [:deck :format] "standard")
+                                    :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
+                    (for [[k v] slug->format]
+                      ^{:key k}
+                      [:option {:value k} v])]]
+                  [:div
+                   [:h3 "Identity"]
+                   [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))
+                                      :on-change #(swap! s assoc-in [:deck :identity] (create-identity s %))}
+                    (let [idents (side-identities (get-in @s [:deck :identity :side]))]
+                      (for [card (sort-by :display-name idents)]
+                        ^{:key (:display-name card)}
+                        [:option
+                         {:value (identity-option-string card)}
+                         (:display-name card)]))]]
+                  [card-lookup s]
+                  [:h3 "Decklist"
+                   [:span.small "(Type or paste a decklist, it will be parsed)"]]]
+                 [:textarea {:ref #(swap! db-dom assoc :deckedit %)
+                             :value (:deck-edit @s)
+                             :on-change #(handle-edit s)}]]]]])})))))
 
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]

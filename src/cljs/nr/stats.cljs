@@ -53,22 +53,24 @@
         [:div "Lost: " lose  " (" pl "%)"]])]))
 
 (defn stats []
-  (r/with-let [stats (r/cursor app-state [:stats])]
-    [:div.blue-shade.content-page.panel
-     [:div
-      [:div
-       [:h3 "Game Stats"]
-       [stat-view {:stats @stats
-                   :start-key :games-started :complete-key :games-completed
-                   :win-key :wins :lose-key :loses}]]
-      [:div
-       [:h3 "Corp Stats"]
-       [stat-view {:stats @stats
-                   :start-key :games-started-corp :complete-key :games-completed-corp
-                   :win-key :wins-corp :lose-key :loses-corp}]]
-      [:div
-       [:h3 "Runner Stats"]
-       [stat-view {:stats @stats
-                   :start-key :games-started-runner :complete-key :games-completed-runner
-                   :win-key :wins-runner :lose-key :loses-runner}]]]
-     [:p [:button {:on-click #(clear-user-stats)} "Clear Stats"]]]))
+  (r/with-let [stats (r/cursor app-state [:stats])
+               active (r/cursor app-state [:active-page])]
+    (when (= "/stats" (first @active))
+      [:div.blue-shade.content-page.panel
+       [:div
+        [:div
+         [:h3 "Game Stats"]
+         [stat-view {:stats @stats
+                     :start-key :games-started :complete-key :games-completed
+                     :win-key :wins :lose-key :loses}]]
+        [:div
+         [:h3 "Corp Stats"]
+         [stat-view {:stats @stats
+                     :start-key :games-started-corp :complete-key :games-completed-corp
+                     :win-key :wins-corp :lose-key :loses-corp}]]
+        [:div
+         [:h3 "Runner Stats"]
+         [stat-view {:stats @stats
+                     :start-key :games-started-runner :complete-key :games-completed-runner
+                     :win-key :wins-runner :lose-key :loses-runner}]]]
+       [:p [:button {:on-click #(clear-user-stats)} "Clear Stats"]]])))

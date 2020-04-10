@@ -342,6 +342,7 @@
           [:span.flash-message (:flash-message @s)]]]]])))
 
 (defn account [user]
-  (when @user
-    [account-view user]))
+  (r/with-let [active (r/cursor app-state [:active-page])]
+    (when (and @user (= "/account" (first @active)))
+      [account-view user])))
 

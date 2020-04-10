@@ -196,76 +196,78 @@
           (update-message-channel channel data)))))
 
 (defn chat []
-  (let [s (r/atom {:channel :general
-                   :zoom false
-                   :zoom-ch (chan)
-                   :scrolling false})
-        old (atom {:prev-msg-count 0}) ; old is not a r/atom so we don't render when this is updated
-        cards-loaded (r/cursor app-state [:cards-loaded])
-        user (r/cursor app-state [:user])]
+  (r/with-let [active (r/cursor app-state [:active-page])]
+    (when (= "/" (first @active))
+      (let [s (r/atom {:channel :general
+                       :zoom false
+                       :zoom-ch (chan)
+                       :scrolling false})
+            old (atom {:prev-msg-count 0}) ; old is not a r/atom so we don't render when this is updated
+            cards-loaded (r/cursor app-state [:cards-loaded])
+            user (r/cursor app-state [:user])]
 
-    (r/create-class
-      {:display-name "chat"
+        (r/create-class
+          {:display-name "chat"
 
-       :component-will-mount
-       (fn []
-         (fetch-all-messages)
-         (go (while true
-               (let [card (<! (:zoom-ch @s))]
-                 (swap! s assoc :zoom card)))))
+           :component-will-mount
+           (fn []
+             (fetch-all-messages)
+             (go (while true
+                   (let [card (<! (:zoom-ch @s))]
+                     (swap! s assoc :zoom card)))))
 
-       :component-did-update
-       (fn []
-         (when-let [msg-list (:message-list @chat-state)]
-           (let [curr-channel (:channel @s)
-                 prev-channel (:prev-channel @old)
-                 curr-msg-count (count (get-in @app-state [:channels curr-channel]))
-                 prev-msg-count (:prev-msg-count @old)
-                 curr-page (:active-page @app-state)
-                 prev-page (:prev-page @old)
-                 is-scrolled (:scrolling @s)]
-             (when (or (and (zero? (.-scrollTop msg-list))
-                            (not is-scrolled))
-                       (not= curr-page prev-page)
-                       (not= curr-channel prev-channel)
-                       (and (not= curr-msg-count prev-msg-count)
-                            (not is-scrolled)))
-               (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))
-               ; use an atom instead of prev-props as r/current-component is only valid in component functions
-               (swap! old assoc :prev-page curr-page)
-               (swap! old assoc :prev-channel curr-channel)
-               (swap! old assoc :prev-msg-count curr-msg-count)))))
+           :component-did-update
+           (fn []
+             (when-let [msg-list (:message-list @chat-state)]
+               (let [curr-channel (:channel @s)
+                     prev-channel (:prev-channel @old)
+                     curr-msg-count (count (get-in @app-state [:channels curr-channel]))
+                     prev-msg-count (:prev-msg-count @old)
+                     curr-page (:active-page @app-state)
+                     prev-page (:prev-page @old)
+                     is-scrolled (:scrolling @s)]
+                 (when (or (and (zero? (.-scrollTop msg-list))
+                                (not is-scrolled))
+                           (not= curr-page prev-page)
+                           (not= curr-channel prev-channel)
+                           (and (not= curr-msg-count prev-msg-count)
+                                (not is-scrolled)))
+                   (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))
+                   ; use an atom instead of prev-props as r/current-component is only valid in component functions
+                   (swap! old assoc :prev-page curr-page)
+                   (swap! old assoc :prev-channel curr-channel)
+                   (swap! old assoc :prev-msg-count curr-msg-count)))))
 
-       :reagent-render
-       (fn []
-         [:div.chat-app
-          [:div.blue-shade.panel.channel-list
-           [:h4 "Channels"]
-           (doall
-             (for
-               [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
-                    :português :sverige :stimhack-league :русский]]
-               ^{:key ch}
-               [channel-view {:channel ch :active-channel (:channel @s)} s]))]
-          [:div.chat-container
-           [:div.chat-card-zoom
-            (when-let [card (:zoom @s)]
-              [card-zoom (r/atom card)])]
-           [:div.chat-box
-            [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
-                                                 :on-scroll #(let [currElt (.-currentTarget %)
-                                                                   scroll-top (.-scrollTop currElt)
-                                                                   scroll-height (.-scrollHeight currElt)
-                                                                   client-height (.-clientHeight currElt)
-                                                                   scrolling (< (+ scroll-top client-height) scroll-height)]
-                                                               (swap! s assoc :scrolling scrolling))}
-             (if (not @cards-loaded)
-               [:h4 "Loading cards..."]
-               (let [message-list (get-in @app-state [:channels (:channel @s)])]
-                 (doall (map-indexed
-                   (fn [i message]
-                     [:div {:key i}
-                      [message-view message s]]) message-list))))]
-            (when @user
-              [:div
-               [msg-input-view (:channel @s)]])]]])})))
+           :reagent-render
+           (fn []
+             [:div.chat-app
+              [:div.blue-shade.panel.channel-list
+               [:h4 "Channels"]
+               (doall
+                 (for
+                   [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
+                        :português :sverige :stimhack-league :русский]]
+                   ^{:key ch}
+                   [channel-view {:channel ch :active-channel (:channel @s)} s]))]
+              [:div.chat-container
+               [:div.chat-card-zoom
+                (when-let [card (:zoom @s)]
+                  [card-zoom (r/atom card)])]
+               [:div.chat-box
+                [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
+                                                     :on-scroll #(let [currElt (.-currentTarget %)
+                                                                       scroll-top (.-scrollTop currElt)
+                                                                       scroll-height (.-scrollHeight currElt)
+                                                                       client-height (.-clientHeight currElt)
+                                                                       scrolling (< (+ scroll-top client-height) scroll-height)]
+                                                                   (swap! s assoc :scrolling scrolling))}
+                 (if (not @cards-loaded)
+                   [:h4 "Loading cards..."]
+                   (let [message-list (get-in @app-state [:channels (:channel @s)])]
+                     (doall (map-indexed
+                              (fn [i message]
+                                [:div {:key i}
+                                 [message-view message s]]) message-list))))]
+                (when @user
+                  [:div
+                   [msg-input-view (:channel @s)]])]]])})))))

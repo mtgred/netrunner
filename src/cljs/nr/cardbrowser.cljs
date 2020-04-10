@@ -420,26 +420,28 @@
 
 
 (defn card-browser []
-  (let [state (r/atom {:search-query ""
-                       :sort-field "Faction"
-                       :format-filter "All"
-                       :set-filter "All"
-                       :type-filter "All"
-                       :side-filter "All"
-                       :faction-filter "All"
-                       :page 1
-                       :decorate-card true
-                       :selected-card nil})]
-    (r/create-class
-      {:display-name "card-browser"
-       :reagent-render
-       (fn []
-         (.focus (js/$ ".search"))
-         [:div.cardbrowser
-          [:div.blue-shade.panel.filters
-           [query-builder state]
-           [sort-by-builder state]
-           [dropdown-builder state]
-           [clear-filters state]]
-          [card-list-view state]
-          [card-info-view state]])})))
+  (r/with-let [active (r/cursor app-state [:active-page])]
+    (when (= "/cards" (first @active))
+      (let [state (r/atom {:search-query ""
+                           :sort-field "Faction"
+                           :format-filter "All"
+                           :set-filter "All"
+                           :type-filter "All"
+                           :side-filter "All"
+                           :faction-filter "All"
+                           :page 1
+                           :decorate-card true
+                           :selected-card nil})]
+        (r/create-class
+          {:display-name "card-browser"
+           :reagent-render
+           (fn []
+             (.focus (js/$ ".search"))
+             [:div.cardbrowser
+              [:div.blue-shade.panel.filters
+               [query-builder state]
+               [sort-by-builder state]
+               [dropdown-builder state]
+               [clear-filters state]]
+              [card-list-view state]
+              [card-info-view state]])})))))
