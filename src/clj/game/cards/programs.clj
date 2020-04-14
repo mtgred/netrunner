@@ -2188,25 +2188,23 @@
              :req (req (get-in card [:special :rng-guess]))
              :async true
              :msg (msg "reveal " (:title target))
-             :effect (req (if-let [guess (get-in card [:special :rng-guess])]
-                            (if (or (= guess (:cost target))
-                                    (= guess (:advancementcost target)))
-                              (do (reveal state side target)
-                                  (continue-ability
-                                    state side
-                                    {:prompt "Choose RNG Key reward"
-                                     :choices ["Gain 3 [Credits]" "Draw 2 cards"]
-                                     :async true
-                                     :msg (msg (if (= target "Draw 2 cards")
-                                                 "draw 2 cards"
-                                                 "gain 3 [Credits]"))
-                                     :effect (req (if (= target "Draw 2 cards")
-                                                    (draw state :runner eid 2 nil)
-                                                    (do (gain-credits state :runner 3)
-                                                        (effect-completed state side eid))))}
-                                    card nil))
-                              (effect-completed state side eid))
-                            (effect-completed state side eid)))}
+             :effect (req (reveal state side target)
+                          (continue-ability
+                            state side
+                            (let [guess (get-in card [:special :rng-guess])]
+                              (when (or (= guess (:cost target))
+                                        (= guess (:advancementcost target)))
+                                {:prompt "Choose RNG Key reward"
+                                 :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                 :async true
+                                 :msg (msg (if (= target "Draw 2 cards")
+                                             "draw 2 cards"
+                                             "gain 3 [Credits]"))
+                                 :effect (req (if (= target "Draw 2 cards")
+                                                (draw state :runner eid 2 nil)
+                                                (do (gain-credits state :runner 3)
+                                                    (effect-completed state side eid))))}))
+                            card nil))}
             {:event :post-access-card
              :effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
             (let [highest-cost

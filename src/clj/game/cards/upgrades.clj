@@ -978,7 +978,6 @@
                                    :msg "swap a card from the top 5 of R&D with a card in HQ"
                                    :effect (req (move state side rdc :hand)
                                                 (move state side target :deck {:index (:index rdc)})
-                                                (clear-wait-prompt state :runner)
                                                 (effect-completed state side eid))})
                                 card nil))}}}
                  card nil))}]})

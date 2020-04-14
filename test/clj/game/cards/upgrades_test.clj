@@ -1894,7 +1894,41 @@
       (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
       (is (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (take-credits state :runner)
-      (is (find-card "Beanstalk Royalties" (:hand (get-corp)))))))
+      (is (find-card "Beanstalk Royalties" (:hand (get-corp))))))
+  (testing "Interaction with RNG Key. #5046"
+    (do-game
+      (new-game {:corp {:deck []
+                        :hand ["Nihongai Grid" "Beanstalk Royalties"
+                                "Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma" "Fire Wall"]}
+                 :runner {:hand ["RNG Key"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (play-from-hand state :corp "Nihongai Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "RNG Key")
+      (run-empty-server state "HQ")
+      (is (= "Fire RNG Key?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Guess a number" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "3")
+      (is (= "Use Nihongai Grid to look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
+      (click-prompt state :corp "Yes")
+      (is (= "Choose a card in R&D" (:msg (prompt-map :corp))))
+      (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]
+             (map :title (prompt-buttons :corp))))
+      (click-prompt state :corp "Accelerated Beta Test")
+      (is (= "Choose a card in HQ" (:msg (prompt-map :corp))))
+      (click-card state :corp "Beanstalk Royalties")
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "Gain 3 [Credits]")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Nihongai Grid")
+      (click-prompt state :runner "No action"))))
 
 (deftest oberth-protocol
   ;; Oberth Protocol
