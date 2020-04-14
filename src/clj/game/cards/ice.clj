@@ -2091,16 +2091,13 @@
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                           :msg (msg "redirect the run to " target
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
-                          :effect (req (let [dest (server->zone state target)]
-                                         (swap! state update-in [:run]
-                                                #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                        :server (rest dest)))
-                                         (set-phase state :approach-ice)
-                                         (register-floating-effect
-                                           state side card
-                                           {:type :jack-out-additional-cost
-                                            :duration :end-of-run
-                                            :value [:add-installed-to-bottom-of-deck 1]})))})]})
+                          :effect (effect (redirect-run target :approach-ice)
+                                          (register-floating-effect
+                                            card
+                                            {:type :jack-out-additional-cost
+                                             :duration :end-of-run
+                                             :value [:add-installed-to-bottom-of-deck 1]})
+                                          (effect-completed eid))})]})
 
 (define-card "Minelayer"
   {:subroutines [{:msg "install an ICE from HQ"

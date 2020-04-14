@@ -2461,7 +2461,29 @@
         (is (= :approach-ice (get-in @state [:run :phase])) "Runner is in correct state")
         (run-jack-out state)
         (click-card state :runner "Daily Casts")
-        (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck")))))
+        (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck"))))
+  (testing "Redirection works correctly. #5047"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game" "Ice Wall"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
+      (click-prompt state :corp "Archives")
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Ice Wall")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost

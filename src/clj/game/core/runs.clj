@@ -340,6 +340,17 @@
                   (= :approach-server (get-in @state [:run :phase])))
           (system-msg state side "has no further action")))))
 
+(defn redirect-run
+  [state side server phase]
+  (let [dest (server->zone state server)]
+    (swap! state update :run
+           assoc
+           :position (count (get-in (:corp @state) (conj dest :ices)))
+           :server (rest dest)))
+  (set-next-phase state phase)
+  (set-current-ice state)
+  (start-next-phase state side nil))
+
 ;; Non timing stuff
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
