@@ -1570,9 +1570,8 @@
                                                                                   (= (zone->name (first (:server run)))
                                                                                      chosen-server))
                                                                          (let [curr-pos (get-in @state [:run :position])]
-                                                                           (when (>= curr-pos target)
-                                                                             (swap! state assoc-in [:run :position] (inc curr-pos))
-                                                                             (set-next-phase state :approach-ice))))
+                                                                           (when (< target curr-pos)
+                                                                             (swap! state update-in [:run :position] inc))))
                                                                        (effect-completed state side eid))))})
                                            card nil))})
                             card nil))}]})

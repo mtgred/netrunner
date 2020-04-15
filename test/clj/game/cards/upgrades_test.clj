@@ -1510,6 +1510,25 @@
         (is (not (:run @state)) "Run has ended")
         (is (nil? (refresh mb)) "Marcus Batty is trashed")))))
 
+(deftest midori
+  ;; Midori
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Midori" "Ice Wall" "Anansi"]}})
+    (play-from-hand state :corp "Midori" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Anansi")
+    (let [current-ice (core/get-current-ice state)]
+      (is (= "Anansi" (:title current-ice)))
+      (is (not (rezzed? current-ice))))
+    (is (= ["Ice Wall"] (map :title (:hand (get-corp))))
+        "Ice Wall has been added to hand")))
+
 (deftest midway-station-grid
   ;; Midway Station Grid
   (do-game
@@ -2699,26 +2718,29 @@
 (deftest the-twins
   ;; The Twins
   (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 10)]
-                      :hand ["The Twins" (qty "Ice Wall" 2)]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["The Twins" (qty "Quicksand" 2)]}
                :runner {:deck ["Corroder"]}})
     (play-from-hand state :corp "The Twins" "New remote")
-    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (play-from-hand state :corp "Quicksand" "Server 1")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
     (let [twins (get-content state :remote1 0)
-          iw (get-ice state :remote1 0)
+          quicksand (get-ice state :remote1 0)
           cor (get-program state 0)]
       (core/rez state :corp twins)
       (run-on state "Server 1")
-      (core/rez state :corp iw)
+      (core/rez state :corp quicksand)
       (run-continue state)
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
       (click-prompt state :corp "Yes")
-      (click-card state :corp (-> (get-corp) :hand first))
-      (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1"))))
+      (click-card state :corp (find-card "Quicksand" (:hand (get-corp))))
+      (is (= 1 (:position (get-run))) "Run should be moved back to position 1")
+      (is (utils/same-card? quicksand (core/get-current-ice state)))
+      (is (= 2 (get-counters (get-ice state :remote1 0) :power))
+          "Encounter abilities resolve a second time"))))
 
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage

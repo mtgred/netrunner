@@ -213,6 +213,9 @@
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
   ([state side eid ice subroutines msgs]
    (if (and (seq subroutines)
+            (if (installed? ice)
+              (rezzed? ice)
+              true)
             (:run @state)
             (not (get-in @state [:run :ended])))
      (let [sub (first subroutines)]

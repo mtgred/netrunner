@@ -504,6 +504,7 @@
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (click-prompt state :corp "R&D")
+      (run-continue state)
       (is (= :rd (-> (get-run) :server first)) "Run redirected to R&D")
       (is (= 2 (:position (get-run))) "Passed Bullfrog")
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
@@ -1182,10 +1183,8 @@
         (run-continue state)
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
-        (click-prompt state :corp "No") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
-        (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
-        (run-next-phase state)
+        (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
         (card-subroutine state :corp (get-ice state :hq 0) 0)
         (click-prompt state :runner "2 net damage") ; take 2 net
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
@@ -1197,7 +1196,6 @@
         (run-continue state)
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
-        (run-next-phase state)
         (card-subroutine state :corp (get-ice state :archives 0) 0)
         (click-prompt state :runner "End the run") ; ETR
         (is (not (get-in @state [:run])) "Formicary ended the run"))))
@@ -1901,7 +1899,6 @@
         (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
         (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
         (run-continue state)

@@ -303,22 +303,26 @@
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
                ;; Immediately end pass ice step if:
                ;; * run ends
+               ;; * position is no longer 0
                ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
+                                          (pos? (:position (:run @state)))
                                           (check-for-empty-server state))))]
         (set-phase state :approach-server)
         (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
-                  (if (get-in @state [:run :jack-out-after-pass])
+                  (cond
+                    (or (check-for-empty-server state)
+                        (:ended (:run @state)))
+                    (handle-end-run state side)
+                    (and (not (get-in @state [:run :next-phase]))
+                         (get-in @state [:run :jack-out-after-pass]))
                     (wait-for (jack-out state :runner (make-eid state))
                               (when (or (check-for-empty-server state)
                                         (:ended (:run @state)))
-                                (handle-end-run state side)))
-                    (when (or (check-for-empty-server state)
-                              (:ended (:run @state)))
-                      (handle-end-run state side))))))
+                                (handle-end-run state side)))))))
 
 (defmethod continue :approach-server [state side args])
 
@@ -341,15 +345,22 @@
           (system-msg state side "has no further action")))))
 
 (defn redirect-run
-  [state side server phase]
-  (let [dest (server->zone state server)]
-    (swap! state update :run
-           assoc
-           :position (count (get-in (:corp @state) (conj dest :ices)))
-           :server (rest dest)))
-  (set-next-phase state phase)
-  (set-current-ice state)
-  (start-next-phase state side nil))
+  ([state side server] (redirect-run state side server nil))
+  ([state side server phase]
+   (let [dest (server->zone state server)
+         num-ice (count (get-in (:corp @state) (conj dest :ices)))
+         phase (if (= phase :approach-ice)
+                 (if (pos? num-ice)
+                   :approach-ice
+                   :approach-server)
+                 phase)]
+     (swap! state update :run
+            assoc
+            :position num-ice
+            :server [(second dest)])
+     (when phase
+       (set-next-phase state phase)))
+   (set-current-ice state)))
 
 ;; Non timing stuff
 (defn gain-run-credits

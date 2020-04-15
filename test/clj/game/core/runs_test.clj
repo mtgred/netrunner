@@ -182,6 +182,7 @@
       (is (= 1 (count (core/turn-events state :corp :approach-ice))))
       (is (last-log-contains? state "Runner approaches Vanilla"))
       (core/redirect-run state :corp "Archives" :approach-ice)
+      (run-next-phase state)
       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
       (is (= "Ice Wall" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
