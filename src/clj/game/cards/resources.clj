@@ -978,9 +978,9 @@
 (define-card "Enhanced Vision"
   {:events [{:event :successful-run
              :silent (req true)
-             :effect (req (let [card (first (shuffle (:hand corp)))]
-                            (reveal state :corp card)
-                            (system-msg state :runner "force the Corp to reveal " (:title card))))
+             :effect (req (let [target (first (shuffle (:hand corp)))]
+                            (reveal state :corp target)
+                            (system-msg state :runner (str "uses Enhanced Vision to force the Corp to reveal " (:title target)))))
              :req (req (genetics-trigger? state side :successful-run))}]})
 
 (define-card "Fall Guy"

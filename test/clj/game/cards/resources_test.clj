@@ -1337,6 +1337,31 @@
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
 
+(deftest enhanced-vision
+  ;; Enhanced Vision
+  (testing "Logs the revealed card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:hand ["Enhanced Vision"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Enhanced Vision")
+      (run-empty-server state "Archives")
+      (is (last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
+          "Card name is logged")))
+  (testing "Triggers reveal abilities"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:hand ["Enhanced Vision"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Enhanced Vision")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Corp gains 1 from Enhanced Vision forced reveal"
+        (run-empty-server state "Archives")))))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (testing "Basic test"
