@@ -43,48 +43,55 @@
    :flags {:has-abilities-when-stolen true}})
 
 (define-card "Accelerated Beta Test"
-  (letfn [(abt [n i]
-            (if (pos? i)
-              {:async true
-               :prompt "Select a piece of ICE from the Temporary Zone to install"
-               :choices {:card #(and (corp? %)
-                                     (ice? %)
-                                     (in-play-area? %))}
-               :effect (req (wait-for (corp-install state side target nil
-                                                    {:ignore-all-cost true :install-state :rezzed-no-cost})
-                                      (let [card (get-card state card)]
-                                        (unregister-events state side card)
-                                        (if (not (:shuffle-occurred card))
-                                          (if (< n i)
-                                            (continue-ability state side (abt (inc n) i) card nil)
-                                            (do (doseq [c (get-in @state [:corp :play-area])]
-                                                  (system-msg state side "trashes a card")
-                                                  (trash state side c {:unpreventable true}))
-                                                (effect-completed state side eid)))
-                                          (do (doseq [c (get-in @state [:corp :play-area])]
-                                                (move state side c :deck))
-                                              (shuffle! state side :deck)
-                                              (effect-completed state side eid))))))
-               :cancel-effect (req (doseq [c (get-in @state [:corp :play-area])]
-                                     (system-msg state side "trashes a card")
-                                     (trash state side c {:unpreventable true})))}
-              {:prompt "None of the cards are ice. Say goodbye!"
-               :choices ["I have no regrets"]
-               :effect (req (doseq [c (get-in @state [:corp :play-area])]
-                              (system-msg state side "trashes a card")
-                              (trash state side c {:unpreventable true})))}))]
+  (letfn [(abt [titles choices]
+            {:async true
+             :prompt (str "The top 3 cards of R&D: " titles)
+             :choices (concat (filter ice? choices) ["Done"])
+             :effect (req (if (= target "Done")
+                            (do (unregister-events state side card)
+                                (trash-cards state side eid choices {:unpreventable true}))
+                            (wait-for (corp-install state side target nil
+                                                    {:ignore-all-cost true
+                                                     :install-state :rezzed-no-cost})
+                                      (let [choices (remove-once #(= target %) choices)]
+                                        (cond
+                                          ;; Shuffle ends the ability
+                                          (get-in (get-card state card) [:special :shuffle-occurred])
+                                          (do (unregister-events state side card)
+                                              (trash-cards state side eid choices {:unpreventable true}))
+                                          ;; There are still ice left
+                                          (seq (filter ice? choices))
+                                          (continue-ability
+                                            state side (abt titles choices) card nil)
+                                          ;; Trash what's left
+                                          :else
+                                          (do (unregister-events state side card)
+                                              (trash-cards state side eid choices {:unpreventable true})))))))})
+          (suffer [titles choices]
+            {:prompt (str "The top 3 cards of R&D: " titles
+                          ". None are ice. Say goodbye!")
+             :choices ["I have no regrets"]
+             :async true
+             :effect (effect (system-msg (str "trashes " (quantify (count choices) "card")))
+                             (trash-cards eid choices {:unpreventable true}))})]
     {:interactive (req true)
-     :optional {:prompt "Look at the top 3 cards of R&D?"
-                :yes-ability {:async true
-                              :msg "look at the top 3 cards of R&D"
-                              :effect (req (register-events
-                                             state side card
-                                             [{:event :corp-shuffle-deck
-                                               :effect (effect (update! (assoc card :shuffle-occurred true)))}])
-                                        (let [n (count (filter ice? (take 3 (:deck corp))))]
-                                          (doseq [c (take (min (count (:deck corp)) 3) (:deck corp))]
-                                            (move state side c :play-area))
-                                          (continue-ability state side (abt 1 n) card nil)))}}}))
+     :optional
+     {:prompt "Look at the top 3 cards of R&D?"
+      :yes-ability
+      {:async true
+       :msg "look at the top 3 cards of R&D"
+       :effect (req (register-events
+                      state side card
+                      [{:event :corp-shuffle-deck
+                        :effect (effect (update! (assoc-in card [:special :shuffle-occurred] true)))}])
+                 (let [choices (take 3 (:deck corp))
+                       titles (join ", " (map :title choices))]
+                   (continue-ability
+                     state side
+                     (if (seq (filter ice? choices))
+                       (abt titles choices)
+                       (suffer titles choices))
+                     card nil)))}}}))
 
 (define-card "Advanced Concept Hopper"
   {:events
@@ -209,18 +216,17 @@
              :prompt "Select a card to move to HQ"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
-                            (do
-                              (doseq [t to-trash]
-                                (trash state :corp t {:unpreventable true}))
-                              (doseq [h to-hq]
-                                (move state :corp h :hand))
-                              (if (not-empty remaining)
-                                (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
-                                (do (clear-wait-prompt state :runner)
-                                    (effect-completed state :corp eid)))
-                              (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq)
-                                                           " cards to HQ, discard " (count to-trash)
-                                                           ", and arrange the top cards of R&D")))
+                            (wait-for (trash-cards state :corp to-trash {:unpreventable true})
+                                      (doseq [h to-hq]
+                                        (move state :corp h :hand))
+                                      (if (not-empty remaining)
+                                        (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                                        (do (clear-wait-prompt state :runner)
+                                            (system-msg state :corp
+                                                        (str "uses Bacterial Programming to add " (count to-hq)
+                                                             " cards to HQ, discard " (count to-trash)
+                                                             ", and arrange the top cards of R&D"))
+                                            (effect-completed state :corp eid))))
                             (continue-ability state :corp (hq-step
                                                             (clj-set/difference (set remaining) (set [target]))
                                                             to-trash
