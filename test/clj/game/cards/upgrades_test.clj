@@ -1427,7 +1427,27 @@
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp beale)
-          (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it"))))))
+          (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it")))))
+  (testing "Properly async. #5049"
+    (do-game
+      (new-game {:corp {:deck ["Hedge Fund" "Ice Wall"]
+                        :hand ["Daily Business Show" "La Costa Grid" "Project Beale"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (play-from-hand state :corp "Project Beale" "Server 2")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= "Select a card in Server 2" (:msg (prompt-map :corp))))
+      (click-card state :corp "Project Beale")
+      (last-log-contains? state "La Costa Grid to place an advancement token on a card in Server 2")
+      (is (= "Select 1 card to add to the bottom of R&D" (:msg (prompt-map :corp))))
+      (click-card state :corp "Ice Wall")
+      (last-log-contains? state "Daily Business Show to add 1 card to the bottom of R&D")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei

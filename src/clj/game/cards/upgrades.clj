@@ -747,15 +747,11 @@
                                 (end-run state side eid card))))}]})
 
 (define-card "La Costa Grid"
-  (let [ability {:effect
-                 (effect
-                   (continue-ability
-                     (let [server-name (zone->name (second (:zone card)))]
-                       {:prompt (str "Advance a card in Server " server-name)
-                        :msg (msg "place an advancement token on " (card-str state target))
-                        :choices {:card #(in-same-server? % card)}
-                        :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
-                     card nil))}]
+  (let [ability {:prompt (msg "Select a card in " (zone->name (second (:zone card))))
+                 :msg (msg "place an advancement token on " (card-str state target))
+                 :choices {:req (req (and (installed? target)
+                                          (in-same-server? card target)))}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))

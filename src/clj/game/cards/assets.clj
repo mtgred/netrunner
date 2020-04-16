@@ -539,12 +539,13 @@
                                         {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
                                          :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                          :choices {:max dbs
-                                                   :card #(some (fn [c] (same-card? c %)) drawn)}
+                                                   :card #(some (fn [c] (same-card? c %)) drawn)
+                                                   :all true}
                                          :effect (req (doseq [c targets]
                                                         (move state side c :deck)))}
                                         card targets)
-                                      (do (clear-wait-prompt state :runner)
-                                          (effect-completed state side eid)))))}]})
+                                      (clear-wait-prompt state :runner)
+                                      (effect-completed state side eid))))}]})
 
 (define-card "Daily Quest"
   (let [ability {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
