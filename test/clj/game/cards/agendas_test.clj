@@ -2843,7 +2843,36 @@
       (play-from-hand state :corp "SDS Drone Deployment" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Remote 1")
-      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal"))))
+      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal")))
+  (testing "Ensure effect is async"
+    (do-game
+      (new-game {:corp {:hand ["Amani Senai" "Team Sponsorship" "SDS Drone Deployment"
+                               "NGO Front"]
+                        :credits 10}
+                 :runner {:hand ["Cache" "Corroder"]
+                          :credits 10}})
+      (play-from-hand state :corp "Amani Senai" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :corp "Team Sponsorship" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Corroder")
+      (take-credits state :runner)
+      (play-and-score state "SDS Drone Deployment")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+      (is (= ["SDS Drone Deployment" "Amani Senai" "Team Sponsorship"] (map :title (prompt-buttons :corp))))
+      (click-prompt state :corp "SDS Drone Deployment")
+      (click-card state :corp "Cache")
+      (click-prompt state :corp "Amani Senai")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp "Corroder")
+      (click-card state :corp "NGO Front")
+      (click-prompt state :corp "New remote")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips

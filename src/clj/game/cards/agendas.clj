@@ -1368,6 +1368,7 @@
 
 (define-card "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
+   :async true
    :effect (req (show-wait-prompt state :runner "Corp to use SDS Drone Deployment")
                 (if (seq (all-installed-runner-type state :program))
                   (continue-ability
@@ -1376,12 +1377,14 @@
                      :label "Trash a program"
                      :msg (msg "trash " (:title target))
                      :choices {:card #(and (installed? %)
-                                           (program? %))}
-                     :effect (effect (trash target)
-                                     (clear-wait-prompt :runner))
-                     :end-effect (effect (clear-wait-prompt :runner))}
+                                           (program? %))
+                               :all true}
+                     :async true
+                     :effect (effect (clear-wait-prompt :runner)
+                                     (trash eid target nil))}
                     card nil)
-                  (clear-wait-prompt state :runner)))})
+                  (do (clear-wait-prompt state :runner)
+                      (effect-completed state side eid))))})
 
 (define-card "Self-Destruct Chips"
   {:silent (req true)
