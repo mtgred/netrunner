@@ -73,7 +73,7 @@
                                                        :password         hash-pw
                                                        :isadmin          first_user
                                                        :options          {}})
-            demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
+            demo-decks (mc/find-maps db "decks" {:username "__demo2019__"})]
         (when (not-empty demo-decks)
           (mc/insert-batch db "decks" (map #(-> %
                                                 (dissoc :_id)
