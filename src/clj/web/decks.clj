@@ -11,7 +11,6 @@
 (defn decks-handler [req]
   (if-let [user (:user req)]
     (response 200 (mc/find-maps db "decks" {:username (:username user)}))
-    (response 200 (mc/find-maps db "decks" {:username "__demo2019__"}))))
 
 (defn decks-create-handler [{{username :username} :user
                              deck                 :body}]
