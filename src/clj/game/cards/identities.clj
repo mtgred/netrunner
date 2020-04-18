@@ -438,13 +438,7 @@
                             (do (when run
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
-                                (trash state side eid target nil))))}
-            ; {:event :end-access-phase
-            ;  :req (req (and (= :archives (:from-server target))
-            ;                 (pos? (get-in @state [:run :cards-accessed :discard] 0))
-            ;                 (seq (filter operation? (:discard corp)))))
-            ;  :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}
-            ]})
+                                (trash state side eid target nil))))}]})
 
 (define-card "Ele \"Smoke\" Scovak: Cynosure of the Net"
   {:recurring 1

@@ -854,7 +854,17 @@
       (play-and-score state "Hostile Takeover")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
-      (is (nil? (:run @state)) "No run has been created"))))
+      (is (nil? (:run @state)) "No run has been created")))
+  (testing "Interaction with Aumakua and accessing an operation in archives #5054"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :discard [(qty "Hedge Fund" 2)]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"
+                          :hand ["Aumakua"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "Archives")
+      (is (= 1 (get-counters (get-program state 0) :virus))))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net
   ;; Ele "Smoke" Scovak: Cynosure of the Net
