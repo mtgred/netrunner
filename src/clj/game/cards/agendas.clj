@@ -219,7 +219,7 @@
                             (wait-for (trash-cards state :corp to-trash {:unpreventable true})
                                       (doseq [h to-hq]
                                         (move state :corp h :hand))
-                                      (if (not-empty remaining)
+                                      (if (seq remaining)
                                         (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
                                         (do (clear-wait-prompt state :runner)
                                             (system-msg state :corp
@@ -240,17 +240,19 @@
                             (continue-ability state :corp (trash-step
                                                             (clj-set/difference (set remaining) (set [target]))
                                                             (conj to-trash target)) card nil)))})]
-    (let [arrange-rd (effect (continue-ability
-                               {:optional
-                                {:async true
-                                 :prompt "Arrange top 7 cards of R&D?"
-                                 :yes-ability {:async true
-                                               :effect (req (let [c (take 7 (:deck corp))]
-                                                              (when (:run @state)
-                                                                (swap! state assoc-in [:run :shuffled-during-access :rd] true))
-                                                              (show-wait-prompt state :runner "Corp to use Bacterial Programming")
-                                                              (continue-ability state :corp (trash-step c '()) card nil)))}}}
-                               card nil))]
+    (let [arrange-rd
+          (effect (continue-ability
+                    {:optional
+                     {:async true
+                      :prompt "Arrange top 7 cards of R&D?"
+                      :yes-ability
+                      {:async true
+                       :effect (req (let [c (take 7 (:deck corp))]
+                                      (when (:run @state)
+                                        (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                                      (show-wait-prompt state :runner "Corp to use Bacterial Programming")
+                                      (continue-ability state :corp (trash-step c '()) card nil)))}}}
+                    card nil))]
       {:effect arrange-rd
        :async true
        :stolen {:async true
@@ -986,19 +988,19 @@
 (define-card "Paper Trail"
   {:trace {:base 6
            :successful {:msg "trash all connection and job resources"
-                        :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
-                                                                   (has-subtype? % "Connection"))
-                                                              (all-active-installed state :runner))]
-                                       (trash state side resource)))}}})
+                        :async true
+                        :effect (req (let [resources (filter #(or (has-subtype? % "Job")
+                                                                  (has-subtype? % "Connection"))
+                                                             (all-active-installed state :runner))]
+                                       (trash-cards state side eid resources)))}}})
 
 (define-card "Personality Profiles"
   (let [pp {:req (req (pos? (count (:hand runner))))
-            :effect (effect
-                      (continue-ability
-                        (let [c (first (shuffle (:hand runner)))]
-                          {:msg (msg "force the Runner to trash " (:title c) " from their Grip at random")
-                           :effect (effect (trash eid c nil))})
-                        card nil))}]
+            :async true
+            :effect (req (let [c (first (shuffle (:hand runner)))]
+                           (system-msg state side (str "uses Personality Profiles to force the Runner to trash "
+                                                       (:title c) " from their Grip at random"))
+                           (trash state side eid c nil)))}]
     {:events [(assoc pp :event :searched-stack)
               (assoc pp
                      :event :runner-install
@@ -1058,11 +1060,12 @@
                                       (count (all-installed state :runner)))
                             :card #(and (runner? %)
                                         (installed? %))}
-                  :effect (effect (trash-cards targets)
-                                  (system-msg (str "trashes " (join ", " (map :title targets))))
-                                  (gain-bad-publicity :corp 1))}
-                 card nil)
-               (clear-wait-prompt :corp))}))
+                  :async true
+                  :effect (req (wait-for (trash-cards state side targets)
+                                         (system-msg state side (str "trashes " (join ", " (map :title targets))))
+                                         (clear-wait-prompt state :corp)
+                                         (gain-bad-publicity state :corp eid 1)))}
+                 card nil))}))
 
 (define-card "Project Atlas"
   {:silent (req true)

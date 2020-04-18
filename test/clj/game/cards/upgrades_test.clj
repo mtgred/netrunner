@@ -386,6 +386,38 @@
       (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
       (is (= 1 (count (:discard (get-corp)))) "Bio Vault trashed"))))
 
+(deftest black-level-clearance
+  ;;Black Level Clearance
+  (testing "taking brain damage"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Black Level Clearance"]}})
+      (play-from-hand state :corp "Black Level Clearance" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (changes-val-macro
+        0 (:credit (get-corp))
+        "Corp gains 0 credits"
+        (click-prompt state :runner "Take 1 brain damage"))
+      (is (get-run) "Run has ended")
+      (is (get-content state :remote1) "Black Level Clearance has not been trashed")))
+  (testing "Jack out"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Black Level Clearance"]}})
+      (play-from-hand state :corp "Black Level Clearance" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (changes-val-macro
+        5 (:credit (get-corp))
+        "Corp gains 5 credits"
+        (click-prompt state :runner "Jack out"))
+      (is (= ["Hedge Fund"] (map :title (:hand (get-corp)))) "Corp drew 1 card")
+      (is (nil? (get-run)) "Run has ended")
+      (is (empty? (get-content state :remote1)) "Black Level Clearance has been trashed"))))
+
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
@@ -2996,8 +3028,10 @@
       (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0") ; Corp wins trace
-      (dotimes [_ 4]
-        (click-card state :runner (get-program state 0)))
+      (click-card state :runner (get-program state 0))
+      (click-card state :runner (get-program state 1))
+      (click-card state :runner (get-program state 2))
+      (click-card state :runner (get-program state 3))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
       (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards")))
   (testing "Shouldn't trigger from self-trash in root of central server. Issue #4813"

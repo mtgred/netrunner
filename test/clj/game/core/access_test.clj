@@ -388,7 +388,6 @@
         (new-game {:corp {:discard [(qty "Breaking News" 3)]}})
         (take-credits state :corp)
         (run-empty-server state :archives)
-        (println (prompt-fmt :runner))
         (click-prompt state :runner "Breaking News")
         (click-prompt state :runner "Steal")
         (click-prompt state :runner "Breaking News")

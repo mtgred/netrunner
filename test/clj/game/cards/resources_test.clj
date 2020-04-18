@@ -343,7 +343,7 @@
     (is (= 8 (hand-size :runner)) "Runner hand size boosted by Brain Cage")
     (take-credits state :runner)
     (gain-tags state :runner 2)
-    (core/trash state :runner (get-hardware state 0))
+    (trash state :runner (get-hardware state 0))
     (play-from-hand state :corp "Traffic Accident")
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
@@ -1145,7 +1145,7 @@
           (is (:disabled (hosted-ct)) "CT is disabled")
           (is (= 4 (core/available-mu state)) "Disabling DJ Fenris also disabled CT, reducing MU back to 4")
           ;; Trash Malia to stop disable
-          (core/trash state :corp (refresh malia))
+          (trash state :corp (refresh malia))
           (is (not (:disabled (refresh dj-fenris))) "DJ Fenris is enabled")
           (is (not (:disabled (hosted-ct))) "CT is enabled")
           (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))))
@@ -1234,7 +1234,7 @@
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Cache")
       (take-credits state :runner)
-      (core/trash state :runner (get-program state 0))
+      (trash state :runner (get-program state 0))
       (is (not-empty (:prompt (get-runner))) "Dummy Box prompting to prevent program trash")
       (card-ability state :runner (get-resource state 0) 1)
       (click-card state :runner (find-card "Clot" (:hand (get-runner))))
@@ -1759,7 +1759,7 @@
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
       (play-from-hand state :runner "Gene Conditioning Shoppe")
       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-      (core/trash state :runner (get-resource state 1))
+      (trash state :runner (get-resource state 1))
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
   (testing "set :genetics-trigger-twice flag - ensure redundant copies work"
     (do-game
@@ -1777,9 +1777,9 @@
         (let [gcs1 (get-resource state 1)
               gcs2 (get-resource state 2)]
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-          (core/trash state :runner gcs1)
+          (trash state :runner gcs1)
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-          (core/trash state :runner gcs2)
+          (trash state :runner gcs2)
           (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice))))))))
 
 (deftest ghost-runner
@@ -3359,7 +3359,7 @@
     (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
     (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
     (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
-    (core/trash state :runner (get-resource state 0))
+    (trash state :runner (get-resource state 0))
     (is (last-log-contains? state "Sure Gamble, Desperado, Diesel")
         "Rolodex did log trashed card names")
     (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
@@ -3400,13 +3400,13 @@
     (play-from-hand state :runner "Motivation")
     (play-from-hand state :runner "Astrolabe")
     (take-credits state :runner)
-    (core/trash state :runner (get-resource state 2))
+    (trash state :runner (get-resource state 2))
     (is (empty? (:prompt (get-runner))) "Sac Con not prompting to prevent resource trash")
-    (core/trash state :runner (get-program state 0))
+    (trash state :runner (get-program state 0))
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 2 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-program state))) "Cache still installed")
-    (core/trash state :runner (get-hardware state 0))
+    (trash state :runner (get-hardware state 0))
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-hardware state))) "Astrolabe still installed")))

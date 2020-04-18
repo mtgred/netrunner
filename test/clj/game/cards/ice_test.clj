@@ -274,12 +274,12 @@
       (play-from-hand state :corp "Architect" "HQ")
       (let [architect (get-ice state :hq 0)]
         (core/rez state :corp architect)
-        (core/trash state :corp (refresh architect))
+        (trash state :corp (refresh architect))
         (is (get-ice state :hq 0) "Architect was trashed, but should be untrashable")
         (core/derez state :corp (refresh architect))
-        (core/trash state :corp (refresh architect))
+        (trash state :corp (refresh architect))
         (is (nil? (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
-        (core/trash state :corp (get-in @state [:corp :hand 0]))
+        (trash state :corp (get-in @state [:corp :hand 0]))
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
 
@@ -4200,7 +4200,7 @@
 
 (deftest whirlpool
   ;; Whirlpool
-  (testing "Basic test - whirlpool on remote"
+  (testing "on remote"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]}})
@@ -4215,7 +4215,7 @@
         (fire-subs state wp)
         (is (get-in @state [:run :cannot-jack-out]))
         (is (nil? (refresh wp)) "Whirlpool is trashed"))))
-  (testing "Basic test - whirlpool on hq"
+  (testing "on hq"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]}})
@@ -4230,7 +4230,7 @@
         (fire-subs state wp)
         (is (get-in @state [:run :cannot-jack-out]))
         (is (nil? (refresh wp)) "Whirlpool is trashed"))))
-  (testing "Basic test - whirlpool not trashed when broken"
+  (testing "whirlpool not trashed when broken"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]
@@ -4247,7 +4247,7 @@
         (core/rez state :corp wp)
         (run-continue state)
         (card-ability state :runner au 0)
-        (click-prompt state :runner "The Runner cannot jack out for the remainder of this run. Trash Whirlpool.")
+        (click-prompt state :runner "The Runner cannot jack out for the remainder of this run")
         (is (refresh wp) "Whirlpool not trashed")))))
 
 (deftest winchester

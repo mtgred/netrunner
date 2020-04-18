@@ -392,7 +392,7 @@
                                                 " from the Runner's Stack"))
                                (wait-for (mill state :corp :runner 3)
                                          (system-msg state side (str "trashes Aimor"))
-                                         (trash state side eid card nil)))}]})
+                                         (trash state side eid card {:cause :subroutine})))}]})
 
 (define-card "Akhet"
   (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
@@ -597,7 +597,8 @@
                                  (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
                                      (continue-ability
                                        state :runner
-                                       {:prompt "Trash 1 program or trash top 2 cards of the Stack?"
+                                       {:async true
+                                        :prompt "Trash 1 program or trash top 2 cards of the Stack?"
                                         :choices ["Trash 1 program" "Trash top 2 of Stack"]
                                         :effect (req (clear-wait-prompt state :corp)
                                                      (if (and (= target "Trash top 2 of Stack") (> (count (:deck runner)) 1))
@@ -834,7 +835,8 @@
                                               :choices {:card #(and (installed? %)
                                                                     (resource? %))}
                                               :cancel-effect (req (effect-completed state side eid))
-                                              :effect (effect (trash target {:cause :subroutine}))}
+                                              :async true
+                                              :effect (effect (trash eid target {:cause :subroutine}))}
                                              card nil)
                                            (effect-completed state side eid))))}]
    :strength-bonus advance-counters})
@@ -897,30 +899,32 @@
              :choices cards
              :async true
              :msg (msg "trash " (:title target))
-             :effect (req (trash state side target {:unpreventable true})
-                          (continue-ability
-                            state side
-                            (reorder-choice
-                              :runner :runner (remove-once #(= % target) cards)
-                              '() (count (remove-once #(= % target) cards))
-                              (remove-once #(= % target) cards))
-                            card nil))})]
+             :effect (req (wait-for (trash state side target {:unpreventable true
+                                                              :cause :subroutine})
+                                    (continue-ability
+                                      state side
+                                      (reorder-choice
+                                        :runner :runner (remove-once #(= % target) cards)
+                                        '() (count (remove-once #(= % target) cards))
+                                        (remove-once #(= % target) cards))
+                                      card nil)))})]
     {:subroutines [(trace-ability
                      2
                      {:async true
-                      :label "Look at the top of Stack"
-                      :msg "look at top X cards of Stack"
-                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
+                      :label "Look at the top of the stack"
+                      :msg "look at top X cards of the stack"
+                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the stack")
                                    (let [c (- target (second targets))
                                          from (take c (:deck runner))]
                                      (system-msg state :corp
-                                                 (str "looks at the top " c " cards of Stack"))
+                                                 (str "looks at the top " (quantify c "card") " of the stack"))
                                      (if (< 1 c)
                                        (continue-ability state side (dh-trash from) card nil)
-                                       (do (system-msg state :corp (str "trashes " (:title (first from))))
-                                           (trash state side (first from) {:unpreventable true})
-                                           (clear-wait-prompt state :runner)
-                                           (effect-completed state side eid)))))})]}))
+                                       (wait-for (trash state side (first from) {:unpreventable true
+                                                                                 :cause :subroutine})
+                                                 (system-msg state :corp (str "trashes " (:title (first from))))
+                                                 (clear-wait-prompt state :runner)
+                                                 (effect-completed state side eid)))))})]}))
 
 (define-card "Data Loop"
   {:on-encounter {:req (req (pos? (count (:hand runner))))
@@ -945,7 +949,7 @@
   {:subroutines [{:msg "do 1 net damage"
                   :async true
                   :effect (req (wait-for (damage state :runner :net 1 {:card card})
-                                         (trash state :corp eid card nil)))}]})
+                                         (trash state :corp eid card {:cause :subroutine})))}]})
 
 (define-card "Data Raven"
   {:abilities [(power-counter-ability (give-tags 1))]
@@ -1081,10 +1085,12 @@
                   :prompt "Select a console to trash"
                   :choices {:card #(has-subtype? % "Console")}
                   :msg (msg "trash " (:title target))
-                  :effect (effect (trash target))}
+                  :async true
+                  :effect (effect (trash eid target {:cause :subroutine}))}
                  {:msg "trash all virtual resources"
-                  :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
-                                 (trash state side c)))}]
+                  :async true
+                  :effect (req (let [cards (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
+                                 (trash-cards state side eid cards {:cause :subroutine})))}]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (define-card "Engram Flush"
@@ -1118,7 +1124,7 @@
                                        :msg (msg "trash " (:title target) " from grip")
                                        :effect (req (if (= "None" target)
                                                       (effect-completed state side eid)
-                                                      (trash state side eid target nil)))}])))}
+                                                      (trash state side eid target {:cause :subroutine})))}])))}
      :subroutines [sub
                    sub]}))
 
@@ -1233,23 +1239,37 @@
    :strength-bonus advance-counters})
 
 (define-card "Flare"
-  {:subroutines [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
-                                   :msg "trash 1 hardware, do 2 meat damage, and end the run"
-                                   :async true
-                                   :effect (effect (continue-ability
-                                                     {:prompt "Select a piece of hardware to trash"
-                                                      :label "Trash a piece of hardware"
-                                                      :choices {:card hardware?}
-                                                      :msg (msg "trash " (:title target))
-                                                      :effect (req (wait-for
-                                                                     (trash state side target {:cause :subroutine})
-                                                                     (wait-for (damage state side :meat 2 {:unpreventable true
-                                                                                                           :card card})
-                                                                               (end-run state side eid card))))
-                                                      :cancel-effect (req (wait-for (damage state side :meat 2 {:unpreventable true
-                                                                                                                :card card})
-                                                                                    (end-run state side eid card)))}
-                                                     card nil))})]})
+  {:subroutines [(trace-ability
+                   6
+                   {:label "Trash 1 hardware, do 2 meat damage, and end the run"
+                    :async true
+                    :effect
+                    (effect
+                      (continue-ability
+                        {:prompt "Select a piece of hardware to trash"
+                         :label "Trash a piece of hardware"
+                         :choices {:card hardware?}
+                         :msg (msg "trash " (:title target))
+                         :async true
+                         :effect (req (wait-for
+                                        (trash state side target {:cause :subroutine})
+                                        (system-msg state :corp
+                                                    (str "uses Flare to trash " (:title target)))
+                                        (wait-for (damage state side :meat 2 {:unpreventable true
+                                                                              :card card})
+                                        (system-msg state :corp
+                                                    (str "uses Flare to deal 2 meat damage"))
+                                        (system-msg state :corp
+                                                    (str "uses Flare to end the run"))
+                                        (end-run state side eid card))))
+                         :cancel-effect (req (wait-for (damage state side :meat 2 {:unpreventable true
+                                                                                   :card card})
+                                                       (system-msg state :corp
+                                                                   (str "uses Flare to deal 2 meat damage"))
+                                                       (system-msg state :corp
+                                                                   (str "uses Flare to end the run"))
+                                                       (end-run state side eid card)))}
+                        card nil))})]})
 
 (define-card "Formicary"
   {:derezzed-events
@@ -1377,8 +1397,9 @@
                                         (not (has-subtype? % "Decoder"))
                                         (not (has-subtype? % "Fracter"))
                                         (not (has-subtype? % "Killer")))}
-                  :effect (effect (trash target {:cause :subroutine})
-                                  (clear-wait-prompt :runner))}
+                  :async true
+                  :effect (effect (clear-wait-prompt :runner)
+                                  (trash eid target {:cause :subroutine}))}
                  end-the-run]
    :strength-bonus (req (- (count (filter #(has-subtype? % "Icebreaker")
                                           (all-active-installed state :runner)))))})
@@ -1396,20 +1417,21 @@
              :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
              :async true
              :effect (req (wait-for (draw state :runner 3 nil)
-                                    (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
-                                      (if (pos? delta)
-                                        (continue-ability
-                                          state :runner
+                                    (continue-ability
+                                      state :runner
+                                      (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
+                                        (when (pos? delta)
                                           {:prompt (msg "Select " delta " cards to discard")
                                            :player :runner
                                            :choices {:max delta
                                                      :card #(in-hand? %)}
-                                           :effect (req (doseq [c targets]
-                                                          (trash state :runner c))
-                                                        (system-msg state :runner
-                                                                    (str "trashes " (join ", " (map :title targets)))))}
-                                          card nil)
-                                        (effect-completed state side eid)))))}]
+                                           :async true
+                                           :effect (req (wait-for (trash-cards state :runner targets)
+                                                                  (system-msg
+                                                                    state :runner
+                                                                    (str "trashes " (join ", " (map :title targets))))
+                                                                  (effect-completed state side eid)))}))
+                                      card nil)))}]
     {:subroutines [sub
                    sub]}))
 
@@ -1491,8 +1513,9 @@
                   :msg (msg "trash " (:title target))
                   :choices {:card #(and (installed? %)
                                         (has-subtype? % "Icebreaker"))}
-                  :effect (effect (trash target {:cause :subroutine})
-                                  (clear-wait-prompt :runner))}]})
+                  :async true
+                  :effect (effect (clear-wait-prompt :runner)
+                                  (trash eid target {:cause :subroutine}))}]})
 
 (define-card "Hortum"
   (letfn [(hort [n] {:prompt "Choose a card to add to HQ with Hortum"
@@ -1565,7 +1588,7 @@
                :req (req (:howler-target card))
                :async true
                :effect (effect (derez (get-card state (:howler-target card)))
-                               (trash eid card nil))}]}))
+                               (trash eid card {:cause :subroutine}))}]}))
 
 (define-card "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
@@ -1702,11 +1725,8 @@
             :async true
             :effect (effect (damage eid :net 2 {:card card}))}
    :subroutines [(assoc runner-trash-installed-sub
-                        :effect (req (trash state side target {:cause :subroutine})
-                                     (when current-ice
-                                       (no-action state side nil)
-                                       (continue state side nil))
-                                     (trash state side card)))]})
+                        :effect (req (wait-for (trash state side target {:cause :subroutine})
+                                               (trash state side eid card {:cause :subroutine}))))]})
 
 (define-card "Janus 1.0"
   {:subroutines [(do-brain-damage 1)
@@ -1796,7 +1816,7 @@
                     :msg (msg "force the Runner to access " (:title target))
                     :effect (req (wait-for (do-access state :runner [:hq] {:no-root true
                                                                         :access-first target})
-                                           (trash state side eid card nil)))}}}]})
+                                           (trash state side eid card {:cause :subroutine})))}}}]})
 
 (define-card "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
@@ -1812,15 +1832,18 @@
                         :msg (msg "force the Runner to encounter " (card-str state target))})]})
 
 (define-card "Lab Dog"
-  {:subroutines [(assoc trash-hardware
-                        :label "Force the Runner to trash an installed piece of hardware"
-                        :player :runner
-                        :msg (msg "force the Runner to trash " (:title target))
-                        :effect (req (trash state side target)
-                                     (when current-ice
-                                       (no-action state side nil)
-                                       (continue state side nil))
-                                     (trash state side card)))]})
+  {:subroutines [{:label "Force the Runner to trash an installed piece of hardware"
+                  :player :runner
+                  :async true
+                  :msg (msg "force the Runner to trash " (:title target))
+                  :prompt "Select a piece of hardware to trash"
+                  :choices {:card #(and (installed? %)
+                                        (hardware? %))}
+                  :effect (req (wait-for (trash state side target {:cause :subroutine})
+                                         (when current-ice
+                                           (no-action state side nil)
+                                           (continue state side nil))
+                                         (trash state side eid card {:cause :subroutine})))}]})
 
 (define-card "Lancelot"
   (grail-ice trash-program))
@@ -1864,20 +1887,23 @@
           (top-3-names [state] (map :title (top-3 state)))]
     {:subroutines [(end-the-run-unless-runner-pays 2)
                    {:label "Reveal the top 3 cards of the Stack"
+                    :async true
                     :effect (effect (system-msg (str "uses Loot Box to reveal the top 3 cards of the stack: "
                                                      (join ", " (top-3-names state))))
                               (reveal (top-3 state))
                               (show-wait-prompt :runner "Corp to choose a card to add to the Grip")
                               (continue-ability
                                 {:prompt "Choose a card to add to the Grip"
+                                 :choices (req (top-3 state))
                                  :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
                                            " [Credits] and shuffle the Stack. Loot Box is trashed")
-                                 :choices (req (top-3 state))
+                                 :async true
                                  :effect (effect (move :runner target :hand)
                                                  (gain-credits :corp (:cost target))
                                                  (shuffle! :runner :deck)
-                                                 (trash card)
-                                                 (clear-wait-prompt :runner))} card nil))}]}))
+                                                 (clear-wait-prompt :runner)
+                                                 (trash eid card {:cause :subroutine}))}
+                                card nil))}]}))
 
 (define-card "Lotus Field"
   {:subroutines [end-the-run]
@@ -1892,11 +1918,12 @@
                                    :effect (effect (purge))})
                  (trace-ability 3 {:label "Trash a virus"
                                    :prompt "Choose a virus to trash"
-                                   :msg (msg "trash " (:title target))
                                    :choices {:card #(and (installed? %)
                                                          (has-subtype? % "Virus"))}
-                                   :effect (effect (trash target {:cause :subroutine})
-                                                   (clear-wait-prompt :runner))})
+                                   :msg (msg "trash " (:title target))
+                                   :async true
+                                   :effect (effect (clear-wait-prompt :runner)
+                                                   (trash eid target {:cause :subroutine}))})
                  (trace-ability 2 {:label "Remove a virus in the Heap from the game"
                                    :prompt "Choose a virus in the Heap to remove from the game"
                                    :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
@@ -2068,12 +2095,12 @@
                           :label "do 2 net damage"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
-                                                 (trash state :corp eid card nil)))}
+                                                 (trash state :corp eid card {:cause :subroutine})))}
                          {:async true
                           :label "do 1 net damage"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
-                                                 (trash state :corp eid card nil)))})]})
+                                                 (trash state :corp eid card {:cause :subroutine})))})]})
 
 (define-card "Mind Game"
   {:subroutines [(do-psi {:label "Redirect the run to another server"
@@ -2255,7 +2282,7 @@
                   :choices {:card #(and (installed? %)
                                         (runner? %))}
                   :async true
-                  :effect (req (trash state side eid target {:cause :subroutine}))}]})
+                  :effect (effect (trash eid target {:cause :subroutine}))}]})
 
 (define-card "NEXT Gold"
   {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
@@ -2405,7 +2432,7 @@
              :req (req (and (same-card? card target)
                             (empty? (remove :broken (:subroutines target)))))
              :async true
-             :effect (effect (trash :corp eid card nil))}]
+             :effect (effect (trash :corp eid card {:cause :effect}))}]
    :subroutines [end-the-run]})
 
 (define-card "Peeping Tom"
@@ -2554,20 +2581,16 @@
                               :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
                                                      (effect-completed eid))
                               :effect (req (wait-for
-                                             (trash state :corp (make-eid state) target nil)
-                                             (do
-                                               (system-msg state :corp "trashes a card from HQ")
-                                               (wait-for
-                                                 (resolve-ability state side trash-resource-sub card nil)
-                                                 (effect-completed state side eid)))))}
+                                             (trash state :corp target {:cause :subroutine})
+                                             (system-msg state :corp "trashes a card from HQ")
+                                             (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
-                           (do
-                             (system-msg state :corp "trashes Sadaka")
-                             (clear-wait-prompt state :runner)
-                             (when current-ice
-                               (no-action state side nil)
-                               (continue state side nil))
-                             (trash state :corp eid card nil))))}]}))
+                           (system-msg state :corp "trashes Sadaka")
+                           (clear-wait-prompt state :runner)
+                           (when current-ice
+                             (no-action state side nil)
+                             (continue state side nil))
+                           (trash state :corp eid card nil)))}]}))
 
 (define-card "Sagittarius"
   (constellation-ice trash-program))
@@ -2607,8 +2630,8 @@
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
                   :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
-                  :effect (req (redirect-run state side target :approach-ice)
-                               (trash state side eid card {:unpreventable true}))}]})
+                  :effect (effect (redirect-run target :approach-ice)
+                                  (trash eid card {:unpreventable true :cause :subroutine}))}]})
 
 (define-card "Sandstone"
   {:subroutines [end-the-run]
@@ -2801,7 +2824,7 @@
                 :choices (req (cancellable (:hand runner) :sorted))
                 :prompt "Choose a card to trash"
                 :effect (effect (reveal (:hand runner))
-                                (trash eid target nil))}]
+                                (trash eid target {:cause :subroutine}))}]
    :subroutines [(trace-ability 3 add-power-counter)]})
 
 (define-card "Snowflake"
@@ -2809,12 +2832,13 @@
 
 (define-card "Special Offer"
   {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
+                  :msg "gains 5 [Credits] and trashes Special Offer"
+                  :async true
                   :effect (req (gain-credits state :corp 5)
                                (when current-ice
                                  (no-action state :corp nil)
                                  (continue state :runner nil))
-                               (trash state side card)
-                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]})
+                               (trash state side eid card {:cause :subroutine}))}]})
 
 (define-card "Spiderweb"
   {:subroutines [end-the-run
@@ -2877,7 +2901,7 @@
                   :choices {:card #(and (installed? %)
                                         (program? %)
                                         (has-subtype? % "AI"))}
-                  :effect (effect (trash eid target nil))}]})
+                  :effect (effect (trash eid target {:cause :subroutine}))}]})
 
 (define-card "SYNC BRE"
   {:subroutines [(tag-trace 4)
@@ -3080,14 +3104,16 @@
 (define-card "Universal Connectivity Fee"
   {:subroutines [{:label "Force the Runner to lose credits"
                   :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
+                  :async true
                   :effect (req (if tagged
                                  (do (lose-credits state :runner :all)
                                      (lose state :runner :run-credit :all)
                                      (when current-ice
                                        (no-action state side nil)
                                        (continue state side nil))
-                                     (trash state side card))
-                                 (lose-credits state :runner 1)))}]})
+                                     (trash state side eid card {:cause :subroutine}))
+                                 (do (lose-credits state :runner 1)
+                                     (effect-completed state side eid))))}]})
 
 (define-card "Upayoga"
   {:subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
@@ -3142,20 +3168,16 @@
   (constellation-ice (give-tags 1)))
 
 (define-card "Waiver"
-  ;; FIXME: bad implementation
-  {:subroutines [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"
-                                   :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))
-                                             ". Cards with a play/install cost less than or equal to " (- target (second targets))
-                                             " will be trashed")
-                                   :effect (req (reveal state side (:hand runner))
-                                                (let [delta (- target (second targets))]
-                                                  (doseq [c (:hand runner)]
-                                                    (when (<= (:cost c) delta)
-                                                      (resolve-ability
-                                                        state side
-                                                        {:msg (msg "trash " (:title c))
-                                                         :effect (effect (trash c))}
-                                                        card nil)))))})]})
+  {:subroutines [(trace-ability
+                   5 {:label "Reveal the grip and trash cards"
+                      :msg (msg "reveal all cards in the grip: " (join ", " (map :title (:hand runner))))
+                      :async true
+                      :effect (req (reveal state side (:hand runner))
+                                   (let [delta (- target (second targets))
+                                         cards (filter #(<= (:cost %) delta) (:hand runner))]
+                                     (system-msg state side (str "uses Waiver to trash "
+                                                                 (join ", " (map :title cards))))
+                                     (trash-cards state side eid cards {:cause :subroutine})))})]})
 
 (define-card "Wall of Static"
   {:subroutines [end-the-run]})
@@ -3181,8 +3203,9 @@
                   :player :runner
                   :choices (req (:hand runner))
                   :not-distinct true
-                  :effect (effect (trash :runner target)
-                                  (system-msg :runner (str "trashes " (:title target) " from their Grip")))}]})
+                  :async true
+                  :effect (effect (system-msg :runner (str "trashes " (:title target) " from their Grip"))
+                                  (trash :runner eid target {:cause :subroutine}))}]})
 
 (define-card "Wendigo"
   (implementation-note
@@ -3191,13 +3214,14 @@
                {:msg "prevent the Runner from using a chosen program for the remainder of this run"})))
 
 (define-card "Whirlpool"
-  {:subroutines [{:label "The Runner cannot jack out for the remainder of this run. Trash Whirlpool."
+  {:subroutines [{:label "The Runner cannot jack out for the remainder of this run"
                   :msg "prevent the Runner from jacking out"
+                  :async true
                   :effect (req (prevent-jack-out state side)
                                (when current-ice
                                  (no-action state side nil)
                                  (continue state side nil))
-                               (trash state side card))}]})
+                               (trash state side eid card {:cause :subroutine}))}]})
 
 (define-card "Winchester"
   (let [protecting-hq-req (req (= (second (:zone card)) :hq))

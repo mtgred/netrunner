@@ -460,12 +460,11 @@
 
 (defn pay-trash-from-deck
   [state side eid amount]
-  (let [cards (take amount (get-in @state [side :deck]))]
-    (wait-for (trash-cards state side cards {:unpreventable true :seen false})
-              (complete-with-result
-                state side eid
-                (str "trashes " (quantify amount "card") " from the top of "
-                     (if (= :corp side) "R&D" "the stack"))))))
+  (wait-for (mill state side side amount)
+            (complete-with-result
+              state side eid
+              (str "trashes " (quantify amount "card") " from the top of "
+                   (if (= :corp side) "R&D" "the stack")))))
 
 (defn pay-trash-from-hand
   "Trash a card from hand as part of a cost"
@@ -491,12 +490,11 @@
 (defn pay-randomly-trash-from-hand
   "Randomly trash a card from hand as part of a cost"
   [state side eid amount]
-  (let [cards (take amount (shuffle (get-in @state [side :hand])))]
-    (wait-for (trash-cards state side cards {:unpreventable true :seen false})
-              (complete-with-result
-                state side eid
-                (str "trashes " (quantify amount "card") " randomly from "
-                     (if (= :corp side) "HQ" "the grip"))))))
+  (wait-for (discard-from-hand state side side amount)
+            (complete-with-result
+              state side eid
+              (str "trashes " (quantify amount "card") " randomly from "
+                   (if (= :corp side) "HQ" "the grip")))))
 
 (defn pay-trash-entire-hand
   [state side eid]
@@ -597,15 +595,18 @@
            (if (= counter :advancement)
              (update card :advance-counter - amount)
              (update-in card [:counter counter] - amount)))
-  (when (agenda? card)
-    (trigger-event state side :agenda-counter-spent (get-card state card)))
-  (complete-with-result
-    state side eid
-    (str "spends "
-         (if (< 1 amount)
-           (quantify amount (str "hosted " (name counter) " counter"))
-           (str "a hosted " (name counter) " counter"))
-         " from on " (:title card))))
+  (wait-for (trigger-event-sync state side
+                                (if (agenda? card)
+                                  :agenda-counter-spent
+                                  :counter-added)
+                                (get-card state card))
+            (complete-with-result
+              state side eid
+              (str "spends "
+                   (if (< 1 amount)
+                     (quantify amount (str "hosted " (name counter) " counter"))
+                     (str "a hosted " (name counter) " counter"))
+                   " from on " (:title card)))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"

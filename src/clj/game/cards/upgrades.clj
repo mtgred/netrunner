@@ -3,7 +3,7 @@
             [game.core.card :refer :all]
             [game.core.card-defs :refer [define-card]]
             [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [effect-completed]]
+            [game.core.eid :refer [make-eid effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
@@ -152,8 +152,9 @@
                                   :async true
                                   :effect (effect (gain-tags :corp eid 1))}
                      :unsuccessful
-                     {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
-                                      (trash card))}}}]})
+                     {:async true
+                      :effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
+                                      (trash eid card nil))}}}]})
 
 (define-card "Bio Vault"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -167,25 +168,24 @@
 
 (define-card "Black Level Clearance"
   {:events [{:event :successful-run
-             :interactive (req true)
-             :req (req this-server)
              :async true
-             :effect (effect (continue-ability
-                               {:prompt "Take 1 brain damage or jack out?"
-                                :player :runner
-                                :choices ["Take 1 brain damage" "Jack out"]
-                                :effect (req (if (= target "Take 1 brain damage")
-                                               (damage state side eid :brain 1 {:card card})
-                                               (do (jack-out state side nil)
-                                                   (swap! state update-in [:runner :prompt] rest)
-                                                   (close-access-prompt state side)
-                                                   (handle-end-run state side)
-                                                   (gain-credits state :corp 5)
-                                                   (draw state :corp)
-                                                   (system-msg state :corp (str "gains 5 [Credits] and draws 1 card. Black Level Clearance is trashed"))
-                                                   (trash state side card)
-                                                   (effect-completed state side eid))))}
-                               card nil))}]})
+             :interactive (req true)
+             :player :runner
+             :req (req this-server)
+             :prompt "Take 1 brain damage or jack out?"
+             :choices ["Take 1 brain damage" "Jack out"]
+             :effect (req (if (= target "Take 1 brain damage")
+                            (damage state :runner eid :brain 1 {:card card})
+                            (wait-for
+                              (jack-out state :runner (make-eid state))
+                              (wait-for
+                                (gain-credits state :corp 5 nil)
+                                (wait-for
+                                  (draw state :corp 1 nil)
+                                  (system-msg state :corp
+                                              (str "gains 5 [Credits] and draws 1 card. "
+                                                   "Black Level Clearance is trashed"))
+                                  (trash state :corp eid card nil))))))}]})
 
 (define-card "Breaker Bay Grid"
   {:constant-effects [{:type :rez-cost
@@ -291,12 +291,15 @@
                 :req (req (and this-server
                                (< run-position (count (get-run-ices state)))
                                (rezzed? (get-in (:ices (card->server state card)) [(:position run)]))))
-                :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
-                               (trash state :corp card)
+                :async true
+                :effect (req (wait-for
+                               (trash state :corp card nil)
                                (swap! state update-in [:run :position] inc)
                                (set-next-phase state :approach-ice)
                                (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
-                                                            icename " again"))
+                                                            (:title (get-in (:ices (card->server state card)) [(:position run)]))
+                                                            " again"))
+                               (effect-completed state side eid)
                                (start-next-phase state side nil)))}]})
 
 (define-card "Cold Site Server"
@@ -366,13 +369,15 @@
                                        (and (installed? %) ; card installed in a server
                                             ;; central upgrades are not in a server
                                             (not (#{:hq :rd :archives} (first (:zone %)))))))}
+             :async true
              :effect (req (wait-for (trash state :corp card nil)
                                     (move state :corp to-swap (:zone target) {:keep-server-alive true})
                                     (move state :corp target (:zone to-swap) {:keep-server-alive true})
                                     (system-msg state :corp
                                                 (str "uses Daruma to swap " (card-str state to-swap)
                                                      " with " (card-str state target)))
-                                    (clear-wait-prompt state :runner)))
+                                    (clear-wait-prompt state :runner)
+                                    (effect-completed state side eid)))
              :cancel-effect (effect (clear-wait-prompt :runner))})
           (ability [card]
             {:optional {:prompt "Trash Daruma to swap a card in this server?"
@@ -596,6 +601,7 @@
         {:prompt "Choose one"
          :player :runner
          :choices ["Trash 1 scored agenda" "End the run"]
+         :async true
          :effect (req (if (= target "End the run")
                         (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
                             (end-run state side eid card))
@@ -613,8 +619,9 @@
                           (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
                               (end-run state side eid card)))))}]
     {:events [{:event :run
+               :async true
                :req (req (and this-server
-                              (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
+                              (empty? (filter #{:hq} (:successful-run runner-reg)))))
                :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}]}))
 
 (define-card "Hokusai Grid"
@@ -761,7 +768,8 @@
              :once :per-run
              :req (req this-server)
              :psi {:not-equal
-                   {:effect
+                   {:async true
+                    :effect
                     (effect
                       (show-wait-prompt :runner "Corp to use Letheia Nisei")
                       (continue-ability
@@ -789,6 +797,7 @@
                 :choices {:card #(and (installed? %)
                                       (program? %))}
                 :cost [:tag 1 :trash]
+                :async true
                 :effect (effect (trash eid target nil))}]})
 
 (define-card "Khondi Plaza"
@@ -1005,10 +1014,11 @@
              :effect (req (prevent-run-on-server state card (second (:zone card))))}
             {:event :successful-run
              :req (req (= target :hq))
-             :effect (req (trash state :corp card)
-                          (enable-run-on-server state card
+             :async true
+             :effect (req (enable-run-on-server state card
                                                 (second (:zone card)))
-                          (system-msg state :corp (str "trashes Off the Grid")))}]
+                          (system-msg state :corp (str "trashes Off the Grid"))
+                          (trash state :corp eid card nil))}]
    :leave-play (req (enable-run-on-server state card (second (:zone card))))})
 
 (define-card "Old Hollywood Grid"
@@ -1446,14 +1456,14 @@
              :async true
              :interactive (req true)
              :player :runner
-             :choices {:card #(and (runner? %)
+             :choices {:all true
+                       :max n
+                       :card #(and (runner? %)
                                    (installed? %))}
-             :msg (msg "force the Runner to trash " (card-str state target))
-             :effect (req (wait-for (trash state :runner target {:unpreventable true})
-                                    (if (pos? (dec n))
-                                      (continue-ability state side (wt (dec n)) card nil)
-                                      (do (clear-wait-prompt state :corp)
-                                          (effect-completed state side eid)))
+             :msg (msg "force the Runner to trash " (join ", " (map :title targets)))
+             :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true})
+                                    (clear-wait-prompt state :corp)
+                                    (effect-completed state side eid)
                                     ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
                                     (when (not (get-only-card-to-access state))
                                       (handle-end-run state side))))})
@@ -1494,7 +1504,8 @@
                :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}]}))
 
 (define-card "Will-o'-the-Wisp"
-  {:events [{:event :successful-run
+  {:implementation "Doesn't restrict icebreaker selection"
+   :events [{:event :successful-run
              :interactive (req true)
              :async true
              :req (req (and this-server
@@ -1503,15 +1514,14 @@
                              (continue-ability
                                {:optional
                                 {:prompt "Trash Will-o'-the-Wisp?"
-                                 :choices {:card #(has-subtype? % "Icebreaker")}
                                  :yes-ability {:async true
                                                :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                                                :choices {:card #(has-subtype? % "Icebreaker")}
                                                :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                                               :effect (effect (trash card)
-                                                               (move :runner target :deck)
-                                                               (clear-wait-prompt :runner)
-                                                               (effect-completed eid))}
+                                               :effect (req (wait-for (trash state side card nil)
+                                                                      (move :runner target :deck)
+                                                                      (clear-wait-prompt :runner)
+                                                                      (effect-completed eid)))}
                                  :no-ability {:effect (effect (clear-wait-prompt :runner)
                                                               (effect-completed eid))}}}
                                card nil))}]})

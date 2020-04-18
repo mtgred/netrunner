@@ -64,7 +64,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-program state 0)]
-      (core/trash state :runner gord)
+      (trash state :runner gord)
       (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner

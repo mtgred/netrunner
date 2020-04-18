@@ -362,7 +362,7 @@
     (take-credits state :corp)
     (click-prompt state :runner "Archives")
     (run-empty-server state "Archives")
-    (click-prompt state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
     (is (= 1 (-> (get-corp) :discard count)) "Alice ability should trash 1 card from HQ")
     (is (-> (get-corp) :discard first :seen not) "Discarded card should be facedown when access is replaced")))
 
@@ -816,7 +816,7 @@
         (is (= 1 (count (:discard (get-corp)))))
         (run-empty-server state "HQ")
         (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
-  (testing "Do not trigger maw on first Operation access (due to trash)"
+  (testing "Do not trigger Maw on first Operation access (due to trash)"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Restructure" 2)]}
                  :runner {:id "Edward Kim: Humanity's Hammer"
@@ -3058,11 +3058,12 @@
     (take-credits state :runner)
     (gain-tags state :runner 1)
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (swap! state assoc-in [:corp :credit] 0)
     (changes-val-macro 0 (:credit (get-runner))
                        "Paid 0c to trash resource"
                        (core/trash-resource state :corp nil)
                        (click-card state :corp (get-resource state 0)))
-    (is (= 1 (count (:discard (get-runner)))) "Trashed Fan Site")))
+    (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
 
 (deftest the-foundry-refining-the-process
   ;; The Foundry
@@ -3074,7 +3075,7 @@
       (play-from-hand state :corp "Accelerated Beta Test" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (click-prompt state :corp "Yes")
-      (click-card state :corp (find-card "Eli 1.0" (:play-area (get-corp))))
+      (click-prompt state :corp "Eli 1.0")
       (click-prompt state :corp "Archives")
       (click-prompt state :corp "Yes")
       (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")

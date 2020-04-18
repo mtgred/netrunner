@@ -12,7 +12,7 @@
       (do-game
         (new-game {:corp {:hand (qty "Hedge Fund" 5)}})
         (is (not (core/first-trash? state)))
-        (core/trash state first-trash (find-card "Hedge Fund" (:hand (get-corp))))
+        (trash state first-trash (find-card "Hedge Fund" (:hand (get-corp))))
         (is (core/first-trash? state))
-        (core/trash state second-trash (find-card "Hedge Fund" (:hand (get-corp))))
+        (trash state second-trash (find-card "Hedge Fund" (:hand (get-corp))))
         (is (not (core/first-trash? state)))))))

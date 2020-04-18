@@ -6,23 +6,18 @@
 
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
-  [state side eid c]
-  ;; Do not trigger :no-trash if card has already been trashed
-  (wait-for (trigger-event-sync state side
-                                (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
-                                  :no-trash)
-                                c)
-            (wait-for (trigger-event-sync state side
-                                          (when (and (agenda? c)
-                                                     (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
-                                            :no-steal)
-                                          c)
-                      (when (and (get-card state c)
-                                 ;; Don't increment :no-trash-or-steal if accessing a card in Archives
-                                 (not= (:zone c) [:discard]))
-                        (no-trash-or-steal state))
-                      (swap! state dissoc :access)
-                      (trigger-event-sync state side eid :post-access-card c))))
+  ([state side eid c] (access-end state side eid c nil))
+  ([state side eid c {:keys [trashed stolen] :as args}]
+   ;; Do not trigger :no-trash if card has already been trashed
+   (wait-for (trigger-event-sync state side (when-not trashed :no-trash) c)
+             (wait-for (trigger-event-sync state side (when-not stolen :no-steal) c)
+                       (when (and (not trashed)
+                                  (not stolen)
+                                  ;; Don't increment :no-trash-or-steal if accessing a card in Archives
+                                  (not= (:zone c) [:discard]))
+                         (no-trash-or-steal state))
+                       (swap! state dissoc :access)
+                       (trigger-event-sync state side eid :post-access-card c)))))
 
 ;;; Accessing rules
 (defn interactions
@@ -108,7 +103,7 @@
                                                               (:title card) " from "
                                                               (name-zone :corp (get-nested-zone card))))
                                   (wait-for (trash state side card nil)
-                                            (access-end state side eid c)))
+                                            (access-end state side eid (first async-result) {:trashed true})))
 
                         ; Use access ability
                         (some #(= % target) ability-strs)
@@ -120,7 +115,8 @@
                                      (:trash? ability true))
                             (swap! state assoc-in [:run :did-trash] true))
                           (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
-                                    (access-end state side eid c)))))}
+                                    (let [card (first async-result)]
+                                      (access-end state side eid card {:trashed (in-discard? card)}))))))}
         card nil))))
 
 ;;; Stealing agendas
@@ -148,7 +144,8 @@
     (wait-for
       (trigger-event-simult
         state :runner :agenda-stolen
-        {:first-ability {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
+        {:first-ability {:async true
+                         :effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
                                                                      (quantify points "agenda point")))
                                       (swap! state update-in [:runner :register :stole-agenda]
                                              #(+ (or % 0) (:agendapoints c 0)))
@@ -159,10 +156,10 @@
                                         (swap! state assoc-in [:run :did-steal] true))
                                       (when (card-flag? c :has-events-when-stolen true)
                                         (register-events state side c))
-                                      (remove-old-current state side :corp))}
+                                      (remove-old-current state side eid :corp))}
          :card-abilities (ability-as-handler c (:stolen (card-def c)))}
         c)
-      (access-end state side eid card))))
+      (access-end state side eid c {:stolen true}))))
 
 (defn- steal-agenda
   "Trigger the stealing of an agenda, now that costs have been paid."
@@ -235,8 +232,9 @@
                                    (:trash? ability true))
                           (swap! state assoc-in [:run :did-trash] true))
                         (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
-                                  (trigger-event state side :no-steal card)
-                                  (access-end state side eid card)))))}
+                                  (let [card (first async-result)]
+                                    (trigger-event state side :no-steal card)
+                                    (access-end state side eid card {:stolen (in-scored? card)}))))))}
       card nil)))
 
 (defn- reveal-access?
@@ -303,7 +301,9 @@
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
                   (access-non-agenda state side eid c))
-                (access-end state side eid c)))))
+                (access-end state side eid c {:trashed (find-cid (:cid c) (get-in @state [:corp :discard]))
+                                              :stolen (and (agenda? c)
+                                                           (find-cid (:cid c) (get-in @state [:runner :scored])))})))))
 
 (defn access-cost-bonus
   "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
