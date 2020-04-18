@@ -514,7 +514,8 @@
                 [:img {:src (image-url (:identity deck))
                        :alt (get-in deck [:identity :title] "")}]
                 [:div.float-right [deck-status-span deck]]
-                [:h4 (:name deck)]
+                [:h4 (str (s/trim (subs (:name deck) 0 40))
+                          (when (< 40 (count (:name deck))) "..."))]
                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                 [:p (get-in deck [:identity :title]) [:br]
                  (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
