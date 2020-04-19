@@ -1217,16 +1217,15 @@
                                    :unregister-once-resolved true
                                    :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}
                (letfn [(ri [cards]
-                         {:async true
-                          :effect (req (if (seq cards)
-                                         (wait-for (runner-install state side (first cards) {:facedown true})
-                                                   (continue-ability state side (ri (rest cards)) card nil))
-                                         (effect-completed state side eid)))})]
+                         (when (seq cards)
+                           {:async true
+                            :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
+                                                   (continue-ability state side (ri (rest cards)) card nil)))}))]
                  {:async true
                   :label "Install the top 3 cards of your Stack facedown"
                   :msg "install the top 3 cards of their Stack facedown"
                   :cost [:trash]
-                  :effect (effect (continue-ability (ri (take 3 (get-in @state [:runner :deck]))) card nil))})]})
+                  :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]})
 
 (define-card "Ice Analyzer"
   {:implementation "Credit use restriction is not enforced"

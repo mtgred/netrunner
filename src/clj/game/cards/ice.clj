@@ -1825,11 +1825,11 @@
 
 (define-card "Konjin"
   {:implementation "Encounter effect is manual"
-   :abilities [(do-psi {:label "Force the runner to encounter another ice"
-                        :prompt "Choose a piece of ice"
-                        :choices {:card ice?
-                                  :not-self true}
-                        :msg (msg "force the Runner to encounter " (card-str state target))})]})
+   :on-encounter (do-psi {:label "Force the runner to encounter another ice"
+                          :prompt "Choose a piece of ice"
+                          :choices {:card ice?
+                                    :not-self true}
+                          :msg (msg "force the Runner to encounter " (card-str state target))})})
 
 (define-card "Lab Dog"
   {:subroutines [{:label "Force the Runner to trash an installed piece of hardware"
