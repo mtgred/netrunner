@@ -139,7 +139,8 @@
             (register-events state side newh)))))
     (trigger-event state side :swap a-new b-new)
     (update-ice-strength state side a-new)
-    (update-ice-strength state side b-new)))
+    (update-ice-strength state side b-new)
+    (set-current-ice state)))
 
 (defn card-index
   "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
