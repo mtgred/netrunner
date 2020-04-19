@@ -96,7 +96,6 @@
                                 :per-run nil
                                 :run {:server s
                                       :position n
-                                      :access-bonus []
                                       :corp-auto-no-action false
                                       :jack-out false
                                       :jack-out-after-pass false
@@ -576,15 +575,15 @@
            (effect-completed state side (make-result eid false)))))))
 
 (defn- run-end-fx
-  [state side eid run]
+  [state side {:keys [eid successful unsuccessful]}]
   (cond
     ;; Successful
-    (:successful run)
+    successful
     (do
       (play-sfx state side "run-successful")
       (effect-completed state side (make-result eid {:successful true})))
     ;; Unsuccessful
-    (:unsuccessful run)
+    unsuccessful
     (do
       (play-sfx state side "run-unsuccessful")
       (effect-completed state side (make-result eid {:unsuccessful true})))
@@ -606,7 +605,7 @@
               (update-all-ice state side)
               (reset-all-ice state side)
               (clear-run-register! state)
-              (run-end-fx state side (:eid run) run))))
+              (run-end-fx state side run))))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."

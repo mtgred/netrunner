@@ -2,7 +2,7 @@
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
             [game.core.card-defs :refer [define-card]]
-            [game.core.effects :refer [register-floating-effect]]
+            [game.core.effects :refer [register-floating-effect unregister-floating-effects]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -495,6 +495,11 @@
                             :msg (msg "make a run on " target)
                             :makes-run true
                             :effect (effect (update! (dissoc card :dopp-active))
+                                            (unregister-floating-effects :end-of-run)
+                                            (unregister-floating-events :end-of-run)
+                                            (update-all-icebreakers)
+                                            (update-all-ice)
+                                            (reset-all-ice)
                                             (clear-wait-prompt :corp)
                                             (make-run eid target))}}}]})
 

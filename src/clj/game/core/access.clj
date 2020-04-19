@@ -1038,18 +1038,19 @@
   "Increase the number of cards to be accessed in server during this run by n.
   For temporary/per-run effects like Legwork, Maker's Eye.
   Not for permanent increases like RDI."
-  [state side server bonus]
-  (swap! state update-in [:run :access-bonus] conj [server bonus]))
+  ([state side server bonus] (access-bonus state side server bonus (if (:run @state) :end-of-run :end-of-access)))
+  ([state side server bonus duration]
+   (let [floating-effect
+         (register-floating-effect
+           state side nil
+           {:type :access-bonus
+            :duration duration
+            :req (req (= server (second targets)))
+            :value bonus})])))
 
 (defn access-bonus-count
-  [run s]
-  (reduce
-    (fn [acc [server bonus]]
-      (if (= s server)
-        (+ acc bonus)
-        acc))
-    0
-    (:access-bonus run)))
+  [state side s]
+  (sum-effects state side nil :access-bonus [s]))
 
 (defn access-count
   [state side kw]
@@ -1059,7 +1060,7 @@
            :hq-access :hq
            kw)
         accesses (+ (get-in @state [:runner kw] 0)
-                    (access-bonus-count run s))]
+                    (access-bonus-count state side s))]
     (if-let [max-access (:max-access run)]
       (min max-access accesses)
       accesses)))

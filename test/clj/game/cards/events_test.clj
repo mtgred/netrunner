@@ -1526,6 +1526,10 @@
         (run-continue state)
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 1)
+        (is (= 1 (core/access-bonus-count state :runner :rd))
+            "The Turning Wheel should provide 1 additional access on R&D")
+        (is (= 1 (core/access-bonus-count state :runner :hq))
+            "The Turning Wheel should provide 1 additional access on HQ")
         (run-successful state)
         ;; HQ
         (dotimes [_ 2]
@@ -1534,10 +1538,6 @@
         (dotimes [_ 2]
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd)))
-            "The Turning Wheel should provide 1 additional access on R&D")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq)))
-            "The Turning Wheel should provide 1 additional access on HQ")
         (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
   (testing "The Turning Wheel gains counters after using D&C. Issue #3810"

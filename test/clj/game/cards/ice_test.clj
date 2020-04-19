@@ -3569,7 +3569,7 @@
         (let [credits (:credit (get-corp))]
           (card-subroutine state :corp shiro 1)
           (click-prompt state :corp "No")
-          (is (= 3 (core/access-bonus-count (:run @state) :rd)) "Should access an additional 3 cards")
+          (is (= 3 (core/access-bonus-count state :runner :rd)) "Should access an additional 3 cards")
           (dotimes [_ 5]
             (click-prompt state :runner "No action"))
           (run-jack-out state)
