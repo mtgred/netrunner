@@ -49,7 +49,7 @@
           (do (mc/update db "decks"
                          {:_id (object-id deck-id) :username username}
                          {"$set" (dissoc deck :_id)})
-            (response 200 {:message "OK"}))
+            (response 200 {:message "OK" :_id (object-id deck-id)}))
           (response 409 {:message "Deck is missing identity"}))
         (response 409 {:message "Deck is missing _id"})))
     (response 401 {:message "Unauthorized"})))

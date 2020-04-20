@@ -4,7 +4,7 @@
             [nr.ajax :refer [GET DELETE]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.deckbuilder :refer [process-decks num->percent]]
+            [nr.deckbuilder :refer [num->percent]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
