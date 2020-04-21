@@ -3028,10 +3028,17 @@
   (let [ef (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))
         ability {:label "Reset number of subs"
                  :req (req (asset? target))
-                 :effect ef}]
+                 :effect ef}
+        trash-req (req (some #(and (asset? %)
+                                   (installed? %)
+                                   (rezzed? %))
+                             targets))]
     {:effect ef
      :events [(assoc ability :event :rez)
-              (assoc ability :event :derez)]}))
+              (assoc ability :event :derez)
+              (assoc ability :event :game-trash :req trash-req)
+              (assoc ability :event :corp-trash :req trash-req)
+              (assoc ability :event :runner-trash :req trash-req)]}))
 
 (define-card "Trebuchet"
   {:effect take-bad-pub

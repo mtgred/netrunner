@@ -4006,7 +4006,33 @@
       (play-from-hand state :corp "Tour Guide" "HQ")
       (let [tg (get-ice state :hq 0)]
         (core/rez state :corp tg)
-        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")))))
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "trashing resets the number"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)
+            ngo (get-content state :remote2 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
+        (core/rez state :corp ngo)
+        (core/advance state :corp {:card (refresh ngo)})
+        (core/advance state :corp {:card (refresh ngo)})
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= 2 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 2 subs")
+        (card-ability state :corp (refresh ngo) 0)
+        (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 1 subs")))))
 
 (deftest trebuchet
   ;; Trebuchet
