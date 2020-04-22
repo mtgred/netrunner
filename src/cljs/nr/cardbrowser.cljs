@@ -3,7 +3,6 @@
   (:require [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [clojure.string :as s]
             [jinteki.cards :refer [all-cards] :as cards]
-            [jinteki.decks :as decks]
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]

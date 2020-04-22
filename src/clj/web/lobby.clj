@@ -8,7 +8,7 @@
             [crypto.password.bcrypt :as bcrypt]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.decks :as decks]
+            [jinteki.validator :refer [calculate-deck-status]]
             [cheshire.core :as json]
             [clj-time.core :as t])
   (:import org.bson.types.ObjectId))
@@ -211,12 +211,12 @@
 (defn handle-lobby-create
   [{{{:keys [username emailhash] :as user} :user} :ring-req
     client-id                                     :client-id
-    {:keys [title format allowspectator spectatorhands password room side options]} :?data :as event}]
+    {:keys [title format allow-spectator spectatorhands password room side options]} :?data :as event}]
   (let [gameid (java.util.UUID/randomUUID)
         game {:date           (java.util.Date.)
               :gameid         gameid
               :title          title
-              :allowspectator allowspectator
+              :allow-spectator allow-spectator
               :spectatorhands spectatorhands
               :mute-spectators false
               :password       (when (not-empty password) (bcrypt/encrypt password))
@@ -342,7 +342,7 @@
                    (update-in d [:cards] #(mapv map-card %))
                    (update-in d [:cards] #(vec (remove unknown-card %)))
                    (update-in d [:identity] #(@all-cards (:title %)))
-                   (assoc d :status (decks/calculate-deck-status d)))]
+                   (assoc d :status (calculate-deck-status d)))]
     (when (and (:identity deck) (player? client-id gameid))
       (swap! all-games update-in [gameid :players
                               (if (= client-id (:ws-id fplayer)) 0 1)]

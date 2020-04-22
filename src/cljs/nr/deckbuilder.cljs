@@ -5,16 +5,17 @@
             [goog.string :as gstring]
             [goog.string.format]
             [jinteki.cards :refer [all-cards] :as cards]
-            [jinteki.decks :as decks]
+            [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
             [nr.account :refer [load-alt-arts]]
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
+            [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
-                              slug->format]]
+                              slug->format checkbox-button cond-button]]
             [reagent.core :as r]))
 
 (def select-channel (chan))
@@ -44,7 +45,7 @@
 (defn no-inf-cost?
   [identity card]
   (or (= (:faction card) (:faction identity))
-      (= 0 (:factioncost card)) (= INFINITY (decks/id-inf-limit identity))))
+      (= 0 (:factioncost card)) (= INFINITY (validator/id-inf-limit identity))))
 
 (defn take-best-card
   "Returns a non-rotated card from the list of cards or a random rotated card from the list"
@@ -268,7 +269,7 @@
     (fn [user]
       (let [deck (:deck @s)]
         (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-        (go (let [response (<! (DELETE (str "/data/decks/" (:_id deck))))]
+        (go (let [response (<! (DELETE (str "/data/validator/" (:_id deck))))]
               (when (= 200 (:status response))
                 (load-decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state)))
                 (swap! s assoc :deck nil)
@@ -301,6 +302,14 @@
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
 
+(defn load-decks-from-json
+  [json]
+  (for [deck json]
+    (assoc deck
+           :identity (parse-identity (:identity deck))
+           :cards (:cards deck)
+           :parsed? false)))
+
 (defn save-deck [s]
   (authenticated
     (fn [user]
@@ -330,12 +339,7 @@
                   new-id (get-in response [:json :_id])
                   new-deck (if new? (assoc deck :_id new-id) deck)
                   json (:json (<! (GET (str "/data/decks"))))
-                  all-decks (for [deck json]
-                              (assoc deck
-                                     :identity (parse-identity (:identity deck))
-                                     :cards (:cards deck)
-                                     :parsed? false))]
-              (swap! app-state assoc :decks (conj decks new-deck))
+                  all-decks (load-decks-from-json json)]
               (set-deck-on-state s new-deck)
               (load-decks all-decks)))))))
 
@@ -349,9 +353,6 @@
               (swap! app-state assoc :decks (conj decks deck))
               (set-deck-on-state s deck)
               (put! select-channel (:deck @s))))))))
-
-(defn html-escape [st]
-  (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
@@ -377,59 +378,7 @@
 (defn deck-influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
   [deck]
-  (dots-html influence-dot (decks/influence-map deck)))
-
-(defn- build-deck-status-label [deck-status violation-details?]
-  [:div.status-tooltip.blue-shade
-   (doall (for [[status-key {:keys [legal reason description]}] deck-status
-                :when description]
-            ^{:key status-key}
-            [:div {:class (if legal "legal" "invalid")
-                   :title (when violation-details? reason)}
-             [:span.tick (if legal "✔" "✘")]
-             description]))])
-
-(defn- deck-status-details
-  [deck use-trusted-info]
-  (if use-trusted-info
-    (decks/trusted-deck-status deck)
-    (decks/calculate-deck-status deck)))
-
-(defn check-deck-status
-  [deck-status]
-  (let [fmt (:format deck-status)]
-    (if (get-in deck-status [(keyword fmt) :legal])
-      fmt "invalid")))
-
-(defn format-deck-status-span
-  [{:keys [format] :as deck-status} tooltip? violation-details?]
-  (let [status (check-deck-status deck-status)
-        message (str (get slug->format (:format deck-status) "Standard")
-                     " "
-                     (if-not (= "invalid" status) "legal" "illegal"))]
-    [:span.deck-status.shift-tooltip {:class status} message
-     (when tooltip?
-       (build-deck-status-label deck-status violation-details?))]))
-
-(defn deck-status-span-impl [deck tooltip? violation-details? use-trusted-info]
-  (format-deck-status-span (deck-status-details deck false) tooltip? violation-details?))
-
-(def deck-status-span-memoize (memoize deck-status-span-impl))
-
-(defn deck-status-span
-  "Returns a [:span] with standardized message and colors depending on the deck validity."
-  ([deck] (deck-status-span deck false false true))
-  ([deck tooltip? violation-details? use-trusted-info]
-   (deck-status-span-memoize deck tooltip? violation-details? use-trusted-info)))
-
-(defn deck-format-status-span
-  "Returns a [:span] with standardized message and colors depending on the deck validity for a single format."
-  [deck format use-trusted-info?]
-  (format-deck-status-span (assoc
-                             (deck-status-details (assoc deck :format format) use-trusted-info?)
-                             :format
-                             format)
-                           false false))
+  (dots-html influence-dot (validator/influence-map deck)))
 
 (defn distinct-by [f coll]
   (letfn [(step [xs seen]
@@ -442,7 +391,7 @@
 
 (defn match [identity query]
   (->> @all-cards
-       (filter #(decks/allowed? % identity))
+       (filter #(validator/allowed? % identity))
        (distinct-by :title)
        (filter-title query)
        (take 10)))
@@ -474,7 +423,7 @@
         existing-line (when existing-line-idx
                         (nth cards existing-line-idx))
         new-qty (+ (or (:qty existing-line) 0) (:qty edit))
-        draft-id (decks/draft-id? (get-in @s [:deck :identity]))
+        draft-id (validator/draft-id? (get-in @s [:deck :identity]))
         new-cards (cond
                     (and existing-line-idx
                          (not draft-id)
@@ -598,11 +547,10 @@
        [:h4 "No decks"]
 
        :else
-       [:div
-        (doall
-          (for [deck (sort-by :date > @decks)]
-            ^{:key (:_id deck)}
-            [deck-entry s deck]))]))])
+       (doall
+         (for [deck (sort-by :date > @decks)]
+           ^{:key (:_id deck)}
+           [deck-entry s deck]))))])
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -613,10 +561,10 @@
            card-status (format-status format card)
            banned (= :banned card-status)
            rotated (= :rotated card-status)
-           allied (decks/alliance-is-free? cards line)
-           valid (and (decks/allowed? card identity)
-                      (decks/legal-num-copies? identity line))
-           modqty (if (decks/is-prof-prog? deck card) (- qty 1) qty)]
+           allied (validator/alliance-is-free? cards line)
+           valid (and (validator/allowed? card identity)
+                      (validator/legal-num-copies? identity line))
+           modqty (if (validator/is-prof-prog? deck card) (- qty 1) qty)]
        [:span
         [:span {:class (cond
                          (and valid (not rotated) (not banned)) "fake-link"
@@ -640,10 +588,10 @@
                  card-status (format-status format card)
                  banned (= :banned card-status)
                  rotated (= :rotated card-status)
-                 allied (decks/alliance-is-free? cards line)
-                 valid (and (decks/allowed? card identity)
-                            (decks/legal-num-copies? identity line))
-                 modqty (if (decks/is-prof-prog? deck card)
+                 allied (validator/alliance-is-free? cards line)
+                 valid (and (validator/allowed? card identity)
+                            (validator/legal-num-copies? identity line))
+                 modqty (if (validator/is-prof-prog? deck card)
                           (- qty 1)
                           qty)]
              [:span
@@ -673,13 +621,13 @@
         :restricted restricted-span
         :rotated rotated-span
         "")]
-     (let [count (decks/card-count cards)
-           min-count (decks/min-deck-size id)]
+     (let [count (validator/card-count cards)
+           min-count (validator/min-deck-size id)]
        [:div count " cards"
         (when (< count min-count)
           [:span.invalid (str " (minimum " min-count ")")])])
-     (let [inf (decks/influence-count deck)
-           id-limit (decks/id-inf-limit id)]
+     (let [inf (validator/influence-count deck)
+           id-limit (validator/id-inf-limit id)]
        [:div "Influence: "
         ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
         [:span {:class (if (> inf id-limit)
@@ -693,8 +641,8 @@
         (if (pos? inf)
           (deck-influence-html deck))])
      (when (= (:side id) "Corp")
-       (let [min-point (decks/min-agenda-points deck)
-             points (decks/agenda-points deck)]
+       (let [min-point (validator/min-agenda-points deck)
+             points (validator/agenda-points deck)]
          [:div "Agenda points: " points
           (when (< points min-point)
             [:span.invalid " (minimum " min-point ")"])
@@ -709,7 +657,7 @@
      (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
        ^{:key (or (first group) "Unknown")}
        [:div.group
-        [:h4 (str (or (first group) "Unknown") " (" (decks/card-count (last group)) ")") ]
+        [:h4 (str (or (first group) "Unknown") " (" (validator/card-count (last group)) ")") ]
         (doall
           (for [line (sort-by #(get-in % [:card :title]) (last group))]
             ^{:key (or (get-in line [:card :code]) line)}
@@ -841,21 +789,15 @@
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
    [edit-textbox s]])
 
+(defn collection-buttons [s user]
+  [:div.button-bar
+   [cond-button "New Corp deck" @user #(new-deck s "Corp")]
+   [cond-button "New Runner deck" @user #(new-deck s "Runner")]])
+
 (defn list-panel
   [s user decks decks-loaded]
   [:div.decks
-   [:div.button-bar
-    (if @user
-      (list
-        [:button {:key "corp"
-                  :on-click #(new-deck s "Corp")} "New Corp deck"]
-        [:button {:key "runner"
-                  :on-click #(new-deck s "Runner")} "New Runner deck"])
-      (list
-        [:button {:key "corp"
-                  :class "disabled"} "New Corp deck"]
-        [:button {:key "runner"
-                  :class "disabled"} "New Runner deck"]))]
+   [collection-buttons s user]
    [deck-collection s decks decks-loaded]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]
@@ -889,14 +831,6 @@
           [list-panel s user decks decks-loaded]
           [selected-panel s]
           [edit-panel s]]]))))
-
-(defn load-decks-from-json
-  [json]
-  (for [deck json]
-    (assoc deck
-           :identity (parse-identity (:identity deck))
-           :cards (:cards deck)
-           :parsed? false)))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))

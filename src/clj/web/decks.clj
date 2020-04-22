@@ -5,7 +5,7 @@
             [monger.result :refer [acknowledged?]]
             [web.config :refer [server-config]]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.decks :as decks]))
+            [jinteki.validator :refer [calculate-deck-status]]))
 
 
 (defn decks-handler [req]
@@ -20,7 +20,7 @@
           check-deck (-> deck
                          (update-in [:cards] #(map update-card %))
                          (update-in [:identity] #(@all-cards (:title %))))
-          status (decks/calculate-deck-status check-deck)
+          status (calculate-deck-status check-deck)
           deck (-> deck
                    (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
                    (assoc :username username
@@ -38,7 +38,7 @@
           deck (-> deck
                    (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
                    (assoc :username username))
-          status (decks/calculate-deck-status check-deck)
+          status (calculate-deck-status check-deck)
           deck (assoc deck :status status)]
       (when (nil? (:identity check-deck))
         (println "NIL IDENTITY WHEN SAVING DECK")

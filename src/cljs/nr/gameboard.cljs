@@ -9,7 +9,8 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.utils :refer [banned-span influence-dot map-longest toastr-options render-icons render-message]]
+            [nr.utils :refer [banned-span influence-dot map-longest toastr-options render-icons render-message
+                              checkbox-button cond-button]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -1274,16 +1275,6 @@
                    [:div.card-wrapper {:class (when (playable? c) "playable")}
                     [card-view c]]))]))
      (when is-me centrals)]))
-
-(defn cond-button [text cond f]
-  (if cond
-    [:button {:on-click f :key text} text]
-    [:button.disabled {:key text} text]))
-
-(defn checkbox-button [on-text off-text on-cond f]
-  (if on-cond
-    [:button.on {:on-click f :key on-text} on-text]
-    [:button.off {:on-click f :key off-text} off-text]))
 
 (defn play-sfx
   "Plays a list of sounds one after another."
