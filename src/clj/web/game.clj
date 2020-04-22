@@ -75,7 +75,7 @@
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
-  (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
+  (when-let [{:keys [players gameid started messages] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id gameid)
                (not started))
       (let [strip-deck (fn [player] (-> player
@@ -86,8 +86,8 @@
                        (assoc g :started true
                                 :original-players stripped-players
                                 :ending-players stripped-players
-                                :last-update (t/now))
-                       (assoc g :state (core/init-game g))
+                                :last-update (t/now)
+                                :state (core/init-game g))
                        (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)
         (swap! old-states assoc gameid @(:state game))
@@ -222,7 +222,7 @@
           {:keys [side user]} (lobby/player? client-id gameid)]
       (if (and state side user)
         (do (main/handle-say state (jinteki.utils/side-from-str side) user msg)
-          (swap-and-send-diffs! game))
+            (swap-and-send-diffs! game))
         (let [{:keys [user]} (lobby/spectator? client-id gameid)]
           (when (and user (not mute-spectators))
             (main/handle-say state :spectator user msg)

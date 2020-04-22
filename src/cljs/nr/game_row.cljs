@@ -13,7 +13,6 @@
   (authenticated
     (fn [user]
       (swap! s assoc :editing false)
-      (swap! app-state assoc :messages [])
       (ws/ws-send! [(case action
                       "join" :lobby/join
                       "watch" :lobby/watch

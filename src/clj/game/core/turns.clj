@@ -72,6 +72,8 @@
   (let [state (init-game-state game)
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
+    (when-let [messages (seq (:messages game))]
+      (swap! state assoc :log (conj (vec messages) {:user "__system__" :text "[hr]"})))
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     (create-basic-action-cards state)

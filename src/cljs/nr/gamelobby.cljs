@@ -24,12 +24,12 @@
 (def lobby-dom (atom {}))
 
 (defn sort-games-list [games]
-  (sort-by #(vec (map (assoc % :started (not (:started %))
-                               :mygame (if-let [og (:originalPlayers %)]
-                                         (some (fn [p] (= p (get-in @app-state [:user :_id])))
-                                               (map (fn [g] (get-in g [:user :_id])) og))
-                                         false))
-                      [:started :date :mygame]))
+  (sort-by #(map (assoc % :started (not (:started %))
+                        :mygame (if-let [og (:originalPlayers %)]
+                                  (some (fn [p] (= p (get-in @app-state [:user :_id])))
+                                        (map (fn [g] (get-in g [:user :_id])) og))
+                                  false))
+                 [:started :date :mygame])
            > games))
 
 (ws/register-ws-handler!
@@ -57,11 +57,9 @@
       (launch-game (parse-state state)))))
 
 (ws/register-ws-handler!
-  :lobby/message
-  (fn [{:keys [text notification] :as msg}]
-    (swap! app-state update :messages conj msg)
-    (when notification
-      (play-sound notification))))
+  :lobby/notification
+  (fn [notification]
+    (play-sound notification)))
 
 (ws/register-ws-handler!
   :lobby/timeout
@@ -103,7 +101,6 @@
 
         :else
         (do (swap! s assoc :editing false)
-            (swap! app-state assoc :messages [])
             (ws/ws-send! [:lobby/create
                           (assoc
                           (select-keys @s [:title :password :allow-spectator
@@ -152,18 +149,16 @@
              [:p (get-in deck [:identity :title])]]))])]])
 
 (defn send-msg [s]
-  (let [input (:msg-input @lobby-dom)
-        text (:msg @s)]
+  (let [text (:msg @s)]
     (when-not (empty? text)
-      (ws/ws-send! [:lobby/say {:gameid (:gameid @app-state) :msg text}])
+      (ws/ws-send! [:lobby/say {:gameid (:gameid @app-state)
+                                :msg text}])
       (let [msg-list (:message-list @lobby-dom)]
         (set! (.-scrollTop msg-list) (+ (.-scrollHeight msg-list) 500)))
-      (swap! s assoc :msg "")
-      (.focus input))))
+      (swap! s assoc :msg ""))))
 
 (defn chat-view []
-  (let [s (r/atom {})
-        messages (r/cursor app-state [:messages])]
+  (let [s (r/atom {})]
     (r/create-class
       {:display-name "chat-view"
 
@@ -175,7 +170,7 @@
              (set! (.-scrollTop msg-list) (.-scrollHeight msg-list)))))
 
        :reagent-render
-       (fn []
+       (fn [game]
          [:div.chat-box
           [:h3 "Chat"]
           [:div.message-list {:ref #(swap! lobby-dom assoc :message-list %)}
@@ -189,12 +184,13 @@
                              [:div.content
                               [:div.username (get-in msg [:user :username])]
                               [:div (:text msg)]]]) )
-                          @messages)]
+                          (:messages game))]
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-msg s))}
-            [:input {:ref #(swap! lobby-dom assoc :msg-input %)
-                     :placeholder "Say something" :accessKey "l" :value (:msg @s)
+            [:input {:placeholder "Say something"
+                     :type "text"
+                     :value (:msg @s)
                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
             [:button "Send"]]]])})))
 
@@ -346,7 +342,7 @@
         (when (first-user? players @user)
           [cond-button
            "Start"
-           (not (every? :deck players))
+           (every? :deck players)
            #(ws/ws-send! [:netrunner/start @gameid])])
         [:button {:on-click #(leave-lobby s)} "Leave"]
         (when (first-user? players @user)
@@ -387,7 +383,7 @@
                  :let [_id (get-in spectator [:user :_id])]]
              ^{:key _id}
              [player-view spectator])])]
-       [chat-view]])) )
+       [chat-view game]])))
 
 (defn right-panel
   [decks s games gameid password-gameid sets user]
