@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
-            [jinteki.validator :refer [calculate-deck-status]]
+            [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int]]
             [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
@@ -133,7 +133,7 @@
            same-side? (fn [deck] (= side (get-in deck [:identity :side])))
            legal? (fn [deck] (get-in deck
                                      [:status (keyword format) :legal]
-                                     (get-in (calculate-deck-status (assoc deck :format format))
+                                     (get-in (trusted-deck-status (assoc deck :format format))
                                          [(keyword format) :legal]
                                          false)))]
        [:div
@@ -370,7 +370,7 @@
                   (if this-player
                     name
                     "Deck selected")]])
-              (when-let [deck (first (filter #(= (:_id (:deck player)) (:_id %)) @decks))]
+              (when-let [deck (:deck player)]
                 [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
               (when this-player
                 [:span.fake-link.deck-load

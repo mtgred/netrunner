@@ -42,25 +42,31 @@
 
 (defn user-public-view
   "Strips private server information from a player map."
-  [started? player]
+  [{:keys [started format] :as game} player]
   (as-> player p
         (dissoc p :ws-id)
         (if-let [{:keys [_id] :as deck} (:deck p)]
-          (assoc p :deck (select-keys (assoc deck :_id (str _id))
-                                      (if started?
-                                        [:_id :status :name :identity]
-                                        [:_id :status :name])))
+          (let [legal (get-in deck [:status (keyword format) :legal])
+                status {:format format
+                        (keyword format) {:legal legal}}
+                deck (-> deck
+                         (select-keys
+                           (if started
+                             [:name :date :identity]
+                             [:name :date]))
+                         (assoc :_id (str _id) :status status))]
+            (assoc p :deck deck))
           p)))
 
 (defn game-public-view
   "Strips private server information from a game map, preparing to send the game to clients."
-  [{:keys [started] :as game}]
+  [{:keys [started players] :as game}]
   (-> game
       (dissoc :state :last-update)
-      (update-in [:players] #(map (partial user-public-view started) %))
-      (update-in [:original-players] #(map (partial user-public-view started) %))
-      (update-in [:ending-players] #(map (partial user-public-view started) %))
-      (update-in [:spectators] #(map (partial user-public-view started) %))))
+      (update-in [:players] #(map (partial user-public-view game) %))
+      (update-in [:original-players] #(map (partial user-public-view game) %))
+      (update-in [:ending-players] #(map (partial user-public-view game) %))
+      (update-in [:spectators] #(map (partial user-public-view game) %))))
 
 (let [lobby-update (atom true)
       lobby-updates (atom {})]
@@ -333,7 +339,7 @@
     client-id                           :client-id
     deck-id                             :?data}]
   (let [game (game-for-client client-id)
-        fplayer (first (:players game))
+        first-player (if (= client-id (:ws-id (first (:players game)))) 0 1)
         gameid (:gameid game)
 
         map-card (fn [c] (update-in c [:card] @all-cards))
@@ -343,10 +349,9 @@
                    (update-in d [:cards] #(vec (remove unknown-card %)))
                    (update-in d [:identity] #(@all-cards (:title %)))
                    (assoc d :status (calculate-deck-status d)))]
-    (when (and (:identity deck) (player? client-id gameid))
-      (swap! all-games update-in [gameid :players
-                              (if (= client-id (:ws-id fplayer)) 0 1)]
-             (fn [p] (assoc p :deck deck)))
+    (when (and (:identity deck)
+               (player? client-id gameid))
+      (swap! all-games assoc-in [gameid :players first-player :deck] deck)
       (ws/broadcast-to! (lobby-clients gameid)
                         :games/diff
                         {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))

@@ -97,7 +97,7 @@
 
      [:div (doall
              (for [player (:players game)]
-               ^{:key (-> player :user :_id)}
+               ^{:key (get-in player [:user :_id])}
                [player-view player game]))]
 
      (when-let [prompt (:prompt @s)]
