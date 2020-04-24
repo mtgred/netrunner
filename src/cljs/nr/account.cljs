@@ -143,7 +143,9 @@
                 :value @log-width}]
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc-in [:log-width] (get-in @app-state [:options :log-width]))
-                                                 (reset! log-width (get-in @app-state [:options :log-width])))} "Get current log width" ]])))
+                                                 (reset! log-width (get-in @app-state [:options :log-width])))}
+        "Get current log width"]])))
+
 (defn log-top-option [s]
   (let [log-top (r/atom (:log-top @s))]
     (println @log-top)
@@ -156,7 +158,8 @@
                 :value @log-top}]
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
-                                                 (reset! log-top (get-in @app-state [:options :log-top])))} "Get current log top" ]])))
+                                                 (reset! log-top (get-in @app-state [:options :log-top])))}
+        "Get current log top"]])))
 
 (defn account-view [user]
   (let [s (r/atom {:flash-message ""
@@ -345,4 +348,3 @@
   (r/with-let [active (r/cursor app-state [:active-page])]
     (when (and @user (= "/account" (first @active)))
       [account-view user])))
-

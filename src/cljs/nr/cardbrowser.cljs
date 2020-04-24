@@ -149,11 +149,7 @@
   "Generate text html representation a card"
   [card]
   [:div
-   [:h4 (str (:title card) " ")
-    [:span.influence
-     {:class (if-let [faction (:faction card)]
-               (-> faction s/lower-case (s/replace " " "-"))
-               "neutral")}]]
+   [:h4 (:title card)]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -176,11 +172,11 @@
      (when-let [faction (:faction card)]
        [:div.heading "Influence "
         [:span.influence
-         {:dangerouslySetInnerHTML #js {:__html (influence-dots influence)}
-          :class (-> faction s/lower-case (s/replace " " "-"))}]]))
+         {:class (-> faction s/lower-case (s/replace " " "-"))}
+         (influence-dots influence)]]))
    [:div.text
-    [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
-                                          "" (str ": " (:subtype card)))]
+    [:p [:span.type (str (:type card))]
+     (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
     [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
 
     [:div.formats
@@ -257,10 +253,10 @@
 (defn sort-field [fieldname]
   (case fieldname
     "Name" :title
-    "Influence" :factioncost
-    "Cost" :cost
-    "Faction" (juxt :side :faction :code)
-    "Type" (juxt :side :type)
+    "Influence" (juxt :factioncost :side :faction :title)
+    "Cost" (juxt :cost :title)
+    "Faction" (juxt :side :faction :title)
+    "Type" (juxt :side :type :faction :title)
     "Set number" :number))
 
 (defn selected-set-name [state]
@@ -275,21 +271,24 @@
       (swap! state update-in [:page] (fnil inc 0)))))
 
 (defn card-view [card state]
-  (let [cv (r/atom {:showText false})]
+  (let [cv (r/atom {:show-text false})]
     (fn [card state]
       [:div.card-preview.blue-shade
-       {:onClick #(do (.preventDefault %)
-                      (swap! state assoc :selected-card card))
+       {:on-click #(do (.preventDefault %)
+                       (if (= card (:selected-card @state))
+                         (swap! state dissoc :selected-card)
+                         (swap! state assoc :selected-card card)))
         :class (if (:decorate-card @state)
                  (cond (= (:selected-card @state) card) "selected"
                        (selected-alt-art card) "selected-alt")
                  nil)}
-       (if (:showText @cv)
+       (if (or (= card (:selected-card @state))
+               (:show-text @cv))
          [card-as-text card]
          (when-let [url (image-url card true)]
            [:img {:src url
                   :alt (:title card)
-                  :onError #(-> (swap! cv assoc :showText true))
+                  :onError #(-> (swap! cv assoc :show-text true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
 (defn card-list-view [state]
@@ -410,14 +409,6 @@
                           :faction-filter "All")}
        "Clear"]])
 
-(defn card-info-view [state]
-  (let [selected-card (:selected-card @state)]
-    (if (nil? selected-card)
-      [:div {:display "none"}]
-      [:div.blue-shade.panel.filters
-       [card-as-text selected-card]])))
-
-
 (defn card-browser []
   (r/with-let [active (r/cursor app-state [:active-page])]
     (when (= "/cards" (first @active))
@@ -431,16 +422,12 @@
                            :page 1
                            :decorate-card true
                            :selected-card nil})]
-        (r/create-class
-          {:display-name "card-browser"
-           :reagent-render
-           (fn []
-             (.focus (js/$ ".search"))
-             [:div.cardbrowser
-              [:div.blue-shade.panel.filters
-               [query-builder state]
-               [sort-by-builder state]
-               [dropdown-builder state]
-               [clear-filters state]]
-              [card-list-view state]
-              [card-info-view state]])})))))
+        (fn []
+          (.focus (js/$ ".search"))
+          [:div.cardbrowser
+           [:div.blue-shade.panel.filters
+            [query-builder state]
+            [sort-by-builder state]
+            [dropdown-builder state]
+            [clear-filters state]]
+           [card-list-view state]])))))

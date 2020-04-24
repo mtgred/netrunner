@@ -54,11 +54,11 @@
                 (not (or password-game current-game editing)))
        [:button {:on-click #(do (join "watch")
                                 (resume-sound))} "Watch" editing])
-     (when (and (not current-game)
+     (when (and (= 1 (count players))
+                (not current-game)
                 (not editing)
-                (= 1 (count players))
-                (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) original-players))
-                (not started))
+                (not started)
+                (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) players)))
        [:button {:on-click #(do (join "join")
                                 (resume-sound))}
         "Join"])
@@ -113,7 +113,8 @@
                                               (join prompt)))}]]
 
         [:p
-         [:button {:type "button" :on-click #(join prompt)}
+         [:button {:type "button"
+                   :on-click #(join prompt)}
           prompt]
          [:span.fake-link {:on-click #(do
                                         (swap! app-state dissoc :password-gameid)

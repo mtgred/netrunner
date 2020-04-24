@@ -1,7 +1,7 @@
 (ns nr.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize includes? join lower-case split]]
+            [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
             [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card?]]
@@ -9,7 +9,8 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.utils :refer [banned-span influence-dot map-longest toastr-options render-icons render-message
+            [nr.utils :refer [banned-span influence-dot influence-dots map-longest
+                              toastr-options render-icons render-message
                               checkbox-button cond-button]]
             [nr.ws :as ws]
             [reagent.core :as r]))
@@ -438,23 +439,24 @@
               :key "Indicate action"}
      "Indicate action"]))
 
-(let [s (r/atom {})]
-  (defn log-input []
-    (let [gameid (r/cursor game-state [:gameid])
-          games (r/cursor app-state [:games])
-          game (some #(when (= @gameid (str (:gameid %))) %) @games)]
-      (when (or (not-spectator?)
-                (not (:mutespectators game)))
-        [:div
-         [:form {:on-submit #(do (.preventDefault %)
-                                 (send-msg s))
-                 :on-input #(do (.preventDefault %)
-                                (send-typing s))}
-          [:input {:placeholder "Say something"
-                   :type "text"
-                   :value (:msg @s)
-                   :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
-         [indicate-action]]))))
+(defn log-input []
+  (let [gameid (r/cursor game-state [:gameid])
+        games (r/cursor app-state [:games])
+        s (r/atom {})]
+    (fn []
+      (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
+        (when (or (not-spectator?)
+                  (not (:mutespectators game)))
+          [:div
+           [:form {:on-submit #(do (.preventDefault %)
+                                   (send-msg s))
+                   :on-input #(do (.preventDefault %)
+                                  (send-typing s))}
+            [:input {:placeholder "Say something"
+                     :type "text"
+                     :value (:msg @s)
+                     :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+           [indicate-action]])))))
 
 (defn handle-dragstart [e card]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -543,7 +545,7 @@
   "Image element of a facedown card"
   ([side] (facedown-card side [] nil))
   ([side class-list alt-alt-text]
-   (let [s (.toLowerCase side)
+   (let [s (lower-case side)
          alt (if (nil? alt-alt-text)
                (str "Facedown " s " card")
                alt-alt-text)
@@ -586,43 +588,47 @@
            nil [:span.unimplemented "Unimplemented"]
            [:span.impl-msg implemented])]))))
 
+(defn card-as-text
+  [card]
+  [:div.card-preview.blue-shade
+   [:h4 (:title card)]
+   (when-let [memory (:memoryunits card)]
+     (if (< memory 3)
+       [:div.anr-icon {:class (str "mu" memory)} ""]
+       [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+   (when-let [cost (:cost card)]
+     [:div.heading (str "Cost: " cost)])
+   (when-let [trash-cost (:trash card)]
+     [:div.heading (str "Trash cost: " trash-cost)])
+   (when-let [strength (:strength card)]
+     [:div.heading (str "Strength: " strength)])
+   (when-let [requirement (:advancementcost card)]
+     [:div.heading (str "Advancement requirement: " requirement)])
+   (when-let [agenda-point (:agendatpoints card)]
+     [:div.heading (str "Agenda points: " agenda-point)])
+   (when-let [min-deck-size (:minimumdecksize card)]
+     [:div.heading (str "Minimum deck size: " min-deck-size)])
+   (when-let [influence-limit (:influencelimit card)]
+     [:div.heading (str "Influence limit: " influence-limit)])
+   (when-let [influence (:factioncost card)]
+     (when-let [faction (:faction card)]
+       [:div.heading "Influence "
+        [:span.influence
+         {:class (-> faction lower-case (s/replace " " "-"))}
+         (influence-dots influence)]]))
+   [:div.heading
+    [:span.type (str (:type card))]
+    (when-let [subtypes (seq (:subtype card))]
+      (str ": " subtypes))]
+   [:div.text
+    (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
+   (when-let [url (image-url card)]
+     [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])])
+
 (defn card-zoom [zoom-card]
   (if-let [card @zoom-card]
-    [:div.card-preview.blue-shade
-     [:h4 (:title card)]
-     (when-let [memory (:memoryunits card)]
-       (if (< memory 3)
-         [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
-     (when-let [cost (:cost card)]
-       [:div.heading (str "Cost: " cost)])
-     (when-let [trash-cost (:trash card)]
-       [:div.heading (str "Trash cost: " trash-cost)])
-     (when-let [strength (:strength card)]
-       [:div.heading (str "Strength: " strength)])
-     (when-let [requirement (:advancementcost card)]
-       [:div.heading (str "Advancement requirement: " requirement)])
-     (when-let [agenda-point (:agendatpoints card)]
-       [:div.heading (str "Agenda points: " agenda-point)])
-     (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading (str "Minimum deck size: " min-deck-size)])
-     (when-let [influence-limit (:influencelimit card)]
-       [:div.heading (str "Influence limit: " influence-limit)])
-     (when-let [influence (:factioncost card)]
-       (when-let [faction (:faction card)]
-         [:div.heading "Influence "
-          [:span.influence
-           {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
-            :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
-     [:div.text
-      [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
-                                            "" (str ": " (:subtype card)))]
-      [:pre (letfn [(card-by-title [title]
-                      (some #(when (= (:title %) title) %) @all-cards))]
-             (render-icons (:text (card-by-title (:title card)))))]]
-     (when-let [url (image-url card)]
-       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])
-     (do (-> ".card-zoom" js/$ (.addClass "fade")) nil)]
+    (do (-> ".card-zoom" js/$ (.addClass "fade"))
+        [card-as-text card])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn server-menu
@@ -743,66 +749,68 @@
                      (:fired sub) "✅")]])
            subroutines))])))
 
-(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
-                         advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
-                         corp-abilities]
-                  :as card}
-                 flipped]
-  (r/with-let [c-state (r/atom {})]
-    [:div.card-frame
-     [:div.blue-shade.card {:class (str (when selected "selected")
-                                        (when new " new")
-                                        (when (same-card? card (:button @app-state)) " hovered"))
-                            :draggable (when (not-spectator?) true)
-                            :on-touch-start #(handle-touchstart % card)
-                            :on-touch-end   #(handle-touchend %)
-                            :on-touch-move  #(handle-touchmove %)
-                            :on-drag-start #(handle-dragstart % card)
-                            :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                            :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
-                                                       (spectator-view-hidden?)
-                                                       (= (:side @game-state) (keyword (.toLowerCase side))))
-                                               (put! zoom-channel card))
-                            :on-mouse-leave #(put! zoom-channel false)
-                            :on-click #(handle-card-click card c-state)}
-      (when-let [url (image-url card)]
-        (if (or (not code) flipped facedown)
-          (let [facedown-but-known (or (not (or (not code) flipped facedown))
-                                       (spectator-view-hidden?)
-                                       (= (:side @game-state) (keyword (.toLowerCase side))))
-                alt-str (if facedown-but-known (str "Facedown " title) nil)]
-            [facedown-card side ["bg"] alt-str])
-          [:div
-           [:span.cardname title]
-           [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
-      [:div.counters
-       (when counter
-         (map-indexed (fn [i [type num-counters]]
-                (when (pos? num-counters)
-                  (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                    [(keyword selector) {:key type} num-counters])))
-              counter))
-       (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
-       (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
-      (when (and (or current-strength strength)
-                 (or (ice? card)
-                     (has-subtype? card "Icebreaker"))
-                 (active? card))
-        [:div.darkbg.strength (or current-strength strength)])
-      (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
-      (when server-target [:div.darkbg.server-target server-target])
-      (when subtype-target
-        (let [colour-type (case subtype-target
-                            ("Barrier" "Sentry") (lower-case subtype-target)
-                            "Code Gate" "code-gate"
-                            nil)
-              label (if (includes? subtype-target " - ")
-                      (->> (split subtype-target #" - ")
-                           (map first)
-                           (join " - "))
-                      subtype-target)]
-          [:div.darkbg.subtype-target {:class colour-type} label]))
+(defn card-view
+  [card filpped]
+  (let [c-state (r/atom {})]
+    (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
+                 advanceable rezzed strength current-strength title remotes selected hosted
+                 side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
+                 corp-abilities]
+          :as card}
+         flipped]
+      [:div.card-frame
+       [:div.blue-shade.card {:class (str (when selected "selected")
+                                          (when new " new")
+                                          (when (same-card? card (:button @app-state)) " hovered"))
+                              :draggable (when (not-spectator?) true)
+                              :on-touch-start #(handle-touchstart % card)
+                              :on-touch-end   #(handle-touchend %)
+                              :on-touch-move  #(handle-touchmove %)
+                              :on-drag-start #(handle-dragstart % card)
+                              :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
+                              :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
+                                                         (spectator-view-hidden?)
+                                                         (= (:side @game-state) (keyword (lower-case side))))
+                                                 (put! zoom-channel card))
+                              :on-mouse-leave #(put! zoom-channel false)
+                              :on-click #(handle-card-click card c-state)}
+        (when-let [url (image-url card)]
+          (if (or (not code) flipped facedown)
+            (let [facedown-but-known (or (not (or (not code) flipped facedown))
+                                         (spectator-view-hidden?)
+                                         (= (:side @game-state) (keyword (lower-case side))))
+                  alt-str (if facedown-but-known (str "Facedown " title) nil)]
+              [facedown-card side ["bg"] alt-str])
+            [:div
+             [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
+        [:span.cardname title]
+        [:div.counters
+         (when counter
+           (map-indexed (fn [i [type num-counters]]
+                          (when (pos? num-counters)
+                            (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                              [(keyword selector) {:key type} num-counters])))
+                        counter))
+         (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
+         (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
+        (when (and (or current-strength strength)
+                   (or (ice? card)
+                       (has-subtype? card "Icebreaker"))
+                   (active? card))
+          [:div.darkbg.strength (or current-strength strength)])
+        (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
+        (when server-target [:div.darkbg.server-target server-target])
+        (when subtype-target
+          (let [colour-type (case subtype-target
+                              ("Barrier" "Sentry") (lower-case subtype-target)
+                              "Code Gate" "code-gate"
+                              nil)
+                label (if (includes? subtype-target " - ")
+                        (->> (split subtype-target #" - ")
+                             (map first)
+                             (join " - "))
+                        subtype-target)]
+            [:div.darkbg.subtype-target {:class colour-type} label]))
 
       (when (and (= zone ["hand"])
                  (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
@@ -832,7 +840,7 @@
           (for [card hosted]
             (let [flipped (face-down? card)]
               ^{:key (:cid card)}
-              [card-view card flipped])))])]))
+              [card-view card flipped])))])])))
 
 (defn drop-area [server hmap]
   (merge hmap {:on-drop #(handle-drop % server)

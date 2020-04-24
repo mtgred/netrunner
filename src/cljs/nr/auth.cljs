@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [chan put!] :as async]
             [nr.ajax :refer [POST GET]]
             [nr.appstate :refer [app-state]]
+            [clojure.string :refer [lower-case]]
             [reagent.core :as r]))
 
 (defn authenticated [f]
@@ -12,17 +13,17 @@
 
 (defn handle-post [event url s]
   (.preventDefault event)
-  (swap! s assoc :flash-message "")
-  (let [params (-> event .-target js/$ .serialize)
-        _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
+  (swap! s dissoc :flash-message)
+  (let [params (.-serialize (js/$ (.-target event)))]
     (go (let [response (<! (POST url params))]
-          (if (and (= (:status response) 200) (= (:owner "/forgot") "/forgot") )
+          (if (and (= (:status response) 200)
+                   (= url "/forgot"))
             (swap! s assoc :flash-message "Reset password sent")
             (case (:status response)
               401 (swap! s assoc :flash-message "Invalid login or password")
               421 (swap! s assoc :flash-message "No account with that email address exists")
-              422 (swap! s assoc :flash-message  "Username taken")
-              423 (swap! s assoc :flash-message  "Username too long")
+              422 (swap! s assoc :flash-message "Username taken")
+              423 (swap! s assoc :flash-message "Username too long")
               424 (swap! s assoc :flash-message "Email already used")
               (-> js/document .-location (.reload true))))))))
 
@@ -75,17 +76,33 @@
 
 (defn valid-email? [email]
   (let [pattern #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"]
-    (and (string? email) (re-matches pattern (.toLowerCase email)))))
+    (and (string? email)
+         (re-matches pattern (lower-case email)))))
 
 (defn register [event s]
   (.preventDefault event)
    (cond
-     (empty? (:email @s)) (swap! s assoc :flash-message "Email can't be empty")
-     (empty? (:username @s)) (swap! s assoc :flash-message "Username can't be empty")
-     (not (-> @s :email valid-email?)) (swap! s assoc :flash-message "Please enter a valid email address")
-     (< 20 (-> @s :username count)) (swap! s assoc :flash-message "Username must be 20 characters or shorter")
-     (empty? (:password @s)) (swap! s assoc :flash-message "Password can't be empty")
-     :else (handle-post event "/register" s)))
+     (empty? (:email @s))
+     (swap! s assoc :flash-message "Email can't be empty")
+
+     (empty? (:username @s))
+     (swap! s assoc :flash-message "Username can't be empty")
+
+     (not (-> @s :email valid-email?))
+     (swap! s assoc :flash-message "Please enter a valid email address")
+
+     (< 20 (-> @s :username count))
+     (swap! s assoc :flash-message "Username must be 20 characters or shorter")
+
+     (or (empty? (:password @s))
+         (empty? (:confirm-password @s)))
+     (swap! s assoc :flash-message "Password can't be empty")
+
+     (= (:password @s) (:confirm-password  @s))
+     (swap! s assoc :flash-message "Passwords must match")
+
+     :else
+     (handle-post event "/register" s)))
 
 (defn register-form []
   (r/with-let [s (r/atom {:flash-message ""})]
@@ -94,15 +111,37 @@
       [:h3 "Create an account"]
       [:p.flash-message (:flash-message @s)]
       [:form {:on-submit #(register % s)}
-       [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email" :value (:email @s)
+       [:p [:input {:type "text"
+                    :placeholder "Email"
+                    :name "email"
+                    :ref "email"
+                    :value (:email @s)
                     :on-change #(swap! s assoc :email (-> % .-target .-value))
                     :on-blur #(when-not (valid-email? (.. % -target -value))
                                 (swap! s assoc :flash-message "Please enter a valid email address"))}]]
-       [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username" :value (:username @s)
+       [:p [:input {:type "text"
+                    :placeholder "Username"
+                    :name "username"
+                    :ref "username"
+                    :value (:username @s)
                     :on-change #(swap! s assoc :username (-> % .-target .-value))
-                    :on-blur #(check-username (-> % .-target .-value) s) :maxLength "16"}]]
-       [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"
-                    :value (:password @s) :on-change #(swap! s assoc :password (-> % .-target .-value))}]]
+                    :on-blur #(check-username (-> % .-target .-value) s)
+                    :maxLength "16"}]]
+       [:p [:input {:type "password"
+                    :placeholder "Password"
+                    :name "password"
+                    :ref "password"
+                    :value (:password @s)
+                    :on-change #(swap! s assoc :password (-> % .-target .-value))}]]
+       [:p [:input {:type "password"
+                    :placeholder "Confirm password"
+                    :name "confirm-password"
+                    :ref "confirm-password"
+                    :value (:confirm-password @s)
+                    :on-change #(swap! s assoc :confirm-password (-> % .-target .-value))
+                    :on-blur #(let [value (-> % .-target .-value)]
+                                (when-not (subs value 0 (count (:password @s)))
+                                  (swap! s assoc :flash-message "Please enter matching passwords")))}]]
        [:p [:button "Sign up"]
         [:button {:data-dismiss "modal"} "Cancel"]]]
       [:p "Already have an account? " \
@@ -119,7 +158,9 @@
       [:h3 "Reset your Password"]
       [:p.flash-message (:flash-message @s)]
       [:form {:on-submit #(handle-post % "/forgot" s)}
-       [:p [:input {:type "text" :placeholder "Email" :name "email"
+       [:p [:input {:type "text"
+                    :placeholder "Email"
+                    :name "email"
                     :on-blur #(check-email (-> % .-target .-value) s)}]]
        [:p [:button "Submit"]
         [:button {:data-dismiss "modal"} "Cancel"]]

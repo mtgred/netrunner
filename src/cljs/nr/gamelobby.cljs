@@ -251,7 +251,8 @@
 (defn games-list-panel [s games gameid password-gameid sets user]
   [:div.games
    [:div.button-bar
-    [cond-button "New game" (not (or @gameid (:editing @s))) #(do (new-game s) (resume-sound))]
+    [cond-button "New game" (not (or @gameid (:editing @s))) #(do (new-game s)
+                                                                  (resume-sound))]
     [:div.rooms
      [room-tab user s games "competitive" "Competitive"]
      [room-tab user s games "casual" "Casual"]]]
