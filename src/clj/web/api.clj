@@ -28,7 +28,7 @@
            (route/resources "/")
            (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
-           (GET "/check/:username" [] auth/check-username-handler)
+           (GET "/check-username/:username" [] auth/check-username-handler)
 
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/cards/version" [] data/cards-version-handler)
@@ -63,6 +63,8 @@
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
            (PUT "/profile" [] auth/update-profile-handler)
+           (GET "/profile/email" [] auth/email-handler)
+           (PUT "/profile/email" [] auth/change-email-handler)
 
            (DELETE "/profile/stats/user" [] stats/clear-userstats-handler)
            (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)

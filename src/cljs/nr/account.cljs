@@ -4,11 +4,10 @@
             [clojure.string :as s]
             [goog.dom :as gdom]
             [jinteki.cards :refer [all-cards]]
-            [nr.auth :refer [avatar] :as auth]
+            [nr.auth :refer [avatar valid-email?] :as auth]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
             [nr.appstate :refer [app-state]]
-            [nr.auth :refer [avatar] :as auth]
             [reagent.core :as r]))
 
 (def alt-arts-channel (chan))
@@ -133,7 +132,6 @@
 
 (defn log-width-option [s]
   (let [log-width (r/atom (:log-width @s))]
-    (println @log-width)
     (fn []
       [:div
        [:input {:type "number"
@@ -148,7 +146,6 @@
 
 (defn log-top-option [s]
   (let [log-top (r/atom (:log-top @s))]
-    (println @log-top)
     (fn []
       [:div
        [:input {:type "number"
@@ -160,6 +157,41 @@
                                   :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
         "Get current log top"]])))
+
+(defn change-email [s]
+  (let [email-state (r/atom {:flash-message ""
+                             :email ""})]
+    (fn [s]
+      [:div#change-email.modal.fade {:ref "change-email"}
+       [:div.modal-dialog
+        [:h3 "Change email address"]
+        [:p.flash-message (:flash-message @email-state)]
+        [:form {:on-submit (fn [event]
+                             (.preventDefault event)
+                             (let [email (:email @email-state)]
+                               (when (valid-email? email)
+                                 (go (let [{status             :status
+                                            {message :message} :json} (<! (PUT "/profile/email" {:email email} :json))]
+                                       (if (= 200 status)
+                                         (-> js/document .-location (.reload true))
+                                         (swap! email-state assoc :flash-message message)))))))}
+         (when-let [email (:email @s)]
+           [:p [:label "Current email: "]
+            [:input {:type "text"
+                     :value email
+                     :name "current-email"
+                     :read-only true}]])
+         [:p [:label "Desired email: "]
+          [:input {:type "text"
+                   :placeholder "Email address"
+                   :name "email"
+                   :on-change #(let [value (-> % .-target .-value)]
+                                 (swap! email-state assoc :email value))
+                   :on-blur #(if (valid-email? (-> % .-target .-value))
+                               (swap! email-state assoc :flash-message "")
+                               (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
+         [:p [:button "Update"]
+          [:button {:data-dismiss "modal"} "Cancel"]]]]])))
 
 (defn account-view [user]
   (let [s (r/atom {:flash-message ""
@@ -176,6 +208,11 @@
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
+
+    (go (let [response (<! (GET "profile/email"))]
+          (when (= 200 (:status response))
+            (swap! s assoc :email (:email (:json response))))))
+
     (go (while true
           (let [cards (<! alt-arts-channel)
                 first-alt (first (sort-by :title (vals cards)))]
@@ -187,9 +224,13 @@
 
     (fn [user]
       [:div.account
+       [change-email s]
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
         [:h2 "Settings"]
         [:form {:on-submit #(handle-post % "/profile" s)}
+         [:section
+          [:h3 "Email"]
+          [:a {:href "" :data-target "#change-email" :data-toggle "modal"} "Change email"]]
          [:section
           [:h3 "Avatar"]
           [avatar @user {:opts {:size 38}}]
@@ -311,12 +352,12 @@
                         [:option {:value t :key t} (alt-art-name t)]))]
               [:button
                {:type "button"
-                :on-click #(do (reset-card-art s))}
+                :on-click #(reset-card-art s)}
                "Set"]]
              [:div.reset-all
               [:button
                {:type "button"
-                :on-click #(do (reset-card-art s "default"))}
+                :on-click #(reset-card-art s "default")}
                "Reset All to Official Art"]]])]
 
          [:section
@@ -325,8 +366,8 @@
            [:input {:on-change #(swap! s assoc-in [:block-user-input] (-> % .-target .-value))
                     :on-key-down (fn [e]
                                    (when (= e.keyCode 13)
-                                     (do (add-user-to-block-list user s)
-                                         (.preventDefault e))))
+                                     (.preventDefault e)
+                                     (add-user-to-block-list user s)))
                     :ref "block-user-input"
                     :value (:block-user-input @s)
                     :type "text" :placeholder "User name"}]
@@ -344,7 +385,8 @@
           [:button "Update Profile"]
           [:span.flash-message (:flash-message @s)]]]]])))
 
-(defn account [user]
-  (r/with-let [active (r/cursor app-state [:active-page])]
+(defn account []
+  (let [user (r/cursor app-state [:user])
+        active (r/cursor app-state [:active-page])]
     (when (and @user (= "/account" (first @active)))
       [account-view user])))

@@ -14,7 +14,8 @@
 (defn handle-post [event url s]
   (.preventDefault event)
   (swap! s dissoc :flash-message)
-  (let [params (.-serialize (js/$ (.-target event)))]
+  (let [params (-> event .-target js/$ .serialize)
+        _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
     (go (let [response (<! (POST url params))]
           (if (and (= (:status response) 200)
                    (= url "/forgot"))
@@ -62,16 +63,10 @@
     [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])
 
 (defn check-username [value s]
-  (go (let [response (<! (GET (str "/check/" value)))]
+  (go (let [response (<! (GET (str "/check-username/" value)))]
         (case (:status response)
           422 (swap! s assoc :flash-message "Username taken")
           423 (swap! s assoc :flash-message "Username too short/too long")
-          (swap! s assoc :flash-message "")))))
-
-(defn check-email [value s]
-  (go (let [response (<! (GET (str "/check/" value)))]
-        (if (= (:status response) 421)
-          (swap! s assoc :flash-message "No account with that email address exists")
           (swap! s assoc :flash-message "")))))
 
 (defn valid-email? [email]
@@ -161,7 +156,8 @@
        [:p [:input {:type "text"
                     :placeholder "Email"
                     :name "email"
-                    :on-blur #(check-email (-> % .-target .-value) s)}]]
+                    :on-blur #(when-not (valid-email? (.. % -target -value))
+                                (swap! s assoc :flash-message "Please enter a valid email address"))}]]
        [:p [:button "Submit"]
         [:button {:data-dismiss "modal"} "Cancel"]]
        [:p "No account? "

@@ -114,6 +114,32 @@
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
+(defn email-handler [{{username :username} :user
+                      body                 :body}]
+  (if username
+    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username username} ["email"])]
+      (response 200 {:email email}))
+    (response 401 {:message "Unauthorized"})))
+
+(defn change-email-handler [{{username :username} :user
+                             {email :email}       :body
+                             :as params}]
+  (cond
+    (not username)
+    (response 401 {:message "Unauthorized"})
+
+    (mc/find-one-as-map db "users" {:email email})
+    (response 400 {:message "Email address already in use"})
+
+    (acknowledged?
+      (mc/update db "users"
+                 {:username username}
+                 {"$set" {:email email}}))
+    (response 200 {:message "Refresh your browser"})
+
+    :else
+    (response 404 {:message "Account not found"})))
+
 (defn update-profile-handler [{{username :username} :user
                                body                 :body}]
   (if username

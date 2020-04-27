@@ -90,7 +90,7 @@
   (r/render [auth-forms] (.getElementById js/document "auth-forms"))
   ; main screens
   (r/render [about] (.getElementById js/document "about"))
-  (r/render [account (r/cursor app-state [:user])] (.getElementById js/document "account"))
+  (r/render [account] (.getElementById js/document "account"))
   (r/render [card-browser] (.getElementById js/document "cardbrowser"))
   (r/render [chat] (.getElementById js/document "chat"))
   (r/render [deck-builder] (.getElementById js/document "deckbuilder"))

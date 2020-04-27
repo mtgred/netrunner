@@ -338,7 +338,7 @@
                                  (PUT "/data/decks" data :json)))
                   new-id (get-in response [:json :_id])
                   new-deck (if new? (assoc deck :_id new-id) deck)
-                  json (:json (<! (GET (str "/data/decks"))))
+                  json (:json (<! (GET "/data/decks")))
                   all-decks (load-decks-from-json json)]
               (set-deck-on-state s new-deck)
               (load-decks all-decks)))))))
