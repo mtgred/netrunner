@@ -14,7 +14,6 @@
             [nr.game-row :refer [game-row]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
-            [nr.stats :refer [notnum->zero]]
             [nr.utils :refer [slug->format cond-button]]
             [nr.ws :as ws]
             [reagent.core :as r]

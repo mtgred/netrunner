@@ -81,15 +81,16 @@
     (when (and (lobby/first-player? client-id gameid)
                (not started))
       (let [strip-deck (fn [player] (-> player
-                                        (update-in [:deck] #(select-keys % [:_id :identity]))
+                                        (update-in [:deck] #(select-keys % [:_id :identity :name]))
                                         (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
-            start-time (t/now)
+            start-date (t/now)
             game (as-> game g
                    (assoc g :started true
                           :original-players stripped-players
                           :ending-players stripped-players
-                          :last-update start-time
+                          :start-date (java.util.Date.)
+                          :last-update start-date
                           :state (core/init-game g))
                    (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)

@@ -1,13 +1,15 @@
 (ns nr.stats
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
+            [clojure.string :refer [capitalize]]
             [jinteki.cards :refer [all-cards]]
             [nr.ajax :refer [GET DELETE]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
             [nr.deckbuilder :refer [num->percent]]
-            [nr.utils :refer [faction-icon render-message]]
+            [nr.player-view :refer [player-view]]
+            [nr.utils :refer [faction-icon render-message notnum->zero]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -24,10 +26,18 @@
   #(do (swap! app-state assoc :stats (-> % :userstats))
        (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
 
-(defn notnum->zero
-  "Converts a non-positive-number value to zero.  Returns the value if already a number"
-  [input]
-  (if (pos? (int input)) input 0))
+(defn game-details [state]
+  (let [game (:view-game @state)]
+    [:div.games.panel
+     [:h4 (:title game)]
+     [:div
+      [:div (str "Lobby: " (:room game))]
+      [:div (str "Format: " (capitalize (str (:format game))))]
+      [:div (str "Winner: " (capitalize (str (:winner game))))]
+      [:div (str "Win method: " (:reason game))]
+      [:div (str "Started: " (:start-date game))]
+      [:div (str "Ended: " (:end-date game))]
+      [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]]]]))
 
 (defn clear-user-stats []
   (authenticated
@@ -55,7 +65,7 @@
        [:div [:div "Won: " win  " (" pw "%)"]
         [:div "Lost: " lose  " (" pl "%)"]])]))
 
-(defn left-panel [stats]
+(defn stats-panel [stats]
   [:div.games.panel
    [:div.games
     [:div
@@ -73,7 +83,32 @@
      [stat-view {:stats @stats
                  :start-key :games-started-runner :complete-key :games-completed-runner
                  :win-key :wins-runner :lose-key :loses-runner}]]]
-   [:p [:button {:on-click #(clear-user-stats)} "Clear Stats"]]])
+   [:p [:button {:on-click #(clear-user-stats)} "Clear Stats"]]] )
+
+(defn left-panel [state stats]
+  (if (:view-game @state)
+    [game-details state]
+    [stats-panel stats]))
+
+(defn game-log [state]
+  (let [game (:view-game @state)]
+    [:div {:style {:overflow "auto"}}
+     [:div.panel.messages
+      (if (seq (:log game))
+        (doall (map-indexed
+                 (fn [i msg]
+                   (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                     (if (= (:user msg) "__system__")
+                       [:div.system {:key i} (render-message (:text msg))]
+                       [:div.message {:key i}
+                        [avatar (:user msg) {:opts {:size 38}}]
+                        [:div.content
+                         [:div.username (get-in msg [:user :username])]
+                         [:div (render-message (:text msg))]]])))
+                 (:log game)))
+        [:h4 "No log available"])]]))
+
+(def faction-icon-memo (memoize faction-icon))
 
 (defn fetch-log [state game]
   (go (let [{:keys [status json]} (<! (GET (str "/profile/history/" (:gameid game))))]
@@ -81,9 +116,9 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner corp-id runner-id turn winner reason] :as game}]
-  (let [corp-id (first (filter #(= (:title %) corp-id) @all-cards))
-        runner-id (first (filter #(= (:title %) runner-id) @all-cards))]
+  [state {:keys [title corp runner turn winner reason] :as game}]
+  (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
+        runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
       {:on-click #(fetch-log state game)}
@@ -92,13 +127,15 @@
 
      [:div
       [:span.player
-       [:span.user-status (str "Corp: " corp " ")]
-       (faction-icon (:faction corp-id) (:title corp-id)) " " (:title corp-id)]]
+       [avatar (:player corp) {:opts {:size 24}}]
+       (get-in corp [:player :username]) " - "
+       (faction-icon-memo (:faction corp-id) (:title corp-id)) " " (:title corp-id)]]
 
      [:div
       [:span.player
-       [:span.user-status (str "Runner: " runner " ")]
-       (faction-icon (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
+       [avatar (:player runner) {:opts {:size 24}}]
+       (get-in runner [:player :username]) " - "
+       (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
        [:h4 "Winner: " winner])]))
@@ -113,23 +150,6 @@
           (for [game games]
             ^{:key (:gameid game)}
             [game-row state game])))]]))
-
-(defn game-log [state]
-  (let [game (:view-game @state)]
-    [:div {:style {:overflow "auto"}}
-     [:button.float-right {:on-click #(swap! state dissoc :view-game)} "View games"]
-     [:div.panel.messages
-      (doall (map-indexed
-               (fn [i msg]
-                 (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                   (if (= (:user msg) "__system__")
-                     [:div.system {:key i} (render-message (:text msg))]
-                     [:div.message {:key i}
-                      [avatar (:user msg) {:opts {:size 38}}]
-                      [:div.content
-                       [:div.username (get-in msg [:user :username])]
-                       [:div (render-message (:text msg))]]])))
-               (:log game)))]]))
 
 (defn right-panel [state]
   (if (:view-game @state)
@@ -150,5 +170,5 @@
     (when (= "/stats" (first @active))
       [:div.container
        [:div.lobby.panel.blue-shade
-        [left-panel stats]
+        [left-panel state stats]
         [right-panel state]]])))

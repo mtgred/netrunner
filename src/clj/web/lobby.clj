@@ -229,7 +229,7 @@
               :room           room
               :format         format
               :players        [{:user    user
-                                :ws-id      client-id
+                                :ws-id   client-id
                                 :side    side
                                 :options options}]
               :spectators     []

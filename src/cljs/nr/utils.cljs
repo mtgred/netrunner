@@ -265,3 +265,8 @@
   (if on-cond
     [:button.on {:on-click f :key on-text} on-text]
     [:button.off {:on-click f :key off-text} off-text]))
+
+(defn notnum->zero
+  "Converts a non-positive-number value to zero.  Returns the value if already a number"
+  [input]
+  (if (pos? (int input)) input 0))
