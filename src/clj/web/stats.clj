@@ -5,6 +5,7 @@
             [monger.operators :refer :all]
             [web.ws :as ws]
             [web.utils :refer [response]]
+            [clojure.set :refer [rename-keys]]
             [clj-time.core :as t])
 
   (:import org.bson.types.ObjectId))
@@ -155,4 +156,26 @@
                         :endDate      (java.util.Date.)
                         :turn         (:turn @state)
                         :corpAgenda   (get-in @state [:corp :agenda-point])
-                        :runnerAgenda (get-in @state [:runner :agenda-point])}})))
+                        :runnerAgenda (get-in @state [:runner :agenda-point])
+                        :log          (:log @state)}})))
+
+(defn history [{{username :username} :user}]
+  (if username
+    (let [games (->> (mc/find-maps db "gamestats" {$or [{:corp username}
+                                                        {:runner username}]})
+                     (map #(dissoc % :_id :log))
+                     (map #(rename-keys % {:startDate :start-date
+                                           :endDate :end-date
+                                           :corpIdentity :corp-id
+                                           :runnerIdentity :runner-id}))
+                     (into []))]
+      (response 200 games))
+    (response 401 {:message "Unauthorized"})))
+
+(defn fetch-log [{{username :username} :user
+                  {:keys [gameid]}     :params}]
+  (if username
+    (let [{:keys [log]} (mc/find-one-as-map db "gamestats" {:gameid gameid} ["log"])]
+      (response 200 log))
+    (response 401 {:message "Unauthorized"}))
+  )

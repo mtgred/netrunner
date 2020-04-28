@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [chan put!] :as async]
             [nr.ajax :refer [POST GET]]
             [nr.appstate :refer [app-state]]
+            [nr.avatar :refer [avatar]]
             [clojure.string :refer [lower-case]]
             [reagent.core :as r]))
 
@@ -32,12 +33,6 @@
   (.preventDefault event)
   (go (let [response (<! (POST "/logout" nil))]
         (-> js/document .-location (.reload true)))))
-
-(defn avatar [{:keys [emailhash username]} opts]
-  (when emailhash
-    [:img.avatar
-     {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (get-in opts [:opts :size]))
-      :alt username}]))
 
 (defn logged-menu [user]
   [:ul

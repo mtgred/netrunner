@@ -4,10 +4,11 @@
             [clojure.string :as s]
             [goog.dom :as gdom]
             [jinteki.cards :refer [all-cards]]
-            [nr.auth :refer [avatar valid-email?] :as auth]
+            [nr.auth :refer [valid-email?] :as auth]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
             [nr.appstate :refer [app-state]]
+            [nr.avatar :refer [avatar]]
             [reagent.core :as r]))
 
 (def alt-arts-channel (chan))
@@ -209,7 +210,7 @@
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
 
-    (go (let [response (<! (GET "profile/email"))]
+    (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))
             (swap! s assoc :email (:email (:json response))))))
 

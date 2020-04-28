@@ -8,7 +8,8 @@
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
-            [nr.auth :refer [avatar] :as auth]
+            [nr.auth :as auth]
+            [nr.avatar :refer [avatar]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button]]

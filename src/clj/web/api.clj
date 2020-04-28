@@ -69,6 +69,9 @@
            (DELETE "/profile/stats/user" [] stats/clear-userstats-handler)
            (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
+           (GET "/profile/history" [] stats/history)
+           (GET "/profile/history/:gameid" [] stats/fetch-log)
+
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
            (PUT "/data/decks" [] decks/decks-save-handler)
