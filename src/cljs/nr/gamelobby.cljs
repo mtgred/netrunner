@@ -23,13 +23,15 @@
 (def lobby-dom (atom {}))
 
 (defn sort-games-list [games]
-  (sort-by #(map (assoc % :started (not (:started %))
-                        :mygame (if-let [og (:originalPlayers %)]
-                                  (some (fn [p] (= p (get-in @app-state [:user :_id])))
-                                        (map (fn [g] (get-in g [:user :_id])) og))
-                                  false))
-                 [:started :date :mygame])
-           > games))
+  (sort-by (fn [game]
+             [(when-let [players (:players game)]
+                (not (some (fn [p]
+                             (= (get-in p [:user :_id])
+                                (get-in @app-state [:user :_id])))
+                           players)))
+              (:started game)
+              (:date game)])
+           games))
 
 (ws/register-ws-handler!
   :games/list
@@ -41,10 +43,10 @@
     (swap! app-state update-in [:games]
            (fn [games]
              (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
-                   create (merge gamemap (:create diff))
-                   update (merge create (:update diff))
-                   delete (apply dissoc update (keys (:delete diff)))]
-               (sort-games-list (vals delete)))))
+                   create-diff (merge gamemap (:create diff))
+                   update-diff (merge create-diff (:update diff))
+                   delete-diff (apply dissoc update-diff (keys (:delete diff)))]
+               (sort-games-list (vals delete-diff)))))
     (when (and notification (not (:gameid @app-state)))
       (play-sound notification))))
 
@@ -247,11 +249,17 @@
            ^{:key (:gameid game)}
            [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]))
 
-(defn games-list-panel [s games gameid password-gameid sets user]
+(defn games-list-panel [s games gameid password-gameid user]
   [:div.games
    [:div.button-bar
-    [cond-button "New game" (not (or @gameid (:editing @s))) #(do (new-game s)
-                                                                  (resume-sound))]
+    [cond-button "New game"
+     (and (not (or @gameid (:editing @s)))
+          (->> @games
+               (mapcat :players)
+               (filter #(= (-> % :user :_id) (:_id @user)))
+               empty?))
+     #(do (new-game s)
+          (resume-sound))]
     [:div.rooms
      [room-tab user s games "competitive" "Competitive"]
      [room-tab user s games "casual" "Casual"]]]
@@ -404,6 +412,6 @@
       [:div.container
        [:div.lobby-bg]
        [:div.lobby.panel.blue-shade
-        [games-list-panel s games gameid password-gameid sets user]
+        [games-list-panel s games gameid password-gameid user]
         [right-panel decks s games gameid password-gameid sets user]
         [reagent-modals/modal-window]]])))
