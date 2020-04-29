@@ -8,6 +8,7 @@
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
             [nr.deckbuilder :refer [num->percent]]
+            [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.player-view :refer [player-view]]
             [nr.utils :refer [faction-icon render-message notnum->zero]]
             [nr.ws :as ws]
@@ -31,12 +32,14 @@
     [:div.games.panel
      [:h4 (:title game)]
      [:div
-      [:div (str "Lobby: " (:room game))]
+      [:div (str "Lobby: " (capitalize (str (:room game))))]
       [:div (str "Format: " (capitalize (str (:format game))))]
       [:div (str "Winner: " (capitalize (str (:winner game))))]
       [:div (str "Win method: " (:reason game))]
       [:div (str "Started: " (:start-date game))]
       [:div (str "Ended: " (:end-date game))]
+      (when (:stats game)
+        [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]]]]))
 
 (defn clear-user-stats []

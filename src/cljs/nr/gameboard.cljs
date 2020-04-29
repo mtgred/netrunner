@@ -10,6 +10,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
             [nr.avatar :refer [avatar]]
+            [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button]]
@@ -1310,85 +1311,39 @@
   (when sfx-current-id
     (swap! sfx-state assoc :sfx-last-played {:gameid gameid :id sfx-current-id}))))
 
-(def corp-stats
-  (let [s #(-> @game-state :stats :corp)]
-    [["Clicks Gained" #(-> (s) :gain :click)]
-     ["Credits Gained" #(-> (s) :gain :credit)]
-     ["Credits Spent" #(-> (s) :spent :credit)]
-     ["Credits by Click" #(-> (s) :click :credit)]
-     ["Cards Drawn" #(-> (s) :gain :card)]
-     ["Cards Drawn by Click" #(-> (s) :click :draw)]
-     ["Damage Done" #(-> (s) :damage :all)]
-     ["Cards Rezzed" #(-> (s) :cards :rezzed)]]))
-
-(def runner-stats
-  (let [s #(-> @game-state :stats :runner)]
-    [["Clicks Gained" #(-> (s) :gain :click)]
-     ["Credits Gained" #(-> (s) :gain :credit)]
-     ["Credits Spent" #(-> (s) :spent :credit)]
-     ["Credits by Click" #(-> (s) :click :credit)]
-     ["Cards Drawn" #(-> (s) :gain :card)]
-     ["Cards Drawn by Click" #(-> (s) :click :draw)]
-     ["Tags Gained" #(-> (s) :gain :tag)]
-     ["Runs Made" #(-> (s) :runs :started)]
-     ["Cards Accessed" #(-> (s) :access :cards)]]))
-
-(defn show-stat
-  "Determines statistic counter and if it should be shown"
-  [side]
-  (when-let [stat-fn (-> side second)]
-    (let [stat (stat-fn)]
-      (if (pos? stat) stat "-"))))
-
-(defn build-game-stats
-  "Builds the end of game statistics div & table"
-  [game-state]
-  (let [stats (map-longest list nil corp-stats runner-stats)]
-    [:div
-     [:table.win.table
-      [:tbody
-        [:tr.win.th
-         [:td.win.th "Corp"] [:td.win.th]
-         [:td.win.th "Runner"] [:td.win.th]]
-       (doall (map-indexed
-          (fn [i [corp runner]]
-            [:tr {:key i}
-             [:td (first corp)] [:td (show-stat corp)]
-             [:td (first runner)] [:td (show-stat runner)]])
-          stats))]]]))
-
 (defn build-win-box
   "Builds the end of game pop up game end"
   [game-state]
-  (let [winner (r/cursor game-state [:winner])
-        win-shown (r/cursor app-state [:win-shown])
-        winning-user (r/cursor game-state [:winning-user])
-        turn (r/cursor game-state [:turn])
-        reason (r/cursor game-state [:reason])
-        time (r/cursor game-state [:stats :time :elapsed])]
+  (let [win-shown (r/atom false)]
     (fn [game-state]
-      (when (and @winner (not @win-shown))
-        [:div.win.centered.blue-shade
-         [:div
-          @winning-user
-          " ("
-          (capitalize @winner)
-          (cond
-            (= "Decked" (capitalize @reason))
-            (str ") wins due to the Corp being decked on turn " @turn)
+      (when (and (:winner @game-state)
+                 (not @win-shown))
+        (let [winner (:winner @game-state)
+              winning-user (:winning-user @game-state)
+              turn (:turn @game-state)
+              reason (:reason @game-state)
+              time (get-in @game-state [:stats :time :elapsed])]
+          [:div.win.centered.blue-shade
+           [:div
+            winning-user
+            " ("
+            (capitalize winner)
+            (cond
+              (= "Decked" (capitalize reason))
+              (str ") wins due to the Corp being decked on turn " turn)
 
-            (= "Flatline" (capitalize @reason))
-            (str ") wins by flatline on turn " @turn)
+              (= "Flatline" (capitalize reason))
+              (str ") wins by flatline on turn " turn)
 
-            (= "Concede" (capitalize @reason))
-            (str ") wins by concession on turn " @turn)
+              (= "Concede" (capitalize reason))
+              (str ") wins by concession on turn " turn)
 
-            :else
-            (str ") wins by scoring agenda points on turn " @turn))]
-         [:div "Time taken: " @time " minutes"]
-         [:br]
-         [build-game-stats game-state]
-         [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "✘"]]))))
+              :else
+              (str ") wins by scoring agenda points on turn " turn))]
+           [:div "Time taken: " time " minutes"]
+           [:br]
+           [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
+           [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
@@ -1422,18 +1377,21 @@
               [:div.start-game.ident.column
                {:class (case @op-keep "mulligan" "mulligan-op" "keep" "keep-op" "")}
                (when-let [url (image-url @op-ident)]
-                 [:img {:src     url :alt (:title @op-ident) :onLoad #(-> % .-target js/$ .show)
-                        :class   (when-not @visible-quote "selected")
+                 [:img {:src url
+                        :alt (:title @op-ident)
+                        :onLoad #(-> % .-target js/$ .show)
+                        :class (when-not @visible-quote "selected")
                         :onClick #(reset! visible-quote false)}])]]
              (when (not= :spectator @my-side)
                [:div.start-hand
                 [:div {:class (when squeeze "squeeze")}
                  (doall (map-indexed
                           (fn [i {:keys [title] :as card}]
-                            [:div.start-card-frame {:style (when squeeze {:left     (* (/ 610 (dec (count @my-hand))) i)
-                                                                          :position "absolute"})
-                                                    :id    (str "startcard" i)
-                                                    :key   (str (:cid card) "-" i "-" @mulliganed)}
+                            [:div.start-card-frame {:style (when squeeze
+                                                             {:left (* (/ 610 (dec (count @my-hand))) i)
+                                                              :position "absolute"})
+                                                    :id (str "startcard" i)
+                                                    :key (str (:cid card) "-" i "-" @mulliganed)}
                              [:div.flipper
                               [:div.card-back
                                [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
@@ -1446,7 +1404,8 @@
                                (js/setTimeout #(.add (.-classList elem) "flip") (+ 1000 (* i 300))))])
                           @my-hand))]])
              [:div.mulligan
-              (if (or (= :spectator @my-side) (and @my-keep @op-keep))
+              (if (or (= :spectator @my-side)
+                      (and @my-keep @op-keep))
                 [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
                 (list ^{:key "keepbtn"} [cond-button "Keep"
                                          (= "mulligan" (-> @my-prompt first :prompt-type))

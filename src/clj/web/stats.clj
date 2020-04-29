@@ -5,7 +5,9 @@
             [monger.operators :refer :all]
             [web.ws :as ws]
             [web.utils :refer [response]]
+            [game.utils :refer [dissoc-in]]
             [clojure.set :refer [rename-keys]]
+            [clojure.string :refer [lower-case]]
             [clj-time.core :as t])
 
   (:import org.bson.types.ObjectId))
@@ -44,7 +46,7 @@
 (defn build-stats-kw
   "Take a stats prefix and add a side to it"
   [prefix side]
-  (keyword (apply str prefix (clojure.string/lower-case side))))
+  (keyword (apply str prefix (lower-case side))))
 
 (defn inc-deck-stats
   "Update deck stats for a given counter"
@@ -158,6 +160,9 @@
                {"$set" {:winner (:winner @state)
                         :reason (:reason @state)
                         :end-date (java.util.Date.)
+                        :stats (-> (:stats @state)
+                                   (dissoc-in [:time :started])
+                                   (dissoc-in [:time :ended]))
                         :turn (:turn @state)
                         :corp.agenda-points (get-in @state [:corp :agenda-point])
                         :runner.agenda-points (get-in @state [:runner :agenda-point])
