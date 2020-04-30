@@ -205,10 +205,11 @@
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed
   rezzed, and calls :corp-install in an awaitable fashion."
-  [state side eid card server {:keys [install-state host-card front index] :as args} slot cost-str]
+  [state side eid card server {:keys [install-state host-card front index display-message] :as args} slot cost-str]
   (let [cdef (card-def card)
         dest-zone (get-in @state (cons :corp slot))
         install-state (or (:install-state cdef) install-state)
+        no-msg (not (if (nil? display-message) true display-message))
         c (-> card
               (assoc :advanceable (:advanceable cdef) :new true)
               (dissoc :seen :disabled))]
@@ -236,17 +237,19 @@
                     ;; Ignore all costs. Pass eid to rez.
                     :rezzed-no-cost
                     (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :all-costs}))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :all-costs
+                                                                                                           :no-msg no-msg}))
 
                     ;; Ignore rez cost only. Pass eid to rez.
                     :rezzed-no-rez-cost
                     (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :rez-costs}))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :rez-costs
+                                                                                                           :no-msg no-msg}))
 
                     ;; Pay costs. Pass eid to rez.
                     :rezzed
                     (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card nil))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:no-msg no-msg}))
 
                     ;; "Face-up" cards. Trigger effect-completed manually.
                     :face-up

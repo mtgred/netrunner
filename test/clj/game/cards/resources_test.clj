@@ -343,7 +343,7 @@
     (is (= 8 (hand-size :runner)) "Runner hand size boosted by Brain Cage")
     (take-credits state :runner)
     (gain-tags state :runner 2)
-    (core/trash state :runner (get-hardware state 0))
+    (trash state :runner (get-hardware state 0))
     (play-from-hand state :corp "Traffic Accident")
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
@@ -1145,7 +1145,7 @@
           (is (:disabled (hosted-ct)) "CT is disabled")
           (is (= 4 (core/available-mu state)) "Disabling DJ Fenris also disabled CT, reducing MU back to 4")
           ;; Trash Malia to stop disable
-          (core/trash state :corp (refresh malia))
+          (trash state :corp (refresh malia))
           (is (not (:disabled (refresh dj-fenris))) "DJ Fenris is enabled")
           (is (not (:disabled (hosted-ct))) "CT is enabled")
           (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))))
@@ -1234,7 +1234,7 @@
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Cache")
       (take-credits state :runner)
-      (core/trash state :runner (get-program state 0))
+      (trash state :runner (get-program state 0))
       (is (not-empty (:prompt (get-runner))) "Dummy Box prompting to prevent program trash")
       (card-ability state :runner (get-resource state 0) 1)
       (click-card state :runner (find-card "Clot" (:hand (get-runner))))
@@ -1336,6 +1336,31 @@
       (click-prompt state :runner "No action")
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
+
+(deftest enhanced-vision
+  ;; Enhanced Vision
+  (testing "Logs the revealed card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:hand ["Enhanced Vision"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Enhanced Vision")
+      (run-empty-server state "Archives")
+      (is (last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
+          "Card name is logged")))
+  (testing "Triggers reveal abilities"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:hand ["Enhanced Vision"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Enhanced Vision")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Corp gains 1 from Enhanced Vision forced reveal"
+        (run-empty-server state "Archives")))))
 
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
@@ -1734,7 +1759,7 @@
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
       (play-from-hand state :runner "Gene Conditioning Shoppe")
       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-      (core/trash state :runner (get-resource state 1))
+      (trash state :runner (get-resource state 1))
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
   (testing "set :genetics-trigger-twice flag - ensure redundant copies work"
     (do-game
@@ -1752,9 +1777,9 @@
         (let [gcs1 (get-resource state 1)
               gcs2 (get-resource state 2)]
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-          (core/trash state :runner gcs1)
+          (trash state :runner gcs1)
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
-          (core/trash state :runner gcs2)
+          (trash state :runner gcs2)
           (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice))))))))
 
 (deftest ghost-runner
@@ -2048,7 +2073,21 @@
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
         (run-continue state)
-        (is (= (- credits 3) (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")))))
+        (is (= (- credits 3) (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth"))))
+  (testing "Preventing an on-encounter effect #5037"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Konjin"]
+                        :credits 10}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Konjin" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (last-log-contains? state "uses Hunting Grounds to prevent the encounter effect on Konjin")))))
 
 (deftest ice-analyzer
   ;; Ice Analyzer
@@ -3334,7 +3373,7 @@
     (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
     (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
     (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
-    (core/trash state :runner (get-resource state 0))
+    (trash state :runner (get-resource state 0))
     (is (last-log-contains? state "Sure Gamble, Desperado, Diesel")
         "Rolodex did log trashed card names")
     (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
@@ -3375,13 +3414,13 @@
     (play-from-hand state :runner "Motivation")
     (play-from-hand state :runner "Astrolabe")
     (take-credits state :runner)
-    (core/trash state :runner (get-resource state 2))
+    (trash state :runner (get-resource state 2))
     (is (empty? (:prompt (get-runner))) "Sac Con not prompting to prevent resource trash")
-    (core/trash state :runner (get-program state 0))
+    (trash state :runner (get-program state 0))
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 2 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-program state))) "Cache still installed")
-    (core/trash state :runner (get-hardware state 0))
+    (trash state :runner (get-hardware state 0))
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-hardware state))) "Astrolabe still installed")))
@@ -4482,7 +4521,7 @@
                 (card-ability state :runner ttw idx)
                 (run-successful state)
                 (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-                (is (= 1 (core/access-bonus-count (:run @state) kw)) "Runner should access 1 additional card"))))]
+                (is (= 1 (core/access-bonus-count state :runner kw)) "Runner should access 1 additional card"))))]
       (ttw-test "R&D" 0 :rd)
       (ttw-test "HQ" 1 :hq)))
   (testing "Access bonus shouldn't carry over to other runs if prematurely ended after spending TTW counters. #3598"
@@ -4504,11 +4543,11 @@
         (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count (:run @state) :rd)) "Runner should access 1 additional card")
+        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
         (card-ability state :corp nisei 0)
         (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter from corp using Nisei counter")
         (run-on state "R&D")
-        (is (zero? (core/access-bonus-count (:run @state) :rd)) "Access bonus should be reset on new run"))))
+        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonus should be reset on new run"))))
   (testing "Spending counters shouldn't increase accesses when running a non-R&D/HQ server"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Ice Wall"]}
@@ -4529,9 +4568,10 @@
         (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count (:run @state) :rd)) "Runner should access 1 additional card")
+        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
         (run-successful state)
-        (is (zero? (-> (get-runner) :register :last-run (core/access-bonus-count :rd))) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
+        (click-prompt state :runner "Steal")
+        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
   (testing "A given ability shouldn't give accesses when running the other server"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 5)]
@@ -4552,7 +4592,7 @@
         (run-continue state)
         (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (zero? (core/access-bonus-count (:run @state) :hq)) "Runner should access 1 additional card")
+        (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 1 additional card")
         (run-successful state)
         (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")

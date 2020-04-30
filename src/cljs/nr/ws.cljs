@@ -33,9 +33,10 @@
         (cb/non-game-toast "Reconnected to server" "success" nil))))
 
   (defn handle-netrunner-msg [[event msg]]
-    (if-let [handler (get @ws-handlers event)]
-      (handler msg)
-      (println "unknown game socket msg" event msg)))
+    (let [handler (get @ws-handlers event)]
+      (cond
+        handler (handler msg)
+        msg (println "unknown game socket msg" event msg))))
 
   (defn event-msg-handler [msg]
     (let [[event-type data] (:event msg)]

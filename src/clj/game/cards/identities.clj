@@ -145,13 +145,14 @@
                 :prompt "Choose another server and redirect the run to its outermost position"
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
-                :effect (req (let [dest (server->zone state target)]
-                               (swap! state update :run
-                                      #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                              :server (rest dest)))
-                               (if (pos? (count (get-in corp (conj dest :ices))))
-                                 (set-next-phase state :encounter-ice)
-                                 (set-next-phase state :approach-server))
+                :effect (req (let [dest (server->zone state target)
+                                   outermost (last (get-in corp (conj dest :ices)))
+                                   phase (cond (rezzed? outermost) :encounter-ice
+                                               outermost :pass-ice
+                                               :else :approach-server)]
+                               (redirect-run state side target phase)
+                               (when (= phase :pass-ice)
+                                 (start-next-phase state side nil))
                                (trash state side eid current-ice {:unpreventable true})))}]})
 
 (define-card "Akiko Nisei: Head Case"
@@ -174,10 +175,13 @@
                              (continue-ability
                                {:prompt "Choose a card in HQ to discard"
                                 :player :corp
-                                :choices (req (:hand corp))
+                                :choices {:all true
+                                          :card #(and (in-hand? %)
+                                                      (corp? %))}
                                 :msg "force the Corp to trash 1 card from HQ"
-                                :effect (effect (trash :corp target)
-                                                (clear-wait-prompt :runner))}
+                                :async true
+                                :effect (effect (clear-wait-prompt :runner)
+                                                (trash :corp eid target nil))}
                                card nil))}]})
 
 (define-card "Andromeda: Dispossessed Ristie"
@@ -404,14 +408,19 @@
                                      (and (:flipped card)
                                           (in-coll? (keys (get-remotes state)) (:server (second targets))))))
                          :value (req [:credit (if (:flipped card) 6 1)])}]
+     :async true
      ; This effect will be resolved when the ID is reenabled after Strike / Direct Access
      :effect (effect
                (continue-ability
                  {:req (req (< 1 (count (get-remotes state))))
                   :prompt "Select a server to be saved from the rules apocalypse"
                   :choices (req (get-remote-names state))
-                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (:zone %)))) (all-installed state :corp))]
-                                 (system-msg state side (str "chooses " target " to be saved from the rules apocalypse and trashes " (count to-be-trashed) " cards"))
+                  :async true
+                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (:zone %))))
+                                                           (all-installed state :corp))]
+                                 (system-msg state side (str "chooses " target
+                                                             " to be saved from the rules apocalypse and trashes "
+                                                             (quantify (count to-be-trashed) "card")))
                                  ; even :unpreventable does not trash Architect
                                  (trash-cards state side eid to-be-trashed {:unpreventable true})))}
                  card nil))
@@ -423,21 +432,16 @@
 
 (define-card "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
-             :async true
              :once :per-turn
              :req (req (and (operation? target)
-                            (turn-flag? state side card :can-trash-operation)))
-             :effect (req (when run
-                            (swap! state assoc-in [:run :did-trash] true))
-                          (swap! state assoc-in [:runner :register :trashed-card] true)
-                          (register-turn-flag! state side card :can-trash-operation (constantly false))
-                          (trash state side eid target nil))
-             :msg (msg "trash " (:title target))}
-            {:event :end-access-phase
-             :req (req (and (= :archives (:from-server target))
-                            (pos? (get-in @state [:run :cards-accessed :discard] 0))
-                            (seq (filter operation? (:discard corp)))))
-             :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}]})
+                            (first-event? state side :access #(operation? (first %)))))
+             :async true
+             :effect (req (if (in-discard? target)
+                            (effect-completed state side eid)
+                            (do (when run
+                                  (swap! state assoc-in [:run :did-trash] true))
+                                (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (trash state side eid target nil))))}]})
 
 (define-card "Ele \"Smoke\" Scovak: Cynosure of the Net"
   {:recurring 1
@@ -1022,7 +1026,8 @@
                                                      :front true})
                                       (swap! state assoc-in [:run :position] 1)
                                       (set-next-phase state :approach-ice)
-                                      (effect-completed state side eid)))}}}]})
+                                      (effect-completed state side eid)
+                                      (start-next-phase state side nil)))}}}]})
 
 (define-card "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice

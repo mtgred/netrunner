@@ -46,15 +46,20 @@
     ;; Set up
     (starting-hand state :corp ["Accelerated Beta Test"])
     (play-and-score state "Accelerated Beta Test")
+    (is (= "Look at the top 3 cards of R&D?" (:msg (prompt-map :corp))))
     (click-prompt state :corp "Yes")
-    (click-card state :corp (find-card "Enigma" (get-in @state [:corp :play-area])))
+    (is (= ["Enigma" "Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
+    (click-prompt state :corp "Enigma")
     (click-prompt state :corp "HQ")
+    (is (empty? (:prompt (get-corp))))
+    (is (empty? (:prompt (get-runner))))
     (is (some? (get-ice state :hq 0)))
     (is (= 2 (count (:discard (get-corp)))))
     (core/move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
     (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (play-and-score state "Accelerated Beta Test")
+    (is (= "Look at the top 3 cards of R&D?" (:msg (prompt-map :corp))))
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "I have no regrets")
     (is (= 2 (count (:discard (get-corp)))))))
@@ -2843,7 +2848,36 @@
       (play-from-hand state :corp "SDS Drone Deployment" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Remote 1")
-      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal"))))
+      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal")))
+  (testing "Ensure effect is async"
+    (do-game
+      (new-game {:corp {:hand ["Amani Senai" "Team Sponsorship" "SDS Drone Deployment"
+                               "NGO Front"]
+                        :credits 10}
+                 :runner {:hand ["Cache" "Corroder"]
+                          :credits 10}})
+      (play-from-hand state :corp "Amani Senai" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :corp "Team Sponsorship" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Corroder")
+      (take-credits state :runner)
+      (play-and-score state "SDS Drone Deployment")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+      (is (= ["SDS Drone Deployment" "Amani Senai" "Team Sponsorship"] (map :title (prompt-buttons :corp))))
+      (click-prompt state :corp "SDS Drone Deployment")
+      (click-card state :corp "Cache")
+      (click-prompt state :corp "Amani Senai")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp "Corroder")
+      (click-card state :corp "NGO Front")
+      (click-prompt state :corp "New remote")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -3207,49 +3241,85 @@
   ;; Timely Public Release: spend agenda counter to install, ignoring all costs
   (testing "Install outside run"
     (do-game
-     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                       :hand ["Timely Public Release" "Enigma"]}})
-     (play-and-score state "Timely Public Release")
-     (let [tpr (get-scored state :corp 0)]
-       (is (= 1 (get-counters (refresh tpr) :agenda)) "TPR comes with 1 counter")
-       (card-ability state :corp (refresh tpr) 0)
-       (core/move state :corp (assoc (find-card "Enigma" (:hand (get-corp))) :seen true) :discard)
-       (click-card state :corp "Enigma")
-       (click-prompt state :corp "HQ")
-       (click-prompt state :corp "0")
-       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")
-       (is (empty? (:hand (get-corp))) "Enigma removed from HQ")
-       (is (zero? (get-counters (refresh tpr) :agenda)) "Agenda counter was spent"))))
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Timely Public Release" "Enigma"]}})
+      (play-and-score state "Timely Public Release")
+      (let [tpr (get-scored state :corp 0)]
+        (is (= 1 (get-counters (refresh tpr) :agenda)) "TPR comes with 1 counter")
+        (card-ability state :corp (refresh tpr) 0)
+        (core/move state :corp (assoc (find-card "Enigma" (:hand (get-corp))) :seen true) :discard)
+        (click-card state :corp "Enigma")
+        (click-prompt state :corp "HQ")
+        (click-prompt state :corp "0")
+        (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")
+        (is (empty? (:hand (get-corp))) "Enigma removed from HQ")
+        (is (zero? (get-counters (refresh tpr) :agenda)) "Agenda counter was spent"))))
   (testing "Install on server being run"
-    (do-game
-     (new-game {:corp {:deck ["Enigma" "Ice Wall" (qty "Timely Public Release" 2)]}})
-     (play-and-score state "Timely Public Release")
-     (play-and-score state "Timely Public Release")
-     (take-credits state :corp)
-     (let [tpr1 (get-scored state :corp 0)
-           tpr2 (get-scored state :corp 1)
-           corp-credits (:credit (get-corp))]
-       (run-on state "R&D")
-       (run-continue state)
-       (is (zero? (get-in @state [:run :position])) "Initial run position is approaching server")
-       (card-ability state :corp (refresh tpr1) 0)
-       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
-       (click-prompt state :corp "R&D")
-       (click-prompt state :corp "0")
-       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
-       (is (= corp-credits (:credit (get-corp))) "Install was free")
-       (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
-       (run-next-phase state)
-       (run-continue state)
-       (let [innermost (get-in @state [:run :position])]
-         (is (zero? (get-in @state [:run :position])) "Run position is after Enigma")
-         (card-ability state :corp (refresh tpr2) 0)
-         (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
-         (click-prompt state :corp "R&D")
-         (click-prompt state :corp "1")
-         (is (= "Ice Wall" (:title (get-ice state :rd 1))) "Ice Wall was installed")
-         (is (= innermost (get-in @state [:run :position])) "Run position unchanged because ice was installed 'behind' the runner")
-         (is (= corp-credits (:credit (get-corp))) "Install was free"))))))
+    (testing "when approaching the server"
+      (do-game
+        (new-game {:corp {:deck ["Enigma" "Timely Public Release"]}})
+        (play-and-score state "Timely Public Release")
+        (take-credits state :corp)
+        (let [tpr (get-scored state :corp 0)
+              corp-credits (:credit (get-corp))]
+          (run-on state "R&D")
+          (run-continue state)
+          (is (zero? (get-in @state [:run :position])) "Initial run position is approaching server")
+          (card-ability state :corp (refresh tpr) 0)
+          (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+          (click-prompt state :corp "R&D")
+          (click-prompt state :corp "0")
+          (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
+          (is (= corp-credits (:credit (get-corp))) "Install was free")
+          (is (zero? (get-in @state [:run :position])) "Still approaching server")
+          (run-successful state)
+          (is (nil? (get-run))))))
+    (testing "in front of current ice"
+      (do-game
+        (new-game {:corp {:deck ["Enigma" "Ice Wall" "Timely Public Release"]}})
+        (play-and-score state "Timely Public Release")
+        (play-from-hand state :corp "Ice Wall" "R&D")
+        (core/rez state :corp (get-ice state :rd 0))
+        (take-credits state :corp)
+        (let [tpr (get-scored state :corp 0)
+              corp-credits (:credit (get-corp))]
+          (run-on state "R&D")
+          (is (= 1 (get-in @state [:run :position])) "Still encountering Ice Wall")
+          (card-ability state :corp (refresh tpr) 0)
+          (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+          (click-prompt state :corp "R&D")
+          (click-prompt state :corp "0")
+          (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
+          (is (= corp-credits (:credit (get-corp))) "Install was free")
+          (is (= 2 (get-in @state [:run :position])) "Now approaching new ice")
+          (run-continue state)
+          (run-continue state)
+          (is (= "Enigma" (:title (core/get-current-ice state))) "Now approaching Enigma"))))
+    (testing "behind the current ice"
+      (do-game
+        (new-game {:corp {:deck ["Enigma" "Ice Wall" "Vanilla" "Timely Public Release"]
+                          :credits 10}})
+        (play-and-score state "Timely Public Release")
+        (play-from-hand state :corp "Vanilla" "R&D")
+        (core/rez state :corp (get-ice state :rd 0))
+        (play-from-hand state :corp "Ice Wall" "R&D")
+        (core/rez state :corp (get-ice state :rd 1))
+        (take-credits state :corp)
+        (let [tpr (get-scored state :corp 0)
+              corp-credits (:credit (get-corp))]
+          (run-on state "R&D")
+          (is (= 2 (get-in @state [:run :position])) "Still encountering Ice Wall")
+          (card-ability state :corp (refresh tpr) 0)
+          (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+          (click-prompt state :corp "R&D")
+          (click-prompt state :corp "2")
+          (is (= "Enigma" (:title (get-ice state :rd 2))) "Enigma was installed")
+          (is (= corp-credits (:credit (get-corp))) "Install was free")
+          (is (= 2 (get-in @state [:run :position])))
+          (is (= "Ice Wall" (:title (core/get-current-ice state))) "Still approaching Ice Wall")
+          (run-continue state)
+          (run-continue state)
+          (is (= "Vanilla" (:title (core/get-current-ice state))) "Now approaching Vanilla"))))))
 
 (deftest transport-monopoly
   ;; Transport Monopoly

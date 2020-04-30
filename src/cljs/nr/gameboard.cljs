@@ -719,7 +719,7 @@
                                                           :ability (- i dynabi-count)})}
                 (render-icons (:label ab))]))
            abilities))
-       (when (seq subroutines)
+       (when (seq (remove :fired subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
           "Fire unbroken subroutines"])
        (when (seq subroutines)
@@ -1546,7 +1546,7 @@
      (let [current-ice (get-current-ice)]
        [cond-button
         "Fire unbroken subs"
-        (and (seq (:subroutines current-ice))
+        (and (seq (remove :fired (:subroutines current-ice)))
              (not (every? :broken (:subroutines current-ice))))
         #(send-command "unbroken-subroutines" {:card current-ice})])
 
@@ -1584,7 +1584,7 @@
      (cond
        (:next-phase @run)
        [cond-button
-        (phase->next-phase-title run)
+        (phase->title next-phase)
         (and next-phase
              (not (:no-action @run)))
         #(send-command "start-next-phase")]

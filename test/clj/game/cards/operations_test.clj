@@ -4177,6 +4177,7 @@
       (run-continue state)
       (run-successful state)
       (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
       (is (zero? (count (:discard (get-corp)))) "Corp starts with no discards")
       (play-from-hand state :runner "En Passant")
       (click-card state :runner (get-ice state :hq 0))

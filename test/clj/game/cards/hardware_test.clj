@@ -45,7 +45,7 @@
         (changes-val-macro 3 (:credit (get-runner))
                            "Runner got Acacia credits"
                            (click-prompt state :runner "Done"))
-        (is (= 0 (count (:discard (get-runner)))) "Acacia has not been trashed")))))
+        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed")))))
 
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
@@ -77,7 +77,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "Trashing a non-event doesn't trigger Aniccam"
     (do-game
@@ -85,7 +85,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))
+      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
   (testing "Trashing an event along with some non events triggers Aniccam"
     (do-game
@@ -93,7 +93,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))
+      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "Aniccam must not trigger a second time in one turn"
     (do-game
@@ -112,9 +112,9 @@
         (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
                             :deck ["Corroder"]}})
         (take-credits state :corp)
-        (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
+        (trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
         (play-from-hand state :runner "Aniccam")
-        (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
+        (trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
         (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
   (testing "The effect triggers on meat damage"
     (do-game
@@ -146,7 +146,7 @@
                           :deck [(qty "Sure Gamble" 2)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash state :runner (first (:deck (get-runner))))
+      (trash state :runner (first (:deck (get-runner))))
       (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "An event being trashed after playing it triggers Aniccam"
     (do-game
@@ -162,7 +162,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))))
+      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))))
   (testing "Trashing a current triggers Aniccam"
     (do-game
       (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
@@ -226,7 +226,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Clone Chip")
-      (core/trash state :runner (get-program state 0))
+      (trash state :runner (get-program state 0))
       (card-ability state :runner (get-hardware state 1) 0)
       (click-card state :runner (first (:discard (get-runner))))
       (is (= 3 (count (get-program state))) "Three Intis installed")
@@ -431,7 +431,7 @@
         (play-from-hand state :runner "Boomerang")
         (click-card state :runner icew)
         (let [boom (get-hardware state 0)]
-          (core/trash state :runner icew)
+          (trash state :runner icew)
           (is (nil? (:server-target (refresh boom))) "No more target message")
           (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card")))))
   (testing "Does not fire on Crisium runs. Issue #4734"
@@ -524,7 +524,7 @@
       (let [[target & non-targets] (:hand (get-runner))
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
-        (core/trash-cards state :runner (:hand (get-runner)))
+        (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
         (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -539,7 +539,7 @@
       (let [[target & non-targets] (:hand (get-runner))
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
-        (core/trash-cards state :runner (:hand (get-runner)))
+        (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
         (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -554,7 +554,7 @@
       (let [[target & non-targets] (take 3 (:deck (get-runner)))
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
-        (core/trash-cards state :runner (take 3 (:deck (get-runner))))
+        (core/trash-cards state :runner (make-eid state) (take 3 (:deck (get-runner))))
         (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -660,18 +660,18 @@
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (core/trash state :corp (first (:hand (get-runner))))
+      (trash state :corp (first (:hand (get-runner))))
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash state :runner (first (:hand (get-runner))))
+      (trash state :runner (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
       (is (empty? (:prompt (get-runner))))))
   (testing "Runner trash -> install -> Corp trash should not cause Buffer Drive to trigger"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (core/trash state :runner (first (:hand (get-runner))))
+      (trash state :runner (first (:hand (get-runner))))
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash state :corp (first (:hand (get-runner))))
+      (trash state :corp (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
       (is (empty? (:prompt (get-runner))))))
   (testing "Doesn't activate on trashed corp card. Issue #4908"
@@ -721,6 +721,23 @@
       (is (empty? (:prompt (get-runner))) "Runner has no open prompt")
       (is (not (prompt-is-card? state :runner (get-hardware state 0)))
           "Buffer Drive doesn't open a prompt"))))
+
+(deftest capstone
+  ;; Capstone
+  (do-game
+    (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                        :hand ["Capstone" (qty "Corroder" 2) (qty "Cache" 2) "Patchwork"]
+                        :credits 100}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Capstone")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Cache")
+    (let [capstone (get-hardware state 0)]
+      (card-ability state :runner capstone 0)
+      (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+      (click-card state :runner (find-card "Cache" (:hand (get-runner))))
+      (click-card state :runner (find-card "Patchwork" (:hand (get-runner)))))))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
@@ -2048,7 +2065,7 @@
       (play-from-hand state :runner "Maw")
       (play-from-hand state :runner "Imp")
       (run-empty-server state :archives)
-      (click-prompt state :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
+      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
       (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (run-empty-server state :rd)
@@ -2057,17 +2074,17 @@
       (is (empty? (:prompt (get-runner))) "No more prompts for runner")))
   (testing "Maw should trigger when declining to steal. #3388"
     (do-game
-      (new-game {:corp {:deck [(qty "Obokata Protocol" 2) (qty "Ice Wall" 4)]}
+      (new-game {:corp {:deck [(qty "Ice Wall" 4)]
+                        :hand [(qty "Obokata Protocol" 2) "Ice Wall"]
+                        :discard ["Ice Wall"]}
                  :runner {:id "Alice Merchant: Clan Agitator"
                           :deck ["Maw" "Archives Interface"]}})
-      (trash-from-hand state :corp "Ice Wall")
-      (starting-hand state :corp ["Obokata Protocol" "Obokata Protocol"])
       (take-credits state :corp)
       (core/gain state :runner :credit 100)
       (play-from-hand state :runner "Maw")
       (play-from-hand state :runner "Archives Interface")
       (run-empty-server state :archives)
-      (click-prompt state :corp (find-card "Obokata Protocol" (:hand (get-corp))))
+      (click-card state :corp (find-card "Obokata Protocol" (:hand (get-corp))))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner (find-card "Ice Wall" (:discard (get-corp))))
       (click-prompt state :runner "No action")
@@ -2096,38 +2113,37 @@
   ;; Maya - Move accessed card to bottom of R&D
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 2) (qty "Snare!" 2) "Hostile Takeover" "Scorched Earth"]}
-                 :runner {:deck ["Maya" (qty "Sure Gamble" 3)]}})
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) (qty "Snare!" 2)
+                               "Hostile Takeover" "Scorched Earth"]}
+                 :runner {:hand ["Maya" (qty "Sure Gamble" 3)]}})
       (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (play-from-hand state :runner "Maya")
-      (let [maya (get-hardware state 0)
-            accessed (first (:deck (get-corp)))]
-        (run-empty-server state :rd)
-        (is (= (:cid accessed) (:cid (:card (prompt-map :runner)))) "Accessing the top card of R&D")
-        (card-ability state :runner maya 0)
-        (is (empty? (:prompt (get-runner))) "No more prompts for runner")
-        (is (not (:run @state)) "Run is ended")
-        (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
-        (take-credits state :runner)
-        (core/draw state :corp)
-        (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
-        (take-credits state :corp)
-        (let [accessed (first (:deck (get-corp)))]
-          (run-empty-server state :rd)
-          (click-prompt state :corp "Yes")
-          (is (zero? (count (:hand (get-runner)))) "Runner took Snare! net damage")
-          (is (= (:cid accessed) (:cid (:card (prompt-map :runner)))) "Accessing the top card of R&D")
-          (card-ability state :runner maya 0)
-          (is (empty? (:prompt (get-runner))) "No more prompts for runner")
-          (is (not (:run @state)) "Run is ended")
-          (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))))
+      (run-empty-server state "R&D")
+      (is (= "You accessed Hostile Takeover." (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Steal")
+      (is (= "Move Hostile Takeover to the bottom of R&D?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+      (is (not (:run @state)) "Run is ended")
+      (is (= "Hostile Takeover" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck {:front true})
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (click-prompt state :corp "Yes")
+      (is (zero? (count (:hand (get-runner)))) "Runner took Snare! net damage")
+      (is (= "You accessed Snare!." (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Pay 0 [Credits] to trash")
+      (click-prompt state :runner "Yes")
+      (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+      (is (not (:run @state)) "Run is ended")
+      (is (= "Snare!" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))
   (testing "Does not interrupt multi-access"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)]}
-                 :runner {:deck ["Maya" (qty "Sure Gamble" 3) "R&D Interface"]}})
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)]}
+                 :runner {:hand ["Maya" (qty "Sure Gamble" 3) "R&D Interface"]}})
       (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
       (take-credits state :corp)
@@ -2138,7 +2154,8 @@
             accessed (first (:deck (get-corp)))]
         (run-empty-server state :rd)
         (is (= (:cid accessed) (:cid (:card (prompt-map :runner)))) "Accessing the top card of R&D")
-        (card-ability state :runner maya 0)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
         (is (:prompt (get-runner)) "Runner has next access prompt")))))
 

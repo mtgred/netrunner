@@ -1,6 +1,7 @@
 (ns game.cards.events-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.eid :refer :all]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -270,7 +271,7 @@
         (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
         (is (= 3 (count (:hand (get-runner))))
             "No meat damage dealt by Tri-maf's leave play effect")
-        (core/trash state :runner tmc)
+        (trash state :runner tmc)
         (is (= 3 (count (:hand (get-runner))))
             "No meat damage dealt by trashing facedown Tri-maf"))))
   (testing "Interaction with Calvin B4L3Y and Jinja City Grid. Issue #4201"
@@ -1359,6 +1360,18 @@
     (click-prompt state :runner "Remove 1 tag")
     (is (zero? (count-tags state)))))
 
+(deftest asdf
+  (do-game
+    (new-game {:corp {:hand ["Wraparound" "The Future Perfect"]}
+               :runner {:hand [(qty "Deuces Wild" 2) (qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Deuces Wild")
+    (click-prompt state :runner "Expose 1 ice and make a run")
+    ; (click-prompt state :runner "Done")
+    (println (prompt-fmt :corp))
+    (println (prompt-fmt :runner))
+  ))
+
 (deftest diana-s-hunt
   ;; Diana's Hunt
   (do-game
@@ -1436,10 +1449,11 @@
      (click-prompt state :runner "No action")
      (take-credits state :runner)
      (take-credits state :corp)
-     (is (changes-val-macro 1 (count (:discard (get-corp)))
-                            "Alice not permanently blanked"
-                            (run-empty-server state "Archives")
-                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp)))))))))
+     (changes-val-macro
+       1 (count (:discard (get-corp)))
+       "Alice not permanently blanked"
+       (run-empty-server state "Archives")
+       (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
@@ -1512,6 +1526,10 @@
         (run-continue state)
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 1)
+        (is (= 1 (core/access-bonus-count state :runner :rd))
+            "The Turning Wheel should provide 1 additional access on R&D")
+        (is (= 1 (core/access-bonus-count state :runner :hq))
+            "The Turning Wheel should provide 1 additional access on HQ")
         (run-successful state)
         ;; HQ
         (dotimes [_ 2]
@@ -1520,10 +1538,6 @@
         (dotimes [_ 2]
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd)))
-            "The Turning Wheel should provide 1 additional access on R&D")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq)))
-            "The Turning Wheel should provide 1 additional access on HQ")
         (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
   (testing "The Turning Wheel gains counters after using D&C. Issue #3810"
@@ -3371,7 +3385,7 @@
     (click-prompt state :runner (find-card "Desperado" (:deck (get-runner))))
     (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))
     (is (= 2 (count (:discard (get-runner)))))
-    (click-prompt state :runner "None")
+    (click-prompt state :runner "Done")
     ;; start arranging
     (click-prompt state :runner (find-card "Making an Entrance" (:deck (get-runner))))
     (click-prompt state :runner (find-card "Sure Gamble" (:deck (get-runner))))
