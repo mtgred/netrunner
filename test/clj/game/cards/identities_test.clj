@@ -835,9 +835,9 @@
       (run-empty-server state "Archives")
       (run-empty-server state "HQ")
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Hedge Fund")
-      (take-credits state :corp)))
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))))
+      (is (nil? (get-run)))))
   (testing "Interaction with Eater"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -898,7 +898,7 @@
       (play-and-score state "Hostile Takeover")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
-      (is (nil? (:run @state)) "No run has been created")))
+      (is (nil? (get-run)) "No run has been created")))
   (testing "Interaction with Aumakua and accessing an operation in archives #5054"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -908,7 +908,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "Archives")
-      (is (= 1 (get-counters (get-program state 0) :virus))))))
+      (is (= 1 (get-counters (get-program state 0) :virus)))))
+  (testing "Trashed card is logged"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost.")))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net
   ;; Ele "Smoke" Scovak: Cynosure of the Net

@@ -441,6 +441,10 @@
                             (do (when run
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (system-msg state :runner
+                                            (str "uses Edward Kim: Humanity's Hammer to"
+                                                 " trash " (:title target)
+                                                 " at no cost"))
                                 (trash state side eid target nil))))}]})
 
 (define-card "Ele \"Smoke\" Scovak: Cynosure of the Net"
