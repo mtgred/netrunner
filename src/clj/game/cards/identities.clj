@@ -146,13 +146,10 @@
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
                 :effect (req (let [dest (server->zone state target)
-                                   outermost (last (get-in corp (conj dest :ices)))
-                                   phase (cond (rezzed? outermost) :encounter-ice
-                                               outermost :pass-ice
-                                               :else :approach-server)]
+                                   ice (count (get-in corp (conj dest :ices)))
+                                   phase (if (pos? ice) :encounter-ice :approach-server)]
                                (redirect-run state side target phase)
-                               (when (= phase :pass-ice)
-                                 (start-next-phase state side nil))
+                               (start-next-phase state side nil)
                                (trash state side eid current-ice {:unpreventable true})))}]})
 
 (define-card "Akiko Nisei: Head Case"
@@ -1030,6 +1027,8 @@
                                                      :front true})
                                       (swap! state assoc-in [:run :position] 1)
                                       (set-next-phase state :approach-ice)
+                                      (update-all-ice state side)
+                                      (update-all-icebreakers state side)
                                       (effect-completed state side eid)
                                       (start-next-phase state side nil)))}}}]})
 

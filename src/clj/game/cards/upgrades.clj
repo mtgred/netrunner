@@ -296,6 +296,8 @@
                                (trash state :corp card nil)
                                (swap! state update-in [:run :position] inc)
                                (set-next-phase state :approach-ice)
+                               (update-all-ice state side)
+                               (update-all-icebreakers state side)
                                (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
                                                             (:title (get-in (:ices (card->server state card)) [(:position run)]))
                                                             " again"))
@@ -1358,6 +1360,8 @@
                :effect (req (reveal state side target)
                             (swap! state update-in [:run :position] inc)
                             (set-next-phase state :encounter-ice)
+                            (update-all-ice state side)
+                            (update-all-icebreakers state side)
                             (trash state side eid (assoc target :seen true) nil)
                             (start-next-phase state side nil))}}}]})
 

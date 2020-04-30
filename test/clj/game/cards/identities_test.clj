@@ -316,7 +316,7 @@
                  (filter #(= :pass-ice (first %)))
                  (keep second))]
         (is (= 1 (count ice-passed-last-run)))
-        (is (utils/same-card? (get-ice state :hq 0) (first ice-passed-last-run))))
+        (is (utils/same-card? (get-ice state :hq 0) (ffirst ice-passed-last-run))))
       (run-successful state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
@@ -340,7 +340,27 @@
       (play-from-hand state :runner "En Passant")
       (click-card state :runner "Kakugo")
       (is (nil? (get-ice  state :hq 0)))
-      (is (find-card "Kakugo" (:discard (get-corp)))))))
+      (is (find-card "Kakugo" (:discard (get-corp))))))
+  (testing "Uses up on-encounter bypass effects"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund" "Ice Wall" "Vanilla" "Kakugo"]
+                        :credits 10}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "R&D")
+      (is (= (get-ice state :rd 0) (core/get-current-ice state)))
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "HQ")
+      (is (= (get-ice state :hq 0) (core/get-current-ice state)))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Kakugo protecting HQ at position 0.")))))
 
 (deftest akiko-nisei-head-case
   ;; Akiko Nisei

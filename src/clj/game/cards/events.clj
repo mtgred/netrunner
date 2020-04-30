@@ -889,7 +889,7 @@
                   (->> (:events (:last-run runner-reg))
                        (filter #(= :pass-ice (first %)))
                        (map second)
-                       (keep #(get-card state %))
+                       (keep #(get-card state (first %)))
                        (filter (complement rezzed?))
                        seq)))
    :prompt "Choose an unrezzed piece of ICE that you passed on your last run"
@@ -897,7 +897,7 @@
                              (->> (:events (:last-run runner-reg))
                                   (filter #(= :pass-ice (first %)))
                                   (map second)
-                                  (keep #(get-card state %))
+                                  (keep #(get-card state (first %)))
                                   (filter (complement rezzed?)))))}
    :msg (msg "trash " (card-str state target))
    :effect (effect (trash eid target nil))})
@@ -1521,6 +1521,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
+             :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})

@@ -3572,7 +3572,6 @@
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "Archives")
       (let [credits (:credit (get-runner))]
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "Yes")

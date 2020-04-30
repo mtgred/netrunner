@@ -1257,17 +1257,6 @@
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
 
-(define-card "Inside Job"
-  {:async true
-   :makes-run true
-   :prompt "Choose a server"
-   :choices (req runnable-servers)
-   :effect (effect (make-run eid target nil card))
-   :events [{:event :encounter-ice
-             :once :per-run
-             :msg (msg "bypass " (:title target))
-             :effect (req (bypass-ice state))}]})
-
 (define-card "Flashbang"
   (auto-icebreaker {:abilities [{:label "Derez a Sentry being encountered"
                                  :cost [:credit 6]
@@ -1769,21 +1758,15 @@
   (virus-breaker "Sentry"))
 
 (define-card "Na'Not'K"
-  (auto-icebreaker {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
-                                            (fn [k ref old new]
-                                              (let [server (first (get-in @state [:run :server]))]
-                                                (when (or
-                                                        ; run initiated or ended
-                                                        (not= (get-in old [:run])
-                                                              (get-in new [:run]))
-                                                        ; server configuration changed (redirected or newly installed ICE)
-                                                        (not= (get-in old [:corp :servers server :ices])
-                                                              (get-in new [:corp :servers server :ices])))
-                                                  (update-breaker-strength ref side card))))))
-                    :strength-bonus (req (if-let [numice (count run-ices)] numice 0))
-                    :leave-play (req (remove-watch state (keyword (str "nanotk" (:cid card)))))
-                    :abilities [(break-sub 1 1 "Sentry")
-                                (strength-pump 3 2)]}))
+  (let [strength-change
+        {:req (req (ice? target))
+         :effect (effect (update-breaker-strength card))}]
+    (auto-icebreaker {:events [(assoc strength-change :event :corp-install)
+                               (assoc strength-change :event :corp-trash)
+                               (assoc strength-change :event :runner-trash)]
+                      :strength-bonus (req (count run-ices))
+                      :abilities [(break-sub 1 1 "Sentry")
+                                  (strength-pump 3 2)]})))
 
 (define-card "Nerve Agent"
   {:events [{:event :successful-run

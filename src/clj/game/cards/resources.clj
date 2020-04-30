@@ -2299,6 +2299,8 @@
                                                (swap! state update-in [:run]
                                                       #(assoc % :position (inc run-position) :server [dest]))
                                                (set-next-phase state :approach-ice)
+                                               (update-all-ice state side)
+                                               (update-all-icebreakers state side)
                                                (effect-completed state side eid))))})
                    card nil))}}}]})
 
