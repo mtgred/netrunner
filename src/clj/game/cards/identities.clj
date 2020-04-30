@@ -359,7 +359,8 @@
              :req (req (and (= target :net)
                             (corp-can-choose-damage? state)
                             (pos? (last targets))
-                            (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
+                            (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))
+                            (pos? (count (:hand runner)))))
              :effect (req (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                           (continue-ability
                             state :corp

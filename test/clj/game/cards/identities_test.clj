@@ -695,7 +695,19 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Scrubbed")
       (core/damage state :corp :net 1)
-      (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly"))))
+      (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly")))
+  (testing "Doesn't prompt when Runner's hand is empty"
+    (do-game
+      (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Neural EMP"]}
+                 :runner {:discard ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (is (empty? (:prompt (get-corp))) "No choice because grip is empty")
+      (is (= :corp (:winner @state))))))
 
 (deftest earth-station-sea-headquarters
   ;;Earth Station: SEA Headquarters
