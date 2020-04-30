@@ -4250,7 +4250,23 @@
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= :corp (:winner @state)) "Corp wins")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+  (testing "Trash effect works correctly"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project" "Degree Mill"]}
+                 :runner {:deck ["The Black File"]}})
+      (play-and-score state "Degree Mill")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-and-score state "Vanity Project")
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (gain-tags state :runner 1)
+      (core/trash-resource state :corp nil)
+      (click-card state :corp "The Black File")
+      (is (= :corp (:winner @state)) "Corp has now won"))))
 
 (deftest the-class-act
   ;; The Class Act

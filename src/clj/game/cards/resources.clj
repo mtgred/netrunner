@@ -2544,7 +2544,7 @@
                                 (system-msg state side "removes The Black File from the game")
                                 (check-winner state side))
                             (add-counter state side card :power 1)))}]
-   :trash-effect (effect (check-winner))
+   :trash-effect {:effect (effect (check-winner))}
    :leave-play (effect (check-winner))})
 
 (define-card "The Class Act"
