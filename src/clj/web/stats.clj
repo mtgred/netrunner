@@ -5,6 +5,9 @@
             [monger.operators :refer :all]
             [web.ws :as ws]
             [web.utils :refer [response]]
+            [game.utils :refer [dissoc-in]]
+            [clojure.set :refer [rename-keys]]
+            [clojure.string :refer [lower-case]]
             [clj-time.core :as t])
 
   (:import org.bson.types.ObjectId))
@@ -43,7 +46,7 @@
 (defn build-stats-kw
   "Take a stats prefix and add a side to it"
   [prefix side]
-  (keyword (apply str prefix (clojure.string/lower-case side))))
+  (keyword (apply str prefix (lower-case side))))
 
 (defn inc-deck-stats
   "Update deck stats for a given counter"
@@ -134,25 +137,117 @@
                                              :deck-id   (str deck-id)
                                              :deckstats deckstats}])))))
 
-(defn game-started [{:keys [gameid date title room players]}]
+(defn game-started [{:keys [gameid date start-date title room players format]}]
   (let [corp (some #(when (= "Corp" (:side %)) %) players)
         runner (some #(when (= "Runner" (:side %)) %) players)]
-    (mc/insert db "gamestats" {:gameid         (str gameid)
-                               :startDate      date
-                               :title          title
-                               :room           room
-                               :corp           (get-in corp [:user :username] "")
-                               :runner         (get-in runner [:user :username] "")
-                               :corpIdentity   (get-in corp [:deck :identity :title])
-                               :runnerIdentity (get-in runner [:deck :identity :title])})))
+    (mc/insert db :game-logs {:gameid (str gameid)
+                              :title title
+                              :room room
+                              :creation-date date
+                              :start-date start-date
+                              :format format
+                              :corp {:player (select-keys (:user corp) [:username :emailhash])
+                                     :deck-name (get-in corp [:deck :name])
+                                     :identity (get-in corp [:deck :identity :title])}
+                              :runner {:player (select-keys (:user runner) [:username :emailhash])
+                                       :deck-name (get-in runner [:deck :name])
+                                       :identity (get-in runner [:deck :identity :title])}})))
 
 (defn game-finished [{:keys [state gameid]}]
   (when state
-    (mc/update db "gamestats"
+    (mc/update db :game-logs
                {:gameid (str gameid)}
-               {"$set" {:winner       (:winner @state)
-                        :reason       (:reason @state)
-                        :endDate      (java.util.Date.)
-                        :turn         (:turn @state)
-                        :corpAgenda   (get-in @state [:corp :agenda-point])
-                        :runnerAgenda (get-in @state [:runner :agenda-point])}})))
+               {"$set" {:winner (:winner @state)
+                        :reason (:reason @state)
+                        :end-date (java.util.Date.)
+                        :stats (-> (:stats @state)
+                                   (dissoc-in [:time :started])
+                                   (dissoc-in [:time :ended]))
+                        :turn (:turn @state)
+                        :corp.agenda-points (get-in @state [:corp :agenda-point])
+                        :runner.agenda-points (get-in @state [:runner :agenda-point])
+                        :log (:log @state)}})))
+
+(defn history [{{username :username} :user}]
+  (if username
+    (let [games (->> (mc/find-maps db :game-logs {$or [{:corp.player.username username}
+                                                       {:runner.player.username username}]})
+                     (map #(dissoc % :_id :log))
+                     (into []))]
+      (response 200 games))
+    (response 401 {:message "Unauthorized"})))
+
+(defn fetch-log [{{username :username} :user
+                  {:keys [gameid]}     :params}]
+  (if username
+    (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])
+          log (or log {})]
+      (response 200 log))
+    (response 401 {:message "Unauthorized"})))
+
+; db.gamestats.renameCollection("game-logs");
+; db["game-logs"].aggregate(
+;    [
+;     {$set: {"corp": {
+;                      "player": "$corp",
+;                      "deck-name": "",
+;                      "identity": "$corpIdentity",
+;                      "agenda-points": "$corpAgenda",
+;                      },
+;             "runner": {
+;                        "player": "$runner",
+;                        "deck-name": "",
+;                        "identity": "$runnerIdentity",
+;                        "agenda-points": "$runnerAgenda",
+;                        },
+;             "creation-date": "$startDate",
+;             "end-date": "$endDate",
+;             }},
+;     {$lookup:
+;      {
+;       from: "users",
+;       localField: "corp.player",
+;       foreignField: "username",
+;       as: "corp-user",
+;       }},
+;     {$lookup:
+;      {
+;       from: "users",
+;       localField: "runner.player",
+;       foreignField: "username",
+;       as: "runner-user",
+;       }},
+;     {$set:
+;      {"corp.player":
+;       {$let:
+;        {vars:
+;         {"corp_user":
+;          {
+;           $arrayElemAt: [ "$corp-user", 0 ]
+;           }},
+;         in:
+;         {
+;          "username": "$$corp_user.username",
+;          "emailhash": "$$corp_user.emailhash",
+;          }}},
+;       "runner.player":
+;       {$let:
+;        {vars:
+;         {"runner_user":
+;          {
+;           $arrayElemAt: ["$runner-user", 0]
+;           }},
+;         in:
+;         {"username": "$$runner_user.username",
+;          "emailhash": "$$runner_user.emailhash",
+;          }}}}},
+;     {$unset: [
+;               "corpIdentity",
+;               "runnerIdentity",
+;               "startDate",
+;               "endDate",
+;               "corp-user",
+;               "runner-user",
+;               ]},
+;     {$out: "game-logs"},
+;     ]);

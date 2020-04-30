@@ -7,8 +7,7 @@
             [clojure.edn :as edn]))
 
 (defn cards-handler [req]
-  (let [r (map #(dissoc % :_id) (mc/find-maps db "cards"))]
-    (response 200 r)))
+  (response 200 (map #(dissoc % :_id) (mc/find-maps db "cards"))))
 
 (defn alt-arts-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "altarts"))))

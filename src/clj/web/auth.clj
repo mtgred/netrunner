@@ -54,32 +54,41 @@
                      (update-in [:user :_id] str)))
         (handler req)))))
 
-(defn register-handler [{{:keys [username password email]} :params
-                         :as                               request}]
-  (if (< 20 (count username))
-    (response 423 {:message "Usernames are limited to 20 characters"})
-    (if-let [_ (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})]
-      (response 422 {:message "Username taken"})
-      (let [first_user (not (mc/any? db "users"))
-            emailhash (digest/md5 email)
-            registrationDate (java.util.Date.)
-            lastConnection registrationDate
-            hash-pw (password/encrypt password)
-            new-user (mc/insert-and-return db "users" {:username         username
-                                                       :email            email
-                                                       :emailhash        emailhash
-                                                       :registrationDate registrationDate
-                                                       :lastConnection   lastConnection
-                                                       :password         hash-pw
-                                                       :isadmin          first_user
-                                                       :options          {}})
-            demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
-        (when (not-empty demo-decks)
-          (mc/insert-batch db "decks" (map #(-> %
-                                                (dissoc :_id)
-                                                (assoc :username username))
-                                           demo-decks)))
-        (response 200 {:message "ok"})))))
+(defn register-handler
+  [{{:keys [username password confirm-password email]} :params
+    :as request}]
+  (cond
+    (< 20 (count username))
+    (response 401 {:message "Usernames are limited to 20 characters"})
+
+    (not= password confirm-password)
+    (response 401 {:message "Passwords must match"})
+
+    (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})
+    (response 422 {:message "Username taken"})
+
+    :else
+    (let [first-user (not (mc/any? db "users"))
+          email-hash (digest/md5 email)
+          registration-date (java.util.Date.)
+          last-connection registration-date
+          hash-pw (password/encrypt password)
+          demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
+      (mc/insert db "users"
+                 {:username         username
+                  :email            email
+                  :emailhash        email-hash
+                  :registrationDate registration-date
+                  :lastConnection   last-connection
+                  :password         hash-pw
+                  :isadmin          first-user
+                  :options          {}})
+      (when (not-empty demo-decks)
+        (mc/insert-batch db "decks" (map #(-> %
+                                              (dissoc :_id)
+                                              (assoc :username username))
+                                         demo-decks)))
+      (response 200 {:message "ok"}))))
 
 (defn login-handler [{{:keys [username password]} :params
                       :as request}]
@@ -104,6 +113,32 @@
   (if (mc/find-one-as-map db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
+
+(defn email-handler [{{username :username} :user
+                      body                 :body}]
+  (if username
+    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username username} ["email"])]
+      (response 200 {:email email}))
+    (response 401 {:message "Unauthorized"})))
+
+(defn change-email-handler [{{username :username} :user
+                             {email :email}       :body
+                             :as params}]
+  (cond
+    (not username)
+    (response 401 {:message "Unauthorized"})
+
+    (mc/find-one-as-map db "users" {:email email})
+    (response 400 {:message "Email address already in use"})
+
+    (acknowledged?
+      (mc/update db "users"
+                 {:username username}
+                 {"$set" {:email email}}))
+    (response 200 {:message "Refresh your browser"})
+
+    :else
+    (response 404 {:message "Account not found"})))
 
 (defn update-profile-handler [{{username :username} :user
                                body                 :body}]

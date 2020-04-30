@@ -5,6 +5,8 @@
             [web.stats :as stats]
             [game.main :as main]
             [game.core :as core]
+            [web.db :refer [db object-id]]
+            [monger.collection :as mc]
             [jinteki.utils :refer [side-from-str]]
             [cheshire.core :as json]
             [crypto.password.bcrypt :as bcrypt]
@@ -75,20 +77,22 @@
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
-  (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
+  (when-let [{:keys [players gameid started messages] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id gameid)
                (not started))
       (let [strip-deck (fn [player] (-> player
-                                        (update-in [:deck] #(select-keys % [:_id :identity]))
+                                        (update-in [:deck] #(select-keys % [:_id :identity :name]))
                                         (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
+            start-date (t/now)
             game (as-> game g
-                       (assoc g :started true
-                                :original-players stripped-players
-                                :ending-players stripped-players
-                                :last-update (t/now))
-                       (assoc g :state (core/init-game g))
-                       (update-in g [:players] #(mapv strip-deck %)))]
+                   (assoc g :started true
+                          :original-players stripped-players
+                          :ending-players stripped-players
+                          :start-date (java.util.Date.)
+                          :last-update start-date
+                          :state (core/init-game g))
+                   (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)
         (swap! old-states assoc gameid @(:state game))
         (stats/game-started game)
@@ -156,9 +160,9 @@
                           {:diff {:update {gameid (lobby/game-public-view (lobby/game-for-id gameid))}}})))))
 
 (defn handle-game-action
-  [{{{:keys [username] :as user} :user}        :ring-req
-    client-id                                  :client-id
-    {:keys [gameid-str command args] :as msg}      :?data}]
+  [{{{:keys [username] :as user} :user}       :ring-req
+    client-id                                 :client-id
+    {:keys [gameid-str command args] :as msg} :?data}]
   (when (active-game? gameid-str client-id)
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [players state] :as game} (lobby/game-for-id gameid)
@@ -222,7 +226,7 @@
           {:keys [side user]} (lobby/player? client-id gameid)]
       (if (and state side user)
         (do (main/handle-say state (jinteki.utils/side-from-str side) user msg)
-          (swap-and-send-diffs! game))
+            (swap-and-send-diffs! game))
         (let [{:keys [user]} (lobby/spectator? client-id gameid)]
           (when (and user (not mute-spectators))
             (main/handle-say state :spectator user msg)
@@ -257,13 +261,13 @@
       (swap-and-send-diffs! game))))
 
 (ws/register-ws-handlers!
-  :netrunner/start handle-game-start
-  :netrunner/action handle-game-action
-  :netrunner/leave handle-game-leave
-  :netrunner/rejoin handle-game-rejoin
-  :netrunner/concede handle-game-concede
-  :netrunner/mute-spectators handle-mute-spectators
-  :netrunner/say handle-game-say
-  :netrunner/typing handle-game-typing
-  :lobby/watch handle-game-watch
-  :chsk/uidport-close handle-ws-close)
+  :netrunner/start #'handle-game-start
+  :netrunner/action #'handle-game-action
+  :netrunner/leave #'handle-game-leave
+  :netrunner/rejoin #'handle-game-rejoin
+  :netrunner/concede #'handle-game-concede
+  :netrunner/mute-spectators #'handle-mute-spectators
+  :netrunner/say #'handle-game-say
+  :netrunner/typing #'handle-game-typing
+  :lobby/watch #'handle-game-watch
+  :chsk/uidport-close #'handle-ws-close)
