@@ -2766,8 +2766,7 @@
           (top-3-types [state card et]
             (->> (get-effects state :corp card et)
                  first
-                 (map :type)
-                 (filter identity)
+                 (keep :type)
                  (into #{})
                  count))]
     {:on-encounter {:effect (req (move state :runner (first (:deck runner)) :deck)

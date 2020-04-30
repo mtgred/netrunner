@@ -1306,7 +1306,7 @@
                                                                              :install-state :rezzed-no-cost
                                                                              :display-message false
                                                                              :index index}))
-                                  (do (system-msg state side (str "does not find any ICE to install from R&D"))
+                                  (do (system-msg state side "does not find any ICE to install from R&D")
                                       (effect-completed state side eid))))))))})
 
 (define-card "NAPD Cordon"

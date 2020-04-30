@@ -145,11 +145,14 @@
                 :prompt "Choose another server and redirect the run to its outermost position"
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
-                :effect (req (let [dest (server->zone state target)]
-                               (redirect-run state side target
-                                             (if (pos? (count (get-in corp (conj dest :ices))))
-                                               :encounter-ice
-                                               :approach-server))
+                :effect (req (let [dest (server->zone state target)
+                                   outermost (last (get-in corp (conj dest :ices)))
+                                   phase (cond (rezzed? outermost) :encounter-ice
+                                               outermost :pass-ice
+                                               :else :approach-server)]
+                               (redirect-run state side target phase)
+                               (when (= phase :pass-ice)
+                                 (start-next-phase state side nil))
                                (trash state side eid current-ice {:unpreventable true})))}]})
 
 (define-card "Akiko Nisei: Head Case"

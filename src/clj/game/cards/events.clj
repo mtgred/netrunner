@@ -885,21 +885,22 @@
 
 (define-card "En Passant"
   {:async true
-   :req (req (let [server (first (flatten (turn-events state side :run)))]
-               (and (:successful-run runner-reg)
-                    (seq (filter (complement rezzed?) (get-in @state (concat [:corp :servers] [server] [:ices])))))))
-   :effect (effect
-             (continue-ability
-               (let [server (first (flatten (turn-events state side :run)))]
-                 {:async true
-                  :prompt (str "Choose an unrezzed piece of ICE protecting "
-                               (zone->name server) " that you passed on your last run")
-                  :choices {:card #(and (ice? %)
-                                        (not (rezzed? %))
-                                        (= server (second (:zone %))))}
-                  :msg (msg "trash " (card-str state target))
-                  :effect (effect (trash eid target nil))})
-               card nil))})
+   :req (req (and (:successful-run runner-reg)
+                  (->> (:events (:last-run runner-reg))
+                       (filter #(= :pass-ice (first %)))
+                       (map second)
+                       (keep #(get-card state %))
+                       (filter (complement rezzed?))
+                       seq)))
+   :prompt "Choose an unrezzed piece of ICE that you passed on your last run"
+   :choices {:req (req (some #(same-card? :installed-cid target %)
+                             (->> (:events (:last-run runner-reg))
+                                  (filter #(= :pass-ice (first %)))
+                                  (map second)
+                                  (keep #(get-card state %))
+                                  (filter (complement rezzed?)))))}
+   :msg (msg "trash " (card-str state target))
+   :effect (effect (trash eid target nil))})
 
 (define-card "Encore"
   {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -1575,8 +1576,7 @@
         select-install-cost (fn [state]
                               (let [current-values
                                     (->> (all-active-installed state :runner)
-                                         (map :cost)
-                                         (filter identity)
+                                         (keep :cost)
                                          (remove zero?)
                                          frequencies
                                          (merge {1 0})

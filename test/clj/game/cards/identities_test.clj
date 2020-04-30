@@ -298,6 +298,50 @@
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
+(deftest aginfusion-new-miracles-for-a-new-world
+  (testing "Ability works. #5056"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund" "Ice Wall" "Kakugo"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (is (= (get-ice state :rd 0) (core/get-current-ice state)))
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "HQ")
+      (let [ice-passed-last-run
+            (->> (:events (get-run))
+                 (filter #(= :pass-ice (first %)))
+                 (keep second))]
+        (is (= 1 (count ice-passed-last-run)))
+        (is (utils/same-card? (get-ice state :hq 0) (first ice-passed-last-run))))
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Works with passing effects"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund" "Ice Wall" "Kakugo"]}
+                 :runner {:hand ["En Passant"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (is (= (get-ice state :rd 0) (core/get-current-ice state)))
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "HQ")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (play-from-hand state :runner "En Passant")
+      (click-card state :runner "Kakugo")
+      (is (nil? (get-ice  state :hq 0)))
+      (is (find-card "Kakugo" (:discard (get-corp)))))))
+
 (deftest akiko-nisei-head-case
   ;; Akiko Nisei
   (testing "Basic test"

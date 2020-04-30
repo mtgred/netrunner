@@ -257,8 +257,8 @@
                 :choices {:max (req (count (:hand runner)))
                           :card #(and (runner? %)
                                       (in-hand? %))}
-                :effect (req (let [trashed-card-names (filter identity (map :title targets))
-                                   installed-card-names (filter identity (map :title (all-active-installed state :runner)))
+                :effect (req (let [trashed-card-names (keep :title targets)
+                                   installed-card-names (keep :title (all-active-installed state :runner))
                                    overlap (clj-set/intersection (set trashed-card-names)
                                                                  (set installed-card-names))]
                                (wait-for (trash-cards state side targets {:unpreventable true})

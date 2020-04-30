@@ -110,8 +110,7 @@
                        ;; the discard. At the same time, gather their `:trash-effect`s
                        ;; to be used in the simult event later.
                        moved-cards (->> trashlist
-                                        (map #(get-card? state %))
-                                        (filter identity)
+                                        (keep #(get-card? state %))
                                         ;; juxt is used to perform both the move and
                                         ;; `get-trash-effect` on each card in the list.
                                         ;; This gives us a list of tuples:
