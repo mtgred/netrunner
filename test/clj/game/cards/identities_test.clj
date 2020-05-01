@@ -524,9 +524,10 @@
         (play-from-hand state :corp "Shipment from MirrorMorph")
         (click-card state :corp marilyn)
         (click-prompt state :corp "New remote")
-        (is (= (:cid marilyn) (:cid (get-content state :remote1 0))) "Marilyn is installed as first card")
-        (click-card state :corp herrings) ;; This should be the Asa prompt, should be automatically installed in remote1
-        (is (= (:cid herrings) (:cid (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
+        (is (= "Marilyn Campaign" (:title (get-content state :remote1 0))) "Marilyn is installed as first card")
+        (is (= "Select a non-agenda in HQ to install" (:msg (prompt-map :corp))))
+        (click-card state :corp herrings)
+        (is (= "Red Herrings" (:title (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
         (click-card state :corp vitruvius)
         (click-prompt state :corp "New remote")
         (click-card state :corp pup)

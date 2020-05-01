@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
+            [game.core.card :refer [get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
@@ -22,7 +22,6 @@
 (defn load-all-cards []
   (when (empty? @all-cards)
     (->> (load-cards)
-         (map #(assoc % :cid (make-cid)))
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))

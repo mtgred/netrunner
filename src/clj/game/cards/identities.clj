@@ -236,7 +236,7 @@
                                             (if (is-remote? z)
                                               "non-agenda"
                                               "piece of ice")
-                                            " in HQ to install with Asa Group: Security Through Vigilance (optional)")
+                                            " in HQ to install")
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %)
                                                      (corp-installable-type? %)
