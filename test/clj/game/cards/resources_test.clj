@@ -3463,7 +3463,7 @@
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
-      (is (= (:cid ts) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
+      (is (= "Tech Startup" (:title (last (:rfg (get-corp))))) "Tech Startup was removed from game")
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)

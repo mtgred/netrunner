@@ -1,7 +1,11 @@
 (ns game.utils
   (:require [clojure.string :refer [split-lines split join]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.cards :refer [all-cards]]
+            [clj-uuid :as uuid]))
+
+(defn make-cid []
+  (uuid/to-string (uuid/v4)))
 
 (defn server-card
   [title]

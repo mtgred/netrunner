@@ -1393,7 +1393,7 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
-(deftest hoshiko-shiro-untold-proganoist
+(deftest hoshiko-shiro-untold-protagonist
   ;; Hoshiko Shiro
   (testing "ID ability"
     (do-game

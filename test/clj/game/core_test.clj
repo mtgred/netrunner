@@ -56,10 +56,7 @@
                               (require [(get nspaces filename) :reload true])))}]))
 
 ;; General utilities necessary for starting a new game
-(defn find-card
-  "Return a card with given title from given sequence"
-  [title from]
-  (some #(when (= (:title %) title) %) from))
+(def find-card core/find-card)
 
 (defn starting-hand
   "Moves all cards in the player's hand to their draw pile, then moves the specified card names

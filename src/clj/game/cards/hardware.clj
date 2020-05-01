@@ -177,13 +177,13 @@
    :abilities [(break-sub
                  [:trash] 2 "All"
                  {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                              (same-card? :installed-cid current-ice boomerang-target)
+                              (same-card? current-ice boomerang-target)
                               true)) ; When eg. flipped by Assimilator
                   :additional-ability
                   {:effect (effect
                              (register-events
                                ;; Boomerang is trashed at this point
-                               (find-latest state card)
+                               (find-card "Boomerang" (:discard (:runner @state)))
                                (let [server (:server run)]
                                  [{:event :run-ends
                                    :once :per-run
@@ -234,11 +234,15 @@
                        (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
                                (event-count state side :corp-trash grip-or-stack-trash?))))))
          :prompt "Add a trashed card to the bottom of the stack"
-         :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
-         :effect (req (when-not (= "No action" target)
-                        (system-msg state side (str "uses Buffer Drive to add " (:title target)
-                                                    " to the bottom of the stack"))
-                        (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
+         :choices (req (conj (sort (map :title (filter :cid targets))) "No action"))
+         :async true
+         :effect (req (if (= "No action" target)
+                        (effect-completed state side eid)
+                        (do (system-msg state side
+                                        (str "uses Buffer Drive to add " target
+                                             " to the bottom of the stack"))
+                            (move state side (find-card target (:discard (:runner @state))) :deck)
+                            (effect-completed state side eid))))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
      :abilities [{:label "Add a card from the heap to the top of the stack"

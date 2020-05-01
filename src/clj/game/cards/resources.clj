@@ -592,7 +592,7 @@
                                                        (register-turn-flag!
                                                          state side card :can-rez
                                                          (fn [state side card]
-                                                           (if (same-card? :installed-cid card c)
+                                                           (if (same-card? card c)
                                                              ((constantly false)
                                                               (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                              true))))

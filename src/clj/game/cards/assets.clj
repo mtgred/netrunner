@@ -61,7 +61,7 @@
 (def executive-trash-effect
   {:when-inactive true
    :req (req (and (= side :runner)
-                  (same-card? card (:access @state))))
+                  (same-card? target (:access @state))))
    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
    :async true
    :effect (req (as-agenda state :runner eid card 2))})

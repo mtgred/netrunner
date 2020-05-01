@@ -273,7 +273,7 @@
           pad (get-content state :remote2 0)]
       (click-card state :runner "PAD Campaign")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")
-      (is (some #(utils/same-card? pad %) (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
+      (is (find-card "PAD Campaign" (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
       (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
 
 (deftest ankusa

@@ -1679,11 +1679,7 @@
   {:derezzed-events
    [{:event :pre-agenda-scored
      :req (req (and (same-card? target card)
-                    (let [agenda-cids (->> (turn-events state :corp :corp-install)
-                                           (filter #(agenda? (first %)))
-                                           (map #(:cid (first %)))
-                                           (into #{}))]
-                      (contains? agenda-cids (:cid card)))))
+                    (= :this-turn (installed? target))))
      :effect (effect (register-turn-flag!
                        card :can-score
                        (fn [state side other-card]

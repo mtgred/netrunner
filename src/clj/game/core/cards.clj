@@ -8,6 +8,11 @@
          use-mu)
 
 ;;; Functions for loading card information.
+(defn find-card
+  "Return a card with given title from given sequence"
+  [title from]
+  (some #(when (= (:title %) title) %) from))
+
 (defn find-cid
   "Return a card with specific :cid from given sequence"
   [cid from]
@@ -36,7 +41,8 @@
   (cond
     (= type "Identity")
     (when (= side (to-keyword (:side card)))
-      (swap! state assoc-in [side :identity] card))
+      (swap! state assoc-in [side :identity] card)
+      card)
 
     host
     (update-hosted! state side card)
@@ -45,7 +51,8 @@
     (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
               [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
           (when (not-empty tail)
-            (swap! state assoc-in z (vec (concat head [card] (rest tail))))))))
+            (swap! state assoc-in z (vec (concat head [card] (rest tail))))
+            card))))
 
 ;; Helpers for move
 (defn- remove-old-card
@@ -119,9 +126,14 @@
         c (if (= :scored (first dest))
             (assoc c :scored-side side)
             c)
+        cid (if (and (not (contains? #{:deck :hand :discard} src-zone))
+                     (contains? #{:deck :hand :discard} target-zone))
+              (make-cid)
+              (:cid c))
         moved-card (assoc c :zone dest
                             :host nil
                             :hosted hosted
+                            :cid cid
                             :previous-zone (:zone c))
         ;; Set up abilities for stolen agendas
         moved-card (if (and (= :scored (first dest))

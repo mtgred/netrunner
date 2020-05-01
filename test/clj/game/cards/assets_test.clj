@@ -3140,17 +3140,17 @@
         (is (zero? (:credit (get-corp))))
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= (:cid agenda1) (:cid (get-content state :remote4 0))))
+        (is (= (:title agenda1) (:title (get-content state :remote4 0))))
         (is (= 1 (:credit (get-corp))) "Turtlebacks triggered")
         ;; Install second agenda
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= (:cid agenda2) (:cid (get-content state :remote5 0))))
+        (is (= (:title agenda2) (:title (get-content state :remote5 0))))
         (is (= 2 (:credit (get-corp))) "Turtlebacks triggered")
         ;; DBS - put first agenda at bottom of R&D
         (click-card state :corp (get-content state :remote4 0))
         (is (zero? (count (:hand (get-corp)))))
-        (is (= (:cid agenda1) (:cid (last (:deck (get-corp))))))))))
+        (is (= (:title agenda1) (:title (last (:deck (get-corp))))))))))
 
 (deftest prana-condenser
   ;; Prāna Condenser
