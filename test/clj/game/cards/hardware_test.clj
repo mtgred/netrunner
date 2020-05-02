@@ -1408,7 +1408,35 @@
         (click-prompt state :runner "DDoS")
         (click-card state :runner pp)
         (is (= 0 (:credit (get-runner))) "DDoS installed with 2c discount using only Paladin Poemu credits")
-        (is (= "DDoS" (:title (get-resource state 1))) "DDoS is installed")))))
+        (is (= "DDoS" (:title (get-resource state 1))) "DDoS is installed"))))
+  (testing "Interaction with Reaver #5061"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "DDoS" "Equivocation" "Falsified Credentials" "Golden" "Gachapon" "Reaver"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "DDoS" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Falsified Credentials" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Golden" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C D E F G
+      (play-from-hand state :runner "Reaver")
+      (play-from-hand state :runner "Gachapon")
+      (is (zero? (count (:hand (get-runner)))))
+      (card-ability state :runner (get-hardware state 0) 0)
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= "Au Revoir" (:title (first (:hand (get-runner))))) "Runner drew from Reaver")
+      (is (= (-> (get-runner) :prompt first :msg)
+             "The set aside cards are: Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials, Golden")
+          "Shown correct six cards")
+      (click-prompt state :runner "OK")
+      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
+      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (click-prompt state :runner "DDoS")
+      (is (= "DDoS" (:title (get-resource state 0))) "DDoS is installed"))))
 
 (deftest gebrselassie
   ;; Gebrselassie
