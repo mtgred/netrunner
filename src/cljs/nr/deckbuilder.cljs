@@ -304,11 +304,12 @@
 
 (defn load-decks-from-json
   [json]
-  (for [deck json]
-    (assoc deck
-           :identity (parse-identity (:identity deck))
-           :cards (:cards deck)
-           :parsed? false)))
+  (when-not (= {:message "Not authorized"} json)
+    (for [deck json]
+      (assoc deck
+             :identity (parse-identity (:identity deck))
+             :cards (:cards deck)
+             :parsed? false))))
 
 (defn save-deck [s]
   (authenticated
