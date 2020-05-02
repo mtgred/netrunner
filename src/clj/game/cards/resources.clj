@@ -699,7 +699,7 @@
                 :cost [:click 1 :virus 3 :trash]
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
-                                (runner-install eid target nil))}
+                                (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (define-card "Cybertrooper Talut"

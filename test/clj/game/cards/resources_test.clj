@@ -736,6 +736,68 @@
           (take-credits state :runner)
           (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
+(deftest crypt
+  ;; Crypt
+  (testing "Gains counters when running Archives"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Crypt"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (let [crypt (get-resource state 0)]
+        (run-empty-server state "Archives")
+        (is (= "Place a virus counter on Crypt?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes")
+        (is (= 1 (get-counters (refresh crypt) :virus)))
+        (run-empty-server state "R&D")
+        (is (= 1 (get-counters (refresh crypt) :virus))))))
+  (testing "Ability can install a virus card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Crypsis" "Djinn"]
+                          :hand ["Crypt"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (let [crypt (get-resource state 0)]
+        (core/add-counter state :runner (refresh crypt) :virus 2)
+        (card-ability state :runner (refresh crypt) 0)
+        (is (empty? (:prompt (get-runner))) "Crypt ability costs 3 virus counters")
+        (core/add-counter state :runner (refresh crypt) :virus 1)
+        (changes-val-macro
+          -1 (:click (get-runner))
+          "Crypt ability costs 1 click"
+          (card-ability state :runner (refresh crypt) 0)
+          (is (= ["Crypsis" "Cancel"] (map #(or (:title %) %) (prompt-buttons :runner))))
+          (changes-val-macro
+            -5 (:credit (get-runner))
+            "Install Crypsis at full cost"
+            (click-prompt state :runner "Crypsis")))
+        (is (= "Crypsis" (:title (get-program state 0))))
+        (is (nil? (get-resource state 0)) "Crypt ability costs self-trash"))))
+  (testing "Install is marked as ability #5058"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Crypsis"]
+                          :hand ["Paladin Poemu" "Crypt"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (play-from-hand state :runner "Paladin Poemu")
+      (let [crypt (get-resource state 0)]
+        (core/add-counter state :runner (refresh crypt) :virus 3)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (changes-val-macro
+          -4 (:credit (get-runner))
+          "Only pay 4 for Crypsis, using 1 from Paladin Poemu"
+          (card-ability state :runner (refresh crypt) 0)
+          (click-prompt state :runner "Crypsis")
+          (click-card state :runner "Paladin Poemu"))))))
+
 (deftest cybertrooper-talut
   ;; Cybertrooper Talut
   (testing "Basic test"
