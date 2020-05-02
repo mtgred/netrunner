@@ -182,10 +182,6 @@
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
-;; This function appears unused as well
-(defn prevent-steal [state side]
-  (swap! state assoc-in [:runner :register :cannot-steal] true))
-
 (defn prevent-current [state side]
   (swap! state assoc-in [:runner :register :cannot-play-current] true))
 
@@ -195,19 +191,15 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
+(defn zone-locked?
+  [state side zone]
+  (seq (get-in @state [side :locked zone])))
+
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
 (defn untrashable-while-resources? [card]
   (and (card-flag? card :untrashable-while-resources true) (installed? card)))
-
-(defn install-locked?
-  "Checks if installing is locked"
-  [state side]
-  (let [kw (keyword (str (name side) "-lock-install"))]
-    (or (seq (get-in @state [:stack :current-run kw]))
-        (seq (get-in @state [:stack :current-turn kw]))
-        (seq (get-in @state [:stack :persistent kw])))))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.

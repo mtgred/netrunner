@@ -169,7 +169,7 @@
                       (some #(same-card? card %) (get-in @state (cons :runner (vec zone))))
                       (some #(same-card? card %) (get-in @state (cons :corp (vec zone)))))
                   (or force
-                      (empty? (get-in @state [side :locked (-> card :zone first)]))))
+                      (empty? (get-in @state [(to-keyword (:side card)) :locked (-> card :zone first)]))))
          (trigger-event state side :pre-card-moved card src-zone target-zone)
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]

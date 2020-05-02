@@ -26,20 +26,21 @@
            [game.core.player Corp Runner]
            [game.core.card Card]))
 
-(load "core/events")    ; triggering of events
-(load "core/cards")     ; retrieving and updating cards
-(load "core/costs")     ; application of costs to play
-(load "core/rules")     ; core game rules
-(load "core/trashing")  ; trashing cards
-(load "core/turns")     ; the turn sequence
-(load "core/actions")   ; functions linked to UI actions
-(load "core/abilities") ; support for card abilities and prompts
-(load "core/installing"); installing and interacting with installed cards and servers
-(load "core/hosting")   ; hosting routines
-(load "core/runs")      ; the run sequence
-(load "core/access")    ; accessing rules
-(load "core/ice")       ; ice and icebreaker interactions
-(load "core/flags")     ; various miscellaneous manipulations of specific effects
-(load "core/io")        ; routines for parsing input or printing to the log
-(load "core/misc")      ; misc stuff
-(load "cards")          ; card definitions
+(load "core/events")       ; triggering of events
+(load "core/cards")        ; retrieving and updating cards
+(load "core/costs")        ; application of costs to play
+(load "core/rules")        ; core game rules
+(load "core/trashing")     ; trashing cards
+(load "core/turns")        ; the turn sequence
+(load "core/actions")      ; functions linked to UI actions
+(load "core/abilities")    ; support for card abilities and prompts
+(load "core/initializing") ; initializing cards
+(load "core/installing")   ; installing and interacting with installed cards and servers
+(load "core/hosting")      ; hosting routines
+(load "core/runs")         ; the run sequence
+(load "core/access")       ; accessing rules
+(load "core/ice")          ; ice and icebreaker interactions
+(load "core/flags")        ; various miscellaneous manipulations of specific effects
+(load "core/io")           ; routines for parsing input or printing to the log
+(load "core/misc")         ; misc stuff
+(load "cards")             ; card definitions
