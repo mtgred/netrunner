@@ -269,7 +269,7 @@
     (fn [user]
       (let [deck (:deck @s)]
         (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-        (go (let [response (<! (DELETE (str "/data/validator/" (:_id deck))))]
+        (go (let [response (<! (DELETE (str "/data/decks/" (:_id deck))))]
               (when (= 200 (:status response))
                 (load-decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state)))
                 (swap! s assoc :deck nil)
