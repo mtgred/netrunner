@@ -42,6 +42,24 @@
     ^{:key factionkey}
     [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
 
+(defn faction-icon
+  [faction id]
+  (letfn [(icon-span [css-faction]
+            [:span.faction-icon {:class css-faction
+                                 :title id}])]
+    (case faction
+      "Adam" (icon-span "adam")
+      "Anarch" (icon-span "anarch")
+      "Apex" (icon-span "apex")
+      "Criminal" (icon-span "criminal")
+      "Haas-Bioroid" (icon-span "hb")
+      "Jinteki" (icon-span "jinteki")
+      "NBN" (icon-span "nbn")
+      "Shaper" (icon-span "shaper")
+      "Sunny Lebeau" (icon-span "sunny")
+      "Weyland Consortium" (icon-span "weyland")
+      [:span.side "(Unknown)"])))
+
 ;; Shared function options
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -237,3 +255,18 @@
 (defn render-message [input]
   "Render icons, cards and special codes in a message"
   (render-specials (render-icons (render-cards input))))
+
+(defn cond-button [text cond f]
+  (if cond
+    [:button {:on-click f :key text} text]
+    [:button.disabled {:key text} text]))
+
+(defn checkbox-button [on-text off-text on-cond f]
+  (if on-cond
+    [:button.on {:on-click f :key on-text} on-text]
+    [:button.off {:on-click f :key off-text} off-text]))
+
+(defn notnum->zero
+  "Converts a non-positive-number value to zero.  Returns the value if already a number"
+  [input]
+  (if (pos? (int input)) input 0))

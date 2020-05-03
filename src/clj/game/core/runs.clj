@@ -96,13 +96,13 @@
                                 :per-run nil
                                 :run {:server s
                                       :position n
-                                      :access-bonus []
                                       :corp-auto-no-action false
                                       :jack-out false
                                       :jack-out-after-pass false
                                       :phase :initiation
                                       :next-phase :initiation
-                                      :eid eid})
+                                      :eid eid
+                                      :events '()})
                          (when (or run-effect card)
                            (add-run-effect state side (assoc run-effect :card card)))
                          (trigger-event state side :begin-run :server s)
@@ -132,6 +132,10 @@
          (empty? (get-in @state [:corp :servers server :content]))
          (empty? (get-in @state [:corp :servers server :ices])))))
 
+(defn log-run-event
+  [state side phase args]
+  (swap! state update-in [:run :events] conj [phase args]))
+
 (defmethod start-next-phase :approach-ice
   [state side args]
   (set-phase state :approach-ice)
@@ -148,6 +152,7 @@
                                     {:cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (check-for-empty-server state)))}
                                     ice)
+              (log-run-event state side :approach-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (if (get-in @state [:run :jack-out-after-pass])
@@ -211,6 +216,7 @@
                                                                 (not= current-server (:server (:run @state)))
                                                                 (check-for-empty-server state)))}
                                     ice)
+              (log-run-event state side :encounter-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (cond
@@ -230,6 +236,7 @@
   (let [current-ice (or (get-current-ice state)
                         (get-in @state [:run :current-ice]))]
     (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil current-ice)
+              (log-run-event state side :encounter-ice-ends current-ice)
               (swap! state dissoc-in [:run :bypass])
               (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
@@ -280,6 +287,7 @@
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
+              (log-run-event state side :pass-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (reset-all-ice state side)
@@ -294,6 +302,10 @@
                   (do (set-next-phase state :approach-server)
                       (start-next-phase state side nil)))))))
 
+(defmethod start-next-phase :pass-ice
+  [state side args]
+  (pass-ice state side))
+
 (defmethod start-next-phase :approach-server
   [state side args]
   (let [no-ice (zero? (count (get-run-ices state)))
@@ -303,22 +315,28 @@
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
                ;; Immediately end pass ice step if:
                ;; * run ends
+               ;; * position is no longer 0
                ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
+                                          (pos? (:position (:run @state)))
                                           (check-for-empty-server state))))]
+        (set-current-ice state nil)
         (set-phase state :approach-server)
         (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
+                  (log-run-event state side :approach-server (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
-                  (if (get-in @state [:run :jack-out-after-pass])
+                  (cond
+                    (or (check-for-empty-server state)
+                        (:ended (:run @state)))
+                    (handle-end-run state side)
+                    (and (not (get-in @state [:run :next-phase]))
+                         (get-in @state [:run :jack-out-after-pass]))
                     (wait-for (jack-out state :runner (make-eid state))
                               (when (or (check-for-empty-server state)
                                         (:ended (:run @state)))
-                                (handle-end-run state side)))
-                    (when (or (check-for-empty-server state)
-                              (:ended (:run @state)))
-                      (handle-end-run state side))))))
+                                (handle-end-run state side)))))))
 
 (defmethod continue :approach-server [state side args])
 
@@ -339,6 +357,24 @@
         (when (or (= :approach-ice (get-in @state [:run :phase]))
                   (= :approach-server (get-in @state [:run :phase])))
           (system-msg state side "has no further action")))))
+
+(defn redirect-run
+  ([state side server] (redirect-run state side server nil))
+  ([state side server phase]
+   (let [dest (server->zone state server)
+         num-ice (count (get-in (:corp @state) (conj dest :ices)))
+         phase (if (= phase :approach-ice)
+                 (if (pos? num-ice)
+                   :approach-ice
+                   :approach-server)
+                 phase)]
+     (swap! state update :run
+            assoc
+            :position num-ice
+            :server [(second dest)])
+     (when phase
+       (set-next-phase state phase)))
+   (set-current-ice state)))
 
 ;; Non timing stuff
 (defn gain-run-credits
@@ -554,15 +590,15 @@
            (effect-completed state side (make-result eid false)))))))
 
 (defn- run-end-fx
-  [state side eid run]
+  [state side {:keys [eid successful unsuccessful]}]
   (cond
     ;; Successful
-    (:successful run)
+    successful
     (do
       (play-sfx state side "run-successful")
       (effect-completed state side (make-result eid {:successful true})))
     ;; Unsuccessful
-    (:unsuccessful run)
+    unsuccessful
     (do
       (play-sfx state side "run-unsuccessful")
       (effect-completed state side (make-result eid {:unsuccessful true})))
@@ -584,7 +620,7 @@
               (update-all-ice state side)
               (reset-all-ice state side)
               (clear-run-register! state)
-              (run-end-fx state side (:eid run) run))))
+              (run-end-fx state side run))))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."

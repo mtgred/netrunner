@@ -117,6 +117,7 @@
      :rd-access 0
      :hq-access 0
      :rd-access-fn seq
+     :hq-access-fn shuffle
      :brain-damage 0
      :keep false
      :quote r-quote}))

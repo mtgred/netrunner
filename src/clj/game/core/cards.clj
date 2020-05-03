@@ -68,6 +68,7 @@
         to-installed (#{:servers :rig} (first dest))
         trash-hosted (fn [h]
                        (trash state side
+                              (make-eid state)
                               (update-in h [:zone] #(map to-keyword %))
                               {:unpreventable true
                                :host-trashed true

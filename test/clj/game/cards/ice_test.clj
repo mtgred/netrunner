@@ -274,12 +274,12 @@
       (play-from-hand state :corp "Architect" "HQ")
       (let [architect (get-ice state :hq 0)]
         (core/rez state :corp architect)
-        (core/trash state :corp (refresh architect))
+        (trash state :corp (refresh architect))
         (is (get-ice state :hq 0) "Architect was trashed, but should be untrashable")
         (core/derez state :corp (refresh architect))
-        (core/trash state :corp (refresh architect))
+        (trash state :corp (refresh architect))
         (is (nil? (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
-        (core/trash state :corp (get-in @state [:corp :hand 0]))
+        (trash state :corp (get-in @state [:corp :hand 0]))
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
 
@@ -504,6 +504,7 @@
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (click-prompt state :corp "R&D")
+      (run-continue state)
       (is (= :rd (-> (get-run) :server first)) "Run redirected to R&D")
       (is (= 2 (:position (get-run))) "Passed Bullfrog")
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
@@ -1182,10 +1183,8 @@
         (run-continue state)
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
-        (click-prompt state :corp "No") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
-        (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
-        (run-next-phase state)
+        (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
         (card-subroutine state :corp (get-ice state :hq 0) 0)
         (click-prompt state :runner "2 net damage") ; take 2 net
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
@@ -1197,7 +1196,6 @@
         (run-continue state)
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
-        (run-next-phase state)
         (card-subroutine state :corp (get-ice state :archives 0) 0)
         (click-prompt state :runner "End the run") ; ETR
         (is (not (get-in @state [:run])) "Formicary ended the run"))))
@@ -1901,7 +1899,6 @@
         (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
         (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
         (run-continue state)
@@ -2461,7 +2458,29 @@
         (is (= :approach-ice (get-in @state [:run :phase])) "Runner is in correct state")
         (run-jack-out state)
         (click-card state :runner "Daily Casts")
-        (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck")))))
+        (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck"))))
+  (testing "Redirection works correctly. #5047"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game" "Ice Wall"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
+      (click-prompt state :corp "Archives")
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Ice Wall")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
@@ -3550,7 +3569,7 @@
         (let [credits (:credit (get-corp))]
           (card-subroutine state :corp shiro 1)
           (click-prompt state :corp "No")
-          (is (= 3 (core/access-bonus-count (:run @state) :rd)) "Should access an additional 3 cards")
+          (is (= 3 (core/access-bonus-count state :runner :rd)) "Should access an additional 3 cards")
           (dotimes [_ 5]
             (click-prompt state :runner "No action"))
           (run-jack-out state)
@@ -3987,7 +4006,33 @@
       (play-from-hand state :corp "Tour Guide" "HQ")
       (let [tg (get-ice state :hq 0)]
         (core/rez state :corp tg)
-        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")))))
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "trashing resets the number"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)
+            ngo (get-content state :remote2 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
+        (core/rez state :corp ngo)
+        (core/advance state :corp {:card (refresh ngo)})
+        (core/advance state :corp {:card (refresh ngo)})
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (is (= 2 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 2 subs")
+        (card-ability state :corp (refresh ngo) 0)
+        (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 1 subs")))))
 
 (deftest trebuchet
   ;; Trebuchet
@@ -4181,7 +4226,7 @@
 
 (deftest whirlpool
   ;; Whirlpool
-  (testing "Basic test - whirlpool on remote"
+  (testing "on remote"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]}})
@@ -4196,7 +4241,7 @@
         (fire-subs state wp)
         (is (get-in @state [:run :cannot-jack-out]))
         (is (nil? (refresh wp)) "Whirlpool is trashed"))))
-  (testing "Basic test - whirlpool on hq"
+  (testing "on hq"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]}})
@@ -4211,7 +4256,7 @@
         (fire-subs state wp)
         (is (get-in @state [:run :cannot-jack-out]))
         (is (nil? (refresh wp)) "Whirlpool is trashed"))))
-  (testing "Basic test - whirlpool not trashed when broken"
+  (testing "whirlpool not trashed when broken"
     (do-game
       (new-game {:corp {:hand ["Whirlpool" "Ice Wall" "Border Control"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]
@@ -4228,7 +4273,7 @@
         (core/rez state :corp wp)
         (run-continue state)
         (card-ability state :runner au 0)
-        (click-prompt state :runner "The Runner cannot jack out for the remainder of this run. Trash Whirlpool.")
+        (click-prompt state :runner "The Runner cannot jack out for the remainder of this run")
         (is (refresh wp) "Whirlpool not trashed")))))
 
 (deftest winchester

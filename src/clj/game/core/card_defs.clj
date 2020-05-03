@@ -9,7 +9,7 @@
   "Retrieves a card's abilities definition map."
   [card]
   (if-let [title (:title card)]
-    (get @card-defs title)
+    (get @card-defs title {})
     (.println *err* (with-out-str
                       (print-stack-trace
                         (Exception. (str "Tried to select card def for non-existent card: " card))

@@ -255,17 +255,19 @@
     (check-winner state side)))
 
 (defn remove-old-current
-  "Removes the old current when a new one is played, or an agenda is stolen / scored"
-  [state side current-side]
-  (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
-    (trigger-event state side :trash-current current)
-    (unregister-constant-effects state side current)
-    (let [current (get-card state current)]
-      (if (get-in current [:special :rfg-when-trashed])
-        (do (system-say state side (str (:title current) " is removed from the game."))
-            (move state (other-side side) current :rfg))
-        (do (system-say state side (str (:title current) " is trashed."))
-            (trash state (to-keyword (:side current)) current))))))
+  "Trashes or RFG the existing current when a new current is played, or an agenda is stolen / scored"
+  [state side eid current-side]
+  (if-let [current (first (get-in @state [current-side :current]))]
+    (do (trigger-event state side :trash-current current)
+        (unregister-constant-effects state side current)
+        (let [current (get-card state current)]
+          (if (get-in current [:special :rfg-when-trashed])
+            (do (system-say state side (str (:title current) " is removed from the game."))
+                (move state (other-side side) current :rfg)
+                (effect-completed state side eid))
+            (do (system-say state side (str (:title current) " is trashed."))
+                (trash state (to-keyword (:side current)) eid current nil)))))
+    (effect-completed state side eid)))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon

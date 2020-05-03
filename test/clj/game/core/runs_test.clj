@@ -167,7 +167,26 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
-      (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended"))))
+      (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended")))
+  (testing "Redirection updates current-ice. #5047"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanilla" "Ice Wall"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (take-credits state :corp)
+      (run-on state :hq)
+      (is (= "Vanilla" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
+      (is (= 1 (count (core/turn-events state :corp :approach-ice))))
+      (is (last-log-contains? state "Runner approaches Vanilla"))
+      (core/redirect-run state :corp "Archives" :approach-ice)
+      (run-next-phase state)
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
+      (is (= "Ice Wall" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
+      (is (= 2 (count (core/turn-events state :corp :approach-ice))))
+      (is (last-log-contains? state "Runner approaches Ice Wall")))))
 
 (deftest buffered-continue
   (testing "Buffered continue on approaching ice"

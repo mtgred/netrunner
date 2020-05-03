@@ -1,9 +1,11 @@
-(ns jinteki.decks
+(ns jinteki.validator
   (:require [clojure.string :refer [split split-lines join escape] :as s]
             [game.core.card :refer [has-subtype?]]
             [jinteki.utils :refer [faction-label INFINITY]]
             [jinteki.cards :refer [all-cards] :as cards]
-            #?@(:clj [[clj-time.core :as t] [clj-time.format :as f]])))
+            #?@(:clj [[clj-time.core :as t]
+                      [clj-time.format :as f]
+                      [clj-time.coerce :as c]])))
 
 (defn card-count
   [cards]
@@ -244,8 +246,8 @@
      :description (str "Legal for " (-> fmt name s/capitalize))}))
 
 (defn build-snapshot-plus-legality
-  [valid fmt deck]
-  (merge (build-format-legality valid fmt deck)
+  [valid deck]
+  (merge (build-format-legality valid :snapshot-plus deck)
          {:description "Legal for Snapshot Plus"}))
 
 (defn cards-over-one-core
@@ -306,10 +308,18 @@
      :eternal (build-format-legality valid :eternal deck)
      :classic (build-format-legality valid :classic deck)
      :snapshot (build-format-legality valid :snapshot deck)
-     :snapshot-plus (build-snapshot-plus-legality valid :snapshot-plus deck)
+     :snapshot-plus (build-snapshot-plus-legality valid deck)
      :core-experience (build-core-experience-legality valid deck)
      :socr (build-socr-legality valid deck)}))
 
 (defn trusted-deck-status
-  [{:keys [status] :as deck}]
-  status)
+  [{:keys [status date] :as deck}]
+  (let [deck-date #?(:clj  (f/parse (f/formatters :date-time) date)
+                     :cljs (js/Date.parse date))
+        mwl-epoch (:date-start @cards/mwl)
+        mwl-date #?(:clj  (f/unparse (f/formatters :date-time) (c/from-long mwl-epoch))
+                    :cljs (js/Date. mwl-epoch))]
+    (if (and status
+             (> deck-date mwl-date))
+      status
+      (calculate-deck-status deck))))

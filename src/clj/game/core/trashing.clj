@@ -66,6 +66,7 @@
 (declare get-current-ice set-current-ice)
 
 (defn update-current-ice-to-trash
+  "If the current ice is going to be trashed, update it with any changes"
   [state trashlist]
   (let [current-ice (get-current-ice state)
         current-ice-to-trash (first (filter #(same-card? current-ice %) trashlist))]
@@ -75,7 +76,7 @@
 (defn trash-cards
   "Attempts to trash each given card, and then once all given cards have been either
   added or not added to the trash list, all of those cards are trashed"
-  ([state side cards] (trash-cards state side (make-eid state) cards nil))
+  ; ([state side cards] (trash-cards state side (make-eid state) cards nil))
   ([state side eid cards] (trash-cards state side eid cards nil))
   ([state side eid cards {:keys [cause keep-server-alive host-trashed game-trash] :as args}]
    (let [num-cards (< 1 (count cards))]
@@ -109,8 +110,7 @@
                        ;; the discard. At the same time, gather their `:trash-effect`s
                        ;; to be used in the simult event later.
                        moved-cards (->> trashlist
-                                        (map #(get-card? state %))
-                                        (filter identity)
+                                        (keep #(get-card? state %))
                                         ;; juxt is used to perform both the move and
                                         ;; `get-trash-effect` on each card in the list.
                                         ;; This gives us a list of tuples:
@@ -121,8 +121,8 @@
                                         ;; `trigger-event-simult` handles the additional
                                         ;; abilities.
                                         (map (juxt move-card get-trash-effect))
-                                        (map #(apply ability-as-handler %))
-                                        (into []))]
+                                        (into []))
+                       card-abilities (mapv #(apply ability-as-handler %) moved-cards)]
                    (swap! state update-in [:trash :trash-list] dissoc eid)
                    (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
                      (swap! state assoc-in [side :register :trashed-card] true))
@@ -138,11 +138,13 @@
                                        game-trash :game-trash
                                        (= side :corp) :corp-trash
                                        (= side :runner) :runner-trash)
-                         targets (concat trashlist (list {:cause cause}))]
-                     (apply trigger-event-simult state side eid trash-event {:card-abilities moved-cards} targets)))))]
+                         targets (concat trashlist (list {:cause cause}))
+                         eid (make-result eid (mapv first moved-cards))]
+                     (apply trigger-event-simult state side eid trash-event {:card-abilities card-abilities} targets)))))]
        (preventrec cards)))))
 
 (defn trash
-  ([state side card] (trash-cards state side (make-eid state) [card] nil))
-  ([state side card args] (trash-cards state side (make-eid state) [card] args))
+  ; ([state side card] (trash-cards state side (make-eid state) [card] nil))
+  ; ([state side card args] (trash-cards state side (make-eid state) [card] args))
+  ; ([state side eid card] (trash-cards state side eid [card] nil))
   ([state side eid card args] (trash-cards state side eid [card] args)))

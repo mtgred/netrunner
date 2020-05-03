@@ -30,9 +30,11 @@
                                          (nil? choices#) nil
                                          (sequential? choices#) choices#
                                          :else [choices#])
+                              card# (:card prompt#)
                               prompt-type# (:prompt-type prompt#)]
                           (str (side-str side#) ": " (:msg prompt# "") "\n"
-                               "Type: " (if (some? prompt-type#) prompt-type# "nil") "\n"
+                               (when prompt-type# (str "Type: " prompt-type# "\n"))
+                               (when card# (str "Card: " (:title card#) "\n"))
                                (join "\n" (map #(str "[ " (or (get-in % [:value :title])
                                                               (:value %)
                                                               %

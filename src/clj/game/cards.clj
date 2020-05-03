@@ -15,22 +15,25 @@
                     :msg (msg "trash " (:title target))
                     :choices {:card #(and (installed? %)
                                           (program? %))}
-                    :effect (effect (trash target {:cause :subroutine})
-                                    (clear-wait-prompt :runner))})
+                    :async true
+                    :effect (effect (clear-wait-prompt :runner)
+                                    (trash eid target {:cause :subroutine}))})
 
 (def trash-hardware {:prompt "Select a piece of hardware to trash"
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:card #(and (installed? %)
                                            (hardware? %))}
-                     :effect (effect (trash target {:cause :subroutine}))})
+                     :async true
+                     :effect (effect (trash eid target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
                          :choices {:card #(and (installed? %)
                                                (resource? %))}
-                         :effect (effect (trash target {:cause :subroutine}))})
+                         :async true
+                         :effect (effect (trash eid target {:cause :subroutine}))})
 
 (def trash-installed-sub
   {:async true
@@ -136,7 +139,8 @@
             (register-events state side newh)))))
     (trigger-event state side :swap a-new b-new)
     (update-ice-strength state side a-new)
-    (update-ice-strength state side b-new)))
+    (update-ice-strength state side b-new)
+    (set-current-ice state)))
 
 (defn card-index
   "Get the zero-based index of the given card in its server's list of content. Same as ice-index"

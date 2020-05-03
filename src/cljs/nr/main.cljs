@@ -10,9 +10,10 @@
             [nr.chat :refer [chat]]
             [nr.deckbuilder :refer [deck-builder]]
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
-            [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game player-view]]
+            [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
             [nr.news :refer [news news-state]]
+            [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [reagent.core :as r])
   (:import goog.history.Html5History))
@@ -89,7 +90,7 @@
   (r/render [auth-forms] (.getElementById js/document "auth-forms"))
   ; main screens
   (r/render [about] (.getElementById js/document "about"))
-  (r/render [account (r/cursor app-state [:user])] (.getElementById js/document "account"))
+  (r/render [account] (.getElementById js/document "account"))
   (r/render [card-browser] (.getElementById js/document "cardbrowser"))
   (r/render [chat] (.getElementById js/document "chat"))
   (r/render [deck-builder] (.getElementById js/document "deckbuilder"))

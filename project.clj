@@ -110,6 +110,7 @@
 
   :figwheel {:http-server-root "public"
              :server-port 3449
+             :reload-clj-files false
              :css-dirs ["resources/public/css"]}
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.

@@ -434,15 +434,21 @@
    (dotimes [_ n]
      (core/advance state :corp {:card (get-card state card)}))))
 
+(defn trash
+  [state side card]
+  (is (:cid card) "It's a card object")
+  (when (:cid card)
+    (core/trash state side (eid/make-eid state) card nil)))
+
 (defn trash-from-hand
   "Trash specified card from hand of specified side"
   [state side title]
-  (core/trash state side (find-card title (get-in @state [side :hand]))))
+  (core/trash state side (eid/make-eid state) (find-card title (get-in @state [side :hand])) nil))
 
 (defn trash-resource
   "Trash specified card from rig of the runner"
   [state title]
-  (core/trash state :runner (find-card title (get-in @state [:runner :rig :resource]))))
+  (core/trash state :runner (eid/make-eid state) (find-card title (get-in @state [:runner :rig :resource])) nil))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"

@@ -13,6 +13,16 @@
   (move state side c :rfg)
   (effect-completed state side eid))
 
+(defn current-handler
+  [state side eid card]
+  (if (has-subtype? card "Current")
+    (wait-for (remove-old-current state side :corp)
+              (wait-for (remove-old-current state side :runner)
+                        (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))
+                              c (move state side c :current)]
+                          (effect-completed state side (make-result eid c)))))
+    (effect-completed state side (make-result eid card))))
+
 ;;; Playing cards.
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
@@ -22,42 +32,40 @@
                    (build-spend-msg cost-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    (when (has-subtype? card "Current")
-      (doseq [s [:corp :runner]]
-        (remove-old-current state side s))
-      (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))]
-        (move state side c :current)))
-    ;; Select the "on the table" version of the card
-    (let [cdef (card-def card)
-          card (some #(when (same-card? % card) %) (concat (get-in @state [side :play-area]) (get-in @state [side :current])))]
-      (when card
-        (card-init state side (if (:rfg-instead-of-trashing cdef)
-                                (assoc card :rfg-instead-of-trashing true)
-                                card)
-                   {:resolve-effect false :init-data true}))
-      (let [card (get-card state card)]
-        (wait-for (trigger-event-sync state side (if (= side :corp) :play-operation :play-event) card)
-                  ;; Resolve ability, removing :req as that has already been checked
-                  (wait-for (resolve-ability state side (dissoc cdef :req :cost :additional-cost) card nil)
-                            (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
-                                  trash-after-resolving (:trash-after-resolving cdef true)
-                                  zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
-                              (if (and c trash-after-resolving)
-                                (let [trash-or-move (if (= zone :rfg) fake-move trash)]
-                                  (wait-for (trash-or-move state side c {:unpreventable true})
-                                            (unregister-events state side card)
-                                            (unregister-constant-effects state side card)
-                                            (when (= zone :rfg)
-                                              (system-msg state side
-                                                          (str "removes " (:title c) " from the game instead of trashing it")))
-                                            (when (has-subtype? card "Terminal")
-                                              (lose state side :click (-> @state side :click))
-                                              (swap! state assoc-in [:corp :register :terminal] true))
-                                            (effect-completed state side eid)))
-                                (do (when (has-subtype? card "Terminal")
-                                      (lose state side :click (-> @state side :click))
-                                      (swap! state assoc-in [:corp :register :terminal] true))
-                                    (effect-completed state side eid))))))))))
+    ;; Need to await trashing the existing current
+    (wait-for
+      (current-handler state side card)
+      ;; Select the "on the table" version of the card
+      (let [card async-result
+            cdef (card-def card)]
+        (when card
+          (card-init state side (if (:rfg-instead-of-trashing cdef)
+                                  (assoc card :rfg-instead-of-trashing true)
+                                  card)
+                     {:resolve-effect false :init-data true}))
+        (let [card (get-card state card)]
+          (wait-for (trigger-event-sync state side (if (= side :corp) :play-operation :play-event) card)
+                    ;; Resolve ability, removing :req as that has already been checked
+                    (wait-for (resolve-ability state side (dissoc cdef :req :cost :additional-cost) card nil)
+                              (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
+                                    trash-after-resolving (:trash-after-resolving cdef true)
+                                    zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
+                                (if (and c trash-after-resolving)
+                                  (let [trash-or-move (if (= zone :rfg) fake-move trash)]
+                                    (wait-for (trash-or-move state side c {:unpreventable true})
+                                              (unregister-events state side card)
+                                              (unregister-constant-effects state side card)
+                                              (when (= zone :rfg)
+                                                (system-msg state side
+                                                            (str "removes " (:title c) " from the game instead of trashing it")))
+                                              (when (has-subtype? card "Terminal")
+                                                (lose state side :click (-> @state side :click))
+                                                (swap! state assoc-in [:corp :register :terminal] true))
+                                              (effect-completed state side eid)))
+                                  (do (when (has-subtype? card "Terminal")
+                                        (lose state side :click (-> @state side :click))
+                                        (swap! state assoc-in [:corp :register :terminal] true))
+                                      (effect-completed state side eid)))))))))))
 
 (defn play-instant
   "Plays an Event or Operation."
@@ -158,7 +166,8 @@
                    (if (and (not suppress-event) (pos? deck-count))
                      (wait-for
                        (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
-                       (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
+                       (let [eid (make-result eid drawn)]
+                         (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent)))
                      (effect-completed state side eid))
                    (when (safe-zero? (remaining-draws state side))
                      (prevent-draw state side))))
@@ -401,7 +410,7 @@
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side eid :corp-gain-bad-publicity n))
+        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity n))
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
@@ -515,6 +524,7 @@
    ;; Remove all hosted cards first
    (doseq [h (:hosted card)]
      (trash state side
+            (make-eid state)
             (update-in h [:zone] #(map to-keyword %))
             {:unpreventable true :suppress-event true}))
    (let [card (get-card state card)]
@@ -574,21 +584,15 @@
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"
-  ([state side] (mill state side (make-eid state) side 1))
-  ([state side n] (mill state side (make-eid state) side n))
-  ([state from-side to-side n] (mill state from-side (make-eid state) to-side n))
-  ([state from-side eid to-side n]
-   (let [cards (take n (get-in @state [to-side :deck]))]
-     (trash-cards state from-side eid cards {:unpreventable true}))))
+  [state from-side eid to-side n]
+  (let [cards (take n (get-in @state [to-side :deck]))]
+    (trash-cards state from-side eid cards {:unpreventable true})))
 
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
-  ([state side] (discard-from-hand state side (make-eid state) side 1))
-  ([state side n] (discard-from-hand state side (make-eid state) side n))
-  ([state from-side to-side n] (discard-from-hand state from-side (make-eid state) to-side n))
-  ([state from-side eid to-side n]
-   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
-     (trash-cards state from-side eid cards {:unpreventable true}))))
+  [state from-side eid to-side n]
+  (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
+    (trash-cards state from-side eid cards {:unpreventable true})))
 
 (defn change-hand-size
   "Changes a side's hand-size modification by specified amount (positive or negative)"
@@ -605,8 +609,8 @@
   (system-msg state side (str "exposes " (card-str state target {:visible true})))
   (if-let [ability (:expose (card-def target))]
     (wait-for (resolve-ability state side ability target nil)
-              (trigger-event-sync state side (make-result eid true) :expose target))
-    (trigger-event-sync state side (make-result eid true) :expose target)))
+              (trigger-event-sync state side (make-result eid target) :expose target))
+    (trigger-event-sync state side (make-result eid target) :expose target)))
 
 (defn expose
   "Exposes the given card."
@@ -614,7 +618,8 @@
   ([state side eid target] (expose state side eid target nil))
   ([state side eid target {:keys [unpreventable] :as args}]
     (swap! state update-in [:expose] dissoc :expose-prevent)
-    (if (rezzed? target)
+    (if (or (rezzed? target)
+            (nil? target))
       (effect-completed state side eid) ; cannot expose faceup cards
       (wait-for (trigger-event-sync state side :pre-expose target)
                 (let [prevent (get-prevent-list state :corp :expose)]
@@ -626,8 +631,8 @@
                                      (str "Prevent " (:title target) " from being exposed?") ["Done"]
                                      (fn [_]
                                        (clear-wait-prompt state :runner)
-                                       (if-let [_ (get-in @state [:expose :expose-prevent])]
-                                         (effect-completed state side (make-result eid false)) ;; ??
+                                       (if (get-in @state [:expose :expose-prevent])
+                                         (effect-completed state side (make-result eid false))
                                          (do (system-msg state :corp "will not prevent a card from being exposed")
                                              (resolve-expose state side eid target args))))
                                      {:priority 10}))

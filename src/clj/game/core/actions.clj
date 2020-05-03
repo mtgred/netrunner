@@ -172,7 +172,7 @@
                 ;; Discard from hand, do not trigger trash
                 (do (move-card-to :discard {:force true})
                     (log-move "discards"))
-                (do (trash state s c {:unpreventable true})
+                (do (trash state s (make-eid state) c {:unpreventable true})
                     (log-move "trashes"))))
           ("Grip" "HQ")
           (do (move-card-to :hand {:force true})
@@ -738,7 +738,7 @@
   ([state side eid args]
    (let [card (or (:card args) args)]
      (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
-               (when (can-score? state side card)
+               (if (can-score? state side card)
                  ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
                  (let [moved-card (move state :corp card :scored)
                        c (card-init state :corp moved-card {:resolve-effect false
@@ -747,11 +747,12 @@
                    (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
                    (trigger-event-simult
                      state :corp eid :agenda-scored
-                     {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
+                     {:first-ability {:async true
+                                      :effect (req (when-let [current (first (get-in @state [:runner :current]))]
                                                      ;; This is to handle Employee Strike with damage IDs #2688
                                                      (when (:disable-id (card-def current))
                                                        (swap! state assoc-in [:corp :disable-id] true)))
-                                                   (remove-old-current state side :runner))}
+                                                   (remove-old-current state side eid :runner))}
                       :card-abilities (card-as-handler c)
                       :after-active-player
                       {:effect (req (let [c (get-card state c)
@@ -762,7 +763,8 @@
                                       (update-all-agenda-points state side)
                                       (check-winner state side)
                                       (play-sfx state side "agenda-score")))}}
-                     c)))))))
+                     c))
+                 (effect-completed state side eid))))))
 
 ;;; Runner actions
 (defn click-run
