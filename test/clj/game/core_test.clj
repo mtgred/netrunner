@@ -337,7 +337,7 @@
      (is (not (:no-action run#)) "The run can continue")
      (when (and (some? run#)
                 (not (:no-action run#)))
-       (core/no-action ~state :corp nil)
+       (core/continue ~state :corp nil)
        (core/continue ~state :runner nil)
        true)))
 

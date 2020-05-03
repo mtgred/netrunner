@@ -1499,7 +1499,7 @@
        [cond-button
         (str "Rez " (:title current-ice))
         (not (rezzed? current-ice))
-        #(send-command "rez" {:card current-ice :press-no-action true})])
+        #(send-command "rez" {:card current-ice :press-continue true})])
 
      (= "encounter-ice" (:phase @run))
      (let [current-ice (get-current-ice)]
@@ -1525,7 +1525,7 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "corp" (:no-action @run)))
-    #(send-command "no-action")]
+    #(send-command "continue")]
 
    (when (not= "approach-server" (:phase @run))
      [checkbox-button

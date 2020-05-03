@@ -1662,9 +1662,9 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (is (= 1 (count-tags state)) "Jesminder did not avoid the second tag during the run")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (core/continue state :runner nil)
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (core/successful-run state :runner nil)
         (run-empty-server state "R&D") ; clear per-run buffer
         (take-credits state :runner)

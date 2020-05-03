@@ -43,8 +43,17 @@
 (defn toggle-auto-no-action
   [state side args]
   (swap! state update-in [:run :corp-auto-no-action] not)
-  (when (rezzed? (get-current-ice state))
-    (no-action state :corp nil)))
+  (when (and (rezzed? (get-current-ice state))
+             (or (= :approach-ice (get-in @state [:run :phase]))
+                 (= :encounter-ice (get-in @state [:run :phase]))))
+    (continue state :corp nil)))
+
+(defn check-auto-no-action
+  "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
+  [state]
+  (when (and (get-in @state [:run :corp-auto-no-action])
+             (rezzed? (get-current-ice state)))
+    (continue state :corp nil)))
 
 (defn set-phase
   [state phase]
@@ -143,6 +152,7 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (reset-all-ice state side)
+  (check-auto-no-action state)
   (let [ice (get-current-ice state)]
     (system-msg state :runner (str "approaches " (card-str state ice)))
     (wait-for (trigger-event-simult state :runner :approach-ice
@@ -166,10 +176,11 @@
 
 (defmethod continue :approach-ice
   [state side args]
-  (if (get-in @state [:run :no-action])
+  (if-not (get-in @state [:run :no-action])
+    (do (swap! state assoc-in [:run :no-action] side)
+        (when (= :corp side) (system-msg state side "has no further action")))
     (do (update-all-ice state side)
         (update-all-icebreakers state side)
-        (swap! state assoc-in [:run :no-action] false)
         (swap! state assoc-in [:run :jack-out] true)
         (cond
           (or (check-for-empty-server state)
@@ -179,12 +190,7 @@
           (do (set-next-phase state :encounter-ice)
               (start-next-phase state :runner nil))
           :else
-          (pass-ice state side)))
-    (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :corp side) (system-msg state side "has no further action"))
-        (when (and (rezzed? (get-current-ice state))
-                   (:corp-auto-no-action (:run @state)))
-          (no-action state :corp nil)))))
+          (pass-ice state side)))))
 
 (defn bypass-ice
   [state]
@@ -200,6 +206,7 @@
   (set-phase state :encounter-ice)
   (update-all-ice state side)
   (update-all-icebreakers state side)
+  (check-auto-no-action state)
   (let [ice (get-current-ice state)
         on-encounter (when ice (:on-encounter (card-def ice)))
         current-server (:server (:run @state))]
@@ -253,15 +260,11 @@
   [state side {:keys [jack-out] :as args}]
   (when (some? jack-out)
     (swap! state assoc-in [:run :jack-out-after-pass] jack-out)) ;ToDo: Do not transmit this to the Corp (same with :no-action)
-  (if (or (and (get-in @state [:run :no-action])
-               (not= side (get-in @state [:run :no-action]))) ; Other side has pressed continue
+  (if (or (get-in @state [:run :no-action])
           (get-in @state [:run :bypass]))
     (encounter-ends state side args)
     (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :runner side) (system-msg state side "has no further action"))
-        (when (and (:corp-auto-no-action (:run @state))
-                   (empty? (remove :broken (:subroutines (get-current-ice state)))))
-          (no-action state :corp nil)))))
+        (when (= :runner side) (system-msg state side "has no further action")))))
 
 (defn pass-ice
   [state side]
@@ -347,16 +350,6 @@
                       (Exception. "Continue clicked at the wrong time")
                       2500)))
   (.println *err* (str "Run: " (:run @state) "\n")))
-
-(defn no-action
-  "The corp indicates they have no more actions for this window."
-  [state side args]
-  (if (get-in @state [:run :no-action])
-    (continue state :corp args)
-    (do (swap! state assoc-in [:run :no-action] :corp)
-        (when (or (= :approach-ice (get-in @state [:run :phase]))
-                  (= :approach-server (get-in @state [:run :phase])))
-          (system-msg state side "has no further action")))))
 
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))

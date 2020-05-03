@@ -202,7 +202,7 @@
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
         (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))
     (do-game
@@ -214,7 +214,7 @@
         (run-on state :remote1)
         (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
         (is (not (:no-action (:run @state))) "no-action is not set yet")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
         (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
         (core/continue state :runner nil)
@@ -235,7 +235,7 @@
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
         (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset"))))
   (testing "Buffered continue on encountering ice"
@@ -250,7 +250,7 @@
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
         (is (not (:no-action (:run @state))) "no-action is not set yet")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
         (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
         (core/continue state :runner nil)
@@ -289,7 +289,7 @@
         (is (= :approach-server (:phase (:run @state))) "Approaching server")
         (core/continue state :runner nil)
         (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Corp")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Runner now")
         (core/successful-run state :runner nil)
         (click-prompt state :runner "No action")
@@ -318,7 +318,7 @@
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/rez state :corp v0 {:press-no-action true})
+        (core/rez state :corp v0 {:press-continue true})
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
   (testing "auto-no-action on toggling setting"
     (do-game
@@ -377,7 +377,7 @@
         (take-credits state :corp)
         (run-on state :remote1)
         (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (last-log-contains? state "Corp has no further action.") "Message is shown for Corp on approach"))))
   (testing "Message for Runner on encounter"
     (do-game
@@ -403,7 +403,7 @@
         (core/rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter")))))
 
 (deftest continue-and-jack-out
@@ -422,7 +422,7 @@
         (run-on state :remote1)
         (core/rez state :corp iw1)
         (run-continue state)
-        (core/no-action state :corp nil)
+        (core/continue state :corp nil)
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
         (core/continue state :runner {:jack-out true})
@@ -440,5 +440,5 @@
     (play-from-hand state :runner "Devil Charm")
     (run-on state :rd)
     (core/continue state :runner nil)
-    (core/rez state :corp (get-ice state :rd 0) {:press-no-action true})
+    (core/rez state :corp (get-ice state :rd 0) {:press-continue true})
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
