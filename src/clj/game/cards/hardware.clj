@@ -800,7 +800,7 @@
                                      card nil))))}]}))
 
 (define-card "Gebrselassie"
-  {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
+  {:abilities [{:msg "host it on an installed non-AI icebreaker"
                 :cost [:click 1]
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
@@ -824,7 +824,7 @@
    :events [{:event :pump-breaker
              :req (req (same-card? target (:host card)))
              :effect (req (let [last-pump (assoc (second targets)
-                                                 :duration :end-of-run
+                                                 :duration :end-of-turn
                                                  :original-duration (:duration (last (:effects @state))))]
                             (swap! state assoc :effects
                                    (->> (:effects @state)

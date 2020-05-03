@@ -1475,7 +1475,8 @@
       (run-continue state)
       (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
       (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
-      (run-jack-out state))))
+      (run-jack-out state)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength"))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
