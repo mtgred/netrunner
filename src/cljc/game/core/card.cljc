@@ -15,7 +15,6 @@
    format
    image_url
    implementation
-   init
    memoryunits
    minimumdecksize
    normalizedtitle

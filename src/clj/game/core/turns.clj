@@ -110,11 +110,8 @@
 
 (defn build-card
   [card]
-  (let [server-card (or (server-card (:title card)) card)
-        c (assoc (make-card server-card) :art (:art card))]
-    (if-let [init (:init (card-def c))]
-      (merge c init)
-      c)))
+  (let [server-card (or (server-card (:title card)) card)]
+    (assoc (make-card server-card) :art (:art card))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
