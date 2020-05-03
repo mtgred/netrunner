@@ -736,6 +736,68 @@
           (take-credits state :runner)
           (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
+(deftest crypt
+  ;; Crypt
+  (testing "Gains counters when running Archives"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Crypt"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (let [crypt (get-resource state 0)]
+        (run-empty-server state "Archives")
+        (is (= "Place a virus counter on Crypt?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes")
+        (is (= 1 (get-counters (refresh crypt) :virus)))
+        (run-empty-server state "R&D")
+        (is (= 1 (get-counters (refresh crypt) :virus))))))
+  (testing "Ability can install a virus card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Crypsis" "Djinn"]
+                          :hand ["Crypt"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (let [crypt (get-resource state 0)]
+        (core/add-counter state :runner (refresh crypt) :virus 2)
+        (card-ability state :runner (refresh crypt) 0)
+        (is (empty? (:prompt (get-runner))) "Crypt ability costs 3 virus counters")
+        (core/add-counter state :runner (refresh crypt) :virus 1)
+        (changes-val-macro
+          -1 (:click (get-runner))
+          "Crypt ability costs 1 click"
+          (card-ability state :runner (refresh crypt) 0)
+          (is (= ["Crypsis" "Cancel"] (map #(or (:title %) %) (prompt-buttons :runner))))
+          (changes-val-macro
+            -5 (:credit (get-runner))
+            "Install Crypsis at full cost"
+            (click-prompt state :runner "Crypsis")))
+        (is (= "Crypsis" (:title (get-program state 0))))
+        (is (nil? (get-resource state 0)) "Crypt ability costs self-trash"))))
+  (testing "Install is marked as ability #5058"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Crypsis"]
+                          :hand ["Paladin Poemu" "Crypt"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypt")
+      (play-from-hand state :runner "Paladin Poemu")
+      (let [crypt (get-resource state 0)]
+        (core/add-counter state :runner (refresh crypt) :virus 3)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (changes-val-macro
+          -4 (:credit (get-runner))
+          "Only pay 4 for Crypsis, using 1 from Paladin Poemu"
+          (card-ability state :runner (refresh crypt) 0)
+          (click-prompt state :runner "Crypsis")
+          (click-card state :runner "Paladin Poemu"))))))
+
 (deftest cybertrooper-talut
   ;; Cybertrooper Talut
   (testing "Basic test"
@@ -3463,7 +3525,7 @@
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
-      (is (= (:cid ts) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
+      (is (= "Tech Startup" (:title (last (:rfg (get-corp))))) "Tech Startup was removed from game")
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
@@ -3572,7 +3634,6 @@
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "Archives")
       (let [credits (:credit (get-runner))]
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "Yes")
@@ -4250,7 +4311,23 @@
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= :corp (:winner @state)) "Corp wins")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+  (testing "Trash effect works correctly"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project" "Degree Mill"]}
+                 :runner {:deck ["The Black File"]}})
+      (play-and-score state "Degree Mill")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-and-score state "Vanity Project")
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (gain-tags state :runner 1)
+      (core/trash-resource state :corp nil)
+      (click-card state :corp "The Black File")
+      (is (= :corp (:winner @state)) "Corp has now won"))))
 
 (deftest the-class-act
   ;; The Class Act

@@ -171,16 +171,22 @@
         (filter (fn [ability]
                   (let [card (card-for-ability state ability)]
                     (and (not (apply trigger-suppress state side event card targets))
-                         (can-trigger? state side (:ability ability) card targets)))))
+                         (can-trigger? state side (make-eid state) (:ability ability) card targets)))))
         (sort-by (complement #(is-active-player state %)))
         doall)))
+
+(defn log-event
+  [state event targets]
+  (swap! state update :turn-events #(cons [event targets] %))
+  (when (:run @state)
+    (swap! state update-in [:run :events] #(cons [event targets] %))))
 
 (defn trigger-event
   "Resolves all abilities registered as handlers for the given event key, passing them
   the targets given."
   [state side event & targets]
   (when (some? event)
-    (swap! state update :turn-events #(cons [event targets] %))
+    (log-event state event targets)
     (let [get-side #(-> % :card :side game.utils/to-keyword)
           is-active-player #(= (:active-player @state) (get-side %))
           handlers (gather-events state side event targets)]
@@ -207,7 +213,7 @@
   [state side eid event & targets]
   (if (nil? event)
     (effect-completed state side eid)
-    (do (swap! state update :turn-events #(cons [event targets] %))
+    (do (log-event state event targets)
         (let [get-side #(-> % :card :side game.utils/to-keyword)
               is-active-player #(= (:active-player @state) (get-side %))
               handlers (gather-events state side event targets)]
@@ -323,7 +329,7 @@
   [state side eid event {:keys [first-ability card-abilities after-active-player cancel-fn] :as options} & targets]
   (if (nil? event)
     (effect-completed state side eid)
-    (do (swap! state update :turn-events #(cons [event targets] %))
+    (do (log-event state event targets)
         (let [get-ability-side #(-> % :ability :side)
               active-player (:active-player @state)
               opponent (other-side active-player)
@@ -440,3 +446,32 @@
   "Returns true if this is the first trash of an owned installed card this turn by this side"
   [state side]
   (= 1 (count (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side)))))
+
+
+;; Functions for run event parsing
+(defn run-events
+  "Returns the targets vectors of each run event with the given key that was triggered this run."
+  [state side ev]
+  (when (:run @state)
+    (mapcat rest (filter #(= ev (first %)) (get-in @state [:run :events])))))
+
+(defn no-run-event?
+  "Returns true if the given run event has not happened yet this run.
+  Filters on run events satisfying (pred targets) if given pred."
+  ([state side ev] (no-run-event? state side ev (constantly true)))
+  ([state side ev pred]
+   (empty? (filter pred (run-events state side ev)))))
+
+(defn run-event-count
+  "Returns the number of times a run event has happened this run."
+  ([state side ev] (run-event-count state side ev (constantly true)))
+  ([state side ev pred]
+   (count (filter pred (run-events state side ev)))))
+
+(defn first-run-event?
+  "Returns true if the given run event has only occured once this run.
+  Includes itself if this is checked in the requirement for a run event ability.
+  Filters on run events satisfying (pred targets) if given pred."
+  ([state side ev] (first-run-event? state side ev (constantly true)))
+  ([state side ev pred]
+   (= 1 (run-event-count state side ev pred))))

@@ -104,7 +104,8 @@
        (assoc :cid cid
               :implementation (card-implemented card)
               :subroutines (subroutines-init (assoc card :cid cid) (card-def card)))
-       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)
+       (dissoc :setname :text :_id :influence :number :influencelimit
+               :factioncost :format :quantity)
        (map->Card))))
 
 (defn build-card

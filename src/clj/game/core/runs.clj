@@ -38,7 +38,8 @@
 
 (defn get-current-ice
   [state]
-  (get-card state (get-in @state [:run :current-ice])))
+  (let [ice (get-in @state [:run :current-ice])]
+    (or (get-card state ice) ice)))
 
 (defn toggle-auto-no-action
   [state side args]
@@ -111,7 +112,8 @@
                                       :phase :initiation
                                       :next-phase :initiation
                                       :eid eid
-                                      :events '()})
+                                      :current-ice nil
+                                      :events nil})
                          (when (or run-effect card)
                            (add-run-effect state side (assoc run-effect :card card)))
                          (trigger-event state side :begin-run :server s)
@@ -141,10 +143,6 @@
          (empty? (get-in @state [:corp :servers server :content]))
          (empty? (get-in @state [:corp :servers server :ices])))))
 
-(defn log-run-event
-  [state side phase args]
-  (swap! state update-in [:run :events] conj [phase args]))
-
 (defmethod start-next-phase :approach-ice
   [state side args]
   (set-phase state :approach-ice)
@@ -162,7 +160,6 @@
                                     {:cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (check-for-empty-server state)))}
                                     ice)
-              (log-run-event state side :approach-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (if (get-in @state [:run :jack-out-after-pass])
@@ -215,15 +212,16 @@
                                     {:card-abilities (ability-as-handler ice on-encounter)
                                      ;; Immediately end encounter step if:
                                      ;; * run ends
+                                     ;; * ice is not rezzed
                                      ;; * ice is bypassed
                                      ;; * run is moved to another server
                                      ;; * server becomes empty
                                      :cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (can-bypass-ice state side (get-card state ice))
+                                                                (not (rezzed? (get-card state ice)))
                                                                 (not= current-server (:server (:run @state)))
                                                                 (check-for-empty-server state)))}
                                     ice)
-              (log-run-event state side :encounter-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (cond
@@ -231,6 +229,7 @@
                     (:ended (:run @state)))
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
+                    (not (rezzed? (get-card state ice)))
                     (not= current-server (:server (:run @state))))
                 (encounter-ends state side args)))))
 
@@ -239,22 +238,18 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (swap! state assoc-in [:run :no-action] false)
-  ;; This is necessary for when the current ice is trashed
-  (let [current-ice (or (get-current-ice state)
-                        (get-in @state [:run :current-ice]))]
-    (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil current-ice)
-              (log-run-event state side :encounter-ice-ends current-ice)
-              (swap! state dissoc-in [:run :bypass])
-              (unregister-floating-effects state side :end-of-encounter)
-              (unregister-floating-events state side :end-of-encounter)
-              (update-all-ice state side)
-              (update-all-icebreakers state side)
-              (cond
-                (or (check-for-empty-server state)
-                    (:ended (:run @state)))
-                (handle-end-run state side)
-                (not (get-in @state [:run :next-phase]))
-                (pass-ice state side)))))
+  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
+            (swap! state dissoc-in [:run :bypass])
+            (unregister-floating-effects state side :end-of-encounter)
+            (unregister-floating-events state side :end-of-encounter)
+            (update-all-ice state side)
+            (update-all-icebreakers state side)
+            (cond
+              (or (check-for-empty-server state)
+                  (:ended (:run @state)))
+              (handle-end-run state side)
+              (not (get-in @state [:run :next-phase]))
+              (pass-ice state side))))
 
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out] :as args}]
@@ -290,7 +285,6 @@
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
-              (log-run-event state side :pass-ice ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (reset-all-ice state side)
@@ -327,7 +321,6 @@
         (set-phase state :approach-server)
         (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
-                  (log-run-event state side :approach-server (count (get-run-ices state)))
                   (update-all-ice state side)
                   (update-all-icebreakers state side)
                   (cond
@@ -367,7 +360,9 @@
             :server [(second dest)])
      (when phase
        (set-next-phase state phase)))
-   (set-current-ice state)))
+   (set-current-ice state)
+   (update-all-ice state side)
+   (update-all-icebreakers state side)))
 
 ;; Non timing stuff
 (defn gain-run-credits

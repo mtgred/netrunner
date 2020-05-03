@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
+            [game.core.card :refer [get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
@@ -22,7 +22,6 @@
 (defn load-all-cards []
   (when (empty? @all-cards)
     (->> (load-cards)
-         (map #(assoc % :cid (make-cid)))
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
@@ -57,10 +56,7 @@
                               (require [(get nspaces filename) :reload true])))}]))
 
 ;; General utilities necessary for starting a new game
-(defn find-card
-  "Return a card with given title from given sequence"
-  [title from]
-  (some #(when (= (:title %) title) %) from))
+(def find-card core/find-card)
 
 (defn starting-hand
   "Moves all cards in the player's hand to their draw pile, then moves the specified card names

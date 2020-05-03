@@ -107,7 +107,13 @@
               {:event :derez
                :req (req (same-card? target current-ice))
                :effect (req (when (outermost? run-position run-ices)
-                              (activate state card false)))}]}))
+                              (activate state card false)))}
+              {:event :corp-trash
+               :req (req (some #(same-card? % current-ice) targets))
+               :effect (req (activate state card false))}
+              {:event :runner-trash
+               :req (req (some #(same-card? % current-ice) targets))
+               :effect (req (activate state card false))}]}))
 
 (define-card "Adam: Compulsive Hacker"
   {:events [{:event :pre-start-game
@@ -146,13 +152,10 @@
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
                 :effect (req (let [dest (server->zone state target)
-                                   outermost (last (get-in corp (conj dest :ices)))
-                                   phase (cond (rezzed? outermost) :encounter-ice
-                                               outermost :pass-ice
-                                               :else :approach-server)]
+                                   ice (count (get-in corp (conj dest :ices)))
+                                   phase (if (pos? ice) :encounter-ice :approach-server)]
                                (redirect-run state side target phase)
-                               (when (= phase :pass-ice)
-                                 (start-next-phase state side nil))
+                               (start-next-phase state side nil)
                                (trash state side eid current-ice {:unpreventable true})))}]})
 
 (define-card "Akiko Nisei: Head Case"
@@ -239,7 +242,7 @@
                                             (if (is-remote? z)
                                               "non-agenda"
                                               "piece of ice")
-                                            " in HQ to install with Asa Group: Security Through Vigilance (optional)")
+                                            " in HQ to install")
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %)
                                                      (corp-installable-type? %)
@@ -362,7 +365,8 @@
              :req (req (and (= target :net)
                             (corp-can-choose-damage? state)
                             (pos? (last targets))
-                            (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
+                            (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))
+                            (pos? (count (:hand runner)))))
              :effect (req (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                           (continue-ability
                             state :corp
@@ -441,6 +445,10 @@
                             (do (when run
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (system-msg state :runner
+                                            (str "uses Edward Kim: Humanity's Hammer to"
+                                                 " trash " (:title target)
+                                                 " at no cost"))
                                 (trash state side eid target nil))))}]})
 
 (define-card "Ele \"Smoke\" Scovak: Cynosure of the Net"
@@ -982,12 +990,12 @@
                :effect (req (let [cid (first target)
                                   ability-idx (:ability-idx (:source-info eid))
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (number? (first target))
-                                          (seq [cid ability-idx])
+                                  cause (if (keyword? (first target))
                                           (case (first target)
                                             :play-instant (seq [bac-cid 3])
                                             :corp-click-install (seq [bac-cid 2])
-                                            (first target)))
+                                            (first target))
+                                          (seq [cid ability-idx]))
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
@@ -1026,6 +1034,8 @@
                                                      :front true})
                                       (swap! state assoc-in [:run :position] 1)
                                       (set-next-phase state :approach-ice)
+                                      (update-all-ice state side)
+                                      (update-all-icebreakers state side)
                                       (effect-completed state side eid)
                                       (start-next-phase state side nil)))}}}]})
 

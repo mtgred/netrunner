@@ -88,7 +88,7 @@
          (empty? (:confirm-password @s)))
      (swap! s assoc :flash-message "Password can't be empty")
 
-     (= (:password @s) (:confirm-password  @s))
+     (not= (:password @s) (:confirm-password  @s))
      (swap! s assoc :flash-message "Passwords must match")
 
      :else

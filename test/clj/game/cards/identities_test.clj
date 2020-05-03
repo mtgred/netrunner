@@ -243,7 +243,23 @@
       (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
-      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice"))))
+      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
+  (testing "Trashing the ice removes the tag #4984"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck ["Ice Wall"]}
+                 :runner {:deck ["Corroder" "Hippo"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "Server 1")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (zero? (count-tags state)) "Acme additional tag falls off"))))
 
 (deftest adam-compulsive-hacker
   ;; Adam
@@ -316,7 +332,7 @@
                  (filter #(= :pass-ice (first %)))
                  (keep second))]
         (is (= 1 (count ice-passed-last-run)))
-        (is (utils/same-card? (get-ice state :hq 0) (first ice-passed-last-run))))
+        (is (utils/same-card? (get-ice state :hq 0) (ffirst ice-passed-last-run))))
       (run-successful state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
@@ -340,7 +356,27 @@
       (play-from-hand state :runner "En Passant")
       (click-card state :runner "Kakugo")
       (is (nil? (get-ice  state :hq 0)))
-      (is (find-card "Kakugo" (:discard (get-corp)))))))
+      (is (find-card "Kakugo" (:discard (get-corp))))))
+  (testing "Uses up on-encounter bypass effects"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund" "Ice Wall" "Vanilla" "Kakugo"]
+                        :credits 10}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "R&D")
+      (is (= (get-ice state :rd 0) (core/get-current-ice state)))
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "HQ")
+      (is (= (get-ice state :hq 0) (core/get-current-ice state)))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Kakugo protecting HQ at position 0.")))))
 
 (deftest akiko-nisei-head-case
   ;; Akiko Nisei
@@ -504,9 +540,10 @@
         (play-from-hand state :corp "Shipment from MirrorMorph")
         (click-card state :corp marilyn)
         (click-prompt state :corp "New remote")
-        (is (= (:cid marilyn) (:cid (get-content state :remote1 0))) "Marilyn is installed as first card")
-        (click-card state :corp herrings) ;; This should be the Asa prompt, should be automatically installed in remote1
-        (is (= (:cid herrings) (:cid (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
+        (is (= "Marilyn Campaign" (:title (get-content state :remote1 0))) "Marilyn is installed as first card")
+        (is (= "Select a non-agenda in HQ to install" (:msg (prompt-map :corp))))
+        (click-card state :corp herrings)
+        (is (= "Red Herrings" (:title (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
         (click-card state :corp vitruvius)
         (click-prompt state :corp "New remote")
         (click-card state :corp pup)
@@ -675,7 +712,19 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Scrubbed")
       (core/damage state :corp :net 1)
-      (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly"))))
+      (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly")))
+  (testing "Doesn't prompt when Runner's hand is empty"
+    (do-game
+      (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Neural EMP"]}
+                 :runner {:discard ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (is (empty? (:prompt (get-corp))) "No choice because grip is empty")
+      (is (= :corp (:winner @state))))))
 
 (deftest earth-station-sea-headquarters
   ;;Earth Station: SEA Headquarters
@@ -835,9 +884,9 @@
       (run-empty-server state "Archives")
       (run-empty-server state "HQ")
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Hedge Fund")
-      (take-credits state :corp)))
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner))))
+      (is (nil? (get-run)))))
   (testing "Interaction with Eater"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -898,7 +947,7 @@
       (play-and-score state "Hostile Takeover")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
-      (is (nil? (:run @state)) "No run has been created")))
+      (is (nil? (get-run)) "No run has been created")))
   (testing "Interaction with Aumakua and accessing an operation in archives #5054"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -908,7 +957,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "Archives")
-      (is (= 1 (get-counters (get-program state 0) :virus))))))
+      (is (= 1 (get-counters (get-program state 0) :virus)))))
+  (testing "Trashed card is logged"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost.")))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net
   ;; Ele "Smoke" Scovak: Cynosure of the Net
@@ -1352,7 +1409,7 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
-(deftest hoshiko-shiro-untold-proganoist
+(deftest hoshiko-shiro-untold-protagonist
   ;; Hoshiko Shiro
   (testing "ID ability"
     (do-game

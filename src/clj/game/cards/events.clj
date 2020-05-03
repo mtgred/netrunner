@@ -872,7 +872,7 @@
                :max (req (count (:hand runner)))}
      :cancel-effect (effect (continue-ability (ec 0 []) card nil))
      :async true
-     :effect (req (let [trash-cost (apply + (map :cost targets))
+     :effect (req (let [trash-cost (reduce + (keep :cost targets))
                         to-trash targets]
                     (wait-for (trash-cards state side to-trash {:unpreventable true})
                               (continue-ability state side (ec trash-cost to-trash) card nil))))}))
@@ -889,15 +889,15 @@
                   (->> (:events (:last-run runner-reg))
                        (filter #(= :pass-ice (first %)))
                        (map second)
-                       (keep #(get-card state %))
+                       (keep #(get-card state (first %)))
                        (filter (complement rezzed?))
                        seq)))
    :prompt "Choose an unrezzed piece of ICE that you passed on your last run"
-   :choices {:req (req (some #(same-card? :installed-cid target %)
+   :choices {:req (req (some #(same-card? target %)
                              (->> (:events (:last-run runner-reg))
                                   (filter #(= :pass-ice (first %)))
                                   (map second)
-                                  (keep #(get-card state %))
+                                  (keep #(get-card state (first %)))
                                   (filter (complement rezzed?)))))}
    :msg (msg "trash " (card-str state target))
    :effect (effect (trash eid target nil))})
@@ -1521,6 +1521,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
+             :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})
@@ -2690,21 +2691,21 @@
                   :choices (req (cancellable
                                   (filter program? ((if (= where "Heap") :discard :deck) runner))))
                   :async true
-                  :effect (effect (trigger-event :searched-stack nil)
-                                  (shuffle! :deck)
-                                  (register-events
-                                    card
-                                    (let [program target]
-                                      [{:event :runner-turn-ends
-                                        :duration :end-of-turn
-                                        :req (req (let [program (find-cid (:cid program) (all-installed state :runner))]
-                                                    (get-in program [:special :test-run])))
-                                        :msg (msg "move " (:title program) " to the top of the stack")
-                                        :effect (effect (move (find-cid (:cid program) (all-installed state :runner))
-                                                              :deck {:front true}))}]))
-                                  (runner-install (assoc eid :source card :source-type :runner-install)
-                                                  (assoc-in target [:special :test-run] true)
-                                                  {:ignore-all-cost true}))})
+                  :effect (req (trigger-event state side :searched-stack nil)
+                               (shuffle! state side :deck)
+                               (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                                         target {:ignore-all-cost true})
+                                         (if async-result
+                                           (let [installed-card (update! state side (assoc-in async-result [:special :test-run] true))]
+                                             (register-events
+                                               state side installed-card
+                                               [{:event :runner-turn-ends
+                                                 :duration :end-of-turn
+                                                 :req (req (get-in (find-latest state installed-card) [:special :test-run]))
+                                                 :msg (msg "move " (:title installed-card) " to the top of the stack")
+                                                 :effect (effect (move (find-latest state installed-card) :deck {:front true}))}])
+                                             (effect-completed state side eid))
+                                           (effect-completed state side eid))))})
                card nil))})
 
 (define-card "The Maker's Eye"

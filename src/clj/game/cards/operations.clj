@@ -1260,23 +1260,23 @@
                          (in-hand? %))}
    :async true
    :effect (req (wait-for (corp-install state side target "New remote" nil)
-                          (let [target (find-latest state target)]
-                            (add-prop state side target :advance-counter 3 {:placed true}))
-                          (register-turn-flag!
-                            state side
-                            card :can-rez
-                            (fn [state side card]
-                              (if (same-card? card target)
-                                ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
-                                true)))
-                          (register-turn-flag!
-                            state side
-                            card :can-score
-                            (fn [state side card]
-                              (if (same-card? card target)
-                                ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
-                                true)))
-                          (effect-completed state side eid)))})
+                          (let [installed-card async-result]
+                            (add-prop state side installed-card :advance-counter 3 {:placed true})
+                            (register-turn-flag!
+                              state side
+                              card :can-rez
+                              (fn [state side card]
+                                (if (same-card? card installed-card)
+                                  ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
+                                  true)))
+                            (register-turn-flag!
+                              state side
+                              card :can-score
+                              (fn [state side card]
+                                (if (same-card? card installed-card)
+                                  ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
+                                  true)))
+                            (effect-completed state side eid))))})
 
 (define-card "Mutate"
   {:req (req (some #(and (ice? %)

@@ -1,114 +1,15 @@
 (in-ns 'game.core)
 
-(declare available-mu free-mu host install-locked? make-rid rez run-flag?
-         installable-servers server->zone set-prop system-msg turn-flag? in-play?
-         update-breaker-strength update-ice-strength update-run-ice use-mu add-sub
-         get-remotes)
+(declare host rez installable-servers server->zone system-msg turn-flag?
+         in-play? update-breaker-strength use-mu get-remotes)
 
-;;;; Functions for the installation and deactivation of cards.
-
-;;; Deactivate a card
-(defn- dissoc-card
-  "Dissoc relevant keys in card"
-  [card keep-counter]
-  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
-                  :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
-        c (assoc c :subroutines (subroutines-init c (card-def card)))
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
-    c))
-
-(defn- trigger-leave-effect
-  "Triggers leave effects for specified card if relevant"
-  [state side {:keys [disabled installed rezzed facedown zone host] :as card}]
-  (when-let [leave-effect (:leave-play (card-def card))]
-    (when (and (not disabled)
-               (not (and (runner? card) host (not installed) (not facedown)))
-               (or (and (runner? card) installed (not facedown))
-                   rezzed
-                   (and host (not facedown))
-                   (= (first zone) :current)
-                   (= (first zone) :scored)))
-      (leave-effect state side (make-eid state) card nil))))
-
-(defn deactivate
-  "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
-  some events."
-  ([state side card] (deactivate state side card nil))
-  ([state side {:keys [cid disabled facedown installed memoryunits rezzed] :as card} keep-counter]
-   (unregister-events state side card)
-   (unregister-constant-effects state side card)
-   (trigger-leave-effect state side card)
-   (when (and memoryunits
-              installed
-              (not facedown))
-     (free-mu state memoryunits))
-   (when (and (find-cid cid (all-active-installed state side))
-              (not disabled)
-              (or rezzed
-                  installed))
-     (when-let [in-play (:in-play (card-def card))]
-       (apply lose state side in-play)))
-   (dissoc-card card keep-counter)))
-
-
-;;; Initialising a card
-(defn- ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (let [abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
-                    (:abilities cdef))]
-    (for [ab abilities]
-      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
-
-(defn- corp-ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (for [ab (:corp-abilities cdef)]
-    (assoc (select-keys ab [:cost]) :label (make-label ab))))
-
-(defn- runner-ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (for [ab (:runner-abilities cdef)]
-    (assoc (select-keys ab [:cost]) :label (make-label ab))))
-
-(defn card-init
-  "Initializes the abilities and events of the given card."
-  ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
-  ([state side card args] (card-init state side (make-eid state) card args))
-  ([state side eid card {:keys [resolve-effect init-data] :as args}]
-   (let [cdef (card-def card)
-         recurring (:recurring cdef)
-         abilities (ability-init cdef)
-         run-abs (runner-ability-init cdef)
-         corp-abs (corp-ability-init cdef)
-         c (merge card
-                  (when init-data (:data cdef))
-                  {:abilities abilities
-                   :runner-abilities run-abs
-                   :corp-abilities corp-abs})
-         c (if (number? recurring) (assoc c :rec-counter recurring) c)
-         c (if (string? (:strength c)) (assoc c :strength 0) c)]
-     (when recurring
-       (let [r (if (number? recurring)
-                 (effect (set-prop card :rec-counter recurring))
-                 recurring)]
-         (register-events
-           state side c
-           [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
-             :req (req (not (:disabled card)))
-             :effect r}])))
-     (update! state side c)
-     (register-events state side c)
-     (register-constant-effects state side c)
-     (if (and resolve-effect (is-ability? cdef))
-       (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
-       (effect-completed state side eid))
-     (when-let [in-play (:in-play cdef)]
-       (apply gain state side in-play))
-     (get-card state c))))
-
+(defn install-locked?
+  "Checks if installing is locked"
+  [state side]
+  (let [kw (keyword (str (name side) "-lock-install"))]
+    (or (seq (get-in @state [:stack :current-run kw]))
+        (seq (get-in @state [:stack :current-turn kw]))
+        (seq (get-in @state [:stack :persistent kw])))))
 
 ;;; Intalling a corp card
 (defn- corp-can-install-reason
@@ -220,8 +121,7 @@
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
                        (move state side c slot {:front front
-                                                :index index}))
-          moved-card (assoc moved-card :installed-cid (make-installed-cid))]
+                                                :index index}))]
       (update! state side moved-card)
 
       (when (agenda? c)
@@ -414,8 +314,7 @@
     (update! state side (assoc installed-card :added-virus-counter true))))
 
 (defn runner-install
-  "Installs specified runner card if able
-  Params include base-cost, no-cost, host-card, facedown and custom-message."
+  "Installs specified runner card if able"
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg cost-bonus] :as params}]
@@ -442,8 +341,7 @@
                                          [:rig (if facedown :facedown (to-keyword (:type card)))]))
                                c (assoc c
                                         :installed :this-turn
-                                        :new true
-                                        :installed-cid (make-installed-cid))
+                                        :new true)
                                installed-card (if facedown
                                                 (do (update! state side c)
                                                     (find-latest state c))

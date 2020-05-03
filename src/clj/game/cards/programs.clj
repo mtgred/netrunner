@@ -769,7 +769,7 @@
              :interactive (req true)
              :optional
              {:req (req (and (is-central? target)
-                             (pos? (get-counters card :virus))
+                             (can-pay? state side eid card nil [:virus 1])
                              (not-empty (get-in @state [:corp :servers target :ices]))
                              (<= 2 (count (filter ice? (all-installed state :corp))))))
               :once :per-turn
@@ -838,14 +838,14 @@
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :encounter-ice-ends
                               :req (req (any-subs-broken-by-card? target card))
-                              :msg (msg (if (pos? (get-counters card :virus))
+                              :msg (msg (if (can-pay? state side eid card nil [:virus 1])
                                           "remove a virus token from Crypsis"
                                           "trash Crypsis"))
                               :async true
-                              :effect (req (if (pos? (get-counters card :virus))
-                                             (do (add-counter state side card :virus -1)
-                                                 (effect-completed state side eid))
-                                             (trash state side eid card nil)))}]}))
+                              :effect (req (wait-for (pay-sync state :runner card [:virus 1])
+                                                     (if async-result
+                                                       (effect-completed state side eid)
+                                                       (trash state side eid card nil))))}]}))
 
 (define-card "Customized Secretary"
   (letfn [(custsec-host [cards]
@@ -1247,7 +1247,7 @@
                       state side card
                       [{:event :encounter-ice
                         :optional
-                        {:req (req (and (same-card? :installed-cid ice target)
+                        {:req (req (and (same-card? ice target)
                                         (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
                                       " [Credits] to bypass " (:title ice) "?")
@@ -1256,17 +1256,6 @@
                                        :effect (req (bypass-ice state))}}}])))
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
-
-(define-card "Inside Job"
-  {:async true
-   :makes-run true
-   :prompt "Choose a server"
-   :choices (req runnable-servers)
-   :effect (effect (make-run eid target nil card))
-   :events [{:event :encounter-ice
-             :once :per-run
-             :msg (msg "bypass " (:title target))
-             :effect (req (bypass-ice state))}]})
 
 (define-card "Flashbang"
   (auto-icebreaker {:abilities [{:label "Derez a Sentry being encountered"
@@ -1467,7 +1456,7 @@
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
                                    :req (req (and (not (get-in @state [:per-turn (:cid card)]))
-                                                  (pos? (get-counters card :virus))))
+                                                  (can-pay? state side eid card nil [:virus 1])))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn
@@ -1769,21 +1758,15 @@
   (virus-breaker "Sentry"))
 
 (define-card "Na'Not'K"
-  (auto-icebreaker {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
-                                            (fn [k ref old new]
-                                              (let [server (first (get-in @state [:run :server]))]
-                                                (when (or
-                                                        ; run initiated or ended
-                                                        (not= (get-in old [:run])
-                                                              (get-in new [:run]))
-                                                        ; server configuration changed (redirected or newly installed ICE)
-                                                        (not= (get-in old [:corp :servers server :ices])
-                                                              (get-in new [:corp :servers server :ices])))
-                                                  (update-breaker-strength ref side card))))))
-                    :strength-bonus (req (if-let [numice (count run-ices)] numice 0))
-                    :leave-play (req (remove-watch state (keyword (str "nanotk" (:cid card)))))
-                    :abilities [(break-sub 1 1 "Sentry")
-                                (strength-pump 3 2)]}))
+  (let [strength-change
+        {:req (req (ice? target))
+         :effect (effect (update-breaker-strength card))}]
+    (auto-icebreaker {:events [(assoc strength-change :event :corp-install)
+                               (assoc strength-change :event :corp-trash)
+                               (assoc strength-change :event :runner-trash)]
+                      :strength-bonus (req (count run-ices))
+                      :abilities [(break-sub 1 1 "Sentry")
+                                  (strength-pump 3 2)]})))
 
 (define-card "Nerve Agent"
   {:events [{:event :successful-run

@@ -273,7 +273,7 @@
           pad (get-content state :remote2 0)]
       (click-card state :runner "PAD Campaign")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")
-      (is (some #(utils/same-card? pad %) (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
+      (is (find-card "PAD Campaign" (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
       (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
 
 (deftest ankusa
@@ -1985,57 +1985,81 @@
 
 (deftest grappling-hook
   ;; Grappling Hook
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall" "Little Engine"]
-                      :credits 10}
-               :runner {:hand [(qty "Grappling Hook" 2) "Corroder" "Torch"]
-                        :credits 100}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Little Engine" "New remote")
-    (take-credits state :corp)
-    (core/gain state :runner :click 10)
-    (play-from-hand state :runner "Grappling Hook")
-    (play-from-hand state :runner "Grappling Hook")
-    (play-from-hand state :runner "Corroder")
-    (play-from-hand state :runner "Torch")
-    (let [iw (get-ice state :hq 0)
-          le (get-ice state :remote1 0)
-          gh1 (get-program state 0)
-          gh2 (get-program state 1)
-          cor (get-program state 2)
-          torch (get-program state 3)]
-      (run-on state :hq)
-      (core/rez state :corp iw)
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Little Engine"]
+                        :credits 10}
+                 :runner {:hand [(qty "Grappling Hook" 2) "Corroder" "Torch"]
+                          :credits 100}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Little Engine" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Grappling Hook")
+      (play-from-hand state :runner "Grappling Hook")
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Torch")
+      (let [iw (get-ice state :hq 0)
+            le (get-ice state :remote1 0)
+            gh1 (get-program state 0)
+            gh2 (get-program state 1)
+            cor (get-program state 2)
+            torch (get-program state 3)]
+        (run-on state :hq)
+        (core/rez state :corp iw)
+        (run-continue state)
+        (card-ability state :runner gh1 0)
+        (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall only has 1 subroutine")
+        (is (refresh gh1) "Grappling Hook isn't trashed")
+        (card-ability state :runner cor 0)
+        (click-prompt state :runner "End the run")
+        (card-ability state :runner gh1 0)
+        (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall has no unbroken subroutines")
+        (is (refresh gh1) "Grappling Hook isn't trashed")
+        (run-jack-out state)
+        (run-on state :remote1)
+        (core/rez state :corp le)
+        (run-continue state)
+        (card-ability state :runner gh1 0)
+        (is (seq (:prompt (get-runner))) "Grappling Hook creates break prompt")
+        (click-prompt state :runner "End the run")
+        (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
+        (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
+        (run-jack-out state)
+        (run-on state :remote1)
+        (run-continue state)
+        (core/update! state :runner (assoc (refresh torch) :current-strength 7))
+        (card-ability state :runner torch 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done")
+        (card-ability state :runner gh2 0)
+        (is (empty? (:prompt (get-runner))) "No break prompt as Little Engine has more than 1 broken sub")
+        (is (refresh gh2) "Grappling Hook isn't trashed"))))
+  (testing "interaction with News Hound #4988"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["News Hound" "Surveillance Sweep"]
+                        :credits 10}
+                 :runner {:hand ["Grappling Hook"]
+                          :credits 100}})
+      (play-from-hand state :corp "News Hound" "HQ")
+      (play-from-hand state :corp "Surveillance Sweep")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (card-ability state :runner gh1 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall only has 1 subroutine")
-      (is (refresh gh1) "Grappling Hook isn't trashed")
-      (card-ability state :runner cor 0)
-      (click-prompt state :runner "End the run")
-      (card-ability state :runner gh1 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall has no unbroken subroutines")
-      (is (refresh gh1) "Grappling Hook isn't trashed")
-      (run-jack-out state)
-      (run-on state :remote1)
-      (core/rez state :corp le)
-      (run-continue state)
-      (card-ability state :runner gh1 0)
-      (is (seq (:prompt (get-runner))) "Grappling Hook creates break prompt")
-      (click-prompt state :runner "End the run")
-      (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
-      (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
-      (run-jack-out state)
-      (run-on state :remote1)
-      (run-continue state)
-      (core/update! state :runner (assoc (refresh torch) :current-strength 7))
-      (card-ability state :runner torch 0)
-      (click-prompt state :runner "End the run")
-      (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Done")
-      (card-ability state :runner gh2 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt as Little Engine has more than 1 broken sub")
-      (is (refresh gh2) "Grappling Hook isn't trashed"))))
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Trace 3 - Give the Runner 1 tag")
+      (fire-subs state (get-ice state :hq 0))
+      (click-prompt state :runner "10")
+      (click-prompt state :corp "1")
+      (is (zero? (count-tags state)) "Runner gained no tags")
+      (is (get-run) "Run hasn't ended")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
 
 (deftest gravedigger
   ;; Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp
@@ -2228,7 +2252,21 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (run-empty-server state "Archives")
-      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives"))))
+      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives")))
+  (testing "Hivemind installed #5000"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Imp" "Hivemind"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hivemind")
+      (is (= 1 (get-counters (get-program state 0) :virus)))
+      (play-from-hand state :runner "Imp")
+      (core/add-counter state :runner (get-program state 1) :virus -2)
+      (is (= 0 (get-counters (get-program state 1) :virus)))
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+      (is (= 1 (count (:discard (get-corp))))))))
 
 (deftest incubator
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program

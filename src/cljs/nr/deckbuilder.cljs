@@ -269,7 +269,7 @@
     (fn [user]
       (let [deck (:deck @s)]
         (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-        (go (let [response (<! (DELETE (str "/data/validator/" (:_id deck))))]
+        (go (let [response (<! (DELETE (str "/data/decks/" (:_id deck))))]
               (when (= 200 (:status response))
                 (load-decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state)))
                 (swap! s assoc :deck nil)
@@ -304,11 +304,12 @@
 
 (defn load-decks-from-json
   [json]
-  (for [deck json]
-    (assoc deck
-           :identity (parse-identity (:identity deck))
-           :cards (:cards deck)
-           :parsed? false)))
+  (when-not (= {:message "Not authorized"} json)
+    (for [deck json]
+      (assoc deck
+             :identity (parse-identity (:identity deck))
+             :cards (:cards deck)
+             :parsed? false))))
 
 (defn save-deck [s]
   (authenticated

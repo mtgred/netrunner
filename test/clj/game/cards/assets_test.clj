@@ -379,7 +379,45 @@
 
 (deftest blacklist
   ;; Blacklist
-  (testing "#2426.  Need to allow steal."
+  (testing "Blocks moving cards from heap #5044"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist" "Ice Wall"]}
+                 :runner {:hand ["Boomerang"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (click-card state :runner "Ice Wall")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-successful state)
+      (is (= "Shuffle a copy of Boomerang back into the Stack?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (find-card "Boomerang" (:discard (get-runner))))
+      (is (not (find-card "Boomerang" (:deck (get-runner)))))))
+  (testing "Blocks installing cards from heap"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist" "Ice Wall"]}
+                 :runner {:discard ["Paperclip"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= "Install Paperclip?" (:msg (prompt-map :runner))))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Spend 0 when Blacklist blocks install"
+        (click-prompt state :runner "Yes"))
+      (is (nil? (get-program state 0)))))
+  (testing "Need to allow steal. #2426"
     (do-game
       (new-game {:corp {:deck [(qty "Fetal AI" 3) "Blacklist"]}})
       (trash-from-hand state :corp "Fetal AI")
@@ -3140,17 +3178,17 @@
         (is (zero? (:credit (get-corp))))
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= (:cid agenda1) (:cid (get-content state :remote4 0))))
+        (is (= (:title agenda1) (:title (get-content state :remote4 0))))
         (is (= 1 (:credit (get-corp))) "Turtlebacks triggered")
         ;; Install second agenda
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= (:cid agenda2) (:cid (get-content state :remote5 0))))
+        (is (= (:title agenda2) (:title (get-content state :remote5 0))))
         (is (= 2 (:credit (get-corp))) "Turtlebacks triggered")
         ;; DBS - put first agenda at bottom of R&D
         (click-card state :corp (get-content state :remote4 0))
         (is (zero? (count (:hand (get-corp)))))
-        (is (= (:cid agenda1) (:cid (last (:deck (get-corp))))))))))
+        (is (= (:title agenda1) (:title (last (:deck (get-corp))))))))))
 
 (deftest prana-condenser
   ;; Prāna Condenser

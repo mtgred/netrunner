@@ -177,13 +177,13 @@
    :abilities [(break-sub
                  [:trash] 2 "All"
                  {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                              (same-card? :installed-cid current-ice boomerang-target)
+                              (same-card? current-ice boomerang-target)
                               true)) ; When eg. flipped by Assimilator
                   :additional-ability
                   {:effect (effect
                              (register-events
                                ;; Boomerang is trashed at this point
-                               (find-latest state card)
+                               (find-card "Boomerang" (:discard (:runner @state)))
                                (let [server (:server run)]
                                  [{:event :run-ends
                                    :once :per-run
@@ -234,11 +234,15 @@
                        (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
                                (event-count state side :corp-trash grip-or-stack-trash?))))))
          :prompt "Add a trashed card to the bottom of the stack"
-         :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
-         :effect (req (when-not (= "No action" target)
-                        (system-msg state side (str "uses Buffer Drive to add " (:title target)
-                                                    " to the bottom of the stack"))
-                        (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
+         :choices (req (conj (sort (map :title (filter :cid targets))) "No action"))
+         :async true
+         :effect (req (if (= "No action" target)
+                        (effect-completed state side eid)
+                        (do (system-msg state side
+                                        (str "uses Buffer Drive to add " target
+                                             " to the bottom of the stack"))
+                            (move state side (find-card target (:discard (:runner @state))) :deck)
+                            (effect-completed state side eid))))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
      :abilities [{:label "Add a card from the heap to the top of the stack"
@@ -761,38 +765,42 @@
                               (continue-ability state side
                                                 (shuffle-next set-aside target to-shuffle)
                                                 card nil)))}))]
-    {:abilities [{:label "Set aside 6 cards and resolve effect"
+    {:abilities [{:label "Install a card from the top of the stack"
                   :cost [:trash]
-                  :prompt (msg "The set aside cards are: " (join ", " (map :title (take 6 (:deck runner)))))
-                  :msg (msg "set aside 6 cards and start resolving the effect")
-                  :choices (req ["OK"])
+                  :msg "install a card from the top of the stack"
                   :async true
                   :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
-                                 (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Choose a card to install"
-                                    :async true
-                                    :choices (req (concat (filter #(and (or (program? %)
-                                                                            (and (resource? %)
-                                                                                 (has-subtype? % "Virtual")))
-                                                                        (can-pay? state side
-                                                                                  (assoc eid :source card :source-type :runner-install)
-                                                                                  % nil [:credit (install-cost state side % {:cost-bonus -2})]))
-                                                                  set-aside)
-                                                          ["No action"]))
-                                    :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
-                                    :effect (req (if (= "No action" target)
-                                                   (continue-ability state side (shuffle-next set-aside nil nil) card nil)
-                                                   (let [to-install target
-                                                         set-aside (remove-once #(= % target) set-aside)
-                                                         new-eid (assoc eid :source card :source-type :runner-install)]
-                                                     (wait-for (runner-install state side new-eid target {:cost-bonus -2})
-                                                               (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
-                                   card nil)))}]}))
+                                 (show-wait-prompt state :corp "Runner to resolve Gachapon")
+                                 (wait-for
+                                   (resolve-ability state side
+                                                    {:prompt (msg "The set aside cards are: " (join ", " (map :title set-aside)))
+                                                     :choices ["OK"]}
+                                                    card nil)
+                                   (continue-ability
+                                     state side
+                                     {:prompt "Choose a card to install"
+                                      :async true
+                                      :choices (req (concat
+                                                      (filter #(and (or (program? %)
+                                                                        (and (resource? %)
+                                                                             (has-subtype? % "Virtual")))
+                                                                    (can-pay? state side
+                                                                              (assoc eid :source card :source-type :runner-install)
+                                                                              % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                              set-aside)
+                                                      ["No action"]))
+                                      :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
+                                      :effect (req (if (= "No action" target)
+                                                     (continue-ability state side (shuffle-next set-aside nil nil) card nil)
+                                                     (let [to-install target
+                                                           set-aside (remove-once #(= % target) set-aside)
+                                                           new-eid (assoc eid :source card :source-type :runner-install)]
+                                                       (wait-for (runner-install state side new-eid target {:cost-bonus -2})
+                                                                 (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
+                                     card nil))))}]}))
 
 (define-card "Gebrselassie"
-  {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
+  {:abilities [{:msg "host it on an installed non-AI icebreaker"
                 :cost [:click 1]
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
@@ -816,7 +824,7 @@
    :events [{:event :pump-breaker
              :req (req (same-card? target (:host card)))
              :effect (req (let [last-pump (assoc (second targets)
-                                                 :duration :end-of-run
+                                                 :duration :end-of-turn
                                                  :original-duration (:duration (last (:effects @state))))]
                             (swap! state assoc :effects
                                    (->> (:effects @state)
@@ -1295,7 +1303,7 @@
                       ;; Patchwork wasn't used in the traditional way
                       (not (get-in card [:special :patchwork]))
                       ;; Check if Patchwork can trigger
-                      (can-trigger? state side patchwork-ability card targets)))
+                      (can-trigger? state side eid patchwork-ability card targets)))
        :custom-amount 2
        :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
                                          (when (= :runner-install (:source-type eid)) "install"))

@@ -63,7 +63,7 @@
                                         (get-in @state [:runner :register :must-trash-with-credits]))
           ; Access abilities
           access-ab-cards (when-not must-trash-with-credits?
-                            (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
+                            (seq (filter #(can-trigger? state :runner eid (access-ab %) % [card])
                                          (all-active state :runner))))
           ; Remove any non-trash abilities, as they can't be used if we're forced to trash
           trash-ab-cards (seq (filter #(:trash? (access-ab %) true) access-ab-cards))
@@ -182,7 +182,7 @@
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
         access-ab-cards (when-not (in-discard? card)
-                          (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
+                          (seq (filter #(can-trigger? state :runner eid (access-ab %) % [card])
                                        (all-active state :runner))))
         ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
@@ -407,22 +407,21 @@
   [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root server] :as args}]
   (let [current-available (->> (get-in @state [:corp :servers (first server) :content])
                                get-all-content
-                               (map :installed-cid)
+                               (map :cid)
                                set)
         already-accessed (clj-set/intersection already-accessed current-available)
         available (clj-set/difference current-available already-accessed)
-        already-accessed-fn (fn [card] (contains? already-accessed (:installed-cid card)))
-        ]
+        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))]
     (when (must-continue? state already-accessed-fn access-amount args)
       {:prompt "Click a card to access it. You must access all cards in this server."
-       :choices {:card #(contains? available (:installed-cid %))}
+       :choices {:card #(contains? available (:cid %))}
        :async true
        :effect (req (wait-for (access-card state side target)
                               (continue-ability
                                 state side
                                 (access-helper-remote
                                   state {:base (dec base) :total (dec total)}
-                                  (conj already-accessed (:installed-cid target))
+                                  (conj already-accessed (:cid target))
                                   args)
                                 card nil)))})))
 
@@ -482,9 +481,9 @@
   [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root idx] :as args}]
   (let [
         ;; already-accessed is only used for upgrades
-        current-available (set (map :installed-cid (get-in @state [:corp :servers :rd :content])))
+        current-available (set (map :cid (get-in @state [:corp :servers :rd :content])))
         already-accessed (clj-set/intersection already-accessed current-available)
-        already-accessed-fn (fn [card] (contains? already-accessed (:installed-cid card)))
+        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         deck (access-cards-from-rd state)
         card-to-access (nth deck idx nil)
@@ -539,7 +538,7 @@
                           state side
                           (access-helper-rd
                             state {:base base :total (dec total)}
-                            (conj already-accessed (:installed-cid (first unrezzed))) args)
+                            (conj already-accessed (:cid (first unrezzed))) args)
                           nil nil))
               ;; more than one unrezzed upgrade. allow user to select with mouse.
               (continue-ability
@@ -552,11 +551,9 @@
                                           state side
                                           (access-helper-rd
                                             state {:base base :total (dec total)}
-                                            (conj already-accessed (:installed-cid target)) args)
+                                            (conj already-accessed (:cid target)) args)
                                           nil nil)))}
-                nil nil))))
-
-        ]
+                nil nil))))]
     (when (and (seq choices) (must-continue? state already-accessed-fn access-amount args))
       (cond
 
@@ -590,7 +587,7 @@
                                       state side
                                       (access-helper-rd
                                         state {:base base :total (dec total)}
-                                        (conj already-accessed (:installed-cid accessed)) args)
+                                        (conj already-accessed (:cid accessed)) args)
                                       card nil)))))}))))
 
 (defmethod choose-access :rd
@@ -645,13 +642,10 @@
   (let [
         hand (get-in @state [:corp :hand])
         current-available (set (concat (map :cid hand)
-                                       (map :installed-cid (get-in @state [:corp :servers :hq :content]))))
+                                       (map :cid (get-in @state [:corp :servers :hq :content]))))
         already-accessed (clj-set/intersection already-accessed current-available)
 
-        already-accessed-fn (fn [card] (contains? already-accessed
-                                                  (if (installed? card)
-                                                    (:installed-cid card)
-                                                    (:cid card))))
+        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         card-from "Card from hand"
         card-from-button (when (and (pos? base)
@@ -694,7 +688,7 @@
                           state side
                           (access-helper-hq
                             state {:base base :total (dec total)}
-                            (conj already-accessed (:installed-cid (first unrezzed))) args)
+                            (conj already-accessed (:cid (first unrezzed))) args)
                           nil nil))
               ;; more than one unrezzed upgrade. allow user to select with mouse.
               (continue-ability
@@ -707,10 +701,9 @@
                                           state side
                                           (access-helper-hq
                                             state {:base base :total (dec total)}
-                                            (conj already-accessed (:installed-cid target)) args)
+                                            (conj already-accessed (:cid target)) args)
                                           nil nil)))}
-                nil nil))))
-        ]
+                nil nil))))]
 
     (when (and (seq choices) (must-continue? state already-accessed-fn access-amount args))
       (cond
@@ -722,9 +715,7 @@
                                     state side
                                     (access-helper-hq
                                       state {:base (dec base) :total (dec total)}
-                                      (conj already-accessed (if (installed? accessed)
-                                                               (:installed-cid accessed)
-                                                               (:cid accessed)))
+                                      (conj already-accessed (:cid accessed))
                                       (assoc args :access-first (next access-first)))
                                     nil nil))))}
 
@@ -758,7 +749,7 @@
                                       state side
                                       (access-helper-hq
                                         state {:base base :total (dec total)}
-                                        (conj already-accessed (:installed-cid accessed)) args)
+                                        (conj already-accessed (:cid accessed)) args)
                                       card nil)))))}))))
 
 (defmethod choose-access :hq
@@ -822,7 +813,7 @@
 
 (defn- accessible? [state card]
   (or (agenda? card)
-      (should-trigger? state :corp card nil (:access (card-def card)))))
+      (should-trigger? state :corp (make-eid state) card nil (:access (card-def card)))))
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability that can trigger
@@ -870,13 +861,10 @@
   [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root] :as args}]
   (let [
         current-available (set (concat (map :cid (get-in @state [:corp :discard]))
-                                       (map :installed-cid (get-in @state [:corp :servers :archives :content]))))
+                                       (map :cid (get-in @state [:corp :servers :archives :content]))))
         already-accessed (clj-set/intersection already-accessed current-available)
 
-        already-accessed-fn (fn [card] (contains? already-accessed
-                                                  (if (installed? card)
-                                                    (:installed-cid card)
-                                                    (:cid card))))
+        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         faceup-cards-buttons (map :title (faceup-accessible state already-accessed-fn))
         unrezzed-card "Unrezzed upgrade"
@@ -905,7 +893,7 @@
         (req (let [unrezzed-card (filter #(not (rezzed? %)) root)]
                (if (= 1 (count unrezzed-card))
                  ;; only one unrezzed upgrade; access it and continue
-                 (let [already-accessed (conj already-accessed (:installed-cid (first unrezzed-card)))
+                 (let [already-accessed (conj already-accessed (:cid (first unrezzed-card)))
                        access-amount {:base base
                                       :total (dec total)}]
                    (wait-for (access-card state side (first unrezzed-card))
@@ -920,7 +908,7 @@
                     :prompt "Choose an upgrade in Archives to access."
                     :choices {:card #(and (= (second (:zone %)) :archives)
                                           (not (already-accessed %)))}
-                    :effect (req (let [already-accessed (conj already-accessed (:installed-cid target))
+                    :effect (req (let [already-accessed (conj already-accessed (:cid target))
                                        access-amount {:base base
                                                       :total (dec total)}]
                                    (wait-for (access-card state side target)
@@ -951,8 +939,7 @@
                            (continue-ability
                              state side
                              (access-helper-archives state access-amount already-accessed args)
-                             nil nil)))))
-        ]
+                             nil nil)))))]
     (when (and (seq choices)
                (must-continue? state already-accessed-fn access-amount args))
       (cond
@@ -992,9 +979,7 @@
                         (let [accessed (some #(when (= (:title %) target) %)
                                              (concat (faceup-accessible state already-accessed-fn)
                                                      (root-content state :archives already-accessed-fn)))
-                              already-accessed (conj already-accessed (if (installed? accessed)
-                                                                        (:installed-cid accessed)
-                                                                        (:cid accessed)))
+                              already-accessed (conj already-accessed (:cid accessed))
                               ;; Base access count is only decremented when accessing a card in archives
                               access-amount {:base (if (in-discard? accessed) (dec base) base)
                                              :total (dec total)}]

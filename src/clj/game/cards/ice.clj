@@ -1286,6 +1286,9 @@
                                     {:front true})
                               (swap! state assoc-in [:run :position] 1)
                               (set-next-phase state :encounter-ice)
+                              (set-current-ice state)
+                              (update-all-ice state side)
+                              (update-all-icebreakers state side)
                               (effect-completed state side eid)
                               (start-next-phase state side nil)))}}}]
    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"

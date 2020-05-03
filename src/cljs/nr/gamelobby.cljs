@@ -117,6 +117,7 @@
   (ws/ws-send! [:netrunner/leave {:gameid-str (:gameid @game-state)}])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown :start-shown)
+  (set! (.-cursor (.-style (.-body js/document))) "default")
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)

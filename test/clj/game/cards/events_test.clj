@@ -1360,18 +1360,6 @@
     (click-prompt state :runner "Remove 1 tag")
     (is (zero? (count-tags state)))))
 
-(deftest asdf
-  (do-game
-    (new-game {:corp {:hand ["Wraparound" "The Future Perfect"]}
-               :runner {:hand [(qty "Deuces Wild" 2) (qty "Sure Gamble" 3)]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Deuces Wild")
-    (click-prompt state :runner "Expose 1 ice and make a run")
-    ; (click-prompt state :runner "Done")
-    (println (prompt-fmt :corp))
-    (println (prompt-fmt :runner))
-  ))
-
 (deftest diana-s-hunt
   ;; Diana's Hunt
   (do-game

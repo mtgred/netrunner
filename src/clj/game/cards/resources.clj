@@ -592,7 +592,7 @@
                                                        (register-turn-flag!
                                                          state side card :can-rez
                                                          (fn [state side card]
-                                                           (if (same-card? :installed-cid card c)
+                                                           (if (same-card? card c)
                                                              ((constantly false)
                                                               (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                              true))))
@@ -699,7 +699,7 @@
                 :cost [:click 1 :virus 3 :trash]
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
-                                (runner-install eid target nil))}
+                                (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (define-card "Cybertrooper Talut"
@@ -2299,6 +2299,8 @@
                                                (swap! state update-in [:run]
                                                       #(assoc % :position (inc run-position) :server [dest]))
                                                (set-next-phase state :approach-ice)
+                                               (update-all-ice state side)
+                                               (update-all-icebreakers state side)
                                                (effect-completed state side eid))))})
                    card nil))}}}]})
 
@@ -2335,7 +2337,7 @@
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
-                            (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine})
+                            (wait-for (resolve-ability state :corp (make-eid state {:source-type :subroutine})
                                                        (:sub-effect sub) current-ice nil)
                                       (if (and (:run @state)
                                                (not (:ended (:run @state)))
@@ -2544,7 +2546,7 @@
                                 (system-msg state side "removes The Black File from the game")
                                 (check-winner state side))
                             (add-counter state side card :power 1)))}]
-   :trash-effect (effect (check-winner))
+   :trash-effect {:effect (effect (check-winner))}
    :leave-play (effect (check-winner))})
 
 (define-card "The Class Act"
