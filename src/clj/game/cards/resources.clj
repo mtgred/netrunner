@@ -579,7 +579,7 @@
                          (let [c target]
                            {:optional
                             {:prompt (str "Trash Councilman and pay " (rez-cost state :corp c)
-                                          " [Credits] to trash " (:title c) "?")
+                                          " [Credits] to derez " (:title c) "?")
                              :yes-ability
                              {:async true
                               :cost [:credit (rez-cost state :corp c)]
