@@ -318,7 +318,7 @@
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/rez state :corp v0 {:press-no-action true})
+        (core/rez state :corp v0 {:press-continue true})
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
   (testing "auto-no-action on toggling setting"
     (do-game
@@ -440,5 +440,5 @@
     (play-from-hand state :runner "Devil Charm")
     (run-on state :rd)
     (core/continue state :runner nil)
-    (core/rez state :corp (get-ice state :rd 0) {:press-no-action true})
+    (core/rez state :corp (get-ice state :rd 0) {:press-continue true})
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
