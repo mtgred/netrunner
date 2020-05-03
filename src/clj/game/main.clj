@@ -36,7 +36,6 @@
    "keep" core/keep-hand
    "move" core/move-card
    "mulligan" core/mulligan
-   "no-action" core/no-action
    "play" core/play
    "purge" core/do-purge
    "remove-tag" core/remove-tag
