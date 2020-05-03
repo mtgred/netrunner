@@ -181,7 +181,7 @@
         (when (= :corp side) (system-msg state side "has no further action")))
     (do (update-all-ice state side)
         (update-all-icebreakers state side)
-        (swap! state assoc-in [:run :jack-out] true) ; TODO: What does this do?
+        (swap! state assoc-in [:run :jack-out] true)
         (cond
           (or (check-for-empty-server state)
               (:ended (:run @state)))
@@ -260,10 +260,11 @@
   [state side {:keys [jack-out] :as args}]
   (when (some? jack-out)
     (swap! state assoc-in [:run :jack-out-after-pass] jack-out)) ;ToDo: Do not transmit this to the Corp (same with :no-action)
-  (if-not (get-in @state [:run :no-action])
+  (if (or (get-in @state [:run :no-action])
+          (get-in @state [:run :bypass]))
+    (encounter-ends state side args)
     (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :runner side) (system-msg state side "has no further action")))
-    (encounter-ends state side args)))
+        (when (= :runner side) (system-msg state side "has no further action")))))
 
 (defn pass-ice
   [state side]
