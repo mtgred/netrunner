@@ -1841,8 +1841,8 @@
                                         (hardware? %))}
                   :effect (req (wait-for (trash state side target {:cause :subroutine})
                                          (when current-ice
-                                           (no-action state side nil)
-                                           (continue state side nil))
+                                           (continue state :corp nil)
+                                           (continue state :runner nil))
                                          (trash state side eid card {:cause :subroutine})))}]})
 
 (define-card "Lancelot"
@@ -2043,8 +2043,8 @@
                                                      (clear-wait-prompt state :corp)
                                                      (wait-for (as-agenda state :runner card -1)
                                                                (when current-ice
-                                                                 (no-action state side nil)
-                                                                 (continue state side nil))
+                                                                 (continue state :corp nil)
+                                                                 (continue state :runner nil))
                                                                (effect-completed state side eid)))))}
                                  card nil))}]})
 
@@ -2588,8 +2588,8 @@
                            (system-msg state :corp "trashes Sadaka")
                            (clear-wait-prompt state :runner)
                            (when current-ice
-                             (no-action state side nil)
-                             (continue state side nil))
+                             (continue state :corp nil)
+                             (continue state :runner nil))
                            (trash state :corp eid card nil)))}]}))
 
 (define-card "Sagittarius"
@@ -2835,7 +2835,7 @@
                   :async true
                   :effect (req (gain-credits state :corp 5)
                                (when current-ice
-                                 (no-action state :corp nil)
+                                 (continue state :corp nil)
                                  (continue state :runner nil))
                                (trash state side eid card {:cause :subroutine}))}]})
 
@@ -3115,8 +3115,8 @@
                                  (do (lose-credits state :runner :all)
                                      (lose state :runner :run-credit :all)
                                      (when current-ice
-                                       (no-action state side nil)
-                                       (continue state side nil))
+                                       (continue state :corp nil)
+                                       (continue state :runner nil))
                                      (trash state side eid card {:cause :subroutine}))
                                  (do (lose-credits state :runner 1)
                                      (effect-completed state side eid))))}]})
@@ -3225,8 +3225,8 @@
                   :async true
                   :effect (req (prevent-jack-out state side)
                                (when current-ice
-                                 (no-action state side nil)
-                                 (continue state side nil))
+                                 (continue state :corp nil)
+                                 (continue state :runner nil))
                                (trash state side eid card {:cause :subroutine}))}]})
 
 (define-card "Winchester"
