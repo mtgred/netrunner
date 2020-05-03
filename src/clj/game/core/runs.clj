@@ -44,13 +44,15 @@
   [state side args]
   (swap! state update-in [:run :corp-auto-no-action] not)
   (when (and (rezzed? (get-current-ice state))
-             (= :encounter-ice (get-in @state [:run :phase])))
+             (or (= :approach-ice (get-in @state [:run :phase]))
+                 (= :encounter-ice (get-in @state [:run :phase]))))
     (continue state :corp nil)))
 
 (defn check-auto-no-action
-  "If corp-auto-no-action is enabled, presses continue for the corp."
+  "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
   [state]
-  (when (get-in @state [:run :corp-auto-no-action])
+  (when (and (get-in @state [:run :corp-auto-no-action])
+             (rezzed? (get-current-ice state)))
     (continue state :corp nil)))
 
 (defn set-phase
