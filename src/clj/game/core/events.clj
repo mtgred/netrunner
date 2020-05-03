@@ -171,7 +171,7 @@
         (filter (fn [ability]
                   (let [card (card-for-ability state ability)]
                     (and (not (apply trigger-suppress state side event card targets))
-                         (can-trigger? state side (:ability ability) card targets)))))
+                         (can-trigger? state side (make-eid state) (:ability ability) card targets)))))
         (sort-by (complement #(is-active-player state %)))
         doall)))
 

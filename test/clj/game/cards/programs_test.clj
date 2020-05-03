@@ -2228,7 +2228,21 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (run-empty-server state "Archives")
-      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives"))))
+      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives")))
+  (testing "Hivemind installed #5000"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Imp" "Hivemind"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hivemind")
+      (is (= 1 (get-counters (get-program state 0) :virus)))
+      (play-from-hand state :runner "Imp")
+      (core/add-counter state :runner (get-program state 1) :virus -2)
+      (is (= 0 (get-counters (get-program state 1) :virus)))
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+      (is (= 1 (count (:discard (get-corp))))))))
 
 (deftest incubator
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program

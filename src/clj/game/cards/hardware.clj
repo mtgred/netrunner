@@ -1303,7 +1303,7 @@
                       ;; Patchwork wasn't used in the traditional way
                       (not (get-in card [:special :patchwork]))
                       ;; Check if Patchwork can trigger
-                      (can-trigger? state side patchwork-ability card targets)))
+                      (can-trigger? state side eid patchwork-ability card targets)))
        :custom-amount 2
        :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
                                          (when (= :runner-install (:source-type eid)) "install"))

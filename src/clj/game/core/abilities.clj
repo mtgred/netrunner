@@ -11,8 +11,6 @@
   "Checks if the specified ability definition should trigger.
   Checks for a :req, either in the top level map, or in an :optional or :psi sub-map
   Returns true if no :req found, returns nil if the supplied ability is nil"
-  ([state side card targets ability]
-    (should-trigger? state side (make-eid state) card targets ability))
   ([state side eid card targets {:keys [req optional psi trace] :as ability}]
    (when ability
      (let [partial-should-trigger? (partial should-trigger? state side eid card targets)]
@@ -29,9 +27,9 @@
 
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
-  [state side ability card targets]
+  [state side eid ability card targets]
   (and (not-used-once? state ability card)
-       (should-trigger? state side card targets ability)))
+       (should-trigger? state side eid card targets ability)))
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
@@ -141,7 +139,7 @@
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid optional] :as ability} card targets]
-  (if (can-trigger? state side optional card targets)
+  (if (can-trigger? state side eid optional card targets)
     (resolve-ability
       state side
       (-> ability
@@ -154,7 +152,7 @@
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
   [state side {:keys [eid psi] :as ability} card targets]
-  (if (can-trigger? state side psi card targets)
+  (if (can-trigger? state side eid psi card targets)
     (resolve-ability
       state side
       (-> ability
@@ -167,7 +165,7 @@
 (defn- check-trace
   "Checks if there is a trace to resolve"
   [state side {:keys [eid trace] :as ability} card targets]
-  (if (can-trigger? state side ability card targets)
+  (if (can-trigger? state side eid ability card targets)
     (resolve-ability
       state side
       (-> ability
@@ -179,7 +177,7 @@
 
 (defn- check-prompt
   [state side {:keys [eid] :as ability} card targets]
-  (if (can-trigger? state side ability card targets)
+  (if (can-trigger? state side eid ability card targets)
     (do-choices state side ability card targets)
     (effect-completed state side eid)))
 
@@ -187,7 +185,7 @@
   [state side {:keys [eid choices optional psi trace async] :as ability} card targets]
   (cond
     ;; Can't trigger, so complete the eid and exit
-    (not (can-trigger? state side ability card targets))
+    (not (can-trigger? state side eid ability card targets))
     (effect-completed state side eid)
     ;; Ability is async, so let it complete itself
     (or async choices optional psi trace)

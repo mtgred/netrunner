@@ -63,7 +63,7 @@
                                         (get-in @state [:runner :register :must-trash-with-credits]))
           ; Access abilities
           access-ab-cards (when-not must-trash-with-credits?
-                            (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
+                            (seq (filter #(can-trigger? state :runner eid (access-ab %) % [card])
                                          (all-active state :runner))))
           ; Remove any non-trash abilities, as they can't be used if we're forced to trash
           trash-ab-cards (seq (filter #(:trash? (access-ab %) true) access-ab-cards))
@@ -182,7 +182,7 @@
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
         access-ab-cards (when-not (in-discard? card)
-                          (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
+                          (seq (filter #(can-trigger? state :runner eid (access-ab %) % [card])
                                        (all-active state :runner))))
         ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
@@ -813,7 +813,7 @@
 
 (defn- accessible? [state card]
   (or (agenda? card)
-      (should-trigger? state :corp card nil (:access (card-def card)))))
+      (should-trigger? state :corp (make-eid state) card nil (:access (card-def card)))))
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability that can trigger

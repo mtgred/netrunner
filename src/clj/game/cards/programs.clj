@@ -769,7 +769,7 @@
              :interactive (req true)
              :optional
              {:req (req (and (is-central? target)
-                             (pos? (get-counters card :virus))
+                             (can-pay? state side eid card nil [:virus 1])
                              (not-empty (get-in @state [:corp :servers target :ices]))
                              (<= 2 (count (filter ice? (all-installed state :corp))))))
               :once :per-turn
@@ -838,14 +838,14 @@
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :encounter-ice-ends
                               :req (req (any-subs-broken-by-card? target card))
-                              :msg (msg (if (pos? (get-counters card :virus))
+                              :msg (msg (if (can-pay? state side eid card nil [:virus 1])
                                           "remove a virus token from Crypsis"
                                           "trash Crypsis"))
                               :async true
-                              :effect (req (if (pos? (get-counters card :virus))
-                                             (do (add-counter state side card :virus -1)
-                                                 (effect-completed state side eid))
-                                             (trash state side eid card nil)))}]}))
+                              :effect (req (wait-for (pay-sync state :runner card [:virus 1])
+                                                     (if async-result
+                                                       (effect-completed state side eid)
+                                                       (trash state side eid card nil))))}]}))
 
 (define-card "Customized Secretary"
   (letfn [(custsec-host [cards]
@@ -1456,7 +1456,7 @@
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
                                    :req (req (and (not (get-in @state [:per-turn (:cid card)]))
-                                                  (pos? (get-counters card :virus))))
+                                                  (can-pay? state side eid card nil [:virus 1])))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn
