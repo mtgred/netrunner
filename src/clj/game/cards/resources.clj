@@ -2337,7 +2337,7 @@
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
-                            (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine})
+                            (wait-for (resolve-ability state :corp (make-eid state {:source-type :subroutine})
                                                        (:sub-effect sub) current-ice nil)
                                       (if (and (:run @state)
                                                (not (:ended (:run @state)))
