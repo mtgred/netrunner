@@ -38,7 +38,8 @@
 
 (defn get-current-ice
   [state]
-  (get-card state (get-in @state [:run :current-ice])))
+  (let [ice (get-in @state [:run :current-ice])]
+    (or (get-card state ice) ice)))
 
 (defn toggle-auto-no-action
   [state side args]
@@ -237,21 +238,18 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (swap! state assoc-in [:run :no-action] false)
-  ;; This is necessary for when the current ice is trashed
-  (let [current-ice (or (get-current-ice state)
-                        (get-in @state [:run :current-ice]))]
-    (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil current-ice)
-              (swap! state dissoc-in [:run :bypass])
-              (unregister-floating-effects state side :end-of-encounter)
-              (unregister-floating-events state side :end-of-encounter)
-              (update-all-ice state side)
-              (update-all-icebreakers state side)
-              (cond
-                (or (check-for-empty-server state)
-                    (:ended (:run @state)))
-                (handle-end-run state side)
-                (not (get-in @state [:run :next-phase]))
-                (pass-ice state side)))))
+  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
+            (swap! state dissoc-in [:run :bypass])
+            (unregister-floating-effects state side :end-of-encounter)
+            (unregister-floating-events state side :end-of-encounter)
+            (update-all-ice state side)
+            (update-all-icebreakers state side)
+            (cond
+              (or (check-for-empty-server state)
+                  (:ended (:run @state)))
+              (handle-end-run state side)
+              (not (get-in @state [:run :next-phase]))
+              (pass-ice state side))))
 
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out] :as args}]

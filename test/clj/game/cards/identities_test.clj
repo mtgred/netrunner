@@ -243,7 +243,23 @@
       (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
-      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice"))))
+      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
+  (testing "Trashing the ice removes the tag #4984"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck ["Ice Wall"]}
+                 :runner {:deck ["Corroder" "Hippo"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "Server 1")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (zero? (count-tags state)) "Acme additional tag falls off"))))
 
 (deftest adam-compulsive-hacker
   ;; Adam

@@ -107,7 +107,13 @@
               {:event :derez
                :req (req (same-card? target current-ice))
                :effect (req (when (outermost? run-position run-ices)
-                              (activate state card false)))}]}))
+                              (activate state card false)))}
+              {:event :corp-trash
+               :req (req (some #(same-card? % current-ice) targets))
+               :effect (req (activate state card false))}
+              {:event :runner-trash
+               :req (req (some #(same-card? % current-ice) targets))
+               :effect (req (activate state card false))}]}))
 
 (define-card "Adam: Compulsive Hacker"
   {:events [{:event :pre-start-game
