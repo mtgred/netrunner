@@ -1525,7 +1525,7 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "corp" (:no-action @run)))
-    #(send-command "no-action")]
+    #(send-command "continue")]
 
    (when (not= "approach-server" (:phase @run))
      [checkbox-button

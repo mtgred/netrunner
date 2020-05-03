@@ -10,7 +10,7 @@
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
          update-all-ice update-all-icebreakers continue play-ability
          play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones
-         pump get-current-ice no-action)
+         pump get-current-ice)
 
 ;;; Neutral actions
 (defn play
