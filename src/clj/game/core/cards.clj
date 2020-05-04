@@ -262,19 +262,15 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (wait-for (trigger-event-sync state side (when (= :deck kw)
-                                             (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck))
-                                nil)
-            (swap! state update-in [side kw] shuffle)))
+  (when (contains? #{:deck :hand :discard} kw)
+    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)) nil)
+    (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
-  (let [player (side @state)
-        zones (filter #(not (seq (get-in @state [side :locked %]))) args)
-        deck (shuffle (reduce concat (:deck player) (for [p zones] (zone :deck (p player)))))]
-    (swap! state assoc-in [side :deck] deck)
-    (doseq [p zones]
-      (swap! state assoc-in [side p] []))))
+  (doseq [zone (filter keyword? args)]
+    (move-zone state side zone :deck))
+  (shuffle! state side :deck))
 
 ;;; Misc card functions
 (defn get-virus-counters
