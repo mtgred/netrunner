@@ -125,6 +125,8 @@
         b-new (assoc b :zone (:zone a))]
     (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
     (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (update-installed-card-indices state :corp (:zone a))
+    (update-installed-card-indices state :corp (:zone b))
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
       (when (rezzed? newcard)
