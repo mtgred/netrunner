@@ -334,7 +334,9 @@
                                         (:ended (:run @state)))
                                 (handle-end-run state side)))))))
 
-(defmethod continue :approach-server [state side args])
+(defmethod continue :approach-server [state side args]
+  (if-not (get-in @state [:run :no-action])
+    (swap! state assoc-in [:run :no-action] side)))
 
 (defmethod continue :default
   [state side args]
