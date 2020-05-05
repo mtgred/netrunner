@@ -336,9 +336,9 @@
 
 (defmethod continue :approach-server
   [state side args]
-  (when (= :corp side)
-    (swap! state assoc-in [:run :no-action] true)
-    (system-msg state side "has no further action")))
+  (when-not (get-in @state [:run :no-action])
+    (when (= :corp side) (system-msg state side "has no further action"))
+    (swap! state assoc-in [:run :no-action] side)))
 
 (defmethod continue :default
   [state side args]
@@ -499,7 +499,7 @@
 (defn corp-phase-43
   "The corp indicates they want to take action after runner hits Successful Run, before access."
   [state side args]
-  (swap! state assoc-in [:run :corp-phase-43] true)
+  (swap! state assoc-in [:run :corp-phase-43] not)
   (continue state side nil))
 
 (defn end-run-prevent
