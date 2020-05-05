@@ -52,7 +52,7 @@
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
    "toggle-auto-no-action" core/toggle-auto-no-action
-   "trash" #(core/trash %1 %2 (get-card %1 (:card %3)) (eid/make-eid %1))
+   "trash" #(core/trash %1 %2 (eid/make-eid %1) (get-card %1 (:card %3)) nil)
    "trash-resource" core/trash-resource
    "unbroken-subroutines" core/play-unbroken-subroutines
    "view-deck" core/view-deck})
