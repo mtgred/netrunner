@@ -5,6 +5,7 @@
             [game.core.eid :as eid]
             [game.core.toasts :refer [toast]]
             [game.core.card :refer [private-card get-card]]
+            [game.utils :refer [dissoc-in]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)
@@ -62,7 +63,8 @@
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
     (update-in [:corp :register] dissoc :most-recent-drawn)
     (update-in [:runner :register] dissoc :most-recent-drawn)
-    (update :run dissoc :current-ice :events)))
+    (dissoc-in [:run :current-ice])
+    (dissoc-in [:run :events])))
 
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
