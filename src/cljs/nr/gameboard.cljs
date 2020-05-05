@@ -1511,10 +1511,10 @@
 
      (and (not (:next-phase @run))
           (zero? (:position @run)))
-     [cond-button
+     [checkbox-button
       "Action before access"
-      (and (not= "initiation" (:phase @run))
-           (not (:no-action @run)))
+      "Action before access"
+      (:corp-phase-43 @run)
       #(send-command "corp-phase-43")])
 
    [cond-button
