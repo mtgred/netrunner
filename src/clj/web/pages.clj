@@ -16,6 +16,7 @@
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport" :content "width=device-width, initial-scale=0.6, minimal-ui"}]
      [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
+     [:link {:rel "apple-touch-icon" :href "img/icons/jinteki_167.png"}]
      [:title "Jinteki"]
      (hiccup/include-css "/css/carousel.css")
      (hiccup/include-css (str "/css/netrunner.css?v=" version))
