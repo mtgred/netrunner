@@ -340,7 +340,7 @@
         (swap! state assoc-in [:run :no-action] side))
     (do (if (get-in @state [:run :corp-phase-43])
           (set-next-phase state :corp-phase-43)
-          (set-next-phase state :successful-run))
+          (set-next-phase state :access-server))
         (start-next-phase state side nil))))
 
 (defmethod start-next-phase :corp-phase-43
@@ -353,13 +353,13 @@
   (if-not (get-in @state [:run :no-action])
     (swap! state assoc-in [:run :no-action] side)
     (if-not (:ended (:run @state))
-      (do (set-next-phase state :successful-run)
+      (do (set-next-phase state :access-server)
           (start-next-phase state side nil))
       (handle-end-run state side))))
 
-(defmethod start-next-phase :successful-run
+(defmethod start-next-phase :access-server
   [state side args]
-  (set-phase state :successful-run)
+  (set-phase state :access-server)
   (successful-run state :runner nil))
 
 (defmethod continue :default

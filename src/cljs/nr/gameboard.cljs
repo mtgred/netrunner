@@ -1463,7 +1463,7 @@
    "pass-ice" "Pass ice"
    "approach-server" "Approach server"
    "corp-phase-43" "Corp phase 4.3"
-   "successful-run" "Successful run"})
+   "access-server" "Successful run"})
 
 (defn phase->next-phase-title
   [run]
@@ -1476,7 +1476,7 @@
                  "Approach ice")
     "approach-server" "Successful run"
     "corp-phase-43" "Successful run"
-    "successful-run" "Successful run"
+    "access-server" "Successful run"
     ;; Error
     "No current run"))
 
@@ -1529,13 +1529,13 @@
         (str "Continue to " (phase->next-phase-title run))))
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
-         (not= "successful-run" (:phase @run))
+         (not= "access-server" (:phase @run))
          (not= "corp" (:no-action @run)))
     #(send-command "continue")]
 
    (when (and (not= "approach-server" (:phase @run))
               (not= "corp-phase-43" (:phase @run))
-              (not= "successful-run" (:phase @run)))
+              (not= "access-server" (:phase @run)))
      [checkbox-button
       "Stop auto-passing priority"
       "Auto-pass priority"
