@@ -5,6 +5,7 @@
             [game.core.eid :as eid]
             [game.core.toasts :refer [toast]]
             [game.core.card :refer [private-card get-card]]
+            [game.utils :refer [dissoc-in]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)
@@ -52,7 +53,7 @@
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
    "toggle-auto-no-action" core/toggle-auto-no-action
-   "trash" #(core/trash %1 %2 (get-card %1 (:card %3)) (eid/make-eid %1))
+   "trash" #(core/trash %1 %2 (eid/make-eid %1) (get-card %1 (:card %3)) nil)
    "trash-resource" core/trash-resource
    "unbroken-subroutines" core/play-unbroken-subroutines
    "view-deck" core/view-deck})
@@ -60,9 +61,12 @@
 (defn strip [state]
   (-> state
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
-    (update-in [:corp :register] dissoc :most-recent-drawn)
-    (update-in [:runner :register] dissoc :most-recent-drawn)
-    (update :run dissoc :current-ice :events)))
+    (update-in [:corp :register] select-keys [:spent-click])
+    (update-in [:runner :register] select-keys [:spent-click])
+    (dissoc-in [:corp :register-last-turn])
+    (dissoc-in [:runner :register-last-turn])
+    (dissoc-in [:run :current-ice])
+    (dissoc-in [:run :events])))
 
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"

@@ -2265,6 +2265,24 @@
         (click-card state :runner "Ghost Runner")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended")))
+    (testing "Issue #5083: Mu Safecracker doesn't work with Cold Read"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Hedge Fund" 2)]}
+                   :runner {:hand ["Mu Safecracker" "Cold Read"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Mu Safecracker")
+        (play-from-hand state :runner "Cold Read")
+        (click-prompt state :runner "R&D")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner "Cold Read")
+        (click-card state :runner "Cold Read")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Done")
         (is (not (:run @state)) "Run has ended")))))
 
 (deftest net-ready-eyes

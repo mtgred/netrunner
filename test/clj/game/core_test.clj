@@ -359,7 +359,9 @@
      (when (and (some? run#)
                 (zero? (:position run#))
                 (= :approach-server (:phase run#)))
-       (core/successful-run ~state :runner nil)
+       (core/continue ~state :corp nil)
+       (when (:no-action (:run @~state))
+         (core/successful-run ~state :runner nil))
        true)))
 
 (defmacro run-jack-out

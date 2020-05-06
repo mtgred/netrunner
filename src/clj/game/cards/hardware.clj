@@ -1118,7 +1118,7 @@
              :optional
              {:req (req (and (= target :hq)
                              (some #(has-subtype? % "Stealth")
-                                   (all-active-installed state :runner))))
+                                   (all-active state :runner))))
               :prompt "Pay 1 [Credits] to access 1 additional card?"
               :yes-ability
               {:async true
@@ -1130,7 +1130,7 @@
              :optional
              {:req (req (and (= target :rd)
                              (some #(has-subtype? % "Stealth")
-                                   (all-active-installed state :runner))))
+                                   (all-active state :runner))))
               :prompt "Pay 2 [Credits] to access 1 additional card?"
               :yes-ability
               {:async true
