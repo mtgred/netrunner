@@ -107,13 +107,15 @@
 
 (defn send-command
   ([command] (send-command command nil))
-  ([command {:keys [no-lock] :as args}]
+  ([command {:keys [no-lock card] :as args}]
    (when (or (not @lock) no-lock)
-     (try (js/ga "send" "event" "game" command) (catch js/Error e))
-     (when-not no-lock (reset! lock true))
-     (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state)
-                                      :command command
-                                      :args args}]))))
+     (let [card (select-keys card [:cid :zone :side :host :type])
+           args (merge args (when (seq card) {:card card}))]
+       (try (js/ga "send" "event" "game" command) (catch js/Error e))
+       (when-not no-lock (reset! lock true))
+       (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state)
+                                        :command command
+                                        :args args}])))))
 
 (defn mute-spectators [mute-state]
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
