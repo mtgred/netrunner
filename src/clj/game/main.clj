@@ -61,8 +61,10 @@
 (defn strip [state]
   (-> state
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
-    (update-in [:corp :register] dissoc :most-recent-drawn)
-    (update-in [:runner :register] dissoc :most-recent-drawn)
+    (update-in [:corp :register] select-keys [:spent-click])
+    (update-in [:runner :register] select-keys [:spent-click])
+    (dissoc-in [:corp :register-last-turn])
+    (dissoc-in [:runner :register-last-turn])
     (dissoc-in [:run :current-ice])
     (dissoc-in [:run :events])))
 
