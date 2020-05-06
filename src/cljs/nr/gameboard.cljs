@@ -1459,7 +1459,9 @@
    "approach-ice" "Approach ice"
    "encounter-ice" "Encounter ice"
    "pass-ice" "Pass ice"
-   "approach-server" "Approach server"})
+   "approach-server" "Approach server"
+   "corp-phase-43" "Corp phase 4.3"
+   "successful-run" "Successful run"})
 
 (defn phase->next-phase-title
   [run]
@@ -1470,7 +1472,9 @@
     "pass-ice" (if (zero? (:position @run))
                  "Approach server"
                  "Approach ice")
-    "approach-server" "Approach server"
+    "approach-server" "Successful run"
+    "corp-phase-43" "Successful run"
+    "successful-run" "Successful run"
     ;; Error
     "No current run"))
 
@@ -1509,8 +1513,7 @@
              (not (every? :broken (:subroutines current-ice))))
         #(send-command "unbroken-subroutines" {:card current-ice})])
 
-     (and (not (:next-phase @run))
-          (zero? (:position @run)))
+     (= "approach-server" (:phase @run))
      [checkbox-button
       "Action before access"
       "Action before access"
@@ -1524,10 +1527,13 @@
         (str "Continue to " (phase->next-phase-title run))))
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
+         (not= "successful-run" (:phase @run))
          (not= "corp" (:no-action @run)))
     #(send-command "continue")]
 
-   (when (not= "approach-server" (:phase @run))
+   (when (and (not= "approach-server" (:phase @run))
+              (not= "corp-phase-43" (:phase @run))
+              (not= "successful-run" (:phase @run)))
      [checkbox-button
       "Stop auto-passing priority"
       "Auto-pass priority"
@@ -1558,8 +1564,8 @@
 
        (zero? (:position @run))
        [cond-button "Successful Run"
-        (:no-action @run)
-        #(send-command "successful-run")])
+        (not= "runner" (:no-action @run))
+        #(send-command "continue")])
 
      (when (= "encounter-ice" (:phase @run))
        (let [current-ice (get-current-ice)
@@ -1575,9 +1581,7 @@
                (= "approach-ice" (:phase @run)))
        [cond-button
         (if (:jack-out @run) "Jack Out" "Undo click")
-        (and (or (not= "approach-server" (:phase @run))
-                 (:no-action @run))
-             (not (:cannot-jack-out @run)))
+        (not (:cannot-jack-out @run))
         (if (:jack-out @run)
           #(send-command "jack-out")
           #(send-msg (r/atom {:msg "/undo-click"})))])

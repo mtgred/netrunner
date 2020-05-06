@@ -4,7 +4,7 @@
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
          update-all-agenda-points reset-all-ice no-action make-run encounter-ends
-         pass-ice do-access)
+         pass-ice do-access successful-run-trigger)
 
 (defn add-run-effect
   [state side run-effect]
@@ -335,9 +335,32 @@
                                 (handle-end-run state side)))))))
 
 (defmethod continue :approach-server [state side args]
-  (when-not (get-in @state [:run :no-action])
-    (when (= :corp side) (system-msg state side "has no further action"))
-    (swap! state assoc-in [:run :no-action] side)))
+  (if-not (get-in @state [:run :no-action])
+    (do (when (= :corp side) (system-msg state side "has no further action"))
+        (swap! state assoc-in [:run :no-action] side))
+    (do (if (get-in @state [:run :corp-phase-43])
+          (set-next-phase state :corp-phase-43)
+          (set-next-phase state :successful-run))
+        (start-next-phase state side nil))))
+
+(defmethod start-next-phase :corp-phase-43
+  [state side args]
+  (set-phase state :corp-phase-43)
+  (system-msg state :corp "wants to act before the run is successful"))
+
+(defmethod continue :corp-phase-43
+  [state side args]
+  (if-not (get-in @state [:run :no-action])
+    (swap! state assoc-in [:run :no-action] side)
+    (if-not (:ended (:run @state))
+      (do (set-next-phase state :successful-run)
+          (start-next-phase state side nil))
+      (handle-end-run state side))))
+
+(defmethod start-next-phase :successful-run
+  [state side args]
+  (set-phase state :successful-run)
+  (successful-run-trigger state :runner))
 
 (defmethod continue :default
   [state side args]
@@ -477,29 +500,12 @@
                     (wait-for (do-access state side server)
                               (handle-end-run state side))))))))
 
-(defn successful-run
-  "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
-  [state side args]
-  (if (get-in @state [:run :corp-phase-43])
-    ;; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
-    (do (swap! state dissoc :no-action)
-        (system-msg state :corp "wants to act before the run is successful")
-        (show-wait-prompt state :runner "Corp's actions")
-        (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
-                     (fn [args-corp]
-                       (clear-wait-prompt state :runner)
-                       (if-not (:ended (:run @state))
-                        (show-prompt state :runner nil "The run is now successful" ["Continue"]
-                                     (fn [args-runner] (successful-run-trigger state :runner)))
-                        (handle-end-run state side)))
-                     {:priority -1}))
-    (successful-run-trigger state side)))
-
 (defn corp-phase-43
   "The corp indicates they want to take action after runner hits Successful Run, before access."
   [state side args]
   (swap! state update-in [:run :corp-phase-43] not)
-  (continue state side nil))
+  (if-not (= :corp (get-in @state [:run :no-action]))
+    (continue state side nil)))
 
 (defn end-run-prevent
   [state side]
