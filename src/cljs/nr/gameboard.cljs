@@ -1463,7 +1463,7 @@
    "pass-ice" "Pass ice"
    "approach-server" "Approach server"
    "corp-phase-43" "Corp phase 4.3"
-   "access-server" "Successful run"})
+   "access-server" "Access server"})
 
 (defn phase->next-phase-title
   [run]
@@ -1474,9 +1474,9 @@
     "pass-ice" (if (zero? (:position @run))
                  "Approach server"
                  "Approach ice")
-    "approach-server" "Successful run"
-    "corp-phase-43" "Successful run"
-    "access-server" "Successful run"
+    "approach-server" "Access server"
+    "corp-phase-43" "Access server"
+    "access-server" "End of run"
     ;; Error
     "No current run"))
 
@@ -1498,7 +1498,7 @@
 (defn corp-run-div
   [run]
   [:div.panel.blue-shade
-   [:h4 "Current phase:" [:br] (get phase->title (:phase @run))]
+   [:h4 "Current phase:" [:br] (get phase->title (:phase @run) "Unknown phase")]
    (cond
      (= "approach-ice" (:phase @run))
      (let [current-ice (get-current-ice)]
@@ -1565,7 +1565,7 @@
         #(send-command "continue")]
 
        (zero? (:position @run))
-       [cond-button "Successful Run"
+       [cond-button "Access server"
         (not= "runner" (:no-action @run))
         #(send-command "continue")])
 
