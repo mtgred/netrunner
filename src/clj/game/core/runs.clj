@@ -4,7 +4,7 @@
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
          update-all-agenda-points reset-all-ice no-action make-run encounter-ends
-         pass-ice do-access successful-run-trigger)
+         pass-ice do-access successful-run)
 
 (defn add-run-effect
   [state side run-effect]
@@ -360,7 +360,7 @@
 (defmethod start-next-phase :successful-run
   [state side args]
   (set-phase state :successful-run)
-  (successful-run-trigger state :runner))
+  (successful-run state :runner nil))
 
 (defmethod continue :default
   [state side args]
@@ -433,9 +433,9 @@
   [state _]
   (swap! state assoc-in [:run :prevent-access] true))
 
-(defn- successful-run-trigger
+(defn successful-run
   "The real 'successful run' trigger."
-  [state side]
+  [state side args]
   (wait-for
     (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
     (wait-for (register-successful-run state side (get-in @state [:run :server]))
