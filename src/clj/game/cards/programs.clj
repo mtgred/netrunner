@@ -210,7 +210,8 @@
              :effect
              (effect
                (continue-ability
-                 {:optional
+                 {:eid (assoc eid :source-type :ability)
+                  :optional
                   {:prompt (str "Pay 2 [Credits] to make " (:title target) " gain " ice-type "?")
                    :yes-ability
                    {:cost [:credit cost]

@@ -94,7 +94,7 @@
 
 (defmacro continue-ability
   [state side ability card targets]
-  `(game.core/resolve-ability ~state ~side (assoc ~ability :eid ~'eid) ~card ~targets))
+  `(game.core/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
 
 (defmacro when-let*
   ([bindings & body]

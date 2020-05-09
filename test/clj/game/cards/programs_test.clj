@@ -1687,7 +1687,34 @@
         (click-card state :corp engolo)
         (run-continue state)
         (is (nil? (refresh engolo)) "Engolo is trashed")
-        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed")))))
+        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed"))))
+ (testing "Marks eid as :ability #4962"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]}
+                 :runner {:hand ["Engolo" "Trickster Taka"]
+                          :credits 20}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trickster Taka")
+      (core/add-counter state :runner (get-resource state 0) :credit 2)
+      (play-from-hand state :runner "Engolo")
+      (let [roto (get-ice state :hq 0)
+            engolo (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp roto)
+        (run-continue state)
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Runner spends credits on Taka"
+          (click-prompt state :runner "Yes")
+          (click-card state :runner "Trickster Taka")
+          (click-card state :runner "Trickster Taka"))
+        (is (zero? (get-counters (get-resource state 0) :credit)) "Taka has been used")
+        (run-jack-out state)
+        (is (nil? (get-run)))
+        (is (empty? (:prompt (get-corp))))
+        (is (empty? (:prompt (get-runner))))))))
 
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
