@@ -331,6 +331,8 @@
   ([state phase]
    `(let [run# (:run @~state)]
       (is (some? run#) "There is a run happening")
+      (is (empty? (get-in @~state [:runner :prompt])) "No open prompts for the runner")
+      (is (empty? (get-in @~state [:corp :prompt])) "No open prompts for the corp")
       (is (not (:no-action run#)) "No player has pressed continue yet")
       (is (not= :access-server (:phase run#))
           "The run has not reached the server yet")

@@ -345,7 +345,8 @@
   ;; Black Hat
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Hedge Fund"]}
                  :runner {:deck [(qty "Black Hat" 3)]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
