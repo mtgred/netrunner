@@ -413,11 +413,9 @@
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
      (is (get-in @~state [:run :run-effects]) "There is a run-effect")
-     ; (when (run-next-phase ~state)
-       (when (run-continue ~state)
-         (when (run-successful ~state)
-           (is (get-in @~state [:runner :prompt]) "A prompt is shown")
-           (is (get-in @~state [:run :successful]) "Run is marked successful"))))) ;)
+     (when (run-continue ~state)
+       (is (get-in @~state [:runner :prompt]) "A prompt is shown")
+       (is (get-in @~state [:run :successful]) "Run is marked successful"))))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))

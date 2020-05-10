@@ -311,7 +311,6 @@
         (is (= 3 (count (get-in @state [:corp :servers :remote1 :content])))
             "3 cards in server 1 before successful run")
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Because I Can")
         (is (= (+ n 3) (count (get-in @state [:corp :deck]))) "3 cards were shuffled into R&D")
         (is (zero? (count (get-in @state [:corp :servers :remote1 :content]))) "No cards left in server 1"))))
@@ -335,7 +334,9 @@
         (is (= 1 (count (get-in @state [:corp :servers :remote2 :content]))) "1 card in server 3 before successful run")
         (run-continue state)
         (run-next-phase state)
-        (run-successful state)
+        (run-continue state)
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))
         (click-prompt state :runner "Because I Can")
         (is (= (inc n) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
         (is (zero? (count (get-in @state [:corp :servers :remote2 :content]))) "No cards left in server 3")))))
@@ -457,10 +458,9 @@
       (is (= 1 (count (prompt-buttons :runner))) "Only HQ is runnable")
       (click-prompt state :runner "HQ")
       (run-continue state)
-      (run-continue state)
       (changes-val-macro 7 (:credit (get-runner))
                          "Gained 6+1 credits from Bravado"
-                         (run-successful state))))
+                         (run-continue state))))
   (testing "Gaining money based on distinct pieces of ice"
     (do-game
       (new-game {:corp {:hand [(qty "Ice Wall" 2) "Cell Portal"]
@@ -479,11 +479,11 @@
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
         (run-next-phase state)
-        (dotimes [_ 4]
+        (dotimes [_ 3]
           (run-continue state))
         (changes-val-macro 9 (:credit (get-runner))
                            "Gained 6+3 credits from Bravado"
-                           (run-successful state)))))
+                           (run-continue state)))))
   (testing "Reinstalled ice during a run is counted twice"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 10)]
@@ -516,7 +516,6 @@
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
         (run-next-phase state)
-        (run-continue state)
         ;; Enigma
         (run-continue state)
         ;; Ice Wall
@@ -530,7 +529,7 @@
         (changes-val-macro 11 (:credit (get-runner))
                            "Gained 6+5 credits from Bravado"
                            ; Cell Portal, Architect, Ice Wall, 2x Enigma
-                           (run-successful state)))))
+                           (run-continue state)))))
   (testing "Also gaining credits on unsuccessful runs"
     (do-game
       (new-game {:corp {:hand ["Ice Wall"]}
@@ -1511,9 +1510,9 @@
       (let [ttw (get-resource state 0)]
         (core/add-counter state :runner ttw :power 4)
         (play-from-hand state :runner "Divide and Conquer")
-        (run-continue state)
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 1)
+        (run-continue state)
         (is (= 1 (core/access-bonus-count state :runner :rd))
             "The Turning Wheel should provide 1 additional access on R&D")
         (is (= 1 (core/access-bonus-count state :runner :hq))
@@ -1559,7 +1558,6 @@
         (play-from-hand state :runner "Divide and Conquer")
         (run-phase-43 state)
         (card-ability state :corp (refresh scored-nisei) 0)
-        (click-prompt state :corp "Done") ; close 4.3 corp
         (is (empty? (:prompt (get-runner))) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
         (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
@@ -3532,7 +3530,6 @@
       (starting-hand state :corp ["Hedge Fund"])
       (take-credits state :corp)
       (play-from-hand state :runner "Möbius")
-      (run-continue state)
       (run-jack-out state)
       (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
   (testing "Normal rnd run does not gain cred"
@@ -4060,14 +4057,12 @@
       ; 3 cards in hand - no boost
       (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
       (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
-      (run-successful state)
       (play-from-hand state :runner "Pushing the Envelope")
       (click-prompt state :runner "Archives")
-      (run-continue state)
       ; 2 cards in hand - boost
       (is (= 2 (:current-strength (refresh atman))) "Atman 2 current strength")
       (is (= 4 (:current-strength (refresh corr))) "Corroder 2 current strength")
-      (run-successful state)
+      (run-continue state)
       (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
       (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength"))))
 
@@ -4517,7 +4512,7 @@
       (run-on state :remote1)
       (run-continue state)
       (is (empty? (:prompt (get-corp))) "Caprice prompt is not showing")
-      (run-jack-out state)
+      (click-prompt state :runner "No action")
       ;; Trashable execs
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 6 [Credits] to trash")
@@ -4940,7 +4935,7 @@
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "System Seizure")
     (let [c1 (get-program state 0)
-          c2  (get-program state 1)]
+          c2 (get-program state 1)]
       (run-empty-server state "R&D") ;; Check that System Seizure triggers even if another run has been made
       (run-on state "HQ") ;; Check that System Seizure only keeps strength on one of the breakers
       (core/rez state :corp (get-ice state :hq 0))
@@ -4952,10 +4947,9 @@
       (is (= 3 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 3 strength")
       (is (= 3 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 3 strength")
       (run-continue state)
-      (run-continue state)
       (is (= 3 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 3 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength")
-      (run-successful state)
+      (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength")
       ;; Check that System Seizure does not keep strength on 2nd run
@@ -4968,10 +4962,9 @@
       (is (= 3 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 3 strength")
       (is (= 3 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 3 strength")
       (run-continue state)
-      (run-continue state)
       (is (= 3 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 3 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength")
-      (run-successful state)
+      (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength")
       (take-credits state :runner)
@@ -4985,10 +4978,9 @@
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 3 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 3 strength")
       (run-continue state)
-      (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 3 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 3 strength")
-      (run-successful state)
+      (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength"))))
 
