@@ -1180,7 +1180,6 @@
         (run-on state "HQ")
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
-        (run-continue state)
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
@@ -1188,12 +1187,14 @@
         (card-subroutine state :corp (get-ice state :hq 0) 0)
         (click-prompt state :runner "2 net damage") ; take 2 net
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
-        (run-jack-out state)
+        (run-continue state)
+        (click-prompt state :corp "No")
+        (run-continue state)
+        (click-prompt state :runner "No action")
         (let [cards-in-hand (count (:hand (get-runner)))]
           (card-ability state :runner responders 0)
           (is (= (inc cards-in-hand) (count (:hand (get-runner)))) "First Responders was able to trigger"))
         (run-on state "Archives")
-        (run-continue state)
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
         (card-subroutine state :corp (get-ice state :archives 0) 0)
@@ -1919,12 +1920,10 @@
         (core/rez state :corp kakugo)
         (run-continue state)
         (run-continue state)
-        (run-continue state)
         (run-jack-out state)
         (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
         (core/swap-ice state :corp (refresh kakugo) (refresh ice-wall))
         (run-on state "Archives")
-        (run-continue state)
         (run-continue state)
         (run-continue state)
         (run-jack-out state)
