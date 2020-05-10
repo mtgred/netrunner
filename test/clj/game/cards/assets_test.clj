@@ -395,7 +395,7 @@
       (card-ability state :runner (get-hardware state 0) 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (run-successful state)
+      (run-continue state)
       (is (= "Shuffle a copy of Boomerang back into the Stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (find-card "Boomerang" (:discard (get-runner))))
@@ -1322,8 +1322,8 @@
     ;; ice wall 2
     (run-continue state)
     ;; server
-    (run-successful state)
-    (is (= :waiting (prompt-type :runner)) "Runner waiting for Corp to act")
+    (run-continue state)
+    (println (clojure.string/join "\n" (map :text (:log @state))))
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
