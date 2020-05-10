@@ -127,7 +127,6 @@
       (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
       (is (= 5 (:click (get-runner))) "Runner gains 1 click")
       (run-on state "Archives")
-      (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
       (is (= 1 (count (:discard (get-runner)))) "Algernon trashed")
@@ -145,7 +144,6 @@
       (is (= 8 (:credit (get-runner))) "No credits spent")
       (is (= 4 (:click (get-runner))) "No clicks gained")
       (run-on state "Archives")
-      (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
       (is (empty? (:discard (get-runner))) "No cards trashed")
@@ -368,12 +366,10 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Au Revoir")
     (run-on state "Archives")
-    (run-continue state)
     (run-jack-out state)
     (is (= 5 (:credit (get-runner))) "Gained 1 credit from jacking out")
     (play-from-hand state :runner "Au Revoir")
     (run-on state "Archives")
-    (run-continue state)
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
@@ -1077,7 +1073,6 @@
         (run-continue state)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh enig))
         (click-card state :runner (refresh iw))
@@ -1092,7 +1087,6 @@
       (take-credits state :corp)
       (run-on state "R&D")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
   (testing "No prompt with less than 2 ice installed"
@@ -1105,7 +1099,7 @@
       (play-from-hand state :runner "Cordyceps")
       (run-on state "HQ")
       (run-continue state)
-      (run-successful state)
+      (run-continue state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
@@ -1420,11 +1414,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "DaVinci")
       (run-on state "HQ")
-      (run-continue state)
       (changes-val-macro
         1 (get-counters (get-program state 0) :power)
         "DaVinci gains 1 counter on successful run"
-        (run-successful state))))
+        (run-continue state))))
   (testing "Gain no counters on unsuccessful run"
     (do-game
       (new-game {:runner {:hand ["DaVinci"]}})
@@ -1434,7 +1427,7 @@
       (run-continue state)
       (changes-val-macro
         0 (get-counters (get-program state 0) :power)
-        "DaVinci gains 1 counter on successful run"
+        "DaVinci does not gain counter on unsuccessful run"
         (run-jack-out state))))
   (testing "Install a card with install cost lower than number of counters"
     (do-game
@@ -1906,7 +1899,6 @@
         (run-continue state)
         (is (= "Pay 1 [Credits] to bypass Ice Wall?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
-        (run-continue state)
         (is (= :approach-server (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
   (testing "Bypass leaves if uninstalled"
     (do-game
@@ -1953,7 +1945,6 @@
       (let [gauss (get-program state 0)]
         (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
         (run-on state :hq)
-        (run-continue state)
         (card-ability state :runner (refresh gauss) 1) ;; boost
         (is (= 6 (:current-strength (refresh gauss))) "+3 base and boosted strength")
         (run-jack-out state)
@@ -3017,11 +3008,13 @@
 (deftest nyashia
   ;; Nyashia
   (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Hedge Fund"]}
                :runner {:deck ["Nyashia"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Nyashia")
-    (run-empty-server state "R&D")
+    (run-on state "R&D")
+    (run-continue state)
     (click-prompt state :runner "Yes")
     (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
 
@@ -3971,7 +3964,9 @@
             sb (get-program state 1)]
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))
+        (click-prompt state :runner "No action")
         (is (= 1 (get-counters (refresh nerve) :virus)))
         (card-ability state :runner sb 0)
         (run-continue state)
@@ -4063,7 +4058,7 @@
         (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
   (testing "Strength boost until end of run when using dynamic auto-pump-and-break ability"
     (do-game
-      (new-game {:corp {:deck ["Spiderweb" "Hedge Fund"]}
+      (new-game {:corp {:deck ["Spiderweb" (qty "Hedge Fund" 2)]}
                  :runner {:deck ["Snowball"]}})
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Spiderweb" "HQ")
@@ -4079,7 +4074,6 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
         (is (= 5 (:current-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
         (core/continue state :corp nil)
-        (run-continue state)
         (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate
@@ -4269,8 +4263,8 @@
         (run-continue state)
         (card-ability state :runner corr 0)
         (click-prompt state :runner "End the run")
-        (run-continue state)
         (click-prompt state :runner "Yes")
+        (run-continue state)
         (is (= 1 (get-counters (refresh tako) :power)) "Counter gained from breaking all subs"))))
   (testing "+3 strength"
     (do-game
