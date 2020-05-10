@@ -1490,10 +1490,9 @@
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh ff) :credit)]
           (run-on state "Server 1")
-          (run-continue state)
           (card-ability state :runner ff 0)
           (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
-          (run-successful state)
+          (run-continue state)
           (card-ability state :runner ff 0)
           (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
           (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
@@ -1534,7 +1533,6 @@
         (is (empty? (:prompt (get-runner))) "No prompt for Fueno")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 4 credit from Fencer Fueno"
                            (click-prompt state :runner "Pay 4 [Credits] to trash")
@@ -1688,7 +1686,8 @@
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"
     (do-game
-      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+      (new-game {:corp {:deck [(qty "Restructure" 10)]
+                        :hand ["Restructure"]}
                  :runner {:deck ["Find the Truth"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Find the Truth")
@@ -1699,7 +1698,8 @@
       (click-prompt state :runner "OK")))
   (testing "Equivocation & FTT - should get order of choice"
     (do-game
-      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+      (new-game {:corp {:deck [(qty "Restructure" 10)]
+                        :hand ["Restructure"]}
                  :runner {:deck ["Equivocation" "Find the Truth"]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
@@ -1916,7 +1916,6 @@
     (is (= 6 (:credit (get-runner))) "Gained 1c for a successful run during the turn")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-continue state)
     (run-jack-out state)
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
@@ -4617,7 +4616,6 @@
         (run-empty-server state "HQ")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "R&D")
-        (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
@@ -4755,7 +4753,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Thunder Art Gallery")
       (play-from-hand state :runner "Hot Pursuit")
-      (run-successful state)
+      (run-continue state)
       (click-card state :runner "Datasucker")
       (click-prompt state :runner "No action")
       (is (nil? (:run @state)) "Run has correctly ended")
@@ -4800,14 +4798,13 @@
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh tt) :credit)]
           (run-on state "Server 1")
-          (run-continue state)
           (card-ability state :runner tt 0)
           (is (= (dec counters) (get-counters (refresh tt) :credit)) "Spent 1c from Taka during a run")
           (is (= (inc credits) (:credit (get-runner)))))
         (let [tags (count-tags state)
               credits (:credit (get-runner))
               counters (get-counters (refresh tt) :credit)]
-          (run-successful state)
+          (run-continue state)
           (card-ability state :runner tt 0)
           (is (= counters (get-counters (refresh tt) :credit)) "Can't spend credits on Taka once run is successful")
           (is (= credits (:credit (get-runner))))
@@ -4857,8 +4854,8 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Trickster Taka"
                            (run-on state :hq)
-                           (card-ability state :runner refr 1)
                            (run-continue state)
+                           (card-ability state :runner refr 1)
                            (click-card state :runner refr))))))
 
 (deftest virus-breeding-ground
