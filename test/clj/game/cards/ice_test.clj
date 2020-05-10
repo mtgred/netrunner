@@ -1893,7 +1893,6 @@
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Jua encounter effect happens")
         (run-continue state)
-        (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Kakugo" (:hand (get-corp))))
@@ -1901,6 +1900,9 @@
         (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
         (core/rez state :corp (get-ice state :hq 0))
+        (println (prompt-fmt :corp))
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))
         (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
         (run-continue state)
         (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
@@ -4056,7 +4058,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (run-continue state)
-        (run-successful state)
+        (run-continue state)
         (click-prompt state :runner "No action")))) ;; Runner couldn't steal
   (testing "No trashing on successful trace."
     (do-game
@@ -4079,7 +4081,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (run-continue state)
-        (run-successful state)
+        (run-continue state)
         (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
         (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
 
