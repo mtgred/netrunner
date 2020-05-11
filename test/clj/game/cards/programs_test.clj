@@ -3270,7 +3270,29 @@
         (let [pc (get-program state 0)]
           (run-on state :hq)
           (run-continue state)
-          (is (empty? (filter #(:dynamic %) (:abilities (refresh pc)))) "No auto-pumping option for Akhet"))))))
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh pc)))) "No auto-pumping option for Akhet"))))
+    (testing "Orion triggers all heap breakers once"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Orion"]
+                          :credits 15}
+                   :runner {:hand [(qty "Paperclip" 2) (qty "MKUltra" 2) (qty "Black Orchestra" 2)]
+                            :credits 100}})
+        (play-from-hand state :corp "Orion" "HQ")
+        (take-credits state :corp)
+        (trash-from-hand state :runner "Paperclip")
+        (trash-from-hand state :runner "Paperclip")
+        (trash-from-hand state :runner "MKUltra")
+        (trash-from-hand state :runner "MKUltra")
+        (trash-from-hand state :runner "Black Orchestra")
+        (trash-from-hand state :runner "Black Orchestra")
+        (run-on state :hq)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (click-prompt state :runner "No")
+        (click-prompt state :runner "No")
+        (click-prompt state :runner "No")
+        (is (empty? (:prompt (get-runner))) "No further prompts to install heap breakers")))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"
