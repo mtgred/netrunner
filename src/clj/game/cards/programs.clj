@@ -365,10 +365,16 @@
                                :once :per-turn
                                :prompt (msg "Pay 2 [Credits] to bypass" (:title target))
                                :yes-ability
-                               {:once :per-turn
-                                :cost [:credit 2]
-                                :msg (msg "bypass " (:title target))
-                                :effect (req (bypass-ice state))}}}]
+                               {:async true
+                                :effect
+                                (effect
+                                  (continue-ability
+                                    {:eid (assoc eid :source-type :ability)
+                                     :once :per-turn
+                                     :cost [:credit 2]
+                                     :msg (msg "bypass " (:title target))
+                                     :effect (req (bypass-ice state))}
+                                    card nil))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 1 2)]}))
 
