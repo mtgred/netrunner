@@ -13,7 +13,6 @@
       (take-credits state :corp)
       (run-on state :archives)
       (run-continue state)
-      (run-successful state)
       (is (nil? (:run @state)))))
   (testing "with an ice"
     (do-game

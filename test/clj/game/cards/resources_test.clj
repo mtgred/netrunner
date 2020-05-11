@@ -122,7 +122,6 @@
         (run-continue state) ; No rez
         (run-continue state) ; No rez
         (run-continue state)
-        (run-successful state)
         (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
         (run-on state "HQ")
         (core/rez state :corp van1)
@@ -472,7 +471,6 @@
         (click-prompt state :runner "No action")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
         (is (not (:run @state)) "Run over")))))
@@ -584,7 +582,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
@@ -608,7 +605,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
@@ -633,7 +629,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
@@ -2298,7 +2293,6 @@
         (card-subroutine state :corp (refresh eni) 0)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (core/end-phase-12 state :runner nil)
         (is (= 3 (:click (get-runner))) "Enigma took a click")))))
 
@@ -2843,7 +2837,6 @@
       (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (play-from-hand state :runner "No One Home")
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
@@ -3167,7 +3160,6 @@
         (card-ability state :runner j 0)
         (click-prompt state :runner "Archives")
         (run-continue state)
-        (run-successful state)
         (core/end-phase-12 state :runner nil)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
@@ -3332,7 +3324,6 @@
       (play-from-hand state :runner "Deep Data Mining")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
@@ -3634,7 +3625,6 @@
       (click-prompt state :corp "Archives")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Yes")
         (is (= (+ 3 credits) (:credit (get-runner))) "2 from Sec Testing, 1 from Paragon"))))
@@ -3652,7 +3642,6 @@
       (click-prompt state :runner "Archives")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing")))))
 
 (deftest slipstream
@@ -4595,7 +4584,6 @@
                 (run-on state server)
                 (run-continue state)
                 (card-ability state :runner ttw idx)
-                (run-successful state)
                 (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
                 (is (= 1 (core/access-bonus-count state :runner kw)) "Runner should access 1 additional card"))))]
       (ttw-test "R&D" 0 :rd)
@@ -4644,7 +4632,6 @@
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
-        (run-successful state)
         (click-prompt state :runner "Steal")
         (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
   (testing "A given ability shouldn't give accesses when running the other server"
@@ -4668,7 +4655,6 @@
         (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 1 additional card")
-        (run-successful state)
         (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))
@@ -4998,7 +4984,6 @@
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Yes") ; trigger Whistleblower
       (click-prompt state :runner "Fetal AI")
       (is (= 0 (count (:hand (get-runner)))) "Fetal AI deals net before Whistleblower triggers on Corp turn")

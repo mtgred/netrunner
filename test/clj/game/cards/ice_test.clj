@@ -343,7 +343,6 @@
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (is (zero? (count-tags state)) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
       (run-continue state)
@@ -484,7 +483,6 @@
         (is (= 1 (count (:subroutines (refresh bs)))))
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh bs)))))))))
 
@@ -1602,7 +1600,6 @@
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       ;; Prompt for "you cannot access any card this run"
       (click-prompt state :runner "OK")
       (is (not (accessing state "Hostile Takeover"))))))
@@ -1843,7 +1840,6 @@
         (run-continue state)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (= 2 (count (:hand (get-runner)))) "Runner starts with 2 cards in hand")
         (play-from-hand state :runner "Desperado")
         (is (= 2 (count (:hand (get-runner)))) "No cards installed")
@@ -2067,7 +2063,6 @@
         (is (= 1 (count (:subroutines (refresh ko)))))
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh ko)))))))))
 
@@ -2086,7 +2081,6 @@
       (card-subroutine state :corp lock 0)
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (play-from-hand state :runner "Diesel")
       (is (= 1 (count (:hand (get-runner)))) "No cards drawn")
       (take-credits state :runner)

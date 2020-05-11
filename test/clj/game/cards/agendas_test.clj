@@ -78,7 +78,6 @@
         (click-prompt state :corp "Draw 1 card")
         (is (= (inc cards) (count (:hand (get-corp)))) (str "Corp should have " (inc cards) " card in hand"))
         (run-continue state)
-        (run-successful state)
         (run-on state :archives)
         (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")
         (run-jack-out state)))
@@ -91,7 +90,6 @@
         (click-prompt state :corp "Gain 1 [Credits]")
         (is (= (inc credits) (:credit (get-corp))) (str "Corp should have " (inc credits) " credits"))
         (run-continue state)
-        (run-successful state)
         (run-on state :archives)
         (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")))))
 
@@ -404,7 +402,6 @@
       (play-from-hand state :runner "The Maker's Eye")
       (click-prompt state :corp "Yes")
       (is (= 1 (count-tags state)) "Runner takes 1 tag for playing a Run event")
-      (run-successful state)
       (play-from-hand state :runner "Wyrm")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (= 1 (count-tags state)) "Runner doesn't gain a tag from installing an icebreaker after playing a Run event")
@@ -415,8 +412,7 @@
       (is (= 2 (count-tags state)) "Runner gains 1 tag for installing an Icebreaker")
       (play-from-hand state :runner "The Maker's Eye")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (= 2 (count-tags state)) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")
-      (run-successful state)))
+      (is (= 2 (count-tags state)) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")))
   (testing "Should only trigger on Run events. #3619"
     (do-game
       (new-game {:corp {:deck ["Better Citizen Program"]}
@@ -2389,7 +2385,6 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "HQ")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on it")
       (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
@@ -3334,14 +3329,12 @@
                            (click-prompt state :runner "HQ")
                            (card-ability state :corp (refresh tm) 0)
                            (run-continue state)
-                           (run-successful state)
                            (click-prompt state :runner "No action")) ; accessed Hedge Fund
         (changes-val-macro 3 (:credit (get-runner))
                            "Gained 5c from DL"
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-prompt state :runner "HQ")
                            (run-continue state)
-                           (run-successful state)
                            (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
   (testing "Omar interaction"
     (do-game
@@ -3355,7 +3348,6 @@
         (card-ability state :runner omar 0)
         (card-ability state :corp (refresh tm) 0)
         (run-continue state)
-        (run-successful state)
         (is (empty? (-> (get-runner) :register :successful-run)))
         (is (empty? (:prompt (get-runner))) "No omar prompt"))))
   (testing "Stargate interaction. Issue #4713"
@@ -3372,7 +3364,6 @@
         (card-ability state :runner stargate 0)
         (card-ability state :corp (refresh tm) 0)
         (run-continue state)
-        (run-successful state)
         (is (empty? (-> (get-runner) :register :successful-run)))
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No stargate prompt")
         (click-prompt state :runner "No action"))))
@@ -3391,8 +3382,7 @@
         (run-continue state)
         (changes-val-macro
           0 (count (:hand (get-runner)))
-          "Transport Monopoly blocks DreamNet"
-          (run-successful state))))))
+          "Transport Monopoly blocks DreamNet")))))
 
 (deftest underway-renovation
   ;; Underway Renovation

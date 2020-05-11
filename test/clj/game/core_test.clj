@@ -360,25 +360,6 @@
        (core/continue ~state :runner nil)
        true)))
 
-(defmacro run-successful
-  "No action from corp and successful run for runner."
-  [state]
-  ; `(let [run# (:run @~state)]
-     ; (is (some? run#) "There is a run happening")
-     ; (is (zero? (:position run#)) "Runner has passed all ice")
-     ; (is (not (:no-action run#)) "No player has pressed continue yet")
-     ; (is (not (:corp-phase-43 run#)) "Corp is not asking for phase 4.3")
-     ; (is (or (= :approach-server (:phase run#))
-             ; (= :corp-phase-43 (:phase run#)))
-         ; "Run is in the right phase")
-     ; (when (and (some? run#)
-                ; (zero? (:position run#))
-                ; (= :approach-server (:phase run#)))
-       ; (core/continue ~state :corp nil)
-       ; (core/continue ~state :runner nil)
-       ; true)))
-       )
-
 (defmacro run-jack-out
   "Jacks out in run."
   [state]

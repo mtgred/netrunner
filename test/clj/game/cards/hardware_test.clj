@@ -334,7 +334,6 @@
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
         (click-prompt state :runner "Yes")
@@ -357,14 +356,12 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No")
         (run-on state :hq)
         (run-continue state)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
   (testing "Cannot use Boomerang on other ice"
@@ -454,7 +451,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
     (do-game
@@ -475,7 +471,6 @@
         (click-prompt state :runner "Trace X - Give the Runner 2 tags")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
         (is (empty? (:prompt (get-runner))) "No second prompt for shuffling Boomerang in"))))
@@ -1030,7 +1025,6 @@
       (play-from-hand state :runner "Doppelgänger")
       (play-from-hand state :runner "The Maker's Eye")
       (run-continue state)
-      (run-successful state)
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
       (click-prompt state :runner "No action")
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
@@ -1042,7 +1036,6 @@
       (click-prompt state :runner "R&D")
       (is (:run @state) "New run started")
       (run-continue state)
-      (run-successful state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
       (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
       (click-prompt state :runner "No action")
@@ -1060,7 +1053,6 @@
       (card-ability state :runner dorm 0)
       (click-prompt state :runner "Server 1")
       (run-continue state)
-      (run-successful state)
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
       (is (zero? (count-tags state)) "Runner has 0 tags")
@@ -1109,7 +1101,6 @@
         (is (= 4 (:credit (get-runner))))
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
         (card-ability state :runner ff 1)
         (click-prompt state :runner "Done")
@@ -1938,7 +1929,6 @@
       (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
       (is (empty? (:prompt (get-runner))))
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "No action")
       (run-on state "HQ")
       (is (= :waiting (prompt-type :corp)) "Corp should be waiting on Runner")
@@ -2272,7 +2262,6 @@
         (play-from-hand state :runner "Cold Read")
         (click-prompt state :runner "R&D")
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Yes")
         (click-card state :runner "Cold Read")
         (click-card state :runner "Cold Read")
@@ -2296,7 +2285,6 @@
         (click-card state :runner pea)
         (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
   (testing "Do not display prompt without an installed icebreaker"
@@ -2773,7 +2761,6 @@
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
           (run-continue state)
           (run-continue state)
-          (run-successful state)
           (click-prompt state :corp "No")
           (click-prompt state :runner "No action")
           (take-credits state :runner)
@@ -3049,7 +3036,6 @@
     (click-card state :runner "Lucky Find")
     (click-prompt state :runner "Done")
     (run-continue state)
-    (run-successful state)
     (click-prompt state :runner "No action") ; First card
     (click-prompt state :runner "Steal") ; Second card, due to additional access
     (is (nil? (:run @state)) "Run is over")))
@@ -3366,8 +3352,7 @@
   (letfn [(laundry-archives [state]
             (play-from-hand state :runner "Dirty Laundry")
             (click-prompt state :runner "Archives")
-            (run-continue state)
-            (run-successful state))]
+            (run-continue state))]
     (testing "Installing Swift gives the runner +1[mu]"
       (do-game
         (new-game {:runner {:hand ["Swift"]}})
@@ -3559,7 +3544,6 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
@@ -3569,7 +3553,6 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
       (click-prompt state :runner "Steal")

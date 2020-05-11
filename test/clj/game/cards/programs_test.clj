@@ -262,7 +262,6 @@
     (play-from-hand state :runner "Analog Dreamers")
     (card-ability state :runner (get-program state 0) 0)
     (run-continue state)
-    (run-successful state)
     (click-prompt state :runner "Analog Dreamers")
     (click-card state :runner "Hostile Takeover")
     (is (= "Choose a card to shuffle into R&D" (:msg (prompt-map :runner)))
@@ -458,7 +457,6 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (run-successful state)
       (let [credits (:credit (get-runner))]
         (is (= 3 (hosted-credits)) "Jak Sinclair didn't trigger Bankroll")
         (card-ability state :runner bankroll 0)
@@ -1113,7 +1111,6 @@
       (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
       (run-on state "HQ")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
 
@@ -1373,7 +1370,6 @@
         (run-on state "Server 1")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (= 2 (get-counters (refresh ds) :virus)) "No counter gained, not a central server")
         (run-on state "Server 1")
         (core/rez state :corp fw)
@@ -1627,7 +1623,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards"))))
   (testing "Eater interaction with remote server. Issue #4536"
     (do-game
@@ -1651,7 +1646,6 @@
         (click-card state :corp eater)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (find-card "Eater" (:discard (get-runner))) "Eater is trashed")
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
 
@@ -2364,7 +2358,6 @@
         (run-continue state)
         (click-prompt state :runner "No")
         (run-continue state)
-        (run-successful state)
         ;; Use non-Inversificator breaker
         (run-on state "HQ")
         (run-continue state)
@@ -2427,7 +2420,6 @@
       (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
@@ -3126,7 +3118,6 @@
       (click-prompt state :runner "Yes") ; install paperclip
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (is (not (:run @state)) "Run ended")
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
@@ -3932,7 +3923,6 @@
         (core/rez state :corp ash)
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
@@ -3951,7 +3941,6 @@
         (core/rez state :corp cr)
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
   (testing "Allow Nerve Agent to gain counters. Issue #1158/#955"
     (do-game
@@ -3970,7 +3959,6 @@
         (is (= 1 (get-counters (refresh nerve) :virus)))
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (= 2 (get-counters (refresh nerve) :virus))))))
   (testing "Grant Security Testing credits on HQ."
     (do-game
@@ -3985,7 +3973,6 @@
         (click-prompt state :runner "HQ")
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
 
@@ -4092,7 +4079,6 @@
      (card-ability state :runner (get-program state 0) 0)
      (is (:run @state) "Run initiated")
      (run-continue state)
-     (run-successful state)
      (click-prompt state :runner "Troll")
      (is (empty? (:prompt (get-runner))) "Prompt closed")
      (is (not (:run @state)) "Run ended")
@@ -4116,7 +4102,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (nth (prompt-buttons :runner) 2))
         (is (last-log-contains? state "Runner uses Stargate to trash bottom Troll.") "Correct log")))
     (testing "middle card"
@@ -4133,7 +4118,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (second (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash middle Troll.") "Correct log")))
     (testing "top card"
@@ -4150,7 +4134,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (first (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash top Troll.") "Correct log"))))
   (testing "No position indicator if non-duplicate selected"
@@ -4167,7 +4150,6 @@
       (play-from-hand state :runner "Stargate")
       (card-ability state :runner (get-program state 0) 0)
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner (second (prompt-buttons :runner)))
       (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
 
