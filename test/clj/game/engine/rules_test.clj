@@ -352,7 +352,6 @@
     (let [caprice (get-content state :remote1 0)]
       (core/rez state :corp caprice)
       (run-on state "Server 1")
-      (run-continue state)
       (is (prompt-is-card? state :corp caprice) "Caprice prompt even with no ice, once runner makes run")
       (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
       (click-prompt state :corp "2 [Credits]")
