@@ -335,8 +335,6 @@
         (run-continue state)
         (run-next-phase state)
         (run-continue state)
-        (println (prompt-fmt :runner))
-        (println (clojure.string/join "\n" (map :text (:log @state))))
         (click-prompt state :runner "Because I Can")
         (is (= (inc n) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
         (is (zero? (count (get-in @state [:corp :servers :remote2 :content]))) "No cards left in server 3")))))

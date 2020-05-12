@@ -3953,8 +3953,6 @@
             sb (get-program state 1)]
         (card-ability state :runner sb 0)
         (run-continue state)
-        (println (prompt-fmt :runner))
-        (println (clojure.string/join "\n" (map :text (:log @state))))
         (click-prompt state :runner "No action")
         (is (= 1 (get-counters (refresh nerve) :virus)))
         (card-ability state :runner sb 0)

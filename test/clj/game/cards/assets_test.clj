@@ -1323,7 +1323,6 @@
     (run-continue state)
     ;; server
     (run-continue state)
-    (println (clojure.string/join "\n" (map :text (:log @state))))
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
