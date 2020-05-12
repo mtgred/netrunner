@@ -3400,7 +3400,31 @@
           (take-credits state :runner)
           (take-credits state :corp)
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
-          (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
+          (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+  (testing "Interaction with Customized Secretary #2672"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:deck ["Parasite"]
+                          :hand ["Djinn" "Customized Secretary"]
+                          :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Djinn")
+      (card-ability state :runner (get-program state 0) 1)
+      (is (= "Choose a non-Icebreaker program in your grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Customized Secretary")
+      (is (= "Choose a program to host" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Parasite")
+      (card-ability state :runner (first (:hosted (get-program state 0))) 0)
+      (is (= "Parasite" (:title (first (:hosted (first (:hosted (get-program state 0))))))))
+      (is (= "Choose a program to install" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Parasite")
+      (is (= "Choose a card to host Parasite on" (:msg (prompt-map :runner))))
+      (click-card state :runner "Enigma")
+      (is (= "Customized Secretary" (:title (first (:hosted (get-program state 0))))))
+      (is (empty? (:hosted (first (:hosted (get-program state 0)))))))))
 
 (deftest paricia
   ;; Paricia
