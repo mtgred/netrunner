@@ -49,7 +49,6 @@
    "shuffle" core/shuffle-deck
    "start-turn" core/start-turn
    "subroutine" core/play-subroutine
-   "successful-run" core/successful-run
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
    "toggle-auto-no-action" core/toggle-auto-no-action

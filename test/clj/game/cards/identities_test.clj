@@ -198,7 +198,6 @@
                         :deck ["Vanilla" (qty "Hedge Fund" 5)]}})
       (take-credits state :corp)
       (run-on state :archives)
-      (run-continue state)
       (is (not (is-tagged? state)) "No ice to encounter")))
   (testing "No tag when encountering second ice"
     (do-game
@@ -333,7 +332,7 @@
                  (keep second))]
         (is (= 1 (count ice-passed-last-run)))
         (is (utils/same-card? (get-ice state :hq 0) (ffirst ice-passed-last-run))))
-      (run-successful state)
+      (run-continue state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
       (is (empty? (:prompt (get-corp))))
@@ -351,7 +350,7 @@
       (is (= (get-ice state :rd 0) (core/get-current-ice state)))
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "HQ")
-      (run-successful state)
+      (run-continue state)
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "En Passant")
       (click-card state :runner "Kakugo")
@@ -413,14 +412,13 @@
         (run-continue state)
         (card-subroutine state :corp shiro 1)
         (click-prompt state :corp "No")
-        (run-continue state)
-        (run-continue state)
         (click-prompt state :corp "0 [Credits]")
         (click-prompt state :runner "0 [Credits]")
         (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
-        (run-successful state)
+        (run-continue state)
+        (run-continue state)
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :remote1)
@@ -905,7 +903,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (= 1 (count (:discard (get-corp)))))
         (run-empty-server state "HQ")
         (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
@@ -933,7 +930,6 @@
       (is (= 1 (count (:discard (get-corp)))) "Only Hedge Fund in archives")
       (play-from-hand state :runner "Divide and Conquer")
       (run-continue state)
-      (run-successful state)
       (is (= 1 (count (:discard (get-corp)))) "Still only Hedge Fund in archives")))
   (testing "Trashing an operation not during a run won't create a run. Issue #3399"
     (do-game
@@ -1464,7 +1460,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (take-credits state :runner)
         (is (not (:flipped (refresh ho))) "Hoshiko does not flip"))))
   (testing "Changing link and subtype when flipping"
@@ -1584,7 +1579,6 @@
        (take-credits state :runner)
        (take-credits state :corp)
        (run-on state "Archives")
-       (run-continue state)
        (is (changes-credits (get-corp) 1
                             (run-jack-out state))) ; triggers reflection
        (take-credits state :runner)
@@ -1719,10 +1713,8 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (is (= 1 (count-tags state)) "Jesminder did not avoid the second tag during the run")
-        (core/continue state :corp nil)
-        (core/continue state :runner nil)
-        (core/continue state :corp nil)
-        (core/successful-run state :runner nil)
+        (run-continue state)
+        (run-continue state)
         (run-empty-server state "R&D") ; clear per-run buffer
         (take-credits state :runner)
         (play-from-hand state :corp "SEA Source")
@@ -1736,7 +1728,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "John Masanori")
       (run-on state "HQ")
-      (run-continue state)
       (run-jack-out state)
       (is (= 1 (count-tags state)) "Jesminder did not avoid John Masanori tag"))))
 
@@ -2311,7 +2302,6 @@
                         :deck ["Enigma"]}})
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-continue state)
       (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
@@ -2328,7 +2318,6 @@
       (run-on state "R&D")
       (run-continue state)
       (run-continue state)
-      (run-continue state)
       (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
@@ -2341,7 +2330,6 @@
                         :deck ["Kakugo"]}})
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-continue state)
       (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Kakugo" (:hand (get-corp))))
@@ -2450,7 +2438,6 @@
       (play-from-hand state :runner "Direct Access")
       (click-prompt state :runner "Server 1")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (click-prompt state :runner "Yes")
       (run-empty-server state "Server 2")
@@ -2727,7 +2714,6 @@
       (let [omar (get-in @state [:runner :identity])]
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "HQ")
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
@@ -2741,7 +2727,6 @@
         (is (= [:rd] (get-in @state [:runner :register :successful-run])))
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "HQ")
         (is (= [:hq :rd] (get-in @state [:runner :register :successful-run]))))))
   (testing "Ash prevents access, but not successful run"
@@ -2756,7 +2741,6 @@
         (core/rez state :corp ash)
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "HQ")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -2774,7 +2758,6 @@
         (core/rez state :corp cr)
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (is (= (:cid cr) (-> (prompt-map :runner) :card :cid)))
         (is (empty? (-> (get-runner) :register :successful-run)))
         (is (= :archives (get-in @state [:run :server 0]))))))
@@ -2788,7 +2771,6 @@
             medium (get-program state 0)]
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "R&D")
         (is (= 1 (get-counters (refresh medium) :virus))))))
   (testing "When selecting HQ, ability adds counters to Nerve Agent"
@@ -2801,7 +2783,6 @@
             nerve (get-program state 0)]
         (card-ability state :runner omar 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "HQ")
         (is (= 1 (get-counters (refresh nerve) :virus))))))
   (testing "Moving to a different server shouldn't trigger ability. Issue #3969"
@@ -2822,7 +2803,6 @@
         (click-prompt state :corp "R&D")
         (is (= [:rd] (:server (get-run))))
         (run-continue state)
-        (run-successful state)
         (is (empty? (prompt-map :corp)))
         (is (empty? (prompt-map :runner)))))))
 
@@ -2996,7 +2976,6 @@
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
     (run-continue state)
-    (run-successful state)
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
     (click-prompt state :runner "No action")
     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")

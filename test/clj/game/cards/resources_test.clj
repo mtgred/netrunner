@@ -122,7 +122,6 @@
         (run-continue state) ; No rez
         (run-continue state) ; No rez
         (run-continue state)
-        (run-successful state)
         (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
         (run-on state "HQ")
         (core/rez state :corp van1)
@@ -472,7 +471,6 @@
         (click-prompt state :runner "No action")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
         (is (not (:run @state)) "Run over")))))
@@ -584,7 +582,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
@@ -608,7 +605,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
@@ -633,7 +629,6 @@
         (card-ability state :runner cs 0)
         (click-prompt state :runner "HQ")
         (run-continue state)
-        (run-successful state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
@@ -1490,10 +1485,9 @@
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh ff) :credit)]
           (run-on state "Server 1")
-          (run-continue state)
           (card-ability state :runner ff 0)
           (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
-          (run-successful state)
+          (run-continue state)
           (card-ability state :runner ff 0)
           (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
           (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
@@ -1534,7 +1528,6 @@
         (is (empty? (:prompt (get-runner))) "No prompt for Fueno")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 4 credit from Fencer Fueno"
                            (click-prompt state :runner "Pay 4 [Credits] to trash")
@@ -1688,7 +1681,8 @@
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"
     (do-game
-      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+      (new-game {:corp {:deck [(qty "Restructure" 10)]
+                        :hand ["Restructure"]}
                  :runner {:deck ["Find the Truth"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Find the Truth")
@@ -1699,7 +1693,8 @@
       (click-prompt state :runner "OK")))
   (testing "Equivocation & FTT - should get order of choice"
     (do-game
-      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+      (new-game {:corp {:deck [(qty "Restructure" 10)]
+                        :hand ["Restructure"]}
                  :runner {:deck ["Equivocation" "Find the Truth"]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
@@ -1916,7 +1911,6 @@
     (is (= 6 (:credit (get-runner))) "Gained 1c for a successful run during the turn")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-continue state)
     (run-jack-out state)
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
@@ -2299,7 +2293,6 @@
         (card-subroutine state :corp (refresh eni) 0)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (core/end-phase-12 state :runner nil)
         (is (= 3 (:click (get-runner))) "Enigma took a click")))))
 
@@ -2844,7 +2837,6 @@
       (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (play-from-hand state :runner "No One Home")
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
@@ -3168,7 +3160,6 @@
         (card-ability state :runner j 0)
         (click-prompt state :runner "Archives")
         (run-continue state)
-        (run-successful state)
         (core/end-phase-12 state :runner nil)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
@@ -3333,7 +3324,6 @@
       (play-from-hand state :runner "Deep Data Mining")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
@@ -3635,7 +3625,6 @@
       (click-prompt state :corp "Archives")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Yes")
         (is (= (+ 3 credits) (:credit (get-runner))) "2 from Sec Testing, 1 from Paragon"))))
@@ -3653,7 +3642,6 @@
       (click-prompt state :runner "Archives")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-successful state)
         (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing")))))
 
 (deftest slipstream
@@ -4596,7 +4584,6 @@
                 (run-on state server)
                 (run-continue state)
                 (card-ability state :runner ttw idx)
-                (run-successful state)
                 (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
                 (is (= 1 (core/access-bonus-count state :runner kw)) "Runner should access 1 additional card"))))]
       (ttw-test "R&D" 0 :rd)
@@ -4617,7 +4604,6 @@
         (run-empty-server state "HQ")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "R&D")
-        (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
@@ -4646,7 +4632,6 @@
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
-        (run-successful state)
         (click-prompt state :runner "Steal")
         (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
   (testing "A given ability shouldn't give accesses when running the other server"
@@ -4670,7 +4655,6 @@
         (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 1 additional card")
-        (run-successful state)
         (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))
@@ -4755,7 +4739,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Thunder Art Gallery")
       (play-from-hand state :runner "Hot Pursuit")
-      (run-successful state)
+      (run-continue state)
       (click-card state :runner "Datasucker")
       (click-prompt state :runner "No action")
       (is (nil? (:run @state)) "Run has correctly ended")
@@ -4800,14 +4784,13 @@
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh tt) :credit)]
           (run-on state "Server 1")
-          (run-continue state)
           (card-ability state :runner tt 0)
           (is (= (dec counters) (get-counters (refresh tt) :credit)) "Spent 1c from Taka during a run")
           (is (= (inc credits) (:credit (get-runner)))))
         (let [tags (count-tags state)
               credits (:credit (get-runner))
               counters (get-counters (refresh tt) :credit)]
-          (run-successful state)
+          (run-continue state)
           (card-ability state :runner tt 0)
           (is (= counters (get-counters (refresh tt) :credit)) "Can't spend credits on Taka once run is successful")
           (is (= credits (:credit (get-runner))))
@@ -4857,8 +4840,8 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Trickster Taka"
                            (run-on state :hq)
-                           (card-ability state :runner refr 1)
                            (run-continue state)
+                           (card-ability state :runner refr 1)
                            (click-card state :runner refr))))))
 
 (deftest virus-breeding-ground
@@ -5001,7 +4984,6 @@
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "Yes") ; trigger Whistleblower
       (click-prompt state :runner "Fetal AI")
       (is (= 0 (count (:hand (get-runner)))) "Fetal AI deals net before Whistleblower triggers on Corp turn")

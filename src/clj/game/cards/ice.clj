@@ -1278,7 +1278,7 @@
      :optional
      {:prompt "Rez Formicary?"
       :yes-ability
-      {:msg "rez and move Formicary. The Runner is now approaching Formicary."
+      {:msg "rez and move Formicary. The Runner is now approaching Formicary"
        :async true
        :effect (req (wait-for (rez state side card nil)
                               (move state side (get-card state card)
@@ -1297,7 +1297,8 @@
                   :prompt "Suffer 2 net damage or end the run?"
                   :choices ["2 net damage" "End the run"]
                   :effect (req (if (= target "End the run")
-                                 (end-run state :corp eid card)
+                                 (do (system-msg state :runner "chooses to end the run")
+                                     (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]})
 
 (define-card "Free Lunch"

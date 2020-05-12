@@ -327,15 +327,23 @@
 
 (defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."
-  [state]
-  `(let [run# (:run @~state)]
-     (is (some? run#) "There is a run happening")
-     (is (not (:no-action run#)) "The run can continue")
-     (when (and (some? run#)
-                (not (:no-action run#)))
-       (core/continue ~state :corp nil)
-       (core/continue ~state :runner nil)
-       true)))
+  ([state] `(run-continue ~state :any))
+  ([state phase]
+   `(let [run# (:run @~state)]
+      (is (some? run#) "There is a run happening")
+      (is (empty? (get-in @~state [:runner :prompt])) "No open prompts for the runner")
+      (is (empty? (get-in @~state [:corp :prompt])) "No open prompts for the corp")
+      (is (not (:no-action run#)) "No player has pressed continue yet")
+      (is (not= :access-server (:phase run#))
+          "The run has not reached the server yet")
+      (when (and (some? run#)
+                 (not (:no-action run#))
+                 (not= :access-server (:phase run#)))
+        (core/continue ~state :corp nil)
+        (core/continue ~state :runner nil))
+      (if (not= :any ~phase)
+        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase"))
+      true)))
 
 (defmacro run-phase-43
   "Ask for triggered abilities phase 4.3"
@@ -343,25 +351,13 @@
   `(let [run# (:run @~state)]
      (is (some? run#) "There is a run happening")
      (is (zero? (:position run#)) "Runner has passed all ice")
-     (when (and (some? run#)
-                (zero? (:position run#)))
-       (core/corp-phase-43 ~state :corp nil)
-       (core/successful-run ~state :runner nil)
-       true)))
-
-(defmacro run-successful
-  "No action from corp and successful run for runner."
-  [state]
-  `(let [run# (:run @~state)]
-     (is (some? run#) "There is a run happening")
-     (is (zero? (:position run#)) "Runner has passed all ice")
-     (is (= :approach-server (:phase run#)) "Run is in the right phase")
+     (is (not (:no-action run#)) "No player has pressed continue yet")
+     (is (= :approach-server (:phase run#)) "Runner is approaching the server")
      (when (and (some? run#)
                 (zero? (:position run#))
                 (= :approach-server (:phase run#)))
-       (core/continue ~state :corp nil)
-       (when (:no-action (:run @~state))
-         (core/successful-run ~state :runner nil))
+       (core/corp-phase-43 ~state :corp nil)
+       (core/continue ~state :runner nil)
        true)))
 
 (defmacro run-jack-out
@@ -377,8 +373,7 @@
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
   `(when (run-on ~state ~server)
-     (when (run-continue ~state)
-       (run-successful ~state))))
+     (run-continue ~state)))
 
 (defmacro fire-subs
   [state card]
@@ -401,11 +396,9 @@
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
      (is (get-in @~state [:run :run-effects]) "There is a run-effect")
-     ; (when (run-next-phase ~state)
-       (when (run-continue ~state)
-         (when (run-successful ~state)
-           (is (get-in @~state [:runner :prompt]) "A prompt is shown")
-           (is (get-in @~state [:run :successful]) "Run is marked successful"))))) ;)
+     (when (run-continue ~state)
+       (is (get-in @~state [:runner :prompt]) "A prompt is shown")
+       (is (get-in @~state [:run :successful]) "Run is marked successful"))))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))

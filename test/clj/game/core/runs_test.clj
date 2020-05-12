@@ -13,7 +13,6 @@
       (take-credits state :corp)
       (run-on state :archives)
       (run-continue state)
-      (run-successful state)
       (is (nil? (:run @state)))))
   (testing "with an ice"
     (do-game
@@ -46,7 +45,7 @@
       (click-prompt state :runner "End the run")
       (run-continue state)
       (is (= :approach-server (:phase (:run @state))))
-      (run-successful state)
+      (run-continue state)
       (click-prompt state :runner "No action") ; Access Hedge Fund
       (is (nil? (:run @state)))))
   (testing "with ice with on-encounter effect"
@@ -290,8 +289,7 @@
         (core/continue state :runner nil)
         (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Corp")
         (core/continue state :corp nil)
-        (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Runner now")
-        (core/successful-run state :runner nil)
+        (is (= :access-server (:phase (:run @state))) "Accessing server")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run ended"))))
   (testing "stop at unrezzed ice"

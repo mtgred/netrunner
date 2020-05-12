@@ -127,7 +127,6 @@
       (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
       (is (= 5 (:click (get-runner))) "Runner gains 1 click")
       (run-on state "Archives")
-      (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
       (is (= 1 (count (:discard (get-runner)))) "Algernon trashed")
@@ -145,7 +144,6 @@
       (is (= 8 (:credit (get-runner))) "No credits spent")
       (is (= 4 (:click (get-runner))) "No clicks gained")
       (run-on state "Archives")
-      (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
       (is (empty? (:discard (get-runner))) "No cards trashed")
@@ -264,7 +262,6 @@
     (play-from-hand state :runner "Analog Dreamers")
     (card-ability state :runner (get-program state 0) 0)
     (run-continue state)
-    (run-successful state)
     (click-prompt state :runner "Analog Dreamers")
     (click-card state :runner "Hostile Takeover")
     (is (= "Choose a card to shuffle into R&D" (:msg (prompt-map :runner)))
@@ -368,12 +365,10 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Au Revoir")
     (run-on state "Archives")
-    (run-continue state)
     (run-jack-out state)
     (is (= 5 (:credit (get-runner))) "Gained 1 credit from jacking out")
     (play-from-hand state :runner "Au Revoir")
     (run-on state "Archives")
-    (run-continue state)
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
@@ -462,7 +457,6 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (run-successful state)
       (let [credits (:credit (get-runner))]
         (is (= 3 (hosted-credits)) "Jak Sinclair didn't trigger Bankroll")
         (card-ability state :runner bankroll 0)
@@ -1077,7 +1071,6 @@
         (run-continue state)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh enig))
         (click-card state :runner (refresh iw))
@@ -1092,7 +1085,6 @@
       (take-credits state :corp)
       (run-on state "R&D")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
   (testing "No prompt with less than 2 ice installed"
@@ -1105,7 +1097,7 @@
       (play-from-hand state :runner "Cordyceps")
       (run-on state "HQ")
       (run-continue state)
-      (run-successful state)
+      (run-continue state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
@@ -1119,7 +1111,6 @@
       (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
       (run-on state "HQ")
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
 
@@ -1379,7 +1370,6 @@
         (run-on state "Server 1")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (= 2 (get-counters (refresh ds) :virus)) "No counter gained, not a central server")
         (run-on state "Server 1")
         (core/rez state :corp fw)
@@ -1420,11 +1410,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "DaVinci")
       (run-on state "HQ")
-      (run-continue state)
       (changes-val-macro
         1 (get-counters (get-program state 0) :power)
         "DaVinci gains 1 counter on successful run"
-        (run-successful state))))
+        (run-continue state))))
   (testing "Gain no counters on unsuccessful run"
     (do-game
       (new-game {:runner {:hand ["DaVinci"]}})
@@ -1434,7 +1423,7 @@
       (run-continue state)
       (changes-val-macro
         0 (get-counters (get-program state 0) :power)
-        "DaVinci gains 1 counter on successful run"
+        "DaVinci does not gain counter on unsuccessful run"
         (run-jack-out state))))
   (testing "Install a card with install cost lower than number of counters"
     (do-game
@@ -1634,7 +1623,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards"))))
   (testing "Eater interaction with remote server. Issue #4536"
     (do-game
@@ -1658,7 +1646,6 @@
         (click-card state :corp eater)
         (run-continue state)
         (run-continue state)
-        (run-successful state)
         (is (find-card "Eater" (:discard (get-runner))) "Eater is trashed")
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
 
@@ -1906,7 +1893,6 @@
         (run-continue state)
         (is (= "Pay 1 [Credits] to bypass Ice Wall?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
-        (run-continue state)
         (is (= :approach-server (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
   (testing "Bypass leaves if uninstalled"
     (do-game
@@ -1953,7 +1939,6 @@
       (let [gauss (get-program state 0)]
         (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
         (run-on state :hq)
-        (run-continue state)
         (card-ability state :runner (refresh gauss) 1) ;; boost
         (is (= 6 (:current-strength (refresh gauss))) "+3 base and boosted strength")
         (run-jack-out state)
@@ -2373,7 +2358,6 @@
         (run-continue state)
         (click-prompt state :runner "No")
         (run-continue state)
-        (run-successful state)
         ;; Use non-Inversificator breaker
         (run-on state "HQ")
         (run-continue state)
@@ -2436,7 +2420,6 @@
       (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game")
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
@@ -3017,11 +3000,13 @@
 (deftest nyashia
   ;; Nyashia
   (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Hedge Fund"]}
                :runner {:deck ["Nyashia"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Nyashia")
-    (run-empty-server state "R&D")
+    (run-on state "R&D")
+    (run-continue state)
     (click-prompt state :runner "Yes")
     (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
 
@@ -3133,7 +3118,6 @@
       (click-prompt state :runner "Yes") ; install paperclip
       (run-continue state)
       (run-continue state)
-      (run-successful state)
       (is (not (:run @state)) "Run ended")
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
@@ -3939,7 +3923,6 @@
         (core/rez state :corp ash)
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
@@ -3958,7 +3941,6 @@
         (core/rez state :corp cr)
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
   (testing "Allow Nerve Agent to gain counters. Issue #1158/#955"
     (do-game
@@ -3971,11 +3953,10 @@
             sb (get-program state 1)]
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
+        (click-prompt state :runner "No action")
         (is (= 1 (get-counters (refresh nerve) :virus)))
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (= 2 (get-counters (refresh nerve) :virus))))))
   (testing "Grant Security Testing credits on HQ."
     (do-game
@@ -3990,7 +3971,6 @@
         (click-prompt state :runner "HQ")
         (card-ability state :runner sb 0)
         (run-continue state)
-        (run-successful state)
         (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
 
@@ -4063,7 +4043,7 @@
         (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
   (testing "Strength boost until end of run when using dynamic auto-pump-and-break ability"
     (do-game
-      (new-game {:corp {:deck ["Spiderweb" "Hedge Fund"]}
+      (new-game {:corp {:deck ["Spiderweb" (qty "Hedge Fund" 2)]}
                  :runner {:deck ["Snowball"]}})
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Spiderweb" "HQ")
@@ -4079,7 +4059,6 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
         (is (= 5 (:current-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
         (core/continue state :corp nil)
-        (run-continue state)
         (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate
@@ -4098,7 +4077,6 @@
      (card-ability state :runner (get-program state 0) 0)
      (is (:run @state) "Run initiated")
      (run-continue state)
-     (run-successful state)
      (click-prompt state :runner "Troll")
      (is (empty? (:prompt (get-runner))) "Prompt closed")
      (is (not (:run @state)) "Run ended")
@@ -4122,7 +4100,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (nth (prompt-buttons :runner) 2))
         (is (last-log-contains? state "Runner uses Stargate to trash bottom Troll.") "Correct log")))
     (testing "middle card"
@@ -4139,7 +4116,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (second (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash middle Troll.") "Correct log")))
     (testing "top card"
@@ -4156,7 +4132,6 @@
         (play-from-hand state :runner "Stargate")
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
-        (run-successful state)
         (click-prompt state :runner (first (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash top Troll.") "Correct log"))))
   (testing "No position indicator if non-duplicate selected"
@@ -4173,7 +4148,6 @@
       (play-from-hand state :runner "Stargate")
       (card-ability state :runner (get-program state 0) 0)
       (run-continue state)
-      (run-successful state)
       (click-prompt state :runner (second (prompt-buttons :runner)))
       (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
 
@@ -4269,8 +4243,8 @@
         (run-continue state)
         (card-ability state :runner corr 0)
         (click-prompt state :runner "End the run")
-        (run-continue state)
         (click-prompt state :runner "Yes")
+        (run-continue state)
         (is (= 1 (get-counters (refresh tako) :power)) "Counter gained from breaking all subs"))))
   (testing "+3 strength"
     (do-game
