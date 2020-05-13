@@ -3276,16 +3276,10 @@
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Orion"]
                           :credits 15}
-                   :runner {:hand [(qty "Paperclip" 2) (qty "MKUltra" 2) (qty "Black Orchestra" 2)]
+                   :runner {:discard [(qty "Paperclip" 2) (qty "MKUltra" 2) (qty "Black Orchestra" 2)]
                             :credits 100}})
         (play-from-hand state :corp "Orion" "HQ")
         (take-credits state :corp)
-        (trash-from-hand state :runner "Paperclip")
-        (trash-from-hand state :runner "Paperclip")
-        (trash-from-hand state :runner "MKUltra")
-        (trash-from-hand state :runner "MKUltra")
-        (trash-from-hand state :runner "Black Orchestra")
-        (trash-from-hand state :runner "Black Orchestra")
         (run-on state :hq)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
