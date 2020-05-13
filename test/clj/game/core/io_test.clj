@@ -58,6 +58,34 @@
           (core/say state :corp {:user user :text "/jack-out"})
           (is (:run @state) "Run is still active")))))
 
+  (testing "/discard #n"
+    (let [user {:username "Runner"}]
+      (testing "Add card with long title"
+        (do-game
+          (new-game {:runner {:hand ["Cache"]}})
+          (take-credits state :corp)
+          (is (= ["Cache"] (->> (get-runner) :hand (mapv :title))) "Cache should be in hand")
+          (core/say state :runner {:user user :text "/discard #1"})
+          (is (empty? (:hand (get-runner))) "Runner has empty grip")))))
+
+  (testing "/summon"
+    (let [user {:username "Runner"}]
+      (testing "Add card with short title"
+        (do-game
+          (new-game {:runner {:hand []}})
+          (take-credits state :corp)
+          (is (empty? (:hand (get-runner))) "Runner starts with empty grip")
+          (core/say state :runner {:user user :text "/summon DDoS"})
+          (is (= ["DDoS"] (->> (get-runner) :hand (mapv :title))) "DDoS should now be added into hand")))
+
+      (testing "Add card with long title"
+        (do-game
+          (new-game {:runner {:hand []}})
+          (take-credits state :corp)
+          (is (empty? (:hand (get-runner))) "Runner starts with empty grip")
+          (core/say state :runner {:user user :text "/summon Harmony AR Therapy"})
+          (is (= ["Harmony AR Therapy"] (->> (get-runner) :hand (mapv :title))) "Harmony AR Therapy should now be added into hand")))))
+
   (testing "/link"
     (let [user {:username "Runner"}]
       (testing "Can increase link"
