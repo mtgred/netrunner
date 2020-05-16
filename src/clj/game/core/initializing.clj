@@ -17,10 +17,6 @@
   [state side {:keys [disabled installed rezzed facedown zone host] :as card}]
   (when-let [leave-effect (:leave-play (card-def card))]
     (when (and (not disabled)
-               ;(= nil (println (get-scoring-owner state card)))
-               ;(not (= (get-scoring-owner state card) :runner) )
-               ;(= nil (println card))
-               ;(in-runner-scored? state side card) not working, some namespace problem?
                (not (and (runner? card) host (not installed) (not facedown)))
                (or (and (runner? card) installed (not facedown))
                    rezzed
