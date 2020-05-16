@@ -2734,7 +2734,6 @@
       (click-card state :runner (get-scored state :runner 0))
       (is (= 5 (hand-size :corp)) "Corp hand size is still 5"))))
 
-
 (deftest remote-enforcement
   ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
   (do-game
