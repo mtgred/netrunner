@@ -109,7 +109,10 @@
               :else
               card)
             card)
-        c (if (and (or installed
+        c (if (and (not (and (= (get-scoring-owner state card) :runner)
+                             (#{:scored} src-zone)
+                             (#{:hand :deck :discard :rfg} target-zone)))
+                   (or installed
                        host
                        (#{:servers :scored :current :play-area} src-zone))
                    (or (#{:hand :deck :discard :rfg} target-zone)
