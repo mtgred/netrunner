@@ -1350,9 +1350,9 @@
 
 (define-card "Kasi String"
   {:events [{:event :run-ends
-             :req (req (and (first-event? state :runner :run-ends is-remote?)
-                            (not (get-in @state [:run :did-steal]))
-                            (get-in @state [:run :did-access])
+             :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
+                            (not (:did-steal target))
+                            (:did-access target)
                             (is-remote? (:server target))))
              :effect (effect (add-counter card :power 1))
              :msg "add a power counter to itself"}
