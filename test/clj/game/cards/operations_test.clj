@@ -1306,8 +1306,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 3 (:click (get-corp))))
-      (is (= 3 (:click-per-turn (get-corp))))
-      )))
+      (is (= 3 (:click-per-turn (get-corp)))))))
 
 (deftest fast-break
   ;; Fast Break
