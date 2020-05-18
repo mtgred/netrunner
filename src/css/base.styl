@@ -1381,6 +1381,41 @@ nav ul
     padding: 3px 6px
     overflow: visible
 
+  .cardinfo
+    > span.cardtitle
+      display: flex
+      justify-content: center
+      margin-bottom: 2px
+      font-weight: bold
+      size: 130%
+
+    > span.cardsubtype
+      display: flex
+      justify-content: left
+      margin-bottom: 2px
+
+    > span.cardstrength
+      display: flex
+      justify-content: left
+      margin-bottom: 2px
+
+    > span.cardmisc
+      display: flex
+      justify-content: right
+      margin-bottom: 2px
+
+    > img.card
+      position: relative
+      transform:rotate(90deg)
+      height: 120px
+      width: 150px
+      object-fit:cover
+      object-position: 50% 100%
+      overflow:hidden
+      border-radius: 4px
+      top: 30px
+      display:block
+
   .header
     position: absolute
     top: 0
@@ -1549,16 +1584,26 @@ nav ul
     display: none
     position: absolute
     z-index: 30
-    width: 200px
+    width: 400px
     font-size: 12px
     line-height: 16px
+
+    div.abilities-row
+      display: flex
+      flex-direction: row
+
+      div.abilities-column
+        flex-direction: column
+        float:left
+        width:50%
+        padding: 3px 6px
 
     > span
       margin: 2px
       &:last-child
         margin-bottom: 0
 
-    > div
+    div.ability
       border: 1px solid white
       padding: 3px 6px
       border-radius: 4px

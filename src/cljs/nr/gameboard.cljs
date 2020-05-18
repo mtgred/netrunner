@@ -705,53 +705,62 @@
                             (count subroutines)))
                    (some #{"derez" "rez" "advance" "trash"} actions)
                    (= type "ICE")))
-      [:div.panel.blue-shade.abilities {:style {:display "inline"}}
-       (when (seq actions)
-         [:span.float-center "Actions:"])
-       (when (seq actions)
-         (map-indexed
-           (fn [i action]
-             [:div {:key i
-                    :on-click #(do (send-command action {:card card}))}
-              (capitalize action)])
-           actions))
-       (when (seq abilities)
-         [:span.float-center "Abilities:"])
-       (when (seq abilities)
-         (map-indexed
-           (fn [i ab]
-             (if (:dynamic ab)
-               [:div {:key i
-                      :on-click #(send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
-                                                                        :card card))}
-                (render-icons (:label ab))]
-               [:div {:key i
-                      :on-click #(send-command "ability" {:card card
-                                                          :ability (- i dynabi-count)})}
-                (render-icons (:label ab))]))
-           abilities))
-       (when (seq (remove :fired subroutines))
-         [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
-          "Fire unbroken subroutines"])
-       (when (seq subroutines)
-         [:span.float-center "Subroutines:"])
-       (when (seq subroutines)
-         (map-indexed
-           (fn [i sub]
-             [:div {:key i
-                    :on-click #(send-command "subroutine" {:card card
-                                                           :subroutine i})}
-              [:span (cond (:broken sub)
-                           {:class :disabled
-                            :style {:font-style :italic}}
-                           (false? (:resolve sub))
-                           {:class :dont-resolve
-                            :style {:text-decoration :line-through}})
-               (render-icons (str " [Subroutine]" " " (:label sub)))]
-              [:span.float-right
-               (cond (:broken sub) banned-span
-                     (:fired sub) "✅")]])
-           subroutines))])))
+      [:div.panel.blue-shade.abilities {:style {:display "flex" :flex-direction "column"}}
+       [:div.abilities-row
+        [:div.abilities-column
+         (when (seq actions)
+           [:span.float-center "Actions:"])
+         (when (seq actions)
+           (map-indexed
+             (fn [i action]
+               [:div.ability {:key i
+                              :on-click #(do (send-command action {:card card}))}
+                (capitalize action)])
+             actions))
+         (when (seq abilities)
+           [:span.float-center "Abilities:"])
+         (when (seq abilities)
+           (map-indexed
+             (fn [i ab]
+               (if (:dynamic ab)
+                 [:div.ability {:key i
+                                :on-click #(send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
+                                                                                  :card card))}
+                  (render-icons (:label ab))]
+                 [:div.ability {:key i
+                                :on-click #(send-command "ability" {:card card
+                                                                    :ability (- i dynabi-count)})}
+                  (render-icons (:label ab))]))
+             abilities))
+         (when (seq (remove :fired subroutines))
+           [:div.ability {:on-click #(send-command "unbroken-subroutines" {:card card})}
+            "Fire unbroken subroutines"])
+         (when (seq subroutines)
+           [:span.float-center "Subroutines:"])
+         (when (seq subroutines)
+           (map-indexed
+             (fn [i sub]
+               [:div.ability {:key i
+                              :on-click #(send-command "subroutine" {:card card
+                                                                     :subroutine i})}
+                [:span (cond (:broken sub)
+                             {:class :disabled
+                              :style {:font-style :italic}}
+                             (false? (:resolve sub))
+                             {:class :dont-resolve
+                              :style {:text-decoration :line-through}})
+                 (render-icons (str " [Subroutine]" " " (:label sub)))]
+                [:span.float-right
+                 (cond (:broken sub) banned-span
+                       (:fired sub) "✅")]])
+             subroutines))]
+        [:div.abilities-column
+         [:div.cardinfo
+          [:span.cardtitle (:title card)]
+          [:span.cardtype (:subtype card)]
+          [:span.cardmisc (str "Strength " (:current-strength card))]
+          (let [url (image-url card)]
+            [:img.card {:src url :alt (:title card) :onError #(-> % .-target js/$ .hide)}])]]]])))
 
 (defn card-view
   [card filpped]
