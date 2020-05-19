@@ -2904,7 +2904,7 @@
      :trace {:base 3
              :unsuccessful
              {:async true
-              :msg (msg "reveal all cards in HQ" (when-let [hand (seq (get-in @state [:corp :hand]))]
+              :msg (msg "reveal all cards in HQ" (when-let [hand (seq (:hand corp))]
                                                    (str ": " (join ", " (map :title hand)))))
               :effect (effect (reveal (:hand corp))
                         (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}}))
