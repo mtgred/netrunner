@@ -13,6 +13,11 @@
   [title from]
   (some #(when (= (:title %) title) %) from))
 
+(defn reverse-find-card
+  "Return a card with given title from given sequence in reverse order (latest addition is first)"
+  [title from]
+  (some #(when (= (:title %) title) %) (reverse from)))
+
 (defn find-cid
   "Return a card with specific :cid from given sequence"
   [cid from]

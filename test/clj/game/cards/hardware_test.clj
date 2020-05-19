@@ -473,7 +473,41 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
-        (is (empty? (:prompt (get-runner))) "No second prompt for shuffling Boomerang in"))))
+        (is (empty? (:prompt (get-runner))) "No second prompt for shuffling Boomerang in")))
+  (testing "Multiple Boomerangs used during single run are shuffled correctly. Issue #5112"
+    (do-game
+      (new-game {:corp {:deck ["Spiderweb"]}
+                 :runner {:deck [(qty "Boomerang" 2) "Paule's Café"]
+                          :credits 20}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paule's Café")
+      (play-from-hand state :runner "Boomerang")
+      (let [spiderweb (get-ice state :hq 0)
+            boom (get-hardware state 0)
+            pau (get-resource state 0)]
+        (click-card state :runner spiderweb)
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Boomerang" (:hand (get-runner))))
+        (click-card state :runner spiderweb)
+        (run-on state :hq)
+        (core/rez state :corp spiderweb)
+        (run-continue state)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (let [boom2 (find-card "Boomerang" (:hosted (refresh pau)))]
+          (card-ability state :runner pau 1)
+          (click-card state :runner boom2)
+          (click-card state :runner spiderweb)
+          (card-ability state :runner (get-hardware state 0) 0)
+          (click-prompt state :runner "End the run")
+          (run-continue state)
+          (run-continue state)
+          (is (= 2 (count (:discard (get-runner)))) "Both Boomerangs in heap")
+          (click-prompt state :runner "Yes")
+          (click-prompt state :runner "Yes")
+          (is (= 0 (count (:discard (get-runner)))) "Both Boomerangs shuffled back in stack"))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
