@@ -2223,7 +2223,7 @@
 (define-card "Negotiator"
   {:subroutines [(gain-credits-sub 2)
                  trash-program]
-   :runner-abilities [(bioroid-break 2 1)]})
+   :runner-abilities [(break-sub [:credit 2] 1)]})
 
 (define-card "Nerine 2.0"
   (let [sub {:label "Do 1 brain damage and Corp may draw 1 card"
