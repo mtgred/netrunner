@@ -136,6 +136,7 @@
 (defn event?
   [card]
   (and (not (facedown? card))
+       (not (:condition card))
        (is-type? card "Event")))
 
 (defn hardware?
@@ -158,7 +159,8 @@
 
 (defn operation?
   [card]
-  (is-type? card "Operation"))
+  (and (not (:condition card))
+       (is-type? card "Operation")))
 
 (defn program?
   [card]
@@ -173,6 +175,12 @@
 (defn upgrade?
   [card]
   (is-type? card "Upgrade"))
+
+(defn condition-counter?
+  [card]
+  (and (:condition card)
+       (or (is-type? card "Event")
+           (is-type? card "Operation"))))
 
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
