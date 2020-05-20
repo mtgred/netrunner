@@ -489,7 +489,6 @@
         (click-card state :runner spiderweb)
         (card-ability state :runner pau 0)
         (click-card state :runner (find-card "Boomerang" (:hand (get-runner))))
-        (click-card state :runner spiderweb)
         (run-on state :hq)
         (core/rez state :corp spiderweb)
         (run-continue state)
