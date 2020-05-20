@@ -1648,7 +1648,7 @@
                   (doseq [c installed]
                     (set-prop state side c :advance-counter 0))
                   (set-prop state side target :advance-counter total-adv)
-                  (update-all-ice state side)
+                  (update-ice-advancement state side)
                   (system-msg state side (str "uses Red Planet Couriers to move " total-adv
                                               " advancement tokens to " (card-str state target)))
                   (effect-completed state side eid)))})

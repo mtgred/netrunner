@@ -2000,6 +2000,7 @@
      :effect (effect (add-prop card :advance-counter 1))
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
+              (assoc ability :event :ice-advancement-changed)
               (assoc ability :event :rez)]}))
 
 (define-card "Matrix Analyzer"
