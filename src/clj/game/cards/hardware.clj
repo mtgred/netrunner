@@ -183,7 +183,7 @@
                   {:effect (effect
                              (register-events
                                ;; Boomerang is trashed at this point
-                               (reverse-find-card "Boomerang" (:discard (:runner @state)))
+                               (find-card "Boomerang" (reverse (:discard (:runner @state))))
                                (let [server (:server run)]
                                  [{:event :run-ends
                                    :once :per-run
