@@ -1646,8 +1646,8 @@
    :effect (req (let [installed (get-all-installed state)
                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
                   (doseq [c installed]
-                    (add-prop state :corp c :advance-counter (- (get-counters c :advancement)) {:placed true}))
-                  (add-prop state :corp target :advance-counter total-adv {:placed true})
+                    (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true}))
+                  (add-prop state side target :advance-counter total-adv {:placed true})
                   (update-all-ice state side)
                   (system-msg state side (str "uses Red Planet Couriers to move " total-adv
                                               " advancement tokens to " (card-str state target)))
