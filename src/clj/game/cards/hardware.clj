@@ -1820,20 +1820,22 @@
              :effect (effect (gain :click 1))}]})
 
 (define-card "The Gauntlet"
-  {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
-   :in-play [:memory 2]
-   :events [{:event :post-successful-run
-             :req (req (and (= :hq target)
-                            run))
-             :silent (req true)
-             :async true
-             :effect (effect (continue-ability
-                               {:prompt "How many ICE protecting HQ did you break all subroutines on?"
-                                ;; Makes number of ice on server (HQ) the upper limit.
-                                ;; This should work since trashed ice do not count according to UFAQ
-                                :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
-                                :effect (effect (access-bonus :hq target))}
-                               card nil))}]})
+  {:in-play [:memory 2]
+   :events [{:event :pre-access
+             :req (req (= :hq target))
+             :effect (req (let [broken-ice
+                                (->> (run-events state side :subroutines-broken)
+                                     (filter (fn [[ice broken-subs]]
+                                               (and (= :hq (second (:zone ice)))
+                                                    (all-subs-broken? ice)
+                                                    (get-card state ice))))
+                                     (keep #(:cid (first %)))
+                                     (into #{}))
+                                hq-ice
+                                (->> (get-in @state (concat [:corp :servers :hq :ices]))
+                                     (keep :cid)
+                                     (filter broken-ice))]
+                            (access-bonus state :runner :hq (count hq-ice))))}]})
 
 (define-card "The Personal Touch"
   {:hosting {:card #(and (has-subtype? % "Icebreaker")
