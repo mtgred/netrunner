@@ -2714,11 +2714,25 @@
 
 (deftest remote-data-farm
   ;; Remote Data Farm
-  (do-game
-    (new-game {:corp {:deck ["Remote Data Farm"]}})
-    (is (= 5 (hand-size :corp)))
-    (play-and-score state "Remote Data Farm")
-    (is (= 7 (hand-size :corp)))))
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck ["Remote Data Farm"]}})
+      (is (= 5 (hand-size :corp)))
+      (play-and-score state "Remote Data Farm")
+      (is (= 7 (hand-size :corp)))))
+  (testing "removed from runner score area. Issue #5109"
+    (do-game
+      (new-game {:corp {:deck ["Remote Data Farm"]}
+                 :runner {:deck ["Data Dealer"]}})
+      (play-from-hand state :corp "Remote Data Farm" "New remote")
+      (is (= 5 (hand-size :corp)))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (play-from-hand state :runner "Data Dealer")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-card state :runner (get-scored state :runner 0))
+      (is (= 5 (hand-size :corp)) "Corp hand size is still 5"))))
 
 (deftest remote-enforcement
   ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
