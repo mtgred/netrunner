@@ -65,14 +65,14 @@
                        (continue-ability
                          {:optional
                           {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
-                                          (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                          (not (get-in @state [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)]))))
                            :player :runner
                            :prompt (str "Install " title "?")
                            :yes-ability {:async true
                                          :effect (effect (runner-install :runner eid card nil))}
                            ;; Add a register to note that the player was already asked about installing,
                            ;; to prevent multiple copies from prompting multiple times.
-                           :no-ability {:effect (req (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                           :no-ability {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}}}
                          card targets))}]})
 
 (defn- pump-and-break
