@@ -1205,7 +1205,24 @@
           (trash state :corp (refresh malia))
           (is (not (:disabled (refresh dj-fenris))) "DJ Fenris is enabled")
           (is (not (:disabled (hosted-ct))) "CT is enabled")
-          (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))))
+          (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))
+    (testing "Interaction with Paige Piper #4055"
+      (do-game
+        (new-game {:runner {:id sunny
+                            :deck [(qty "Sure Gamble" 5) (qty "DJ Fenris" 2)]
+                            :hand ["DJ Fenris" "Paige Piper"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paige Piper")
+        (click-prompt state :runner "No")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (play-from-hand state :runner "DJ Fenris")
+        (click-prompt state :runner "Paige Piper")
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "2")
+        (click-prompt state :runner chaos)
+        (is (empty? (:prompt (get-corp))))
+        (is (empty? (:prompt (get-runner))))))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
