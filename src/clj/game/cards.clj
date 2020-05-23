@@ -125,6 +125,8 @@
         b-new (assoc b :zone (:zone a))]
     (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
     (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (update-installed-card-indices state :corp (:zone a))
+    (update-installed-card-indices state :corp (:zone b))
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
       (when (rezzed? newcard)
@@ -145,7 +147,8 @@
 (defn card-index
   "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
   [state card]
-  (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (:zone card))))))
+  (or (:index card)
+      (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (:zone card)))))))
 
 (defn swap-installed
   "Swaps two installed corp cards - like swap ICE except no strength update"
@@ -156,6 +159,8 @@
         b-new (assoc b :zone (:zone a))]
     (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
     (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (update-installed-card-indices state :corp (:zone a))
+    (update-installed-card-indices state :corp (:zone b))
     (doseq [newcard [a-new b-new]]
       (doseq [h (:hosted newcard)]
         (let [newh (-> h

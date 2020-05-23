@@ -140,7 +140,7 @@
       (play-from-hand state :runner "Aniccam")
       (core/damage state :runner :brain 1)
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "Trashing an event from R&D triggers Annicam"
+  (testing "Trashing an event from R&D triggers Aniccam"
     (do-game
       (new-game {:runner {:hand ["Aniccam"]
                           :deck [(qty "Sure Gamble" 2)]}})
@@ -174,7 +174,29 @@
       (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
       (take-credits state :runner)
       (play-from-hand state :corp "Scarcity of Resources")
-      (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
+      (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed")))
+  (testing "Trashing a card counter doesn't trigger Aniccam #5123"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["SEA Source"]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Aniccam" "Artist Colony" "On the Lam"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Artist Colony")
+      (play-from-hand state :runner "On the Lam")
+      (click-card state :runner (get-resource state 0))
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (click-prompt state :runner "Done")
+      (is (zero? (count-tags state)) "Runner should avoid tag")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")
+      (is (zero? (count (:hand (get-runner)))) "Runner doesn't draw from Aniccam"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -1656,7 +1678,24 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice"))))
+      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice")))
+  (testing "Interaction with Nfr #4782"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Nfr" "Hippo"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Nfr")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (is (= 1 (get-counters (get-program state 0) :power)) "Nfr gains 1 counter"))))
 
 (deftest keiko
   ;; Keiko

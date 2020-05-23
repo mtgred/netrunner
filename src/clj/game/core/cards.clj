@@ -153,6 +153,11 @@
                                 :seen seen
                                 :zone zone)))))
 
+(defn update-installed-card-indices
+  [state side server]
+  (swap! state update-in (cons side server)
+         #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %))))
+
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
@@ -178,8 +183,7 @@
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
              (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
-           (swap! state update-in (cons side dest)
-                  #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))
+           (update-installed-card-indices state side dest)
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)
@@ -258,19 +262,15 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (wait-for (trigger-event-sync state side (when (= :deck kw)
-                                             (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck))
-                                nil)
-            (swap! state update-in [side kw] shuffle)))
+  (when (contains? #{:deck :hand :discard} kw)
+    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)) nil)
+    (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
-  (let [player (side @state)
-        zones (filter #(not (seq (get-in @state [side :locked %]))) args)
-        deck (shuffle (reduce concat (:deck player) (for [p zones] (zone :deck (p player)))))]
-    (swap! state assoc-in [side :deck] deck)
-    (doseq [p zones]
-      (swap! state assoc-in [side p] []))))
+  (doseq [zone (filter keyword? args)]
+    (move-zone state side zone :deck))
+  (shuffle! state side :deck))
 
 ;;; Misc card functions
 (defn get-virus-counters

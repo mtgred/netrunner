@@ -3798,16 +3798,40 @@
 
 (deftest swarm
   ;; Swarm
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Swarm"]
-                      :credits 10}})
-    (play-from-hand state :corp "Swarm" "HQ")
-    (let [swarm (get-ice state :hq 0)]
-      (core/rez state :corp swarm)
-      (is (zero? (count (:subroutines (refresh swarm)))) "Swarm starts with 0 subs")
-      (advance state swarm 2)
-      (is (= 2 (count (:subroutines (refresh swarm)))) "Swarm gains 2 subs"))))
+  (testing "Variable subroutines update"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swarm"]
+                        :credits 10}})
+      (play-from-hand state :corp "Swarm" "HQ")
+      (let [swarm (get-ice state :hq 0)]
+        (core/rez state :corp swarm)
+        (is (zero? (count (:subroutines (refresh swarm)))) "Swarm starts with 0 subs")
+        (advance state swarm 2)
+        (is (= 2 (count (:subroutines (refresh swarm)))) "Swarm gains 2 subs"))))
+  (testing "Subroutine is correct #4608"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swarm"]
+                        :credits 10}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Swarm" "HQ")
+      (let [swarm (get-ice state :hq 0)]
+        (advance state swarm 2)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state "HQ")
+        (core/rez state :corp (refresh swarm))
+        (run-continue state)
+        (fire-subs state (refresh swarm))
+        (is (= ["Corp trash" "Pay 3 [Credits]"] (prompt-buttons :runner)))
+        (click-prompt state :runner "Corp trash")
+        (click-card state :corp "Corroder")
+        (is (find-card "Corroder" (:discard (get-runner))))
+        (changes-val-macro
+          -3 (:credit (get-runner))
+          "Costs 3"
+          (click-prompt state :runner "Pay 3 [Credits]"))))))
 
 (deftest thimblerig
   (testing "Thimblerig does not open a prompt if it's the only piece of ice"

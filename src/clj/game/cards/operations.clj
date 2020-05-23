@@ -2074,7 +2074,7 @@
 (define-card "Sunset"
   (letfn [(sun [serv]
             {:prompt "Select two pieces of ICE to swap positions"
-             :choices {:card #(and (= serv (rest (butlast (:zone %))))
+             :choices {:card #(and (= serv (:zone %))
                                    (ice? %))
                        :max 2}
              :async true
@@ -2087,7 +2087,7 @@
      :choices (req servers)
      :async true
      :msg (msg "rearrange ICE protecting " target)
-     :effect (req (let [serv (rest (server->zone state target))]
+     :effect (req (let [serv (conj (server->zone state target) :ices)]
                     (continue-ability state side (sun serv) card nil)))}))
 
 (define-card "Surveillance Sweep"

@@ -213,7 +213,7 @@
           (send-command "ability" {:card card :ability 0})
           (send-command (first actions) {:card card}))))))
 
-(defn handle-card-click [{:keys [type zone root] :as card} c-state]
+(defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond

@@ -210,7 +210,8 @@
              :effect
              (effect
                (continue-ability
-                 {:optional
+                 {:eid (assoc eid :source-type :ability)
+                  :optional
                   {:prompt (str "Pay 2 [Credits] to make " (:title target) " gain " ice-type "?")
                    :yes-ability
                    {:cost [:credit cost]
@@ -364,10 +365,16 @@
                                :once :per-turn
                                :prompt (msg "Pay 2 [Credits] to bypass" (:title target))
                                :yes-ability
-                               {:once :per-turn
-                                :cost [:credit 2]
-                                :msg (msg "bypass " (:title target))
-                                :effect (req (bypass-ice state))}}}]
+                               {:async true
+                                :effect
+                                (effect
+                                  (continue-ability
+                                    {:eid (assoc eid :source-type :ability)
+                                     :once :per-turn
+                                     :cost [:credit 2]
+                                     :msg (msg "bypass " (:title target))
+                                     :effect (req (bypass-ice state))}
+                                    card nil))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 1 2)]}))
 
@@ -849,33 +856,35 @@
 
 (define-card "Customized Secretary"
   (letfn [(custsec-host [cards]
-            {:prompt "Choose a program to host on Customized Secretary"
-             :choices (cons "None" cards)
-             :async true
-             :effect (req (if (or (= target "None") (not (program? target)))
-                            (do (clear-wait-prompt state :corp)
-                                (shuffle! state side :deck)
-                                (system-msg state side (str "shuffles their Stack"))
-                                (effect-completed state side eid))
-                            (do (host state side (get-card state card) target)
-                                (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
-                                (continue-ability state side (custsec-host (remove-once #(= % target) cards))
-                                                  card nil))))})]
+            (when (seq (filter program? cards))
+              {:prompt "Choose a program to host"
+               :choices (concat (filterv program? cards) ["Done"])
+               :async true
+               :effect (req (if (= target "Done")
+                              (do (clear-wait-prompt state :corp)
+                                  (shuffle! state side :deck)
+                                  (system-msg state side "shuffles the stack")
+                                  (effect-completed state side eid))
+                              (do (host state side (get-card state card) target)
+                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
+                                  (continue-ability state side (custsec-host (remove-once #(= % target) cards))
+                                                    card nil))))}))]
     {:async true
      :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
      :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
-     :effect (req (reveal state side (take 5 (:deck runner)))
-               (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
-               (let [from (take 5 (:deck runner))]
-                 (continue-ability state side (custsec-host from) card nil)))
+     :effect (req (let [from (take 5 (:deck runner))]
+                    (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
+                    (reveal state side from)
+                    (continue-ability state side (custsec-host from) card nil)))
      :abilities [{:cost [:click 1]
-                  :prompt "Choose a program hosted on Customized Secretary to install"
-                  :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side %)])
+                  :label "Install a hosted program"
+                  :prompt "Choose a program to install"
+                  :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                                                % nil [:credit (install-cost state side %)])
                                                      (:hosted card))))
                   :msg (msg "install " (:title target))
-                  :effect (req (if (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil [:credit (install-cost state side target)])
-                                 (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                 (effect-completed state side eid)))}]}))
+                  :async true
+                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}))
 
 (define-card "Cyber-Cypher"
   (auto-icebreaker {:prompt "Choose a server"
@@ -1075,7 +1084,7 @@
                 :async true
                 :effect (effect (continue-ability
                                   {:cost [:click 1]
-                                   :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
+                                   :prompt "Choose a non-Icebreaker program in your grip"
                                    :choices {:card #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (not (has-subtype? % "Icebreaker"))
@@ -1089,7 +1098,7 @@
                                                           (effect-completed state side eid)))}
                                   card nil))}
                {:label "Host an installed non-Icebreaker program on Djinn"
-                :prompt "Choose an installed non-Icebreaker program to host on Djinn"
+                :prompt "Choose an installed non-Icebreaker program"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Icebreaker"))
                                       (installed? %))}

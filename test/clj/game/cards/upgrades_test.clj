@@ -2126,7 +2126,40 @@
         (core/rez state :corp ohg)
         (run-empty-server state "Server 2")
         (click-prompt state :runner "Steal")
-        (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda")))))
+        (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
+  (testing "Stops protecting Archives after being trashed #4501"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Old Hollywood Grid"]
+                        :discard ["Hostile Takeover" "Merger" "Vanity Project"]}
+                 :runner {:hand ["Apocalypse"]}})
+      (play-from-hand state :corp "Old Hollywood Grid" "Archives")
+      (core/rez state :corp (get-content state :archives 0))
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (click-prompt state :runner "Hostile Takeover")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Merger")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Vanity Project")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Old Hollywood Grid")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
+      (play-from-hand state :runner "Apocalypse")
+      (core/gain state :runner :click 1)
+      (run-empty-server state "Archives")
+      (click-prompt state :runner "Hostile Takeover")
+      (is (= ["Steal"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Merger")
+      (is (= ["Steal"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Vanity Project")
+      (is (= ["Steal"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Steal"))))
 
 (deftest overseer-matrix
   ;; Overseer Matrix - corp takes a tag when trashing a card in this server
