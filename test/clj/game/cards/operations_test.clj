@@ -2789,28 +2789,47 @@
       (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
 
 (deftest red-planet-couriers
-  ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
-  (do-game
-    (new-game {:corp {:deck ["Red Planet Couriers" (qty "Ice Wall" 2)
-                             "GRNDL Refinery" "Government Takeover"]}})
-    (core/gain state :corp :click 4)
-    (play-from-hand state :corp "Government Takeover" "New remote")
-    (play-from-hand state :corp "GRNDL Refinery" "New remote")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (let [gt (get-content state :remote1 0)
-          gr (get-content state :remote2 0)
-          iw1 (get-ice state :hq 0)
-          iw2 (get-ice state :rd 0)]
-      (core/add-prop state :corp gr :advance-counter 3)
-      (core/add-prop state :corp iw1 :advance-counter 2)
-      (core/add-prop state :corp iw2 :advance-counter 1)
-      (play-from-hand state :corp "Red Planet Couriers")
-      (click-card state :corp gt)
-      (is (zero? (get-counters (refresh gr) :advancement)) "Advancements removed")
-      (is (zero? (get-counters (refresh iw1) :advancement)) "Advancements removed")
-      (is (zero? (get-counters (refresh iw2) :advancement)) "Advancements removed")
-      (is (= 6 (get-counters (refresh gt) :advancement)) "Gained 6 advancements"))))
+  ;; Red Planet Couriers
+  (testing "Move all advancements on cards to 1 advanceable card"
+    (do-game
+     (new-game {:corp {:deck ["Red Planet Couriers" (qty "Ice Wall" 2)
+                              "GRNDL Refinery" "Government Takeover"]}})
+     (core/gain state :corp :click 4)
+     (play-from-hand state :corp "Government Takeover" "New remote")
+     (play-from-hand state :corp "GRNDL Refinery" "New remote")
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (let [gt (get-content state :remote1 0)
+           gr (get-content state :remote2 0)
+           iw1 (get-ice state :hq 0)
+           iw2 (get-ice state :rd 0)]
+       (core/add-prop state :corp gr :advance-counter 3)
+       (core/add-prop state :corp iw1 :advance-counter 2)
+       (core/add-prop state :corp iw2 :advance-counter 1)
+       (play-from-hand state :corp "Red Planet Couriers")
+       (click-card state :corp gt)
+       (is (zero? (get-counters (refresh gr) :advancement)) "Advancements removed")
+       (is (zero? (get-counters (refresh iw1) :advancement)) "Advancements removed")
+       (is (zero? (get-counters (refresh iw2) :advancement)) "Advancements removed")
+       (is (= 6 (get-counters (refresh gt) :advancement)) "Gained 6 advancements"))))
+  (testing "interaction with masvingo - should correctly reset subs issue #5090"
+    (do-game
+     (new-game {:corp {:deck ["Red Planet Couriers" (qty "Masvingo" 2)]}})
+     (core/gain state :corp :click 2)
+     (core/gain state :corp :credit 6)
+     (play-from-hand state :corp "Masvingo" "HQ")
+     (play-from-hand state :corp "Masvingo" "R&D")
+     (let [mas-hq (get-ice state :hq 0)
+           mas-rd (get-ice state :rd 0)]
+       (core/rez state :corp mas-hq)
+       (core/rez state :corp mas-rd)
+       (core/add-prop state :corp mas-hq :advance-counter 2)
+       (play-from-hand state :corp "Red Planet Couriers")
+       (click-card state :corp (refresh mas-rd))
+       (is (zero? (get-counters (refresh mas-hq) :advancement)) "Advancements removed")
+       (is (zero? (count (:subroutines (refresh mas-hq)))) "Subroutines set to 0")
+       (is (= 4 (get-counters (refresh mas-rd) :advancement)) "Increased to 4 advancements")
+       (is (= 4 (count (:subroutines (refresh mas-rd)))) "Subroutines set to 4")))))
 
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
