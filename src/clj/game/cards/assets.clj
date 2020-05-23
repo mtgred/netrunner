@@ -506,7 +506,8 @@
   {:in-play [:hand-size 4]})
 
 (define-card "Daily Business Show"
-  {:events [{:event :pre-corp-draw
+  {:derezzed-events [corp-rez-toast]
+   :events [{:event :pre-corp-draw
              :msg "draw additional cards"
              ;; The req catches draw events that happened before DBS was rezzed.
              :req (req (first-event? state :corp :pre-corp-draw))
