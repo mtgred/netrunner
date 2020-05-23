@@ -2007,7 +2007,7 @@
    :effect (effect (lose-tags eid :all))})
 
 (define-card "Peace in Our Time"
-  {:req (req (not (:scored-agenda corp-reg)))
+  {:req (req (not (:scored-agenda corp-reg-last)))
    :msg "gain 10 [Credits]. The Corp gains 5 [Credits]"
    :effect (effect (gain-credits :runner 10)
                    (gain-credits :corp 5)
