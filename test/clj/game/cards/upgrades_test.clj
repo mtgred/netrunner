@@ -2272,7 +2272,19 @@
         0 (count-tags state)
         "Runner should not gain a tag from trashing a card in another server"
         (run-empty-server state :remote2)
-        (click-prompt state :runner "Pay 4 [Credits] to trash")))))
+        (click-prompt state :runner "Pay 4 [Credits] to trash"))))
+  (testing "Doesn't trigger on MaxX ability #5129"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Overseer Matrix" "PAD Campaign"]}
+                 :runner {:id "MaxX: Maximum Punk Rock"
+                          :deck [(qty "Sure Gamble" 10)]
+                          :hand ["Spy Camera"]
+                          :credits 10}})
+      (play-from-hand state :corp "Overseer Matrix" "R&D")
+      (core/rez state :corp (get-content state :rd 0))
+      (take-credits state :corp)
+      (is (empty? (:prompt (get-corp)))))))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
