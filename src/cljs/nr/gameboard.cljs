@@ -1456,30 +1456,6 @@
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
 
-(def phase->title
-  {"initiation" "Initiation"
-   "approach-ice" "Approach ice"
-   "encounter-ice" "Encounter ice"
-   "pass-ice" "Pass ice"
-   "approach-server" "Approach server"
-   "corp-phase-43" "Corp phase 4.3"
-   "access-server" "Access server"})
-
-(defn phase->next-phase-title
-  [run]
-  (case (:phase @run)
-    "initiation" "Approach ice"
-    "approach-ice" "Encounter ice"
-    "encounter-ice" "Pass ice"
-    "pass-ice" (if (zero? (:position @run))
-                 "Approach server"
-                 "Approach ice")
-    "approach-server" "Access server"
-    "corp-phase-43" "Access server"
-    "access-server" "End of run"
-    ;; Error
-    "No current run"))
-
 (defn get-run-ices []
   (let [server (-> (:run @game-state)
                    :server
@@ -1494,6 +1470,34 @@
                (pos? pos)
                (<= pos (count run-ice)))
       (nth run-ice (dec pos)))))
+
+(def phase->title
+  {"initiation" "Initiation"
+   "approach-ice" "Approach ice"
+   "encounter-ice" "Encounter ice"
+   "pass-ice" "Pass ice"
+   "approach-server" "Approach server"
+   "corp-phase-43" "Corp phase 4.3"
+   "access-server" "Access server"})
+
+(defn phase->next-phase-title
+  [run]
+  (case (:phase @run)
+    "initiation" "Approach ice"
+    "approach-ice" (if (rezzed? (get-current-ice))
+                     "Encounter ice"
+                     (if (> (:position @run) 1)
+                       "Approach ice"
+                       "Approach server"))
+    "encounter-ice" "Pass ice"
+    "pass-ice" (if (zero? (:position @run))
+                 "Approach server"
+                 "Approach ice")
+    "approach-server" "Access server"
+    "corp-phase-43" "Access server"
+    "access-server" "End of run"
+    ;; Error
+    "No current run"))
 
 (defn corp-run-div
   [run]
