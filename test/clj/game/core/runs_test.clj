@@ -440,3 +440,154 @@
     (core/continue state :runner nil)
     (core/rez state :corp (get-ice state :rd 0) {:press-continue true})
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
+
+(deftest multi-access
+  (testing "Correct handling of multi accesses with draws in between accesses"
+    (testing "Drawing cards underneath the currently accessed card"
+      (do-game
+        (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                          :hand ["Advanced Assembly Lines" "Brain Rewiring" "Chiyashi"
+                                 "DNA Tracker" "Excalibur" "Fire Wall" "Gold Farmer"]
+                          :deck []}})
+        (core/move state :corp (find-card "Advanced Assembly Lines" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Brain Rewiring" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Gold Farmer" (:hand (get-corp))) :deck)
+        ; Deck is now ABCDEFG from top to bottom
+        (take-credits state :corp)
+        (run-on state :rd)
+        (core/access-bonus state :runner :rd 4)
+        (run-continue state :access-server)
+        (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Brain Rewiring." (-> (get-runner) :prompt first :msg)) "Accessed B")
+        (click-prompt state :runner "Steal")
+        (click-prompt state :corp "Draw 2 cards")
+        (is (count (filter #(= "Advanced Assembly Lines" %) (:hand (get-corp)))) "Drawn A")
+        (is (count (filter #(= "Chiyashi" %) (:hand (get-corp)))) "Drawn C")
+        (is (= "You accessed DNA Tracker." (-> (get-runner) :prompt first :msg)) "Accessed D")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Excalibur." (-> (get-runner) :prompt first :msg)) "Accessed E")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)) "Accessed F")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (= "DNA Tracker" (-> (get-corp) :deck first :title)) "D on top")))
+    (testing "Drawing cards above the currently accessed card"
+      (do-game
+        (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                          :hand ["Advanced Assembly Lines" "Brainstorm" "Chiyashi"
+                                 "Domestic Sleepers" "Excalibur" "Fire Wall" "Gold Farmer"]
+                          :deck []}})
+        (core/move state :corp (find-card "Advanced Assembly Lines" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Domestic Sleepers" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Gold Farmer" (:hand (get-corp))) :deck)
+        ; Deck is now ABCDEFG from top to bottom
+        (take-credits state :corp)
+        (run-on state :rd)
+        (core/access-bonus state :runner :rd 4)
+        (run-continue state :access-server)
+        (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Brainstorm." (-> (get-runner) :prompt first :msg)) "Accessed B")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Chiyashi." (-> (get-runner) :prompt first :msg)) "Accessed C")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Domestic Sleepers." (-> (get-runner) :prompt first :msg)) "Accessed D")
+        (click-prompt state :runner "Steal")
+        (click-prompt state :corp "Draw 2 cards")
+        (is (count (filter #(= "Advanced Assembly Lines" %) (:hand (get-corp)))) "Drawn A")
+        (is (count (filter #(= "Brainstorm" %) (:hand (get-corp)))) "Drawn C")
+        (is (= "You accessed Excalibur." (-> (get-runner) :prompt first :msg)) "Accessed E")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (= "Chiyashi" (-> (get-corp) :deck first :title)) "C on top"))))
+  (testing "Correct handling of multi accesses with shuffle in between accesses"
+    (testing "Shuffle from Bacterial Programming"
+      (do-game
+        (new-game {:corp {:hand ["Advanced Assembly Lines" "Bacterial Programming" "Chiyashi"
+                                 "DNA Tracker" "Excalibur" "Fire Wall" "Gold Farmer"
+                                 "Hostile Infrastructure"]
+                          :deck []}})
+        (core/move state :corp (find-card "Advanced Assembly Lines" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Bacterial Programming" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Gold Farmer" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Hostile Infrastructure" (:hand (get-corp))) :deck)
+        ; Deck is now ABCDEFGH from top to bottom
+        (take-credits state :corp)
+        (run-on state :rd)
+        (core/access-bonus state :runner :rd 4)
+        (run-continue state :access-server)
+        (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Bacterial Programming." (-> (get-runner) :prompt first :msg)) "Accessed B")
+        (click-prompt state :runner "Steal")
+        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Hostile Infrastructure")
+        (click-prompt state :corp "Gold Farmer")
+        (click-prompt state :corp "Fire Wall")
+        (click-prompt state :corp "Excalibur")
+        (click-prompt state :corp "DNA Tracker")
+        (click-prompt state :corp "Chiyashi")
+        (click-prompt state :corp "Advanced Assembly Lines")
+        (click-prompt state :corp "Done")
+        (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A again")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed Chiyashi." (-> (get-runner) :prompt first :msg)) "Accessed C")
+        (click-prompt state :runner "No action")
+        (is (= "You accessed DNA Tracker." (-> (get-runner) :prompt first :msg)) "Accessed D")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (= "Advanced Assembly Lines" (-> (get-corp) :deck first :title)) "A on top")))))
+
+(deftest-pending multi-access-shuffle
+  ; Currently, shuffling during the accesses is only handled for Bacterial Programming using
+  ; a special flag. This should be generalized at some point.
+  (testing "Correct handling of multi accesses with shuffle in between accesses"
+    (testing "Shuffle from paid ability during accesses"
+      (do-game
+        (new-game {:corp {:hand ["Advanced Assembly Lines" "Brainstorm" "Chrysalis" "DNA Tracker" "Efficiency Committee"
+                                 "Shannon Claire"]
+                          :deck []}})
+        (core/move state :corp (find-card "Advanced Assembly Lines" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Chrysalis" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+        (core/move state :corp (find-card "Efficiency Committee" (:hand (get-corp))) :deck)
+        (play-from-hand state :corp "Shannon Claire" "New remote")
+        (let [sc (get-content state :remote1 0)]
+          (core/rez state :corp sc)
+          ; Deck is now ABCD from top to bottom
+          (take-credits state :corp)
+          (run-on state :rd)
+          (core/access-bonus state :runner :rd 3)
+          (run-continue state :access-server)
+          (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
+          (click-prompt state :runner "No action")
+          (is (= "You accessed Brainstorm." (-> (get-runner) :prompt first :msg)) "Accessed B")
+          (click-prompt state :runner "No action")
+          (is (= "You are encountering Chrysalis. Allow its subroutine to fire?" (-> (get-runner) :prompt first :msg)) "Accessing C")
+          (card-ability state :corp sc 1)
+          (click-prompt state :corp "Efficiency Committee")
+          ; R&D was shuffled
+          (click-prompt state :runner "No") ; not letting sub fire
+          (click-prompt state :runner "No action") ; end accessing C
+          (is (= (str "You accessed " (-> (get-corp) :deck first :title) ".")
+                 (-> (get-runner) :prompt first :msg))
+              "Accessing top card of R&D")
+          (click-prompt state :runner "No action")
+          (is false "no")
+          (is (empty? (:prompt (get-runner))) "No more accesses"))))))
