@@ -174,27 +174,37 @@
    :effect (effect (add-icon card target "B" "blue")
                    (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))
    :leave-play (effect (remove-icon card))
-   :abilities [(break-sub
-                 [:trash] 2 "All"
-                 {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                              (same-card? current-ice boomerang-target)
-                              true)) ; When eg. flipped by Assimilator
-                  :additional-ability
-                  {:effect (effect
-                             (register-events
-                               ;; Boomerang is trashed at this point
-                               (find-card "Boomerang" (reverse (:discard (:runner @state))))
-                               (let [server (:server run)]
-                                 [{:event :run-ends
-                                   :once :per-run
-                                   :duration :end-of-run
-                                   :optional
-                                   {:req (req (and (:successful target)
-                                                   (= server (:server target))))
-                                    :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                    :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                                  :effect (effect (move card :deck)
-                                                                  (shuffle! :deck))}}}])))}})]})
+   :abilities [(assoc
+                 (break-sub
+                   [:trash] 2 "All"
+                   {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
+                                (same-card? current-ice boomerang-target)
+                                true))}) ; When eg. flipped by Assimilator
+                 :effect
+                 (req (wait-for
+                        (trash state side (make-eid state eid) card {:cause :ability-cost
+                                                                     :unpreventable true})
+                        (continue-ability
+                          state :runner
+                          (when-let [[boomerang] async-result]
+                            (break-sub
+                              nil 2 "All"
+                              {:additional-ability
+                               {:effect
+                                (effect
+                                  (register-events
+                                    boomerang
+                                    [{:event :run-ends
+                                      :once :per-run
+                                      :duration :end-of-run
+                                      :optional
+                                      {:req (req (and (:successful target)))
+                                       :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                       :yes-ability
+                                       {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                        :effect (effect (move card :deck)
+                                                        (shuffle! :deck))}}}]))}}))
+                          card nil))))]})
 
 (define-card "Box-E"
   {:in-play [:memory 2 :hand-size 2]})

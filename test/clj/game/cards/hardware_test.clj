@@ -528,7 +528,32 @@
           (is (= 2 (count (:discard (get-runner)))) "Both Boomerangs in heap")
           (click-prompt state :runner "Yes")
           (click-prompt state :runner "Yes")
-          (is (= 0 (count (:discard (get-runner)))) "Both Boomerangs shuffled back in stack"))))))
+          (is (= 0 (count (:discard (get-runner)))) "Both Boomerangs shuffled back in stack")))))
+  (testing "Boomerang works even when target server changed #5130"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Surveyor" "Ice Wall"]}
+                 :runner {:id "Omar Keung: Conspiracy Theorist"
+                          :deck ["Boomerang"]}})
+      (play-from-hand state :corp "Surveyor" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [surveyor (get-ice state :archives 0)
+            boom (get-hardware state 0)
+            omar (get-in @state [:runner :identity])]
+        (click-card state :runner surveyor)
+        (card-ability state :runner omar 0)
+        (core/rez state :corp surveyor)
+        (run-continue state)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "Trace X - End the run")
+        (click-prompt state :runner "Trace X - Give the Runner 2 tags")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "HQ")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (is (= "Boomerang" (:title (first (:deck (get-runner))))))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
