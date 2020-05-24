@@ -4400,21 +4400,32 @@
       (is (nil? (get-run)) "Run is ended")))
   (testing "with Gauntlet #2942"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanilla" 3)]}
-                 :runner {:hand ["The Gauntlet" "Rip Deal"]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 5)]
+                        :credits 10}
+                 :runner {:hand ["The Gauntlet" "Corroder" "Rip Deal"]
                           :discard ["Easy Mark" "Sure Gamble"]
-                          :credits 10}})
+                          :credits 15}})
+      (play-from-hand state :corp "Vanilla" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "The Gauntlet")
-      (play-from-hand state :runner "Rip Deal")
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "1")
-      (click-prompt state :runner "Rip Deal")
-      (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (play-from-hand state :runner "Corroder")
+      (let [corroder (get-program state 0)]
+        (play-from-hand state :runner "Rip Deal")
+        (run-continue state)
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-continue state)
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "Rip Deal")
+        (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
       (is (= 2 (-> (get-runner) :hand count)))

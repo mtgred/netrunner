@@ -2367,26 +2367,29 @@
               :replace-access
               {:async true
                :effect
-               (effect
-                 (continue-ability
-                   (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
-                         heap (count (:discard runner))]
-                     (if (pos? heap)
-                       {:show-discard true
-                        :prompt (str "Choose " (quantify (min n heap) "card") " to move from the Heap to your Grip")
-                        :async true
-                        :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
-                        :choices {:max (min n heap)
-                                  :all true
-                                  :card #(and (runner? %)
-                                              (in-discard? %))}
-                        :effect (req (doseq [c targets]
-                                       (move state side c :hand))
-                                     (effect-completed state side eid))}
-                       {:async true
-                        :msg (msg "take no cards from their Heap to their Grip")
-                        :effect (req (effect-completed state side eid))}))
-                   card nil))}}
+               (req (wait-for
+                      ;; todo: remove this when replacement effects are fixed
+                      (trigger-event-sync state side :pre-access (first (:server run)))
+                      (continue-ability
+                        state side
+                        (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
+                              heap (count (:discard runner))]
+                          (if (pos? heap)
+                            {:show-discard true
+                             :prompt (str "Choose " (quantify (min n heap) "card") " to move from the Heap to your Grip")
+                             :async true
+                             :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
+                             :choices {:max (min n heap)
+                                       :all true
+                                       :card #(and (runner? %)
+                                                   (in-discard? %))}
+                             :effect (req (doseq [c targets]
+                                            (move state side c :hand))
+                                          (effect-completed state side eid))}
+                            {:async true
+                             :msg (msg "take no cards from their Heap to their Grip")
+                             :effect (req (effect-completed state side eid))}))
+                        card nil)))}}
              card nil))})
 
 (define-card "Rumor Mill"
