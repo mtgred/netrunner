@@ -71,6 +71,7 @@
                           [:li [:code "/move-hand"] " - Pick a card from your play-area to put into your hand"]
                           [:li [:code "/peek n"] " - See n top cards of your deck"]
                           [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
+                          [:li [:code "/replace-id n"] " - Replace your ID with the card \"n\""]
                           [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
                           [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                           [:li [:code "/rfg"] " - Select a card to remove from the game"]
