@@ -585,9 +585,14 @@
           ; R&D was shuffled
           (click-prompt state :runner "No") ; not letting sub fire
           (click-prompt state :runner "No action") ; end accessing C
-          (is (= (str "You accessed " (-> (get-corp) :deck first :title) ".")
-                 (-> (get-runner) :prompt first :msg))
-              "Accessing top card of R&D")
-          (click-prompt state :runner "No action")
-          (is false "no")
+          (if (= "Chrysalis" (-> (get-corp) :deck first :title))
+            (do
+              (is (= "You are encountering Chrysalis. Allow its subroutine to fire?" (-> (get-runner) :prompt first :msg)) "Accessing top card being C")
+              (click-prompt state :runner "No") ; not letting sub fire
+              (click-prompt state :runner "No action")) ; end accessing C
+            (do
+              (is (= (str "You accessed " (-> (get-corp) :deck first :title) ".")
+                     (-> (get-runner) :prompt first :msg))
+                  "Accessing top card of R&D")
+              (click-prompt state :runner "No action")))
           (is (empty? (:prompt (get-runner))) "No more accesses"))))))
