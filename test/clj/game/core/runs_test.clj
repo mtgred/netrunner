@@ -551,12 +551,7 @@
         (is (= "You accessed DNA Tracker." (-> (get-runner) :prompt first :msg)) "Accessed D")
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "No more accesses")
-        (is (= "Advanced Assembly Lines" (-> (get-corp) :deck first :title)) "A on top")))))
-
-(deftest-pending multi-access-shuffle
-  ; Currently, shuffling during the accesses is only handled for Bacterial Programming using
-  ; a special flag. This should be generalized at some point.
-  (testing "Correct handling of multi accesses with shuffle in between accesses"
+        (is (= "Advanced Assembly Lines" (-> (get-corp) :deck first :title)) "A on top")))
     (testing "Shuffle from paid ability during accesses"
       (do-game
         (new-game {:corp {:hand ["Advanced Assembly Lines" "Brainstorm" "Chrysalis" "DNA Tracker" "Efficiency Committee"

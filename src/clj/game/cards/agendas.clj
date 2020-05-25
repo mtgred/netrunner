@@ -248,7 +248,7 @@
                       :yes-ability
                       {:async true
                        :effect (req (let [c (take 7 (:deck corp))]
-                                      (when (:run @state)
+                                      (when (:access @state)
                                         (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                                       (show-wait-prompt state :runner "Corp to use Bacterial Programming")
                                       (continue-ability state :corp (trash-step c '()) card nil)))}}}
