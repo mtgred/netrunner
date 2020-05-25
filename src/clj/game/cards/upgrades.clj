@@ -1056,9 +1056,10 @@
 (define-card "Overseer Matrix"
   (let [ability {:async true
                  :interactive (req true)
-                 :req (req (some #(or (in-same-server? card %)
-                                      (from-same-server? card %)
-                                      (in-same-server? (assoc card :zone (:previous-zone card)) %))
+                 :req (req (some #(and (corp? %)
+                                       (or (in-same-server? card %)
+                                           (from-same-server? card %)
+                                           (in-same-server? (assoc card :zone (:previous-zone card)) %)))
                                  targets))
                  :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                                  (continue-ability
