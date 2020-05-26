@@ -63,8 +63,8 @@
         room
         (t/now)
         spectatorhands
-        (new-corp (:user corp) corp-identity corp-options (zone :deck corp-deck) corp-deck-id corp-quote)
-        (new-runner (:user runner) runner-identity runner-options (zone :deck runner-deck) runner-deck-id runner-quote)))))
+        (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
+        (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
 
 (defn init-game
   "Initializes a new game with the given players vector."

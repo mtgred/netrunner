@@ -123,7 +123,8 @@
                           (let [directives (->> (server-cards)
                                                 (filter #(has-subtype? % "Directive"))
                                                 (map make-card)
-                                                (zone :play-area))]
+                                                (map #(assoc % :zone [:play-area]))
+                                                (into []))]
                             ;; Add directives to :play-area - assumed to be empty
                             (swap! state assoc-in [:runner :play-area] directives)
                             (continue-ability state side

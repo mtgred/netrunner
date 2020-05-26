@@ -60,13 +60,6 @@
       :else
       (= value cv))))
 
-(defn zone
-  "Associate the specified zone to each item in the collection.
-  Zone can be a singleton or a sequential collection"
-  [zone coll]
-  (let [dest (if (sequential? zone) (vec zone) [zone])]
-    (map #(assoc % :zone dest) coll)))
-
 (defn to-keyword [string]
   (cond
 
