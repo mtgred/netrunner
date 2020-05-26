@@ -40,7 +40,7 @@
                                                                  :init-data true}))
                                  (let [devavec (get-in @state [:runner :rig :program])
                                        devaindex (first (keep-indexed #(when (same-card? %2 card) %1) devavec))
-                                       newdeva (assoc target :zone (:zone card) :installed true)
+                                       newdeva (assoc target :zone (get-zone card) :installed true)
                                        newvec (apply conj (subvec devavec 0 devaindex) newdeva (subvec devavec devaindex))]
                                    (lose state :runner :memory (:memoryunits card))
                                    (swap! state assoc-in [:runner :rig :program] newvec)
@@ -548,23 +548,23 @@
   {:abilities [{:cost [:click 1]
                 :effect (req (let [b (get-card state card)
                                    hosted? (ice? (:host b))
-                                   remote? (is-remote? (second (:zone (:host b))))]
+                                   remote? (is-remote? (second (get-zone (:host b))))]
                                (continue-ability
                                  state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "
                                                (if hosted? (if remote? "a central" "a remote") "any") " server")
                                   :choices {:card #(if hosted?
                                                      (and (if remote?
-                                                            (is-central? (second (:zone %)))
-                                                            (is-remote? (second (:zone %))))
+                                                            (is-central? (second (get-zone %)))
+                                                            (is-remote? (second (get-zone %))))
                                                           (ice? %)
                                                           (can-host? %)
-                                                          (= (last (:zone %)) :ices)
+                                                          (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %)))
                                                      (and (ice? %)
                                                           (can-host? %)
-                                                          (= (last (:zone %)) :ices)
+                                                          (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
@@ -764,10 +764,11 @@
                                          (ice? target)
                                          (= (:title target) (:title current-ice))))}
                 :msg "redirect the run"
-                :effect (req (let [dest (second (:zone target))
+                :effect (req (let [dest (second (get-zone target))
                                    tgtndx (ice-index state target)]
                                (swap! state update-in [:run]
                                       #(assoc % :position tgtndx :server [dest]))
+                               (set-current-ice state)
                                (trash state side eid card {:unpreventable true})))}]})
 
 (define-card "Cordyceps"
@@ -785,7 +786,7 @@
               {:prompt "Select ice protecting this server"
                :choices {:req (req (and (installed? target)
                                         (ice? target)
-                                        (= (first (:server (:run @state))) (second (:zone target)))))}
+                                        (= (first (:server (:run @state))) (second (get-zone target)))))}
                :async true
                :effect (effect
                          (continue-ability
@@ -810,14 +811,14 @@
    :events [{:event :card-moved
              :silent (req true)
              :req (req (and (= "Runner" (:side target))
-                            (= [:hand] (or (:zone target)
-                                           (:previous-zone target)))))
+                            (or (in-hand? target)
+                                (= [:hand] (:previous-zone target)))))
              :effect (effect (update-breaker-strength card))}
             {:event :runner-draw
              :silent (req true)
              :req (req (when-let [drawn (-> @state :runner :register :most-recent-drawn first)]
-                         (= [:hand] (or (:zone drawn)
-                                        (:previous-zone drawn)))))
+                         (or (in-hand? drawn)
+                             (= [:hand] (:previous-zone drawn)))))
              :effect (effect (update-breaker-strength card))}]
    :strength-bonus (req (- (count (:hand runner))))})
 
@@ -1544,9 +1545,9 @@
                                                  (when hosted " not before or after the current host ICE"))
                                     :cost [:click 1]
                                     :choices {:card #(if hosted
-                                                       (and (or (when (= (:zone %) (:zone (:host k)))
+                                                       (and (or (when (= (get-zone %) (get-zone (:host k)))
                                                                   (not= 1 (abs (- (ice-index state %) icepos))))
-                                                                (not= (:zone %) (:zone (:host k))))
+                                                                (not= (get-zone %) (get-zone (:host k))))
                                                             (ice? %)
                                                             (can-host? %)
                                                             (installed? %)
@@ -1979,16 +1980,16 @@
                 :prompt "Host Pawn on the outermost ICE of a central server"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
-                                      (= (last (:zone %)) :ices)
-                                      (is-central? (second (:zone %))))}
+                                      (= (last (get-zone %)) :ices)
+                                      (is-central? (second (get-zone %))))}
                 :msg (msg "host it on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Advance to next ICE"
                 :prompt "Choose the next innermost ICE to host Pawn on it"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
-                                      (= (last (:zone %)) :ices)
-                                      (is-central? (second (:zone %))))}
+                                      (= (last (get-zone %)) :ices)
+                                      (is-central? (second (get-zone %))))}
                 :msg (msg "host it on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
@@ -2001,7 +2002,8 @@
                                             :show-discard true
                                             :choices {:card #(and (has-subtype? % "Caïssa")
                                                                   (not= (:cid %) this-pawn)
-                                                                  (#{[:hand] [:discard]} (:zone %)))}
+                                                                  (or (in-hand? %)
+                                                                      (in-discard? %)))}
                                             :msg (msg "install " (:title target))
                                             :async true
                                             :effect (effect (runner-install eid target {:ignore-all-cost true}))}
@@ -2236,21 +2238,21 @@
                                                  icepos " of a different server")
                                             (msg "Host Rook on a piece of ICE protecting any server"))
                                   :choices {:card #(if hosted?
-                                                     (and (or (= (:zone %) (:zone (:host r)))
+                                                     (and (or (= (get-zone %) (get-zone (:host r)))
                                                               (= (ice-index state %) icepos))
-                                                          (= (last (:zone %)) :ices)
+                                                          (= (last (get-zone %)) :ices)
                                                           (ice? %)
                                                           (can-host? %)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
                                                      (and (ice? %)
                                                           (can-host? %)
-                                                          (= (last (:zone %)) :ices)
+                                                          (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
    :constant-effects [{:type :rez-cost
                        :req (req (and (ice? target)
-                                      (= (:zone (:host card)) (:zone target))))
+                                      (= (get-zone (:host card)) (get-zone target))))
                        :value 2}]})
 
 (define-card "Sadyojata"
@@ -2441,7 +2443,7 @@
   (letfn [(surf [state cice]
             {:prompt (msg "Choose an ICE before or after " (:title cice))
              :choices {:card #(and (ice? %)
-                                   (= (:zone %) (:zone cice))
+                                   (= (get-zone %) (get-zone cice))
                                    (= 1 (abs (- (ice-index state %)
                                                 (ice-index state cice)))))}
              :effect (req (let [tgtndx (ice-index state target)
@@ -2450,9 +2452,9 @@
                                                            (card-str state cice)
                                                            " and "
                                                            (card-str state (nth run-ices tgtndx))))
-                            (swap! state update-in (cons :corp (:zone cice))
+                            (swap! state update-in (cons :corp (get-zone cice))
                                    #(assoc % tgtndx cice))
-                            (swap! state update-in (cons :corp (:zone cice))
+                            (swap! state update-in (cons :corp (get-zone cice))
                                    #(assoc % cidx target))
                             (swap! state update-in [:run] #(assoc % :position (inc tgtndx)))
                             (update-all-ice state side)))})]

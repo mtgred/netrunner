@@ -350,7 +350,7 @@
   is the innermost ice."
   [state ice]
   (or (:index ice)
-      (first (keep-indexed #(when (same-card? %2 ice) %1) (get-in @state (cons :corp (get-nested-zone ice)))))))
+      (first (keep-indexed #(when (same-card? %2 ice) %1) (get-in @state (cons :corp (get-zone ice)))))))
 
 ;; Break abilities
 (defn- break-subroutines-impl

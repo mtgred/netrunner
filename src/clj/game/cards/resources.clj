@@ -132,7 +132,7 @@
 (define-card "Aeneas Informant"
   {:events [{:event :no-trash
              :req (req (and (:trash target)
-                            (not= (first (:zone target)) :discard)))
+                            (not (in-discard? target))))
              :optional {:autoresolve (get-autoresolve :auto-reveal-and-gain)
                         :prompt "Use Aeneas Informant?"
                         :yes-ability {:msg (msg (str "gain 1 [Credits]"
@@ -513,8 +513,8 @@
           (trash-or-bonus [chosen-server]
             {:player :corp
              :prompt "Choose a piece of ice to trash or cancel"
-             :choices {:card #(and (= (last (:zone %)) :ices)
-                                   (= chosen-server (rest (butlast (:zone %)))))}
+             :choices {:card #(and (= (last (get-zone %)) :ices)
+                                   (= chosen-server (rest (butlast (get-zone %)))))}
              :async true
              :effect (effect (system-msg (str "trashes " (card-str state target)))
                              (trash :corp eid target {:unpreventable true}))
@@ -1504,7 +1504,7 @@
                 :prompt "Choose a piece of ICE protecting a remote server"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %)
-                                      (is-remote? (second (:zone %))))}
+                                      (is-remote? (second (get-zone %))))}
                 :msg "derez a piece of ICE protecting a remote server"
                 :cost [:trash]
                 :effect (effect (derez target))}]})
@@ -2264,7 +2264,7 @@
                             (some #(and (ice? %)
                                         (not (protecting-same-server? target %))
                                         (= run-position (ice-index state %))
-                                        (is-central? (second (:zone %))))
+                                        (is-central? (second (get-zone %))))
                                   (all-installed state :corp))))
              :optional
              {:prompt "Trash Slipstream to change servers?"
@@ -2280,10 +2280,10 @@
                                                (not (protecting-same-server? passed-ice target))
                                                (= run-position (ice-index state target))
                                                (not (same-card? target passed-ice))
-                                               (is-central? (second (:zone target)))))}
+                                               (is-central? (second (get-zone target)))))}
                       :msg (msg "approach " (card-str state target))
                       :effect (req (wait-for (trash state side card {:unpreventable true})
-                                             (let [dest (second (:zone target))]
+                                             (let [dest (second (get-zone target))]
                                                (swap! state update-in [:run]
                                                       #(assoc % :position (inc run-position) :server [dest]))
                                                (set-next-phase state :approach-ice)

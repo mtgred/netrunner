@@ -544,8 +544,8 @@
 (define-card "Daily Quest"
   (let [ability {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
                              (not (some (into #{}
-                                              (list (second (:zone card))
-                                                    (second (:zone (:host card)))))
+                                              (list (second (get-zone card))
+                                                    (second (get-zone (:host card)))))
                                         servers))))
                  :msg "gain 3 [Credits]"
                  :effect (effect (gain-credits :corp 3))}]
@@ -598,7 +598,7 @@
                                       (or (in-hand? %)
                                           (in-discard? %)))}
                 :label "Reveal an agenda from HQ or Archives"
-                :msg (msg "reveal " (:title target) " from " (zone->name (:zone target))
+                :msg (msg "reveal " (:title target) " from " (zone->name (get-zone target))
                           (let [target-agenda-points (get-agenda-points state :corp target)]
                             (str ", gain " target-agenda-points " [Credits], "))
                           " and shuffle it into R&D")
@@ -661,7 +661,7 @@
 (define-card "Estelle Moon"
   {:events [{:event :corp-install
              :req (req (and (or (asset? target) (agenda? target) (upgrade? target))
-                            (is-remote? (second (:zone target)))))
+                            (is-remote? (second (get-zone target)))))
              :effect (effect (add-counter card :power 1)
                              (system-msg (str "places 1 power counter on Estelle Moon")))}]
    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
@@ -1848,7 +1848,7 @@
 (define-card "Shi.Kyū"
   {:access
    {:async true
-    :req (req (not= (first (:zone card)) :deck))
+    :req (req (not (in-deck? card)))
     :effect (effect (show-wait-prompt :runner "Corp to use Shi.Kyū")
                     (continue-ability
                       {:optional
@@ -1900,7 +1900,7 @@
 
 (define-card "Snare!"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not= (first (:zone card)) :discard))
+   :access {:req (req (not (in-discard? card)))
             :async true
             :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
                             (continue-ability
@@ -1987,7 +1987,8 @@
              :async true
              :choices {:card #(and (not (operation? %))
                                    (corp? %)
-                                   (#{[:hand] [:discard]} (:zone %)))}
+                                   (or (in-hand? %)
+                                       (in-discard? %)))}
              :msg (msg (corp-install-msg target))
              :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}]})
 
@@ -2071,8 +2072,8 @@
                        :req (req (= :runner (:scored-side target)))
                        :value -1}]
    :events [{:event :card-moved
-             :req (req (or (= :scored (first (:zone target)))
-                           (= :scored (first (:zone (second targets))))))
+             :req (req (or (in-scored? target)
+                           (in-scored? (second targets))))
              :effect (effect (update-all-agenda-points))}]})
 
 (define-card "The News Now Hour"
@@ -2106,7 +2107,7 @@
      :msg "swap it for an asset or agenda from HQ"
      :effect (req (let [c (get-counters card :advancement)
                         target (assoc target :advance-counter c)
-                        server (zone->name (butlast (:zone card)))
+                        server (zone->name (butlast (get-zone card)))
                         index (:index card)]
                     (move state :corp card :hand)
                     (wait-for (corp-install state :corp target server {:index index})
@@ -2149,7 +2150,8 @@
                       (let [card-to-install target]
                         {:async true
                          :prompt (str "Where to install " (:title card-to-install))
-                         :choices (req (remove (set (zone->name (:zone card))) (installable-servers state card-to-install)))
+                         :choices (req (remove (set (zone->name (get-zone card)))
+                                               (installable-servers state card-to-install)))
                          :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
                       card nil))}
    :abilities [{:label "Install 1 card"
