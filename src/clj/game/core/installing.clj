@@ -32,7 +32,7 @@
     (install-locked? state :corp)
     :lock-install
     ;; Earth station cannot have more than one server
-    (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 13))
+    (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 (min 13 (count (:title (get-in @state [:corp :identity]))))))
          (not (:disabled (get-in @state [:corp :identity])))
          (pos? (count (get-remotes state)))
          (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))

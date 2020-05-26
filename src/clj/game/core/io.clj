@@ -276,6 +276,17 @@
     (when card
       (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
 
+(defn command-replace-id
+  [state side args]
+  (let [s-card (server-card (string/join " " args))
+        card (when (and s-card (same-side? (:side s-card) side))
+               (build-card s-card))]
+    (when card
+      (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
+        (disable-identity state side)
+        (swap! state assoc-in [side :identity] new-id)
+        (card-init state side new-id {:resolve-effect true :init-data true})))))
+
 (defn command-host
   [state side]
   (let [f (if (= :corp side) corp? runner?)]
@@ -378,6 +389,7 @@
                                                     (map->Card {:title "/psi command" :side %2})
                                                     {:equal  {:msg "resolve equal bets effect"}
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
+        "/replace-id" #(command-replace-id %1 %2 args)
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
                                           {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
