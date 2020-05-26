@@ -220,6 +220,17 @@
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of turn")))))
 
+(defn command-unique
+  "Toggles :uniqueness of the selected card"
+  [state side]
+  (resolve-ability state side
+                   {:effect (effect (set-prop target :uniqueness (not (:uniqueness target))))
+                    :msg (msg "makes " (card-str state target)
+                              (when (not (:uniqueness (get-card state target))) " not")
+                              " unique")
+                    :choices {:card (fn [t] (same-side? (:side t) side))}}
+                   (map->Card {:title "/unique command"}) nil))
+
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
@@ -436,6 +447,7 @@
         "/trash"      command-trash
         "/undo-click" #(command-undo-click %1 %2)
         "/undo-turn"  #(command-undo-turn %1 %2)
+        "/unique"     command-unique
         nil))))
 
 (defn corp-install-msg
