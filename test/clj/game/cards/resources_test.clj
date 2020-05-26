@@ -283,7 +283,33 @@
       (play-from-hand state :runner "Bazaar")
       (play-from-hand state :runner "Clone Chip")
       (click-prompt state :runner "Yes")
-      (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip"))))
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip")))
+  (testing "with replicator #4456"
+    (do-game
+      (new-game {:runner {:deck [(qty "Clone Chip" 5)]
+                          :hand ["Bazaar" "In the Groove" (qty "Replicator" 3)]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "In the Groove")
+      (play-from-hand state :runner "Bazaar")
+      (is (= "What to get from In the Groove?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Draw 1 card")
+      (play-from-hand state :runner "Replicator")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "In the Groove")
+      (is (= "What to get from In the Groove?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Draw 1 card")
+      (is (= "Install another copy of Replicator?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "In the Groove")
+      (is (= "What to get from In the Groove?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Draw 1 card")
+      (is (= "Install another copy of Replicator?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Draw 1 card")
+      (is (empty? (:prompt (get-corp))))
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest beach-party
   ;; Beach Party - Lose 1 click when turn begins; hand size increased by 5
