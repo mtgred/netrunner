@@ -3735,16 +3735,29 @@
 
 (deftest peace-in-our-time
   ;; Peace in Our Time - runner gains 10, corp gains 5. No runs allowed during turn.
-  (do-game
-    (new-game {:runner {:deck ["Peace in Our Time"]}})
-    (take-credits state :corp)
-    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-    (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
-    (play-from-hand state :runner "Peace in Our Time")
-    (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
-    (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
-    (run-on state "HQ")
-    (is (not (:run @state)) "Not allowed to make a run")))
+  (testing "no runs allowed"
+    (do-game
+      (new-game {:runner {:deck ["Peace in Our Time"]}})
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+      (play-from-hand state :runner "Peace in Our Time")
+      (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
+      (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
+      (run-on state "HQ")
+      (is (not (:run @state)) "Not allowed to make a run"))))
+  (testing "cannot play if agenda scored previously"
+    (do-game
+        (new-game {:runner {:deck ["Peace in Our Time"]}
+                    :corp {:hand ["Hostile Takeover"]}})
+        (play-from-hand state :corp "Hostile Takeover" "New remote")
+        (let [hostile (get-content state :remote1 0)]
+          (advance state hostile 2)
+          (core/score state :corp {:card (refresh hostile)})
+          (take-credits state :corp)
+          (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+          (play-from-hand state :runner "Peace in Our Time")
+          (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits"))))
 
 (deftest planned-assault
   ;; Planned Assault
@@ -4387,21 +4400,32 @@
       (is (nil? (get-run)) "Run is ended")))
   (testing "with Gauntlet #2942"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanilla" 3)]}
-                 :runner {:hand ["The Gauntlet" "Rip Deal"]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Vanilla" 5)]
+                        :credits 10}
+                 :runner {:hand ["The Gauntlet" "Corroder" "Rip Deal"]
                           :discard ["Easy Mark" "Sure Gamble"]
-                          :credits 10}})
+                          :credits 15}})
+      (play-from-hand state :corp "Vanilla" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "The Gauntlet")
-      (play-from-hand state :runner "Rip Deal")
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "1")
-      (click-prompt state :runner "Rip Deal")
-      (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (play-from-hand state :runner "Corroder")
+      (let [corroder (get-program state 0)]
+        (play-from-hand state :runner "Rip Deal")
+        (run-continue state)
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-continue state)
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "Rip Deal")
+        (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
       (is (= 2 (-> (get-runner) :hand count)))

@@ -1205,7 +1205,24 @@
           (trash state :corp (refresh malia))
           (is (not (:disabled (refresh dj-fenris))) "DJ Fenris is enabled")
           (is (not (:disabled (hosted-ct))) "CT is enabled")
-          (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))))
+          (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))
+    (testing "Interaction with Paige Piper #4055"
+      (do-game
+        (new-game {:runner {:id sunny
+                            :deck [(qty "Sure Gamble" 5) (qty "DJ Fenris" 2)]
+                            :hand ["DJ Fenris" "Paige Piper"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Paige Piper")
+        (click-prompt state :runner "No")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (play-from-hand state :runner "DJ Fenris")
+        (click-prompt state :runner "Paige Piper")
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "2")
+        (click-prompt state :runner chaos)
+        (is (empty? (:prompt (get-corp))))
+        (is (empty? (:prompt (get-runner))))))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
@@ -2362,6 +2379,72 @@
     (is (zero? (count-tags state)) "Runner has no tags during turn")
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
+
+
+(deftest kasi-string
+  ;; Kasi String
+  (testing "Basic run trigger test"
+    (do-game
+      (new-game {:corp {:deck ["NGO Front"]}
+                 :runner {:deck ["Kasi String"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kasi String")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on it")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
+  (testing "No counter when stealing agenda"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover"]}
+                 :runner {:deck ["Kasi String"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kasi String")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it")))
+  (testing "Triggers only on remote server"
+    (do-game
+      (new-game {:corp {:deck ["NGO Front" "Hedge Fund"]}
+                 :runner {:deck ["Kasi String"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kasi String")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it - no trigger on HQ")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
+  (testing "Triggers only on remote server"
+    (do-game
+      (new-game {:corp {:deck ["NGO Front" "Hedge Fund"]}
+                 :runner {:deck ["Kasi String"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kasi String")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it - no trigger on HQ")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 1 (count (:scored (get-runner)))) "Kasi String moved to score area")
+      (is (= 1 (:agenda-point (get-runner))) "Kasi String scored for 1 agenda point"))))
 
 (deftest kati-jones
   ;; Kati Jones - Click to store and take

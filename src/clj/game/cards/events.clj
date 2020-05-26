@@ -2007,7 +2007,7 @@
    :effect (effect (lose-tags eid :all))})
 
 (define-card "Peace in Our Time"
-  {:req (req (not (:scored-agenda corp-reg)))
+  {:req (req (not (:scored-agenda corp-reg-last)))
    :msg "gain 10 [Credits]. The Corp gains 5 [Credits]"
    :effect (effect (gain-credits :runner 10)
                    (gain-credits :corp 5)
@@ -2367,26 +2367,29 @@
               :replace-access
               {:async true
                :effect
-               (effect
-                 (continue-ability
-                   (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
-                         heap (count (:discard runner))]
-                     (if (pos? heap)
-                       {:show-discard true
-                        :prompt (str "Choose " (quantify (min n heap) "card") " to move from the Heap to your Grip")
-                        :async true
-                        :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
-                        :choices {:max (min n heap)
-                                  :all true
-                                  :card #(and (runner? %)
-                                              (in-discard? %))}
-                        :effect (req (doseq [c targets]
-                                       (move state side c :hand))
-                                     (effect-completed state side eid))}
-                       {:async true
-                        :msg (msg "take no cards from their Heap to their Grip")
-                        :effect (req (effect-completed state side eid))}))
-                   card nil))}}
+               (req (wait-for
+                      ;; todo: remove this when replacement effects are fixed
+                      (trigger-event-sync state side :pre-access (first (:server run)))
+                      (continue-ability
+                        state side
+                        (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
+                              heap (count (:discard runner))]
+                          (if (pos? heap)
+                            {:show-discard true
+                             :prompt (str "Choose " (quantify (min n heap) "card") " to move from the Heap to your Grip")
+                             :async true
+                             :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
+                             :choices {:max (min n heap)
+                                       :all true
+                                       :card #(and (runner? %)
+                                                   (in-discard? %))}
+                             :effect (req (doseq [c targets]
+                                            (move state side c :hand))
+                                          (effect-completed state side eid))}
+                            {:async true
+                             :msg (msg "take no cards from their Heap to their Grip")
+                             :effect (req (effect-completed state side eid))}))
+                        card nil)))}}
              card nil))})
 
 (define-card "Rumor Mill"
@@ -2904,7 +2907,8 @@
      :trace {:base 3
              :unsuccessful
              {:async true
-              :msg "reveal all cards in HQ"
+              :msg (msg "reveal all cards in HQ" (when-let [hand (seq (:hand corp))]
+                                                   (str ": " (join ", " (map :title hand)))))
               :effect (effect (reveal (:hand corp))
                         (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}}))
 

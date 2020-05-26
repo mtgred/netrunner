@@ -1646,8 +1646,8 @@
    :effect (req (let [installed (get-all-installed state)
                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
                   (doseq [c installed]
-                    (set-prop state side c :advance-counter 0))
-                  (set-prop state side target :advance-counter total-adv)
+                    (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true}))
+                  (add-prop state side target :advance-counter total-adv {:placed true})
                   (update-all-ice state side)
                   (system-msg state side (str "uses Red Planet Couriers to move " total-adv
                                               " advancement tokens to " (card-str state target)))
@@ -2074,7 +2074,7 @@
 (define-card "Sunset"
   (letfn [(sun [serv]
             {:prompt "Select two pieces of ICE to swap positions"
-             :choices {:card #(and (= serv (rest (butlast (:zone %))))
+             :choices {:card #(and (= serv (:zone %))
                                    (ice? %))
                        :max 2}
              :async true
@@ -2087,7 +2087,7 @@
      :choices (req servers)
      :async true
      :msg (msg "rearrange ICE protecting " target)
-     :effect (req (let [serv (rest (server->zone state target))]
+     :effect (req (let [serv (conj (server->zone state target) :ices)]
                     (continue-ability state side (sun serv) card nil)))}))
 
 (define-card "Surveillance Sweep"

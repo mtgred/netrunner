@@ -45,13 +45,12 @@
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       ;; events should be registered for:
-       ;; * runner cards that are installed;
-       ;; * corp cards that are Operations, or are installed and rezzed
-       (when (or (operation? target)
-                 (and (event? target) (not facedown))
-                 (and installed (runner? target))
-                 (and installed (corp? target) (rezzed? target)))
+       ;; events should be registered for condition counters
+       (when (or (condition-counter? target)
+                 (and installed
+                      (or (runner? target)
+                          (and (corp? target)
+                               (rezzed? target)))))
          (register-events state side c)
          (register-constant-effects state side c)
          (when (or (:recurring tdef)

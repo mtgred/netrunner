@@ -310,122 +310,121 @@
   (let [[command & args] (split text #" ")
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
-    (when (<= (count args) 2)
-      (if (= (ffirst args) \#)
-        (case command
-          "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
-          "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
-          nil)
-        (case command
-          "/adv-counter" #(command-adv-counter %1 %2 value)
-          "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (max 0 value))
-          "/card-info"  #(resolve-ability %1 %2
-                                          {:effect (effect (system-msg (str "shows card-info of "
-                                                                            (card-str state target)
-                                                                            ": " (get-card state target))))
-                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
-                                          (map->Card {:title "/card-info command"}) nil)
-          "/clear-win"  clear-win
-          "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
-          "/close-prompt" command-close-prompt
-          "/counter"    #(command-counter %1 %2 args)
-          "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
-          "/deck"       #(toast %1 %2 "/deck number takes the format #n")
-          "/discard"    #(toast %1 %2 "/discard number takes the format #n")
-          "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
-          "/draw"       #(draw %1 %2 (max 0 value))
-          "/end-run"    (fn [state side]
-                          (when (and (= side :corp)
-                                     (:run @state))
-                            (end-run state side (make-eid state) nil)))
-          "/error"      show-error-toast
-          "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
-          "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
-          "/host"       command-host
-          "/install-ice" command-install-ice
-          "/jack-out"   (fn [state side]
-                          (when (and (= side :runner)
-                                     (:run @state))
-                            (jack-out state side (make-eid state))))
-          "/link"       (fn [state side]
-                          (when (= side :runner)
-                            (swap! state assoc-in [:runner :link] (max 0 value))))
-          "/memory"     (fn [state side]
-                          (when (= side :runner)
-                            (swap! state assoc-in [:runner :memory :used]
-                                   (- (+ (get-in @state [:runner :memory :base])
-                                         (get-in @state [:runner :memory :mod]))
-                                      value))))
-          "/move-bottom"  #(resolve-ability %1 %2
-                                            {:prompt "Select a card in hand to put on the bottom of your deck"
-                                             :effect (effect (move target :deck))
-                                             :choices {:card (fn [t] (and (same-side? (:side t) %2)
-                                                                          (in-hand? t)))}}
-                                            (map->Card {:title "/move-bottom command"}) nil)
-          "/move-deck"   #(resolve-ability %1 %2
-                                           {:prompt "Select a card to move to the top of your deck"
-                                            :effect (req (let [c (deactivate %1 %2 target)]
-                                                           (move %1 %2 c :deck {:front true})))
+    (if (= (ffirst args) \#)
+      (case command
+        "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
+        "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
+        nil)
+      (case command
+        "/adv-counter" #(command-adv-counter %1 %2 value)
+        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (max 0 value))
+        "/card-info"  #(resolve-ability %1 %2
+                                        {:effect (effect (system-msg (str "shows card-info of "
+                                                                          (card-str state target)
+                                                                          ": " (get-card state target))))
+                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                        (map->Card {:title "/card-info command"}) nil)
+        "/clear-win"  clear-win
+        "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
+        "/close-prompt" command-close-prompt
+        "/counter"    #(command-counter %1 %2 args)
+        "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
+        "/deck"       #(toast %1 %2 "/deck number takes the format #n")
+        "/discard"    #(toast %1 %2 "/discard number takes the format #n")
+        "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
+        "/draw"       #(draw %1 %2 (max 0 value))
+        "/end-run"    (fn [state side]
+                        (when (and (= side :corp)
+                                    (:run @state))
+                          (end-run state side (make-eid state) nil)))
+        "/error"      show-error-toast
+        "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
+        "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
+        "/host"       command-host
+        "/install-ice" command-install-ice
+        "/jack-out"   (fn [state side]
+                        (when (and (= side :runner)
+                                    (:run @state))
+                          (jack-out state side (make-eid state))))
+        "/link"       (fn [state side]
+                        (when (= side :runner)
+                          (swap! state assoc-in [:runner :link] (max 0 value))))
+        "/memory"     (fn [state side]
+                        (when (= side :runner)
+                          (swap! state assoc-in [:runner :memory :used]
+                                  (- (+ (get-in @state [:runner :memory :base])
+                                        (get-in @state [:runner :memory :mod]))
+                                    value))))
+        "/move-bottom"  #(resolve-ability %1 %2
+                                          {:prompt "Select a card in hand to put on the bottom of your deck"
+                                            :effect (effect (move target :deck))
+                                            :choices {:card (fn [t] (and (same-side? (:side t) %2)
+                                                                        (in-hand? t)))}}
+                                          (map->Card {:title "/move-bottom command"}) nil)
+        "/move-deck"   #(resolve-ability %1 %2
+                                          {:prompt "Select a card to move to the top of your deck"
+                                          :effect (req (let [c (deactivate %1 %2 target)]
+                                                          (move %1 %2 c :deck {:front true})))
+                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                          (map->Card {:title "/move-deck command"}) nil)
+        "/move-hand"  #(resolve-ability %1 %2
+                                        {:prompt "Select a card to move to your hand"
+                                          :effect (req (let [c (deactivate %1 %2 target)]
+                                                        (move %1 %2 c :hand)))
+                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                        (map->Card {:title "/move-hand command"}) nil)
+        "/peek"       #(command-peek %1 %2 value)
+        "/psi"        #(when (= %2 :corp) (psi-game %1 %2
+                                                    (map->Card {:title "/psi command" :side %2})
+                                                    {:equal  {:msg "resolve equal bets effect"}
+                                                      :not-equal {:msg "resolve unequal bets effect"}}))
+        "/rez"        #(when (= %2 :corp)
+                          (resolve-ability %1 %2
+                                          {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
                                             :choices {:card (fn [t] (same-side? (:side t) %2))}}
-                                           (map->Card {:title "/move-deck command"}) nil)
-          "/move-hand"  #(resolve-ability %1 %2
-                                          {:prompt "Select a card to move to your hand"
-                                           :effect (req (let [c (deactivate %1 %2 target)]
-                                                          (move %1 %2 c :hand)))
-                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
-                                          (map->Card {:title "/move-hand command"}) nil)
-          "/peek"       #(command-peek %1 %2 value)
-          "/psi"        #(when (= %2 :corp) (psi-game %1 %2
-                                                      (map->Card {:title "/psi command" :side %2})
-                                                      {:equal  {:msg "resolve equal bets effect"}
-                                                       :not-equal {:msg "resolve unequal bets effect"}}))
-          "/rez"        #(when (= %2 :corp)
-                           (resolve-ability %1 %2
-                                            {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
-                                             :choices {:card (fn [t] (same-side? (:side t) %2))}}
-                                            (map->Card {:title "/rez command"}) nil))
-          "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
-          "/rfg"        #(resolve-ability %1 %2
-                                          {:prompt "Select a card to remove from the game"
-                                           :effect (req (let [c (deactivate %1 %2 target)]
-                                                          (move %1 %2 c :rfg)))
-                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
-                                          (map->Card {:title "/rfg command"}) nil)
-          "/roll"       #(command-roll %1 %2 value)
-          "/summon"     #(command-summon %1 %2 args)
-          "/swap-ice"   #(when (= %2 :corp)
-                           (resolve-ability
-                             %1 %2
-                             {:prompt "Select two installed ice to swap"
-                              :choices {:max 2
-                                        :all true
-                                        :card (fn [c] (and (installed? c)
-                                                           (ice? c)))}
-                              :effect (effect (swap-ice (first targets) (second targets)))}
-                             (map->Card {:title "/swap-ice command"}) nil))
-          "/swap-installed" #(when (= %2 :corp)
-                               (resolve-ability
-                                 %1 %2
-                                 {:prompt "Select two installed non-ice to swap"
-                                  :choices {:max 2
-                                            :all true
-                                            :card (fn [c] (and (installed? c)
-                                                               (corp? c)
-                                                               (not (ice? c))))}
-                                  :effect (effect (swap-installed (first targets) (second targets)))}
-                                 (map->Card {:title "/swap-installed command"}) nil))
-          "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
-          "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
-          "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
-          "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
-          "/trace"      #(when (= %2 :corp) (init-trace %1 %2
-                                                        (map->Card {:title "/trace command" :side %2})
-                                                        {:base (max 0 value)
-                                                         :msg "resolve successful trace effect"}))
-          "/trash"      command-trash
-          "/undo-click" #(command-undo-click %1 %2)
-          "/undo-turn"  #(command-undo-turn %1 %2)
-          nil)))))
+                                          (map->Card {:title "/rez command"}) nil))
+        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
+        "/rfg"        #(resolve-ability %1 %2
+                                        {:prompt "Select a card to remove from the game"
+                                          :effect (req (let [c (deactivate %1 %2 target)]
+                                                        (move %1 %2 c :rfg)))
+                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                        (map->Card {:title "/rfg command"}) nil)
+        "/roll"       #(command-roll %1 %2 value)
+        "/summon"     #(command-summon %1 %2 args)
+        "/swap-ice"   #(when (= %2 :corp)
+                          (resolve-ability
+                            %1 %2
+                            {:prompt "Select two installed ice to swap"
+                            :choices {:max 2
+                                      :all true
+                                      :card (fn [c] (and (installed? c)
+                                                          (ice? c)))}
+                            :effect (effect (swap-ice (first targets) (second targets)))}
+                            (map->Card {:title "/swap-ice command"}) nil))
+        "/swap-installed" #(when (= %2 :corp)
+                              (resolve-ability
+                                %1 %2
+                                {:prompt "Select two installed non-ice to swap"
+                                :choices {:max 2
+                                          :all true
+                                          :card (fn [c] (and (installed? c)
+                                                              (corp? c)
+                                                              (not (ice? c))))}
+                                :effect (effect (swap-installed (first targets) (second targets)))}
+                                (map->Card {:title "/swap-installed command"}) nil))
+        "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
+        "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
+        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
+        "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
+        "/trace"      #(when (= %2 :corp) (init-trace %1 %2
+                                                      (map->Card {:title "/trace command" :side %2})
+                                                      {:base (max 0 value)
+                                                        :msg "resolve successful trace effect"}))
+        "/trash"      command-trash
+        "/undo-click" #(command-undo-click %1 %2)
+        "/undo-turn"  #(command-undo-turn %1 %2)
+        nil))))
 
 (defn corp-install-msg
   "Gets a message describing where a card has been installed from. Example: Interns."

@@ -1027,7 +1027,8 @@
            {:type :access-bonus
             :duration duration
             :req (req (= server (second targets)))
-            :value bonus})])))
+            :value bonus})]
+     floating-effect)))
 
 (defn access-bonus-count
   [state side s]

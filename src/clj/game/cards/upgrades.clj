@@ -107,8 +107,7 @@
                                                 card nil)
                               (do (clear-wait-prompt state :runner)
                                   (effect-completed state side eid)))))})]
-    {:init {:root "R&D"}
-     :install-req (req (filter #{"R&D"} targets))
+    {:install-req (req (filter #{"R&D"} targets))
      :abilities [{:cost [:click 1]
                   :req (req (pos? (count (:deck corp))))
                   :async true
@@ -1057,9 +1056,10 @@
 (define-card "Overseer Matrix"
   (let [ability {:async true
                  :interactive (req true)
-                 :req (req (some #(or (in-same-server? card %)
-                                      (from-same-server? card %)
-                                      (in-same-server? (assoc card :zone (:previous-zone card)) %))
+                 :req (req (some #(and (corp? %)
+                                       (or (in-same-server? card %)
+                                           (from-same-server? card %)
+                                           (in-same-server? (assoc card :zone (:previous-zone card)) %)))
                                  targets))
                  :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                                  (continue-ability
@@ -1098,8 +1098,7 @@
      :events [(assoc ability :event :runner-trash)]}))
 
 (define-card "Panic Button"
-  {:init {:root "HQ"}
-   :install-req (req (filter #{"HQ"} targets))
+  {:install-req (req (filter #{"HQ"} targets))
    :abilities [{:cost [:credit 1]
                 :msg "draw 1 card"
                 :req (req (and run (= (first (:server run)) :hq)))
@@ -1175,8 +1174,7 @@
                      card nil))})
 
 (define-card "Research Station"
-  {:init {:root "HQ"}
-   :install-req (req (filter #{"HQ"} targets))
+  {:install-req (req (filter #{"HQ"} targets))
    :in-play [:hand-size 2]})
 
 (define-card "Ruhr Valley"

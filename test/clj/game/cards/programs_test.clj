@@ -1687,7 +1687,34 @@
         (click-card state :corp engolo)
         (run-continue state)
         (is (nil? (refresh engolo)) "Engolo is trashed")
-        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed")))))
+        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed"))))
+ (testing "Marks eid as :ability #4962"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]}
+                 :runner {:hand ["Engolo" "Trickster Taka"]
+                          :credits 20}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trickster Taka")
+      (core/add-counter state :runner (get-resource state 0) :credit 2)
+      (play-from-hand state :runner "Engolo")
+      (let [roto (get-ice state :hq 0)
+            engolo (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp roto)
+        (run-continue state)
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Runner spends credits on Taka"
+          (click-prompt state :runner "Yes")
+          (click-card state :runner "Trickster Taka")
+          (click-card state :runner "Trickster Taka"))
+        (is (zero? (get-counters (get-resource state 0) :credit)) "Taka has been used")
+        (run-jack-out state)
+        (is (nil? (get-run)))
+        (is (empty? (:prompt (get-corp))))
+        (is (empty? (:prompt (get-runner))))))))
 
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
@@ -3254,7 +3281,23 @@
         (let [pc (get-program state 0)]
           (run-on state :hq)
           (run-continue state)
-          (is (empty? (filter #(:dynamic %) (:abilities (refresh pc)))) "No auto-pumping option for Akhet"))))))
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh pc)))) "No auto-pumping option for Akhet"))))
+    (testing "Orion triggers all heap breakers once"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Orion"]
+                          :credits 15}
+                   :runner {:discard [(qty "Paperclip" 2) (qty "MKUltra" 2) (qty "Black Orchestra" 2)]
+                            :credits 100}})
+        (play-from-hand state :corp "Orion" "HQ")
+        (take-credits state :corp)
+        (run-on state :hq)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (click-prompt state :runner "No")
+        (click-prompt state :runner "No")
+        (click-prompt state :runner "No")
+        (is (empty? (:prompt (get-runner))) "No further prompts to install heap breakers")))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"
@@ -3373,7 +3416,31 @@
           (take-credits state :runner)
           (take-credits state :corp)
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
-          (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
+          (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+  (testing "Interaction with Customized Secretary #2672"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:deck ["Parasite"]
+                          :hand ["Djinn" "Customized Secretary"]
+                          :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Djinn")
+      (card-ability state :runner (get-program state 0) 1)
+      (is (= "Choose a non-Icebreaker program in your grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Customized Secretary")
+      (is (= "Choose a program to host" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Parasite")
+      (card-ability state :runner (first (:hosted (get-program state 0))) 0)
+      (is (= "Parasite" (:title (first (:hosted (first (:hosted (get-program state 0))))))))
+      (is (= "Choose a program to install" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Parasite")
+      (is (= "Choose a card to host Parasite on" (:msg (prompt-map :runner))))
+      (click-card state :runner "Enigma")
+      (is (= "Customized Secretary" (:title (first (:hosted (get-program state 0))))))
+      (is (empty? (:hosted (first (:hosted (get-program state 0)))))))))
 
 (deftest paricia
   ;; Paricia

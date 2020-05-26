@@ -2885,7 +2885,15 @@
                                                     :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
 
 (define-card "Swarm"
-  (let [sub (end-the-run-unless-runner-pays 3)
+  (let [sub {:player :runner
+             :async true
+             :label "Trash a program"
+             :prompt "Let Corp trash 1 program or pay 3 [Credits]?"
+             :choices ["Corp trash"
+                       "Pay 3 [Credits]"]
+             :effect (req (if (= "Corp trash" target)
+                            (continue-ability state :corp trash-program card nil)
+                            (pay-sync state :runner eid card [:credit 3])))}
         ability {:req (req (same-card? card target))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :always

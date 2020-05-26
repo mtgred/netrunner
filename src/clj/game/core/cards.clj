@@ -109,7 +109,10 @@
               :else
               card)
             card)
-        c (if (and (or installed
+        c (if (and (not (and (= (get-scoring-owner state card) :runner)
+                             (#{:scored} src-zone)
+                             (#{:hand :deck :discard :rfg} target-zone)))
+                   (or installed
                        host
                        (#{:servers :scored :current :play-area} src-zone))
                    (or (#{:hand :deck :discard :rfg} target-zone)
@@ -153,6 +156,11 @@
                                 :seen seen
                                 :zone zone)))))
 
+(defn update-installed-card-indices
+  [state side server]
+  (swap! state update-in (cons side server)
+         #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %))))
+
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
@@ -178,8 +186,7 @@
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
              (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
-           (swap! state update-in (cons side dest)
-                  #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))
+           (update-installed-card-indices state side dest)
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)
@@ -267,12 +274,9 @@
 
 (defn shuffle-into-deck
   [state side & args]
-  (let [player (side @state)
-        zones (filter #(not (seq (get-in @state [side :locked %]))) args)
-        deck (shuffle (reduce concat (:deck player) (for [p zones] (zone :deck (p player)))))]
-    (swap! state assoc-in [side :deck] deck)
-    (doseq [p zones]
-      (swap! state assoc-in [side p] []))))
+  (doseq [zone (filter keyword? args)]
+    (move-zone state side zone :deck))
+  (shuffle! state side :deck))
 
 ;;; Misc card functions
 (defn get-virus-counters
