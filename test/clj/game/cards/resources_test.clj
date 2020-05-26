@@ -3297,15 +3297,18 @@
           (changes-val-macro -4 (:credit (get-runner))
                              "Pay 4 for MOpus install (1+5-2)"
                              (click-card state :runner mo))
+          (is (last-log-contains? state "Runner pays 4 \\[Credits\\] to install Magnum Opus using Paule's Café\\.") "Correct message for MOpus install")
           (card-ability state :runner pau 1)
           (changes-val-macro -4 (:credit (get-runner))
                              "Pay 4 for Desperado install (1+3)"
                              (click-card state :runner des))
+          (is (last-log-contains? state "Runner pays 4 \\[Credits\\] to install Desperado using Paule's Café\\.") "Correct message for Desperado install")
           (take-credits state :runner)
           (card-ability state :runner pau 1)
           (changes-val-macro -3 (:credit (get-runner))
-                             "Pay 3 for Corroder install (1+2)"
-                             (click-card state :runner cor))))))
+                             "Pay 3 for Corroder install in Corp turn (1+2)"
+                             (click-card state :runner cor))
+          (is (last-log-contains? state "Runner pays 3 \\[Credits\\] to install Corroder using Paule's Café\\.") "Correct message for Desperado install")))))
   (testing "Can't lower cost below 1. Issue #4816"
     (do-game
       (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones""Fan Site" "Miss Bones" "Corroder"]}})
@@ -3325,7 +3328,8 @@
             -1 (:credit (get-runner))
             "Pay 1 credit for Corroder (2 - 4 + 1 base)"
             (card-ability state :runner pau 1)
-            (click-card state :runner cor)))))))
+            (click-card state :runner cor))
+          (is (last-log-contains? state "Runner pays 1 \\[Credits\\] to install Corroder using Paule's Café\\.") "Correct message for Corroder install"))))))
 
 (deftest penumbral-toolkit
   ;; Penumbral Toolkit

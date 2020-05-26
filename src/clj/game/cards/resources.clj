@@ -1889,7 +1889,11 @@
                                               (:uniqueness %)))
                                 count
                                 -)
-                           0))]
+                           0))
+                       (edit-spend-msg [msg] ; adds 1 to the credit cost message
+                         (let [credit-msg (re-find #"\d+ \[Credits\]" msg)
+                               cost (Integer/parseInt (first (split credit-msg #" ")))]
+                           (clojure.string/replace msg (re-pattern (str cost #" \[Credits\]")) (str (inc cost) " [Credits]"))))]
                  {:async true
                   :label "Install hosted card"
                   :cost [:credit 1]
@@ -1907,7 +1911,7 @@
                                  (assoc eid :source card :source-type :runner-install)
                                  target
                                  {:cost-bonus (discount state card)
-                                  :custom-message #(str (build-spend-msg % "install") (:title target) " using " (:title card))})
+                                  :custom-message #(str (build-spend-msg (edit-spend-msg %) "install") (:title target) " using " (:title card))})
                             (swap! state assoc-in [:per-turn (:cid card)] true))})]})
 
 (define-card "Penumbral Toolkit"
