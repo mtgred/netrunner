@@ -300,8 +300,7 @@
                             :choices {:card #(and (agenda? %)
                                                   (not= (:title %)
                                                         "Bifrost Array")
-                                                  (= (first (:zone %))
-                                                     :scored)
+                                                  (in-scored? %)
                                                   (when-scored? %)
                                                   (:abilities %))}
                             :msg (msg "trigger the \"when scored\" ability of " (:title target))
@@ -466,7 +465,8 @@
              :show-discard true
              :choices {:card #(and (corp? %)
                                    (not (operation? %))
-                                   (#{[:hand] [:discard]} (:zone %)))}
+                                   (or (in-hand? %)
+                                       (in-discard? %)))}
              :msg (msg (corp-install-msg target)
                        (when (zero? n)
                          ", creating a new remote server")
@@ -592,7 +592,7 @@
 (define-card "Fetal AI"
   {:flags {:rd-reveal (req true)}
    :access {:async true
-            :req (req (not= (first (:zone card)) :discard))
+            :req (req (not (in-discard? card)))
             :msg "do 2 net damage"
             :effect (effect (damage eid :net 2 {:card card}))}
    :steal-cost-bonus (req [:credit 2])})
@@ -635,7 +635,7 @@
    :effect (req (gain-tags state :runner eid 1))})
 
 (define-card "Genetic Resequencing"
-  {:choices {:card #(= (last (:zone %)) :scored)}
+  {:choices {:card in-scored?}
    :msg (msg "add 1 agenda counter on " (:title target))
    :effect (effect (add-counter target :agenda 1)
                    (update-all-agenda-points))
@@ -810,13 +810,13 @@
 (define-card "Jumon"
   {:events
    [{:event :corp-turn-ends
-     :req (req (some #(and (= (last (:zone %)) :content)
-                           (is-remote? (second (:zone %))))
+     :req (req (some #(and (= (last (get-zone %)) :content)
+                           (is-remote? (second (get-zone %))))
                      (all-installed state :corp)))
      :prompt "Select a card to place 2 advancement tokens on"
      :player :corp
-     :choices {:card #(and (= (last (:zone %)) :content)
-                           (is-remote? (second (:zone %))))}
+     :choices {:card #(and (= (last (get-zone %)) :content)
+                           (is-remote? (second (get-zone %))))}
      :msg (msg "place 2 advancement token on " (card-str state target))
      :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}]})
 
@@ -834,9 +834,9 @@
   {:interactive (req true)
    :prompt "Select an asset or upgrade to install from Archives or HQ"
    :show-discard true
-   :choices {:card #(and (or (asset? %) (upgrade? %))
-                         (#{[:hand] [:discard]} (:zone %))
-                         (corp? %))}
+   :choices {:card #(and (corp? %)
+                         (or (asset? %) (upgrade? %))
+                         (or (in-hand? %) (in-discard? %)))}
    :msg (msg "install and rez " (:title target) ", ignoring all costs")
    :async true
    :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))})
@@ -1197,16 +1197,18 @@
                                          (asset? %)
                                          (upgrade? %))))}
              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
-             :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true
-                                                                    :index (:index target)})
-                          (move state :corp target (:zone to-swap) {:keep-server-alive true
-                                                                    :index (:index to-swap)})
+             :effect (req (move state :corp to-swap (get-zone target)
+                                {:keep-server-alive true
+                                 :index (:index target)})
+                          (move state :corp target (get-zone to-swap)
+                                {:keep-server-alive true
+                                 :index (:index to-swap)})
                           (clear-wait-prompt state :runner))
              :cancel-effect (effect (put-back-counter card)
                                     (clear-wait-prompt :runner))})
           (choose-card [run-server]
             {:prompt "Choose a card in or protecting the attacked server."
-             :choices {:card #(= (first run-server) (second (:zone %)))}
+             :choices {:card #(= (first run-server) (second (get-zone %)))}
              :effect (effect (continue-ability (choose-swap target) card nil))
              :cancel-effect (effect (put-back-counter card)
                                     (clear-wait-prompt :runner))})]
@@ -1558,7 +1560,7 @@
                                        (not (facedown? target))))
                             (:title target)
                             "ICE")
-                          " from " (zone->name (:zone target)))
+                          " from " (zone->name (get-zone target)))
                 :async true
                 :effect (effect
                           (continue-ability

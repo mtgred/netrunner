@@ -319,7 +319,7 @@
 
 (define-card "Careful Planning"
   {:prompt "Choose a card in or protecting a remote server"
-   :choices {:card #(is-remote? (second (:zone %)))}
+   :choices {:card #(is-remote? (second (get-zone %)))}
    :effect (effect (add-icon card target "CP" "red")
                    (system-msg (str "prevents the rezzing of " (card-str state target)
                                     " for the rest of this turn via Careful Planning"))
@@ -781,8 +781,8 @@
 
 (define-card "Drive By"
   {:choices {:card #(let [topmost (get-nested-host %)]
-                      (and (is-remote? (second (:zone topmost)))
-                           (= (last (:zone topmost)) :content)
+                      (and (is-remote? (second (get-zone topmost)))
+                           (= (last (get-zone topmost)) :content)
                            (not (:rezzed %))))}
    :async true
    :effect (req (wait-for (expose state side target)
@@ -999,7 +999,7 @@
                                       (continue-ability
                                         state side
                                         {:choices {:card #(and (contains? % :advance-counter)
-                                                               (= (first (:server run)) (second (:zone %))))}
+                                                               (= (first (:server run)) (second (get-zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
                                          :effect (req (let [to-remove (min c (get-counters target :advancement))]
@@ -1023,8 +1023,8 @@
              (continue-ability
                (let [chosen-type target]
                  {:choices {:card #(let [topmost (get-nested-host %)]
-                                     (and (is-remote? (second (:zone topmost)))
-                                          (= (last (:zone topmost)) :content)
+                                     (and (is-remote? (second (get-zone topmost)))
+                                          (= (last (get-zone topmost)) :content)
                                           (not (rezzed? %))))}
                   :async true
                   :effect (req             ;taken from Drive By - maybe refactor
@@ -1092,7 +1092,7 @@
                          (not (rezzed? %)))}
    :async true
    :effect (req (let [ice target
-                      serv (zone->name (second (:zone ice)))
+                      serv (zone->name (second (get-zone ice)))
                       icepos (ice-index state ice)]
                   (continue-ability
                     state :corp
@@ -1639,7 +1639,7 @@
                   :async true
                   :prompt (msg "Select a piece of ICE in " target " to trash")
                   :choices {:card #(and (ice? %)
-                                        (= serv (second (:zone %))))}
+                                        (= serv (second (get-zone %))))}
                   :effect (effect (system-msg (str "trashes " (card-str state target)))
                                   (trash :corp eid target nil))})
                card nil))})
@@ -2165,8 +2165,8 @@
    :effect (effect
              (continue-ability
                (let [c (str->int target)]
-                 {:choices {:card #(and (is-remote? (second (:zone %)))
-                                        (= (last (:zone %)) :content)
+                 {:choices {:card #(and (is-remote? (second (get-zone %)))
+                                        (= (last (get-zone %)) :content)
                                         (not (:rezzed %)))}
                   :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
                   :effect (effect (gain-credits (* 2 c))
@@ -2345,7 +2345,7 @@
                                    :req (req (same-card? target-ice target))
                                    :msg (msg "bypass " (:title target))
                                    :effect (req (bypass-ice state))}]))
-                             (make-run eid (second (:zone target)) nil card))})]
+                             (make-run eid (second (get-zone target)) nil card))})]
     {:async true
      :effect (req (show-wait-prompt state :corp "Runner to spend credits")
                (let [all-amounts (range (min 3 (inc (get-in @state [:runner :credit]))))

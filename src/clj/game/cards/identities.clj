@@ -235,7 +235,7 @@
              :async true
              :req (req (first-event? state :corp :corp-install))
              :effect (req (let [installed-card target
-                                z (butlast (:zone installed-card))]
+                                z (butlast (get-zone installed-card))]
                             (continue-ability
                               state side
                               {:prompt (str "Select a "
@@ -420,7 +420,7 @@
                   :prompt "Select a server to be saved from the rules apocalypse"
                   :choices (req (get-remote-names state))
                   :async true
-                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (:zone %))))
+                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
                                                            (all-installed state :corp))]
                                  (system-msg state side (str "chooses " target
                                                              " to be saved from the rules apocalypse and trashes "
@@ -525,7 +525,7 @@
 
 (define-card "Gagarin Deep Space: Expanding the Horizon"
   {:events [{:event :pre-access-card
-             :req (req (is-remote? (second (:zone target))))
+             :req (req (is-remote? (second (get-zone target))))
              :effect (effect (access-cost-bonus [:credit 1]))
              :msg "make the Runner spend 1 [Credits] to access"}]})
 
@@ -1129,8 +1129,9 @@
                               :async true
                               :choices {:card #(and (has-subtype? % "Current")
                                                     (corp? %)
-                                                    (#{[:hand] [:discard]} (:zone %)))}
-                              :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
+                                                    (or (in-hand? %)
+                                                        (in-discard? %)))}
+                              :msg (msg "play a current from " (name-zone "Corp" (get-zone target)))
                               :effect (effect (play-instant eid target nil))}}}]
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)]}))

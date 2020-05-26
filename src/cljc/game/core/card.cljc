@@ -41,37 +41,47 @@
   [card]
   (get-in card [:card :cid]))
 
+(defn get-nested-host
+  "Recursively searches upward to find the 'root' card of a hosting chain."
+  [card]
+  (if (:host card) (recur (:host card)) card))
+
+(defn get-zone
+  "Returns the zone of the 'root' card of a hosting chain"
+  [card]
+  (:zone (get-nested-host card)))
+
 (defn in-server?
   "Checks if the specified card is installed in -- and not PROTECTING -- a server"
   [card]
-  (= (last (:zone card)) :content))
+  (= (last (get-zone card)) :content))
 
 (defn in-hand?
   "Checks if the specified card is in the hand."
   [card]
-  (= (:zone card) [:hand]))
+  (= (get-zone card) [:hand]))
 
 (defn in-discard?
   "Checks if the specified card is in the discard pile."
   [card]
-  (= (:zone card) [:discard]))
+  (= (get-zone card) [:discard]))
 
 (defn in-deck?
   "Checks if the specified card is in the draw deck."
   [card]
-  (= (:zone card) [:deck]))
+  (= (get-zone card) [:deck]))
 
 (defn in-archives-root?
   [card]
-  (= (:zone card) [:servers :archives :content]))
+  (= (get-zone card) [:servers :archives :content]))
 
 (defn in-hq-root?
   [card]
-  (= (:zone card) [:servers :hq :content]))
+  (= (get-zone card) [:servers :hq :content]))
 
 (defn in-rd-root?
   [card]
-  (= (:zone card) [:servers :rd :content]))
+  (= (get-zone card) [:servers :rd :content]))
 
 (defn in-root?
   [card]
@@ -82,17 +92,17 @@
 (defn in-play-area?
   "Checks if the specified card is in the play area."
   [card]
-  (= (:zone card) [:play-area]))
+  (= (get-zone card) [:play-area]))
 
 (defn in-current?
   "Checks if the specified card is in the 'current' zone."
   [card]
-  (= (:zone card) [:current]))
+  (= (get-zone card) [:current]))
 
 (defn in-scored?
   "Checks if the specified card is in _a_ score area (don't know which one)."
   [card]
-  (= (:zone card) [:scored]))
+  (= (get-zone card) [:scored]))
 
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
@@ -216,12 +226,12 @@
 (defn installed?
   [card]
   (or (:installed card)
-      (= :servers (first (:zone card)))))
+      (= :servers (first (get-zone card)))))
 
 (defn facedown?
   "Checks if the specified card is facedown."
   [card]
-  (or (= (:zone card) [:rig :facedown])
+  (or (= (get-zone card) [:rig :facedown])
       (:facedown card)))
 
 (defn active?
@@ -261,16 +271,6 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
-
-(defn get-nested-host
-  "Recursively searches upward to find the 'root' card of a hosting chain."
-  [card]
-  (if (:host card) (recur (:host card)) card))
-
-(defn get-nested-zone
-  "Returns the zone of the 'root' card of a hosting chain"
-  [card]
-  (:zone (get-nested-host card)))
 
 (defn assoc-host-zones
   "Associates a new zone onto a card and its host(s)."

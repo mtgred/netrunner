@@ -222,7 +222,7 @@
        ;; A server was selected
        :else
        (let [slot (if host-card
-                    (get-nested-zone host-card)
+                    (get-zone host-card)
                     (conj (server->zone state server) (if (ice? card) :ices :content)))]
          (swap! state dissoc-in [:corp :install-list])
          (corp-install-pay state side eid card server args slot))))))
@@ -319,7 +319,7 @@
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg cost-bonus] :as params}]
    (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
-     (if (and (empty? (get-in @state [side :locked (first (get-nested-zone card))]))
+     (if (and (empty? (get-in @state [side :locked (first (get-zone card))]))
               (not (install-locked? state :runner)))
        (if-let [hosting (and (not host-card)
                              (not facedown)

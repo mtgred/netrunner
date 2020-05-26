@@ -367,7 +367,7 @@
 ;; Card definitions
 
 (define-card "Afshar"
-  (let [breakable-fn (req (if (= :hq (second (:zone card)))
+  (let [breakable-fn (req (if (= :hq (second (get-zone card)))
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
     {:subroutines [{:msg "make the Runner lose 2 [Credits]"
@@ -453,7 +453,7 @@
   {:flags {:rd-reveal (req true)}
    :access
    {:async true
-    :req (req (not= (first (:zone card)) :discard))
+    :req (req (not (in-discard? card)))
     :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
                     (continue-ability
                       {:optional
@@ -514,7 +514,7 @@
    :events [{:event :card-moved
              :req (req (let [target (nth targets 1)]
                          (and (corp? target)
-                              (or (= :hand (first (:zone target)))
+                              (or (in-hand? target)
                                   (= :hand (first (:previous-zone target)))))))
              :effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}]})
 
@@ -582,7 +582,7 @@
                            (and (operation? target)
                                 (has-subtype? target "Transaction")
                                 (faceup? target)
-                                (or (= :discard (first (:zone target)))
+                                (or (in-discard? target)
                                     (= :discard (first (:previous-zone target)))))))
                :effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}]
      :subroutines [sub
@@ -614,7 +614,7 @@
      :async true
      :choices {:card #(and (ice? %)
                            (in-hand? %))}
-     :effect (req (let [this (zone->name (second (:zone card)))
+     :effect (req (let [this (zone->name (second (get-zone card)))
                         nice target]
                     (continue-ability state side
                                       {:prompt (str "Choose a location to install " (:title target))
@@ -762,7 +762,7 @@
   {:flags {:rd-reveal (req true)}
    :subroutines [(do-net-damage 2)]
    :access {:async true
-            :req (req (not= (first (:zone card)) :discard))
+            :req (req (not (in-discard? card)))
             :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
                             (continue-ability
                               :runner {:optional
@@ -875,7 +875,7 @@
                                         (corp? %))}
                   :msg (msg (corp-install-msg target))
                   :effect (effect (corp-install eid target nil nil))}]
-   :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))})
+   :strength-bonus (req (if (= (second (get-zone card)) :archives) 3 0))})
 
 (define-card "Curtain Wall"
   {:subroutines [end-the-run
@@ -1323,8 +1323,8 @@
         reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                             :show-discard true
                             :choices {:card #(and (corp? %)
-                                                  (or (= [:discard] (:zone %))
-                                                      (= [:hand] (:zone %)))
+                                                  (or (in-hand? %)
+                                                      (in-discard? %))
                                                   (agenda? %))
                                       :max (req 3)}
                             :effect (req (reveal state side targets)
@@ -1371,7 +1371,7 @@
 
 (define-card "Gutenberg"
   {:subroutines [(tag-trace 7)]
-   :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))})
+   :strength-bonus (req (if (= (second (get-zone card)) :rd) 3 0))})
 
 (define-card "Gyri Labyrinth"
   {:implementation "Hand size is not restored if trashed or derezzed after firing"
@@ -1471,7 +1471,7 @@
                                          card nil))
                                    (effect-completed state side eid))))}]
    :access {:async true
-            :req (req (not= (first (:zone card)) :discard))
+            :req (req (not (in-discard? card)))
             :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
                             (continue-ability
                               :runner {:optional
@@ -1563,7 +1563,7 @@
 
 (define-card "Howler"
   (let [ice-index (fn [state i] (first (keep-indexed #(when (same-card? %2 i) %1)
-                                                     (get-in @state (cons :corp (:zone i))))))]
+                                                     (get-in @state (cons :corp (get-zone i))))))]
     {:subroutines
      [{:label "Install a piece of Bioroid ICE from HQ or Archives"
        :async true
@@ -1576,12 +1576,12 @@
                       :choices (req (filter #(and (ice? %)
                                                   (has-subtype? % "Bioroid"))
                                             ((if (= fr "HQ") :hand :discard) corp)))
-                      :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
+                      :effect (req (let [newice (assoc target :zone (get-zone card) :rezzed true)
                                          hndx (ice-index state card)
-                                         ices (get-in @state (cons :corp (:zone card)))
+                                         ices (get-in @state (cons :corp (get-zone card)))
                                          newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
-                                     (swap! state assoc-in (cons :corp (:zone card)) newices)
-                                     (swap! state update-in (cons :corp (:zone target))
+                                     (swap! state assoc-in (cons :corp (get-zone card)) newices)
+                                     (swap! state update-in (cons :corp (get-zone target))
                                             (fn [coll] (remove-once #(same-card? % target) coll)))
                                      (update! state side (assoc card :howler-target newice))
                                      (card-init state side newice {:resolve-effect false
@@ -2057,7 +2057,7 @@
 
 (define-card "Meru Mati"
   {:subroutines [end-the-run]
-   :strength-bonus (req (if (= (second (:zone card)) :hq) 3 0))})
+   :strength-bonus (req (if (= (second (get-zone card)) :hq) 3 0))})
 
 (define-card "Metamorph"
   {:subroutines [{:label "Swap two ICE or swap two installed non-ICE"
@@ -2652,7 +2652,7 @@
   {:flags {:rd-reveal (req true)}
    :subroutines [trash-program]
    :access {:async true
-            :req (req (and (not= (first (:zone card)) :discard)
+            :req (req (and (not (in-discard? card))
                            (some program? (all-active-installed state :runner))))
             :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
                             (continue-ability
@@ -2680,8 +2680,7 @@
 
 (define-card "Seidr Adaptive Barrier"
   (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
-        recalc-event {:req (req (= (:zone target) (:zone card)))
-                      :effect recalculate-strength}]
+        recalc-event {:effect recalculate-strength}]
     {:effect recalculate-strength
      :strength-bonus (req (count (:ices (card->server state card))))
      :subroutines [end-the-run]
@@ -2851,8 +2850,7 @@
 (define-card "Surveyor"
   (let [x (req (* 2 (count (:ices (card->server state card)))))
         recalculate-strength (req (update-ice-strength state side (get-card state card)))
-        recalc-event {:req (req (= (:zone target) (:zone card)))
-                      :effect recalculate-strength}]
+        recalc-event {:effect recalculate-strength}]
     {:effect recalculate-strength
      :strength-bonus x
      :subroutines [{:label "Trace X - Give the Runner 2 tags"
@@ -3103,7 +3101,7 @@
                    "spends [Click][Click][Click]"
                    "spend [Click][Click][Click]"
                    (runner-pay [:click 3] 1))]
-   :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))})
+   :strength-bonus (req (if (is-remote? (second (get-zone card))) 3 0))})
 
 (define-card "Turnpike"
   {:on-encounter {:msg "force the Runner to lose 1 [Credits]"
@@ -3242,8 +3240,7 @@
                                (trash state side eid card {:cause :subroutine}))}]})
 
 (define-card "Winchester"
-  (let [protecting-hq-req (req (= (second (:zone card)) :hq))
-        ab {:req protecting-hq-req
+  (let [ab {:req (req (= (second (get-zone card)) :hq))
             :effect (effect (continue-ability
                               (reset-variable-subs state side card 1 (trace-ability 3 end-the-run) {:back true})
                               card nil))}]

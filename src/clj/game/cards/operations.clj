@@ -134,7 +134,7 @@
    :prompt "Name a card to remove all copies in the Heap from the game"
    :choices (req (cancellable (:discard runner) :sorted))
    :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
-   :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard runner))]
+   :effect (req (doseq [c (filter #(same-card? :title target %) (:discard runner))]
                   (move state :runner c :rfg))
                 (effect-completed state side eid))})
 
@@ -153,8 +153,8 @@
                                           (doseq [c targets]
                                             (move state :corp c :deck))
                                           (shuffle! state :corp :deck)
-                                          (let [from-hq (map :title (filter #(= [:hand] (:zone %)) targets))
-                                                from-archives (map :title (filter #(= [:discard] (:zone %)) targets))]
+                                          (let [from-hq (map :title (filter in-hand? targets))
+                                                from-archives (map :title (filter in-discard? targets))]
                                             (system-msg
                                               state side
                                               (str "uses Attitude Adjustment to shuffle "
@@ -189,8 +189,8 @@
 (define-card "Back Channels"
   {:async true
    :prompt "Select an installed card in a server to trash"
-   :choices {:card #(and (= (last (:zone %)) :content)
-                         (is-remote? (second (:zone %))))}
+   :choices {:card #(and (= (last (get-zone %)) :content)
+                         (is-remote? (second (get-zone %))))}
    :effect (effect (gain-credits (* 3 (get-counters target :advancement)))
                    (trash eid target nil))
    :msg (msg "trash " (card-str state target) " and gain "
@@ -655,7 +655,10 @@
                                               (corp-install state side target server nil)
                                               (let [server (if (= "New remote" server)
                                                              (-> (turn-events state side :corp-install)
-                                                                 ffirst :zone second zone->name)
+                                                                 ffirst
+                                                                 get-zone
+                                                                 second
+                                                                 zone->name)
                                                              server)]
                                                 (if (< n X)
                                                   (continue-ability state side (install-cards server (inc n)) card nil)
@@ -1024,7 +1027,8 @@
    :not-distinct true
    :choices {:card #(and (not (operation? %))
                          (corp? %)
-                         (#{[:hand] [:discard]} (:zone %)))}
+                         (or (in-hand? %)
+                             (in-discard? %)))}
    :effect (effect (corp-install eid target nil {:ignore-install-cost true}))
    :msg (msg (corp-install-msg target))})
 
@@ -1299,7 +1303,7 @@
                                 (reveal state side revealed-cards)
                                 (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                               (let [ice (first r)
-                                    zone (zone->name (second (:zone target)))]
+                                    zone (zone->name (second (get-zone target)))]
                                 (if ice
                                   (do (system-msg state side (str "uses Mutate to install and rez " (:title ice) " from R&D at no cost"))
                                       (corp-install state side eid ice zone {:ignore-all-cost true
@@ -1373,7 +1377,7 @@
 (define-card "Oversight AI"
   {:choices {:card #(and (ice? %)
                          (not (rezzed? %))
-                         (= (last (:zone %)) :ices))}
+                         (= (last (get-zone %)) :ices))}
    :msg (msg "rez " (card-str state target) " at no cost")
    :effect (effect (rez target {:ignore-cost :all-costs
                                 :no-msg true})
@@ -2074,7 +2078,7 @@
 (define-card "Sunset"
   (letfn [(sun [serv]
             {:prompt "Select two pieces of ICE to swap positions"
-             :choices {:card #(and (= serv (:zone %))
+             :choices {:card #(and (= serv (get-zone %))
                                    (ice? %))
                        :max 2}
              :async true

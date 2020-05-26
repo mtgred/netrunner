@@ -14,7 +14,7 @@
                        (when (and (not trashed)
                                   (not stolen)
                                   ;; Don't increment :no-trash-or-steal if accessing a card in Archives
-                                  (not= (get-nested-zone c) [:discard]))
+                                  (not (in-discard? c)))
                          (no-trash-or-steal state))
                        (swap! state dissoc :access)
                        (trigger-event-sync state side eid :post-access-card c)))))
@@ -101,7 +101,7 @@
                                   (swap! state assoc-in [:runner :register :trashed-card] true)
                                   (system-msg state side (str async-result " to trash "
                                                               (:title card) " from "
-                                                              (name-zone :corp (get-nested-zone card))))
+                                                              (name-zone :corp (get-zone card))))
                                   (wait-for (trash state side card nil)
                                             (access-end state side eid (first async-result) {:trashed true})))
 
@@ -219,7 +219,7 @@
                       (wait-for (pay-sync state side nil cost {:action :steal-cost})
                                 (system-msg state side (str async-result " to steal "
                                                             (:title card) " from "
-                                                            (name-zone :corp (get-nested-zone card))))
+                                                            (name-zone :corp (get-zone card))))
                                 (steal-agenda state side eid card))
 
                       ;; Use access ability
@@ -365,8 +365,8 @@
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
    (when (:run @state)
-     (let [zone (or (#{:discard :deck :hand} (first (get-nested-zone card)))
-                    (second (get-nested-zone card)))]
+     (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                    (second (get-zone card)))]
        (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
    (wait-for (trigger-event-sync state side :pre-access-card card)
@@ -903,7 +903,7 @@
                    state side
                    {:async true
                     :prompt "Choose an upgrade in Archives to access."
-                    :choices {:card #(and (= :archives (second (get-nested-zone %)))
+                    :choices {:card #(and (= :archives (second (get-zone %)))
                                           (not (already-accessed %)))}
                     :effect (req (let [already-accessed (conj already-accessed (:cid target))
                                        access-amount {:base base

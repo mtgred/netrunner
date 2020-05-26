@@ -16,17 +16,17 @@
       runner-reg (get-in @state [:runner :register])
       runner-reg-last (get-in @state [:runner :register-last-turn])
       target (first targets)
-      installed (#{:rig :servers} (first (get-nested-zone card)))
+      installed (#{:rig :servers} (first (get-zone card)))
       remotes (get-remote-names state)
       servers (zones->sorted-names (get-zones state))
-      unprotected (let [server (second (get-nested-zone card))]
+      unprotected (let [server (second (get-zone card))]
                     (empty? (get-in @state [:corp :servers server :ices])))
       runnable-servers (zones->sorted-names (get-runnable-zones state side eid card nil))
       hq-runnable (not (:hq (get-in (:runner @state) [:register :cannot-run-on-server])))
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
       tagged (is-tagged? state)
-      this-server (let [s (get-nested-zone card)
+      this-server (let [s (get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))]
     (partition 2)

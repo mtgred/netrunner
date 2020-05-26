@@ -1042,7 +1042,7 @@
              :async true
              :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                             (pos? (count (:hand corp)))
-                            (not= (first (:zone target)) :discard)))
+                            (not (in-discard? target))))
              :once :per-turn
              :msg "force the Corp to trash a random card from HQ"
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
@@ -1060,7 +1060,7 @@
                (continue-ability
                  (let [accessed-card target]
                    {:optional
-                    {:req (req (or (= [:deck] (:zone accessed-card))
+                    {:req (req (or (in-deck? accessed-card)
                                    (= [:deck] (:previous-zone accessed-card))))
                      :once :per-turn
                      :async true
@@ -1836,7 +1836,7 @@
              :effect (req (let [broken-ice
                                 (->> (run-events state side :subroutines-broken)
                                      (filter (fn [[ice broken-subs]]
-                                               (and (= :hq (second (:zone ice)))
+                                               (and (= :hq (second (get-zone ice)))
                                                     (all-subs-broken? ice)
                                                     (get-card state ice))))
                                      (keep #(:cid (first %)))
