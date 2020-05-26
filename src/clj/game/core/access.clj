@@ -14,7 +14,7 @@
                        (when (and (not trashed)
                                   (not stolen)
                                   ;; Don't increment :no-trash-or-steal if accessing a card in Archives
-                                  (not= (:zone c) [:discard]))
+                                  (not= (get-nested-zone c) [:discard]))
                          (no-trash-or-steal state))
                        (swap! state dissoc :access)
                        (trigger-event-sync state side eid :post-access-card c)))))
@@ -365,8 +365,8 @@
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
    (when (:run @state)
-     (let [zone (or (#{:discard :deck :hand} (-> card :zone first))
-                    (-> card :zone second))]
+     (let [zone (or (#{:discard :deck :hand} (first (get-nested-zone card)))
+                    (second (get-nested-zone card)))]
        (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
    (wait-for (trigger-event-sync state side :pre-access-card card)
@@ -399,7 +399,8 @@
 (defmethod must-continue? :remote
   [state already-accessed-fn access-amount args]
   (and (pos? (:total access-amount))
-       (pos? (->> (get-all-content (get-in @state [:corp :servers (first (:server args)) :content]))
+       (pos? (->> (get-in @state [:corp :servers (first (:server args)) :content])
+                  get-all-content
                   (remove already-accessed-fn)
                   count))))
 
@@ -902,7 +903,7 @@
                    state side
                    {:async true
                     :prompt "Choose an upgrade in Archives to access."
-                    :choices {:card #(and (= (second (:zone %)) :archives)
+                    :choices {:card #(and (= :archives (second (get-nested-zone %)))
                                           (not (already-accessed %)))}
                     :effect (req (let [already-accessed (conj already-accessed (:cid target))
                                        access-amount {:base base
