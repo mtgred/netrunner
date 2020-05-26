@@ -2601,6 +2601,42 @@
       (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
+(deftest negotiator
+  (testing "Subroutines fire correctly."
+    (do-game
+     (new-game {:corp {:deck ["Negotiator"]}
+                :runner {:deck ["Pelangi"]}})
+     (play-from-hand state :corp "Negotiator" "HQ")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Pelangi")
+     (let [pelangi (get-program state 0)
+           negotiator (get-ice state :hq 0)]
+       (run-on state "HQ")
+       (core/rez state :corp negotiator)
+       (run-continue state)
+       (is (= 3 (:credit (get-corp) "Corp starts with 3 credits."))) ;; corp has 3 credits after clicking for 2 and rezzing for 3
+       (card-subroutine state :corp negotiator 0)
+       (is (= 5 (:credit (get-corp))) "Corp gained two credits from firing first sub.")
+       (card-subroutine state :corp negotiator 1)
+       (click-card state :corp "Pelangi")
+       (is (= 0 (count (get-program state))) "Pelangi is trashed from firing second sub."))))
+  (testing "Runner can break subs with credits."
+    (do-game
+     (new-game {:corp {:deck ["Negotiator"]}})
+     (play-from-hand state :corp "Negotiator" "HQ")
+     (take-credits state :corp)
+     (let [negotiator (get-ice state :hq 0)]
+       (run-on state "HQ")
+       (core/rez state :corp negotiator)
+       (run-continue state)
+       (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits.")
+       (card-side-ability state :runner negotiator 0)
+       (click-prompt state :runner "Gain 2 [Credits]")
+       (click-prompt state :runner "Trash a program")
+       (is (= 1 (:credit (get-runner))) "Runner has 1 credit after breaking 2 subs.")
+       (run-continue state)
+       (is (= [:hq] (:server (get-run))))))))
+
 (deftest news-hound
   ;; News Hound
   (do-game
