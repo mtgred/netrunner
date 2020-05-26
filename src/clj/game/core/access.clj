@@ -468,25 +468,25 @@
   (remove already-accessed-fn (get-in @state [:corp :servers server :content])))
 
 (defmethod must-continue? :rd
-  [state already-accessed-fn access-amount {:keys [no-root idx] :as args}]
+  [state already-accessed-fn access-amount {:keys [no-root] :as args}]
   (and (pos? (:total access-amount))
        (pos? (count (concat (let [deck (access-cards-from-rd state)
-                                  card-to-see (nth deck idx nil)]
+                                  card-to-see (first (drop-while already-accessed-fn deck))]
                               (when card-to-see
                                 [card-to-see]))
                             (when-not no-root
                               (root-content state :rd already-accessed-fn)))))))
 
 (defn access-helper-rd
-  [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root idx] :as args}]
+  [state {:keys [base total] :as access-amount} already-accessed {:keys [no-root] :as args}]
   (let [
-        ;; already-accessed is only used for upgrades
-        current-available (set (map :cid (get-in @state [:corp :servers :rd :content])))
+        current-available (set (concat (map :cid (get-in @state [:corp :deck]))
+                                       (map :cid (get-in @state [:corp :servers :rd :content]))))
         already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         deck (access-cards-from-rd state)
-        card-to-access (nth deck idx nil)
+        card-to-access (first (drop-while already-accessed-fn deck))
 
         card-from "Card from deck"
         card-from-button (when (and (pos? base)
@@ -509,14 +509,11 @@
         (req
           (wait-for (access-card state side card-to-access "an unseen card")
                     (let [shuffled-during-run (get-in @state [:run :shuffled-during-access :rd])
-                          idx (if (get-card state card-to-access)
-                                (inc idx)
-                                idx)
                           ;; if R&D was shuffled because of the access,
                           ;; the runner "starts over" from the top
-                          args (if shuffled-during-run
-                                 (assoc args :idx 0)
-                                 (assoc args :idx idx))]
+                          already-accessed (if shuffled-during-run
+                                             (set (filter already-accessed-fn root))
+                                             (conj already-accessed (:cid card-to-access)))]
                       (if shuffled-during-run
                         (swap! state update-in [:run :shuffled-during-access] dissoc :rd))
                       (continue-ability
@@ -601,8 +598,7 @@
                                           (-> @state :corp :servers :rd :content))))
                       total-cards-count (count total-cards)
                       pos-total? (pos? total)
-                      pos-total-cards? (pos? total-cards-count)
-                      args (assoc args :idx 0)]
+                      pos-total-cards? (pos? total-cards-count)]
 
                   (cond
                     ;; Only 1 card to access
