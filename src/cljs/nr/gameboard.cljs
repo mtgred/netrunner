@@ -1282,7 +1282,7 @@
        (for [zone (runner-f [:program :hardware :resource :facedown])]
          ^{:key zone}
          [:div
-          (doall (for [c (zone @rig)]
+          (doall (for [c (get @rig zone)]
                    ^{:key (:cid c)}
                    [:div.card-wrapper {:class (when (playable? c) "playable")}
                     [card-view c]]))]))

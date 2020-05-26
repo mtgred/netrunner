@@ -285,7 +285,7 @@
         card (when (and s-card (same-side? (:side s-card) side))
                (build-card s-card))]
     (when card
-      (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
+      (swap! state update-in [side :hand] #(concat % [(assoc card :zone [:hand])])))))
 
 (defn command-replace-id
   [state side args]
