@@ -1349,7 +1349,8 @@
   (constellation-ice (do-net-damage 1)))
 
 (define-card "Gold Farmer"
-  {:on-break-subs {:req (req (some :printed (second targets)))
+  {:implementation "Auto breaking will break even with too few credits"
+   :on-break-subs {:req (req (some :printed (second targets)))
                    :msg (msg (let [n-subs (count (filter :printed (second targets)))]
                                (str "force the runner to lose "
                                     n-subs
