@@ -1131,7 +1131,22 @@
       (take-credits state :corp)
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))
+  (testing "Works when hosted #4571"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest" "Full Immersion RecStudio"]
+                        :credits 10}})
+      (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (card-ability state :corp (get-content state :remote1 0) 0)
+      (click-card state :corp "Daily Quest")
+      (core/rez state :corp (first (:hosted (get-content state :remote1 0))))
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-card state :runner "Daily Quest")
+      (click-prompt state :runner "No action")
+      (is (= 7 (:credit (get-runner)))))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
