@@ -2420,7 +2420,31 @@
         (run-continue state)
         (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
         (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt")))))
+        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+  (testing "shouldn't fire ice's on-pass ability #5143"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Kakugo" "Quandary"]
+                        :credits 20}
+                 :runner {:hand ["Sure Gamble" "Inversificator"]
+                          :credits 20}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inversificator")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (core/update! state :corp (assoc (get-ice state :hq 1) :subtype "Code Gate"))
+      (run-continue state)
+      (let [inv (get-program state 0)]
+        (card-ability state :runner (refresh inv) 1)
+        (card-ability state :runner (refresh inv) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (get-ice state :hq 1))
+        (click-card state :runner (get-ice state :hq 0))
+        (is (= 1 (count (:hand (get-runner)))))))))
 
 (deftest ixodidae
   ;; Ixodidae should not trigger on psi-games
