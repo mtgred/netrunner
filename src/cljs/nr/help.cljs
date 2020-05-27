@@ -85,7 +85,8 @@
                           [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
                           [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
                           [:li [:code "/undo-click"] " - Resets the game back to start of the click.  One click only retained. Only allowed for active player"]
-                          [:li [:code "/undo-turn"] " - Resets the game back to end of the last turn. Requires both players to request it"]]]]}
+                          [:li [:code "/undo-turn"] " - Resets the game back to end of the last turn. Requires both players to request it"]
+                          [:li [:code "/unique"] " - Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"]]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:ul
