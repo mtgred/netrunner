@@ -122,6 +122,7 @@
               #(conj (vec %) {:ability (-> ability
                                            (dissoc :choices)
                                            (assoc :card card))
+                              :cards []
                               :card (get-in ability [:choices :card])
                               :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
