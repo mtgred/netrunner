@@ -2821,6 +2821,7 @@
       (play-from-hand state :corp "Restore")
       (click-card state :corp (find-card "Project Vitruvius" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
+      (is (not(:seen (get-content state :remote1 0))) "Agenda is facedown")
       (is (last-log-contains? state "Corp uses Restore to install Project Vitruvius from Archives.") "Should write correct log")))
   (testing "Show removed count in log when installed"
     (do-game
