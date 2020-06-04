@@ -546,6 +546,7 @@
 
 (define-card "Bishop"
   {:abilities [{:cost [:click 1]
+                :label "move to another ice"
                 :effect (req (let [b (get-card state card)
                                    hosted? (ice? (:host b))
                                    remote? (is-remote? (second (get-zone (:host b))))]
@@ -831,6 +832,7 @@
   {:abilities [{:req (req (and run
                                (= :encounter-ice (:phase run))
                                (all-subs-broken? current-ice)))
+                :label "derez an ice"
                 :cost [:trash]
                 :msg (msg "derez " (:title current-ice))
                 :effect (effect (derez current-ice))}]})
@@ -946,6 +948,7 @@
              :silent (req true)
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:prompt "Choose a card to install from your Grip"
+                :label "install a card from the grip"
                 :req (req (and (not (install-locked? state side))
                                (some #(and (or (hardware? %)
                                                (program? %)
@@ -1320,6 +1323,7 @@
 
 (define-card "Gorman Drip v1"
   {:abilities [{:cost [:click 1 :trash]
+                :label "gain credits"
                 :effect (effect (gain-credits (get-virus-counters state card)))
                 :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
    :events [{:event :corp-click-credit
@@ -1418,6 +1422,7 @@
              :req (req (same-card? target card))
              :effect (effect (update-all-icebreakers))}]
    :abilities [{:req (req (pos? (get-counters card :virus)))
+                :label "move hosted virus counters"
                 :prompt "Move a virus counter to which card?"
                 :choices {:card #(has-subtype? % "Virus")}
                 :effect (req (let [abilities (:abilities (card-def target))
@@ -1477,6 +1482,7 @@
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:click 1 :trash]
+                :label "move hosted virus counters"
                 :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Virus"))}
@@ -1726,6 +1732,7 @@
 
 (define-card "Misdirection"
   {:abilities [{:cost [:click 2]
+                :label "remove tags"
                 :prompt "How many [Credits] to spend to remove that number of tags?"
                 :choices {:number (req (min (total-available-credits state :runner eid card)
                                             (get-in runner [:tag :base])))}
@@ -1861,6 +1868,7 @@
 
 (define-card "Paintbrush"
   {:abilities [{:cost [:click 1]
+                :label "give ice a subtype"
                 :choices {:card #(and (installed? %)
                                       (ice? %)
                                       (rezzed? %))}
@@ -2228,6 +2236,7 @@
 
 (define-card "Rook"
   {:abilities [{:cost [:click 1]
+                :label "move to another ice"
                 :effect (req (let [r (get-card state card)
                                    hosted? (ice? (:host r))
                                    icepos (ice-index state (get-card state (:host r)))]
@@ -2284,6 +2293,7 @@
 
 (define-card "Savoir-faire"
   {:abilities [{:cost [:credit 2]
+                :label "install a program"
                 :once :per-turn
                 :req (req (not (install-locked? state side)))
                 :msg (msg "install " (:title target))
@@ -2317,6 +2327,7 @@
 
 (define-card "Self-modifying Code"
   {:abilities [{:req (req (not (install-locked? state side)))
+                :label "install a program"
                 :cost [:trash :credit 2]
                 :async true
                 :effect (effect (continue-ability
@@ -2528,7 +2539,9 @@
 (define-card "Trope"
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:effect
+   :abilities [{:label "shuffle cards from heap into stack"
+                :async true
+                :effect
                 (effect
                   (continue-ability
                     {:cost [:click 1 :remove-from-game]

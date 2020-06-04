@@ -2,6 +2,7 @@
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def]]
             [game.cards.ice :as ice]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -60,3 +61,14 @@
                     vals
                     (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))]
     (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash] or :trash-icon true"))))
+
+(deftest label
+  (doseq [[title abilities]
+          (->> @all-cards
+               vals
+               (sort-by (juxt :type :title))
+               (map (juxt :title card-def))
+               (filter (comp :abilities second)))
+          [idx ability] (map-indexed (fn [idx itm] [idx itm]) (:abilities abilities))]
+    (is (string? (or (:label ability) (:msg ability)))
+        (str title ": Ability " (inc idx) " doesn't have an appropriate label"))))

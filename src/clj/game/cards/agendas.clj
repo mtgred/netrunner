@@ -170,6 +170,7 @@
    :silent (req true)
    :abilities [{:cost [:agenda 1]
                 :req (req run)
+                :label "increase cost to break subroutines or jack out"
                 :msg "make the Runner trash a card from their grip to jack out or break subroutines for the remainder of the run"
                 :effect (effect (register-floating-effect
                                   card
@@ -186,6 +187,7 @@
   {:effect (effect (add-counter card :agenda 1))
    :silent (req true)
    :abilities [{:cost [:agenda 1]
+                :label "place 1 advancement counter"
                 :msg (msg "place 1 advancement token on " (card-str state target))
                 :choices {:card can-be-advanced?}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
@@ -585,6 +587,7 @@
 
 (define-card "False Lead"
   {:abilities [{:req (req (<= 2 (:click runner)))
+                :label "runner loses [Click][Click]"
                 :msg "force the Runner to lose [Click][Click]"
                 :cost [:forfeit-self]
                 :effect (effect (lose :runner :click 2))}]})
@@ -601,6 +604,7 @@
   {:silent (req true)
    :effect (effect (add-counter card :agenda 3))
    :abilities [{:cost [:agenda 1]
+                :label "place 1 advancement counter"
                 :choices {:card #(and (ice? %)
                                       (can-be-advanced? %))}
                 :req (req (pos? (get-counters card :agenda)))
@@ -612,6 +616,7 @@
   {:silent (req true)
    :effect (effect (add-counter card :agenda 5))
    :abilities [{:cost [:agenda 1]
+                :label "reveal and draw"
                 :once :per-turn
                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
                 :async true
@@ -704,6 +709,7 @@
   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
                                     (is-scored? state :corp card)))}
    :abilities [{:prompt "Select a card to add to the bottom of R&D"
+                :label "add card to bottom of R&D"
                 :show-discard true
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))}
@@ -731,6 +737,7 @@
   {:effect (effect (add-counter card :agenda 1))
    :silent (req true)
    :abilities [{:cost [:click 1 :agenda 1]
+                :label "gain credits"
                 :msg (msg "gain " (:credit runner) " [Credits]")
                 :effect (effect (gain-credits (:credit runner)))}]})
 
@@ -1215,6 +1222,7 @@
     {:silent (req true)
      :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
      :abilities [{:cost [:agenda 1]
+                  :label "swap card in HQ with installed card"
                   :req (req run)
                   :effect (effect (show-wait-prompt :runner "Corp to use Project Yagi-Uda")
                             (continue-ability (choose-card (:server run))
@@ -1315,7 +1323,7 @@
    :silent (req true)
    :abilities [{:cost [:agenda 1]
                 :msg (msg "place 1 advancement token on " (card-str state target))
-                :label "Place 1 advancement token on an installed card"
+                :label "place 1 advancement token"
                 :choices {:card installed?}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
@@ -1372,6 +1380,7 @@
 
 (define-card "Restructured Datapool"
   {:abilities [{:cost [:click 1]
+                :label "give runner 1 tag"
                 :trace {:base 2
                         :successful {:msg "give the Runner 1 tag"
                                      :async true

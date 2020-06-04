@@ -1517,6 +1517,7 @@
                                               (effect-completed state side eid))}}}
                               card nil)))}]
    :abilities [{:msg (msg "deal " (get-counters card :power) " net damage")
+                :label "deal net damage"
                 :cost [[:click 2] [:trash]]
                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]})
 
@@ -1529,6 +1530,7 @@
   {:effect (effect (add-counter card :credit 14))
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
+                :label "gain credits"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (min 2 (get-counters card :credit))]
                                (add-counter state side card :credit (- credits))
@@ -2199,6 +2201,7 @@
                                      (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
                                      (effect-completed state side eid)))))})
         ability {:async true
+                 :label "resolve an ability"
                  :once :per-turn
                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
                                                                  1
