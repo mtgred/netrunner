@@ -17,6 +17,8 @@
             [nr.ws :as ws]
             [reagent.core :as r]))
 
+(declare stacked-card-view show-distinct-cards)
+
 (defonce game-state (r/atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
@@ -840,11 +842,31 @@
            [:div {:on-click #(send-command "rez" {:card card})} "Rez"]]))]
      (when (pos? (count hosted))
        [:div.hosted
-        (doall
-          (for [card hosted]
-            (let [flipped (face-down? card)]
-              ^{:key (:cid card)}
-              [card-view card flipped])))])])))
+          (let [distinct-hosted (vals (group-by :title hosted))]
+            (show-distinct-cards distinct-hosted))])])))
+
+(defn show-distinct-cards
+  [distinct-cards]
+  (doall (apply concat (for [cards distinct-cards] ; apply concat for one-level flattening
+                         (let [hosting (remove #(zero? (count (:hosted %))) cards) ; There are hosted cards on these
+                               others (filter #(zero? (count (:hosted %))) cards)]
+                           [(for [c hosting]
+                              ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
+                                                [card-view c]])
+                            (if (= 1 (count others))
+                              (let [c (first others)]
+                                ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
+                                                  [card-view c]])
+                              [stacked-card-view others])])))))
+
+(defn stacked-card-view
+  [cards]
+  [:div.stacked
+   (doall
+     (for [c cards]
+       (let [flipped (face-down? c)]
+         ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
+                           [card-view c flipped]])))])
 
 (defn drop-area [server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
@@ -1282,10 +1304,9 @@
        (for [zone (runner-f [:program :hardware :resource :facedown])]
          ^{:key zone}
          [:div
-          (doall (for [c (get @rig zone)]
-                   ^{:key (:cid c)}
-                   [:div.card-wrapper {:class (when (playable? c) "playable")}
-                    [card-view c]]))]))
+          (let [cards (get @rig zone)
+                distinct-cards (vals (group-by :title cards))]
+            (show-distinct-cards distinct-cards))]))
      (when is-me centrals)]))
 
 (defn play-sfx
