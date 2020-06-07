@@ -945,13 +945,11 @@
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
                                   cause (if (keyword? (first target))
                                           (case (first target)
-                                            :play-instant (seq [bac-cid 3])
-                                            :corp-click-install (seq [bac-cid 2])
-                                            (first target))
-                                          (seq [cid ability-idx]))
+                                            :play-instant [bac-cid 3]
+                                            :corp-click-install [bac-cid 2]
+                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                          [cid ability-idx])
                                   clicks-spent (+ (get-in card [:seen-this-turn cause] 0) (second targets))]
-                              (when-not target
-                                (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
                               (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))
                               (when (>= clicks-spent 3) ; can be >= 3 because :once :per-turn on ability
                                 (resolve-ability state side ability (get-card state card) nil))))}
