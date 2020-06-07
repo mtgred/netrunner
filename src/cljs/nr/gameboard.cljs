@@ -849,15 +849,25 @@
   [distinct-cards]
   (doall (apply concat (for [cards distinct-cards] ; apply concat for one-level flattening
                          (let [hosting (remove #(zero? (count (:hosted %))) cards) ; There are hosted cards on these
-                               others (filter #(zero? (count (:hosted %))) cards)]
-                           [(for [c hosting]
+                               others (filter #(zero? (count (:hosted %))) cards)
+                               facedowns (filter face-down? others)
+                               others (remove face-down? others)]
+                           [; Hosting
+                            (for [c hosting]
                               ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
-                                                [card-view c]])
-                            (if (= 1 (count others))
-                              (let [c (first others)]
-                                ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
-                                                  [card-view c]])
-                              [stacked-card-view others])])))))
+                                                [card-view c (face-down? c)]])
+                            ; Facedown
+                            (for [c facedowns]
+                              ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
+                                                [card-view c true]])
+                            ; Rest
+                            (if (not-empty others)
+                              (if (= 1 (count others))
+                                (let [c (first others)
+                                      flipped (face-down? c)]
+                                  ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
+                                                    [card-view c flipped]])
+                                [stacked-card-view others]))])))))
 
 (defn stacked-card-view
   [cards]
