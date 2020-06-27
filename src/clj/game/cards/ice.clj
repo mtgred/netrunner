@@ -1318,7 +1318,7 @@
                  :choices {:number (req 3)
                            :max (req 3)
                            :default (req 1)}
-                 :msg (msg "draw " target "cards")
+                 :msg (msg "draw " target " cards")
                  :effect (effect (draw eid target nil))}
         reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                             :show-discard true
