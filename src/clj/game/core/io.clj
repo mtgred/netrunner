@@ -225,11 +225,11 @@
   [state side]
   (resolve-ability state side
                    {:effect (effect (set-prop target :uniqueness (not (:uniqueness target))))
-                    :msg (msg "makes " (card-str state target)
-                              (when (not (:uniqueness (get-card state target))) " not")
+                    :msg (msg "make " (card-str state target)
+                              (when (:uniqueness target) " not") ;it was unique before
                               " unique")
                     :choices {:card (fn [t] (same-side? (:side t) side))}}
-                   (map->Card {:title "/unique command"}) nil))
+                   (map->Card {:title "/unique command" :side side}) nil))
 
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
@@ -447,7 +447,7 @@
         "/trash"      command-trash
         "/undo-click" #(command-undo-click %1 %2)
         "/undo-turn"  #(command-undo-turn %1 %2)
-        "/unique"     command-unique
+        "/unique"     #(command-unique %1 %2)
         nil))))
 
 (defn corp-install-msg
