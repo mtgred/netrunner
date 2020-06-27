@@ -265,6 +265,7 @@
 
 (define-card "Capstone"
   {:abilities [{:req (req (pos? (count (:hand runner))))
+                :label "trash and install cards"
                 :cost [:click 1]
                 :async true
                 :prompt "Select any number of cards to trash from your grip"
@@ -288,6 +289,7 @@
 (define-card "Chop Bot 3000"
   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
    :abilities [{:req (req (:runner-phase-12 @state))
+                :label "trash and draw or remove tag"
                 :msg (msg "trash " (:title target))
                 :choices {:card #(and (runner? %)
                                       (installed? %))
@@ -310,6 +312,7 @@
 
 (define-card "Clone Chip"
   {:abilities [{:prompt "Select a program to install from your Heap"
+                :label "install card from heap"
                 :show-discard true
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (not (install-locked? state side))
@@ -333,6 +336,7 @@
                                       (str "can play another event without spending a [Click] by clicking on Comet"))
                           (update! state side (assoc card :comet-event true)))}]
    :abilities [{:async true
+                :label "play an event in hand twice"
                 :req (req (:comet-event card))
                 :prompt "Select an Event in your Grip to play"
                 :choices {:card #(and (event? %)
@@ -343,6 +347,7 @@
 
 (define-card "Cortez Chip"
   {:abilities [{:prompt "Select a piece of ICE"
+                :label "increase rez cost of ice"
                 :choices {:card #(and (ice? %)
                                       (not (rezzed? %)))}
                 :msg (msg "increase the rez cost of " (card-str state target)
@@ -399,9 +404,10 @@
                          (not (has-subtype? % "AI"))
                          (installed? %))}
    :abilities [{:cost [:credit 2]
+                :label "add 4 strength for the remainder of the run"
                 :req (req run)
                 :effect (effect (pump (get-card state (:host card)) 4))
-                :msg (msg (str "pump the strength of " (get-in card [:host :title]) " by 4"))}]})
+                :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]})
 
 (define-card "Deep Red"
   {:implementation "MU use restriction not enforced"
@@ -861,6 +867,7 @@
 (define-card "GPI Net Tap"
   {:implementation "Trash and jack out effect is manual"
    :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+                :label "expose approached ice"
                 :async true
                 :effect (effect (expose eid current-ice))}]})
 
@@ -1117,7 +1124,7 @@
      :in-play [:memory 3]
      :async true
      :effect (effect (continue-ability (mhelper 1) card nil))
-     :abilities [{:msg (msg "prevent 1 brain or net damage")
+     :abilities [{:msg "prevent 1 brain or net damage"
                   :cost [:trash-program-from-grip 1]
                   :effect (effect (damage-prevent :brain 1)
                                   (damage-prevent :net 1))}]}))
@@ -1477,6 +1484,7 @@
   {:interactions {:prevent [{:type #{:net :brain}
                              :req (req true)}]}
    :abilities [{:async true
+                :label "prevent net or brain damage"
                 :trash-icon true
                 :req (req (not-empty (:deck runner)))
                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
@@ -1500,6 +1508,7 @@
     {:interactions {:prevent [{:type #{:net :brain :meat}
                                :req (req (:access @state))}]}
      :abilities [{:trash-icon true
+                  :label "prevent damage"
                   :async true
                   :req (req (= (:cid (second (:pre-damage (eventmap @state))))
                                (:cid (first (:pre-access-card (eventmap @state))))))
@@ -1592,6 +1601,7 @@
 
 (define-card "Rubicon Switch"
   {:abilities [{:cost [:click 1]
+                :label "derez ice"
                 :once :per-turn
                 :async true
                 :prompt "How many [Credits]?"
@@ -1665,6 +1675,7 @@
                                           :effect (effect (access-bonus kw bonus))}])
                                       (make-run state side eid srv nil card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
+                  :label "run a server"
                   :prompt "Choose a server to run with Severnius Stim Implant"
                   :choices ["HQ" "R&D"]
                   :async true

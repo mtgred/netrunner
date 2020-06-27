@@ -965,6 +965,7 @@
                              (if (pos? (count deck))
                                (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
+                 :label "trash and draw cards"
                  :once :per-turn
                  :async true
                  :effect (req (wait-for (mill state :runner :runner 2)
@@ -1153,6 +1154,7 @@
                                       (update! state side (assoc card :fill-hq true))
                                       (effect-completed state side eid)))}]
      :abilities [{:req (req (:fill-hq card))
+                  :label "draw remaining cards"
                   :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
                   :effect (req (draw state side (- 5 (count (:hand corp))))
                                (update! state side (dissoc card :fill-hq))
@@ -1297,6 +1299,7 @@
 (define-card "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
    :abilities [{:req (req (:run @state))
+                :label "add card from Archives to HQ"
                 :once :per-turn
                 :prompt "Select a card to add to the top of R&D"
                 :show-discard true
@@ -1486,6 +1489,7 @@
                                     (has-most-faction? state :corp "Jinteki")
                                     (> (count (filter ice? (all-installed state :corp))) 1)))}
    :abilities [{:prompt "Select two pieces of ICE to swap positions"
+                :label "swap two ice"
                 :choices {:card #(and (installed? %)
                                       (ice? %))
                           :max 2}

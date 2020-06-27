@@ -144,6 +144,7 @@
 (define-card "Aesop's Pawnshop"
   {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
    :abilities [{:async true
+                :label "trash a card to gain 3 [Credits]"
                 :choices {:req (req (and (runner? target)
                                          (installed? target)
                                          (not (same-card? target card))))}
@@ -204,6 +205,7 @@
   {:data {:counter {:credit 12}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
+                :label "gain 2 [Credits]"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (min 2 (get-counters card :credit))]
                                (add-counter state side card :credit (- credits))
@@ -211,6 +213,7 @@
 
 (define-card "Artist Colony"
   {:abilities [{:prompt "Choose a card to install"
+                :label "install a card"
                 :msg (msg "install " (:title target))
                 :req (req (not (install-locked? state side)))
                 :cost [:forfeit]
@@ -349,6 +352,7 @@
              :req (req (= target :net))
              :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}]
    :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
+                :label "prevent net damage"
                 :cost [:trash]
                 :effect (effect (damage-prevent :net (dec (:dmg-amount card))))}]})
 
@@ -379,6 +383,7 @@
   {:flags {:runner-phase-12 (req true)}
    :abilities [{:req (req (and (:runner-phase-12 @state)
                                (not (seq (get-in @state [:runner :locked :discard])))))
+                :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
                 :show-discard true
@@ -599,6 +604,7 @@
   ;; TODO: Fix to use replace-access
   {:implementation "Does not prevent access of cards installed in the root of a server"
    :abilities [{:cost [:click 1 :trash]
+                :label "run a server"
                 :makes-run true
                 :prompt "Choose a server to run with Counter Surveillance"
                 :msg (msg "run " target)
@@ -743,7 +749,7 @@
 (define-card "Data Dealer"
   {:abilities [{:cost [:click 1 :forfeit]
                 :effect (effect (gain-credits 9))
-                :msg (msg "gain 9 [Credits]")}]})
+                :msg "gain 9 [Credits]"}]})
 
 (define-card "Data Folding"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"
@@ -780,6 +786,7 @@
 
 (define-card "Dean Lister"
   {:abilities [{:req (req run)
+                :label "pump icebreaker"
                 :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
@@ -876,6 +883,7 @@
 (define-card "Dr. Lovegood"
   {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
    :abilities [{:req (req (:runner-phase-12 @state))
+                :label "blank a card"
                 :prompt "Select an installed card to make its text box blank for the remainder of the turn"
                 :once :per-turn
                 :choices {:card installed?}
@@ -1398,14 +1406,17 @@
                             (do (clear-wait-prompt state :corp)
                                 (effect-completed state side eid))))})]
     {:abilities [{:cost [:click 1]
-                  :msg (msg "draw 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
+                  :label "reveal cards"
+                  :msg (msg "reveal 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
                   :async true
                   :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
                             (let [from (take 4 (:deck runner))]
+                              (reveal state side from)
                               (continue-ability state side (lab-keep from) card nil)))}]}))
 
 (define-card "Lewi Guilherme"
   (let [ability {:once :per-turn
+                 :label "lose 1 [Credits] or trash"
                  :optional {:once :per-turn
                             :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                             :yes-ability {:async true
@@ -1429,6 +1440,7 @@
 (define-card "Liberated Account"
   {:data {:counter {:credit 16}}
    :abilities [{:cost [:click 1]
+                :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :effect (effect (gain-credits (min 4 (get-counters card :credit)))
                                 (add-counter card :credit (- (min 4 (get-counters card :credit)))))}]
@@ -1515,6 +1527,7 @@
                                                (installed? target)))
                                 :type :credit}}
    :abilities [{:prompt "Choose how many credits to take from Miss Bones"
+                :label "take hosted credits"
                 :choices {:number (req (get-counters card :credit))}
                 :msg (msg "gain " target " [Credits] for trashing installed cards")
                 :effect (effect (gain-credits target)
@@ -1535,7 +1548,7 @@
 
 (define-card "Mr. Li"
   {:abilities [{:cost [:click 1]
-                :msg (msg "draw 2 cards")
+                :msg "draw 2 cards"
                 :async true
                 :effect (req (wait-for (draw state side 2 nil)
                                        (continue-ability
@@ -1731,6 +1744,7 @@
 
 (define-card "Oracle May"
   {:abilities [{:cost [:click 1]
+                :label "name and reveal a card"
                 :once :per-turn
                 :prompt "Choose card type"
                 :choices ["Event" "Hardware" "Program" "Resource"]
@@ -1850,6 +1864,7 @@
 
 (define-card "Patron"
   (let [ability {:prompt "Choose a server for Patron"
+                 :label "draw cards"
                  :choices (req (conj servers "No server"))
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
@@ -1985,6 +2000,7 @@
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :abilities [{:async true
                 :trash-icon true
+                :label "trash an ice"
                 :effect
                 (effect
                   (continue-ability
@@ -2101,6 +2117,7 @@
                    (last (filter #(= (:cid card) (get-in % [:persistent :from-cid]))
                                  (get-in @state [:runner :rfg]))))]
     {:abilities [{:req (req (not (install-locked? state side)))
+                  :label "install a program from the stack"
                   :async true
                   :cost [:click 1 :rfg-program 1]
                   :effect
@@ -2137,6 +2154,7 @@
   {:interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
    :abilities [{:cost [:trash]
+                :label "prevent damage"
                 :async true
                 :msg (msg (let [cards (concat (get-in runner [:rig :hardware])
                                               (filter #(not (has-subtype? % "Virtual"))
@@ -2165,6 +2183,7 @@
   {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
                              :req (req true)}]}
    :abilities [{:cost [:trash]
+                :label "prevent a program trash"
                 :effect (effect (trash-prevent :program 1)
                                 (trash-prevent :hardware 1))}]})
 
@@ -2218,6 +2237,7 @@
 
 (define-card "Same Old Thing"
   {:abilities [{:async true
+                :label "play an event in the heap"
                 :cost [:click 2 :trash]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
@@ -2236,6 +2256,7 @@
 
 (define-card "Security Testing"
   (let [ability {:prompt "Choose a server for Security Testing"
+                 :label "target a server"
                  :choices (req (conj servers "No server"))
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
@@ -2337,6 +2358,7 @@
                                           card nil)
                                         (effect-completed state side eid)))))})]
     {:abilities [{:implementation "Effect is manually triggered"
+                  :label "choose subroutine order"
                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
                   :async true
                   :msg (msg "select the order the unbroken subroutines on "
@@ -2352,6 +2374,7 @@
    :effect (req (doseq [c (take 3 (:deck runner))]
                   (host state side (get-card state card) c {:facedown true})))
    :abilities [{:async true
+                :label "install a hosted card"
                 :trash-icon true
                 :req (req (not (install-locked? state side)))
                 :prompt "Choose a card on Street Peddler to install"
@@ -2422,6 +2445,7 @@
              :effect (effect (add-counter :runner card :credit 1)
                              (system-msg "places 1 [Credits] on Technical Writer"))}]
    :abilities [{:cost [:click 1 :trash]
+                :label "gain credits"
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :effect (effect (gain-credits (get-counters card :credit)))}]})
 
@@ -2571,6 +2595,7 @@
 (define-card "The Helpful AI"
   {:in-play [:link 1]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
+                :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
                 :cost [:trash]
@@ -2783,6 +2808,7 @@
 
 (define-card "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
+                :label "search stack for a hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :effect (effect (trigger-event :searched-stack nil)
@@ -2808,6 +2834,7 @@
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:click 1]
+                :label "move hosted virus counter"
                 :req (req (pos? (get-counters card :virus)))
                 :effect (req (resolve-ability
                                state side
