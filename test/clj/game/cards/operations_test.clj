@@ -2577,7 +2577,22 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (take-credits state :runner)
-      (play-from-hand state :corp "Power Shutdown"))))
+      (play-from-hand state :corp "Power Shutdown")))
+  (testing "Can trash any number of cards up to deck size per nisei CR 1.4 errata removal, issue #5144"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Ice Wall" 3)]
+                        :hand [(qty "Power Shutdown" 1)]}
+                 :runner {:deck ["Grimoire"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grimoire")
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Power Shutdown")
+      (click-prompt state :corp "5")
+      (is (= 5 (count (:discard (get-corp)))) "5 cards trashed from R&D")
+      (is (= 0 (count (:deck (get-corp)))) "0 card remaining in R&D") ;; one card was drawn at turn start
+      (click-card state :runner (get-hardware state 0)) ; target grimoire
+      (is (= 1 (count (:discard (get-runner)))) "Grimoire trashed"))))
 
 (deftest precognition
   ;; Precognition - Full test

@@ -1436,11 +1436,7 @@
                                           (program? %))
                                      (all-active-installed state :runner)))))
    :prompt "Trash how many cards from the top R&D?"
-   :choices {:number (req (->> (all-active-installed state :runner)
-                               (filter #(or (hardware? %)
-                                            (program? %)))
-                               (map :cost)
-                               (apply max)))}
+   :choices {:number (req (count (:deck corp)))}
    :msg (msg "trash " target " cards from the top of R&D")
    :async true
    :effect (req (wait-for (mill state :corp :corp target)
