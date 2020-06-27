@@ -940,14 +940,19 @@
     {:abilities [ability]
      :leave-play cleanup
      :events [{:event :corp-spent-click
-               :effect (req (let [target (or (first (filter number? target))
-                                             (first target))]
-                              (when-not target
-                                (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
-                              (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
-                                                             (fnil + 0) (second targets)))
-                              (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
-                                (resolve-ability state side ability card nil))))}
+               :effect (req (let [cid (first target)
+                                  ability-idx (:ability-idx (:source-info eid))
+                                  bac-cid (get-in @state [:corp :basic-action-card :cid])
+                                  cause (if (keyword? (first target))
+                                          (case (first target)
+                                            :play-instant [bac-cid 3]
+                                            :corp-click-install [bac-cid 2]
+                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                          [cid ability-idx])
+                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) (second targets))]
+                              (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))
+                              (when (>= clicks-spent 3) ; can be >= 3 because :once :per-turn on ability
+                                (resolve-ability state side ability (get-card state card) nil))))}
               {:event :corp-turn-ends
                :effect cleanup}]}))
 

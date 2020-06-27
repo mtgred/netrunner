@@ -994,10 +994,10 @@
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
                                   cause (if (keyword? (first target))
                                           (case (first target)
-                                            :play-instant (seq [bac-cid 3])
-                                            :corp-click-install (seq [bac-cid 2])
-                                            (first target))
-                                          (seq [cid ability-idx]))
+                                            :play-instant [bac-cid 3]
+                                            :corp-click-install [bac-cid 2]
+                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                          [cid ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
@@ -1011,7 +1011,7 @@
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
                                               ability-idx (nth targets 2 nil)
-                                              cause (seq [cid ability-idx])
+                                              cause [cid ability-idx]
                                               prev-actions (get-in card [:special :mm-actions] [])
                                               actions (conj prev-actions cause)]
                                           (not (and (= 4 (count actions))
