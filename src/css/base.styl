@@ -1790,14 +1790,37 @@ nav ul
       align-self: center
       flex: 1
 
+  .stacked
+    margin: 0px
+    display-flex()
+
+    .card-wrapper:not(:first-child)
+     margin-left: -40px
+
   .hosted
     margin-left: 24px
     margin-top: -65px
     display-flex()
 
-    .card-frame:not(:first-child)
-      margin-left: -15px
+    .card-wrapper
+      margin-top: 0px
+      margin-bottom: 3px
 
+    .card-wrapper:not(:first-child)
+      margin-left: -20px
+
+    .card-wrapper:last-child
+     margin-right: 0px
+
+    .stacked
+      margin-top: 0px
+      margin-bottom: 3px
+
+      .card-wrapper:not(:first-child)
+       margin-left: -40px
+
+    .stacked:not(:first-child)
+      margin-left: -20px
 
   .leftpane
     display-flex()
