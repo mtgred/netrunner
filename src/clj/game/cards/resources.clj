@@ -1892,6 +1892,7 @@
                            0))]
                  {:async true
                   :label "Install hosted card"
+                  :msg "install hosted card"
                   :cost [:credit 1]
                   :req (req (and (seq (:hosted card))
                                  (some #(can-pay? state :runner (assoc eid :source card :source-type :runner-install)
