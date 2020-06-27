@@ -535,7 +535,7 @@
                                          :choices {:max dbs
                                                    :card #(some (fn [c] (same-card? c %)) drawn)
                                                    :all true}
-                                         :effect (req (doseq [c targets]
+                                         :effect (req (doseq [c (reverse targets)]
                                                         (move state side c :deck)))}
                                         card targets)
                                       (clear-wait-prompt state :runner)

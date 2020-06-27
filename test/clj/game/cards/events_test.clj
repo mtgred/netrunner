@@ -4429,7 +4429,7 @@
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
       (is (= 2 (-> (get-runner) :hand count)))
-      (is (= ["Sure Gamble" "Easy Mark"] (->> (get-runner) :hand (map :title) (into []))))
+      (is (= ["Easy Mark" "Sure Gamble"] (->> (get-runner) :hand (map :title) (into []))))
       (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
       (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
       (is (nil? (get-run)) "Run is ended"))))

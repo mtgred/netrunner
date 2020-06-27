@@ -939,7 +939,7 @@
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
                                  :msg (msg "add " n " cards from their Grip to the top of the Stack")
-                                 :effect (req (doseq [c targets]
+                                 :effect (req (doseq [c (reverse targets)]
                                                 (move state :runner c :deck {:front true})))})
                               card nil))}
    :subroutines [end-the-run-if-tagged
