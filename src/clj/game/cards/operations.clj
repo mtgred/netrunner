@@ -1683,8 +1683,9 @@
                                             (in-discard? %))}
                       :effect (req (wait-for
                                      (corp-install state side target nil {:install-state :rezzed})
-                                     (do (system-msg state side (str "uses Restore to "
-                                                                     (corp-install-msg target)))
+                                     (let [seen (assoc target :seen true)]
+                                        (system-msg state side (str "uses Restore to "
+                                                                      (corp-install-msg seen)))
                                          (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
                                            (when (seq leftover)
                                              (doseq [c leftover]

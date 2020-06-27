@@ -2846,6 +2846,36 @@
        (is (= 4 (get-counters (refresh mas-rd) :advancement)) "Increased to 4 advancements")
        (is (= 4 (count (:subroutines (refresh mas-rd)))) "Subroutines set to 4")))))
 
+(deftest restore
+  ;;Restore
+  (testing "Show agenda name in log when installed"
+    (do-game
+      (new-game {:corp {:discard ["Project Vitruvius"]
+                        :hand ["Restore"]}})
+      (play-from-hand state :corp "Restore")
+      (click-card state :corp (find-card "Project Vitruvius" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (not(:seen (get-content state :remote1 0))) "Agenda is facedown")
+      (is (last-log-contains? state "Corp uses Restore to install Project Vitruvius from Archives.") "Should write correct log")))
+  (testing "Show removed count in log when installed"
+    (do-game
+      (new-game {:corp {:discard [(qty "Marilyn Campaign" 3)]
+                        :hand ["Restore"]}})
+      (play-from-hand state :corp "Restore")
+      (click-card state :corp (find-card "Marilyn Campaign" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (last-log-contains? state "Corp removes 2 copies of Marilyn Campaign from the game.") "Should write correct log")))
+  (testing "Card is installed and rezzed"
+    (do-game
+      (new-game {:corp {:discard ["Marilyn Campaign"]
+                        :hand ["Restore"]}})
+      (play-from-hand state :corp "Restore")
+      (click-card state :corp (find-card "Marilyn Campaign" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (= "Marilyn Campaign" (:title (get-content state :remote1 0))) "Marilyn Campaign should be installed")
+      (is (rezzed? (get-content state :remote1 0)) "Marilyn Campaign was rezzed")
+      (is (= 2 (:credit (get-corp))) "Rezzed Marilyn Campaign 2 credit + 1 credit for Restore"))))
+
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
