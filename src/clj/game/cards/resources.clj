@@ -1950,7 +1950,7 @@
                                      (effect-completed state side eid))))
                   :msg (msg "host " (:title target) "")}
                  (assoc remove-counter
-                        :label "Remove 1 counter from a hosted card (start of turn)"
+                        :label "Remove 1 counter from a hosted card"
                         :cost [:credit 1])
                  {:async true
                   :label "X[Credit]: Remove counters from a hosted card"
