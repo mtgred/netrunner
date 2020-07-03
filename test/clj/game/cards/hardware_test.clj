@@ -2748,7 +2748,46 @@
       (play-from-hand state :runner "Prognostic Q-Loop")
       (card-ability state :runner (get-hardware state 0) 1)
       (is (last-log-contains? state "Runner spends \\[Click] and pays 1 \\[Credits] to install Prognostic Q-Loop.")
-          "Shouldn't print anything to log as the stack is empty"))))
+          "Shouldn't print anything to log as the stack is empty")))
+  (testing "Orders correctly with other on run triggers when firing first. Issue #4973"
+    (do-game
+      (new-game {:runner {:hand ["Prognostic Q-Loop", "Masterwork (v37)", "Spy Camera", "Au Revoir", "Bankroll"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom A B
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (play-from-hand state :runner "Masterwork (v37)")
+      (run-on state :hq)
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Prognostic Q-Loop")
+      (click-prompt state :runner "Yes")
+      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))))
+  (testing "Are the correct cards shown if another start of run trigger draws a card. Issue #4973"
+    (do-game
+      (new-game {:runner {:hand ["Prognostic Q-Loop", "Masterwork (v37)", "Spy Camera", "Au Revoir", "Bankroll", "Clone Chip"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom A B C
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (play-from-hand state :runner "Masterwork (v37)")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ; Reset runner first-hardware-install
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (run-on state :hq)
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Masterwork (v37)")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Spy Camera")
+      (is (= 1 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
+      (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
+      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))
+    )))
 
 (deftest public-terminal
   ;; Public Terminal
