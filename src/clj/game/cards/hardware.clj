@@ -1405,10 +1405,12 @@
                         :prompt "Look at top 2 cards of the stack?"
                         :player :runner
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:msg "look at the top 2 cards of the stack"
+                        :yes-ability {:async true
+                                      :msg "look at the top 2 cards of the stack"
                                       :effect (effect (prompt! card (str "The top two cards of your Stack are "
                                                                          (join ", " (map :title (take 2 (:deck runner))))
-                                                                         ".") ["OK"] {}))}}}]
+                                                                         ".") ["OK"] {}
+                                                                         (effect-completed state side eid)))}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of stack"
                 :once :per-turn
