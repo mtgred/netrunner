@@ -2786,8 +2786,7 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))
-    )))
+      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner)))))))
 
 (deftest public-terminal
   ;; Public Terminal
