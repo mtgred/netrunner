@@ -2776,7 +2776,6 @@
       (take-credits state :runner)
       (take-credits state :corp)
       ; Reset runner first-hardware-install
-      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
       (run-on state :hq)
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Masterwork (v37)")
