@@ -47,7 +47,7 @@
      (when (:ismoderator user)
        [:a.block-link "[Moderator]"])
      [:a.block-link {:href "/account"} "Settings"]
-     [:a.block-link {:on-click #(handle-logout %)} "Logout"]]]])
+     [:a.block-link {:on-click #(handle-logout %)} "Jack out"]]]])
 
 (defn unlogged-menu []
   [:ul
