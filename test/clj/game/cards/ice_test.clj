@@ -1120,6 +1120,86 @@
         (card-subroutine state :corp (refresh f2p) 0)
         (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
 
+(deftest fairchild-1-0
+  ;; Fairchild 1.0
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:deck ["Fairchild 1.0"]}
+                 :runner {:deck ["Sacrificial Construct", "Clone Chip"]}})
+      (play-from-hand state :corp "Fairchild 1.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sacrificial Construct")
+      (play-from-hand state :runner "Clone Chip")
+      (let [fairchild (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp fairchild)
+        (run-continue state)
+        (card-subroutine state :corp fairchild 0)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Sacrificial Construct")
+        (is (empty? (get-resource state)) "Sac Con trashed")
+        (card-subroutine state :corp fairchild 1)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Clone Chip")
+        (is (empty? (get-hardware state)) "Sac Con trashed")))))
+
+(deftest fairchild-2-0
+  ;; Fairchild 2.0
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:deck ["Fairchild 2.0"]}
+                 :runner {:deck ["Sacrificial Construct", "Clone Chip", "Sure Gamble"]}})
+      (play-from-hand state :corp "Fairchild 2.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sacrificial Construct")
+      (play-from-hand state :runner "Clone Chip")
+      (let [fairchild (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp fairchild)
+        (run-continue state)
+        (card-subroutine state :corp fairchild 0)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Sacrificial Construct")
+        (is (empty? (get-resource state)) "Sac Con trashed")
+        (card-subroutine state :corp fairchild 1)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Clone Chip")
+        (is (empty? (get-hardware state)) "Sac Con trashed")
+        (card-subroutine state :corp fairchild 2)
+        (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")))))
+
+(deftest fairchild-3-0
+  ;; Fairchild 3.0
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:deck ["Fairchild 3.0"]}
+                 :runner {:deck ["Sacrificial Construct", "Clone Chip", "Sure Gamble"]}})
+      (play-from-hand state :corp "Fairchild 3.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sacrificial Construct")
+      (play-from-hand state :runner "Clone Chip")
+      (let [fairchild (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp fairchild)
+        (run-continue state)
+        (card-subroutine state :corp fairchild 0)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Sacrificial Construct")
+        (is (empty? (get-resource state)) "Sac Con trashed")
+        (card-subroutine state :corp fairchild 1)
+        (click-prompt state :runner "Trash an installed card")
+        (is (= "Select an installed card to trash" (:msg (prompt-map :runner))))
+        (click-card state :runner "Clone Chip")
+        (is (empty? (get-hardware state)) "Sac Con trashed")
+        (card-subroutine state :corp fairchild 2)
+        (click-prompt state :corp "End the run")
+        (is (not (:run @state)) "Run is ended")))))
+
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
   (do-game
