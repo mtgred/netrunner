@@ -35,7 +35,8 @@
       (ws/ws-send! [:lobby/rename-game {:gameid gameid}]))))
 
 (defn game-row
-  [{:keys [title format password started players gameid current-game password-game original-players editing] :as game}]
+  [{:keys [title format room password started players gameid current-game
+           password-game original-players editing] :as game}]
   (r/with-let [s (r/atom {:show-mod-menu false})
                user (:user @app-state)
                join (fn [action]
@@ -54,11 +55,13 @@
                 (not (or password-game current-game editing)))
        [:button {:on-click #(do (join "watch")
                                 (resume-sound))} "Watch" editing])
-     (when (and (= 1 (count players))
-                (not current-game)
-                (not editing)
-                (not started)
-                (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) players)))
+     (when (or (and (= "tournament" room)
+                    (some #(= (:username %) (get-in @app-state [:user :username])) players))
+               (and (>= 1 (count players))
+                    (not current-game)
+                    (not editing)
+                    (not started)
+                    (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) players))))
        [:button {:on-click #(do (join "join")
                                 (resume-sound))}
         "Join"])
@@ -95,9 +98,11 @@
       [:span.format-type (slug->format format "Unknown")]]
 
      [:div (doall
-             (for [player (:players game)]
-               ^{:key (get-in player [:user :_id])}
-               [player-view player game]))]
+             (map-indexed
+               (fn [idx player]
+                 ^{:key idx}
+                 [player-view player game])
+               players))]
 
      (when-let [prompt (:prompt @s)]
        [:div.password-prompt

@@ -5,6 +5,7 @@
             [game.utils :refer [remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
+            [web.diffs :refer [game-public-view]]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt]
             [monger.collection :as mc]
@@ -39,35 +40,7 @@
   "Returns a seq of all client-ids playing or spectating a gameid."
   [gameid]
   (let [game (game-for-id gameid)]
-    (map :ws-id (concat (:players game) (:spectators game)))))
-
-(defn user-public-view
-  "Strips private server information from a player map."
-  [{:keys [started format] :as game} player]
-  (as-> player p
-        (dissoc p :ws-id)
-        (if-let [{:keys [_id] :as deck} (:deck p)]
-          (let [legal (get-in deck [:status (keyword format) :legal])
-                status {:format format
-                        (keyword format) {:legal legal}}
-                deck (-> deck
-                         (select-keys
-                           (if started
-                             [:name :date :identity]
-                             [:name :date]))
-                         (assoc :_id (str _id) :status status))]
-            (assoc p :deck deck))
-          p)))
-
-(defn game-public-view
-  "Strips private server information from a game map, preparing to send the game to clients."
-  [{:keys [started players] :as game}]
-  (-> game
-      (dissoc :state :last-update)
-      (update-in [:players] #(map (partial user-public-view game) %))
-      (update-in [:original-players] #(map (partial user-public-view game) %))
-      (update-in [:ending-players] #(map (partial user-public-view game) %))
-      (update-in [:spectators] #(map (partial user-public-view game) %))))
+    (keep :ws-id (concat (:players game) (:spectators game)))))
 
 (let [lobby-update (atom true)
       lobby-updates (atom {})]
@@ -170,18 +143,30 @@
           (close-lobby game))
         (refresh-lobby :update gameid)))))
 
+(defn already-in-game?
+  "Checks if a user with the given database id (:_id) is already in the game"
+  [{:keys [username] :as user} {:keys [players spectators] :as game}]
+  (some #(= username (:username %)) (map :user (concat players spectators))))
+
 (defn join-game
   "Adds the given user as a player in the given gameid."
   [{options :options _id :_id :as user} client-id gameid]
-  (let [{players :players :as game} (game-for-id gameid)]
-    (when (< (count (filter #(not= _id (get-in % [:user :_id])) players)) 2)
-      (let [{side :side :as fplayer} (first players)
+  (let [{players :players :as game} (game-for-id gameid)
+        existing-players-count (count (remove #(= _id (get-in % [:user :_id])) players))]
+    (println "heck")
+    (when (or (< existing-players-count 2)
+              (already-in-game? user game))
+      (println "here")
+      (let [remaining-player (first (remove #(= _id (get-in % [:user :_id])) players))
+            _ (println remaining-player)
+            side (:side remaining-player)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
                         :ws-id   client-id
                         :side    new-side
                         :options options}]
-        (swap! all-games update-in [gameid :players] #(conj % new-player))
+        (println new-player)
+        (swap! all-games assoc-in [gameid :players] [remaining-player new-player])
         (swap! client-gameids assoc client-id gameid)
         new-player))))
 
@@ -215,27 +200,29 @@
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
 
 (defn handle-lobby-create
-  [{{{:keys [username emailhash] :as user} :user} :ring-req
-    client-id                                     :client-id
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id
     {:keys [title format allow-spectator spectatorhands password room side options]} :?data :as event}]
+  (println user)
   (let [gameid (java.util.UUID/randomUUID)
-        game {:date           (java.util.Date.)
-              :gameid         gameid
-              :title          title
+        game {
+              :date            (java.util.Date.)
+              :gameid          gameid
+              :title           title
               :allow-spectator allow-spectator
-              :spectatorhands spectatorhands
+              :spectatorhands  spectatorhands
               :mute-spectators false
-              :password       (when (not-empty password) (bcrypt/encrypt password))
-              :room           room
-              :format         format
-              :players        [{:user    user
-                                :ws-id   client-id
-                                :side    side
-                                :options options}]
-              :spectators     []
-              :messages       [{:user "__system__"
-                                :text (str (:username user) " has created the game.")}]
-              :last-update    (t/now)}]
+              :password        (when (not-empty password) (bcrypt/encrypt password))
+              :room            room
+              :format          format
+              :players         [{:user    user
+                                 :ws-id   client-id
+                                 :side    side
+                                 :options options}]
+              :spectators      []
+              :messages        [{:user "__system__"
+                                 :text (str username " has created the game.")}]
+              :last-update     (t/now)}]
     (swap! all-games assoc gameid game)
     (swap! client-gameids assoc client-id gameid)
     (ws/send! client-id [:lobby/select {:gameid gameid}])
@@ -246,8 +233,8 @@
   (swap! all-games update-in [gameid :messages] #(conj % {:user user :text (trim text)})))
 
 (defn handle-lobby-leave
-  [{{{:keys [username emailhash] :as user} :user} :ring-req
-    client-id                                     :client-id}]
+  [{{{:keys [username]} :user} :ring-req
+    client-id                  :client-id}]
   (when-let [{gameid :gameid} (game-for-client client-id)]
     (when (player-or-spectator client-id gameid)
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
@@ -257,19 +244,19 @@
       (remove-user client-id gameid))))
 
 (defn handle-lobby-say
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    {:keys [msg gameid]}                :?data}]
+  [{{user :user}         :ring-req
+    client-id            :client-id
+    {:keys [msg gameid]} :?data}]
   (when (player-or-spectator client-id gameid)
-    (lobby-say gameid {:user user :text msg})
+    (lobby-say gameid {:user user
+                       :text msg})
     (ws/broadcast-to! (lobby-clients gameid)
                       :games/diff
                       {:diff {:update {gameid (game-public-view (game-for-id gameid))}}})))
 
 (defn handle-swap-sides
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    gameid                              :?data}]
+  [{client-id :client-id
+    gameid    :?data}]
   (let [game (game-for-id gameid)
         fplayer (first (:players game))]
     (when (= (:ws-id fplayer) client-id)
@@ -279,23 +266,16 @@
                         :games/diff
                         {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
-(defn already-in-game?
-  "Checks if a user with the given database id (:_id) is already in the game"
-  [{:keys [_id] :as user} {:keys [players spectators] :as game}]
-  (or (some #(= _id (:_id %)) (map :user players))
-      (some #(= _id (:_id %)) (map :user spectators))))
-
 (defn handle-lobby-join
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [gameid password options]}   :?data
+    {:keys [gameid password]}           :?data
     reply-fn                            :?reply-fn
     :as                                 msg}]
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
-      (if (and (not (already-in-game? user game))
-               (or (empty? game-password)
-                   (bcrypt/check password game-password)))
+      (if (or (empty? game-password)
+              (bcrypt/check password game-password))
         (do (join-game user client-id gameid)
             (lobby-say gameid {:user "__system__"
                                :text (str username " joined the game.")})
@@ -313,7 +293,7 @@
   "Handles a watch command when a game has not yet started."
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [gameid password options]}   :?data
+    {:keys [gameid password]}           :?data
     reply-fn                            :?reply-fn}]
   (if-let [{game-password :password state :state started :started :as game}
            (@all-games gameid)]
@@ -385,12 +365,12 @@
                     :date (java.util.Date.)})))))
 
 (ws/register-ws-handlers!
-  :chsk/uidport-open handle-ws-connect
-  :lobby/create handle-lobby-create
-  :lobby/leave handle-lobby-leave
-  :lobby/join handle-lobby-join
-  :lobby/watch handle-lobby-watch
-  :lobby/say handle-lobby-say
-  :lobby/swap handle-swap-sides
-  :lobby/deck handle-select-deck
-  :lobby/rename-game handle-rename-game)
+  :chsk/uidport-open #'handle-ws-connect
+  :lobby/create #'handle-lobby-create
+  :lobby/leave #'handle-lobby-leave
+  :lobby/join #'handle-lobby-join
+  :lobby/watch #'handle-lobby-watch
+  :lobby/say #'handle-lobby-say
+  :lobby/swap #'handle-swap-sides
+  :lobby/deck #'handle-select-deck
+  :lobby/rename-game #'handle-rename-game)

@@ -254,7 +254,9 @@
   [:div.games
    [:div.button-bar
     [cond-button "New game"
-     (and (not (or @gameid (:editing @s)))
+     (and (not (or @gameid
+                   (:editing @s)
+                   (= "tournament" (:room @s))))
           (->> @games
                (mapcat :players)
                (filter #(= (-> % :user :_id) (:_id @user)))
@@ -262,8 +264,10 @@
      #(do (new-game s)
           (resume-sound))]
     [:div.rooms
+     [room-tab user s games "tournament" "Tournament"]
      [room-tab user s games "competitive" "Competitive"]
-     [room-tab user s games "casual" "Casual"]]]
+     [room-tab user s games "casual" "Casual"]
+     ]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
@@ -363,27 +367,29 @@
         [:h3 "Players"]
         [:div.players
          (doall
-           (for [player (:players game)
-                 :let [player-id (get-in player [:user :_id])
-                       this-player (= player-id (:_id @user))]]
-             ^{:key player-id}
-             [:div
-              [player-view player game]
-              (when-let [{:keys [name status]} (:deck player)]
-                [:span {:class (:status status)}
-                 [:span.label
-                  (if this-player
-                    name
-                    "Deck selected")]])
-              (when-let [deck (:deck player)]
-                [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
-              (when this-player
-                [:span.fake-link.deck-load
-                 {:on-click #(reagent-modals/modal!
-                               [deckselect-modal user {:games games :gameid gameid
-                                                       :sets sets :decks decks
-                                                       :format (:format game "standard")}])}
-                 "Select Deck"])]))]
+           (map-indexed
+             (fn [idx player]
+               (let [player-id (get-in player [:user :_id])
+                     this-player (= player-id (:_id @user))]
+                 ^{:key (or player-id idx)}
+                 [:div
+                  [player-view player game]
+                  (when-let [{:keys [name status]} (:deck player)]
+                    [:span {:class (:status status)}
+                     [:span.label
+                      (if this-player
+                        name
+                        "Deck selected")]])
+                  (when-let [deck (:deck player)]
+                    [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
+                  (when this-player
+                    [:span.fake-link.deck-load
+                     {:on-click #(reagent-modals/modal!
+                                   [deckselect-modal user {:games games :gameid gameid
+                                                           :sets sets :decks decks
+                                                           :format (:format game "standard")}])}
+                     "Select Deck"])]))
+             players))]
         (when (:allow-spectator game)
           [:div.spectators
            (let [c (count (:spectators game))]

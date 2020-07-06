@@ -61,4 +61,3 @@
       (response 200 {:message "Deleted"})
       (response 403 {:message "Forbidden"}))
     (response 401 {:message "Unauthorized"})))
-
