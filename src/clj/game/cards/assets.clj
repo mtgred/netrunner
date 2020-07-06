@@ -2193,18 +2193,19 @@
                               (effect-completed eid))}
              {:label "add this asset to HQ"
               :msg "add it to HQ"
-              :effect (effect (move card :hand))}
-             {:msg "done"}]
+              :effect (effect (move card :hand))}]
         choice (fn choice [abis n]
-                 {:prompt "Choose an ability to resolve"
-                  :choices (map make-label abis)
-                  :async true
-                  :effect (req (let [chosen (some #(when (= target (make-label %)) %) abis)]
-                                 (wait-for
-                                   (resolve-ability state side chosen card nil)
-                                   (if (and (pos? (dec n)) (not= "done" (:msg chosen)))
-                                     (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
-                                     (effect-completed state side eid)))))})
+                 (let [choices (concat (mapv make-label abis) ["Done"])]
+                   {:prompt "Choose an ability to resolve"
+                    :choices choices
+                    :async true
+                    :effect (req (let [chosen (first (filter #(= % target) choices))
+                                       chosen-ability (first (filter #(= target (make-label %)) abis))]
+                                   (wait-for (resolve-ability state side chosen-ability card nil)
+                                     (if (and (pos? (dec n))
+                                              (not= "Done" chosen))
+                                       (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
+                                       (effect-completed state side eid)))))}))
         ability {:async true
                  :label "resolve an ability"
                  :once :per-turn
