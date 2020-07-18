@@ -43,14 +43,21 @@
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
+(defn wrap-tournament-auth-required [handler]
+  (fn [{user :user :as req}]
+    (if (:tournament-organizer user)
+      (handler req)
+      (response 401 {:message "Not authorized"}))))
+
 (defn wrap-user [handler]
   (fn [{:keys [cookies] :as req}]
     (let [auth-cookie (get cookies "session")
           {:keys [_id emailhash] :as user} (when auth-cookie (unsign-token (:value auth-cookie)))
+          user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats]
           u (when user (mc/find-one-as-map db "users" {:_id (object-id _id) :emailhash emailhash}))]
       (if u
         (handler (-> req
-                     (assoc :user (select-keys u [:_id :username :emailhash :isadmin :ismoderator :special :options :stats]))
+                     (assoc :user (select-keys u user-keys))
                      (update-in [:user :_id] str)))
         (handler req)))))
 

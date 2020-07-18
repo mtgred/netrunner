@@ -7,7 +7,8 @@
 (defn parse [event]
   (let [xhr (.-target event)
         status (.getStatus xhr)]
-    {:status status :json (-> xhr .getResponseText ((.-parse js/JSON)) (js->clj :keywordize-keys true))}))
+    {:status status
+     :json (-> xhr .getResponseText ((.-parse js/JSON)) (js->clj :keywordize-keys true))}))
 
 (defn GET [url]
   (let [ch (chan)]

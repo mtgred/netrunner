@@ -137,7 +137,7 @@
     (let [{:keys [players] :as game} (game-for-id gameid)]
       (swap! client-gameids dissoc client-id)
 
-      (if (empty? players)
+      (if (empty? (filter identity players))
         (do
           (stats/game-finished game)
           (close-lobby game))
@@ -146,26 +146,23 @@
 (defn already-in-game?
   "Checks if a user with the given database id (:_id) is already in the game"
   [{:keys [username] :as user} {:keys [players spectators] :as game}]
-  (some #(= username (:username %)) (map :user (concat players spectators))))
+  (some #(= username (get-in % [:user :username])) (concat players spectators)))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
-  [{options :options _id :_id :as user} client-id gameid]
+  [{:keys [options _id username] :as user} client-id gameid]
   (let [{players :players :as game} (game-for-id gameid)
-        existing-players-count (count (remove #(= _id (get-in % [:user :_id])) players))]
-    (println "heck")
+        existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
     (when (or (< existing-players-count 2)
               (already-in-game? user game))
-      (println "here")
-      (let [remaining-player (first (remove #(= _id (get-in % [:user :_id])) players))
-            _ (println remaining-player)
+      (println options)
+      (let [remaining-player (first (remove #(= username (get-in % [:user :username])) players))
             side (:side remaining-player)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
                         :ws-id   client-id
                         :side    new-side
                         :options options}]
-        (println new-player)
         (swap! all-games assoc-in [gameid :players] [remaining-player new-player])
         (swap! client-gameids assoc client-id gameid)
         new-player))))
@@ -203,7 +200,6 @@
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [title format allow-spectator spectatorhands password room side options]} :?data :as event}]
-  (println user)
   (let [gameid (java.util.UUID/randomUUID)
         game {
               :date            (java.util.Date.)
