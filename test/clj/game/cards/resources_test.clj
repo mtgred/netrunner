@@ -3375,6 +3375,65 @@
                            (click-card state :runner (refresh pt)))
         (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
 
+(deftest personal-workshop
+  ;; Personal Workshop
+  ;; Issue #5167
+  (testing "Removes token on start of turn and installs"
+    (do-game
+     (new-game {:runner {:deck ["Personal Workshop" "Medium"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Personal Workshop")
+     (let [pw (get-resource state 0)]
+       ;; host medium and remove 2 of 3 counters
+       (card-ability state :runner pw 0)
+       (click-card state :runner (find-card "Medium" (:hand (get-runner))))
+       (card-ability state :runner pw 2)
+       (click-card state :runner (first (:hosted (refresh pw))))
+       (click-prompt state :runner "2")
+       ;; come back around to runner start of turn, remove last token
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (click-card state :runner (first (:hosted (refresh pw))))
+       (is (= 1 (count (get-program state))))
+       (is (= "Medium" (:title (get-program state 0)))))))
+  (testing "Manually spending credits removes tokens and installs"
+    (do-game
+     (new-game {:runner {:deck ["Personal Workshop" "Medium"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Personal Workshop")
+     (let [pw (get-resource state 0)]
+       ;; host medium and remove all 3 counters
+       (card-ability state :runner pw 0)
+       (click-card state :runner (find-card "Medium" (:hand (get-runner))))
+       (card-ability state :runner pw 2)
+       (click-card state :runner (first (:hosted (refresh pw))))
+       (click-prompt state :runner "3")
+       (is (= 1 (count (get-program state))))
+       (is (= "Medium" (:title (get-program state 0)))))))
+  (testing "Can host and install more than once per turn"
+    (do-game
+     (new-game {:runner {:deck ["Personal Workshop" "Medium" "Corroder"]}})
+     (take-credits state :corp)
+     (core/gain state :runner :credit 5)
+     (play-from-hand state :runner "Personal Workshop")
+     (let [pw (get-resource state 0)]
+       ;; host medium and remove all 3 counters
+       (card-ability state :runner pw 0)
+       (click-card state :runner (find-card "Medium" (:hand (get-runner))))
+       (card-ability state :runner pw 2)
+       (click-card state :runner (first (:hosted (refresh pw))))
+       (click-prompt state :runner "3")
+       (is (= 1 (count (get-program state))))
+       (is (= "Medium" (:title (get-program state 0))))
+       ;; do the same with corroder
+       (card-ability state :runner pw 0)
+       (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+       (card-ability state :runner pw 2)
+       (click-card state :runner (first (:hosted (refresh pw))))
+       (click-prompt state :runner "2")
+       (is (= 2 (count (get-program state))))
+       (is (= "Corroder" (:title (get-program state 1))))))))
+
 (deftest power-tap
   ;; Power Tap
   (do-game
