@@ -1,9 +1,11 @@
 (ns web.decks
   (:require [web.db :refer [db object-id]]
             [web.utils :refer [response]]
+            [clojure.string :refer [split split-lines join escape lower-case] :as s]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
             [web.config :refer [server-config]]
+            [crypto.password.pbkdf2 :as pbkdf2]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]))
 
@@ -35,9 +37,16 @@
           check-deck (-> deck
                          (update-in [:cards] #(map update-card %))
                          (update-in [:identity] #(@all-cards (:title %))))
+          id (-> deck :identity :title)
+          sorted-cards (sort-by #(:code (:card %)) (:cards check-deck))
+          decklist (s/join (for [entry sorted-cards] (str (:qty entry) (:code (:card entry)))))
+          deckstr (str id decklist)
+          salt (byte-array (map byte (:name deck)))
+          hash (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))
           deck (-> deck
                    (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
-                   (assoc :username username))
+                   (assoc :username username)
+                   (assoc :hash hash))
           status (calculate-deck-status check-deck)
           deck (assoc deck :status status)]
       (when (nil? (:identity check-deck))

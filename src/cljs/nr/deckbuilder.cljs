@@ -649,7 +649,8 @@
             [:span.invalid " (minimum " min-point ")"])
           (when (> points (inc min-point))
             [:span.invalid " (maximum " (inc min-point) ")"])]))
-     [:div [deck-status-span deck true true false]]]))
+     [:div [deck-status-span deck true true false]]
+     (when (:hash deck) [:div "Tournament hash: " (:hash deck)])]))
 
 (defn decklist-contents
   [s deck cards]
