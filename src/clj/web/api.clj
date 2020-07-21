@@ -78,10 +78,7 @@
            (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
 
 (defroutes tournament-routes
-  (GET "/tournament-auth/:username" [] tournament/auth)
-  (GET "/tournament-load/:id" [] tournament/load-tournament)
-  (GET "/tournament-create/:id" [] tournament/create-tournament)
-  )
+  (GET "/tournament-auth/:username" [] tournament/auth))
 
 (defroutes routes
   (wrap-routes user-routes auth/wrap-authentication-required)

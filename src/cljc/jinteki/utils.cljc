@@ -60,3 +60,9 @@
        (s/split $ #"[ \t\n\x0B\f\r!\"#$%&'()*+,-./:;<=>?@\\\[\]^_`{|}~]+")
        (filter seq $)
        (s/join sep $)))))
+
+(defn superuser?
+  [user]
+  (or (:isadmin user)
+      (:ismoderator user)
+      (:tournament-organizer user)))

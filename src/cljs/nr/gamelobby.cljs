@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
             [jinteki.validator :refer [trusted-deck-status]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
@@ -14,7 +14,7 @@
             [nr.game-row :refer [game-row]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
-            [nr.utils :refer [slug->format cond-button]]
+            [nr.utils :refer [slug->format cond-button superuser?]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]
@@ -198,10 +198,11 @@
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
-  [username game]
-  (let [players (get game :players [])
-        blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
-    (= -1 (.indexOf blocked-users username))))
+  [user game]
+  (or (superuser? user)
+      (let [players (get game :players [])
+            blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
+        (= -1 (.indexOf blocked-users (:username user))))))
 
 (defn- blocking-from-game
   "Remove games with players we are blocking"
@@ -213,7 +214,7 @@
 
 (defn filter-blocked-games
   [user games]
-  (let [blocked-games (filter #(blocked-from-game (:username user) %) games)
+  (let [blocked-games (filter #(blocked-from-game user %) games)
         blocked-users (get-in user [:options :blocked-users] [])]
     (filter #(blocking-from-game blocked-users %) blocked-games)))
 

@@ -2,15 +2,17 @@
   (:require [clojure.string :refer [trim]]
             [web.db :refer [db object-id]]
             [web.utils :refer [response tick]]
-            [game.utils :refer [remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
             [web.diffs :refer [game-public-view]]
+            [game.utils :refer [remove-once]]
             [game.core :as core]
-            [crypto.password.bcrypt :as bcrypt]
-            [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]
+            [jinteki.utils :refer [str->int superuser?]]
+            [crypto.password.bcrypt :as bcrypt]
+            [monger.collection :as mc]
+            [monger.operators :refer :all]
             [cheshire.core :as json]
             [clj-time.core :as t])
   (:import org.bson.types.ObjectId))
@@ -189,8 +191,15 @@
   [{:keys [players] :as game}]
   (mapcat #(get-in % [:user :options :blocked-users]) players))
 
-(defn allowed-in-game [game {:keys [username]}]
-  (not-any? #(= username %) (blocked-users game)))
+(defn superusers []
+  (mc/find-maps db "users" {$or [{:isadmin true}
+                                 {:ismoderator true}
+                                 {:tournament-organizer true}]}))
+
+(defn allowed-in-game [game {:keys [username] :as user}]
+  (or (superuser? user)
+      (not-any? #(= username %) (blocked-users game))
+      (some #(= username %) (map :username (superusers)))))
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))

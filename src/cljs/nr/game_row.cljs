@@ -51,8 +51,9 @@
                           (do (swap! app-state assoc :password-gameid gameid)
                               (swap! s assoc :prompt action)))))]
     [:div.gameline {:class (when (= current-game gameid) "active")}
-     (when (and (:allow-spectator game)
-                (not (or password-game current-game editing)))
+     (when (or (superuser? user)
+               (and (:allow-spectator game)
+                    (not (or password-game current-game editing))))
        [:button {:on-click #(do (join "watch")
                                 (resume-sound))} "Watch" editing])
      (when (or (and (= "tournament" room)
