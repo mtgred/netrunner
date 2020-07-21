@@ -1402,13 +1402,15 @@
              :silent (get-autoresolve :auto-fire never?)
              :optional {:req (req (and (first-event? state side :run)
                                        (pos? (count (:deck runner)))))
-                        :prompt "Look at top 2 cards of the stack?"
-                        :player :runner
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:msg "look at the top 2 cards of the stack"
-                                      :effect (effect (prompt! card (str "The top two cards of your Stack are "
-                                                                         (join ", " (map :title (take 2 (:deck runner))))
-                                                                         ".") ["OK"] {}))}}}]
+                        :player :runner
+                        :prompt "Look at top 2 cards of the stack?"
+                        :yes-ability {
+                          :msg "look at the top 2 cards of the stack"
+                          :choices ["OK"]
+                          :prompt (msg "The top two cards of your Stack are "
+                                  (join ", " (map :title (take 2 (:deck runner))))
+                                  ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of stack"
                 :once :per-turn
