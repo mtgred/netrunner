@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :as s]
+            [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
@@ -40,13 +41,14 @@
 
 (defn current-block-list
   []
-  (if-let [curr (get-in @app-state [:options :blocked-users] nil)]
-    curr
-    []))
+  (get-in @app-state [:options :blocked-users] []))
 
 (defn filter-blocked-messages
   [messages]
-  (filter #(= -1 (.indexOf (current-block-list) (:username %))) messages))
+  (let [user (:user @app-state)]
+    (filter #(or (superuser? user)
+                 (= -1 (.indexOf (current-block-list) (:username %))))
+            messages)))
 
 (defn update-message-channel
   [channel messages]

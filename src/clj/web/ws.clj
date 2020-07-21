@@ -3,7 +3,7 @@
             [aero.core :refer [read-config]]
             [buddy.sign.jwt :as jwt]
             [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]))
+            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
 (defonce ws-router (atom nil))
 
@@ -26,34 +26,40 @@
   [event msg]
   (broadcast-to! (:ws @connected-uids) event msg))
 
-(let [ws-handlers (atom {})]
-  (defn handle-unknown [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
-    (println "Unhandled WS msg" id uid ?data)
-    (when ?reply-fn
-      (?reply-fn {:msg "Unhandled event"})))
+(defonce ws-handlers (atom {}))
 
-  (defn register-ws-handler!
-    "Registers a function to handle a given event-id on the web socket.
-    If multiple handlers are registered for an event, each is called until a
-    truthy value is returned, and the rest are ignored."
-    [event handler-fn]
-    (swap! ws-handlers #(update-in % [event] (partial cons handler-fn))))
+(defn handle-unknown
+  [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
+  (println "Unhandled WS msg" id uid ?data)
+  (when ?reply-fn
+    (?reply-fn {:msg "Unhandled event"})))
 
-  (defn register-ws-handlers!
-    "Utility to register a sequence of ws handlers. The sequence alternates
-    *event* *handler* *event* *handler* ..."
-    [& args]
-    (let [handlers (partition 2 args)]
-      (doseq [h handlers]
-        (register-ws-handler! (first h) (second h)))))
+(defn register-ws-handler!
+  "Registers a function to handle a given event-id on the web socket.
+  If multiple handlers are registered for an event, each is called until a
+  truthy value is returned, and the rest are ignored."
+  [event handler-fn]
+  (swap! ws-handlers update event (partial cons handler-fn)))
 
-  (defn handle-ws-msg
-    "Called by the websocket router to process incoming messages."
-    [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
-    (if-let [handlers (get @ws-handlers id)]
-      ;; Call each handler in turn, until one returns a truthy value.
-      (reduce (fn [prev handler] (or prev (handler msg))) false handlers)
-      (handle-unknown msg))))
+(defn register-ws-handlers!
+  "Utility to register a sequence of ws handlers. The sequence alternates
+  *event* *handler* *event* *handler* ..."
+  [& args]
+  (let [handlers (partition 2 args)]
+    (doseq [[event handler-fn] handlers]
+      (register-ws-handler! event handler-fn))))
+
+(defn handle-ws-msg
+  "Called by the websocket router to process incoming messages."
+  [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
+  (if-let [handlers (get @ws-handlers id)]
+    ;; Call each handler in turn, until one returns a truthy value.
+    (reduce (fn [_ handler]
+              (when-let [result (handler msg)]
+                (reduced result)))
+            false
+            handlers)
+    (handle-unknown msg)))
 
 (register-ws-handler! :chsk/ws-ping (fn [_])) ;; do nothing on ping messages
 

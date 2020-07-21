@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
             [jinteki.validator :refer [trusted-deck-status]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
@@ -198,10 +198,11 @@
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
-  [username game]
-  (let [players (get game :players [])
-        blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
-    (= -1 (.indexOf blocked-users username))))
+  [user game]
+  (or (superuser? user)
+      (let [players (get game :players [])
+            blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
+        (= -1 (.indexOf blocked-users (:username user))))))
 
 (defn- blocking-from-game
   "Remove games with players we are blocking"
@@ -213,7 +214,7 @@
 
 (defn filter-blocked-games
   [user games]
-  (let [blocked-games (filter #(blocked-from-game (:username user) %) games)
+  (let [blocked-games (filter #(blocked-from-game user %) games)
         blocked-users (get-in user [:options :blocked-users] [])]
     (filter #(blocking-from-game blocked-users %) blocked-games)))
 
@@ -254,7 +255,9 @@
   [:div.games
    [:div.button-bar
     [cond-button "New game"
-     (and (not (or @gameid (:editing @s)))
+     (and (not (or @gameid
+                   (:editing @s)
+                   (= "tournament" (:room @s))))
           (->> @games
                (mapcat :players)
                (filter #(= (-> % :user :_id) (:_id @user)))
@@ -262,6 +265,7 @@
      #(do (new-game s)
           (resume-sound))]
     [:div.rooms
+     [room-tab user s games "tournament" "Tournament"]
      [room-tab user s games "competitive" "Competitive"]
      [room-tab user s games "casual" "Casual"]]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
@@ -363,27 +367,29 @@
         [:h3 "Players"]
         [:div.players
          (doall
-           (for [player (:players game)
-                 :let [player-id (get-in player [:user :_id])
-                       this-player (= player-id (:_id @user))]]
-             ^{:key player-id}
-             [:div
-              [player-view player game]
-              (when-let [{:keys [name status]} (:deck player)]
-                [:span {:class (:status status)}
-                 [:span.label
-                  (if this-player
-                    name
-                    "Deck selected")]])
-              (when-let [deck (:deck player)]
-                [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
-              (when this-player
-                [:span.fake-link.deck-load
-                 {:on-click #(reagent-modals/modal!
-                               [deckselect-modal user {:games games :gameid gameid
-                                                       :sets sets :decks decks
-                                                       :format (:format game "standard")}])}
-                 "Select Deck"])]))]
+           (map-indexed
+             (fn [idx player]
+               (let [player-id (get-in player [:user :_id])
+                     this-player (= player-id (:_id @user))]
+                 ^{:key (or player-id idx)}
+                 [:div
+                  [player-view player game]
+                  (when-let [{:keys [name status]} (:deck player)]
+                    [:span {:class (:status status)}
+                     [:span.label
+                      (if this-player
+                        name
+                        "Deck selected")]])
+                  (when-let [deck (:deck player)]
+                    [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
+                  (when this-player
+                    [:span.fake-link.deck-load
+                     {:on-click #(reagent-modals/modal!
+                                   [deckselect-modal user {:games games :gameid gameid
+                                                           :sets sets :decks decks
+                                                           :format (:format game "standard")}])}
+                     "Select Deck"])]))
+             players))]
         (when (:allow-spectator game)
           [:div.spectators
            (let [c (count (:spectators game))]

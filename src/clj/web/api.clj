@@ -1,6 +1,5 @@
 (ns web.api
-  (:require [jinteki.nav :as nav]
-            [web.utils :refer [response]]
+  (:require [web.utils :refer [response]]
             [web.data :as data]
             [web.pages :as pages]
             [web.auth :as auth]
@@ -9,6 +8,7 @@
             [web.chat :as chat]
             [web.stats :as stats]
             [web.admin :as admin]
+            [web.tournament :as tournament]
             [web.news :as news]
             [web.decks :as decks]
             [compojure.route :as route]
@@ -77,8 +77,12 @@
            (PUT "/data/decks" [] decks/decks-save-handler)
            (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
 
+(defroutes tournament-routes
+  (GET "/tournament-auth/:username" [] tournament/auth))
+
 (defroutes routes
   (wrap-routes user-routes auth/wrap-authentication-required)
+  (wrap-routes tournament-routes auth/wrap-tournament-auth-required)
   (wrap-routes admin-routes auth/wrap-authorization-required)
   public-routes)
 
