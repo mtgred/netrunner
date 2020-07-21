@@ -1,18 +1,12 @@
 (ns web.admin
   (:require [web.db :refer [db object-id]]
-            [web.lobby :refer [all-games refresh-lobby]]
-            [web.utils :refer [response]]
-            [web.config :refer [frontend-version]]
+            [web.lobby :refer [all-games]]
             [game.main :as main]
             [tasks.nrdb :refer [fetch-data]]
-            [crypto.password.bcrypt :as bcrypt]
+            [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [org.httpkit.client :as http]
-            [cheshire.core :as json]
-            [clj-time.core :as t]
-            [clj-uuid :as uuid]
-            ))
+            [web.config :refer [frontend-version]]))
 
 (defn wrap-version [handler]
   (fn [request]

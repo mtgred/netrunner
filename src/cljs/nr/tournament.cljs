@@ -1,16 +1,5 @@
 (ns nr.tournament
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize]]
-            [jinteki.cards :refer [all-cards]]
-            [nr.ajax :refer [GET DELETE]]
-            [nr.appstate :refer [app-state]]
-            [nr.auth :refer [authenticated] :as auth]
-            [nr.avatar :refer [avatar]]
-            [nr.deckbuilder :refer [num->percent]]
-            [nr.end-of-game-stats :refer [build-game-stats]]
-            [nr.player-view :refer [player-view]]
-            [nr.utils :refer [faction-icon render-message notnum->zero]]
+  (:require [nr.appstate :refer [app-state]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 

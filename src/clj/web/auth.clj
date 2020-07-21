@@ -51,10 +51,13 @@
 
 (defn wrap-user [handler]
   (fn [{:keys [cookies] :as req}]
-    (let [auth-cookie (get cookies "session")
-          {:keys [_id emailhash] :as user} (when auth-cookie (unsign-token (:value auth-cookie)))
-          user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats]
-          u (when user (mc/find-one-as-map db "users" {:_id (object-id _id) :emailhash emailhash}))]
+    (let [user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats]
+          auth-cookie (get cookies "session")
+          user (when auth-cookie
+                 (unsign-token (:value auth-cookie)))
+          u (when user
+              (mc/find-one-as-map db "users" {:_id (object-id (:_id user))
+                                              :emailhash (:emailhash user)}))]
       (if u
         (handler (-> req
                      (assoc :user (select-keys u user-keys))

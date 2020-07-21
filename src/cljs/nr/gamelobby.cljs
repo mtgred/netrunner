@@ -14,7 +14,7 @@
             [nr.game-row :refer [game-row]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
-            [nr.utils :refer [slug->format cond-button superuser?]]
+            [nr.utils :refer [slug->format cond-button]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]
@@ -267,8 +267,7 @@
     [:div.rooms
      [room-tab user s games "tournament" "Tournament"]
      [room-tab user s games "competitive" "Competitive"]
-     [room-tab user s games "casual" "Casual"]
-     ]]
+     [room-tab user s games "casual" "Casual"]]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
