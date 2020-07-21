@@ -15,10 +15,11 @@
             [nr.news :refer [news news-state]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
+            [nr.tournament :refer [tournament]]
             [reagent.core :as r])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament"])
 
 (def history (Html5History.))
 
@@ -98,7 +99,8 @@
   (r/render [game-lobby] (.getElementById js/document "gamelobby"))
   (r/render [help] (.getElementById js/document "help"))
   (r/render [news] (.getElementById js/document "news"))
-  (r/render [stats] (.getElementById js/document "stats")))
+  (r/render [stats] (.getElementById js/document "stats"))
+  (r/render [tournament] (.getElementById js/document "tournament")))
 
 (defn init! []
   (mount-root))

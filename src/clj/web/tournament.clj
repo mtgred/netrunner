@@ -2,13 +2,17 @@
   (:require [web.db :refer [db object-id]]
             [web.lobby :refer [all-games refresh-lobby]]
             [web.utils :refer [response]]
+            [web.ws :as ws]
+            [jinteki.utils :refer [str->int]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clj-time.core :as t]
-            [clj-uuid :as uuid]
-            ))
+            [clj-uuid :as uuid]))
+
+(defn auth [req]
+  (response 200 {:message "ok"}))
 
 (defn parse-response
   [body]
@@ -81,8 +85,7 @@
                      (map #(update % :_id str))
                      (map #(hash-map :user %))
                      (into []))
-        game {
-              :gameid gameid
+        game {:gameid gameid
               :title title
               :room "tournament"
               :format tournament-format
@@ -94,60 +97,61 @@
               :spectatorhands false
               :mute-spectators true
               :date (java.util.Date.)
-              :last-update (t/now)
-              }
-        ]
-    (when (pos? (count players))
+              :last-update (t/now)}]
+    (when (= 2 (count players))
       (swap! all-games assoc gameid game)
-      (refresh-lobby :create gameid))
-    ))
+      (refresh-lobby :create gameid)
+      game)))
 
 (defn create-lobbies-for-tournament
-  [data]
+  [data selected-round]
   (let [players (build-players data)
         rounds (process-all-rounds data players)
-        current-round (last rounds)]
-    (doseq [table current-round]
-      (create-tournament-lobby
-        {:tournament-name (:name data)
-         :tournament-format "standard"
-         :table (:table table)
-         :username1 (get-in table [:player1 :name])
-         :username2 (get-in table [:player2 :name])
-         :allow-spectator true
-         }))))
+        selected-round (nth rounds selected-round (count rounds))]
+    (map
+      (fn [table]
+        (create-tournament-lobby
+          {:tournament-name (:name data)
+           :tournament-format "standard"
+           :table (:table table)
+           :username1 (get-in table [:player1 :name])
+           :username2 (get-in table [:player2 :name])
+           :allow-spectator true}))
+      selected-round)))
 
-(defn auth [req]
-  (response 200 {:message "ok"}))
+(defn load-tournament
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [cobra-link]} :?data
+    reply-fn :?reply-fn
+    :as msg}]
+  (if (:tournament-organizer user)
+    (let [data (download-cobra-data cobra-link)
+          player-count (count (:players data))
+          player-names (keep :name (:players data))
+          db-players (mc/find-maps db "users" {:username {$in player-names}})
+          missing-players (remove #(seq (filter (fn [e] (= % e)) (map :username db-players))) player-names)
 
-(defn abs [n] (max n (- n)))
+          players (build-players data)
+          rounds (process-all-rounds data players)]
+      (ws/send! client-id [:tournament/loaded {:data {:players players
+                                                      :missing-players missing-players
+                                                      :rounds rounds}}])
+      (when reply-fn (reply-fn 200)))
+    (when reply-fn (reply-fn 403))))
 
-(defn load-tournament [{{username :username} :user
-                        {id :id}             :params}]
-  (if (and username id)
-    (try
-      (let [data (download-cobra-data id)
-            player-count (count (:players data))
-            player-names (keep :name (:players data))
-            players (mc/find-maps db "users" {:username {$in (vec player-names)}})]
-        (cond
-          (and data (= player-count (count players)))
-          (response 200 {:message "ok"})
-          data
-          (response 401 {:message (str "Missing players: " (abs (- player-count (count players))))
-                         :player-names (remove #(seq (filter (fn [e] (= % e)) (map :username players))) player-names)})
-          :else
-          (response 403 {:message "Incorrect url"})))
-      (catch Exception e
-        (response 403 {:message "Incorrect url"})))))
+(defn create-tables
+  [{{{:keys [username] :as user} :user} :ring-req
+    {:keys [cobra-link selected-round]} :?data
+    client-id :client-id
+    reply-fn :?reply-fn
+    :as msg}]
+  (if (:tournament-organizer user)
+    (let [data (download-cobra-data cobra-link)
+          created-rounds (create-lobbies-for-tournament data (str->int selected-round))]
+      (ws/send! client-id [:tournament/created {:data {:created-rounds (count created-rounds)}}])
+      (when reply-fn (reply-fn 200)))
+    (when reply-fn (reply-fn 403))))
 
-(defn create-tournament [{{username :username} :user
-                          {id :id}             :params}]
-  (if (and username id)
-    (try
-      (let [data (download-cobra-data id)]
-        (create-lobbies-for-tournament data)
-        (response 200 {:message "ok"}))
-      (catch Exception e
-        (response 403 {:message "Incorrect url"})))
-    (response 403 {:message "Forbidden"})))
+(swap! ws/ws-handlers assoc :tournament/fetch [#'load-tournament])
+(swap! ws/ws-handlers assoc :tournament/create [#'create-tables])

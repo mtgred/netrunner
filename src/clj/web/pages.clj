@@ -96,7 +96,10 @@
         [:div#stats]]
        [:div.item
         [:div.about-bg]
-        [:div#about]]]]
+        [:div#about]]
+       [:div.item
+        [:div.about-bg]
+        [:div#tournament]]]]
     [:audio#ting
       [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
      [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]))

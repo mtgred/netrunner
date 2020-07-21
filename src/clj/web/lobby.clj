@@ -155,7 +155,6 @@
         existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
     (when (or (< existing-players-count 2)
               (already-in-game? user game))
-      (println options)
       (let [remaining-player (first (remove #(= username (get-in % [:user :username])) players))
             side (:side remaining-player)
             new-side (if (= "Corp" side) "Runner" "Corp")

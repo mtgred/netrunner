@@ -3,7 +3,7 @@
             [aero.core :refer [read-config]]
             [buddy.sign.jwt :as jwt]
             [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]))
+            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
 (defonce ws-router (atom nil))
 
@@ -28,7 +28,8 @@
 
 (defonce ws-handlers (atom {}))
 
-(defn handle-unknown [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
+(defn handle-unknown
+  [{:keys [id ?data uid client-id ?reply-fn] :as msg}]
   (println "Unhandled WS msg" id uid ?data)
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
@@ -38,15 +39,15 @@
   If multiple handlers are registered for an event, each is called until a
   truthy value is returned, and the rest are ignored."
   [event handler-fn]
-  (swap! ws-handlers #(update-in % [event] (partial cons handler-fn))))
+  (swap! ws-handlers update event (partial cons handler-fn)))
 
 (defn register-ws-handlers!
   "Utility to register a sequence of ws handlers. The sequence alternates
   *event* *handler* *event* *handler* ..."
   [& args]
   (let [handlers (partition 2 args)]
-    (doseq [h handlers]
-      (register-ws-handler! (first h) (second h)))))
+    (doseq [[event handler-fn] handlers]
+      (register-ws-handler! event handler-fn))))
 
 (defn handle-ws-msg
   "Called by the websocket router to process incoming messages."

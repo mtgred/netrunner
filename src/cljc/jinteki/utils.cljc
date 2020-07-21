@@ -4,9 +4,10 @@
 (def INFINITY 2147483647)
 
 
-(defn str->int [string]
-  #?(:clj  (java.lang.Integer/parseInt string)
-     :cljs (js/parseInt string)))
+(defn str->int
+  [string]
+  #?(:clj (java.lang.Integer/parseInt (re-find #"^\d+" string))
+     :cljs (js/parseInt (re-find #"^\d+" string))))
 
 (defn side-from-str [side-str]
   (keyword (s/lower-case side-str)))
