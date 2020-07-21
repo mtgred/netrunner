@@ -1,6 +1,5 @@
 (ns web.api
-  (:require [jinteki.nav :as nav]
-            [web.utils :refer [response]]
+  (:require [web.utils :refer [response]]
             [web.data :as data]
             [web.pages :as pages]
             [web.auth :as auth]

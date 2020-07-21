@@ -1,8 +1,5 @@
 (ns nr.main
-  (:require [goog.events :as events]
-            [goog.history.EventType :as EventType]
-            [jinteki.nav :as nav]
-            [nr.appstate :refer [app-state]]
+  (:require [nr.appstate :refer [app-state]]
             [nr.about :refer [about]]
             [nr.auth :refer [auth-forms auth-menu]]
             [nr.account :refer [account]]
@@ -12,39 +9,13 @@
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
+            [nr.history :refer [history]]
+            [nr.navbar :refer [navbar]]
             [nr.news :refer [news news-state]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
-            [reagent.core :as r])
-  (:import goog.history.Html5History))
-
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament"])
-
-(def history (Html5History.))
-
-(defn navigate [token]
-  (let [page-number (.indexOf tokens token)]
-    (.carousel (js/$ ".carousel") page-number))
-  (try (js/ga "send" "pageview" token) (catch js/Error e))
-  (.setToken history token)
-  (swap! app-state assoc :active-page [token]))
-
-(events/listen history EventType/NAVIGATE #(navigate (.-token %)))
-(.setUseFragment history false)
-(.setPathPrefix history "")
-(.setEnabled history true)
-
-(defn navbar []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    [:ul.carousel-indicator {}
-     (doall (for [[name route ndx show-fn?] nav/navbar-links]
-              (when (or (not show-fn?) (show-fn? @app-state))
-                [:li {:class (if (= (first @active) route) "active" "")
-                      :key name
-                      :on-click #(.setToken history route)
-                      :data-target "#main" :data-slide-to ndx}
-                 [:a {:href route} name]])))]))
+            [reagent.core :as r]))
 
 (defn status []
   (r/with-let [user (r/cursor app-state [:user])

@@ -8,7 +8,6 @@
             [game.core :as core]
             [game.quotes :as quotes]
             [jinteki.cards :as cards]
-            [jinteki.nav :as nav]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
             [web.api :refer [app]]
