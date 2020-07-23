@@ -1096,6 +1096,18 @@
     [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
     [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
 
+(defn namearea
+  [user]
+  [:div.namearea [avatar user {:opts {:size 32}}]
+   [:div.namebox
+    [:div.username (:username user)]
+    (if-let [pronouns (case (get-in user [:options :pronouns])
+                        "he" "he/him"
+                        "she" "she/her"
+                        "they" "they/them"
+                        nil)]
+      [:div.pronouns pronouns])]])
+
 (defmulti stats-view #(get-in @% [:identity :side]))
 
 (defmethod stats-view "Runner" [runner]
@@ -1104,10 +1116,7 @@
       (let [{:keys [user click credit run-credit memory link tag
                     brain-damage agenda-point hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         [:div.namearea [avatar user {:opts {:size 32}}]
-          [:div.namebox
-           [:div.username (:username user) ]
-           [:div.pronouns "they/them"]]]
+         (namearea user)
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" "")
@@ -1141,10 +1150,7 @@
     (fn [corp]
       (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         [:div.namearea [avatar user {:opts {:size 32}}]
-          [:div.namebox
-           [:div.username (:username user) ]
-           [:div.pronouns "they/them"]]]
+         (namearea user)
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" ""))

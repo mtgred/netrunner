@@ -12,6 +12,7 @@
   (r/atom {:active-page "/"
            :user (js->clj js/user :keywordize-keys true)
            :options (merge {:background "lobby-bg"
+                            :pronouns "none"
                             :show-alt-art true
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
                             :runner-board-order (let [value (get-local-value "runner-board-order" "irl")]
