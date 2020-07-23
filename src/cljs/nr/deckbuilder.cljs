@@ -456,8 +456,10 @@
             limit-qty (if (> qty max-qty) max-qty qty)]
         (update-decklist-cards s {:qty limit-qty
                                   :card best-card})
-        (swap! card-state assoc :quantity 3)
-        (swap! card-state assoc :query "")
+        (reset! card-state {:query ""
+                            :matches []
+                            :quantity 3
+                            :selected 0})
         (-> ".deckedit .lookup" js/$ .select)))))
 
 (defn card-lookup [s]
@@ -475,13 +477,16 @@
                         :on-change #(swap! card-state assoc :query (.. % -target -value))
                         :on-key-down #(handle-keydown card-state %)}]
         " x "
-        [:input.qty {:type "text" :value (:quantity @card-state)
+        [:input.qty {:type "text"
+                     :value (:quantity @card-state)
                      :on-change #(swap! card-state assoc :quantity (.. % -target -value))}]
         [:button "Add to deck"]
         (let [query (:query @card-state)
               matches (match (get-in @s [:deck :identity]) query)
               exact-match (= (:title (first matches)) query)]
           (cond
+            (empty? query) nil
+
             exact-match
             (do
               (swap! card-state assoc :matches matches)
