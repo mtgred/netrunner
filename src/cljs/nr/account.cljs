@@ -239,10 +239,11 @@
           [avatar @user {:opts {:size 38}}]
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
           [:h3 "Pronouns"]
-          (doall (for [option [{:name "he/him"          :ref "he"}
-                               {:name "she/her"         :ref "she"}
-                               {:name "they/them"       :ref "they"}
-                               {:name "Do not display"  :ref "none"}]]
+          (doall (for [option (shuffle
+                                [{:name "he/him"          :ref "he"}
+                                 {:name "she/her"         :ref "she"}
+                                 {:name "they/them"       :ref "they"}
+                                 {:name "Do not display"  :ref "none"}])]
                    [:div {:key (:name option)}
                     [:label [:input {:type "radio"
                                      :name "pronouns"
