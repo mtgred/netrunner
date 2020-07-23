@@ -112,7 +112,8 @@
                                             hostedcards (filter ishosted installedcards)
                                             nonhostedcards (remove ishosted installedcards)]
                                         (doseq [oc hostedcards
-                                                :let [c (get-card state oc)]]
+                                                :let [c (get-card state oc)]
+                                                :when (not (:condition c))]
                                           (flip-facedown state side c))
                                         (doseq [oc nonhostedcards
                                                 :let [c (get-card state oc)]]

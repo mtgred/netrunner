@@ -3679,7 +3679,29 @@
       (play-and-score state "Show of Force")
       (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
       (is (zero? (count-tags state)) "Runner should avoid all meat damage")
-      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")))
+  (testing "should stay active after Apocalypse #5195"
+    (do-game
+      (new-game {:corp {:deck ["SEA Source"]}
+                 :runner {:hand ["Daily Casts" "On the Lam" "Apocalypse"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "On the Lam")
+      (click-card state :runner (get-resource state 0))
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (play-from-hand state :runner "Apocalypse")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (card-ability state :runner (-> (get-runner-facedown state 0) :hosted first) 0)
+      (click-prompt state :runner "Done")
+      (is (zero? (count-tags state)) "Runner should avoid tag"))))
 
 (deftest out-of-the-ashes
   ;; Out of the Ashes - ensure card works when played/trashed/milled

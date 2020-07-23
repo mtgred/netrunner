@@ -38,7 +38,7 @@
            card (assoc-host-zones card)
            c (assoc target :host (dissoc card :hosted)
                            :facedown facedown
-                           :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
+                           :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))
            ;; Update any cards hosted by the target, so their :host has the updated zone.
            c (update-in c [:hosted] #(map (fn [h] (assoc h :host c)) %))

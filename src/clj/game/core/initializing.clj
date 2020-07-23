@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare free-mu host set-prop)
+(declare free-mu)
 
 ;;; Deactivate a card
 (defn- dissoc-card
