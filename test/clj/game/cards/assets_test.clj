@@ -3343,7 +3343,19 @@
         ; TODO: Implement interrupts to make these prompts work correctly
         ; (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
         ; (is (empty? (:prompt (get-runner))) "No Caldera prompt for Runner")
-        ))))
+        )))
+  (testing "Runner cards don't trigger Prana"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Zer0" "Sure Gamble"]}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Zer0")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc from Zer0")))))
 
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish

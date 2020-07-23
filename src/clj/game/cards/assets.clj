@@ -1492,6 +1492,7 @@
              :async true
              :req (req (and (not (get-in card [:special :prana-disabled]))
                             (= target :net)
+                            (= :corp (second targets))
                             (pos? (last targets))))
              :effect (req (let [amount (last targets)
                                 damagecard (second targets)]

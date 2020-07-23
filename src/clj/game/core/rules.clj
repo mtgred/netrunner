@@ -267,7 +267,7 @@
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
-  (wait-for (trigger-event-sync state side :pre-resolve-damage type card n)
+  (wait-for (trigger-event-simult state side :pre-resolve-damage nil type side n)
             (if (get-in @state [:damage :damage-replace])
               (handle-replaced-damage state side eid)
               (if (pos? n)

@@ -1372,6 +1372,7 @@
              :async true
              :req (req (and this-server
                             (= target :net)
+                            (= :corp (second targets))
                             (pos? (last targets))
                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
              :effect (req (swap! state assoc-in [:damage :damage-replace] true)
