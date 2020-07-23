@@ -213,7 +213,7 @@
              (when (seq events)
                (register-events state side moved-card events)))
            ;; Default a card when moved to inactive zones (except :persistent key)
-           (when (#{:discard :hand :deck :rfg} to)
+           (when (some #{:discard :hand :deck :rfg} dest)
              (reset-card state side moved-card))
            (get-card state moved-card)))))))
 

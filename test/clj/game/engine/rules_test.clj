@@ -740,3 +740,25 @@
     (take-credits state :corp)
     (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")
     (core/end-phase-12 state :runner nil)))
+
+(deftest move-removes-icon
+  ;; Moving a marked ice to HQ removes icon #5196
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Project Yagi-Uda" "Ice Wall" "Enigma"]
+                      :credits 10}
+               :runner {:hand ["Boomerang"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-and-score state "Project Yagi-Uda")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Boomerang")
+    (let [icew (get-ice state :hq 0)
+          boom (get-hardware state 0)
+          yagi (get-scored state :corp 0)]
+      (click-card state :runner icew)
+      (run-on state :hq)
+      (core/update! state :corp (assoc-in (refresh yagi) [:counter :agenda] 1))
+      (card-ability state :corp (refresh yagi) 0)
+      (click-card state :corp icew)
+      (click-card state :corp "Enigma")
+      (is (nil? (:icon (find-card "Ice Wall" (:hand (get-corp)))))))))
