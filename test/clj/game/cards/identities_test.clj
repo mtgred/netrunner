@@ -2851,7 +2851,22 @@
     (run-on state "R&D")
     (let [quan (get-ice state :rd 0)]
       (core/rez state :corp quan)
-      (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
+      (is (= 5 (:credit (get-corp))) "Rez cost increased by 1")))
+  (testing "Blue Sun doesn't consider Reina's ability #5192"
+    (do-game
+      (new-game {:corp {:id "Blue Sun: Powering the Future"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:id "Reina Roja: Freedom Fighter"}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Gain 1 credit from Blue Sun"
+        (click-card state :corp "Ice Wall")))))
 
 (deftest rielle-kit-peddler-transhuman
   ;; Rielle "Kit" Peddler - Give ICE Code Gate

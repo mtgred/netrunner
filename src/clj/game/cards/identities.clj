@@ -1237,6 +1237,7 @@
   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
+                                        (not (rezzed? target))
                                         (not-triggered? state card)))
                          :value 1}]
      :events [{:event :rez
