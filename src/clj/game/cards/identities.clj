@@ -657,6 +657,7 @@
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :runner-turn-ends
+               :interactive (req true)
                :async true
                :effect (req (cond
                               (and (:flipped card)
