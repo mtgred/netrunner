@@ -1470,8 +1470,7 @@
 (define-card "Imp"
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
-                                   :req (req (and (not (get-in @state [:per-turn (:cid card)]))
-                                                  (can-pay? state side eid card nil [:virus 1])))
+                                   :req (req (not (get-in @state [:per-turn (:cid card)])))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn

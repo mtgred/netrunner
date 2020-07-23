@@ -186,8 +186,13 @@
       :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power) (<= 0 (- (get-counters card cost-type) amount))
-      (:virus :any-virus-counter) (or (<= 0 (- (get-counters card :virus) amount))
-                                      (<= 0 (- (number-of-virus-counters state) amount)))
+      :virus (<= 0 (- (+ (get-counters card :virus)
+                         (->> (all-active-installed state :runner)
+                              (filter #(= "Hivemind" (:title %)))
+                              (map #(get-counters % :virus))
+                              (reduce +)))
+                      amount))
+      :any-virus-counter (<= 0 (- (number-of-virus-counters state) amount))
       ;; default to cannot afford
       false)))
 

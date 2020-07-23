@@ -2278,7 +2278,17 @@
       (is (= 0 (get-counters (get-program state 1) :virus)))
       (run-empty-server state "HQ")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
-      (is (= 1 (count (:discard (get-corp))))))))
+      (is (= 1 (count (:discard (get-corp)))))))
+  (testing "can't be used when empty #5190"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover"]}
+                 :runner {:hand ["Imp" "Cache"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Imp")
+      (core/update! state :runner (assoc-in (get-program state 1) [:counter :virus] 0))
+      (run-empty-server state "HQ")
+      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives"))))
 
 (deftest incubator
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program

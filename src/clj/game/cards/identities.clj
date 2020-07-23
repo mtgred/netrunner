@@ -477,9 +477,8 @@
      :label "Trash card"
      :req (req (and (not (:disabled card))
                     (not (agenda? target))
-                    (<= (:cost target)
-                        (reduce + (map #(get-counters % :virus)
-                                       (all-installed state :runner))))))
+                    (<= (play-cost state side target)
+                        (number-of-virus-counters state))))
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
                     (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
