@@ -1104,7 +1104,10 @@
       (let [{:keys [user click credit run-credit memory link tag
                     brain-damage agenda-point hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         [:h4.ellipsis [avatar user {:opts {:size 22}}] (:username user)]
+         [:div.namearea [avatar user {:opts {:size 32}}]
+          [:div.namebox
+           [:div.username (:username user) ]
+           [:div.pronouns "they/them"]]]
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" "")
@@ -1138,7 +1141,10 @@
     (fn [corp]
       (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         [:h4.ellipsis [avatar user {:opts {:size 22}}] (:username user)]
+         [:div.namearea [avatar user {:opts {:size 32}}]
+          [:div.namebox
+           [:div.username (:username user) ]
+           [:div.pronouns "they/them"]]]
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" ""))
