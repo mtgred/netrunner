@@ -851,6 +851,7 @@
                                 (register-events
                                   card
                                   [{:event :runner-turn-ends
+                                    :interactive (req true)
                                     :duration :end-of-turn
                                     :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
                                     :msg (msg "remove " (:title target) " from the game")
