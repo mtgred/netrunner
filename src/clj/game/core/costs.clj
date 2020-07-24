@@ -63,12 +63,12 @@
 (defn lose [state side & args]
   (doseq [[cost-type amount] (partition 2 args)]
     (if (= amount :all)
-      (do (swap! state assoc-in [side cost-type] 0)
-          (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type])))
+      (do (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type]))
+          (swap! state assoc-in [side cost-type] 0))
       (do (when (number? amount)
             (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
           (deduct state side [cost-type amount])))
-    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) cost-type amount)))
 
 (defn gain-credits
   "Utility function for triggering events"
@@ -356,7 +356,8 @@
     (when (not (some #{:steal-cost :bioroid-cost} a))
       ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
       (swap! state assoc :click-state (dissoc @state :log)))
-    (lose state side :click amount)
+    (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount)
+    (deduct state side [:click amount])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
                                   a (:click (into {} costs)))

@@ -121,8 +121,8 @@
 
 (define-card "Adjusted Chronotype"
   {:events [{:event :runner-lose
-             :req (req (and (some #{:click} target)
-                            (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
+             :req (req (and (some #{:click} targets)
+                            (let [click-losses (count (filter #(= :click %) (map first (turn-events state side :runner-lose))))]
                               (or (= 1 click-losses)
                                   (and (= 2 click-losses)
                                        (has-flag? state side :persistent :genetics-trigger-twice))))))
