@@ -239,18 +239,16 @@
           [avatar @user {:opts {:size 38}}]
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
           [:h3 "Pronouns"]
-          (doall (for [option (shuffle
-                                [{:name "he/him"          :ref "he"}
-                                 {:name "she/her"         :ref "she"}
-                                 {:name "they/them"       :ref "they"}
-                                 {:name "Do not display"  :ref "none"}])]
-                   [:div {:key (:name option)}
-                    [:label [:input {:type "radio"
-                                     :name "pronouns"
-                                     :value (:ref option)
-                                     :on-change #(swap! s assoc-in [:pronouns] (.. % -target -value))
-                                     :checked (= (:pronouns @s) (:ref option))}]
-                     (:name option)]]))]
+          [:select {:value (:pronouns @s "none")
+                    :default-value "Unspecified"
+                    :on-change #(swap! s assoc :pronouns (.. % -target -value))}
+           (doall
+             (for [option [{:name "Unspecified" :ref "none"}
+                           {:name "They/them" :ref "they"}
+                           {:name "She/her" :ref "she"}
+                           {:name "He/him" :ref "he"}
+                           {:name "Any" :ref "any"}]]
+               [:option {:value (:ref option)} (:name option)]))]]
          [:section
           [:h3 "Sounds"]
           [:div

@@ -1102,9 +1102,11 @@
    [:div.namebox
     [:div.username (:username user)]
     (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "he" "he/him"
-                        "she" "she/her"
+                        "none" "unspecified"
                         "they" "they/them"
+                        "she" "she/her"
+                        "he" "he/him"
+                        "any" "any"
                         nil)]
       [:div.pronouns pronouns])]])
 
