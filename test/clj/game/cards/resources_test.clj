@@ -73,7 +73,16 @@
       (play-from-hand state :runner "Beach Party")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks"))))
+      (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks")))
+  (testing "Doesn't gain clicks from non 'lose' actions #5119"
+    (do-game
+      (new-game {:runner {:deck ["Adjusted Chronotype" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Adjusted Chronotype")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (is (= 3 (:click (get-runner))) "Should have lost 1 click and gained 0 clicks"))))
 
 (deftest aesop-s-pawnshop
   ;; Tests use cases for Aesop's Pawnshop

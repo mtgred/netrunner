@@ -63,8 +63,8 @@
 (defn lose [state side & args]
   (doseq [[cost-type amount] (partition 2 args)]
     (if (= amount :all)
-      (do (swap! state assoc-in [side cost-type] 0)
-          (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type])))
+      (do (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type]))
+          (swap! state assoc-in [side cost-type] 0))
       (do (when (number? amount)
             (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
           (deduct state side [cost-type amount])))
@@ -186,8 +186,13 @@
       :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power) (<= 0 (- (get-counters card cost-type) amount))
-      (:virus :any-virus-counter) (or (<= 0 (- (get-counters card :virus) amount))
-                                      (<= 0 (- (number-of-virus-counters state) amount)))
+      :virus (<= 0 (- (+ (get-counters card :virus)
+                         (->> (all-active-installed state :runner)
+                              (filter #(= "Hivemind" (:title %)))
+                              (map #(get-counters % :virus))
+                              (reduce +)))
+                      amount))
+      :any-virus-counter (<= 0 (- (number-of-virus-counters state) amount))
       ;; default to cannot afford
       false)))
 
@@ -351,7 +356,8 @@
     (when (not (some #{:steal-cost :bioroid-cost} a))
       ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
       (swap! state assoc :click-state (dissoc @state :log)))
-    (lose state side :click amount)
+    (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount)
+    (deduct state side [:click amount])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
                                   a (:click (into {} costs)))

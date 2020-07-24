@@ -231,7 +231,8 @@
 (defn facedown?
   "Checks if the specified card is facedown."
   [card]
-  (or (= (get-zone card) [:rig :facedown])
+  (or (when (not (condition-counter? card))
+        (= (get-zone card) [:rig :facedown]))
       (:facedown card)))
 
 (defn active?

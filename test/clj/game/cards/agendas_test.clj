@@ -423,7 +423,17 @@
       (play-from-hand state :runner "Mining Accident")
       (click-prompt state :corp "Pay 5 [Credits]")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event"))))
+      (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event")))
+  (testing "Shouldn't trigger Apex #5175"
+    (do-game
+      (new-game {:corp {:deck ["Better Citizen Program"]}
+                 :runner {:id "Apex: Invasive Predator"
+                          :deck ["Wyrm"]}})
+      (play-and-score state "Better Citizen Program")
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Wyrm")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program"))))
 
 (deftest bifrost-array
   ;; Bifrost Array
@@ -547,7 +557,21 @@
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
       (is (= 1 (count-bad-pub state)) "Corp gains 1 bad pub")
-      (is (= 2 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 2 agenda counters"))))
+      (is (= 2 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 2 agenda counters")))
+  (testing "interaction with Storgotic Resonator #5194"
+    (do-game
+      (new-game {:corp {:deck ["Broad Daylight" "Storgotic Resonator"]}
+                 :runner {:id "Reina Roja: Freedom Fighter"
+                          :hand [(qty "Stimhack" 5)]}})
+      (play-from-hand state :corp "Storgotic Resonator" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (is (empty? (:discard (get-runner))) "Runner has no discarded cards")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 damage")
+      (is (= 1 (get-counters (get-content state :remote1 0) :power))))))
 
 (deftest cfc-excavation-contract
   ;; CFC Excavation Contract
@@ -679,7 +703,16 @@
       (let [cvs (get-content state :hq 0)]
         (core/rez state :corp cvs)
         (is (changes-credits (get-corp) 4
-                             (card-ability state :corp cvs 0)))))))
+                             (card-ability state :corp cvs 0))))))
+  (testing "Only triggers on the first purge each turn #5174"
+    (do-game
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
+      (core/gain state :corp :click 10)
+      (core/purge state :corp)
+      (play-and-score state "Cyberdex Sandbox")
+      (is (changes-credits
+            (get-corp) 0
+            (click-prompt state :corp "Yes"))))))
 
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net

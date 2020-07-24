@@ -155,6 +155,8 @@
                 :effect (req (let [dest (server->zone state target)
                                    ice (count (get-in corp (conj dest :ices)))
                                    phase (if (pos? ice) :encounter-ice :approach-server)]
+                               (when (zero? ice)
+                                 (swap! state assoc-in [:run :jack-out] true))
                                (redirect-run state side target phase)
                                (start-next-phase state side nil)
                                (trash state side eid current-ice {:unpreventable true})))}]})
@@ -477,9 +479,8 @@
      :label "Trash card"
      :req (req (and (not (:disabled card))
                     (not (agenda? target))
-                    (<= (:cost target)
-                        (reduce + (map #(get-counters % :virus)
-                                       (all-installed state :runner))))))
+                    (<= (play-cost state side target)
+                        (number-of-virus-counters state))))
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
                     (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
@@ -657,6 +658,7 @@
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :runner-turn-ends
+               :interactive (req true)
                :async true
                :effect (req (cond
                               (and (:flipped card)
@@ -812,7 +814,9 @@
 (define-card "Jinteki: Potential Unleashed"
   {:events [{:async true
              :event :pre-resolve-damage
-             :req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))
+             :req (req (and (-> @state :corp :disable-id not)
+                            (= target :net)
+                            (pos? (last targets))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
                                                          " from the top of the Runner's Stack"))
@@ -849,6 +853,7 @@
                                 (register-events
                                   card
                                   [{:event :runner-turn-ends
+                                    :interactive (req true)
                                     :duration :end-of-turn
                                     :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
                                     :msg (msg "remove " (:title target) " from the game")
@@ -1234,6 +1239,7 @@
   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
+                                        (not (rezzed? target))
                                         (not-triggered? state card)))
                          :value 1}]
      :events [{:event :rez

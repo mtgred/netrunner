@@ -287,7 +287,8 @@
                :effect (ability "playing a run event")}
               {:event :runner-install
                :silent (req true)
-               :req (req (and (has-subtype? target "Icebreaker")
+               :req (req (and (not (facedown? target))
+                              (has-subtype? target "Icebreaker")
                               (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
                               (not (used-this-turn? (:cid card) state))))
                :async true
@@ -442,6 +443,7 @@
               :yes-ability {:msg (msg "purge virus counters")
                             :effect (effect (purge))}}
    :events [{:event :purge
+             :req (req (first-event? state :corp :purge))
              :once :per-turn
              :msg "gain 4 [Credits]"
              :effect (req (gain-credits state :corp 4))}]})
