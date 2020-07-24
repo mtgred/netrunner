@@ -117,7 +117,7 @@
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])
-               state (r/atom {})]
+               state (r/atom {:selected-round "0"})]
 
     (ws/register-ws-handler! :tournament/loaded #(load-players state %))
     (ws/register-ws-handler! :tournament/created #(store-results state "created" %))

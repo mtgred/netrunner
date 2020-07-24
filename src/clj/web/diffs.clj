@@ -22,8 +22,8 @@
   "Strips private server information from a game map, preparing to send the game to clients."
   [game]
   (-> game
-      (dissoc :state :last-update)
-      (update-in [:players] #(map (partial user-public-view game) %))
-      (update-in [:original-players] #(map (partial user-public-view game) %))
-      (update-in [:ending-players] #(map (partial user-public-view game) %))
-      (update-in [:spectators] #(map (partial user-public-view game) %))))
+      (dissoc :state :last-update :on-close)
+      (update :players #(map (partial user-public-view game) %))
+      (update :original-players #(map (partial user-public-view game) %))
+      (update :ending-players #(map (partial user-public-view game) %))
+      (update :spectators #(map (partial user-public-view game) %))))

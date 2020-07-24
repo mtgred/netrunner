@@ -77,7 +77,7 @@
   (map #(process-round % players) (:rounds data)))
 
 (defn create-tournament-lobby
-  [{:keys [tournament-name tournament-format table username1 username2 allow-spectator]}]
+  [{:keys [tournament-name tournament-format table username1 username2 allow-spectator on-close]}]
   (let [gameid (uuid/v4)
         title (str tournament-name ", Table " table ": " username1 " vs " username2)
         players (->> (mc/find-maps db "users" {:username {$in [username1 username2]}})
@@ -98,7 +98,8 @@
               :spectatorhands false
               :mute-spectators true
               :date (java.util.Date.)
-              :last-update (t/now)}]
+              :last-update (t/now)
+              :on-close on-close}]
     (when (= 2 (count players))
       (swap! all-games assoc gameid game)
       (refresh-lobby :create gameid)
@@ -109,15 +110,16 @@
   (let [players (build-players data)
         rounds (process-all-rounds data players)
         selected-round (nth rounds selected-round (count rounds))]
-    (map
+    (keep
       (fn [table]
-        (create-tournament-lobby
-          {:tournament-name (:name data)
-           :tournament-format "standard"
-           :table (:table table)
-           :username1 (get-in table [:player1 :name])
-           :username2 (get-in table [:player2 :name])
-           :allow-spectator true}))
+        (let [base {:tournament-name (:name data)
+                    :tournament-format "standard"
+                    :table (:table table)
+                    :username1 (get-in table [:player1 :name])
+                    :username2 (get-in table [:player2 :name])
+                    :allow-spectator true}]
+          (create-tournament-lobby
+            (assoc base :on-close #(create-tournament-lobby base)))))
       selected-round)))
 
 (defn load-tournament
