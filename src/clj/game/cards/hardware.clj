@@ -595,7 +595,6 @@
 
 (define-card "Flame-out"
   (let [turn-end {:async true
-                  :interactive (req true)
                   :effect (req (unregister-events state :runner card)
                                (if-let [hosted (first (:hosted card))]
                                  (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))

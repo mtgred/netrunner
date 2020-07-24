@@ -68,7 +68,7 @@
       (do (when (number? amount)
             (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
           (deduct state side [cost-type amount])))
-    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) cost-type amount)))
+    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
 
 (defn gain-credits
   "Utility function for triggering events"
