@@ -1183,9 +1183,11 @@
              :player :runner
              :prompt "Choose one"
              :choices ["Pay 1 [Credits]" "Trash an installed card"]
+             :async true
              :effect (req (if (= target "Pay 1 [Credits]")
                             (do (pay state side card :credit 1)
-                                (system-msg state side "pays 1 [Credits]"))
+                                (system-msg state side "pays 1 [Credits]")
+                                (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub]
@@ -1197,9 +1199,11 @@
              :player :runner
              :prompt "Choose one"
              :choices ["Pay 2 [Credits]" "Trash an installed card"]
+             :async true
              :effect (req (if (= target "Pay 2 [Credits]")
                             (do (pay state side card :credit 2)
-                                (system-msg state side "pays 2 [Credits]"))
+                                (system-msg state side "pays 2 [Credits]")
+                                (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub
@@ -1212,9 +1216,11 @@
              :player :runner
              :prompt "Choose one"
              :choices ["Pay 3 [Credits]" "Trash an installed card"]
+             :async true
              :effect (req (if (= target "Pay 3 [Credits]")
                             (do (pay state side card :credit 3)
-                                (system-msg state side "pays 3 [Credits]"))
+                                (system-msg state side "pays 3 [Credits]")
+                                (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub
