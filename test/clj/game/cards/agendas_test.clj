@@ -423,7 +423,17 @@
       (play-from-hand state :runner "Mining Accident")
       (click-prompt state :corp "Pay 5 [Credits]")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event"))))
+      (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event")))
+  (testing "Shouldn't trigger Apex #5175"
+    (do-game
+      (new-game {:corp {:deck ["Better Citizen Program"]}
+                 :runner {:id "Apex: Invasive Predator"
+                          :deck ["Wyrm"]}})
+      (play-and-score state "Better Citizen Program")
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Wyrm")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program"))))
 
 (deftest bifrost-array
   ;; Bifrost Array

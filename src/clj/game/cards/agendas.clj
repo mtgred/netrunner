@@ -287,7 +287,8 @@
                :effect (ability "playing a run event")}
               {:event :runner-install
                :silent (req true)
-               :req (req (and (has-subtype? target "Icebreaker")
+               :req (req (and (not (facedown? target))
+                              (has-subtype? target "Icebreaker")
                               (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
                               (not (used-this-turn? (:cid card) state))))
                :async true
