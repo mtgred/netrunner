@@ -274,9 +274,11 @@
                ;; Immediately end pass ice step if:
                ;; * run ends
                ;; * run is moved to another server
+               ;; * ice moves
                ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
                                           (not= current-server (:server (:run @state)))
+                                          (not (same-card? ice (nth (get-run-ices state) (dec pos) nil)))
                                           (check-for-empty-server state))))]
     (set-phase state :pass-ice)
     (update-all-ice state side)
