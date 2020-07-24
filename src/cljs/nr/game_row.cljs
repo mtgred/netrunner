@@ -7,7 +7,7 @@
             [nr.sounds :refer [resume-sound]]
             [nr.utils :refer [slug->format cond-button]]
             [nr.ws :as ws]
-            ))
+            [jinteki.utils :refer [superuser?]]))
 
 (defn join-game [gameid s action password]
   (authenticated
