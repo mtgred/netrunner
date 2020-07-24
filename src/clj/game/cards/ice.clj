@@ -1185,9 +1185,8 @@
              :choices ["Pay 1 [Credits]" "Trash an installed card"]
              :async true
              :effect (req (if (= target "Pay 1 [Credits]")
-                            (do (pay state side card :credit 1)
-                                (system-msg state side "pays 1 [Credits]")
-                                (effect-completed state side eid))
+                            (do (system-msg state side "pays 1 [Credits]")
+                                (pay-sync state side eid card :credit 1))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub]
@@ -1201,9 +1200,8 @@
              :choices ["Pay 2 [Credits]" "Trash an installed card"]
              :async true
              :effect (req (if (= target "Pay 2 [Credits]")
-                            (do (pay state side card :credit 2)
-                                (system-msg state side "pays 2 [Credits]")
-                                (effect-completed state side eid))
+                            (do (system-msg state side "pays 2 [Credits]")
+                                (pay-sync state side eid card :credit 2))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub
@@ -1218,9 +1216,8 @@
              :choices ["Pay 3 [Credits]" "Trash an installed card"]
              :async true
              :effect (req (if (= target "Pay 3 [Credits]")
-                            (do (pay state side card :credit 3)
-                                (system-msg state side "pays 3 [Credits]")
-                                (effect-completed state side eid))
+                            (do (system-msg state side "pays 3 [Credits]")
+                                (pay-sync state side eid card :credit 3))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub
