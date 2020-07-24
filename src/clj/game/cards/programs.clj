@@ -1498,6 +1498,7 @@
                     :events [{:event :pass-ice
                               :req (req (and (all-subs-broken-by-card? target card)
                                              (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
+                              :async true
                               :effect
                               (effect
                                 (continue-ability

@@ -98,9 +98,12 @@
     (stats/update-game-stats all-games gameid)
     (stats/push-stats-update all-games gameid))
 
-  (refresh-lobby :delete gameid)
-  (swap! all-games dissoc gameid)
-  (swap! old-states dissoc gameid))
+  (let [callback (get-in @all-games [gameid :on-close])]
+    (refresh-lobby :delete gameid)
+    (swap! all-games dissoc gameid)
+    (swap! old-states dissoc gameid)
+    (when callback
+      (callback))))
 
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."

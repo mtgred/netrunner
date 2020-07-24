@@ -214,9 +214,11 @@
 
 (defn filter-blocked-games
   [user games]
-  (let [blocked-games (filter #(blocked-from-game user %) games)
-        blocked-users (get-in user [:options :blocked-users] [])]
-    (filter #(blocking-from-game blocked-users %) blocked-games)))
+  (if (= "tournament" (:room (first games)))
+    games
+    (let [blocked-games (filter #(blocked-from-game user %) games)
+          blocked-users (get-in user [:options :blocked-users] [])]
+      (filter #(blocking-from-game blocked-users %) blocked-games))))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")

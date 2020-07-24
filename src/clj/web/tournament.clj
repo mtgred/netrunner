@@ -1,6 +1,6 @@
 (ns web.tournament
   (:require [web.db :refer [db object-id]]
-            [web.lobby :refer [all-games refresh-lobby]]
+            [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.utils :refer [response]]
             [web.ws :as ws]
             [jinteki.utils :refer [str->int]]
@@ -77,7 +77,7 @@
   (map #(process-round % players) (:rounds data)))
 
 (defn create-tournament-lobby
-  [{:keys [tournament-name tournament-format table username1 username2 allow-spectator]}]
+  [{:keys [tournament-name tournament-format table username1 username2 allow-spectator on-close]}]
   (let [gameid (uuid/v4)
         title (str tournament-name ", Table " table ": " username1 " vs " username2)
         players (->> (mc/find-maps db "users" {:username {$in [username1 username2]}})
@@ -89,6 +89,7 @@
               :title title
               :room "tournament"
               :format tournament-format
+              :tournament-name tournament-name
               :players players
               :spectators []
               :messages [{:user "__system__"
@@ -97,7 +98,8 @@
               :spectatorhands false
               :mute-spectators true
               :date (java.util.Date.)
-              :last-update (t/now)}]
+              :last-update (t/now)
+              :on-close on-close}]
     (when (= 2 (count players))
       (swap! all-games assoc gameid game)
       (refresh-lobby :create gameid)
@@ -108,21 +110,22 @@
   (let [players (build-players data)
         rounds (process-all-rounds data players)
         selected-round (nth rounds selected-round (count rounds))]
-    (map
+    (keep
       (fn [table]
-        (create-tournament-lobby
-          {:tournament-name (:name data)
-           :tournament-format "standard"
-           :table (:table table)
-           :username1 (get-in table [:player1 :name])
-           :username2 (get-in table [:player2 :name])
-           :allow-spectator true}))
+        (let [base {:tournament-name (:name data)
+                    :tournament-format "standard"
+                    :table (:table table)
+                    :username1 (get-in table [:player1 :name])
+                    :username2 (get-in table [:player2 :name])
+                    :allow-spectator true}]
+          (create-tournament-lobby
+            (assoc base :on-close #(create-tournament-lobby base)))))
       selected-round)))
 
 (defn load-tournament
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id :client-id
+  [{{user :user} :ring-req
     {:keys [cobra-link]} :?data
+    client-id :client-id
     reply-fn :?reply-fn
     :as msg}]
   (if (:tournament-organizer user)
@@ -136,12 +139,13 @@
           rounds (process-all-rounds data players)]
       (ws/send! client-id [:tournament/loaded {:data {:players players
                                                       :missing-players missing-players
-                                                      :rounds rounds}}])
+                                                      :rounds rounds
+                                                      :tournament-name (:name data)}}])
       (when reply-fn (reply-fn 200)))
     (when reply-fn (reply-fn 403))))
 
 (defn create-tables
-  [{{{:keys [username] :as user} :user} :ring-req
+  [{{user :user} :ring-req
     {:keys [cobra-link selected-round]} :?data
     client-id :client-id
     reply-fn :?reply-fn
@@ -153,5 +157,26 @@
       (when reply-fn (reply-fn 200)))
     (when reply-fn (reply-fn 403))))
 
+(defn close-tournament-tables
+  [tournament-name]
+  (let [tables (for [game (vals @all-games)
+                     :when (= tournament-name (:tournament-name game))]
+                 {:started false
+                  :gameid (:gameid game)})]
+    (map close-lobby tables)))
+
+(defn delete-tables
+  [{{user :user} :ring-req
+    {:keys [tournament-name]} :?data
+    client-id :client-id
+    reply-fn :?reply-fn
+    :as msg}]
+  (if (:tournament-organizer user)
+    (let [deleted-rounds (close-tournament-tables tournament-name)]
+      (ws/send! client-id [:tournament/deleted {:data {:deleted-rounds (count deleted-rounds)}}])
+      (when reply-fn (reply-fn 200)))
+    (when reply-fn (reply-fn 403))))
+
 (swap! ws/ws-handlers assoc :tournament/fetch [#'load-tournament])
 (swap! ws/ws-handlers assoc :tournament/create [#'create-tables])
+(swap! ws/ws-handlers assoc :tournament/delete [#'delete-tables])
