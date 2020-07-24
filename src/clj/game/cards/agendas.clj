@@ -443,6 +443,7 @@
               :yes-ability {:msg (msg "purge virus counters")
                             :effect (effect (purge))}}
    :events [{:event :purge
+             :req (req (first-event? state :corp :purge))
              :once :per-turn
              :msg "gain 4 [Credits]"
              :effect (req (gain-credits state :corp 4))}]})

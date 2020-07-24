@@ -703,7 +703,16 @@
       (let [cvs (get-content state :hq 0)]
         (core/rez state :corp cvs)
         (is (changes-credits (get-corp) 4
-                             (card-ability state :corp cvs 0)))))))
+                             (card-ability state :corp cvs 0))))))
+  (testing "Only triggers on the first purge each turn #5174"
+    (do-game
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
+      (core/gain state :corp :click 10)
+      (core/purge state :corp)
+      (play-and-score state "Cyberdex Sandbox")
+      (is (changes-credits
+            (get-corp) 0
+            (click-prompt state :corp "Yes"))))))
 
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
