@@ -155,6 +155,8 @@
                 :effect (req (let [dest (server->zone state target)
                                    ice (count (get-in corp (conj dest :ices)))
                                    phase (if (pos? ice) :encounter-ice :approach-server)]
+                               (when (zero? ice)
+                                 (swap! state assoc-in [:run :jack-out] true))
                                (redirect-run state side target phase)
                                (start-next-phase state side nil)
                                (trash state side eid current-ice {:unpreventable true})))}]})
