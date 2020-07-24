@@ -290,7 +290,7 @@
       (is (empty? (:prompt (get-runner))))
       (is (nil? (get-run)))))
   (testing "when access count is reduced"
-    (testing "reduced by 1"
+    (testing "by 1"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Bryan Stinson"]
@@ -300,8 +300,8 @@
         (core/rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
-        (run-continue state)
         (core/access-bonus state :corp :archives -1)
+        (run-continue state)
         (is (= ["Hostile Takeover" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
         (click-prompt state :runner "No action")
@@ -311,7 +311,7 @@
         (is (empty? (:prompt (get-corp))))
         (is (empty? (:prompt (get-runner))))
         (is (nil? (get-run)))))
-    (testing "reduced by more than 1"
+    (testing "by more than 1"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Bryan Stinson"]
@@ -321,8 +321,8 @@
         (core/rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
-        (run-continue state)
         (core/access-bonus state :corp :archives -2)
+        (run-continue state)
         (is (= ["Hostile Takeover" "Shock!" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
         (click-prompt state :runner "No action")
@@ -389,7 +389,19 @@
         (click-prompt state :runner "Breaking News")
         (click-prompt state :runner "Steal")
         (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
-        (is (empty (:discard (get-corp))) "0 agendas left in archives"))))
+        (is (empty (:discard (get-corp))) "0 agendas left in archives")))
+  (testing "choosing Everything else first #5151"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :discard ["Global Food Initiative" (qty "Blue Level Clearance" 3)]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (is (= ["Global Food Initiative" "Everything else"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Everything else")
+      (is (= ["Global Food Initiative"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Global Food Initiative")
+      (is (= ["Steal"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Steal"))))
 
 (deftest remote-access
   (testing "reduced by 1. #5014"
