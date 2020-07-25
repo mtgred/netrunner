@@ -1096,18 +1096,18 @@
     [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
     [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
 
-(defn namearea
+(defn name-area
   [user]
   [:div.namearea [avatar user {:opts {:size 32}}]
    [:div.namebox
     [:div.username (:username user)]
+    (println "pronouns" (get-in user [:options :pronouns]))
     (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "none" "unspecified"
                         "they" "they/them"
                         "she" "she/her"
                         "he" "he/him"
                         "any" "any"
-                        nil)]
+                        "unspecified pronouns")]
       [:div.pronouns pronouns])]])
 
 (defmulti stats-view #(get-in @% [:identity :side]))
@@ -1118,7 +1118,7 @@
       (let [{:keys [user click credit run-credit memory link tag
                     brain-damage agenda-point hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         (namearea user)
+         (name-area user)
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" "")
@@ -1152,7 +1152,7 @@
     (fn [corp]
       (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         (namearea user)
+         (name-area user)
          [:div (str click " Click" (if (not= click 1) "s" ""))
           (when me? (controls :click))]
          [:div (str credit " Credit" (if (not= credit 1) "s" ""))
