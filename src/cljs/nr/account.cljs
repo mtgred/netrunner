@@ -7,7 +7,6 @@
             [nr.auth :refer [valid-email?] :as auth]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
-            [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
             [reagent.core :as r]))
 
@@ -240,7 +239,7 @@
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
           [:h3 "Pronouns"]
           [:select {:value (:pronouns @s "none")
-                    :default-value "Unspecified"
+                    :default-value "none"
                     :on-change #(swap! s assoc :pronouns (.. % -target -value))}
            (doall
              (for [option [{:name "Unspecified" :ref "none"}

@@ -1,5 +1,6 @@
 (ns web.tournament
-  (:require [web.db :refer [db object-id]]
+  (:require [clojure.string :refer [lower-case]]
+            [web.db :refer [db object-id]]
             [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.utils :refer [response]]
             [web.ws :as ws]
@@ -77,10 +78,15 @@
   (map #(process-round % players) (:rounds data)))
 
 (defn create-tournament-lobby
-  [{:keys [tournament-name tournament-format table username1 username2 allow-spectator on-close]}]
+  [{:keys [tournament-name tournament-format selected-round table
+           username1 username2 allow-spectator on-close]}]
   (let [gameid (uuid/v4)
-        title (str tournament-name ", Table " table ": " username1 " vs " username2)
-        players (->> (mc/find-maps db "users" {:username {$in [username1 username2]}})
+        title (str tournament-name ", Round " selected-round
+                   ", Table " table ": " username1 " vs " username2)
+        query (into [] (for [username [username1 username2]]
+                         {:username {$regex (str "^" username "$")
+                                     $options "i"}}))
+        players (->> (mc/find-maps db "users" {$or query})
                      (map #(select-keys % [:_id :username :emailhash :isadmin :options :stats]))
                      (map #(update % :_id str))
                      (map #(hash-map :user %))
@@ -109,18 +115,19 @@
   [data selected-round]
   (let [players (build-players data)
         rounds (process-all-rounds data players)
-        selected-round (nth rounds selected-round (count rounds))]
+        round (nth rounds selected-round (count rounds))]
     (keep
       (fn [table]
         (let [base {:tournament-name (:name data)
                     :tournament-format "standard"
+                    :selected-round (inc selected-round)
                     :table (:table table)
                     :username1 (get-in table [:player1 :name])
                     :username2 (get-in table [:player2 :name])
                     :allow-spectator true}]
           (create-tournament-lobby
             (assoc base :on-close #(create-tournament-lobby base)))))
-      selected-round)))
+      round)))
 
 (defn load-tournament
   [{{user :user} :ring-req
@@ -132,8 +139,11 @@
     (let [data (download-cobra-data cobra-link)
           player-count (count (:players data))
           player-names (keep :name (:players data))
-          db-players (mc/find-maps db "users" {:username {$in player-names}})
-          missing-players (remove #(seq (filter (fn [e] (= % e)) (map :username db-players))) player-names)
+          query (into [] (for [username player-names]
+                           {:username {$regex (str "^" username "$")
+                                       $options "i"}}))
+          db-players (mc/find-maps db "users" {$or query})
+          missing-players (remove #(seq (filter (fn [e] (= (lower-case %) (lower-case e))) (map :username db-players))) player-names)
 
           players (build-players data)
           rounds (process-all-rounds data players)]
