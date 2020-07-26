@@ -89,7 +89,11 @@
         players (->> (mc/find-maps db "users" {$or query})
                      (map #(select-keys % [:_id :username :emailhash :isadmin :options :stats]))
                      (map #(update % :_id str))
-                     (map #(hash-map :user %))
+                     (map #(hash-map :user %)))
+        players (->> (if (= username1 (get-in (first players) [:user :username]))
+                       [(first players) (second players)]
+                       [(second players) (first players)])
+                     (filter identity)
                      (into []))
         game {:gameid gameid
               :title title
@@ -118,15 +122,18 @@
         round (nth rounds selected-round (count rounds))]
     (keep
       (fn [table]
-        (let [base {:tournament-name (:name data)
+        (let [username1 (get-in table [:player1 :name])
+              username2 (get-in table [:player2 :name])
+              base {:tournament-name (:name data)
                     :tournament-format "standard"
                     :selected-round (inc selected-round)
                     :table (:table table)
-                    :username1 (get-in table [:player1 :name])
-                    :username2 (get-in table [:player2 :name])
+                    :username1 username1
+                    :username2 username2
                     :allow-spectator true}]
           (create-tournament-lobby
-            (assoc base :on-close #(create-tournament-lobby base)))))
+            (assoc base :on-close #(create-tournament-lobby
+                                     (assoc base :username1 username2 :username2 username1))))))
       round)))
 
 (defn load-tournament
