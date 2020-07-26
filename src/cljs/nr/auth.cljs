@@ -64,6 +64,12 @@
           423 (swap! s assoc :flash-message "Username too short/too long")
           (swap! s assoc :flash-message "")))))
 
+(defn check-email [value s]
+  (go (let [response (<! (GET (str "/check-email/" value)))]
+        (case (:status response)
+          422 (swap! s assoc :flash-message "Email taken")
+          (swap! s assoc :flash-message "")))))
+
 (defn valid-email? [email]
   (let [pattern #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"]
     (and (string? email)
@@ -107,8 +113,9 @@
                     :ref "email"
                     :value (:email @s)
                     :on-change #(swap! s assoc :email (-> % .-target .-value))
-                    :on-blur #(when-not (valid-email? (.. % -target -value))
-                                (swap! s assoc :flash-message "Please enter a valid email address"))}]]
+                    :on-blur #(do (check-email (-> % .-target .-value) s)
+                                  (when-not (valid-email? (.. % -target -value))
+                                    (swap! s assoc :flash-message "Please enter a valid email address")))}]]
        [:p [:input {:type "text"
                     :placeholder "Username"
                     :name "username"

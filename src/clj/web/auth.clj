@@ -77,6 +77,9 @@
     (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})
     (response 422 {:message "Username taken"})
 
+    (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$") $options "i"}})
+    (response 424 {:message "Email taken"})
+
     :else
     (let [first-user (not (mc/any? db "users"))
           email-hash (digest/md5 email)
@@ -120,14 +123,22 @@
                          :max-age -1}}))
 
 (defn check-username-handler [{{:keys [username]} :params}]
-  (if (mc/find-one-as-map db "users" {:username username})
+  (if (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
+                                                 $options "i"}})
+    (response 422 {:message "Username taken"})
+    (response 200 {:message "OK"})))
+
+(defn check-email-handler [{{:keys [email]} :params}]
+  (if (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$")
+                                              $options "i"}})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn email-handler [{{username :username} :user
                       body                 :body}]
   (if username
-    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username username} ["email"])]
+    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
+                                                                     $options "i"}})]
       (response 200 {:email email}))
     (response 401 {:message "Unauthorized"})))
 
