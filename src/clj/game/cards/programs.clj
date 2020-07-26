@@ -1505,7 +1505,7 @@
                                     {:optional
                                      {:prompt (str "Swap " (:title ice) " with another ice?")
                                       :yes-ability
-                                      {:prompt "Select the Code Gate you just passed and another piece of ICE to swap positions"
+                                      {:prompt "Select another ice"
                                        :choices {:card #(and (installed? %)
                                                              (ice? %)
                                                              (not (same-card? % ice)))}

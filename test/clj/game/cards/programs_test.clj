@@ -2454,7 +2454,32 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (get-ice state :hq 1))
         (click-card state :runner (get-ice state :hq 0))
-        (is (= 1 (count (:hand (get-runner)))))))))
+        (is (= 1 (count (:hand (get-runner))))))))
+ (testing "Async issue with Thimblerig #5042"
+    (do-game
+      (new-game {:corp {:hand ["Drafter" "Border Control" "Vanilla" "Thimblerig"]
+                        :credits 100}
+                 :runner {:hand ["Inversificator"]
+                          :credits 100}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Border Control" "R&D")
+      (play-from-hand state :corp "Drafter" "R&D")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inversificator")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Drafter")
+      (is (= ["Border Control" "Thimblerig"] (map :title (get-ice state :rd))))
+      (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :hq))))
+      (is (empty? (:prompt (get-corp))) "Corp gets no Thimblerig prompt")
+      (is (empty? (:prompt (get-runner))) "No more prompts open"))))
 
 (deftest ixodidae
   ;; Ixodidae should not trigger on psi-games

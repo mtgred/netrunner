@@ -4002,7 +4002,7 @@
     (do-game
       (new-game {:corp {:hand ["Drafter" "Border Control" "Vanilla" "Thimblerig"]
                         :credits 100}})
-      (core/gain state :corp :click 2)
+      (core/gain state :corp :click 1)
       (play-from-hand state :corp "Border Control" "R&D")
       (play-from-hand state :corp "Drafter" "R&D")
       (play-from-hand state :corp "Thimblerig" "HQ")
