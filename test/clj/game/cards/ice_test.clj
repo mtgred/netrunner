@@ -3950,6 +3950,7 @@
           (click-prompt state :runner "Pay 3 [Credits]"))))))
 
 (deftest thimblerig
+  ;; Thimblerig
   (testing "Thimblerig does not open a prompt if it's the only piece of ice"
     (do-game
       (new-game {:corp {:deck ["Thimblerig" "Guard"]}})
@@ -3996,7 +3997,33 @@
         (is (= "Vanilla" (:title (get-ice state :remote1 0))) "Vanilla ice on remote")
         (click-card state :corp vanilla)
         (is (= "Vanilla" (:title (get-ice state :hq 0))) "Vanilla outermost ice on HQ after swap during run")
-        (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig ice on remote after swap during run")))))
+        (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig ice on remote after swap during run"))))
+  (testing "Swapping issues related to trashing #5197"
+    (do-game
+      (new-game {:corp {:hand ["Drafter" "Border Control" "Vanilla" "Thimblerig"]
+                        :credits 100}})
+      (core/gain state :corp :click 2)
+      (play-from-hand state :corp "Border Control" "R&D")
+      (play-from-hand state :corp "Drafter" "R&D")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (doseq [ice (concat (get-ice state :rd) (get-ice state :hq))]
+        (core/rez state :corp ice))
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (run-continue state)
+      (card-ability state :corp (get-ice state :rd 0) 0)
+      (run-on state "HQ")
+      (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Drafter")
+      (run-jack-out state)
+      (is (= ["Thimblerig"] (map :title (get-ice state :rd))))
+      (is (= ["Drafter" "Vanilla"] (map :title (get-ice state :hq)))))))
 
 (deftest tithonium
   ;; Tithonium - Forfeit option as rez cost, can have hosted condition counters
