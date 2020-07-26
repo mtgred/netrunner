@@ -29,6 +29,7 @@
            (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
            (GET "/check-username/:username" [] auth/check-username-handler)
+           (GET "/check-email/:email" [] auth/check-email-handler)
 
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/cards/version" [] data/cards-version-handler)
