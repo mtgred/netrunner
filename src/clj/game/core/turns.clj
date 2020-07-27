@@ -96,6 +96,15 @@
        (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
        :subroutines))
 
+(defn- ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (let [abilities (if (:recurring cdef)
+                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
+                    (:abilities cdef))]
+    (for [ab abilities]
+      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
+
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
   ([card] (make-card card (make-cid)))
@@ -103,9 +112,10 @@
    (-> card
        (assoc :cid cid
               :implementation (card-implemented card)
-              :subroutines (subroutines-init (assoc card :cid cid) (card-def card)))
+              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
+              :abilities (ability-init (card-def card)))
        (dissoc :setname :text :_id :influence :number :influencelimit
-               :factioncost :format :quantity)
+               :image_url :factioncost :format :quantity)
        (map->Card))))
 
 (defn build-card

@@ -47,15 +47,6 @@
 
 
 ;;; Initialising a card
-(defn- ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (let [abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
-                    (:abilities cdef))]
-    (for [ab abilities]
-      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
-
 (defn- corp-ability-init
   "Gets abilities associated with the card"
   [cdef]
@@ -75,13 +66,11 @@
   ([state side eid card {:keys [resolve-effect init-data] :as args}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
-         abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
          c (merge card
                   (when init-data (:data cdef))
-                  {:abilities abilities
-                   :runner-abilities run-abs
+                  {:runner-abilities run-abs
                    :corp-abilities corp-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
