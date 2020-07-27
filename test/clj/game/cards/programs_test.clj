@@ -2455,7 +2455,7 @@
         (click-card state :runner (get-ice state :hq 1))
         (click-card state :runner (get-ice state :hq 0))
         (is (= 1 (count (:hand (get-runner))))))))
- (testing "Async issue with Thimblerig #5042"
+  (testing "Async issue with Thimblerig #5042"
     (do-game
       (new-game {:corp {:hand ["Drafter" "Border Control" "Vanilla" "Thimblerig"]
                         :credits 100}
@@ -2479,7 +2479,39 @@
       (is (= ["Border Control" "Thimblerig"] (map :title (get-ice state :rd))))
       (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :hq))))
       (is (empty? (:prompt (get-corp))) "Corp gets no Thimblerig prompt")
-      (is (empty? (:prompt (get-runner))) "No more prompts open"))))
+      (is (empty? (:prompt (get-runner))) "No more prompts open")))
+  (testing "Swap vs subtype issues #5170"
+    (do-game
+      (new-game {:corp {:hand ["Drafter" "Data Raven" "Vanilla"]
+                        :credits 100}
+                 :runner {:id "Rielle \"Kit\" Peddler: Transhuman"
+                          :hand ["Inversificator" "Hunting Grounds" "Stargate"]
+                          :credits 100}})
+      (play-from-hand state :corp "Data Raven" "R&D")
+      (play-from-hand state :corp "Drafter" "R&D")
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inversificator")
+      (play-from-hand state :runner "Hunting Grounds")
+      (play-from-hand state :runner "Stargate")
+      (core/gain state :runner :click 10)
+      (let [inv (get-program state 0)
+            hg (get-resource state 0)
+            sg (get-program state 1)]
+        (card-ability state :runner sg 0)
+        (run-continue state)
+        (core/rez state :corp (get-ice state :rd 0))
+        (card-ability state :runner hg 0)
+        (run-continue state)
+        (card-ability state :runner inv 1)
+        (card-ability state :runner inv 1)
+        (card-ability state :runner inv 0)
+        (click-prompt state :runner "Trace 3 - Add 1 power counter")
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner "Vanilla")
+        (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :rd))))
+        (is (= ["Data Raven"] (map :title (get-ice state :archives))))))))
 
 (deftest ixodidae
   ;; Ixodidae should not trigger on psi-games
