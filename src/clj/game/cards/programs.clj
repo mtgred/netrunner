@@ -150,7 +150,8 @@
                                    (rezzed? current-ice)
                                    (= :encounter-ice (:phase run))
                                    breaker-ability)
-                            (vec (concat (when (and breaker-ability
+                            (vec (concat abs
+                                         (when (and breaker-ability
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
@@ -158,8 +159,7 @@
                                              :label (str (when (seq total-cost)
                                                            (str (build-cost-label total-cost) ": "))
                                                          "Match strength and fully break "
-                                                         (:title current-ice))}])
-                                         abs))
+                                                         (:title current-ice))}])))
                             abs)))))})
 
 (defn- mu-based-strength
@@ -506,14 +506,8 @@
                                          (installed? %))}
                    :effect (req (when (host state side card target)
                                   (gain :memory (:memoryunits target))))}
-        gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2
-                                                                           :dynamic :copy
-                                                                           :source (:title c)
-                                                                           :index %1
-                                                                           :label (make-label %2))
-                                                                   (:abilities (card-def c))))
-                                              (:hosted card))]
-                         (update! state :runner (assoc card :abilities (concat new-abis [host-click host-free])))))]
+        gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
+                         (update! state :runner (assoc card :abilities (concat [host-click host-free] new-abis)))))]
     {:abilities [host-click host-free]
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))

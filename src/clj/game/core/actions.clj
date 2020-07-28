@@ -309,7 +309,7 @@
   [state side {:keys [card ability targets] :as args}]
   (let [card (get-card state card)
         cdef (card-def card)
-        abilities (:abilities cdef)
+        abilities (:abilities card)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
@@ -318,7 +318,7 @@
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
                            (trigger-event-sync state side eid :spent-credits-from-card card))}
-             (get-in cdef [:abilities ability]))
+             (nth abilities ability))
         cannot-play (or (:disabled card)
                         (any-effects state side :prevent-ability true? card [ab ability]))]
     (when-not cannot-play

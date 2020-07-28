@@ -574,7 +574,8 @@
                                    (rezzed? current-ice)
                                    (= :encounter-ice (:phase run))
                                    break-ability)
-                            (vec (concat (when (and break-ability
+                            (vec (concat abs
+                                         (when (and break-ability
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
@@ -590,8 +591,7 @@
                                            [{:dynamic :auto-pump
                                              :label (str (when (seq total-pump-cost)
                                                            (str (build-cost-label total-pump-cost) ": "))
-                                                         "Match strength of " (:title current-ice))}])
-                                         abs))
+                                                         "Match strength of " (:title current-ice))}])))
                             abs)))))})
 
 ;; Takes a a card definition, and returns a new card definition that

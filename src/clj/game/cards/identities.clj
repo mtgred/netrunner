@@ -1471,14 +1471,14 @@
                                        target (second targets)]
                                    (and (not (:sync-flipped card))
                                         (same-card? targetcard (:basic-action-card runner))
-                                        (= "Remove 1 tag" (:label target)))))
+                                        (some? (re-find #"Remove 1 tag" (:label target))))))
                        :value [:credit 1]}
                       {:type :card-ability-additional-cost
                        :req (req (let [targetcard (first targets)
                                        target (second targets)]
                                    (and (:sync-flipped card)
                                         (same-card? targetcard (:basic-action-card corp))
-                                        (= "Trash 1 resource if the Runner is tagged" (:label target)))))
+                                        (some? (re-find #"Trash 1 resource if the Runner is tagged" (:label target))))))
                        :value [:credit -2]}]
    :abilities [{:cost [:click 1]
                 :effect (req (if (:sync-flipped card)

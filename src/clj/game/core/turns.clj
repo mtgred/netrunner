@@ -96,7 +96,7 @@
        (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
        :subroutines))
 
-(defn- ability-init
+(defn ability-init
   "Gets abilities associated with the card"
   [cdef]
   (for [ab (:abilities cdef)]
