@@ -6,9 +6,10 @@
 (defn- dissoc-card
   "Dissoc relevant keys in card"
   [card keep-counter]
-  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
+  (let [cdef (card-def card)
+        c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
                   :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
-        c (assoc c :subroutines (subroutines-init c (card-def card)))
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
 
