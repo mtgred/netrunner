@@ -3040,6 +3040,7 @@
 (define-card "Tour Guide"
   (let [ef (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))
         ability {:label "Reset number of subs"
+                 :silent (req true)
                  :req (req (asset? target))
                  :effect ef}
         trash-req (req (some #(and (asset? %)
