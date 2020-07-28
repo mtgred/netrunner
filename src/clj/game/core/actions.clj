@@ -308,17 +308,8 @@
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
   [state side {:keys [card ability targets] :as args}]
   (let [card (get-card state card)
-        cdef (card-def card)
         abilities (:abilities card)
-        ab (if (= ability (count abilities))
-             ;; recurring credit abilities are not in the :abilities map and are implicit
-             {:msg "take 1 [Recurring Credits]"
-              :req (req (pos? (get-counters card :recurring)))
-              :async true
-              :effect (req (add-prop state side card :rec-counter -1)
-                           (gain state side :credit 1)
-                           (trigger-event-sync state side eid :spent-credits-from-card card))}
-             (nth abilities ability))
+        ab (nth abilities ability)
         cannot-play (or (:disabled card)
                         (any-effects state side :prevent-ability true? card [ab ability]))]
     (when-not cannot-play
@@ -538,20 +529,9 @@
                                              " and break all subroutines on " (:title current-ice)))
                             (continue state side nil)))))))
 
-(defn play-copy-ability
-  "Play an ability from another card's definition."
-  [state side {:keys [card source index] :as args}]
-  (let [card (get-card state card)
-        source-abis (:abilities (card-def source))
-        abi (when (< -1 index (count source-abis))
-              (nth source-abis index))]
-    (when abi
-      (do-play-ability state side card abi index nil))))
-
 (def dynamic-abilities
   {"auto-pump" play-auto-pump
-   "auto-pump-and-break" play-auto-pump-and-break
-   "copy" play-copy-ability})
+   "auto-pump-and-break" play-auto-pump-and-break})
 
 (defn play-dynamic-ability
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
