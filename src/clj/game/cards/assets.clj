@@ -2203,9 +2203,12 @@
                     :effect (req (let [chosen (first (filter #(= % target) choices))
                                        chosen-ability (first (filter #(= target (make-label %)) abis))]
                                    (wait-for (resolve-ability state side chosen-ability card nil)
+                                     (println chosen)
+                                     (println (remove-once #(= (make-label %) chosen) abis))
+                                     ;;(println (remove-once #(= % chosen) choices))
                                      (if (and (pos? (dec n))
                                               (not= "Done" chosen))
-                                       (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
+                                       (continue-ability state side (choice (remove-once #(= (make-label %) chosen) abis) (dec n)) card nil)
                                        (effect-completed state side eid)))))}))
         ability {:async true
                  :label "resolve an ability"
