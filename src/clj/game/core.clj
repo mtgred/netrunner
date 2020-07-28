@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.core.eid :refer :all]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [card-def]]
+            [game.core.card-defs :refer [card-defs card-def]]
             [game.core.prompts :refer :all]
             [game.core.toasts :refer [toast show-error-toast]]
             [game.utils :refer :all]

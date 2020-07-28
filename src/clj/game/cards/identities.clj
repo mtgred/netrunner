@@ -1,6 +1,5 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.core.card-defs :refer [define-card]]
             [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed make-eid complete-with-result]]
             [game.core.card-defs :refer [card-def]]

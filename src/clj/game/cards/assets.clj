@@ -1,7 +1,6 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [define-card]]
             [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
