@@ -99,11 +99,8 @@
 (defn- ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (let [abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
-                    (:abilities cdef))]
-    (for [ab abilities]
-      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
+  (for [ab (:abilities cdef)]
+    (assoc ab :label (make-label ab))))
 
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
