@@ -2277,6 +2277,7 @@
                                    :effect (effect (gain-credits 2)
                                                    (update! (dissoc (get-card state card) :server-target)))}}))}
               {:event :runner-turn-ends
+               :silent (req true)
                :effect (effect (update! (dissoc card :server-target)))}]
      :abilities [ability]}))
 
