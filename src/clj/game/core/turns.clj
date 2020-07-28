@@ -100,7 +100,7 @@
   "Gets abilities associated with the card"
   [cdef]
   (for [ab (:abilities cdef)]
-    (assoc ab :label (make-label ab))))
+    (assoc ab :cost-str (build-cost-label (:cost ab)))))
 
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
