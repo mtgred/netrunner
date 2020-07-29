@@ -882,24 +882,25 @@
                        :value 1}]})
 
 (define-card "Dr. Lovegood"
-  {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
-   :abilities [{:req (req (:runner-phase-12 @state))
-                :label "blank a card"
-                :prompt "Select an installed card to make its text box blank for the remainder of the turn"
-                :once :per-turn
-                :choices {:card installed?}
-                :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
-                :effect (req (let [c target]
-                               (disable-card state side c)
-                               (register-events
-                                 state side card
-                                 [{:event :post-runner-turn-ends
-                                   :effect (req (enable-card state side (get-card state c))
-                                                (when-let [reactivate-effect (:reactivate (card-def c))]
-                                                  (resolve-ability state :runner reactivate-effect
-                                                                   (get-card state c) nil))
-                                                (unregister-events state side card))}])))}]
-   :events [{:event :post-runner-turn-ends}]})
+  {:events [{:event :pre-runner-turn-begins
+              :label "blank a card"
+              :prompt "Select an installed card to make its text box blank for the remainder of the turn"
+              :once :per-turn
+              :interactive (req true)
+              :async true
+              :choices {:card installed?}
+              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
+              :effect (req (let [c target]
+                              (disable-card state side c)
+                              (register-events
+                                state side card
+                                [{:event :post-runner-turn-ends
+                                  :effect (req (enable-card state side (get-card state c))
+                                              (when-let [reactivate-effect (:reactivate (card-def c))]
+                                                (resolve-ability state :runner reactivate-effect
+                                                                  (get-card state c) nil))
+                                              (unregister-events state side card {:events [{:event :post-runner-turn-ends}]}))}])
+                              (effect-completed state side eid)))}]})
 
 (define-card "DreamNet"
   {:events [{:event :successful-run
