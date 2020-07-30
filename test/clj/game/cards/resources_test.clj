@@ -1273,6 +1273,24 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 11 (:credit (get-corp))) "Corp has 11c")))
 
+(deftest dr-lovegood
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Dr. Lovegood" "Virus Breeding Ground" "The Black File" "Drug Dealer"]
+                          :credits 40}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (play-from-hand state :runner "Virus Breeding Ground")
+      (play-from-hand state :runner "Dr. Lovegood")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [blackfile (get-resource state 0)
+            vbg (get-resource state 1)]
+        (click-prompt state :runner "Dr. Lovegood")
+        (click-card state :runner blackfile)
+        (is (= 0 (get-counters (refresh blackfile) :power)) "Black File has still 0 power counters")
+        (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground has 1 virus counter")))))
+
 (deftest dreamnet
   ;; DreamNet
   (testing "Draw 1 card on first successful run"

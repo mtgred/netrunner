@@ -282,7 +282,9 @@
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
-                                                          (remove-once #(same-card? target (:card %)) handlers))
+                                                          ;;check if any card has been disabled (Dr. Lovegood)
+                                                          (remove-once #( true? (:disabled (get-card state (:card %))))
+                                                            (remove-once #(same-card? target (:card %)) handlers)))
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
 
