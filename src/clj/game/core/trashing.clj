@@ -128,7 +128,7 @@
                      (swap! state assoc-in [side :register :trashed-card] true))
                    ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                    (swap! state assoc-in [:corp :discard]
-                     (sort-by #(if (:seen %) -1 (rand-int 30)) (get-in @state [:corp :discard])))
+                     (vec (sort-by #(if (:seen %) -1 (rand-int 30)) (get-in @state [:corp :discard]))))
                    (let [;; The trash event will be determined by who is performing the
                          ;; trash. `:game-trash` in this case refers to when a checkpoint
                          ;; sees a card has been trashed and it has hosted cards, so it
