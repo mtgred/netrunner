@@ -657,7 +657,6 @@
                   (:msg ability)
                   "")
         cost-str (:cost-str ability)]
-    (prn label cost-str)
     (cond
       (and (not (s/blank? cost-str))
            (not (s/blank? label)))

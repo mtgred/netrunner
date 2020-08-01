@@ -96,8 +96,9 @@
 
 (defn update-ability-cost-str
   [state side card]
-  (assoc card :abilities (for [ab (:abilities card)]
-                           (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab card))))))
+  (assoc card :abilities
+         (into [] (for [ab (:abilities card)]
+                    (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab card)))))))
 
 (defn update-all-card-labels
   [state]

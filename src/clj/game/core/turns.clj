@@ -94,13 +94,14 @@
   [card cdef]
   (->> (:subroutines cdef)
        (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines))
+       :subroutines
+       (into [])))
 
 (defn ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (for [ab (:abilities cdef)]
-    (assoc ab :cost-str (build-cost-label (:cost ab)))))
+  (into [] (for [ab (:abilities cdef)]
+             (assoc ab :cost-str (build-cost-label (:cost ab))))))
 
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
