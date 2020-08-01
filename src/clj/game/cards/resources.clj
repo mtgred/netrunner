@@ -2881,7 +2881,7 @@
                        :req (req (let [targetcard (first targets)
                                        target (second targets)]
                                    (and (same-card? targetcard (:basic-action-card corp))
-                                        (some? (re-find #"Trash 1 resource if the Runner is tagged" (:label target))))))
+                                        (= "Trash 1 resource if the Runner is tagged" (:label target)))))
                        :value [:credit 2]}]
    :implementation "Errata from FAQ 3.0.1: should be unique"})
 
