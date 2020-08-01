@@ -4,7 +4,7 @@
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
          update-all-agenda-points reset-all-ice no-action make-run encounter-ends
-         pass-ice do-access successful-run complete-run)
+         pass-ice do-access successful-run)
 
 (defn add-run-effect
   [state side run-effect]
@@ -435,17 +435,6 @@
   [state _]
   (swap! state assoc-in [:run :prevent-access] true))
 
-(defn successful-run
-  "The real 'successful run' trigger."
-  [state side args]
-  (if (any-effects state side :block-successful-run)
-        (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
-            (complete-run state side))
-        (wait-for
-          (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
-          (wait-for (register-successful-run state side (get-in @state [:run :server]))
-            (complete-run state side)))))
-
 (defn complete-run
   "This does all of the access related stuff"
   [state side]
@@ -509,6 +498,17 @@
         :else
         (wait-for (do-access state side server)
                   (handle-end-run state side))))))
+
+(defn successful-run
+  "The real 'successful run' trigger."
+  [state side args]
+  (if (any-effects state side :block-successful-run)
+        (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
+            (complete-run state side))
+        (wait-for
+          (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
+          (wait-for (register-successful-run state side (get-in @state [:run :server]))
+            (complete-run state side)))))
 
 (defn corp-phase-43
   "The corp indicates they want to take action after runner hits Successful Run, before access."
