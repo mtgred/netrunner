@@ -732,14 +732,15 @@
                        :choices {:number (req numtargets)}
                        :effect (req (let [c target]
                                       (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
-                                        (do (pay state :corp card :credit c)
-                                            (continue-ability
-                                              state :corp
-                                              {:msg (msg "place " (quantify c " advancement token") " on "
-                                                         (card-str state target))
-                                               :choices {:card installed?}
-                                               :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                              card nil))
+                                        (let [new-eid (make-eid state {:source card :source-type :ability})]
+                                          (wait-for (pay-sync state :corp new-eid card :credit c)
+                                                    (continue-ability
+                                                      state :corp
+                                                      {:msg (msg "place " (quantify c " advancement token") " on "
+                                                                 (card-str state target))
+                                                       :choices {:card installed?}
+                                                       :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                      card nil)))
                                         (effect-completed state side eid))))}
                       card nil)
                     (effect-completed state side eid))))})
@@ -1506,13 +1507,14 @@
    :choices {:number (req (count-tags state))}
    :effect (req (let [c target]
                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
-                    (do (pay state :corp card :credit c)
-                        (continue-ability
-                          state side
-                          {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
-                           :choices {:card can-be-advanced?}
-                           :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                          card nil))
+                    (let [new-eid (make-eid state {:source card :source-type :ability})]
+                      (wait-for (pay-sync state :corp new-eid card :credit c)
+                                (continue-ability
+                                  state side
+                                  {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
+                                   :choices {:card can-be-advanced?}
+                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                  card nil)))
                     (effect-completed state side eid))))})
 
 (define-card "Psychokinesis"

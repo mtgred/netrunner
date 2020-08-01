@@ -321,18 +321,19 @@
                                                                  (count (:hand runner))))}
                                      :async true
                                      :effect (req (when (pos? target)
-                                                    (pay state :corp card :credit target)
-                                                    (let [from (take target (shuffle (:hand runner)))]
-                                                      (doseq [c from]
-                                                        (move state :runner c :deck))
-                                                      (system-msg state side (str "uses Brain Rewiring to pay " target
-                                                                                  " [Credits] and add " target
-                                                                                  " cards from the Runner's Grip"
-                                                                                  " to the bottom of their Stack."
-                                                                                  " The Runner draws 1 card"))
-                                                      (wait-for (draw state :runner 1 nil)
-                                                                (clear-wait-prompt state :runner)
-                                                                (effect-completed state side eid)))))}
+                                                    (wait-for
+                                                      (pay-sync state :corp card :credit target)
+                                                      (let [from (take target (shuffle (:hand runner)))]
+                                                        (doseq [c from]
+                                                          (move state :runner c :deck))
+                                                        (system-msg state side (str "uses Brain Rewiring to pay " target
+                                                                                    " [Credits] and add " target
+                                                                                    " cards from the Runner's Grip"
+                                                                                    " to the bottom of their Stack."
+                                                                                    " The Runner draws 1 card"))
+                                                        (wait-for (draw state :runner 1 nil)
+                                                                  (clear-wait-prompt state :runner)
+                                                                  (effect-completed state side eid))))))}
                        :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                      card nil))})
 

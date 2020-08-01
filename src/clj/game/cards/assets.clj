@@ -345,8 +345,7 @@
              :effect (req (case target
                             "Pay 1 [Credits]"
                             (do (system-msg state :runner "pays 1 [Credits]")
-                                (pay state :runner card :credit 1)
-                                (effect-completed state side eid))
+                                (pay-sync state :runner eid card :credit 1))
                             (do (system-msg state :runner "takes 1 tag")
                                 (gain-tags state :corp eid 1))))}]})
 

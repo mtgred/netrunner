@@ -691,22 +691,6 @@
        (swap! state update-in [:stats side :spent cost-type] (fnil + 0) amount)
        (complete-with-result state side eid (deduct state side [cost-type amount]))))))
 
-(defn pay
-  "Deducts each cost from the player.
-  args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
-  The map with :action was added for Jeeves so we can log what each click was used on"
-  [state side card & args]
-  (let [args (flatten args)
-        raw-costs (remove map? args)
-        actions (filter map? args)
-        eid (make-eid state)]
-    (when-let [costs (can-pay? state side (:title card) raw-costs)]
-        (->> costs
-             (map (partial cost-handler state side eid card actions costs))
-             (filter some?)
-             (interpose " and ")
-             (apply str)))))
-
 (defn- pay-sync-next
   [state side eid costs card actions msgs]
   (if (empty? costs)

@@ -982,7 +982,8 @@
 
 (define-card "Datapike"
   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
-                  :effect (effect (pay :runner card :credit 2))}
+                  :async true
+                  :effect (effect (pay-sync :runner eid card :credit 2))}
                  end-the-run]})
 
 (define-card "DNA Tracker"
@@ -1465,14 +1466,15 @@
                   :choices (req (map str (range (inc (min 2 (:credit corp))))))
                   :effect (req (let [c (str->int target)]
                                  (if (can-pay? state side (assoc eid :source card :source-type :subroutine) card (:title card) :credit c)
-                                   (do (pay state :corp card :credit c)
-                                       (continue-ability
-                                         state side
-                                         {:msg (msg "pay " c "[Credits] and place " (quantify c " advancement token")
-                                                    " on " (card-str state target))
-                                          :choices {:card can-be-advanced?}
-                                          :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                         card nil))
+                                   (let [new-eid (make-eid state {:source card :source-type :subroutine})]
+                                     (wait-for (pay-sync state :corp new-eid card :credit c)
+                                               (continue-ability
+                                                 state side
+                                                 {:msg (msg "pay " c "[Credits] and place " (quantify c " advancement token")
+                                                            " on " (card-str state target))
+                                                  :choices {:card can-be-advanced?}
+                                                  :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                 card nil)))
                                    (effect-completed state side eid))))}]
    :access {:async true
             :req (req (not (in-discard? card)))

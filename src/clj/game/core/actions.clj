@@ -202,6 +202,12 @@
   (.println *err* (str "Prompt: " prompt))
   (.println *err* (str "Prompt args: " prompt-args)))
 
+(defn maybe-pay
+  [state side eid card choices choice]
+  (if (= choices :credit)
+    (pay-sync state side eid card :credit (min choice (get-in @state [side :credit])))
+    (effect-completed state side eid)))
+
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -218,15 +224,14 @@
           (:number choices))
       (if (number? choice)
         (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
-            (when (= choices :credit) ; :credit prompts require payment
-              (pay state side card :credit (min choice (get-in @state [side :credit]))))
-            (when (:counter choices)
-              ;; :Counter prompts deduct counters from the card
-              (add-counter state side card (:counter choices) (- choice)))
-            ;; trigger the prompt's effect function
-            (when effect
-              (effect (or choice card)))
-            (finish-prompt state side prompt card))
+            (wait-for (maybe-pay state side card choices choice)
+                      (when (:counter choices)
+                        ;; :Counter prompts deduct counters from the card
+                        (add-counter state side card (:counter choices) (- choice)))
+                      ;; trigger the prompt's effect function
+                      (when effect
+                        (effect (or choice card)))
+                      (finish-prompt state side prompt card)))
         (prompt-error "in an integer prompt" prompt args))
 
       ;; List of card titles for auto-completion
