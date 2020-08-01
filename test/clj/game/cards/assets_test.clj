@@ -4985,7 +4985,7 @@
         (changes-val-macro 1 (:credit (get-corp))
                            "Gained 1 credit"
                            (click-prompt state :corp "Gain 1 [Credits]"))
-        (is (= ["Draw 1 card" "Place 1 advancement token on a piece of ice" "Add this asset to HQ"]
+        (is (= ["Draw 1 card" "Place 1 advancement token on a piece of ice" "Add this asset to HQ" "Done"]
                (prompt-buttons :corp)) "Chosen options are removed")
         (changes-val-macro 1 (count (:hand (get-corp)))
                            "Drew 1 card"
