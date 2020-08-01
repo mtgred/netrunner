@@ -1432,9 +1432,7 @@
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
-     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
-     :effect (effect (lose :corp :hand-size 1))
-     :leave-play (effect (gain :corp :hand-size 1))
+     :in-play [:corp :hand-size -1]
      :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
      :events [(assoc ability :event :runner-turn-begins)]}))
 

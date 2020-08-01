@@ -42,7 +42,11 @@
               (or rezzed
                   installed))
      (when-let [in-play (:in-play (card-def card))]
-       (apply lose state side in-play)))
+        (if (some #(= :corp %) in-play)
+                (apply lose state :corp (remove #(= :corp %) in-play))
+        (if (some #(= :runner %) in-play)
+                (apply lose state :runner (remove #(= :runner %) in-play))
+        (apply lose state side in-play)))))
    (dissoc-card card keep-counter)))
 
 
@@ -101,5 +105,9 @@
        (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
-       (apply gain state side in-play))
+       (if (some #(= :corp %) in-play)
+            (apply gain state :corp (remove #(= :corp %) in-play))
+        (if (some #(= :runner %) in-play)
+            (apply gain state :runner (remove #(= :runner %) in-play))
+       (apply gain state side in-play))))
      (get-card state c))))
