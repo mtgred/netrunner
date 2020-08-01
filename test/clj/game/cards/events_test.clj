@@ -1427,17 +1427,34 @@
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
-  (do-game
-    (new-game {:runner {:deck [(qty "Dirty Laundry" 2)]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Dirty Laundry")
-    (click-prompt state :runner "Archives")
-    (run-continue state)
-    (is (= 8 (:credit (get-runner))) "Gained 5 credits")
-    (play-from-hand state :runner "Dirty Laundry")
-    (click-prompt state :runner "Archives")
-    (run-jack-out state)
-    (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
+  (testing "Basic test"
+    (do-game
+     (new-game {:runner {:deck [(qty "Dirty Laundry" 2)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Dirty Laundry")
+     (click-prompt state :runner "Archives")
+     (run-continue state)
+     (is (= 8 (:credit (get-runner))) "Gained 5 credits")
+     (play-from-hand state :runner "Dirty Laundry")
+     (click-prompt state :runner "Archives")
+     (run-jack-out state)
+     (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
+
+  (testing "Doppelgänger interaction"
+    (do-game
+     (new-game {:runner {:hand ["Doppelgänger" "Dirty Laundry"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Doppelgänger")
+     (play-from-hand state :runner "Dirty Laundry")
+     (is (changes-credits (get-runner) 5
+                          (do (click-prompt state :runner "Archives")
+                              (run-continue state)
+                              (is (not (:run @state)))
+                              (click-prompt state :runner "Yes")
+                              (click-prompt state :runner "Archives")
+                              (is (:run @state) "New run started")
+                              (run-continue state)))
+         "Dirty Laundry pays out 5 creds when comboed with Doppelganger"))))
 
 (deftest diversion-of-funds
   ;; Diversion of Funds
