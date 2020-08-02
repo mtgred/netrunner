@@ -613,6 +613,7 @@
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
              :silent (req true)
+             :unregister-once-resolved true
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
 
 (define-card "Déjà Vu"
@@ -750,7 +751,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
              :req (req (:successful target))
-             :silent (req true)
+             :once :per-turn
              :msg "gain 5 [Credits]"
              :effect (effect (gain-credits :runner 5))}]})
 
@@ -1288,7 +1289,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
              :req (req (:successful target))
-             :silent (req true)
+             :once :per-turn
              :msg "gain 12 [Credits]"
              :effect (effect (gain-credits :runner 12))}]})
 
@@ -1719,6 +1720,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [{:event :successful-run
              :silent (req true)
+             :unregister-once-resolved true
              :effect (effect (access-bonus :hq 2))}]})
 
 (define-card "Leverage"
