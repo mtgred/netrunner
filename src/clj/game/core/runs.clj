@@ -102,20 +102,24 @@
                                                           (zone->name (unknown->kw server))
                                                           (when ignore-costs ", ignoring all costs"))))
                          ;; s is a keyword for the server, like :hq or :remote1
-                         (swap! state assoc
-                                :per-run nil
-                                :run {:server s
-                                      :position n
-                                      :corp-auto-no-action false
-                                      :jack-out false
-                                      :jack-out-after-pass false
-                                      :phase :initiation
-                                      :next-phase :initiation
-                                      :eid eid
-                                      :current-ice nil
-                                      :events nil})
+                         (let [run-id (make-eid state)]
+                           (swap! state assoc
+                                  :per-run nil
+                                  :run {:run-id run-id
+                                        :server s
+                                        :position n
+                                        :corp-auto-no-action false
+                                        :jack-out false
+                                        :jack-out-after-pass false
+                                        :phase :initiation
+                                        :next-phase :initiation
+                                        :eid eid
+                                        :current-ice nil
+                                        :events nil})
+                           (when card
+                             (update! state side (assoc-in card [:special :run-id] run-id))))
                          (when (or run-effect card)
-                           (add-run-effect state side (assoc run-effect :card card)))
+                           (add-run-effect state side (assoc run-effect :card (get-card state card))))
                          (trigger-event state side :begin-run :server s)
                          (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
                          (swap! state assoc-in [:runner :next-run-credit] 0)
