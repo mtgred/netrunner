@@ -3257,7 +3257,24 @@
     (run-jack-out state)
     (run-empty-server state :hq)
     (click-prompt state :runner "Steal")
-    (is (not (:run @state)) "Run has finished"))))
+    (is (not (:run @state)) "Run has finished")))
+  (testing "Doppelgänger interaction"
+    (do-game
+     (new-game {:runner {:hand ["Doppelgänger" "Legwork"]}
+                :corp {:hand [(qty "Hostile Takeover" 5)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Doppelgänger")
+     (play-run-event state "Legwork" :hq)
+     (do (dotimes [_ 3]
+           (click-prompt state :runner "Steal"))
+         (is (not (:run @state)))
+         (click-prompt state :runner "Yes")
+         (click-prompt state :runner "HQ")
+         (is (:run @state) "New run started")
+         (run-continue state)
+         (click-prompt state :runner "Steal")
+         (is (not (:run @state))
+             "Legwork only gives bonus accesses on its own run when combined with Doppelgänger")))))
 
 (deftest leverage
   ;; Leverage
