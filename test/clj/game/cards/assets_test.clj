@@ -3746,7 +3746,17 @@
         (is (zero? (get-counters (refresh rex) :power)))
         (click-prompt state :corp "Remove 1 bad publicity")
         (is (zero? (count-bad-pub state)) "Should not have the same amount of bad publicity")
-        (is (= "Rex Campaign" (-> (get-corp) :discard first :title)))))))
+        (is (= "Rex Campaign" (-> (get-corp) :discard first :title))))))
+  (testing "No trigger when trashed by Runner"
+    (do-game
+      (new-game {:corp {:deck ["Rex Campaign"]}})
+      (play-from-hand state :corp "Rex Campaign" "New remote")
+      (let [rex (get-content state :remote1 0)]
+        (core/rez state :corp rex)
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (empty? (:prompt (get-corp))) "No prompt to trigger Rex Campaign when trashed by the Runner")))))
 
 (deftest ronald-five
   ;; Ronald Five - Runner loses a click every time they trash a Corp card
