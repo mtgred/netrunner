@@ -275,7 +275,7 @@
                       :effect (req (clear-wait-prompt state :corp)
                                    (if (= target "End the run")
                                      (end-run state side eid card)
-                                     (pay-sync state :runner eid card :credit cost)))})
+                                     (pay state :runner eid card :credit cost)))})
                    card nil))}]
      :abilities [ability]}))
 
@@ -563,7 +563,7 @@
                                :effect (req (clear-wait-prompt state :corp)
                                             (if (= c-pay-str target)
                                               (do (system-msg state :runner (str "pays " cost " [Credits]"))
-                                                  (pay-sync state :runner eid card :credit cost))
+                                                  (pay state :runner eid card :credit cost))
                                               (do (system-msg state :corp "ends the run")
                                                   (end-run state :corp eid card))))}
                               card nil)))}]})
@@ -1386,7 +1386,7 @@
                                :msg "do 1 brain damage instead of net damage"
                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                             (clear-wait-prompt state :runner)
-                                            (wait-for (pay-sync state :corp card :credit 2)
+                                            (wait-for (pay state :corp card :credit 2)
                                                       (wait-for (damage state side :brain 1 {:card card})
                                                                 (swap! state assoc-in [:damage :damage-replace] true)
                                                                 (effect-completed state side eid))))}

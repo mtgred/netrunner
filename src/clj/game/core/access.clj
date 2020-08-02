@@ -94,7 +94,7 @@
 
                         ; Pay credits (from pool or cards) to trash
                         (= target (first trash-cost-str))
-                        (wait-for (pay-sync state side (make-eid state trash-eid) card [:credit trash-cost])
+                        (wait-for (pay state side (make-eid state trash-eid) card [:credit trash-cost])
                                   (when (:run @state)
                                     (swap! state assoc-in [:run :did-trash] true)
                                     (when must-trash?
@@ -218,7 +218,7 @@
 
                       ;; Pay additiional costs to steal
                       (= target "Pay to steal")
-                      (wait-for (pay-sync state side nil cost {:action :steal-cost})
+                      (wait-for (pay state side nil cost {:action :steal-cost})
                                 (system-msg state side (str async-result " to steal "
                                                             (:title card) " from "
                                                             (name-zone :corp (get-zone card))))
@@ -346,7 +346,7 @@
            :effect (req (if (or (= "OK" target)
                                 (= "No action" target))
                           (access-end state side eid accessed-card)
-                          (wait-for (pay-sync state side accessed-card cost)
+                          (wait-for (pay state side accessed-card cost)
                                     (if async-result
                                       (access-trigger-events state side eid accessed-card title (assoc args :cost-msg async-result))
                                       (access-end state side eid accessed-card)))))})

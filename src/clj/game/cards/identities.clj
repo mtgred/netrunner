@@ -77,7 +77,7 @@
                                                             (expose state :runner eid itarget))}
                                               :yes-ability
                                               {:async true
-                                               :effect (req (wait-for (pay-sync state :corp card [:credit 1])
+                                               :effect (req (wait-for (pay state :corp card [:credit 1])
                                                                       (system-msg state :corp (str "spends 1 [Credits] to prevent "
                                                                                                    " card from being exposed"))
                                                                       (clear-wait-prompt state :runner)

@@ -102,13 +102,13 @@
               ;; if priority, have not spent a click
               (not (and (has-subtype? card "Priority")
                         (get-in @state [side :register :spent-click]))))
-       ;; Wait on pay-sync to finish before triggering instant-effect
+       ;; Wait on pay to finish before triggering instant-effect
        (let [original-zone (:zone card)
              moved-card (move state side (assoc card :seen true) :play-area)]
          ;; Only mark the register once costs have been paid and card has been moved
          (if (has-subtype? card "Run")
            (swap! state assoc-in [:runner :register :click-type] :run))
-         (wait-for (pay-sync state side (make-eid state eid) moved-card costs {:action :play-instant})
+         (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
                    (if-let [cost-str async-result]
                      (complete-play-instant state side eid moved-card cost-str ignore-cost)
                      ;; could not pay the card's price; put it back and mark the effect as being over.

@@ -322,7 +322,7 @@
                                      :async true
                                      :effect (req (when (pos? target)
                                                     (wait-for
-                                                      (pay-sync state :corp card :credit target)
+                                                      (pay state :corp card :credit target)
                                                       (let [from (take target (shuffle (:hand runner)))]
                                                         (doseq [c from]
                                                           (move state :runner c :deck))

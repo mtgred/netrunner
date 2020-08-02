@@ -733,7 +733,7 @@
                        :effect (req (let [c target]
                                       (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
                                         (let [new-eid (make-eid state {:source card :source-type :ability})]
-                                          (wait-for (pay-sync state :corp new-eid card :credit c)
+                                          (wait-for (pay state :corp new-eid card :credit c)
                                                     (continue-ability
                                                       state :corp
                                                       {:msg (msg "place " (quantify c " advancement token") " on "
@@ -833,7 +833,7 @@
                                          :card #(and (installed? %)
                                                      (is-type? % card-type)
                                                      (not (has-subtype? % "Icebreaker")))}
-                               :effect (req (wait-for (pay-sync state :runner card :credit (* 3 (count targets)))
+                               :effect (req (wait-for (pay state :runner card :credit (* 3 (count targets)))
                                                       (system-msg
                                                         state :runner
                                                         (str async-result " to prevent the trashing of "
@@ -1508,7 +1508,7 @@
    :effect (req (let [c target]
                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
                     (let [new-eid (make-eid state {:source card :source-type :ability})]
-                      (wait-for (pay-sync state :corp new-eid card :credit c)
+                      (wait-for (pay state :corp new-eid card :credit c)
                                 (continue-ability
                                   state side
                                   {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
@@ -2111,7 +2111,7 @@
              :prompt "Pay 4 [Credits] or take 1 tag?"
              :choices ["Pay 4 [Credits]" "Take 1 tag"]
              :effect (req (if (= target "Pay 4 [Credits]")
-                            (pay-sync state :runner eid card :credit 4)
+                            (pay state :runner eid card :credit 4)
                             (gain-tags state :corp eid 1 nil)))}
             {:event :corp-turn-begins
              :async true

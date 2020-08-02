@@ -691,21 +691,21 @@
        (swap! state update-in [:stats side :spent cost-type] (fnil + 0) amount)
        (complete-with-result state side eid (deduct state side [cost-type amount]))))))
 
-(defn- pay-sync-next
+(defn- pay-next
   [state side eid costs card actions msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
     (wait-for (cost-handler state side (make-eid state eid) card actions costs (first costs))
-              (pay-sync-next state side eid (rest costs) card actions (conj msgs async-result)))))
+              (pay-next state side eid (rest costs) card actions (conj msgs async-result)))))
 
-(defn pay-sync
+(defn pay
   "Same as pay, but awaitable."
   [state side eid card & args]
   (let [args (flatten args)
         raw-costs (remove map? args)
         actions (filter map? args)]
     (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
-      (wait-for (pay-sync-next state side (make-eid state eid) costs card actions [])
+      (wait-for (pay-next state side (make-eid state eid) costs card actions [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))

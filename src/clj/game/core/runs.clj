@@ -92,7 +92,7 @@
              (swap! state assoc-in [:runner :register :click-type] :run)
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
-           (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
+           (wait-for (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
                      (if-let [cost-str async-result]
                        (let [s [(if (keyword? server) server (last (server->zone state server)))]
                              ices (get-in @state (concat [:corp :servers] s [:ices]))
@@ -563,7 +563,7 @@
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
    (let [cost (jack-out-cost state side)]
      (if (can-pay? state side eid nil "jack out" cost)
-       (wait-for (pay-sync state :runner nil cost)
+       (wait-for (pay state :runner nil cost)
                  (if-let [cost-str async-result]
                    (let [prevent (get-prevent-list state :corp :jack-out)]
                      (if (cards-can-prevent? state :corp prevent :jack-out)

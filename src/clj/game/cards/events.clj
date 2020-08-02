@@ -2862,7 +2862,7 @@
                        :choices (req (map str (range 0 (inc (:click runner)))))
                        :async true
                        :effect (req (let [n (str->int target)]
-                                      (wait-for (pay-sync state :runner card :click n)
+                                      (wait-for (pay state :runner card :click n)
                                                 (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}}
                      card))})
 

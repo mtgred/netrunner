@@ -852,7 +852,7 @@
                                           "remove a virus token from Crypsis"
                                           "trash Crypsis"))
                               :async true
-                              :effect (req (wait-for (pay-sync state :runner card [:virus 1])
+                              :effect (req (wait-for (pay state :runner card [:virus 1])
                                                      (if async-result
                                                        (effect-completed state side eid)
                                                        (trash state side eid card nil))))}]}))
@@ -1739,7 +1739,7 @@
                 :async true
                 ;; TODO use :x-credits when it's built
                 :effect (req (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
-                               (wait-for (pay-sync state :runner new-eid card [:credit target])
+                               (wait-for (pay state :runner new-eid card [:credit target])
                                          (if-let [cost-str async-result]
                                            (do (system-msg state :runner
                                                            (str (build-spend-msg cost-str "use")

@@ -278,7 +278,7 @@
   "Perform the ability, checking all costs can be paid etc."
   [state side {:keys [eid cost] :as ability} card targets]
   ;; Ensure that any costs can be paid
-  (wait-for (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
+  (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             (when-let [cost-str async-result]
               ;; Print the message
               (print-msg state side ability card targets cost-str)
@@ -372,10 +372,10 @@
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (wait-for
-        (pay-sync state opponent (make-eid state eid) card [:credit opponent-bet])
+        (pay state opponent (make-eid state eid) card [:credit opponent-bet])
         (system-msg state opponent async-result)
         (wait-for
-          (pay-sync state side (make-eid state eid) card [:credit bet])
+          (pay state side (make-eid state eid) card [:credit bet])
           (system-msg state side async-result)
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
@@ -415,7 +415,7 @@
                           ((fnil + 0 0) link boost)
                           strength)
         trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
-    (wait-for (pay-sync state other (make-eid state eid) card [:credit boost])
+    (wait-for (pay state other (make-eid state eid) card [:credit boost])
               (system-msg state other (str async-result
                                            " to increase " (if (corp-start? trace) "link" "trace")
                                            " strength to " (if (corp-start? trace)
@@ -456,7 +456,7 @@
                    ((fnil + 0 0 0) base bonus boost)
                    ((fnil + 0 0) link boost))
         trace (assoc trace :strength strength)]
-    (wait-for (pay-sync state player (make-eid state eid) card [:credit boost])
+    (wait-for (pay state player (make-eid state eid) card [:credit boost])
               (system-msg state player (str async-result
                                             " to increase " (if (corp-start? trace) "trace" "link")
                                             " strength to " strength))
