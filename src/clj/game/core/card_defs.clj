@@ -14,3 +14,8 @@
                       (print-stack-trace
                         (Exception. (str "Tried to select card def for non-existent card: " card))
                         2500)))))
+
+(defn define-card
+  [title ability]
+  (swap! card-defs assoc title ability)
+  ability)

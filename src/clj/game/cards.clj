@@ -385,6 +385,4 @@
 
 (defn define-card
   [title ability]
-  (let [ability (make-recurring-ability ability)]
-    (swap! card-defs assoc title ability)
-    ability))
+  (card-defs/define-card title (make-recurring-ability ability)))
