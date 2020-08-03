@@ -366,7 +366,9 @@
 (defmethod start-next-phase :access-server
   [state side args]
   (set-phase state :access-server)
-  (successful-run state :runner nil))
+  (if (check-for-empty-server state)
+    (handle-end-run state side)
+    (successful-run state :runner nil)))
 
 (defmethod continue :default
   [state side args]
