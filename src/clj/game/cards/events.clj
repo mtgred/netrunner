@@ -842,7 +842,7 @@
                                         (when (or (same-card? card (first cards-to-trash))
                                                   (same-card? card (second cards-to-trash))) (update! state side (assoc card :seen true))))
                                       (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash)
-                                              (gain-credits state :runner eid credits nil)))
+                                              (gain-credits state :runner eid credits nil))))
                                   (effect-completed state side eid))))}}
                card))})
 
