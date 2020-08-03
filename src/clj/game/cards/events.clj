@@ -838,8 +838,11 @@
                                              (join " and " (map :title cards-to-trash))
                                              " from HQ and gain "
                                              credits " [Credits]"))
-                                      (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash))
-                                                (gain-credits state :runner eid credits nil)))
+                                      (doseq [card (get-in @state [:corp :hand])]
+                                        (when (or (same-card? card (first cards-to-trash))
+                                                  (same-card? card (second cards-to-trash))) (update! state side (assoc card :seen true))))
+                                      (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash)
+                                              (gain-credits state :runner eid credits nil)))
                                   (effect-completed state side eid))))}}
                card))})
 
