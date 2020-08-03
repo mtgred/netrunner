@@ -2388,7 +2388,7 @@
                 :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
                           (join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
                           " are trashed as a result")
-                :effect (req (let [card (update-in card [:hosted] (fn [coll] (remove-once #(same-card? % target) coll)))]
+                :effect (req (let [card (update! state side (update card :hosted (fn [coll] (remove-once #(same-card? % target) coll))))]
                                (wait-for (trash state side card {:cause :ability-cost})
                                          (runner-install state side (assoc eid :source card :source-type :runner-install)
                                                          (dissoc target :facedown) {:cost-bonus -1}))))}]})
