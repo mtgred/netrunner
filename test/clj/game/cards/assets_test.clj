@@ -2174,26 +2174,49 @@
 
 (deftest jackson-howard
   ;; Jackson Howard - Draw 2 cards
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Jackson Howard"]
-                      :discard ["Ice Wall" "Enigma" "Rototurret"]}})
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (let [jhow (get-content state :remote1 0)]
-      (core/rez state :corp jhow)
-      (is (zero? (count (:hand (get-corp)))))
-      (is (= 2 (:click (get-corp))))
-      (card-ability state :corp jhow 0)
-      (is (= 2 (count (:hand (get-corp)))) "Drew 2 cards")
-      (is (= 1 (:click (get-corp))))
-      (card-ability state :corp jhow 1)
-      (click-card state :corp "Ice Wall")
-      (click-card state :corp "Enigma")
-      (click-card state :corp "Rototurret")
-      (is (find-card "Jackson Howard" (:rfg (get-corp))) "Jackson is rfg'd")
-      (is (find-card "Ice Wall" (:deck (get-corp))) "Ice Wall is shuffled back into the deck")
-      (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
-      (is (find-card "Rototurret" (:deck (get-corp))) "Rototurret is shuffled back into the deck"))))
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Jackson Howard"]
+                       :discard ["Ice Wall" "Enigma" "Rototurret"]}})
+     (play-from-hand state :corp "Jackson Howard" "New remote")
+     (let [jhow (get-content state :remote1 0)]
+       (core/rez state :corp jhow)
+       (is (zero? (count (:hand (get-corp)))))
+       (is (= 2 (:click (get-corp))))
+       (card-ability state :corp jhow 0)
+       (is (= 2 (count (:hand (get-corp)))) "Drew 2 cards")
+       (is (= 1 (:click (get-corp))))
+       (card-ability state :corp jhow 1)
+       (click-card state :corp "Ice Wall")
+       (click-card state :corp "Enigma")
+       (click-card state :corp "Rototurret")
+       (is (find-card "Jackson Howard" (:rfg (get-corp))) "Jackson is rfg'd")
+       (is (find-card "Ice Wall" (:deck (get-corp))) "Ice Wall is shuffled back into the deck")
+       (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
+       (is (find-card "Rototurret" (:deck (get-corp))) "Rototurret is shuffled back into the deck"))))
+  (testing "Mid-run usage does not allow successful run effects to trigger"
+    (do-game
+     (new-game {:corp {:deck ["Jackson Howard"]
+                       :discard ["Enigma" "Ice Wall"]}
+                :runner {:deck ["Desperado"]}})
+      (play-from-hand state :corp "Jackson Howard" "New remote")
+      (let [jhow (get-content state :remote1 0)]
+        (core/rez state :corp jhow)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Desperado")
+        (run-on state :remote1)
+        (is (changes-credits
+             (get-runner) 0
+             (do (card-ability state :corp jhow 1)
+                 (click-card state :corp "Enigma")
+                 (click-prompt state :corp "Done")
+                 (is (find-card "Jackson Howard" (:rfg (get-corp))) "Jackson is rfg'd")
+                 (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
+                 (is (nil? (refresh jhow)))
+                 (run-continue state)
+                 (is (nil? (:run @state)))))
+            "A server vanishing by mid-run does not trigger Desperado even if players proceed to access")))))
 
 (deftest jeeves-model-bioroids
   ;; Jeeves Model Bioroids
