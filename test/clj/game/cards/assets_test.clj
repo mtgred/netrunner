@@ -3355,7 +3355,25 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Zer0")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc from Zer0")))))
+        (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc from Zer0"))))
+  (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand [(qty "PAD Tap" 3)]}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+      (let [pc (get-content state :remote1 0)
+            bio (get-content state :remote2 0)]
+        (core/rez state :corp pc)
+        (core/rez state :corp bio)
+        (take-credits state :corp)
+        (play-from-hand state :runner "PAD Tap")
+        (play-from-hand state :runner "PAD Tap")
+        (play-from-hand state :runner "PAD Tap")
+        (take-credits state :runner)
+        (click-prompt state :corp "Yes")
+        (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana")))))
 
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish
