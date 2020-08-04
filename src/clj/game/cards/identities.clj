@@ -522,7 +522,7 @@
              :silent (req true)
              :req (req (and (= target :hq)
                             (first-successful-run-on-server? state :hq)))
-             :msg "gain 2 [Credits]"
+             :msg "gain 2 [Credits]"implementation
              :effect (effect (gain-credits 2))}]})
 
 (define-card "Gagarin Deep Space: Expanding the Horizon"
@@ -530,6 +530,11 @@
              :req (req (is-remote? (second (get-zone target))))
              :effect (effect (access-cost-bonus [:credit 1]))
              :msg "make the Runner spend 1 [Credits] to access"}]})
+
+(define-card "GameNET: Where Dreams are Real"
+  { :implementation "Credit gain not implemented. You can use shortcut ability."
+    :abilities [{:msg "gain 1 [Credits] (shortcut)"
+                :effect (req (gain-credits state :corp 1))}]})
 
 (define-card "GRNDL: Power Unleashed"
   {:events [{:event :pre-start-game
