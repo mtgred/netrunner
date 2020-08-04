@@ -522,7 +522,7 @@
              :silent (req true)
              :req (req (and (= target :hq)
                             (first-successful-run-on-server? state :hq)))
-             :msg "gain 2 [Credits]"implementation
+             :msg "gain 2 [Credits]"
              :effect (effect (gain-credits 2))}]})
 
 (define-card "Gagarin Deep Space: Expanding the Horizon"
