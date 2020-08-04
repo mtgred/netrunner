@@ -905,10 +905,15 @@
                                       (effect-completed state side eid)))}}}]})
 
 (define-card "Hippo"
+  (letfn [(build-hippo-pred [outermost-ices]
+    (fn [events]
+      (or (map #(and (same-card? % (first events))
+                     (every? :broken (:subroutines (first events)))) outermost-ices))))]
   {:events [{:event :subroutines-broken
              :optional
-             {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
-                                         (every? :broken (:subroutines (first %))))]
+              {:req (req (let [servers (->> (:corp @state) :servers seq flatten)
+                               outermost-ices (filter #(some? %) (map #(last (:ices %)) servers))
+                               pred (build-hippo-pred outermost-ices)]
                           (and (same-card? (last run-ices) target)
                                (every? :broken (:subroutines target))
                                (first-event? state side :subroutines-broken pred))))
@@ -917,7 +922,7 @@
               {:async true
                :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
                                (move card :rfg)
-                               (trash eid target nil))}}}]})
+                               (trash eid target nil))}}}]}))
 
 (define-card "HQ Interface"
   {:in-play [:hq-access 1]})
