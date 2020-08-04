@@ -947,23 +947,29 @@
   {:events [{:event :successful-run
              :silent (req true)
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:prompt "Choose a card to install from your Grip"
-                :label "install a card from the grip"
-                :req (req (and (not (install-locked? state side))
+   :abilities [{:req (req (and (not (install-locked? state side))
                                (some #(and (or (hardware? %)
                                                (program? %)
                                                (resource? %))
                                            (<= (install-cost state side %) (get-counters card :power)))
                                      (:hand runner))))
-                :choices {:req (req (and (in-hand? target)
-                                         (or (hardware? target)
-                                             (program? target)
-                                             (resource? target))
-                                         (<= (install-cost state side target) (get-counters card :power))))}
-                :msg (msg "install " (:title target) " at no cost")
+                :label "install a card from the grip"
                 :cost [:trash]
                 :async true
-                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}]})
+                :effect (req (let [counters (get-counters card :power)]
+                             (show-wait-prompt state :corp "Runner to use DaVinci")
+                             (continue-ability state side
+                              {:prompt "Choose a card to install from your Grip"
+                                :msg (msg "install " (:title target) " at no cost")
+                              :choices {:req  (req (and (in-hand? target)
+                                                        (or (hardware? target)
+                                                            (program? target)
+                                                            (resource? target))
+                                                        (<= (install-cost state side target) counters)))}
+                                :async true
+                                :effect (req (clear-wait-prompt state :corp)
+                                             (runner-install state side (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
+                        card nil)))}]})
 
 (define-card "Deep Thought"
   {:events [{:event :successful-run
