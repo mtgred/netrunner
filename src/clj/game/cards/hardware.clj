@@ -907,8 +907,8 @@
 (define-card "Hippo"
   (letfn [(build-hippo-pred [outermost-ices]
     (fn [events]
-      (or (map #(and (same-card? % (first events))
-                     (every? :broken (:subroutines (first events)))) outermost-ices))))]
+      (not (empty? (filter #(true? %) (map #(and (same-card? % (first events))
+                                                 (every? :broken (:subroutines (first events)))) outermost-ices))))))]
   {:events [{:event :subroutines-broken
              :optional
               {:req (req (let [servers (->> (:corp @state) :servers seq flatten)
