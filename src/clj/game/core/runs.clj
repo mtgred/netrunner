@@ -416,9 +416,9 @@
   ([state side eid server]
    (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
    (swap! state assoc-in [:run :successful] true)
-   (wait-for (trigger-event-simult state side :pre-successful-run nil (first server))
-             (wait-for (trigger-event-simult state side :successful-run nil (first (get-in @state [:run :server])))
-                       (wait-for (trigger-event-simult state side :post-successful-run nil (first (get-in @state [:run :server])))
+   (wait-for (trigger-event-simult state side :pre-successful-run nil (:run @state))
+             (wait-for (trigger-event-simult state side :successful-run nil (:run @state))
+                       (wait-for (trigger-event-simult state side :post-successful-run nil (:run @state))
                                  (effect-completed state side eid))))))
 
 (defn replace-access

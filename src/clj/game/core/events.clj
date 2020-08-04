@@ -415,7 +415,7 @@
 (defn first-successful-run-on-server?
   "Returns true if the active run is the first succesful run on the given server"
   [state server]
-  (first-event? state :runner :successful-run #(= [server] %)))
+  (first-event? state :runner :successful-run #(= [server] (:server (first %)))))
 
 (defn first-trash?
   "Returns true if cards have been trashed by either player only once this turn.

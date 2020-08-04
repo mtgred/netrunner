@@ -614,7 +614,7 @@
    :req (req rd-runnable)
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
-             :req (req (and (= target :rd)
+             :req (req (and (= (first (:server target)) :rd)
                             this-card-run))
              :silent (req true)
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
@@ -1727,7 +1727,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= target :hq)
+             :req (req (and (= (first (:server target)) :hq)
                             this-card-run))
              :effect (effect (access-bonus :hq 2))}]})
 
@@ -1814,7 +1814,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
              :req (req this-card-run)
-             :effect (req (prevent-run-on-server state card (:server target))
+             :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
                             (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                             (gain state :runner :click 1)
@@ -1885,7 +1885,7 @@
                               (effect-completed state side eid)))))
    :events [{:event :successful-run
              :req (req (and (get-in card [:special :run-again])
-                            (= target :rd)))
+                            (= (first (:server target)) :rd)))
              :msg "gain 4 [Credits]"
              :effect (effect (gain-credits 4))}
             {:event :run-ends
@@ -2737,7 +2737,7 @@
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= target :rd)
+             :req (req (and (= (first (:server target)) :rd)
                             this-card-run))
              :effect (effect (access-bonus :rd 2))}]})
 

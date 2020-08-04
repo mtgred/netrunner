@@ -654,7 +654,7 @@
   {:leave-play (effect (update-all-advancement-costs))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (= target :rd))
+             :req (req (= (first (:server target)) :rd))
              :effect (effect (add-counter card :virus 1))}
             {:event :pre-advancement-cost
              :req (req (>= (get-virus-counters state card) 3))
@@ -777,9 +777,9 @@
    :events [{:event :successful-run
              :interactive (req true)
              :optional
-             {:req (req (and (is-central? target)
+             {:req (req (and (is-central? (first (:server target)))
                              (can-pay? state side eid card nil [:virus 1])
-                             (not-empty (get-in @state [:corp :servers target :ices]))
+                             (not-empty (get-in @state [:corp :servers (first (:server target)) :ices]))
                              (<= 2 (count (filter ice? (all-installed state :corp))))))
               :once :per-turn
               :prompt "Use Cordyceps to swap ice?"
@@ -934,7 +934,7 @@
 (define-card "Datasucker"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (#{:hq :rd :archives} target))
+             :req (req (is-central? (first (:server target))))
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current ICE"
@@ -969,7 +969,7 @@
   {:events [{:event :successful-run
              :silent (req true)
              :effect (effect (add-counter card :virus 1))
-             :req (req (= target :rd))}
+             :req (req (= (first (:server target)) :rd))}
             {:event :runner-turn-begins
              :req (req (>= (get-virus-counters state card) 3)) :msg "look at the top card of R&D"
              :effect (effect (prompt! card (str "The top card of R&D is "
@@ -1167,7 +1167,7 @@
                                                                                        " from the top of R&D"))
                                                         (continue-ability state side (force-draw topcard) card nil)))}}}]
     {:events [{:event :successful-run
-               :req (req (= target :rd))
+               :req (req (= (first (:server target)) :rd))
                :async true
                :interactive (req true)
                :effect (effect (continue-ability reveal card nil))}]}))
@@ -1581,7 +1581,7 @@
 
 (define-card "Lamprey"
   {:events [{:event :successful-run
-             :req (req (= target :hq))
+             :req (req (= (first (:server target)) :hq))
              :msg "force the Corp to lose 1 [Credits]"
              :effect (effect (lose-credits :corp 1))}
             {:event :purge
@@ -1713,7 +1713,7 @@
 
 (define-card "Medium"
   {:events [{:event :successful-run
-             :req (req (= target :rd))
+             :req (req (= (first (:server target)) :rd))
              :effect (effect (add-counter card :virus 1))}
             {:event :pre-access
              :async true
@@ -1787,7 +1787,7 @@
 
 (define-card "Nerve Agent"
   {:events [{:event :successful-run
-             :req (req (= target :hq))
+             :req (req (= (first (:server target)) :hq))
              :effect (effect (add-counter card :virus 1))}
             {:event :pre-access
              :async true
@@ -2091,7 +2091,7 @@
                      (set-prop state side card :rec-counter (get-counters card :virus))))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (= target :hq))
+             :req (req (= (first (:server target)) :hq))
              :effect (effect (add-counter card :virus 1))}]
    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
                                 :type :recurring}}})
@@ -2223,8 +2223,12 @@
                           (update! state :runner (assoc-in card [:special :rng-highest] cost))
                           cost)))]
               {:event :successful-run
-               :req (req (and (#{:hq :rd} target)
-                              (first-event? state :runner :successful-run #{[:hq] [:rd]})))
+               :req (req (and (#{:hq :rd} (first (:server target)))
+                              (first-event? state :runner :successful-run
+                                            ;; #(#{:hq :rd} (first (:server (first %))))
+                                            (fn [targets] #{:hq :rd} (first (:server (first targets))))
+                                            ;; #(#{:hq :rd} (first (:server (first %))))
+                                            )))
                :optional
                {:prompt "Fire RNG Key?"
                 :autoresolve (get-autoresolve :auto-fire)
@@ -2598,7 +2602,7 @@
   {:implementation "Power counters added automatically"
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (= target :rd))
+             :req (req (= (first (:server target)) :rd))
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:cost [:click 1 :power 3]
                 :once :per-turn
@@ -2652,7 +2656,7 @@
     {:events [{:event :successful-run
                :interactive (req true)
                :async true
-               :req (req (and (= target :hq)
+               :req (req (and (= (first (:server target)) :hq)
                               (first-successful-run-on-server? state :hq)
                               (some #(and (ice? %) (not (rezzed? %)))
                                     (all-installed state :corp))))

@@ -340,7 +340,7 @@
 (define-card "Bhagat"
   {:events [{:event :successful-run
              :async true
-             :req (req (and (= target :hq)
+             :req (req (and (= (first (:server target)) :hq)
                             (first-successful-run-on-server? state :hq)))
              :msg "force the Corp to trash the top card of R&D"
              :effect (req (mill state :corp eid :corp 1))}]})
@@ -624,7 +624,7 @@
                                                     {:cost [:credit tags]
                                                      :msg (str "access up to " tags " cards")
                                                      :effect
-                                                     (effect (access-bonus target (dec tags)))}
+                                                     (effect (access-bonus (first (:server target)) (dec tags)))}
                                                     card targets)
                                                   ;; Can't pay, don't access cards
                                                   (do (system-msg state side "could not afford to use Counter Surveillance")
@@ -686,7 +686,7 @@
 (define-card "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (= :archives target))
+             :req (req (= :archives (first (:server target))))
              :optional {:prompt "Place a virus counter on Crypt?"
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:effect (effect (add-counter card :virus 1)

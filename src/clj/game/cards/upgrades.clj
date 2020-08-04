@@ -1018,7 +1018,7 @@
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
-             :req (req (= target :hq))
+             :req (req (= (first (:server target)) :hq))
              :async true
              :effect (req (enable-run-on-server state card (second (get-zone card)))
                           (system-msg state :corp (str "trashes Off the Grid"))
