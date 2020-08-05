@@ -1108,9 +1108,9 @@
                               (if (not (pos? (get-counters (get-card state card) :credit)))
                                 (trash state :corp eid card {:unpreventable true})
                                 (effect-completed state :corp eid)))}]
-    {:data {:counter {:credit 8}}
-     :derezzed-events [corp-rez-toast]
+    {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
+     :effect (req (add-counter state side card :credit 8))
      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
      :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                     :async true
