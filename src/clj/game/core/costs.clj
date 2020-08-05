@@ -183,7 +183,7 @@
       :trash-resource-from-hand (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
-      :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state :runner)) amount))
+      :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power) (<= 0 (- (get-counters card cost-type) amount))
       :virus (<= 0 (- (+ (get-counters card :virus)
@@ -673,10 +673,10 @@
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid amount)
 
-     ;; Move installed runner cards to the deck (eg Mind Game)
+     ;; Move installed cards to the deck (eg Mind Game)
      :add-installed-to-bottom-of-deck
      (pay-move-installed-to-deck state side eid nil amount
-                                 (every-pred installed? runner?)
+                                 (every-pred installed? (if (= :corp side) corp? runner?))
                                  {:front false})
 
      ;; Spend a counter on another card
