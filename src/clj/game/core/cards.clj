@@ -63,6 +63,14 @@
       (remove-from-host state side card)
       (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(same-card? card %) coll))))))
 
+(defn uninstall
+  "Triggers :uninstall effects"
+  ([state side {:keys [disabled] :as card}]
+  (when-let [uninstall-effect (:uninstall (card-def card))]
+    (when (not disabled)
+      (uninstall-effect state side (make-eid state) card nil)))
+  card))
+
 (defn- get-moved-card
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
@@ -73,6 +81,7 @@
         dest (if (sequential? to) (vec to) [to])
         to-facedown (= dest [:rig :facedown])
         to-installed (#{:servers :rig} (first dest))
+        from-installed (#{:servers :rig} src-zone)
         trash-hosted (fn [h]
                        (trash state side
                               (make-eid state)
@@ -119,6 +128,9 @@
                        to-facedown)
                    (not (facedown? c)))
             (deactivate state side c to-facedown)
+            c)
+        c (if from-installed
+            (uninstall state side c)
             c)
         c (if to-installed
             (assoc c :installed :this-turn)
