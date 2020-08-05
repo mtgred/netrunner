@@ -1439,7 +1439,6 @@
      (click-prompt state :runner "Archives")
      (run-jack-out state)
      (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
-
   (testing "Doppelgänger interaction"
     (do-game
      (new-game {:runner {:hand ["Doppelgänger" "Dirty Laundry"]}})
