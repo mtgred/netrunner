@@ -5,9 +5,7 @@
   (label [this])
   (value [this])
   (payable? [this state side eid card])
-  (handler
-    [this state side card]
-    [this state side eid card]))
+  (handler [this state side eid card actions]))
 
 (def cost-records {})
 
@@ -23,7 +21,7 @@
   (payable? [this state side eid card]
     (or (<= 0 (- (get-in @state [side :credit]) amount))
         (<= 0 (- (total-available-credits state side eid card) amount))))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (let [provider-func #(eligible-pay-credit-cards state side eid card)]
       (cond
         (and (pos? amount)
@@ -47,12 +45,17 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-in @state [side :click]) amount)))
-  (handler [this state side eid card]
-    (swap! state update-in [:stats side :lose :click] (fnil + 0) amount)
-    (deduct state side [:click amount])
-    (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :corp-spent-click :runner-spent-click))
-              (swap! state assoc-in [side :register :spent-click] true)
-              (complete-with-result state side eid (str "spends " (label this))))))
+  (handler [this state side eid card actions]
+    (let [a (keep :action actions)]
+      (when (not (some #{:steal-cost :bioroid-cost} a))
+        (swap! state assoc :click-state (dissoc @state :log)))
+      (swap! state update-in [:stats side :lose :click] (fnil + 0) amount)
+      (deduct state side [:click amount])
+      (wait-for (trigger-event-sync state side (make-eid state eid)
+                                    (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                    a amount)
+                (swap! state assoc-in [side :register :spent-click] true)
+                (complete-with-result state side eid (str "spends " (label this)))))))
 (register-cost #'->Click)
 
 (defrecord Trash [amount]
@@ -62,7 +65,7 @@
   (value [this] 1)
   (payable? [this state side eid card]
     (installed? (get-card state card)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (trash state side card {:cause :ability-cost
                                       :unpreventable true})
               (complete-with-result state side eid (str "trashes " (:title card))))))
@@ -83,7 +86,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :scored])) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "Agenda") " to forfeit")
@@ -106,7 +109,7 @@
   (value [this] 1)
   (payable? [this state side eid card]
     (is-scored? state side (get-card state card)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (forfeit state side card {:msg false})
               (complete-with-result
                 state side eid
@@ -120,7 +123,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-in @state [:runner :tag :base] 0) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (lose-tags state side amount)
               (complete-with-result state side eid (str "removes " (quantify amount "tag"))))))
 (register-cost #'->Tag)
@@ -132,7 +135,7 @@
   (value [this] 1)
   (payable? [this state side eid card]
     (active? (get-card state card)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (move state side card :hand)
     (complete-with-result
       state side eid
@@ -147,7 +150,7 @@
   (value [this] 1)
   (payable? [this state side eid card]
     (active? (get-card state card)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (move state side card :rfg)
     (complete-with-result
       state side eid
@@ -162,10 +165,10 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed program")
+      {:prompt (str "Choose " (quantify amount "program")
                     " to remove from the game")
        :choices {:all true
                  :max amount
@@ -188,7 +191,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed card") " to trash")
@@ -211,7 +214,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed piece") " of hardware to trash")
@@ -234,7 +237,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed program") " to trash")
@@ -257,7 +260,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :resource)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed resource") " to trash")
@@ -280,7 +283,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed connection resource") " to trash")
@@ -306,7 +309,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "installed rezzed ICE" "") " to trash")
@@ -329,7 +332,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :deck])) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (mill state side side amount)
               (complete-with-result
                 state side eid
@@ -344,7 +347,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :hand])) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                           (in-hand? %))
           prompt-hand (if (= :corp side) "HQ" "your grip")
@@ -372,7 +375,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :hand])) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (discard-from-hand state side side amount)
               (complete-with-result
                 state side eid
@@ -386,9 +389,9 @@
   (label [this] "trash all cards in your hand")
   (value [this] 1)
   (payable? [this state side eid card] true)
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (let [cards (get-in @state [side :hand])]
-      (wait-for (trash-cards state side card {:unpreventable true})
+      (wait-for (trash-cards state side cards {:unpreventable true})
                 (complete-with-result
                   state side eid
                   (str "trashes all (" (count async-result) ") cards in "
@@ -405,7 +408,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "piece") " of hardware to trash from your grip")
@@ -429,7 +432,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "program") " to trash from your grip")
@@ -453,7 +456,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt (str "Choose " (quantify amount "resource") " to trash from your grip")
@@ -477,7 +480,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (damage state side :net amount {:unpreventable true})
               (complete-with-result
                 state side eid
@@ -491,7 +494,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (damage state side :meat amount {:unpreventable true})
               (complete-with-result
                 state side eid
@@ -505,7 +508,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (damage state side :brain amount {:unpreventable true})
               (complete-with-result
                 state side eid
@@ -519,7 +522,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state :runner
       {:prompt (str "Choose " (quantify amount "installed card")
@@ -546,7 +549,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (let [deck (if (= :corp side) "R&D" "the stack")]
       (continue-ability
         state side
@@ -573,7 +576,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (continue-ability
       state side
       {:prompt "Select an agenda with a counter"
@@ -594,7 +597,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (number-of-virus-counters state) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (wait-for (resolve-ability state side (pick-virus-counters-to-spend amount) card nil)
               (complete-with-result state side eid (str "spends " (:msg async-result))))))
 (register-cost #'->AnyVirusCounter)
@@ -608,7 +611,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :advancement) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (update! state side (update card :advance-counter - amount))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
@@ -627,7 +630,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :agenda) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (update! state side (update-in card [:counter :agenda] - amount))
     (wait-for (trigger-event-sync state side :agenda-counter-spent (get-card state card))
               (complete-with-result
@@ -646,7 +649,7 @@
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :power) amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (update! state side (update-in card [:counter :power] - amount))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
@@ -670,7 +673,7 @@
                      (map #(get-counters % :virus))
                      (reduce +)))
              amount)))
-  (handler [this state side eid card]
+  (handler [this state side eid card actions]
     (update! state side (update-in card [:counter :virus] - amount))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
@@ -745,6 +748,12 @@
   (= "[Click][Click][Click][Click], suffer 1 net damage, 1 [Credits]"
      (build-cost-label-2 [[[:click 1] [:click 3] [:net 1] [:credit 1]]])))
 
+(defn- flag-stops-pay?-2
+  "Checks installed cards to see if payment type is prevented by a flag"
+  [state side cost]
+  (let [flag (keyword (str "cannot-pay-" (name (cost-name cost))))]
+    (some #(card-flag? % flag true) (all-active-installed state side))))
+
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
   If title is specified a toast will be generated if the player is unable to pay
@@ -754,7 +763,9 @@
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
          costs (merge-costs-2 (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
-     (if (every? #(payable? % state side eid card) costs)
+     (if (every? #(and (not (flag-stops-pay?-2 state side %))
+                       (payable? % state side eid card))
+                 costs)
        costs
        (when title
          (toast state side (str "Unable to pay for " title "."))
@@ -765,13 +776,12 @@
   [state side eid costs card actions msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
-    (let [cost (first costs)
-          new-eid (make-eid state eid)
+    (let [new-eid (make-eid state eid)
           reqmac (fn [st si e]
                    (let [async-result (:result e)]
                      (pay-next st si eid (rest costs) card actions (conj msgs async-result))))]
       (register-effect-completed state side new-eid reqmac)
-      (handler cost state side new-eid card))))
+      (handler (first costs) state side new-eid card actions))))
 
 (defn pay
   "Same as pay, but awaitable."
