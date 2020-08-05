@@ -129,7 +129,8 @@
                    (not (facedown? c)))
             (deactivate state side c to-facedown)
             c)
-        c (if from-installed
+        c (if (and from-installed
+                   (not (facedown? c))) 
             (uninstall state side c)
             c)
         c (if to-installed
