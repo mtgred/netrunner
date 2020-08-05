@@ -4213,7 +4213,8 @@
         (click-prompt state :runner "0")
         (run-continue state)
         (run-continue state)
-        (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
+        (is (= 1 (count (:choices (prompt-map :runner)))) "Only one choice in prompt")
+        (click-prompt state :runner "No action")
         (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
 
 (deftest troll
