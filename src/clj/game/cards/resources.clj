@@ -340,7 +340,7 @@
 (define-card "Bhagat"
   {:events [{:event :successful-run
              :async true
-             :req (req (and (= (first (:server target)) :hq)
+             :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)))
              :msg "force the Corp to trash the top card of R&D"
              :effect (req (mill state :corp eid :corp 1))}]})
@@ -624,7 +624,7 @@
                                                     {:cost [:credit tags]
                                                      :msg (str "access up to " tags " cards")
                                                      :effect
-                                                     (effect (access-bonus (first (:server target)) (dec tags)))}
+                                                     (effect (access-bonus (target-server target) (dec tags)))}
                                                     card targets)
                                                   ;; Can't pay, don't access cards
                                                   (do (system-msg state side "could not afford to use Counter Surveillance")
@@ -686,7 +686,7 @@
 (define-card "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (= :archives (first (:server target))))
+             :req (req (= :archives (target-server target)))
              :optional {:prompt "Place a virus counter on Crypt?"
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:effect (effect (add-counter card :virus 1)
@@ -2033,7 +2033,7 @@
 (define-card "Psych Mike"
   {:events [{:event :run-ends
              :req (req (and (:successful target)
-                            (first-event? state side :run-ends #(and (= :rd (first (:server (first %))))
+                            (first-event? state side :run-ends #(and (= :rd (target-server (first %)))
                                                                      (:successful (first %))))))
              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}]})
@@ -2717,7 +2717,7 @@
                :silent (req true)}
               {:event :run-ends
                :effect (req (when (and (not (:agenda-stolen card))
-                                       (#{:hq :rd} (first (:server target))))
+                                       (#{:hq :rd} (target-server target)))
                               (add-counter state side card :power 1)
                               (system-msg state :runner (str "places a power counter on " (:title card))))
                          (update! state side (dissoc (get-card state card) :agenda-stolen)))

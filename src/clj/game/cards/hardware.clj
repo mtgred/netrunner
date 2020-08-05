@@ -894,7 +894,7 @@
              :msg "force the Corp to lose 1 [Credits]"
              :effect (effect (lose-credits :corp 1))}
             {:event :successful-run
-             :req (req (= (first (:server target)) :archives))
+             :req (req (= (target-server target) :archives))
              :optional
              {:prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
               :yes-ability
@@ -1089,7 +1089,7 @@
    :implementation "Power counters added automatically"
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (= (first (:server target)) :rd))
+             :req (req (= (target-server target) :rd))
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:async true
                 :cost [:click 1 :power 3]
@@ -1100,7 +1100,7 @@
   {:in-play [:memory 2]
    :events [{:event :successful-run
              :async true
-             :req (req (= (first (:server target)) :rd))
+             :req (req (= (target-server target) :rd))
              :effect (effect (continue-ability
                                {:prompt "Select a card and replace 1 spent [Recurring Credits] on it"
                                 :choices {:card #(< (get-counters % :recurring) (:recurring (card-def %) 0))}
@@ -1133,7 +1133,7 @@
   {:implementation "Stealth credit restriction not enforced"
    :events [{:event :successful-run
              :optional
-             {:req (req (and (= (first (:server target)) :hq)
+             {:req (req (and (= (target-server target) :hq)
                              (some #(has-subtype? % "Stealth")
                                    (all-active state :runner))))
               :prompt "Pay 1 [Credits] to access 1 additional card?"
@@ -1151,7 +1151,7 @@
                    card nil))}}}
             {:event :successful-run
              :optional
-             {:req (req (and (= (first (:server target)) :rd)
+             {:req (req (and (= (target-server target) :rd)
                              (some #(has-subtype? % "Stealth")
                                    (all-active state :runner))))
               :prompt "Pay 2 [Credits] to access 1 additional card?"
@@ -1238,10 +1238,10 @@
    :events [{:event :run-ends
              :once :per-turn
              :req (req (and (:successful target)
-                            (#{:rd :hq} (first (:server target)))
+                            (#{:rd :hq} (target-server target))
                             (first-event? state side :run-ends
                                           #(and (:successful (first %))
-                                                (#{:rd :hq} (first (:server (first %))))))))
+                                                (#{:rd :hq} (target-server (first %)))))))
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
              :effect (effect (draw eid (total-cards-accessed target) nil))}
@@ -1527,7 +1527,7 @@
 (define-card "Record Reconstructor"
   {:events
    [{:event :successful-run
-     :req (req (= (first (:server target)) :archives))
+     :req (req (= (target-server target) :archives))
      :effect (effect (add-run-effect
                        {:card card
                         :replace-access
@@ -1912,7 +1912,7 @@
 (define-card "Top Hat"
   {:events [{:event :successful-run
              :interactive (req true)
-             :req (req (and (= (first (:server target)) :rd)
+             :req (req (and (= (target-server target) :rd)
                             (not= (:max-access run) 0)))
              :async true
              :effect

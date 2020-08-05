@@ -26,12 +26,11 @@
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
       tagged (is-tagged? state)
-      ;; true if the current run (or the previous run if no current run) was initiated by this card
+      ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
+      ;; true if the run was initiated by this card
       this-card-run (and (get-in card [:special :run-id])
                          (= (get-in card [:special :run-id])
-                            (if (:run @state)
-                              (:run-id (:run @state))
-                              (:run-id (get-in (:runner @state) [:register :last-run])))))
+                            (:run-id (first targets))))
       this-server (let [s (get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))]

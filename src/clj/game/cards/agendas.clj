@@ -451,7 +451,7 @@
 (define-card "Dedicated Neural Net"
   {:events [{:event :successful-run
              :interactive (req true)
-             :psi {:req (req (= (first (:server target)) :hq))
+             :psi {:req (req (= (target-server target) :hq))
                    :once :per-turn
                    :not-equal {:effect (effect (register-floating-effect
                                                  card

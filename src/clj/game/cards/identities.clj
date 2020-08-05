@@ -174,7 +174,7 @@
   {:events [{:event :successful-run
              :async true
              :interactive (req true)
-             :req (req (and (= (first (:server target)) :archives)
+             :req (req (and (= (target-server target) :archives)
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
              :effect (effect (show-wait-prompt :runner "Corp to trash 1 card from HQ")
@@ -405,7 +405,7 @@
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :successful-run
-               :req (req (and (= (first (:server target)) :hq)
+               :req (req (and (= (target-server target) :hq)
                               (:flipped card)))
                :effect flip-effect}]
      :constant-effects [{:type :run-additional-cost
@@ -520,7 +520,7 @@
 (define-card "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= (first (:server target)) :hq)
+             :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)))
              :msg "gain 2 [Credits]"
              :effect (effect (gain-credits 2))}]})
@@ -1036,7 +1036,7 @@
                                      (in-hand? %))}
                :async true
                :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
-               :effect (req (wait-for (corp-install state side target (zone->name (first (:server run)))
+               :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
                                                     {:ignore-all-cost true
                                                      :front true})
                                       (swap! state assoc-in [:run :position] 1)
@@ -1318,7 +1318,7 @@
   {:events [{:event :successful-run
              :interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
              :async true
-             :req (req (and (= (first (:server target)) :hq)
+             :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)))
              :effect (effect (continue-ability {:choices {:card #(and (installed? %)
                                                                       (not (rezzed? %)))}
@@ -1415,7 +1415,7 @@
 
 (define-card "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
-             :req (req (and (= (first (:server target)) :hq)
+             :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)
                             (<= 2 (count (:discard runner)))))
              :interactive (req true)

@@ -289,3 +289,8 @@
                   (when (pred x)
                     idx))
                 coll))
+
+(defn target-server
+  [run]
+  "Returns the server keyword corresponding to the target of a run."
+  (first (:server run)))
