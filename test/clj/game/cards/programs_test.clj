@@ -1450,7 +1450,7 @@
         (core/add-counter state :runner davinci :power 2)
         (changes-val-macro
           0 (:credit (get-runner))
-          "DaVinci installs The Turning Wheel for free"
+          "DaVinci installs Simulchip for free"
           (card-ability state :runner (refresh davinci) 0)
           (click-card state :runner "Simulchip"))
         (is (get-hardware state 0) "Simulchip is installed")
