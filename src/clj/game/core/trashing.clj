@@ -106,22 +106,24 @@
                        ;; No card should end up in the opponent's discard pile, so instead
                        ;; of using `side`, we use the card's `:side`.
                        move-card #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive})
+                       ;; If the trashed card is installed, update all of the indicies
+                       ;; of the other installed cards in the same location
+                       update-indicies (fn [card]
+                                         (when (installed? card)
+                                           (update-installed-card-indices state side (:zone card))))
                        ;; Perform the move of the cards from their current location to
                        ;; the discard. At the same time, gather their `:trash-effect`s
                        ;; to be used in the simult event later.
-                       moved-cards (->> trashlist
-                                        (keep #(get-card? state %))
-                                        ;; juxt is used to perform both the move and
-                                        ;; `get-trash-effect` on each card in the list.
-                                        ;; This gives us a list of tuples:
-                                        ;; the moved card and the trash effect
-                                        ;; This is used when we build the `card-abilities`
-                                        ;; list of effects, applying the pair to
-                                        ;; `ability-as-handler`, which is the format
-                                        ;; `trigger-event-simult` handles the additional
-                                        ;; abilities.
-                                        (map (juxt move-card get-trash-effect))
-                                        (into []))
+                       moved-cards (reduce
+                                     (fn [acc card]
+                                       (if-let [card (get-card? state card)]
+                                         (let [moved-card (move-card card)
+                                               trash-effect (get-trash-effect card)]
+                                           (update-indicies card)
+                                           (conj acc [moved-card trash-effect]))
+                                         acc))
+                                     []
+                                     trashlist)
                        card-abilities (mapv #(apply ability-as-handler %) moved-cards)]
                    (swap! state update-in [:trash :trash-list] dissoc eid)
                    (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))

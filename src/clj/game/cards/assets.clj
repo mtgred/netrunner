@@ -2205,7 +2205,7 @@
                                    (wait-for (resolve-ability state side chosen-ability card nil)
                                      (if (and (pos? (dec n))
                                               (not= "Done" chosen))
-                                       (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
+                                       (continue-ability state side (choice (remove-once #(= % chosen-ability) abis) (dec n)) card nil)
                                        (effect-completed state side eid)))))}))
         ability {:async true
                  :label "resolve an ability"
