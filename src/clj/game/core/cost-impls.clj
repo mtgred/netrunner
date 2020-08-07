@@ -3,6 +3,7 @@
 (defprotocol CostFns
   (cost-name [this])
   (label [this])
+  (rank [this])
   (value [this])
   (payable? [this state side eid card])
   (handler [this state side eid card actions]))
@@ -17,6 +18,7 @@
   CostFns
   (cost-name [this] :credit)
   (label [this] (str amount " [Credits]"))
+  (rank [this] 2)
   (value [this] amount)
   (payable? [this state side eid card]
     (or (<= 0 (- (get-in @state [side :credit]) amount))
@@ -42,6 +44,7 @@
   (label [this] (->> (repeat "[Click]")
                      (take amount)
                      (apply str)))
+  (rank [this] 1)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-in @state [side :click]) amount)))
@@ -62,6 +65,7 @@
   CostFns
   (cost-name [this] :trash)
   (label [this] "[trash]")
+  (rank [this] 3)
   (value [this] 1)
   (payable? [this state side eid card]
     (installed? (get-card state card)))
@@ -83,6 +87,7 @@
   CostFns
   (cost-name [this] :forfeit)
   (label [this] (str "forfeit " (quantify amount "Agenda")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :scored])) amount)))
@@ -106,6 +111,7 @@
   CostFns
   (cost-name [this] :forfeit-self)
   (label [this] "forfeit this Agenda")
+  (rank [this] 4)
   (value [this] 1)
   (payable? [this state side eid card]
     (is-scored? state side (get-card state card)))
@@ -120,6 +126,7 @@
   CostFns
   (cost-name [this] :tag)
   (label [this] (str "remove " (quantify amount "tag")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-in @state [:runner :tag :base] 0) amount)))
@@ -132,6 +139,7 @@
   CostFns
   (cost-name [this] :return-to-hand)
   (label [this] "return this card to your hand")
+  (rank [this] 4)
   (value [this] 1)
   (payable? [this state side eid card]
     (active? (get-card state card)))
@@ -147,6 +155,7 @@
   CostFns
   (cost-name [this] :remove-from-game)
   (label [this] "remove this card from the game")
+  (rank [this] 3)
   (value [this] 1)
   (payable? [this state side eid card]
     (active? (get-card state card)))
@@ -162,6 +171,7 @@
   (cost-name [this] :rfg-program)
   (label [this] (str "remove " (quantify amount "installed program")
                      " from the game"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
@@ -188,6 +198,7 @@
   CostFns
   (cost-name [this] :installed)
   (label [this] (str "trash " (quantify amount "installed card")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
@@ -211,6 +222,7 @@
   CostFns
   (cost-name [this] :hardware)
   (label [this] (str "trash " (quantify amount "installed piece") " of hardware"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
@@ -234,6 +246,7 @@
   CostFns
   (cost-name [this] :program)
   (label [this] (str "trash " (quantify amount "installed program")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
@@ -257,6 +270,7 @@
   CostFns
   (cost-name [this] :resource)
   (label [this] (str "trash " (quantify amount "installed resource")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed-runner-type state :resource)) amount)))
@@ -280,6 +294,7 @@
   CostFns
   (cost-name [this] :connection)
   (label [this] (str "trash " (str "trash " (quantify amount "installed connection resource"))))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
@@ -306,6 +321,7 @@
   CostFns
   (cost-name [this] :ice)
   (label [this] (str "trash " (str "trash " (quantify amount "installed rezzed ICE" ""))))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) amount)))
@@ -329,6 +345,7 @@
   CostFns
   (cost-name [this] :trash-from-deck)
   (label [this] (str "trash " (quantify amount "card") " from the top of your deck"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :deck])) amount)))
@@ -344,6 +361,7 @@
   CostFns
   (cost-name [this] :trash-from-hand)
   (label [this] (str "trash " (quantify amount "card") " from your hand"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :hand])) amount)))
@@ -372,6 +390,7 @@
   CostFns
   (cost-name [this] :randomly-trash-from-hand)
   (label [this] (str "trash " (quantify amount "card") " randomly from your hand"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (get-in @state [side :hand])) amount)))
@@ -387,6 +406,7 @@
   CostFns
   (cost-name [this] :trash-entire-hand)
   (label [this] "trash all cards in your hand")
+  (rank [this] 4)
   (value [this] 1)
   (payable? [this state side eid card] true)
   (handler [this state side eid card actions]
@@ -405,6 +425,7 @@
   CostFns
   (cost-name [this] :trash-hardware-from-hand)
   (label [this] (str "trash " (quantify amount "piece") " of hardware in your grip"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) amount)))
@@ -429,6 +450,7 @@
   CostFns
   (cost-name [this] :trash-program-from-hand)
   (label [this] (str "trash " (quantify amount "program") " in your grip"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount)))
@@ -453,6 +475,7 @@
   CostFns
   (cost-name [this] :trash-resource-from-hand)
   (label [this] (str "trash " (quantify amount "resource") " in your grip"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount)))
@@ -477,6 +500,7 @@
   CostFns
   (cost-name [this] :net)
   (label [this] (str "suffer " amount " net damage"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
@@ -491,6 +515,7 @@
   CostFns
   (cost-name [this] :meat)
   (label [this] (str "suffer " amount " meat damage"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
@@ -505,6 +530,7 @@
   CostFns
   (cost-name [this] :brain)
   (label [this] (str "suffer " amount " brain damage"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= amount (count (get-in @state [:runner :hand]))))
@@ -519,6 +545,7 @@
   CostFns
   (cost-name [this] :shuffle-installed-to-stack)
   (label [this] (str "shuffle " (quantify amount "installed card") " into your deck"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
@@ -546,6 +573,7 @@
   CostFns
   (cost-name [this] :add-installed-to-bottom-of-deck)
   (label [this] (str "add " (quantify amount "installed card") " to the bottom of your deck"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (count (all-installed state side)) amount)))
@@ -573,6 +601,7 @@
   CostFns
   (cost-name [this] :any-agenda-counter)
   (label [this] "any agenda counter")
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount)))
@@ -594,6 +623,7 @@
   CostFns
   (cost-name [this] :any-virus-counter)
   (label [this] (str "any " (quantify amount "virus counter")))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (number-of-virus-counters state) amount)))
@@ -608,6 +638,7 @@
   (label [this] (if (< 1 amount)
                   (quantify amount "hosted advancement counter")
                   "hosted advancement counter"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :advancement) amount)))
@@ -627,6 +658,7 @@
   (label [this] (if (< 1 amount)
                   (quantify amount "hosted agenda counter")
                   "hosted agenda counter"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :agenda) amount)))
@@ -646,6 +678,7 @@
   (label [this] (if (< 1 amount)
                   (quantify amount "hosted power counter")
                   "hosted power counter"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (get-counters card :power) amount)))
@@ -665,6 +698,7 @@
   (label [this] (if (< 1 amount)
                   (quantify amount "hosted virus counter")
                   "hosted virus counter"))
+  (rank [this] 4)
   (value [this] amount)
   (payable? [this state side eid card]
     (<= 0 (- (+ (get-counters card :virus)
@@ -731,6 +765,7 @@
                    (and (= :credit (cost-name %))
                         (zero? (value %)))
                    false))
+        (sort-by rank)
         (into []))))
 
 (defn build-cost-label-2
@@ -745,7 +780,7 @@
       (capitalize cost-string))))
 
 (comment
-  (= "[Click][Click][Click][Click], suffer 1 net damage, 1 [Credits]"
+  (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
      (build-cost-label-2 [[[:click 1] [:click 3] [:net 1] [:credit 1]]])))
 
 (defn- flag-stops-pay?-2
@@ -769,8 +804,7 @@
        costs
        (when title
          (toast state side (str "Unable to pay for " title "."))
-         false))
-     )))
+         false)))))
 
 (defn- pay-next
   [state side eid costs card actions msgs]
