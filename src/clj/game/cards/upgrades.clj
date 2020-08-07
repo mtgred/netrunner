@@ -335,15 +335,10 @@
                             card nil))}]})
 
 (define-card "Crisium Grid"
-  (let [suppress-event {:req (req (and this-server (not (same-card? target card))))}]
-    {:suppress [(assoc suppress-event :event :pre-successful-run)
-                (assoc suppress-event :event :successful-run)]
-     :events [{:event :pre-successful-run
-               :silent (req true)
-               :req (req this-server)
-               :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
-                            (swap! state update-in [:run] dissoc :successful)
-                            (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}]}))
+  {:constant-effects [{
+    :type :block-successful-run
+    :req (req this-server)
+    :value true}]})
 
 (define-card "Cyberdex Virus Suite"
   {:flags {:rd-reveal (req true)}

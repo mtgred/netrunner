@@ -884,7 +884,22 @@
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
       (core/continue state :corp nil)
       (run-continue state)
-      (is (seq (:prompt (get-runner))) "The Gauntlet has a prompt"))))
+      (is (seq (:prompt (get-runner))) "The Gauntlet has a prompt")))
+  (testing "Crisium Grid prevents first successful run abilities. Issue #5092"
+    (do-game
+     (new-game {:corp {:hand ["Crisium Grid"]
+                       :deck [(qty "Hedge Fund" 3)]}
+                :runner {:hand ["Bhagat"]
+                         :credits 20}})
+     (play-from-hand state :corp "Crisium Grid" "HQ")
+     (core/rez state :corp (get-content state :hq 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Bhagat")
+     (run-empty-server state "HQ")
+     (click-prompt state :runner "Pay 5 [Credits] to trash")
+     (is (= 1 (count (:discard (get-corp)))) "Archive has 1 card (Crisium)")
+     (run-empty-server state "HQ")
+     (is (= 2 (count (:discard (get-corp)))) "Archive has 2 cards (Crisium and Hedge Fund)"))))
 
 (deftest cyberdex-virus-suite
   ;; Cyberdex Virus Suite
