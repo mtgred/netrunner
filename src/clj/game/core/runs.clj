@@ -443,22 +443,22 @@
     (let [the-run (:run @state)
           server (:server the-run) ; bind here as the server might have changed
           run-effects (->> (:run-effects the-run)
-                          (filter #(and (:replace-access %)
-                                        (or (not (:req %))
-                                            ((:req %) state :runner (:eid the-run) (:card %) [(first server)]))))
-                          doall)
+                           (filter #(and (:replace-access %)
+                                         (or (not (:req %))
+                                             ((:req %) state :runner (:eid the-run) (:card %) [(first server)]))))
+                           doall)
           mandatory-run-effects (->> run-effects
-                                    (filter #(get-in % [:replace-access :mandatory]))
-                                    doall)]
+                                     (filter #(get-in % [:replace-access :mandatory]))
+                                     doall)]
       (cond
         ;; Prevented from accessing anything
         (:prevent-access the-run)
         (resolve-ability
           state :runner
           {:prompt "You are prevented from accessing any cards this run."
-          :choices ["OK"]
-          :effect (effect (system-msg :runner "is prevented from accessing any cards this run")
-                          (handle-end-run))}
+           :choices ["OK"]
+           :effect (effect (system-msg :runner "is prevented from accessing any cards this run")
+                           (handle-end-run))}
           nil nil)
 
         ;; One mandatory replace-access effect
@@ -472,8 +472,8 @@
         (resolve-ability
           state :runner
           {:prompt "Choose a mandatory replacement effect"
-          :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
-          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
+           :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
+           :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
                           (system-msg state :runner
                                       (str "chooses to use the replacement effect from " (:title (:card chosen))))
                           (replace-access state :runner (:replace-access chosen) (:card chosen))))}
@@ -484,8 +484,8 @@
         (resolve-ability
           state :runner
           {:prompt "Use a replacement effect instead of accessing cards?"
-          :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
-          :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
+           :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
+           :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
                           (do (system-msg state :runner
                                           (str "chooses to use the replacement effect from " (:title (:card chosen))))
                               (replace-access state :runner (:replace-access chosen) (:card chosen)))
@@ -503,12 +503,12 @@
   "The real 'successful run' trigger."
   [state side args]
   (if (any-effects state side :block-successful-run)
-        (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
-            (complete-run state side))
-        (wait-for
-          (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
-          (wait-for (register-successful-run state side (get-in @state [:run :server]))
-            (complete-run state side)))))
+    (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
+        (complete-run state side))
+    (wait-for
+      (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
+      (wait-for (register-successful-run state side (get-in @state [:run :server]))
+                (complete-run state side)))))
 
 (defn corp-phase-43
   "The corp indicates they want to take action after runner hits Successful Run, before access."

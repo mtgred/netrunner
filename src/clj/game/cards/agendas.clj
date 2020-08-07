@@ -1602,16 +1602,16 @@
                             card nil))}]})
 
 (define-card "Transport Monopoly"
-    {:silent (req true)
-     :effect (effect (add-counter card :agenda 2))
-     :abilities [{:cost [:agenda 1]
-                  :req (req run)
-                  :msg "prevent this run from becoming successful"
-                  :effect (effect (register-floating-effect
-                                      card
-                                      {:type :block-successful-run
-                                       :duration :end-of-run
-                                       :value true}))}]})
+  {:silent (req true)
+   :effect (effect (add-counter card :agenda 2))
+   :abilities [{:cost [:agenda 1]
+                :req (req run)
+                :msg "prevent this run from becoming successful"
+                :effect (effect (register-floating-effect
+                                  card
+                                  {:type :block-successful-run
+                                   :duration :end-of-run
+                                   :value true}))}]})
 
 (define-card "Underway Renovation"
   (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

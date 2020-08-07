@@ -335,10 +335,9 @@
                             card nil))}]})
 
 (define-card "Crisium Grid"
-  {:constant-effects [{
-    :type :block-successful-run
-    :req (req this-server)
-    :value true}]})
+  {:constant-effects [{:type :block-successful-run
+                       :req (req this-server)
+                       :value true}]})
 
 (define-card "Cyberdex Virus Suite"
   {:flags {:rd-reveal (req true)}
