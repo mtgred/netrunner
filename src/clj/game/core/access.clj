@@ -54,6 +54,8 @@
           ; Trash costs
           trash-cost (trash-cost state side card)
           trash-eid (assoc eid :source card :source-type :runner-trash-corp-cards)
+          ; Runner cannot trash (eg Trebuchet)
+          can-trash (can-trash? state side c)
           can-pay (when trash-cost
                     (can-pay? state :runner trash-eid card nil [:credit trash-cost]))
           trash-cost-str (when can-pay
@@ -81,7 +83,7 @@
           ; Only display "No action" when we're not forced to do anything
           no-action-str (when-not (or must-trash? must-trash-with-credits?)
                           ["No action"])
-          choices (vec (concat ability-strs trash-cost-str no-action-str))]
+          choices (vec (if can-trash (concat ability-strs trash-cost-str no-action-str) no-action-str))]
       (continue-ability
         state :runner
         {:async true
