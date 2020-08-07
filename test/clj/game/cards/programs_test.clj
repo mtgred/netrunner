@@ -1438,6 +1438,22 @@
           (card-ability state :runner (refresh davinci) 0)
           (click-card state :runner "The Turning Wheel"))
         (is (get-resource state 0) "The Turning Wheel is installed")
+        (is (find-card "DaVinci" (:discard (get-runner))) "DaVinci is trashed"))))
+  (testing "Using ability should trigger trash effects first. Issue #4987"
+    (do-game
+      (new-game {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck ["Simulchip"]
+                          :hand ["DaVinci" "The Turning Wheel"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (let [davinci (get-program state 0)]
+        (core/add-counter state :runner davinci :power 2)
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "DaVinci installs Simulchip for free"
+          (card-ability state :runner (refresh davinci) 0)
+          (click-card state :runner "Simulchip"))
+        (is (get-hardware state 0) "Simulchip is installed")
         (is (find-card "DaVinci" (:discard (get-runner))) "DaVinci is trashed")))))
 
 (deftest demara
