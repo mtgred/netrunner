@@ -817,6 +817,12 @@
       (register-effect-completed state side new-eid reqmac)
       (handler (first costs) state side new-eid card actions))))
 
+(defn sentence-join
+  [strings]
+  (if (<= (count strings) 2)
+    (join " and " strings)
+    (str (apply str (interpose ", " (butlast strings))) ", and " (last strings))))
+
 (defn pay
   "Same as pay, but awaitable."
   [state side eid card & args]
@@ -827,5 +833,5 @@
       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
-                                                          (join " and "))))
+                                                          sentence-join)))
       (complete-with-result state side eid nil))))
