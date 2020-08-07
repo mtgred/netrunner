@@ -185,7 +185,7 @@
                 [base-cost [:credit cost]])]
     (if (and (corp-can-install? state side card slot)
              (not (install-locked? state :corp)))
-      (wait-for (pay-sync state side (make-eid state eid) card costs {:action action})
+      (wait-for (pay state side (make-eid state eid) card costs {:action action})
                 (if-let [cost-str async-result]
                   (if (= server "New remote")
                     (wait-for (trigger-event-simult state side :server-created nil card)
@@ -333,7 +333,7 @@
          (let [cost (runner-get-cost state side (assoc card :facedown facedown) params)]
            (if (not (runner-can-install? state side card facedown))
              (effect-completed state side eid)
-             (wait-for (pay-sync state side (make-eid state eid) card cost)
+             (wait-for (pay state side (make-eid state eid) card cost)
                        (if-let [cost-str async-result]
                          (let [c (if host-card
                                    (host state side host-card card)

@@ -72,13 +72,15 @@
                                               :player :corp
                                               :no-ability
                                               {:async true
-                                               :effect (req (expose state :runner eid itarget)
-                                                            (clear-wait-prompt state :runner))}
+                                               :effect (req (clear-wait-prompt state :runner)
+                                                            (expose state :runner eid itarget))}
                                               :yes-ability
-                                              {:effect (req (pay state :corp card [:credit 1])
-                                                            (system-msg state :corp (str "spends 1 [Credits] to prevent "
-                                                                                         " card from being exposed"))
-                                                            (clear-wait-prompt state :runner))}}}
+                                              {:async true
+                                               :effect (req (wait-for (pay state :corp card [:credit 1])
+                                                                      (system-msg state :corp (str "spends 1 [Credits] to prevent "
+                                                                                                   " card from being exposed"))
+                                                                      (clear-wait-prompt state :runner)
+                                                                      (effect-completed state side eid)))}}}
                                             card nil))))}}}
                       card nil)))}]
    :abilities [(set-autoresolve :auto-419 "419")]})

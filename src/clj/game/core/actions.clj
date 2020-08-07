@@ -202,6 +202,12 @@
   (.println *err* (str "Prompt: " prompt))
   (.println *err* (str "Prompt args: " prompt-args)))
 
+(defn maybe-pay
+  [state side eid card choices choice]
+  (if (= choices :credit)
+    (pay state side eid card :credit (min choice (get-in @state [side :credit])))
+    (effect-completed state side eid)))
+
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -218,15 +224,14 @@
           (:number choices))
       (if (number? choice)
         (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
-            (when (= choices :credit) ; :credit prompts require payment
-              (pay state side card :credit (min choice (get-in @state [side :credit]))))
-            (when (:counter choices)
-              ;; :Counter prompts deduct counters from the card
-              (add-counter state side card (:counter choices) (- choice)))
-            ;; trigger the prompt's effect function
-            (when effect
-              (effect (or choice card)))
-            (finish-prompt state side prompt card))
+            (wait-for (maybe-pay state side card choices choice)
+                      (when (:counter choices)
+                        ;; :Counter prompts deduct counters from the card
+                        (add-counter state side card (:counter choices) (- choice)))
+                      ;; trigger the prompt's effect function
+                      (when effect
+                        (effect (or choice card)))
+                      (finish-prompt state side prompt card)))
         (prompt-error "in an integer prompt" prompt args))
 
       ;; List of card titles for auto-completion
@@ -338,7 +343,7 @@
                                    times-pump)
                           (repeat times-pump (:cost pump-ability)))]
     (when (can-pay? state side eid card total-pump-cost)
-      (wait-for (pay-sync state side (make-eid state eid) card total-pump-cost)
+      (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [n times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (system-msg state side (str (build-spend-msg async-result "increase")
@@ -414,7 +419,7 @@
                              (repeat times-break (:break-cost break-ability)))
           total-cost (merge-costs (conj total-pump-cost total-break-cost))]
       (when (can-pay? state side eid card (:title card) total-cost)
-        (wait-for (pay-sync state side (make-eid state eid) card total-cost)
+        (wait-for (pay state side (make-eid state eid) card total-cost)
                   (dotimes [n times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                   (let [cost-str async-result
@@ -513,7 +518,7 @@
                        [:credit x-number]
                        (repeat ability-uses-needed (:cost breaker-ability))))]
     (when (can-pay? state side eid card (:title card) total-cost)
-      (wait-for (pay-sync state side (make-eid state eid) card total-cost)
+      (wait-for (pay state side (make-eid state eid) card total-cost)
                 (if x-breaker
                   (pump state side (get-card state card) x-number)
                   (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
@@ -639,7 +644,7 @@
            card nil)
          (let [cdef (card-def card)
                costs (get-rez-cost state side card args)]
-           (wait-for (pay-sync state side (make-eid state eid) card costs)
+           (wait-for (pay state side (make-eid state eid) card costs)
                      (if-let [cost-str (and (string? async-result) async-result)]
                        (do (when (:derezzed-events cdef)
                              (unregister-events state side card))
@@ -702,7 +707,7 @@
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
      (when (can-advance? state side card)
-       (wait-for (pay-sync state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
+       (wait-for (pay state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
                  (when-let [cost-str async-result]
                    (let [spent   (build-spend-msg cost-str "advance")
                          card    (card-str state card)

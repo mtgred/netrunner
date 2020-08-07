@@ -344,8 +344,7 @@
              :effect (req (case target
                             "Pay 1 [Credits]"
                             (do (system-msg state :runner "pays 1 [Credits]")
-                                (pay state :runner card :credit 1)
-                                (effect-completed state side eid))
+                                (pay state :runner eid card :credit 1))
                             (do (system-msg state :runner "takes 1 tag")
                                 (gain-tags state :corp eid 1))))}]})
 
@@ -385,7 +384,7 @@
                  :effect (req (case target
                                 "Pay 1 [Credits]"
                                 (do (system-msg state side "pays 1 [Credits]")
-                                    (pay-sync state side eid card :credit 1))
+                                    (pay state side eid card :credit 1))
                                 "Trash top card"
                                 (do (system-msg state side "trashes the top card of the Stack")
                                     (mill state :runner eid :runner 1))))}]

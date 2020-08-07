@@ -437,7 +437,7 @@
                                                               [:credit (get-strength target)])))
                                      :yes-ability
                                      {:async true
-                                      :effect (req (wait-for (pay-sync :runner card [:credit (get-strength target)])
+                                      :effect (req (wait-for (pay :runner card [:credit (get-strength target)])
                                                              (if-let [cost-str async-result]
                                                                (do (system-msg state :runner
                                                                                (str (build-spend-msg cost-str "use")
@@ -1028,7 +1028,7 @@
                               (do (system-msg state :runner "trashes Fencer Fueno")
                                   (trash state :runner eid card nil))
                               (do (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")
-                                  (pay-sync state :runner eid card :credit 1))))}
+                                  (pay state :runner eid card :credit 1))))}
               card nil))
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
@@ -1601,7 +1601,7 @@
                             (if (= target "Trash")
                               (do (system-msg state :runner "trashes Mystic Maemi")
                                   (trash state :runner eid card nil))
-                              (wait-for (pay-sync state :runner
+                              (wait-for (pay state :runner
                                                   (make-eid state {:source card :source-type :ability})
                                                   card [:randomly-trash-from-hand 1])
                                         (system-msg state :runner (build-spend-msg async-result "avoid" "trashing Mystic Maemi"))
@@ -1981,7 +1981,7 @@
                                  :choices {:number (req (min num-counters
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for
-                                                (pay-sync state :runner card [:credit target])
+                                                (pay state :runner card [:credit target])
                                                 (if-let [cost-str async-result]
                                                   (do (system-msg state side
                                                                   (str (build-spend-msg cost-str "use") (:title card)
@@ -2207,7 +2207,7 @@
      :async true
      :trash? false
      :effect (req (let [trash-cost (trash-cost state side target)]
-                    (wait-for (pay-sync state side (make-eid state eid) card [:credit trash-cost])
+                    (wait-for (pay state side (make-eid state eid) card [:credit trash-cost])
                               (let [card (move state :corp target :rfg)]
                                 (system-msg state side
                                             (str "pay " trash-cost

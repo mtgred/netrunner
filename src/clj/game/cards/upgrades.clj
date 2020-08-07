@@ -274,7 +274,7 @@
                       :effect (req (clear-wait-prompt state :corp)
                                    (if (= target "End the run")
                                      (end-run state side eid card)
-                                     (pay-sync state :runner eid card :credit cost)))})
+                                     (pay state :runner eid card :credit cost)))})
                    card nil))}]
      :abilities [ability]}))
 
@@ -556,11 +556,10 @@
                                                 ["End the run"])
                                :effect (req (clear-wait-prompt state :corp)
                                             (if (= c-pay-str target)
-                                              (do (pay state :runner card :credit cost)
-                                                  (system-msg state :runner (str "pays " cost " [Credits]")))
-                                              (do (end-run state side eid card)
-                                                  (system-msg state :corp "ends the run")))
-                                            (effect-completed state side eid))}
+                                              (do (system-msg state :runner (str "pays " cost " [Credits]"))
+                                                  (pay state :runner eid card :credit cost))
+                                              (do (system-msg state :corp "ends the run")
+                                                  (end-run state :corp eid card))))}
                               card nil)))}]})
 
 (define-card "Heinlein Grid"
@@ -1382,15 +1381,13 @@
                                :msg "do 1 brain damage instead of net damage"
                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                             (clear-wait-prompt state :runner)
-                                            (pay state :corp card :credit 2)
-                                            (wait-for (damage state side :brain 1 {:card card})
-                                                      (do (swap! state assoc-in [:damage :damage-replace] true)
-                                                          (effect-completed state side eid))))}
+                                            (wait-for (pay state :corp card :credit 2)
+                                                      (wait-for (damage state side :brain 1 {:card card})
+                                                                (swap! state assoc-in [:damage :damage-replace] true)
+                                                                (effect-completed state side eid))))}
                               :no-ability
-                              {:async true
-                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
-                                            (clear-wait-prompt state :runner)
-                                            (effect-completed state side eid))}}}
+                              {:effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                            (clear-wait-prompt state :runner))}}}
                             card nil))}
             {:event :prevented-damage
              :req (req (and this-server
