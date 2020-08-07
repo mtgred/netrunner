@@ -21,8 +21,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :subroutines-broken
              :async true
-             :req (req (and this-card-run
-                            (has-subtype? target subtype)
+             :req (req (and (has-subtype? target subtype)
                             (every? :broken (:subroutines target))
                             (let [pred #(and (has-subtype? (first %) subtype)
                                              (every? :broken (:subroutines (first %))))]
@@ -433,7 +432,6 @@
      :makes-run true
      :effect (effect (make-run eid target nil card))
      :events [{:event :encounter-ice
-               :req (req this-card-run)
                :once :per-run
                :optional
                {:prompt "Install a program?"
@@ -640,7 +638,6 @@
    :interactions {:access-ability
                   {:label "Trash card"
                    :msg (msg "trash " (:title target) " at no cost")
-                   :req (req this-card-run) ; TODO: figure out if this works or if the card is the access ability
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) nil))}}})
 
@@ -1351,7 +1348,6 @@
    :events [{:event :pre-access
              :async true
              :req (req (and (= target :archives)
-                            this-card-run
                             ;; don't prompt unless there's at least 1 rezzed ICE matching one in Archives
                             (not-empty (clojure.set/intersection
                                          (into #{} (map :title (filter ice? (:discard corp))))
@@ -1528,8 +1524,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :req (req (and this-card-run
-                            (first-run-event? state side :encounter-ice)))
+             :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})
@@ -2089,8 +2084,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :pass-ice
-             :req (req (and this-card-run
-                            (rezzed? target)
+             :req (req (and (rezzed? target)
                             (not-used-once? state {:once :per-run} card)
                             (<= (get-strength target) (count (all-installed state :runner)))))
              :async true
@@ -2266,7 +2260,6 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :req (req this-card-run)
              :once :per-run
              :optional
              {:prompt "Jack out?"
@@ -2356,8 +2349,7 @@
                                card
                                (let [target-ice target]
                                  [{:event :encounter-ice
-                                   :req (req (and this-card-run
-                                                  (same-card? target-ice target)))
+                                   :req (req (same-card? target-ice target))
                                    :msg (msg "bypass " (:title target))
                                    :effect (req (bypass-ice state))}]))
                              (make-run eid (second (get-zone target)) nil card))})]
@@ -2580,8 +2572,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :req (req (= 1 run-position)
-                       this-card-run)
+             :req (req (= 1 run-position))
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})
 
