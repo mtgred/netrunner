@@ -1753,7 +1753,34 @@
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
       (run-continue state)
-      (is (= 1 (get-counters (get-program state 0) :power)) "Nfr gains 1 counter"))))
+      (is (= 1 (get-counters (get-program state 0) :power)) "Nfr gains 1 counter")))
+  (testing "Can't be used after first ice on another server. Issue #4970"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Vanilla"]}
+                 :runner {:hand ["Corroder" "Hippo"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (not-empty (get-hardware state)) "Hippo installed")
+      (is (get-ice state :hq 0) "Ice Wall installed")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "No")
+      (is (get-ice state :hq 0) "Ice Wall is not removed")
+      (run-continue state)
+      (run-continue state)
+      (run-on state "R&D")
+      (core/rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice"))))
 
 (deftest keiko
   ;; Keiko
