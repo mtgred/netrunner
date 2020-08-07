@@ -178,10 +178,10 @@
       (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
       :trash-from-deck (<= 0 (- (count (get-in @state [side :deck])) amount))
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
+      :trash-entire-hand true
       :trash-hardware-from-hand (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) amount))
       :trash-program-from-hand (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount))
       :trash-resource-from-hand (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount))
-      :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
@@ -196,11 +196,11 @@
       ;; default to cannot afford
       false)))
 
-(defn can-pay?
+(defn can-pay?-2
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
-  ([state side title args] (can-pay? state side (make-eid state) nil title args))
+  ([state side title args] (can-pay?-2 state side (make-eid state) nil title args))
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
@@ -691,21 +691,21 @@
        (swap! state update-in [:stats side :spent cost-type] (fnil + 0) amount)
        (complete-with-result state side eid (deduct state side [cost-type amount]))))))
 
-(defn- pay-next
+(defn- pay-next-2
   [state side eid costs card actions msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
     (wait-for (cost-handler state side (make-eid state eid) card actions costs (first costs))
-              (pay-next state side eid (rest costs) card actions (conj msgs async-result)))))
+              (pay-next-2 state side eid (rest costs) card actions (conj msgs async-result)))))
 
-(defn pay
+(defn pay-2
   "Same as pay, but awaitable."
   [state side eid card & args]
   (let [args (flatten args)
         raw-costs (remove map? args)
         actions (filter map? args)]
-    (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
-      (wait-for (pay-next state side (make-eid state eid) costs card actions [])
+    (if-let [costs (can-pay?-2 state side eid card (:title card) raw-costs)]
+      (wait-for (pay-next-2 state side (make-eid state eid) costs card actions [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))

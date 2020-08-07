@@ -1147,7 +1147,7 @@
 (define-card "Guru Davinder"
   {:flags {:cannot-pay-net true}
    :events [{:event :pre-damage
-             :req (req (and (or (= target :meat) (= target :net))
+             :req (req (println targets) (and (or (= target :meat) (= target :net))
                             (pos? (last targets))))
              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
              :async true

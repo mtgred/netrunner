@@ -41,6 +41,44 @@
       (is (= [[:net 1] [:meat 1] [:brain 1]]
              (core/merge-costs [[:net 1] [:meat 1] [:brain 1]]))))))
 
+(deftest merge-costs-2
+  (testing "Non-damage costs"
+    (testing "No defaults, already merged"
+      (is (= [(core/->Credit 1)] (core/merge-costs-2 [[:credit 1]]))))
+    (testing "Costs are already flattened"
+      (is (= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:credit 1 :click 1]]))))
+    (testing "Passed as a flattened vec"
+      (is (= [(core/->Credit 1)] (core/merge-costs-2 [:credit 1]))))
+    (testing "Default type is only element"
+      (is (= [(core/->Credit 1)] (core/merge-costs-2 [[:credit]]))))
+    (testing "Default plus explicit"
+      (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-costs-2 [[:click :credit 1]]))))
+    (testing "Costs ending with defaults expand"
+      (is (= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:credit 1 :click]]))))
+    (testing "Costs aren't reordered"
+      (is (not= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:click 1 :credit 1]]))))
+    (testing "Costs with all defaults are expanded"
+      (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-costs-2 [[:click :credit]]))))
+    (testing "Non-damage costs are combined"
+      (is (= [(core/->Click 4) (core/->Credit 2)] (core/merge-costs-2 [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
+    (testing "Deeply nested costs are flattened"
+      (is (= [(core/->Click 3)] (core/merge-costs-2 [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
+    (testing "Empty costs return an empty list"
+      (is (= [] (core/merge-costs-2 []))))
+    (testing "nil costs return an empty list"
+      (is (= [] (core/merge-costs-2 nil))))))
+
+(deftest can-pay-2
+  (do-game
+    (new-game {:runner {:hand ["All-nighter"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "All-nighter")
+    (changes-val-macro
+      1 (:click (get-runner))
+      "Gains 1 click"
+      (card-ability state :runner (get-resource state 0) 0))
+    ))
+
 (deftest pay-credits
   (testing "Testing several cost messages"
     (do-game

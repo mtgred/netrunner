@@ -29,6 +29,7 @@
 (load "core/events")       ; triggering of events
 (load "core/cards")        ; retrieving and updating cards
 (load "core/costs")        ; application of costs to play
+(load "core/cost-impls")   ; implementation of costs
 (load "core/rules")        ; core game rules
 (load "core/trashing")     ; trashing cards
 (load "core/turns")        ; the turn sequence
