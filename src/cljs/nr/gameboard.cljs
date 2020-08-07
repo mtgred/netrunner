@@ -1101,7 +1101,6 @@
   [:div.namearea [avatar user {:opts {:size 32}}]
    [:div.namebox
     [:div.username (:username user)]
-    (println "pronouns" (get-in user [:options :pronouns]))
     (if-let [pronouns (case (get-in user [:options :pronouns])
                         "they" "they/them"
                         "she" "she/her"
