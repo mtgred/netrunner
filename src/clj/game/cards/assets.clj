@@ -1509,7 +1509,7 @@
                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                               (clear-wait-prompt state :runner)
                                               (add-counter state side (get-card state card) :power 1)
-                                              (gain state side :credit 3)
+                                              (gain-credits state :corp 3)
                                               ;temporarily disable prana to not trigger on X-1 net damage
                                               (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true))
                                               (wait-for (damage state side :net (dec amount) {:card damagecard})
