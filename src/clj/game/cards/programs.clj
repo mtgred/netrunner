@@ -957,19 +957,20 @@
                 :cost [:trash]
                 :async true
                 :effect (req (let [counters (get-counters card :power)]
-                             (show-wait-prompt state :corp "Runner to use DaVinci")
-                             (continue-ability state side
-                              {:prompt "Choose a card to install from your Grip"
-                                :msg (msg "install " (:title target) " at no cost")
-                              :choices {:req  (req (and (in-hand? target)
-                                                        (or (hardware? target)
-                                                            (program? target)
-                                                            (resource? target))
-                                                        (<= (install-cost state side target) counters)))}
-                                :async true
-                                :effect (req (clear-wait-prompt state :corp)
-                                             (runner-install state side (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
-                        card nil)))}]})
+                               (show-wait-prompt state :corp "Runner to use DaVinci")
+                               (continue-ability
+                                 state side
+                                 {:prompt "Choose a card to install from your Grip"
+                                  :msg (msg "install " (:title target) " at no cost")
+                                  :choices {:req  (req (and (in-hand? target)
+                                                            (or (hardware? target)
+                                                                (program? target)
+                                                                (resource? target))
+                                                            (<= (install-cost state side target) counters)))}
+                                  :async true
+                                  :effect (req (clear-wait-prompt state :corp)
+                                               (runner-install state side (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
+                                 card nil)))}]})
 
 (define-card "Deep Thought"
   {:events [{:event :successful-run
