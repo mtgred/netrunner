@@ -369,3 +369,20 @@
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
+
+(defn make-recurring-ability
+  [ability]
+  (if (:recurring ability)
+    (let [recurring-ability
+          {:msg "take 1 [Recurring Credits]"
+           :req (req (pos? (get-counters card :recurring)))
+           :async true
+           :effect (req (add-prop state side card :rec-counter -1)
+                        (gain state side :credit 1)
+                        (trigger-event-sync state side eid :spent-credits-from-card card))}]
+      (update ability :abilities #(conj (into [] %) recurring-ability)))
+    ability))
+
+(defn define-card
+  [title ability]
+  (card-defs/define-card title (make-recurring-ability ability)))

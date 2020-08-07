@@ -13,7 +13,6 @@
    deck-limit
    faction
    format
-   image_url
    implementation
    memoryunits
    minimumdecksize

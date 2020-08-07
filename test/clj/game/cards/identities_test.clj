@@ -2893,7 +2893,6 @@
           iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
       (run-continue state)
-      (card-ability state :runner k 0)
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 

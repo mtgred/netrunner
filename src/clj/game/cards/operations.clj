@@ -1,7 +1,6 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [define-card]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -1233,10 +1232,9 @@
        {:prompt "Select an agenda in the runner's score area"
         :choices {:card #(and (agenda? %)
                               (is-scored? state :runner %))}
-        :effect (req (update! state side (assoc card :title (:title target)))
-                     ;; TODO: Move reverting the name back to here when we move
-                     ;; abilities into the card object and stop relying on `card-def`.
-                     (card-init state side (get-card state card) {:resolve-effect false :init-data true}))}
+        :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
+                     (card-init state side (get-card state card) {:resolve-effect false :init-data true})
+                     (update! state side (assoc (get-card state card) :title "Media Blitz")))}
        card nil))
    :events [{:event :trash-current
              :req (req (same-card? card target))

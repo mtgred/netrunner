@@ -418,7 +418,7 @@
     (let [baba (get-program state 0)
           base-abicount (count (:abilities baba))]
       (card-ability state :runner baba 0)
-      (click-card state :runner (find-card "Faerie" (:hand (get-runner))))
+      (click-card state :runner "Faerie")
       (is (= (+ 2 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 2 subroutines from Faerie")
       (card-ability state :runner (refresh baba) 0)
       (click-card state :runner (find-card "Yog.0" (:hand (get-runner))))

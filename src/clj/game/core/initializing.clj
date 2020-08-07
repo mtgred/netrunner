@@ -6,9 +6,10 @@
 (defn- dissoc-card
   "Dissoc relevant keys in card"
   [card keep-counter]
-  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
+  (let [cdef (card-def card)
+        c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
                   :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
-        c (assoc c :subroutines (subroutines-init c (card-def card)))
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
 
@@ -47,15 +48,6 @@
 
 
 ;;; Initialising a card
-(defn- ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (let [abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
-                    (:abilities cdef))]
-    (for [ab abilities]
-      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
-
 (defn- corp-ability-init
   "Gets abilities associated with the card"
   [cdef]
@@ -75,13 +67,11 @@
   ([state side eid card {:keys [resolve-effect init-data] :as args}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
-         abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
          c (merge card
                   (when init-data (:data cdef))
-                  {:abilities abilities
-                   :runner-abilities run-abs
+                  {:runner-abilities run-abs
                    :corp-abilities corp-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
@@ -103,3 +93,16 @@
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
      (get-card state c))))
+
+(defn update-ability-cost-str
+  [state side card]
+  (assoc card :abilities
+         (into [] (for [ab (:abilities card)]
+                    (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab card)))))))
+
+(defn update-all-card-labels
+  [state]
+  (doseq [card (all-active state :corp)]
+    (update! state :corp (update-ability-cost-str state :runner card)))
+  (doseq [card (all-active state :runner)]
+    (update! state :runner (update-ability-cost-str state :runner card))))

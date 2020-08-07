@@ -74,6 +74,7 @@
   (if (not-spectator? state user)
     (when-let [c (get commands command)]
       (c state side args)
+      (core/update-all-card-labels state)
       (set-action-id state side))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))

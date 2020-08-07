@@ -193,9 +193,11 @@
   [state side card ability & targets]
   `(let [card# (get-card ~state ~card)]
      (is (active? card#) (str (:title card#) " is active"))
-     (core/play-ability ~state ~side {:card card#
-                                      :ability ~ability
-                                      :targets (first ~targets)})))
+     (is (nth (:abilities card#) ~ability nil) (str (:title card#) " has ability #" ~ability))
+     (when (nth (:abilities card#) ~ability nil)
+       (core/play-ability ~state ~side {:card card#
+                                        :ability ~ability
+                                        :targets (first ~targets)}))))
 
 (defmacro card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."

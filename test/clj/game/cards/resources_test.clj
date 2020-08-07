@@ -1058,7 +1058,7 @@
         (card-ability state :runner spycam 1) ; pop spycam
         (click-prompt state :runner "OK")
         (is (= 1 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not add a second power counter")
-        (card-ability state :runner (refresh d99) 2) ; manually add counter
+        (card-ability state :runner (refresh d99) 1) ; manually add counter
         (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added")
         (run-jack-out state)
         (play-from-hand state :runner "Spy Camera")

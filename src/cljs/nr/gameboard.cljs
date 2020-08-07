@@ -651,6 +651,21 @@
             label])
          servers)])))
 
+(defn add-cost-to-label
+  [ability]
+  (let [label (or (:label ability)
+                  (:msg ability)
+                  "")
+        cost-str (:cost-str ability)]
+    (cond
+      (and (not (s/blank? cost-str))
+           (not (s/blank? label)))
+      (str cost-str ": " (s/capitalize label))
+      (not (s/blank? label))
+      (s/capitalize label)
+      :else
+      label)))
+
 (defn runner-abs [card c-state runner-abilities subroutines title]
   (when (:runner-abilities @c-state)
     [:div.panel.blue-shade.runner-abilities {:style {:display "inline"}}
@@ -662,7 +677,7 @@
          [:div {:key i
                 :on-click #(send-command "runner-ability" {:card card
                                                            :ability i})}
-          (render-icons (:label ab))])
+          (render-icons (add-cost-to-label ab))])
        runner-abilities)
      (when (seq subroutines)
        [:div {:on-click #(send-command "system-msg"
@@ -695,7 +710,7 @@
        (fn [i ab]
          [:div {:on-click #(send-command "corp-ability" {:card card
                                                          :ability i})}
-          (render-icons (:label ab))])
+          (render-icons (add-cost-to-label ab))])
        corp-abilities)]))
 
 (defn card-abilities [card c-state abilities subroutines]
@@ -717,20 +732,22 @@
                     :on-click #(do (send-command action {:card card}))}
               (capitalize action)])
            actions))
-       (when (seq abilities)
+       (when (and (active? card)
+                  (seq abilities))
          [:span.float-center "Abilities:"])
-       (when (seq abilities)
+       (when (and (active? card)
+                  (seq abilities))
          (map-indexed
            (fn [i ab]
              (if (:dynamic ab)
                [:div {:key i
                       :on-click #(send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
                                                                         :card card))}
-                (render-icons (:label ab))]
+                (render-icons (add-cost-to-label ab))]
                [:div {:key i
                       :on-click #(send-command "ability" {:card card
                                                           :ability (- i dynabi-count)})}
-                (render-icons (:label ab))]))
+                (render-icons (add-cost-to-label ab))]))
            abilities))
        (when (seq (remove :fired subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
@@ -749,7 +766,7 @@
                            (false? (:resolve sub))
                            {:class :dont-resolve
                             :style {:text-decoration :line-through}})
-               (render-icons (str " [Subroutine]" " " (:label sub)))]
+               (render-icons (str " [Subroutine] " (:label sub)))]
               [:span.float-right
                (cond (:broken sub) banned-span
                      (:fired sub) "✅")]])
