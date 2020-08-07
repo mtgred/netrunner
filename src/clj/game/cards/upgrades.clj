@@ -518,7 +518,7 @@
 
 (define-card "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
-             :req (req (= (first (:server target))
+             :req (req (= (target-server target)
                           (second (get-zone card))))
              :async true
              :msg "do 1 net damage"
@@ -811,7 +811,7 @@
   {:events [{:event :run-ends
              :msg "gain a [Click] next turn"
              :req (req (and (:successful target)
-                            (= (first (:server target)) (second (get-zone card)))
+                            (= (target-server target) (second (get-zone card)))
                             (or (< (:credit runner) 6) (zero? (:click runner)))))
              :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]})
 
@@ -949,7 +949,7 @@
                        :req (req (let [target-card (first targets)]
                                    (and run
                                         (= (:side target-card) "Runner")
-                                        (= (first (:server run)) (second (get-zone card)))
+                                        (= (target-server run) (second (get-zone card)))
                                         (not (has-subtype? target-card "Icebreaker")))))
                        :value true}]})
 
@@ -1014,7 +1014,7 @@
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
-             :req (req (= target :hq))
+             :req (req (= (target-server target) :hq))
              :async true
              :effect (req (enable-run-on-server state card (second (get-zone card)))
                           (system-msg state :corp (str "trashes Off the Grid"))
@@ -1100,7 +1100,7 @@
   {:install-req (req (filter #{"HQ"} targets))
    :abilities [{:cost [:credit 1]
                 :msg "draw 1 card"
-                :req (req (and run (= (first (:server run)) :hq)))
+                :req (req (and run (= (target-server run) :hq)))
                 :effect (effect (draw))}]})
 
 (define-card "Port Anson Grid"

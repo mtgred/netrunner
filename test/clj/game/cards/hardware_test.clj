@@ -795,7 +795,7 @@
   ;; Capstone
   (do-game
     (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
-                        :hand ["Capstone" (qty "Corroder" 2) (qty "Cache" 2) "Patchwork"]
+                        :hand ["Capstone" (qty "Corroder" 3) (qty "Cache" 2) "Patchwork"]
                         :credits 100}})
     (take-credits state :corp)
     (core/gain state :runner :click 10)
@@ -804,12 +804,13 @@
     (play-from-hand state :runner "Cache")
     (let [capstone (get-hardware state 0)]
       (card-ability state :runner capstone 0)
-      (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
-      (click-card state :runner (find-card "Cache" (:hand (get-runner))))
-      (click-card state :runner (find-card "Patchwork" (:hand (get-runner)))))))
+      (is (= 4 (count (:hand (get-runner)))) "4 cards in hand before using Capstone")
+      (dotimes [n 4]
+        (click-card state :runner (nth (:hand (get-runner)) n))))
+    (is (= 3 (count (:hand (get-runner)))) "3 cards in hand after using Capstone")))
 
 (deftest chop-bot-3000
-  ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
+  ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
     (new-game {:runner {:deck ["Chop Bot 3000" "Spy Camera"]}})
     (take-credits state :corp)

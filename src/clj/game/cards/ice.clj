@@ -628,7 +628,7 @@
      :choices {:card #(and (ice? %)
                            (in-hand? %))}
      :effect (req (corp-install state side eid
-                                target (zone->name (first (:server run)))
+                                target (zone->name (target-server run))
                                 {:ignore-all-cost true
                                  :index (max (dec run-position) 0)})
                   (swap! state update-in [:run :position] inc))}]})
@@ -705,7 +705,7 @@
 
 (define-card "Cell Portal"
   {:subroutines [{:msg "make the Runner approach the outermost ICE"
-                  :effect (req (let [server (central->name (first (:server run)))]
+                  :effect (req (let [server (central->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
                                  (derez state side card)))}]})
 
@@ -1285,7 +1285,7 @@
        :async true
        :effect (req (wait-for (rez state side card nil)
                               (move state side (get-card state card)
-                                    [:servers (first (:server run)) :ices]
+                                    [:servers (target-server run) :ices]
                                     {:front true})
                               (swap! state assoc-in [:run :position] 1)
                               (set-next-phase state :encounter-ice)
@@ -2132,7 +2132,7 @@
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
                   :prompt "Choose an ICE to install from HQ"
-                  :effect (effect (corp-install eid target (zone->name (first (:server run))) {:ignore-all-cost true}))}]})
+                  :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true}))}]})
 
 (define-card "Mirāju"
   {:events [{:event :encounter-ice-ends

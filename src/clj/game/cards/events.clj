@@ -22,7 +22,8 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :subroutines-broken
              :async true
-             :req (req (and (has-subtype? target subtype)
+             :req (req (and this-card-run
+                            (has-subtype? target subtype)
                             (every? :broken (:subroutines target))
                             (let [pred #(and (has-subtype? (first %) subtype)
                                              (every? :broken (:subroutines (first %))))]
@@ -433,6 +434,7 @@
      :makes-run true
      :effect (effect (make-run eid target nil card))
      :events [{:event :encounter-ice
+               :req (req this-card-run)
                :once :per-run
                :optional
                {:prompt "Install a program?"
@@ -612,6 +614,8 @@
    :req (req rd-runnable)
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
+             :req (req (and (= (first (:server target)) :rd)
+                            this-card-run))
              :silent (req true)
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
 
@@ -637,6 +641,7 @@
    :interactions {:access-ability
                   {:label "Trash card"
                    :msg (msg "trash " (:title target) " at no cost")
+                   :req (req this-card-run) ; TODO: figure out if this works or if the card is the access ability
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) nil))}}})
 
@@ -749,8 +754,8 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
-             :req (req (:successful target))
-             :silent (req true)
+             :req (req (and (:successful target)
+                            this-card-run))
              :msg "gain 5 [Credits]"
              :effect (effect (gain-credits :runner 5))}]})
 
@@ -1287,8 +1292,8 @@
                    (zones->sorted-names (remove (set bad-zones) (get-runnable-zones state side eid card nil)))))
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
-             :req (req (:successful target))
-             :silent (req true)
+             :req (req (and (:successful target)
+                            this-card-run))
              :msg "gain 12 [Credits]"
              :effect (effect (gain-credits :runner 12))}]})
 
@@ -1320,6 +1325,7 @@
    :events [{:event :successful-run
              :async true
              :msg "gain 9 [Credits] and take 1 tag"
+             :req (req this-card-run)
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (gain-credits state :runner 9)
                                     (effect-completed state side eid)))}]})
@@ -1346,6 +1352,7 @@
    :events [{:event :pre-access
              :async true
              :req (req (and (= target :archives)
+                            this-card-run
                             ;; don't prompt unless there's at least 1 rezzed ICE matching one in Archives
                             (not-empty (clojure.set/intersection
                                          (into #{} (map :title (filter ice? (:discard corp))))
@@ -1522,7 +1529,8 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :req (req (first-run-event? state side :encounter-ice))
+             :req (req (and this-card-run
+                            (first-run-event? state side :encounter-ice)))
              :once :per-run
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})
@@ -1719,6 +1727,8 @@
    :effect (effect (make-run eid :hq nil card))
    :events [{:event :successful-run
              :silent (req true)
+             :req (req (and (= (first (:server target)) :hq)
+                            this-card-run))
              :effect (effect (access-bonus :hq 2))}]})
 
 (define-card "Leverage"
@@ -1762,6 +1772,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
              :async true
+             :req (req this-card-run)
              :effect (req (if (:did-steal target)
                             (do (system-msg state :runner
                                             (str "adds Mad Dash to their score area as an agenda worth 1 agenda point"))
@@ -1802,7 +1813,8 @@
    :choices (req (filter #(can-run-server? state %) remotes))
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
-             :effect (req (prevent-run-on-server state card (:server target))
+             :req (req this-card-run)
+             :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
                             (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                             (gain state :runner :click 1)
@@ -1873,7 +1885,7 @@
                               (effect-completed state side eid)))))
    :events [{:event :successful-run
              :req (req (and (get-in card [:special :run-again])
-                            (= target :rd)))
+                            (= (first (:server target)) :rd)))
              :msg "gain 4 [Credits]"
              :effect (effect (gain-credits 4))}
             {:event :run-ends
@@ -2078,7 +2090,8 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :pass-ice
-             :req (req (and (rezzed? target)
+             :req (req (and this-card-run
+                            (rezzed? target)
                             (not-used-once? state {:once :per-run} card)
                             (<= (get-strength target) (count (all-installed state :runner)))))
              :async true
@@ -2254,6 +2267,7 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
+             :req (req this-card-run)
              :once :per-run
              :optional
              {:prompt "Jack out?"
@@ -2343,7 +2357,8 @@
                                card
                                (let [target-ice target]
                                  [{:event :encounter-ice
-                                   :req (req (same-card? target-ice target))
+                                   :req (req (and this-card-run
+                                                  (same-card? target-ice target)))
                                    :msg (msg "bypass " (:title target))
                                    :effect (req (bypass-ice state))}]))
                              (make-run eid (second (get-zone target)) nil card))})]
@@ -2422,6 +2437,7 @@
      :effect (effect (update! (assoc-in card [:special :run-amok] (get-rezzed-cids (all-installed state :corp))))
                (make-run eid target nil (get-card state card)))
      :events [{:event :run-ends
+               :req (req this-card-run)
                :async true
                :effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
                                   old (set (get-in (get-card state card) [:special :run-amok]))
@@ -2565,7 +2581,8 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :req (req (= 1 run-position))
+             :req (req (= 1 run-position)
+                       this-card-run)
              :msg (msg "bypass " (:title target))
              :effect (req (bypass-ice state))}]})
 
@@ -2612,6 +2629,7 @@
    :effect (effect (gain-next-run-credits 9)
                    (make-run eid target nil card))
    :events [{:event :run-ends
+             :req (req this-card-run)
              :msg "take 1 brain damage"
              :effect (effect (damage eid :brain 1 {:unpreventable true
                                                    :card card}))}]})
@@ -2718,9 +2736,9 @@
    :async true
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
-             :unregister-once-resolved true
              :silent (req true)
-             :req (req (= target :rd))
+             :req (req (and (= (first (:server target)) :rd)
+                            this-card-run))
              :effect (effect (access-bonus :rd 2))}]})
 
 (define-card "The Noble Path"

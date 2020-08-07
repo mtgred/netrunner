@@ -1706,23 +1706,25 @@
                 :effect (effect (lose-credits :runner (* 4 (get-counters card :advancement))))}]})
 
 (define-card "Rex Campaign"
-  (let [ability {:once :per-turn
+  (let [payout-ab {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+                   :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
+                   :msg (msg (if (= target "Remove 1 bad publicity")
+                               "remove 1 bad publicity" "gain 5 [Credits]"))
+                   :effect (req (if (= target "Remove 1 bad publicity")
+                                  (lose-bad-publicity state side 1)
+                                  (gain-credits state side 5)))}
+        ability {:once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label "Remove 1 counter (start of turn)"
-                 :effect (effect (add-counter card :power -1))}]
+                 :effect (req (add-counter state side card :power -1)
+                              (if (zero? (get-counters (get-card state card) :power))
+                                (wait-for (trash state side card nil)
+                                          (continue-ability state side payout-ab card nil))))}]
     {:effect (effect (add-counter card :power 3))
      :derezzed-events [corp-rez-toast]
-     :events [(trash-on-empty :power)
-              (assoc ability :event :corp-turn-begins)]
-     :ability [ability]
-     :trash-effect {:req (req (zero? (get-counters card :power)))
-                    :prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                    :msg (msg (if (= target "Remove 1 bad publicity")
-                                "remove 1 bad publicity" "gain 5 [Credits]"))
-                    :effect (req (if (= target "Remove 1 bad publicity")
-                                   (lose-bad-publicity state side 1)
-                                   (gain-credits state side 5)))}}))
+     :events [(assoc ability :event :corp-turn-begins)]
+     :ability [ability]}))
+
 
 (define-card "Ronald Five"
   (let [ability {:req (req (and (some corp? targets)
