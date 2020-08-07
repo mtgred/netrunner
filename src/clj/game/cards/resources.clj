@@ -1562,25 +1562,25 @@
                                          card nil)))}]})
 
 (define-card "Muertos Gang Member"
-  {:effect (req (show-wait-prompt state :runner "Corp to select a card to derez")
+  {:effect (effect (show-wait-prompt :runner "Corp to select a card to derez")
                    (continue-ability
-                     state :corp
+                     :corp
                      {:prompt "Select a card to derez"
                       :choices {:card #(and (corp? %)
                                             (not (agenda? %))
-                                            (:rezzed %))}
+                                            (rezzed? %))}
                       :effect (effect (clear-wait-prompt :runner)
                                       (derez target))}
                      card nil))
-   :uninstall (req (show-wait-prompt state :runner "Corp to select a card to rez")
+   :uninstall (effect (show-wait-prompt :runner "Corp to select a card to rez")
                       (continue-ability
-                         state :corp
-                         {:prompt "Select a card to rez, ignoring the rez cost"
-                          :choices {:card (complement rezzed?)}
-                          :effect (effect (clear-wait-prompt :runner)
-                                          (rez target {:ignore-cost :rez-cost :no-msg true})
-                                          (system-say (str (:title card) " allows the Corp to rez " (:title target) " at no cost")))}
-                         card nil))
+                        :corp
+                        {:prompt "Select a card to rez, ignoring the rez cost"
+                         :choices {:card (complement rezzed?)}
+                         :effect (effect (clear-wait-prompt :runner)
+                                         (rez target {:ignore-cost :rez-cost :no-msg true})
+                                         (system-say (str (:title card) " allows the Corp to rez " (:title target) " at no cost")))}
+                        card nil))
    :abilities [{:msg "draw 1 card"
                 :async true
                 :cost [:trash]
