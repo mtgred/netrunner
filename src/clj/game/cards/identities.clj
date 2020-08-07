@@ -532,6 +532,11 @@
              :effect (effect (access-cost-bonus [:credit 1]))
              :msg "make the Runner spend 1 [Credits] to access"}]})
 
+(define-card "GameNET: Where Dreams are Real"
+  {:implementation "Credit gain not implemented. You can use shortcut ability."
+   :abilities [{:msg "gain 1 [Credits] (shortcut)"
+                :effect (req (gain-credits state :corp 1))}]})
+
 (define-card "GRNDL: Power Unleashed"
   {:events [{:event :pre-start-game
              :req (req (= :corp side))
