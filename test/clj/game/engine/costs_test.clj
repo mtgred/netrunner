@@ -46,7 +46,7 @@
     (testing "No defaults, already merged"
       (is (= [(core/->Credit 1)] (core/merge-costs-2 [[:credit 1]]))))
     (testing "Costs are already flattened"
-      (is (= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:credit 1 :click 1]]))))
+      (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-costs-2 [[:credit 1 :click 1]]))))
     (testing "Passed as a flattened vec"
       (is (= [(core/->Credit 1)] (core/merge-costs-2 [:credit 1]))))
     (testing "Default type is only element"
@@ -54,7 +54,7 @@
     (testing "Default plus explicit"
       (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-costs-2 [[:click :credit 1]]))))
     (testing "Costs ending with defaults expand"
-      (is (= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:credit 1 :click]]))))
+      (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-costs-2 [[:credit 1 :click]]))))
     (testing "Costs aren't reordered"
       (is (not= [(core/->Credit 1) (core/->Click 1)] (core/merge-costs-2 [[:click 1 :credit 1]]))))
     (testing "Costs with all defaults are expanded"
