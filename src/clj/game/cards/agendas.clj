@@ -320,7 +320,7 @@
                                      :choices {:number (req (min (:credit corp)
                                                                  (count (:hand runner))))}
                                      :async true
-                                     :effect (req (when (pos? target)
+                                     :effect (req (if (pos? target)
                                                     (wait-for
                                                       (pay state :corp card :credit target)
                                                       (let [from (take target (shuffle (:hand runner)))]
@@ -333,7 +333,9 @@
                                                                                     " The Runner draws 1 card"))
                                                         (wait-for (draw state :runner 1 nil)
                                                                   (clear-wait-prompt state :runner)
-                                                                  (effect-completed state side eid))))))}
+                                                                  (effect-completed state side eid))))
+                                                    (do (clear-wait-prompt state :runner)
+                                                        (effect-completed state side eid))))}
                        :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                      card nil))})
 
