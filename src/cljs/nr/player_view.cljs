@@ -24,13 +24,13 @@
     [user-status-span player]
     (when (empty? (:password game))
       (let [side (:side player)
-          faction (:faction (:identity (:deck player)))
-          identity (:title (:identity (:deck player)))
-          specs (:allow-spectator game)]
+            faction (:faction (:identity (:deck player)))
+            identity (:title (:identity (:deck player)))
+            specs (:allow-spectator game)]
         (cond
           (and (some? faction)
-              (not= "Neutral" faction)
-              specs)
+               (not= "Neutral" faction)
+               specs)
           (faction-icon faction identity)
 
           side
