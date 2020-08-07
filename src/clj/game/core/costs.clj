@@ -673,10 +673,10 @@
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid amount)
 
-     ;; Move installed cards to the deck
+     ;; Move installed cards to the deck (eg Mind Game)
      :add-installed-to-bottom-of-deck
      (pay-move-installed-to-deck state side eid nil amount
-                                 (every-pred installed?)
+                                 (every-pred installed? (if (= :corp side) corp? runner?))
                                  {:front false})
 
      ;; Spend a counter on another card
