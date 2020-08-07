@@ -454,6 +454,7 @@
 
 (define-card "Embolus"
   (let [maybe-gain-counter {:once :per-turn
+                            :async true
                             :label "Place a power counter on Embolus"
                             :effect (effect
                                       (continue-ability
