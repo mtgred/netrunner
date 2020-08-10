@@ -95,16 +95,22 @@
      (get-card state c))))
 
 (defn update-ability-cost-str
+  [state side card ability-kw]
+  (into [] (for [ab (get card ability-kw)
+                 :let [ab-cost (if (:break-cost ab)
+                                 (assoc ab :cost (:break-cost ab))
+                                 ab)]]
+             (assoc ab :cost-label (build-cost-label (card-ability-cost state side ab-cost card))))))
+
+(defn update-abilities-cost-str
   [state side card]
-  (assoc card :abilities
-         (into [] (for [ab (:abilities card)
-                        :let [ab-cost (if (:break-cost ab)
-                                        (assoc ab :cost (:break-cost ab))
-                                        ab)]]
-                    (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab-cost card)))))))
+  (-> card
+      (assoc :abilities (update-ability-cost-str state side card :abilities))
+      (assoc :corp-abilities (update-ability-cost-str state side card :corp-abilities))
+      (assoc :runner-abilities (update-ability-cost-str state side card :runner-abilities))))
 
 (defn update-all-card-labels
   [state]
   (doseq [side [:corp :runner]
           card (all-active state side)]
-    (update! state side (update-ability-cost-str state side card))))
+    (update! state side (update-abilities-cost-str state side card))))

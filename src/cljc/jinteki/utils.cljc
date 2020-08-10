@@ -76,13 +76,14 @@
 (defn add-cost-to-label
   [ability]
   (let [label (or (:label ability)
-                  (:msg ability)
+                  (and (string? (:msg ability))
+                       (:msg ability))
                   "")
-        cost-str (:cost-str ability)]
+        cost-label (:cost-label ability)]
     (cond
-      (and (not (s/blank? cost-str))
+      (and (not (s/blank? cost-label))
            (not (s/blank? label)))
-      (str cost-str ": " (capitalize label))
+      (str cost-label ": " (capitalize label))
       (not (s/blank? label))
       (capitalize label)
       :else

@@ -801,7 +801,7 @@
 
 (comment
   (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
-     (build-cost-label [[[:click 1] [:click 3] [:net 1] [:credit 1]]])))
+     (build-cost-label [[:click 1] [:click 3] [:net 1] [:credit 1]])))
 
 (defn- flag-stops-pay?-2
   "Checks installed cards to see if payment type is prevented by a flag"
@@ -866,9 +866,9 @@
                   "")
         cost (:cost ability)]
     (cond
-      (and (seq cost)
-           (not (string/blank? label)))
-      (str (build-cost-label cost) ": " (capitalize label))
+      ; (and (seq cost)
+      ;      (not (string/blank? label)))
+      ; (str (build-cost-label cost) ": " (capitalize label))
       (not (string/blank? label))
       (capitalize label)
       :else
