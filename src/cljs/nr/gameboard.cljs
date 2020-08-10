@@ -1191,8 +1191,6 @@
                                   :else
                                   "")}]])
 
-(enable-console-print!)
-
 (defn server-view [{:keys [server central-view run]} opts]
   (let [content (:content server)
         ices (:ices server)

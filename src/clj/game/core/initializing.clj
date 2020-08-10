@@ -105,7 +105,6 @@
 
 (defn update-all-card-labels
   [state]
-  (doseq [card (all-active state :corp)]
-    (update! state :corp (update-ability-cost-str state :corp card)))
-  (doseq [card (all-active state :runner)]
-    (update! state :runner (update-ability-cost-str state :runner card))))
+  (doseq [side [:corp :runner]
+          card (all-active state side)]
+    (update! state side (update-ability-cost-str state side card))))
