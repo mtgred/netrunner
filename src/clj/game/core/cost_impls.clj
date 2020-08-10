@@ -789,7 +789,7 @@
         (into []))))
 
 (defn build-cost-label
-  "Gets the complete cost-str for specified costs"
+  "Gets the complete cost-label for specified costs"
   [costs]
   (let [cost-string
         (->> (merge-and-convert-costs costs)
@@ -865,20 +865,6 @@
       (complete-with-result state side eid nil))))
 
 ;; cost labels and messages
-(defn make-label
-  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
-  [ability]
-  (let [label (or (:label ability)
-                  (and (string? (:msg ability))
-                       (:msg ability))
-                  "")
-        cost (:cost ability)]
-    (cond
-      (not (string/blank? label))
-      (capitalize label)
-      :else
-      label)))
-
 (defn cost->string
   "Converts a cost (amount attribute pair) to a string for printing"
   [cost]

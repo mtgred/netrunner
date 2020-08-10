@@ -26,7 +26,7 @@
         (core/rez state :corp tg)
         (is (= 1 (count (:subroutines (refresh tg)))))
         (run-on state :hq)
-        (is (= "add 1 strength" (-> (refresh buk) :abilities last :label)) "Not encountered an ice yet")
+        (is (= "Add 1 strength" (-> (refresh buk) :abilities last :label)) "Not encountered an ice yet")
         (core/rez state :corp p2)
         (run-continue state)
         (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
