@@ -66,3 +66,24 @@
   (or (:isadmin user)
       (:ismoderator user)
       (:tournament-organizer user)))
+
+(defn capitalize [string]
+  (str (s/upper-case (first string)) (subs string 1)))
+
+(defn decapitalize [string]
+  (str (s/lower-case (first string)) (subs string 1)))
+
+(defn add-cost-to-label
+  [ability]
+  (let [label (or (:label ability)
+                  (:msg ability)
+                  "")
+        cost-str (:cost-str ability)]
+    (cond
+      (and (not (s/blank? cost-str))
+           (not (s/blank? label)))
+      (str cost-str ": " (capitalize label))
+      (not (s/blank? label))
+      (capitalize label)
+      :else
+      label)))
