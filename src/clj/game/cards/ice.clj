@@ -56,20 +56,6 @@
      (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 ;;; Runner abilites for breaking subs
-(defn runner-pay-or-break
-  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
-  [cost qty label]
-  (let [cost-str (build-cost-string cost cost->label)
-        subs-str (quantify qty "subroutine")]
-    {:cost cost
-     :label (str label " " subs-str)
-     :effect (req (system-msg state :runner (str "spends " cost-str " to " label " " subs-str " on " (:title card))))}))
-
-(defn runner-pay
-  "Ability to pay to avoid a subroutine by spending a resource (Popup Window, Turing, etc)"
-  [cost qty]
-  (runner-pay-or-break cost qty "pay for"))
-
 (defn bioroid-break
   ([cost qty] (bioroid-break cost qty nil))
   ([cost qty args]
@@ -91,6 +77,18 @@
    :async true
    :effect (effect (end-run :corp eid card))})
 
+(defn runner-pays
+  "Ability to pay to avoid a subroutine by paying a resource"
+  [cost]
+  {:async true
+   :effect (req (wait-for (pay state :runner card cost)
+                          (when async-result
+                            (let [cost-str (str async-result
+                                                " due to " (:title card)
+                                                " subroutine")]
+                              (system-msg state :runner cost-str)))
+                          (effect-completed state side eid)))})
+
 (defn end-the-run-unless-runner-pays
   [amount]
   {:player :runner
@@ -103,13 +101,7 @@
                   (do (system-msg state :corp
                                   (str "uses " (:title card) " to end the run"))
                       (end-run state :corp eid card))
-                  (wait-for (pay state :runner card [:credit amount])
-                            (when async-result
-                              (let [cost-str (str async-result
-                                                  " due to " (:title card)
-                                                  " subroutine")]
-                                (system-msg state :runner cost-str)))
-                            (effect-completed state side eid))))})
+                  (continue-ability state side (runner-pays [:credit amount]) card nil)))})
 
 (defn end-the-run-unless-corp-pays
   [amount]
@@ -131,7 +123,9 @@
    :choices ["End the run"
              (capitalize prompt)]
    :effect (req (if (= "End the run" target)
-                  (end-run state :corp eid card)
+                  (do (system-msg state :corp
+                                  (str "uses " (:title card) " to end the run"))
+                      (end-run state :corp eid card))
                   (continue-ability state side ability card nil)))})
 
 (defn give-tags
@@ -3106,7 +3100,7 @@
    :subroutines [(end-the-run-unless-runner
                    "spends [Click][Click][Click]"
                    "spend [Click][Click][Click]"
-                   (runner-pay [:click 3] 1))]
+                   (runner-pays [:click 3]))]
    :strength-bonus (req (if (is-remote? (second (get-zone card))) 3 0))})
 
 (define-card "Turnpike"
@@ -3267,7 +3261,7 @@
   {:subroutines [(end-the-run-unless-runner
                    "spends [Click][Click]"
                    "spend [Click][Click]"
-                   (runner-pay [:click 2] 1))
+                   (runner-pays [:click 2]))
                  (end-the-run-unless-runner-pays 3)
                  (end-the-run-unless-runner
                    "trashes an installed program"

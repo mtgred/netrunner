@@ -1129,7 +1129,7 @@
      :async true
      :effect (effect (continue-ability (mhelper 1) card nil))
      :abilities [{:msg "prevent 1 brain or net damage"
-                  :cost [:trash-program-from-grip 1]
+                  :cost [:trash-program-from-hand 1]
                   :effect (effect (damage-prevent :brain 1)
                                   (damage-prevent :net 1))}]}))
 

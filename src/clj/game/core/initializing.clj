@@ -97,12 +97,15 @@
 (defn update-ability-cost-str
   [state side card]
   (assoc card :abilities
-         (into [] (for [ab (:abilities card)]
-                    (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab card)))))))
+         (into [] (for [ab (:abilities card)
+                        :let [ab-cost (if (:break-cost ab)
+                                        (assoc ab :cost (:break-cost ab))
+                                        ab)]]
+                    (assoc ab :cost-str (build-cost-label (card-ability-cost state side ab-cost card)))))))
 
 (defn update-all-card-labels
   [state]
   (doseq [card (all-active state :corp)]
-    (update! state :corp (update-ability-cost-str state :runner card)))
+    (update! state :corp (update-ability-cost-str state :corp card)))
   (doseq [card (all-active state :runner)]
     (update! state :runner (update-ability-cost-str state :runner card))))

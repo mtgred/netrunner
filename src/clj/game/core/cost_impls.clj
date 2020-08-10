@@ -14,6 +14,49 @@
   [cost-constructor]
   (alter-var-root #'cost-records assoc (cost-name (cost-constructor 1)) cost-constructor))
 
+(defrecord Click [amount]
+  CostFns
+  (cost-name [this] :click)
+  (label [this] (->> (repeat "[Click]")
+                     (take amount)
+                     (apply str)))
+  (rank [this] 1)
+  (value [this] amount)
+  (payable? [this state side eid card]
+    (<= 0 (- (get-in @state [side :click]) amount)))
+  (handler [this state side eid card actions]
+    (let [a (keep :action actions)]
+      (when (not (some #{:steal-cost :bioroid-cost} a))
+        (swap! state assoc :click-state (dissoc @state :log)))
+      (swap! state update-in [:stats side :lose :click] (fnil + 0) amount)
+      (deduct state side [:click amount])
+      (wait-for (trigger-event-sync state side (make-eid state eid)
+                                    (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                    a amount)
+                (swap! state assoc-in [side :register :spent-click] true)
+                (complete-with-result state side eid (str "spends " (label this)))))))
+(register-cost #'->Click)
+
+(defn all-active-pay-credit-cards
+  [state side eid card]
+  (filter #(when-let [pc (-> % card-def :interactions :pay-credits)]
+             (if (:req pc)
+               ((:req pc) state side eid % [card])
+               true))
+          (all-active state side)))
+
+(defn eligible-pay-credit-cards
+  [state side eid card]
+  (filter
+    #(case (-> % card-def :interactions :pay-credits :type)
+       :recurring
+       (pos? (get-counters (get-card state %) :recurring))
+       :credit
+       (pos? (get-counters (get-card state %) :credit))
+       :custom
+       ((-> % card-def :interactions :pay-credits :req) state side eid % [card]))
+    (all-active-pay-credit-cards state side eid card)))
+
 (defrecord Credit [amount]
   CostFns
   (cost-name [this] :credit)
@@ -37,29 +80,6 @@
         :else
         (complete-with-result state side eid (str "pays 0 [Credits]"))))))
 (register-cost #'->Credit)
-
-(defrecord Click [amount]
-  CostFns
-  (cost-name [this] :click)
-  (label [this] (->> (repeat "[Click]")
-                     (take amount)
-                     (apply str)))
-  (rank [this] 1)
-  (value [this] amount)
-  (payable? [this state side eid card]
-    (<= 0 (- (get-in @state [side :click]) amount)))
-  (handler [this state side eid card actions]
-    (let [a (keep :action actions)]
-      (when (not (some #{:steal-cost :bioroid-cost} a))
-        (swap! state assoc :click-state (dissoc @state :log)))
-      (swap! state update-in [:stats side :lose :click] (fnil + 0) amount)
-      (deduct state side [:click amount])
-      (wait-for (trigger-event-sync state side (make-eid state eid)
-                                    (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                    a amount)
-                (swap! state assoc-in [side :register :spent-click] true)
-                (complete-with-result state side eid (str "spends " (label this)))))))
-(register-cost #'->Click)
 
 (defrecord Trash [amount]
   CostFns
@@ -722,7 +742,7 @@
   (let [constructor (get cost-records cost-kw)]
     (constructor qty)))
 
-(defn add-default-to-costs-2
+(defn convert-to-cost-records
   "Take a sequence of costs (nested or otherwise) and add a default value of 1
   to any that don't include a value (normally with :forfeit)."
   [costs]
@@ -750,11 +770,11 @@
              acc))
          [])))
 
-(defn merge-costs-2
+(defn merge-and-convert-costs
   "Combines disparate costs into a single cost per type."
-  ([costs] (merge-costs-2 costs false))
+  ([costs] (merge-and-convert-costs costs false))
   ([costs remove-zero-credit-cost]
-   (->> (add-default-to-costs-2 costs)
+   (->> (convert-to-cost-records costs)
         (group-by cost-name)
         (map (fn [[map-key map-vals]]
                (reduce
@@ -768,11 +788,11 @@
         (sort-by rank)
         (into []))))
 
-(defn build-cost-label-2
+(defn build-cost-label
   "Gets the complete cost-str for specified costs"
   [costs]
   (let [cost-string
-        (->> (merge-costs-2 costs)
+        (->> (merge-and-convert-costs costs)
              (map label)
              (interpose ", ")
              (apply str))]
@@ -781,7 +801,7 @@
 
 (comment
   (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
-     (build-cost-label-2 [[[:click 1] [:click 3] [:net 1] [:credit 1]]])))
+     (build-cost-label [[[:click 1] [:click 3] [:net 1] [:credit 1]]])))
 
 (defn- flag-stops-pay?-2
   "Checks installed cards to see if payment type is prevented by a flag"
@@ -797,7 +817,7 @@
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         costs (merge-costs-2 (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
+         costs (merge-and-convert-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
      (if (every? #(and (not (flag-stops-pay?-2 state side %))
                        (payable? % state side eid card))
                  costs)
@@ -835,3 +855,44 @@
                                                           (filter some?)
                                                           sentence-join)))
       (complete-with-result state side eid nil))))
+
+;; cost labels and messages
+(defn make-label
+  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
+  [ability]
+  (let [label (or (:label ability)
+                  (and (string? (:msg ability))
+                       (capitalize (:msg ability)))
+                  "")
+        cost (:cost ability)]
+    (cond
+      (and (seq cost)
+           (not (string/blank? label)))
+      (str (build-cost-label cost) ": " (capitalize label))
+      (not (string/blank? label))
+      (capitalize label)
+      :else
+      label)))
+
+(defn cost->string
+  "Converts a cost (amount attribute pair) to a string for printing"
+  [cost]
+  (when (not (neg? (value cost)))
+    (let [cost-type (cost-name cost)
+          cost-string (label cost)]
+      (cond
+        (= :click cost-type) (str "spend " cost-string)
+        (= :credit cost-type) (str "pay " cost-string)
+        :else cost-string))))
+
+(defn build-cost-string
+  "Gets the complete cost-str for specified costs"
+  [costs]
+  (let [cost-string
+        (->> (merge-and-convert-costs costs)
+             (filter some?)
+             (map cost->string)
+             (interpose " and ")
+             (apply str))]
+    (when (not (string/blank? cost-string))
+      (capitalize cost-string))))
