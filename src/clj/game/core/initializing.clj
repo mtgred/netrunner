@@ -100,7 +100,7 @@
                  :let [ab-cost (if (:break-cost ab)
                                  (assoc ab :cost (:break-cost ab))
                                  ab)]]
-             (assoc ab :cost-label (build-cost-label (card-ability-cost state side ab-cost card))))))
+             (add-cost-label-to-ability ab (card-ability-cost state side ab-cost card)))))
 
 (defn update-abilities-cost-str
   [state side card]

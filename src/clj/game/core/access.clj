@@ -32,7 +32,7 @@
   [state card]
   (let [title (first (string/split (:title card) #":"))
         access-ability (access-ab card)
-        ability (assoc access-ability :cost-label (build-cost-label (card-ability-cost state :runner access-ability card)))
+        ability (add-cost-label-to-ability access-ability (card-ability-cost state :runner access-ability card))
         label (add-cost-to-label ability)]
     (str "[" title "] " label)))
 

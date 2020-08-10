@@ -799,6 +799,14 @@
     (when (not (string/blank? cost-string))
       (capitalize cost-string))))
 
+(defn add-cost-label-to-ability
+  ([ability] (add-cost-label-to-ability ability (:cost ability)))
+  ([ability cost]
+   (assoc ability :cost-label
+          (build-cost-label (if (:trash-icon ability)
+                              (conj cost [:trash])
+                              cost)))))
+
 (comment
   (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
      (build-cost-label [[:click 1] [:click 3] [:net 1] [:credit 1]])))
@@ -862,13 +870,10 @@
   [ability]
   (let [label (or (:label ability)
                   (and (string? (:msg ability))
-                       (capitalize (:msg ability)))
+                       (:msg ability))
                   "")
         cost (:cost ability)]
     (cond
-      ; (and (seq cost)
-      ;      (not (string/blank? label)))
-      ; (str (build-cost-label cost) ": " (capitalize label))
       (not (string/blank? label))
       (capitalize label)
       :else

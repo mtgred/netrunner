@@ -100,8 +100,7 @@
 (defn ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (into [] (for [ab (:abilities cdef)]
-             (assoc ab :cost-label (build-cost-label (:cost ab))))))
+  (into [] (for [ab (:abilities cdef)] (add-cost-label-to-ability ab))))
 
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
