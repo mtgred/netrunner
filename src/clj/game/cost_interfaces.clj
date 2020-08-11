@@ -1,4 +1,4 @@
-(ns game.costs)
+(ns game.cost-interfaces)
 
 (defrecord Click [amount])
 (defrecord Credit [amount])

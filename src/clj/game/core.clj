@@ -22,11 +22,12 @@
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
             [game.quotes :as quotes]
-            [game.costs :refer :all])
+            [game.cost-interfaces :refer :all])
   (:import [game.core.state State]
            [game.core.player Corp Runner]
            [game.core.card Card]
-           [game.costs Click Credit Trash Forfeit ForfeitSelf Tag ReturnToHand RemoveFromGame RfgProgram
+           [game.cost_interfaces Click Credit Trash Forfeit ForfeitSelf Tag
+            ReturnToHand RemoveFromGame RfgProgram
             TrashInstalledRunnerCard TrashInstalledHardware TrashInstalledProgram TrashInstalledResource TrashInstalledConnection
             TrashRezzedIce TrashFromDeck TrashFromHand RandomlyTrashFromHand TrashEntireHand
             TrashHardwareFromHand TrashProgramFromHand TrashResourceFromHand

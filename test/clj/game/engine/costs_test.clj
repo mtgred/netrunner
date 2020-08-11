@@ -1,6 +1,6 @@
 (ns game.engine.costs-test
   (:require [game.core :as core]
-            [game.costs :refer :all]
+            [game.cost-interfaces :refer :all]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
