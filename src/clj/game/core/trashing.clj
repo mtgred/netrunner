@@ -81,9 +81,8 @@
   ([state side eid cards {:keys [cause keep-server-alive host-trashed game-trash] :as args}]
    (let [num-cards (< 1 (count cards))]
      (letfn [(get-card? [s c]
-               ;; Holdover from old code. Should be `get-card` in all cases, but that
-               ;; requires fixing a bunch of cards and there's not been time yet.
-               (if num-cards (get-card s c) c))
+               (when-let [card (get-card s c)]
+                 (assoc card :seen (:seen c))))
              (preventrec [cs]
                (if (seq cs)
                  (wait-for (prevent-trash state side (get-card? state (first cs)) eid args)

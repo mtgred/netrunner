@@ -45,7 +45,8 @@
       card)
 
     host
-    (update-hosted! state side card)
+    (do (update-hosted! state side card)
+        (get-card state card))
 
     :else
     (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
