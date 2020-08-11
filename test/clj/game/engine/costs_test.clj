@@ -1,5 +1,6 @@
 (ns game.engine.costs-test
   (:require [game.core :as core]
+            [game.cost-interfaces :refer :all]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -10,7 +11,7 @@
     (testing "No defaults, already merged"
       (is (= [[:credit 1]] (core/merge-costs [[:credit 1]]))))
     (testing "Costs are already flattened"
-      (is (= [[:credit 1] [:click 1]] (core/merge-costs [[:credit 1 :click 1]]))))
+      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click 1]]))))
     (testing "Passed as a flattened vec"
       (is (= [[:credit 1]] (core/merge-costs [:credit 1]))))
     (testing "Default type is only element"
@@ -18,7 +19,7 @@
     (testing "Default plus explicit"
       (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit 1]]))))
     (testing "Costs ending with defaults expand"
-      (is (= [[:credit 1] [:click 1]] (core/merge-costs [[:credit 1 :click]]))))
+      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click]]))))
     (testing "Non-damage costs aren't reordered"
       (is (not= [[:credit 1] [:click 1]] (core/merge-costs [[:click 1 :credit 1]]))))
     (testing "Costs with all defaults are expanded"
@@ -35,11 +36,37 @@
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
       (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
-    (testing "Damage isn't combined"
-      (is (= [[:net 1] [:net 1]] (core/merge-costs [[:net 1 :net 1]]))))
+    (testing "Damage is combined"
+      (is (= [[:net 2]] (core/merge-costs [[:net 1 :net 1]]))))
     (testing "Net, meat, and brain damage are recognized"
       (is (= [[:net 1] [:meat 1] [:brain 1]]
              (core/merge-costs [[:net 1] [:meat 1] [:brain 1]]))))))
+
+(deftest merge-and-convert-costs
+  (testing "No defaults, already merged"
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [[:credit 1]]))))
+  (testing "Costs are already flattened"
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click 1]]))))
+  (testing "Passed as a flattened vec"
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [:credit 1]))))
+  (testing "Default type is only element"
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [[:credit]]))))
+  (testing "Default plus explicit"
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:click :credit 1]]))))
+  (testing "Costs ending with defaults expand"
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click]]))))
+  (testing "Costs aren't reordered"
+    (is (not= [(->Credit 1) (->Click 1)] (core/merge-and-convert-costs [[:click 1 :credit 1]]))))
+  (testing "Costs with all defaults are expanded"
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:click :credit]]))))
+  (testing "Costs are combined"
+    (is (= [(->Click 4) (->Credit 2)] (core/merge-and-convert-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
+  (testing "Deeply nested costs are flattened"
+    (is (= [(->Click 3)] (core/merge-and-convert-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
+  (testing "Empty costs return an empty list"
+    (is (= [] (core/merge-and-convert-costs []))))
+  (testing "nil costs return an empty list"
+    (is (= [] (core/merge-and-convert-costs nil)))))
 
 (deftest pay-credits
   (testing "Testing several cost messages"

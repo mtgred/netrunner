@@ -9,6 +9,7 @@
             [game.macros-test :refer :all]
             [game.core.card-defs :refer :all]
             [jinteki.cards :refer [all-cards]]
+            [jinteki.utils :refer [add-cost-to-label]]
             [clojure.test :refer :all]))
 
 (deftest combine-abilities
@@ -72,3 +73,29 @@
           [idx ability] (map-indexed (fn [idx itm] [idx itm]) (:abilities abilities))]
     (is (string? (or (:label ability) (:msg ability)))
         (str title ": Ability " (inc idx) " doesn't have an appropriate label"))))
+
+(deftest cost-label
+  (testing "Conditional costs"
+    (do-game
+      (new-game {:runner {:hand ["Simulchip" "Gorman Drip v1"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Simulchip")
+      ;; Needs to be called manually because it's only run in main.clj and we don't interact
+      ;; with that in tests
+      (core/update-all-card-labels state)
+      (is (= "[trash], trash 1 installed program: Install a program from the heap"
+             (add-cost-to-label (first (:abilities (get-hardware state 0))))))
+      (play-from-hand state :runner "Gorman Drip v1")
+      (card-ability state :runner (get-program state 0) 0)
+      (core/update-all-card-labels state)
+      (is (= "[trash]: Install a program from the heap"
+             (add-cost-to-label (first (:abilities (get-hardware state 0))))))))
+  (testing "trash icon"
+    (do-game
+      (new-game {:runner {:hand ["Recon Drone"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Recon Drone")
+      (core/update-all-card-labels state)
+      (is (= "[trash]: Prevent damage"
+             (add-cost-to-label (first (:abilities (get-hardware state 0)))))))))

@@ -5,7 +5,7 @@
             [differ.core :as differ]
             [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card?]]
-            [jinteki.utils :refer [str->int is-tagged?] :as utils]
+            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
@@ -651,21 +651,6 @@
             label])
          servers)])))
 
-(defn add-cost-to-label
-  [ability]
-  (let [label (or (:label ability)
-                  (:msg ability)
-                  "")
-        cost-str (:cost-str ability)]
-    (cond
-      (and (not (s/blank? cost-str))
-           (not (s/blank? label)))
-      (str cost-str ": " (s/capitalize label))
-      (not (s/blank? label))
-      (s/capitalize label)
-      :else
-      label)))
-
 (defn runner-abs [card c-state runner-abilities subroutines title]
   (when (:runner-abilities @c-state)
     [:div.panel.blue-shade.runner-abilities {:style {:display "inline"}}
@@ -1190,8 +1175,6 @@
                                   "encounter"
                                   :else
                                   "")}]])
-
-(enable-console-print!)
 
 (defn server-view [{:keys [server central-view run]} opts]
   (let [content (:content server)

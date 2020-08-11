@@ -66,3 +66,32 @@
   (or (:isadmin user)
       (:ismoderator user)
       (:tournament-organizer user)))
+
+(defn capitalize [string]
+  (if (pos? (count string))
+    (str (s/upper-case (first string)) (subs string 1))
+    ""))
+
+(defn decapitalize [string]
+  (if (pos? (count string))
+    (str (s/lower-case (first string)) (subs string 1))
+    ""))
+
+(defn make-label
+  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
+  [ability]
+  (capitalize (or (:label ability)
+                  (and (string? (:msg ability))
+                       (:msg ability))
+                  "")))
+
+(defn add-cost-to-label
+  [ability]
+  (let [label (make-label ability)
+        cost-label (:cost-label ability)]
+    (cond
+      (and (not (s/blank? cost-label))
+           (not (s/blank? label)))
+      (str cost-label ": " label)
+      :else
+      label)))

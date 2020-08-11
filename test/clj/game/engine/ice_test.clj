@@ -26,10 +26,10 @@
         (core/rez state :corp tg)
         (is (= 1 (count (:subroutines (refresh tg)))))
         (run-on state :hq)
-        (is (= "add 1 strength" (-> (refresh buk) :abilities last :label)) "Not encountered an ice yet")
+        (is (= "Add 1 strength" (-> (refresh buk) :abilities last :label)) "Not encountered an ice yet")
         (core/rez state :corp p2)
         (run-continue state)
-        (is (= "2 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
+        (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
         (is (= 2 (count (:subroutines (refresh tg))))))))
   (testing "Also works on second encounter"
     (do-game
@@ -47,13 +47,13 @@
         (core/rez state :corp tg)
         (run-on state :hq)
         (run-continue state)
-        (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
+        (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
         (fire-subs state tg)
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :hq)
         (run-continue state)
-        (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities last :label))))))
+        (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label))))))
   (testing "Breaking restrictions on auto-pump-and-break - No auto pumping if (:breakable sub) does not return :unrestricted"
     (do-game
       (new-game {:corp {:hand ["Afshar"]}

@@ -72,12 +72,6 @@
     :else
     string))
 
-(defn capitalize [string]
-  (str (Character/toUpperCase (first string)) (subs string 1)))
-
-(defn decapitalize [string]
-  (str (Character/toLowerCase (first string)) (subs string 1)))
-
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))
 

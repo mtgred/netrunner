@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare any-flag-fn? init-trace optional-ability
+(declare any-flag-fn? init-trace optional-ability prompt!
          do-choices do-ability psi-game resolve-ability-eid resolve-psi resolve-trace
          check-optional check-psi check-trace check-prompt check-ability)
 

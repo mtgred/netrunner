@@ -141,9 +141,9 @@
                                          (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
               total-cost (when (and breaker-ability
                                     ability-uses-needed)
-                                 (if x-breaker
-                                   [:credit x-number]
-                                   (repeat ability-uses-needed (:cost breaker-ability))))]
+                           (if x-breaker
+                             [:credit x-number]
+                             (repeat ability-uses-needed (:cost breaker-ability))))]
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
@@ -156,9 +156,8 @@
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
-                                             :label (str (when (seq total-cost)
-                                                           (str (build-cost-label total-cost) ": "))
-                                                         "Match strength and fully break "
+                                             :cost total-cost
+                                             :label (str "Match strength and fully break "
                                                          (:title current-ice))}])))
                             abs)))))})
 

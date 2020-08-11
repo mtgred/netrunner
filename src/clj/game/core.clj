@@ -21,14 +21,30 @@
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
-            [game.quotes :as quotes])
+            [game.quotes :as quotes]
+            [game.cost-interfaces :refer :all])
   (:import [game.core.state State]
            [game.core.player Corp Runner]
-           [game.core.card Card]))
+           [game.core.card Card]
+           [game.cost_interfaces Click Credit Trash Forfeit ForfeitSelf Tag
+            ReturnToHand RemoveFromGame RfgProgram
+            TrashInstalledRunnerCard TrashInstalledHardware TrashInstalledProgram TrashInstalledResource TrashInstalledConnection
+            TrashRezzedIce TrashFromDeck TrashFromHand RandomlyTrashFromHand TrashEntireHand
+            TrashHardwareFromHand TrashProgramFromHand TrashResourceFromHand
+            NetDamage MeatDamage BrainDamage
+            ShuffleInstalledToDeck AddInstalledToBottomOfDeck
+            AnyAgendaCounter AnyVirusCounter AdvancementCounter AgendaCounter PowerCounter VirusCounter]))
 
 (load "core/events")       ; triggering of events
 (load "core/cards")        ; retrieving and updating cards
-(load "core/costs")        ; application of costs to play
+(load "core/gaining")      ; gain/lose credits and clicks and other base values
+
+;; Cost section
+(load "core/costs/cost_impls") ; implementations of cost functions
+(load "core/costs/payment") ; payment related functions
+(load "core/costs/cost_labels") ; cost-aware ability label generation and application
+(load "core/costs/cost_generation") ; state-aware cost-generating functions
+
 (load "core/rules")        ; core game rules
 (load "core/trashing")     ; trashing cards
 (load "core/turns")        ; the turn sequence

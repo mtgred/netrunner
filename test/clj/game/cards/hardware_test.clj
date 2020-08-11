@@ -3302,7 +3302,7 @@
           "Corroder is installed for free"
           (card-ability state :runner (get-hardware state 0) 0)
           ;; Issue #4889
-          (is (= "Choose 1 program to trash" (:msg (prompt-map :runner)))
+          (is (= "Choose 1 installed program to trash" (:msg (prompt-map :runner)))
               "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
         (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))

@@ -477,8 +477,7 @@
         :breaks subtype
         :break-cost cost
         :additional-ability (:additional-ability args)
-        :label (str (when cost (str (build-cost-label cost) ": "))
-                    (or (:label args)
+        :label (str (or (:label args)
                         (str "break "
                              (when (< 1 n) "up to ")
                              (if (pos? n) n "any number of")
@@ -580,18 +579,16 @@
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
-                                             :label (str (when (seq total-cost)
-                                                           (str (build-cost-label total-cost) ": "))
-                                                         (if (pos? times-pump)
+                                             :cost total-cost
+                                             :label (str (if (pos? times-pump)
                                                            "Match strength and fully break "
                                                            "Fully break ")
                                                          (:title current-ice))}])
                                          (when (and (pos? times-pump)
                                                     (can-pay? state side eid card total-pump-cost))
                                            [{:dynamic :auto-pump
-                                             :label (str (when (seq total-pump-cost)
-                                                           (str (build-cost-label total-pump-cost) ": "))
-                                                         "Match strength of " (:title current-ice))}])))
+                                             :cost total-pump-cost
+                                             :label (str "Match strength of " (:title current-ice))}])))
                             abs)))))})
 
 ;; Takes a a card definition, and returns a new card definition that
