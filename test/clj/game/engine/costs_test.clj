@@ -1,5 +1,6 @@
 (ns game.engine.costs-test
   (:require [game.core :as core]
+            [game.costs :refer :all]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -43,25 +44,25 @@
 
 (deftest merge-and-convert-costs
   (testing "No defaults, already merged"
-    (is (= [(core/->Credit 1)] (core/merge-and-convert-costs [[:credit 1]]))))
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [[:credit 1]]))))
   (testing "Costs are already flattened"
-    (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click 1]]))))
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click 1]]))))
   (testing "Passed as a flattened vec"
-    (is (= [(core/->Credit 1)] (core/merge-and-convert-costs [:credit 1]))))
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [:credit 1]))))
   (testing "Default type is only element"
-    (is (= [(core/->Credit 1)] (core/merge-and-convert-costs [[:credit]]))))
+    (is (= [(->Credit 1)] (core/merge-and-convert-costs [[:credit]]))))
   (testing "Default plus explicit"
-    (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-and-convert-costs [[:click :credit 1]]))))
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:click :credit 1]]))))
   (testing "Costs ending with defaults expand"
-    (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click]]))))
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:credit 1 :click]]))))
   (testing "Costs aren't reordered"
-    (is (not= [(core/->Credit 1) (core/->Click 1)] (core/merge-and-convert-costs [[:click 1 :credit 1]]))))
+    (is (not= [(->Credit 1) (->Click 1)] (core/merge-and-convert-costs [[:click 1 :credit 1]]))))
   (testing "Costs with all defaults are expanded"
-    (is (= [(core/->Click 1) (core/->Credit 1)] (core/merge-and-convert-costs [[:click :credit]]))))
+    (is (= [(->Click 1) (->Credit 1)] (core/merge-and-convert-costs [[:click :credit]]))))
   (testing "Costs are combined"
-    (is (= [(core/->Click 4) (core/->Credit 2)] (core/merge-and-convert-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
+    (is (= [(->Click 4) (->Credit 2)] (core/merge-and-convert-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
   (testing "Deeply nested costs are flattened"
-    (is (= [(core/->Click 3)] (core/merge-and-convert-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
+    (is (= [(->Click 3)] (core/merge-and-convert-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
   (testing "Empty costs return an empty list"
     (is (= [] (core/merge-and-convert-costs []))))
   (testing "nil costs return an empty list"

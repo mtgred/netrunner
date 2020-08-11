@@ -6,42 +6,34 @@
          lose-tags number-of-virus-counters
          pick-virus-counters-to-spend)
 
-(defprotocol CostFns
-  (cost-name [this])
-  (label [this])
-  (rank [this])
-  (value [this])
-  (payable? [this state side eid card])
-  (handler [this state side eid card actions]))
-
 (def cost-records {})
 
 (defn register-cost
   [cost-constructor]
   (alter-var-root #'cost-records assoc (cost-name (cost-constructor 1)) cost-constructor))
 
-(defrecord Click [amount]
+(extend-type Click
   CostFns
   (cost-name [this] :click)
   (label [this] (->> (repeat "[Click]")
-                     (take amount)
+                     (take (:amount this))
                      (apply str)))
   (rank [this] 1)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (get-in @state [side :click]) amount)))
+    (<= 0 (- (get-in @state [side :click]) (:amount this))))
   (handler [this state side eid card actions]
     (let [a (keep :action actions)]
       (when (not (some #{:steal-cost :bioroid-cost} a))
         (swap! state assoc :click-state (dissoc @state :log)))
-      (swap! state update-in [:stats side :lose :click] (fnil + 0) amount)
-      (deduct state side [:click amount])
+      (swap! state update-in [:stats side :lose :click] (fnil + 0) (:amount this))
+      (deduct state side [:click (:amount this)])
       (wait-for (trigger-event-sync state side (make-eid state eid)
                                     (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                    a amount)
+                                    a (:amount this))
                 (swap! state assoc-in [side :register :spent-click] true)
                 (complete-with-result state side eid (str "spends " (label this)))))))
-(register-cost #'->Click)
+(register-cost ->Click)
 
 (defn all-active-pay-credit-cards
   [state side eid card]
@@ -72,31 +64,31 @@
                    (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
           (reduce +))))
 
-(defrecord Credit [amount]
+(extend-type Credit
   CostFns
   (cost-name [this] :credit)
-  (label [this] (str amount " [Credits]"))
+  (label [this] (str (:amount this) " [Credits]"))
   (rank [this] 2)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (or (<= 0 (- (get-in @state [side :credit]) amount))
-        (<= 0 (- (total-available-credits state side eid card) amount))))
+    (or (<= 0 (- (get-in @state [side :credit]) (:amount this)))
+        (<= 0 (- (total-available-credits state side eid card) (:amount this)))))
   (handler [this state side eid card actions]
     (let [provider-func #(eligible-pay-credit-cards state side eid card)]
       (cond
-        (and (pos? amount)
+        (and (pos? (:amount this))
              (pos? (count (provider-func))))
-        (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
-                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+        (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (:amount this)) card nil)
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) (:amount this))
                   (complete-with-result state side eid (str "pays " (:msg async-result))))
-        (pos? amount)
-        (do (lose state side :credit amount)
-            (complete-with-result state side eid (str "pays " amount " [Credits]")))
+        (pos? (:amount this))
+        (do (lose state side :credit (:amount this))
+            (complete-with-result state side eid (str "pays " (:amount this) " [Credits]")))
         :else
         (complete-with-result state side eid (str "pays 0 [Credits]"))))))
-(register-cost #'->Credit)
+(register-cost ->Credit)
 
-(defrecord Trash [amount]
+(extend-type Trash
   CostFns
   (cost-name [this] :trash)
   (label [this] "[trash]")
@@ -108,7 +100,7 @@
     (wait-for (trash state side card {:cause :ability-cost
                                       :unpreventable true})
               (complete-with-result state side eid (str "trashes " (:title card))))))
-(register-cost #'->Trash)
+(register-cost ->Trash)
 
 (defn forfeit-multiple
   [state side eid agendas acc]
@@ -118,31 +110,31 @@
       (wait-for (forfeit state side agenda {:msg false})
                 (forfeit-multiple state side eid (rest agendas) (conj acc agenda))))))
 
-(defrecord Forfeit [amount]
+(extend-type Forfeit
   CostFns
   (cost-name [this] :forfeit)
-  (label [this] (str "forfeit " (quantify amount "Agenda")))
+  (label [this] (str "forfeit " (quantify (:amount this) "Agenda")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (get-in @state [side :scored])) amount)))
+    (<= 0 (- (count (get-in @state [side :scored])) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "Agenda") " to forfeit")
+      {:prompt (str "Choose " (quantify (:amount this) "Agenda") " to forfeit")
        :async true
-       :choices {:max amount
+       :choices {:max (:amount this)
                  :all true
                  :card #(is-scored? state side %)}
        :effect (req (wait-for (forfeit-multiple state side targets [])
                               (complete-with-result
                                 state side eid
-                                (str "forfeits " (quantify amount "agenda")
+                                (str "forfeits " (quantify (:amount this) "agenda")
                                      " (" (join ", " (map :title async-result)) ")"))))}
       card nil)))
-(register-cost #'->Forfeit)
+(register-cost ->Forfeit)
 
-(defrecord ForfeitSelf [amount]
+(extend-type ForfeitSelf
   CostFns
   (cost-name [this] :forfeit-self)
   (label [this] "forfeit this Agenda")
@@ -155,22 +147,22 @@
               (complete-with-result
                 state side eid
                 (str "forfeits " (:title card))))))
-(register-cost #'->ForfeitSelf)
+(register-cost ->ForfeitSelf)
 
-(defrecord Tag [amount]
+(extend-type Tag
   CostFns
   (cost-name [this] :tag)
-  (label [this] (str "remove " (quantify amount "tag")))
+  (label [this] (str "remove " (quantify (:amount this) "tag")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (get-in @state [:runner :tag :base] 0) amount)))
+    (<= 0 (- (get-in @state [:runner :tag :base] 0) (:amount this))))
   (handler [this state side eid card actions]
-    (wait-for (lose-tags state side amount)
-              (complete-with-result state side eid (str "removes " (quantify amount "tag"))))))
-(register-cost #'->Tag)
+    (wait-for (lose-tags state side (:amount this))
+              (complete-with-result state side eid (str "removes " (quantify (:amount this) "tag"))))))
+(register-cost ->Tag)
 
-(defrecord ReturnToHand [amount]
+(extend-type ReturnToHand
   CostFns
   (cost-name [this] :return-to-hand)
   (label [this] "return this card to your hand")
@@ -184,9 +176,9 @@
       state side eid
       (str "returns " (:title card)
            " to " (if (= :corp side) "HQ" "their grip")))))
-(register-cost #'->ReturnToHand)
+(register-cost ->ReturnToHand)
 
-(defrecord RemoveFromGame [amount]
+(extend-type RemoveFromGame
   CostFns
   (cost-name [this] :remove-from-game)
   (label [this] "remove this card from the game")
@@ -199,146 +191,146 @@
     (complete-with-result
       state side eid
       (str "removes " (:title card) " from the game"))))
-(register-cost #'->RemoveFromGame)
+(register-cost ->RemoveFromGame)
 
-(defrecord RfgProgram [amount]
+(extend-type RfgProgram
   CostFns
   (cost-name [this] :rfg-program)
-  (label [this] (str "remove " (quantify amount "installed program")
+  (label [this] (str "remove " (quantify (:amount this) "installed program")
                      " from the game"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
+    (<= 0 (- (count (all-installed-runner-type state :program)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "program")
+      {:prompt (str "Choose " (quantify (:amount this) "program")
                     " to remove from the game")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? program? (complement facedown?))}
        :async true
        :effect (req (doseq [t targets]
                       (move state side (assoc-in t [:persistent :from-cid] (:cid card)) :rfg))
                     (complete-with-result
                       state side eid
-                      (str "removes " (quantify amount "installed program")
+                      (str "removes " (quantify (:amount this) "installed program")
                            " from the game"
                            " (" (join ", " (map #(card-str state %) targets)) ")")))}
       card nil)))
-(register-cost #'->RfgProgram)
+(register-cost ->RfgProgram)
 
-(defrecord TrashInstalledRunnerCard [amount]
+(extend-type TrashInstalledRunnerCard
   CostFns
   (cost-name [this] :installed)
-  (label [this] (str "trash " (quantify amount "installed card")))
+  (label [this] (str "trash " (quantify (:amount this) "installed card")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed state side)) amount)))
+    (<= 0 (- (count (all-installed state side)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed card") " to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed card") " to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? runner?)}
        :async true
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed card")
+                                (str "trashes " (quantify (:amount this) "installed card")
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashInstalledRunnerCard)
+(register-cost ->TrashInstalledRunnerCard)
 
-(defrecord TrashInstalledHardware [amount]
+(extend-type TrashInstalledHardware
   CostFns
   (cost-name [this] :hardware)
-  (label [this] (str "trash " (quantify amount "installed piece") " of hardware"))
+  (label [this] (str "trash " (quantify (:amount this) "installed piece") " of hardware"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
+    (<= 0 (- (count (all-installed-runner-type state :hardware)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed piece") " of hardware to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed piece") " of hardware to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? hardware? (complement facedown?))}
        :async true
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed piece") " of hardware"
+                                (str "trashes " (quantify (:amount this) "installed piece") " of hardware"
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashInstalledHardware)
+(register-cost ->TrashInstalledHardware)
 
-(defrecord TrashInstalledProgram [amount]
+(extend-type TrashInstalledProgram
   CostFns
   (cost-name [this] :program)
-  (label [this] (str "trash " (quantify amount "installed program")))
+  (label [this] (str "trash " (quantify (:amount this) "installed program")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
+    (<= 0 (- (count (all-installed-runner-type state :program)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed program") " to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed program") " to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? program? (complement facedown?))}
        :async true
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed program")
+                                (str "trashes " (quantify (:amount this) "installed program")
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashInstalledProgram)
+(register-cost ->TrashInstalledProgram)
 
-(defrecord TrashInstalledResource [amount]
+(extend-type TrashInstalledResource
   CostFns
   (cost-name [this] :resource)
-  (label [this] (str "trash " (quantify amount "installed resource")))
+  (label [this] (str "trash " (quantify (:amount this) "installed resource")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed-runner-type state :resource)) amount)))
+    (<= 0 (- (count (all-installed-runner-type state :resource)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed resource") " to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed resource") " to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? resource? (complement facedown?))}
        :async true
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed resource")
+                                (str "trashes " (quantify (:amount this) "installed resource")
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashInstalledResource)
+(register-cost ->TrashInstalledResource)
 
-(defrecord TrashInstalledConnection [amount]
+(extend-type TrashInstalledConnection
   CostFns
   (cost-name [this] :connection)
-  (label [this] (str "trash " (str "trash " (quantify amount "installed connection resource"))))
+  (label [this] (str "trash " (str "trash " (quantify (:amount this) "installed connection resource"))))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
+    (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed connection resource") " to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed connection resource") " to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed?
                                    resource?
                                    #(has-subtype? % "Connection")
@@ -347,59 +339,59 @@
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed connection resource")
+                                (str "trashes " (quantify (:amount this) "installed connection resource")
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashInstalledConnection)
+(register-cost ->TrashInstalledConnection)
 
-(defrecord TrashRezzedIce [amount]
+(extend-type TrashRezzedIce
   CostFns
   (cost-name [this] :ice)
-  (label [this] (str "trash " (str "trash " (quantify amount "installed rezzed ICE" ""))))
+  (label [this] (str "trash " (str "trash " (quantify (:amount this) "installed rezzed ICE" ""))))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) amount)))
+    (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "installed rezzed ICE" "") " to trash")
+      {:prompt (str "Choose " (quantify (:amount this) "installed rezzed ICE" "") " to trash")
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred installed? rezzed? ice?)}
        :async true
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
                                 state side eid
-                                (str "trashes " (quantify amount "installed rezzed ICE" "")
+                                (str "trashes " (quantify (:amount this) "installed rezzed ICE" "")
                                      " (" (join ", " (map #(card-str state %) targets)) ")"))))}
       card nil)))
-(register-cost #'->TrashRezzedIce)
+(register-cost ->TrashRezzedIce)
 
-(defrecord TrashFromDeck [amount]
+(extend-type TrashFromDeck
   CostFns
   (cost-name [this] :trash-from-deck)
-  (label [this] (str "trash " (quantify amount "card") " from the top of your deck"))
+  (label [this] (str "trash " (quantify (:amount this) "card") " from the top of your deck"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (get-in @state [side :deck])) amount)))
+    (<= 0 (- (count (get-in @state [side :deck])) (:amount this))))
   (handler [this state side eid card actions]
-    (wait-for (mill state side side amount)
+    (wait-for (mill state side side (:amount this))
               (complete-with-result
                 state side eid
-                (str "trashes " (quantify amount "card") " from the top of "
+                (str "trashes " (quantify (:amount this) "card") " from the top of "
                      (if (= :corp side) "R&D" "the stack"))))))
-(register-cost #'->TrashFromDeck)
+(register-cost ->TrashFromDeck)
 
-(defrecord TrashFromHand [amount]
+(extend-type TrashFromHand
   CostFns
   (cost-name [this] :trash-from-hand)
-  (label [this] (str "trash " (quantify amount "card") " from your hand"))
+  (label [this] (str "trash " (quantify (:amount this) "card") " from your hand"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (get-in @state [side :hand])) amount)))
+    (<= 0 (- (count (get-in @state [side :hand])) (:amount this))))
   (handler [this state side eid card actions]
     (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                           (in-hand? %))
@@ -407,37 +399,37 @@
           hand (if (= :corp side) "HQ" "their grip")]
       (continue-ability
         state side
-        {:prompt (str "Choose " (quantify amount "card") " in " prompt-hand " to trash")
+        {:prompt (str "Choose " (quantify (:amount this) "card") " in " prompt-hand " to trash")
          :choices {:all true
-                   :max amount
+                   :max (:amount this)
                    :card select-fn}
          :async true
          :effect (req (wait-for (trash-cards state side targets {:unpreventable true :seen false})
                                 (complete-with-result
                                   state side eid
-                                  (str "trashes " (quantify amount "card")
+                                  (str "trashes " (quantify (:amount this) "card")
                                        " (" (join ", " (map #(card-str state %) targets)) ")"
                                        " from " hand))))}
         nil nil))))
-(register-cost #'->TrashFromHand)
+(register-cost ->TrashFromHand)
 
-(defrecord RandomlyTrashFromHand [amount]
+(extend-type RandomlyTrashFromHand
   CostFns
   (cost-name [this] :randomly-trash-from-hand)
-  (label [this] (str "trash " (quantify amount "card") " randomly from your hand"))
+  (label [this] (str "trash " (quantify (:amount this) "card") " randomly from your hand"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (get-in @state [side :hand])) amount)))
+    (<= 0 (- (count (get-in @state [side :hand])) (:amount this))))
   (handler [this state side eid card actions]
-    (wait-for (discard-from-hand state side side amount)
+    (wait-for (discard-from-hand state side side (:amount this))
               (complete-with-result
                 state side eid
-                (str "trashes " (quantify amount "card") " randomly from "
+                (str "trashes " (quantify (:amount this) "card") " randomly from "
                      (if (= :corp side) "HQ" "the grip"))))))
-(register-cost #'->RandomlyTrashFromHand)
+(register-cost ->RandomlyTrashFromHand)
 
-(defrecord TrashEntireHand [amount]
+(extend-type TrashEntireHand
   CostFns
   (cost-name [this] :trash-entire-hand)
   (label [this] "trash all cards in your hand")
@@ -454,23 +446,23 @@
                        (when (and (= :runner side)
                                   (pos? (count async-result)))
                          (str " (" (join ", " (map :title async-result)) ")"))))))))
-(register-cost #'->TrashEntireHand)
+(register-cost ->TrashEntireHand)
 
-(defrecord TrashHardwareFromHand [amount]
+(extend-type TrashHardwareFromHand
   CostFns
   (cost-name [this] :trash-hardware-from-hand)
-  (label [this] (str "trash " (quantify amount "piece") " of hardware in your grip"))
+  (label [this] (str "trash " (quantify (:amount this) "piece") " of hardware in your grip"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) amount)))
+    (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "piece") " of hardware to trash from your grip")
+      {:prompt (str "Choose " (quantify (:amount this) "piece") " of hardware to trash from your grip")
        :async true
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred hardware? in-hand?)}
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
@@ -479,23 +471,23 @@
                                      " (" (join ", " (map :title targets)) ")"
                                      " from their grip"))))}
       nil nil)))
-(register-cost #'->TrashHardwareFromHand)
+(register-cost ->TrashHardwareFromHand)
 
-(defrecord TrashProgramFromHand [amount]
+(extend-type TrashProgramFromHand
   CostFns
   (cost-name [this] :trash-program-from-hand)
-  (label [this] (str "trash " (quantify amount "program") " in your grip"))
+  (label [this] (str "trash " (quantify (:amount this) "program") " in your grip"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount)))
+    (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "program") " to trash from your grip")
+      {:prompt (str "Choose " (quantify (:amount this) "program") " to trash from your grip")
        :async true
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred program? in-hand?)}
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
@@ -504,23 +496,23 @@
                                      " (" (join ", " (map :title targets)) ")"
                                      " from their grip"))))}
       nil nil)))
-(register-cost #'->TrashProgramFromHand)
+(register-cost ->TrashProgramFromHand)
 
-(defrecord TrashResourceFromHand [amount]
+(extend-type TrashResourceFromHand
   CostFns
   (cost-name [this] :trash-resource-from-hand)
-  (label [this] (str "trash " (quantify amount "resource") " in your grip"))
+  (label [this] (str "trash " (quantify (:amount this) "resource") " in your grip"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount)))
+    (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify amount "resource") " to trash from your grip")
+      {:prompt (str "Choose " (quantify (:amount this) "resource") " to trash from your grip")
        :async true
        :choices {:all true
-                 :max amount
+                 :max (:amount this)
                  :card (every-pred resource? in-hand?)}
        :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                               (complete-with-result
@@ -529,67 +521,67 @@
                                      " (" (join ", " (map :title targets)) ")"
                                      " from their grip"))))}
       nil nil)))
-(register-cost #'->TrashResourceFromHand)
+(register-cost ->TrashResourceFromHand)
 
-(defrecord NetDamage [amount]
+(extend-type NetDamage
   CostFns
   (cost-name [this] :net)
-  (label [this] (str "suffer " amount " net damage"))
+  (label [this] (str "suffer " (:amount this) " net damage"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= amount (count (get-in @state [:runner :hand]))))
+    (<= (:amount this) (count (get-in @state [:runner :hand]))))
   (handler [this state side eid card actions]
-    (wait-for (damage state side :net amount {:unpreventable true})
+    (wait-for (damage state side :net (:amount this) {:unpreventable true})
               (complete-with-result
                 state side eid
-                (str "suffers " amount " net damage")))))
-(register-cost #'->NetDamage)
+                (str "suffers " (:amount this) " net damage")))))
+(register-cost ->NetDamage)
 
-(defrecord MeatDamage [amount]
+(extend-type MeatDamage
   CostFns
   (cost-name [this] :meat)
-  (label [this] (str "suffer " amount " meat damage"))
+  (label [this] (str "suffer " (:amount this) " meat damage"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= amount (count (get-in @state [:runner :hand]))))
+    (<= (:amount this) (count (get-in @state [:runner :hand]))))
   (handler [this state side eid card actions]
-    (wait-for (damage state side :meat amount {:unpreventable true})
+    (wait-for (damage state side :meat (:amount this) {:unpreventable true})
               (complete-with-result
                 state side eid
-                (str "suffers " amount " meat damage")))))
-(register-cost #'->MeatDamage)
+                (str "suffers " (:amount this) " meat damage")))))
+(register-cost ->MeatDamage)
 
-(defrecord BrainDamage [amount]
+(extend-type BrainDamage
   CostFns
   (cost-name [this] :brain)
-  (label [this] (str "suffer " amount " brain damage"))
+  (label [this] (str "suffer " (:amount this) " brain damage"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= amount (count (get-in @state [:runner :hand]))))
+    (<= (:amount this) (count (get-in @state [:runner :hand]))))
   (handler [this state side eid card actions]
-    (wait-for (damage state side :brain amount {:unpreventable true})
+    (wait-for (damage state side :brain (:amount this) {:unpreventable true})
               (complete-with-result
                 state side eid
-                (str "suffers " amount " brain damage")))))
-(register-cost #'->BrainDamage)
+                (str "suffers " (:amount this) " brain damage")))))
+(register-cost ->BrainDamage)
 
-(defrecord ShuffleInstalledToDeck [amount]
+(extend-type ShuffleInstalledToDeck
   CostFns
   (cost-name [this] :shuffle-installed-to-stack)
-  (label [this] (str "shuffle " (quantify amount "installed card") " into your deck"))
+  (label [this] (str "shuffle " (quantify (:amount this) "installed card") " into your deck"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed state side)) amount)))
+    (<= 0 (- (count (all-installed state side)) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state :runner
-      {:prompt (str "Choose " (quantify amount "installed card")
+      {:prompt (str "Choose " (quantify (:amount this) "installed card")
                     " to shuffle into " (if (= :corp side) "R&D" "the stack"))
-       :choices {:max amount
+       :choices {:max (:amount this)
                  :all true
                  :card (every-pred installed? (if (= :corp side) corp? runner?))}
        :async true
@@ -598,27 +590,27 @@
                     (shuffle! state side :deck)
                     (complete-with-result
                       state side eid
-                      (str "shuffles " (quantify amount "card")
+                      (str "shuffles " (quantify (:amount this) "card")
                            " (" (join ", " (map :title targets)) ")"
                            " into " (if (= :corp side) "R&D" "the stack"))))}
       nil nil)))
-(register-cost #'->ShuffleInstalledToDeck)
+(register-cost ->ShuffleInstalledToDeck)
 
-(defrecord AddInstalledToBottomOfDeck [amount]
+(extend-type AddInstalledToBottomOfDeck
   CostFns
   (cost-name [this] :add-installed-to-bottom-of-deck)
-  (label [this] (str "add " (quantify amount "installed card") " to the bottom of your deck"))
+  (label [this] (str "add " (quantify (:amount this) "installed card") " to the bottom of your deck"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (count (all-installed state side)) amount)))
+    (<= 0 (- (count (all-installed state side)) (:amount this))))
   (handler [this state side eid card actions]
     (let [deck (if (= :corp side) "R&D" "the stack")]
       (continue-ability
         state side
-        {:prompt (str "Choose " (quantify amount "installed card")
+        {:prompt (str "Choose " (quantify (:amount this) "installed card")
                       " to move to the bottom of " deck)
-         :choices {:max amount
+         :choices {:max (:amount this)
                    :all true
                    :card (every-pred installed? (if (= :corp side) corp? runner?))}
          :async true
@@ -626,20 +618,20 @@
                         (move state side target :deck))
                       (complete-with-result
                         state side eid
-                        (str "adds " (quantify amount "installed card")
+                        (str "adds " (quantify (:amount this) "installed card")
                              " to the bottom of " deck
                              " (" (join ", " (map #(card-str state %) targets)) ")")))}
         card nil))))
-(register-cost #'->AddInstalledToBottomOfDeck)
+(register-cost ->AddInstalledToBottomOfDeck)
 
-(defrecord AnyAgendaCounter [amount]
+(extend-type AnyAgendaCounter
   CostFns
   (cost-name [this] :any-agenda-counter)
   (label [this] "any agenda counter")
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount)))
+    (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) (:amount this))))
   (handler [this state side eid card actions]
     (continue-ability
       state side
@@ -652,109 +644,110 @@
                        (complete-with-result
                          eid (str "spends an agenda counter from on " (:title target))))}
       nil nil)))
-(register-cost #'->AnyAgendaCounter)
+(register-cost ->AnyAgendaCounter)
 
-(defrecord AnyVirusCounter [amount]
+(extend-type AnyVirusCounter
   CostFns
   (cost-name [this] :any-virus-counter)
-  (label [this] (str "any " (quantify amount "virus counter")))
+  (label [this] (str "any " (quantify (:amount this) "virus counter")))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (number-of-virus-counters state) amount)))
+    (<= 0 (- (number-of-virus-counters state) (:amount this))))
   (handler [this state side eid card actions]
-    (wait-for (resolve-ability state side (pick-virus-counters-to-spend amount) card nil)
+    (wait-for (resolve-ability state side (pick-virus-counters-to-spend (:amount this)) card nil)
               (complete-with-result state side eid (str "spends " (:msg async-result))))))
-(register-cost #'->AnyVirusCounter)
+(register-cost ->AnyVirusCounter)
 
-(defrecord AdvancementCounter [amount]
+(extend-type AdvancementCounter
   CostFns
   (cost-name [this] :advancement)
-  (label [this] (if (< 1 amount)
-                  (quantify amount "hosted advancement counter")
+  (label [this] (if (< 1 (:amount this))
+                  (quantify (:amount this) "hosted advancement counter")
                   "hosted advancement counter"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (get-counters card :advancement) amount)))
+    (<= 0 (- (get-counters card :advancement) (:amount this))))
   (handler [this state side eid card actions]
-    (update! state side (update card :advance-counter - amount))
+    (update! state side (update card :advance-counter - (:amount this)))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
                 state side eid
                 (str "spends "
-                     (quantify amount (str "hosted advancement counter"))
+                     (quantify (:amount this) (str "hosted advancement counter"))
                      " from on " (:title card))))))
-(register-cost #'->AdvancementCounter)
+(register-cost ->AdvancementCounter)
 
-(defrecord AgendaCounter [amount]
+(extend-type AgendaCounter
   CostFns
   (cost-name [this] :agenda)
-  (label [this] (if (< 1 amount)
-                  (quantify amount "hosted agenda counter")
+  (label [this] (if (< 1 (:amount this))
+                  (quantify (:amount this) "hosted agenda counter")
                   "hosted agenda counter"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (get-counters card :agenda) amount)))
+    (<= 0 (- (get-counters card :agenda) (:amount this))))
   (handler [this state side eid card actions]
-    (update! state side (update-in card [:counter :agenda] - amount))
+    (update! state side (update-in card [:counter :agenda] - (:amount this)))
     (wait-for (trigger-event-sync state side :agenda-counter-spent (get-card state card))
               (complete-with-result
                 state side eid
                 (str "spends "
-                     (quantify amount (str "hosted agenda counter"))
+                     (quantify (:amount this) (str "hosted agenda counter"))
                      " from on " (:title card))))))
-(register-cost #'->AgendaCounter)
+(register-cost ->AgendaCounter)
 
-(defrecord PowerCounter [amount]
+(extend-type PowerCounter
   CostFns
   (cost-name [this] :power)
-  (label [this] (if (< 1 amount)
-                  (quantify amount "hosted power counter")
+  (label [this] (if (< 1 (:amount this))
+                  (quantify (:amount this) "hosted power counter")
                   "hosted power counter"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
-    (<= 0 (- (get-counters card :power) amount)))
+    (<= 0 (- (get-counters card :power) (:amount this))))
   (handler [this state side eid card actions]
-    (update! state side (update-in card [:counter :power] - amount))
+    (update! state side (update-in card [:counter :power] - (:amount this)))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
                 state side eid
                 (str "spends "
-                     (quantify amount (str "hosted power counter"))
+                     (quantify (:amount this) (str "hosted power counter"))
                      " from on " (:title card))))))
-(register-cost #'->PowerCounter)
+(register-cost ->PowerCounter)
 
-(defrecord VirusCounter [amount]
+(extend-type VirusCounter
   CostFns
   (cost-name [this] :virus)
-  (label [this] (if (< 1 amount)
-                  (quantify amount "hosted virus counter")
+  (label [this] (if (< 1 (:amount this))
+                  (quantify (:amount this) "hosted virus counter")
                   "hosted virus counter"))
   (rank [this] 4)
-  (value [this] amount)
+  (value [this] (:amount this))
   (payable? [this state side eid card]
     (<= 0 (- (+ (get-counters card :virus)
                 (->> (all-active-installed state :runner)
                      (filter #(= "Hivemind" (:title %)))
                      (map #(get-counters % :virus))
                      (reduce +)))
-             amount)))
+             (:amount this))))
   (handler [this state side eid card actions]
-    (update! state side (update-in card [:counter :virus] - amount))
+    (update! state side (update-in card [:counter :virus] - (:amount this)))
     (wait-for (trigger-event-sync state side :counter-added (get-card state card))
               (complete-with-result
                 state side eid
                 (str "spends "
-                     (quantify amount (str "hosted virus counter"))
+                     (quantify (:amount this) (str "hosted virus counter"))
                      " from on " (:title card))))))
-(register-cost #'->VirusCounter)
+(register-cost ->VirusCounter)
 
 (defn create-cost
   [cost-kw qty]
   (let [constructor (get cost-records cost-kw)]
+    (if (nil? constructor) (println cost-kw))
     (constructor qty)))
 
 (defn convert-to-cost-records

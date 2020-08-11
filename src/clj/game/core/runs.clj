@@ -2,9 +2,9 @@
 
 (declare any-flag-fn? clear-run-register! run-cleanup gain-run-credits
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
-         card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
+         card-name can-access-loud can-steal? prevent-jack-out card-flag? can-run?
          update-all-agenda-points reset-all-ice no-action make-run encounter-ends
-         pass-ice do-access successful-run)
+         pass-ice do-access successful-run unknown->kw)
 
 (defn add-run-effect
   [state side run-effect]
