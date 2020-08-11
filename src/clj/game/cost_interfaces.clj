@@ -39,5 +39,9 @@
   (label [this])
   (rank [this])
   (value [this])
-  (payable? [this state side eid card])
-  (handler [this state side eid card actions]))
+  (payable? [this state side card]
+            [this state side eid card]
+            [this state side eid card extra])
+  (handler [this state side card actions]
+           [this state side eid card actions]
+           [this state side eid card actions extra]))

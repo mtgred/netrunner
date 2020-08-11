@@ -86,7 +86,7 @@
                      ~@expr))
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
-         totake (if (= 'apply (first action)) 4 3)
+         totake (if (#{'apply 'handler 'payable?} (first action)) 4 3)
          th (nth action totake)]
      `(let [~'use-eid# (and (map? ~th) (:eid ~th))
             ~'new-eid# (if ~'use-eid# ~th (game.core.eid/make-eid ~'state))]

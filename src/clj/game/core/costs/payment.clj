@@ -78,12 +78,8 @@
   [state side eid costs card actions msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
-    (let [new-eid (make-eid state eid)
-          reqmac (fn [st si e]
-                   (let [async-result (:result e)]
-                     (pay-next st si eid (rest costs) card actions (conj msgs async-result))))]
-      (register-effect-completed state side new-eid reqmac)
-      (handler (first costs) state side new-eid card actions))))
+    (wait-for (handler (first costs) state side (make-eid state eid) card actions)
+              (pay-next state side eid (rest costs) card actions (conj msgs async-result)))))
 
 (defn sentence-join
   [strings]
