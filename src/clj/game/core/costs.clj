@@ -1,11 +1,5 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! damage mill is-scored? system-msg
-         unknown->kw discard-from-hand card-str trash trash-cards
-         all-installed-runner-type pick-credit-providing-cards all-active
-         eligible-pay-credit-cards lose-tags number-of-virus-counters
-         pick-virus-counters-to-spend)
-
 (defn- deduct
   "Deduct the value from the player's attribute."
   [state side [attr value]]
@@ -153,27 +147,11 @@
   (= [[:click 4] [:credit 2]] (merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))
   (= [[:click 4] [:credit 2]] (merge-costs [[:credit 1] [:credit 1] [:click 1] [:click 3]])))
 
-(defn- flag-stops-pay?
-  "Checks installed cards to see if payment type is prevented by a flag"
-  [state side cost-type]
-  (let [flag (keyword (str "cannot-pay-" (name cost-type)))]
-    (some #(card-flag? % flag true) (all-active-installed state side))))
-
-(defn total-available-credits
-  [state side eid card]
-  (+ (get-in @state [side :credit])
-     (->> (eligible-pay-credit-cards state side eid card)
-          (map #(+ (get-counters % :recurring)
-                   (get-counters % :credit)
-                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
-          (reduce +))))
-
 (defn build-spend-msg
   "Constructs the spend message for specified cost-str and verb(s)."
   ([cost-str verb] (build-spend-msg cost-str verb nil))
   ([cost-str verb verb2]
-   (if (or (not (instance? String cost-str))
-           (= "" cost-str))
+   (if (string/blank? cost-str)
      (str (or verb2 (str verb "s")) " ")
      (str cost-str " to " verb " "))))
 

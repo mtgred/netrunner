@@ -1,5 +1,11 @@
 (in-ns 'game.core)
 
+(declare forfeit damage mill is-scored?
+         discard-from-hand card-str trash trash-cards
+         all-installed-runner-type pick-credit-providing-cards all-active
+         lose-tags number-of-virus-counters
+         pick-virus-counters-to-spend)
+
 (defprotocol CostFns
   (cost-name [this])
   (label [this])
@@ -56,6 +62,15 @@
        :custom
        ((-> % card-def :interactions :pay-credits :req) state side eid % [card]))
     (all-active-pay-credit-cards state side eid card)))
+
+(defn total-available-credits
+  [state side eid card]
+  (+ (get-in @state [side :credit])
+     (->> (eligible-pay-credit-cards state side eid card)
+          (map #(+ (get-counters % :recurring)
+                   (get-counters % :credit)
+                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
+          (reduce +))))
 
 (defrecord Credit [amount]
   CostFns
@@ -811,7 +826,7 @@
   (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
      (build-cost-label [[:click 1] [:click 3] [:net 1] [:credit 1]])))
 
-(defn- flag-stops-pay?-2
+(defn- flag-stops-pay?
   "Checks installed cards to see if payment type is prevented by a flag"
   [state side cost]
   (let [flag (keyword (str "cannot-pay-" (name (cost-name cost))))]
@@ -826,7 +841,7 @@
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
          costs (merge-and-convert-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
-     (if (every? #(and (not (flag-stops-pay?-2 state side %))
+     (if (every? #(and (not (flag-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
        costs
