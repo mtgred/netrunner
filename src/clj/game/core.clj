@@ -37,8 +37,14 @@
 
 (load "core/events")       ; triggering of events
 (load "core/cards")        ; retrieving and updating cards
-(load "core/costs")        ; application of costs to play
-(load "core/cost_impls")   ; implementation of costs
+(load "core/gaining")      ; gain/lose credits and clicks and other base values
+
+;; Cost section
+(load "core/costs/cost_impls") ; implementations of cost functions
+(load "core/costs/payment") ; payment related functions
+(load "core/costs/cost_labels") ; cost-aware ability label generation and application
+(load "core/costs/cost_generation") ; state-aware cost-generating functions
+
 (load "core/rules")        ; core game rules
 (load "core/trashing")     ; trashing cards
 (load "core/turns")        ; the turn sequence
