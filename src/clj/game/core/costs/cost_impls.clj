@@ -6,13 +6,25 @@
          lose-tags number-of-virus-counters
          pick-virus-counters-to-spend)
 
+(defprotocol CostFns
+  (cost-name [this])
+  (label [this])
+  (rank [this])
+  (value [this])
+  (payable? [this state side card]
+            [this state side eid card]
+            [this state side eid card extra])
+  (handler [this state side card actions]
+           [this state side eid card actions]
+           [this state side eid card actions extra]))
+
 (def cost-records {})
 
 (defn register-cost
   [cost-constructor]
   (alter-var-root #'cost-records assoc (cost-name (cost-constructor 1)) cost-constructor))
 
-(extend-type Click
+(defrecord Click [amount]
   CostFns
   (cost-name [this] :click)
   (label [this] (->> (repeat "[Click]")
@@ -64,7 +76,7 @@
                    (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
           (reduce +))))
 
-(extend-type Credit
+(defrecord Credit [amount]
   CostFns
   (cost-name [this] :credit)
   (label [this] (str (:amount this) " [Credits]"))
@@ -88,7 +100,7 @@
         (complete-with-result state side eid (str "pays 0 [Credits]"))))))
 (register-cost ->Credit)
 
-(extend-type Trash
+(defrecord Trash [amount]
   CostFns
   (cost-name [this] :trash)
   (label [this] "[trash]")
@@ -110,7 +122,7 @@
       (wait-for (forfeit state side agenda {:msg false})
                 (forfeit-multiple state side eid (rest agendas) (conj acc agenda))))))
 
-(extend-type Forfeit
+(defrecord Forfeit [amount]
   CostFns
   (cost-name [this] :forfeit)
   (label [this] (str "forfeit " (quantify (:amount this) "Agenda")))
@@ -134,7 +146,7 @@
       card nil)))
 (register-cost ->Forfeit)
 
-(extend-type ForfeitSelf
+(defrecord ForfeitSelf [amount]
   CostFns
   (cost-name [this] :forfeit-self)
   (label [this] "forfeit this Agenda")
@@ -149,7 +161,7 @@
                 (str "forfeits " (:title card))))))
 (register-cost ->ForfeitSelf)
 
-(extend-type Tag
+(defrecord Tag [amount]
   CostFns
   (cost-name [this] :tag)
   (label [this] (str "remove " (quantify (:amount this) "tag")))
@@ -162,7 +174,7 @@
               (complete-with-result state side eid (str "removes " (quantify (:amount this) "tag"))))))
 (register-cost ->Tag)
 
-(extend-type ReturnToHand
+(defrecord ReturnToHand [amount]
   CostFns
   (cost-name [this] :return-to-hand)
   (label [this] "return this card to your hand")
@@ -178,7 +190,7 @@
            " to " (if (= :corp side) "HQ" "their grip")))))
 (register-cost ->ReturnToHand)
 
-(extend-type RemoveFromGame
+(defrecord RemoveFromGame [amount]
   CostFns
   (cost-name [this] :remove-from-game)
   (label [this] "remove this card from the game")
@@ -193,7 +205,7 @@
       (str "removes " (:title card) " from the game"))))
 (register-cost ->RemoveFromGame)
 
-(extend-type RfgProgram
+(defrecord RfgProgram [amount]
   CostFns
   (cost-name [this] :rfg-program)
   (label [this] (str "remove " (quantify (:amount this) "installed program")
@@ -221,7 +233,7 @@
       card nil)))
 (register-cost ->RfgProgram)
 
-(extend-type TrashInstalledRunnerCard
+(defrecord TrashInstalledRunnerCard [amount]
   CostFns
   (cost-name [this] :installed)
   (label [this] (str "trash " (quantify (:amount this) "installed card")))
@@ -245,7 +257,7 @@
       card nil)))
 (register-cost ->TrashInstalledRunnerCard)
 
-(extend-type TrashInstalledHardware
+(defrecord TrashInstalledHardware [amount]
   CostFns
   (cost-name [this] :hardware)
   (label [this] (str "trash " (quantify (:amount this) "installed piece") " of hardware"))
@@ -269,7 +281,7 @@
       card nil)))
 (register-cost ->TrashInstalledHardware)
 
-(extend-type TrashInstalledProgram
+(defrecord TrashInstalledProgram [amount]
   CostFns
   (cost-name [this] :program)
   (label [this] (str "trash " (quantify (:amount this) "installed program")))
@@ -293,7 +305,7 @@
       card nil)))
 (register-cost ->TrashInstalledProgram)
 
-(extend-type TrashInstalledResource
+(defrecord TrashInstalledResource [amount]
   CostFns
   (cost-name [this] :resource)
   (label [this] (str "trash " (quantify (:amount this) "installed resource")))
@@ -317,7 +329,7 @@
       card nil)))
 (register-cost ->TrashInstalledResource)
 
-(extend-type TrashInstalledConnection
+(defrecord TrashInstalledConnection [amount]
   CostFns
   (cost-name [this] :connection)
   (label [this] (str "trash " (str "trash " (quantify (:amount this) "installed connection resource"))))
@@ -344,7 +356,7 @@
       card nil)))
 (register-cost ->TrashInstalledConnection)
 
-(extend-type TrashRezzedIce
+(defrecord TrashRezzedIce [amount]
   CostFns
   (cost-name [this] :ice)
   (label [this] (str "trash " (str "trash " (quantify (:amount this) "installed rezzed ICE" ""))))
@@ -368,7 +380,7 @@
       card nil)))
 (register-cost ->TrashRezzedIce)
 
-(extend-type TrashFromDeck
+(defrecord TrashFromDeck [amount]
   CostFns
   (cost-name [this] :trash-from-deck)
   (label [this] (str "trash " (quantify (:amount this) "card") " from the top of your deck"))
@@ -384,7 +396,7 @@
                      (if (= :corp side) "R&D" "the stack"))))))
 (register-cost ->TrashFromDeck)
 
-(extend-type TrashFromHand
+(defrecord TrashFromHand [amount]
   CostFns
   (cost-name [this] :trash-from-hand)
   (label [this] (str "trash " (quantify (:amount this) "card") " from your hand"))
@@ -413,7 +425,7 @@
         nil nil))))
 (register-cost ->TrashFromHand)
 
-(extend-type RandomlyTrashFromHand
+(defrecord RandomlyTrashFromHand [amount]
   CostFns
   (cost-name [this] :randomly-trash-from-hand)
   (label [this] (str "trash " (quantify (:amount this) "card") " randomly from your hand"))
@@ -429,7 +441,7 @@
                      (if (= :corp side) "HQ" "the grip"))))))
 (register-cost ->RandomlyTrashFromHand)
 
-(extend-type TrashEntireHand
+(defrecord TrashEntireHand [amount]
   CostFns
   (cost-name [this] :trash-entire-hand)
   (label [this] "trash all cards in your hand")
@@ -448,7 +460,7 @@
                          (str " (" (join ", " (map :title async-result)) ")"))))))))
 (register-cost ->TrashEntireHand)
 
-(extend-type TrashHardwareFromHand
+(defrecord TrashHardwareFromHand [amount]
   CostFns
   (cost-name [this] :trash-hardware-from-hand)
   (label [this] (str "trash " (quantify (:amount this) "piece") " of hardware in your grip"))
@@ -473,7 +485,7 @@
       nil nil)))
 (register-cost ->TrashHardwareFromHand)
 
-(extend-type TrashProgramFromHand
+(defrecord TrashProgramFromHand [amount]
   CostFns
   (cost-name [this] :trash-program-from-hand)
   (label [this] (str "trash " (quantify (:amount this) "program") " in your grip"))
@@ -498,7 +510,7 @@
       nil nil)))
 (register-cost ->TrashProgramFromHand)
 
-(extend-type TrashResourceFromHand
+(defrecord TrashResourceFromHand [amount]
   CostFns
   (cost-name [this] :trash-resource-from-hand)
   (label [this] (str "trash " (quantify (:amount this) "resource") " in your grip"))
@@ -523,7 +535,7 @@
       nil nil)))
 (register-cost ->TrashResourceFromHand)
 
-(extend-type NetDamage
+(defrecord NetDamage [amount]
   CostFns
   (cost-name [this] :net)
   (label [this] (str "suffer " (:amount this) " net damage"))
@@ -538,7 +550,7 @@
                 (str "suffers " (:amount this) " net damage")))))
 (register-cost ->NetDamage)
 
-(extend-type MeatDamage
+(defrecord MeatDamage [amount]
   CostFns
   (cost-name [this] :meat)
   (label [this] (str "suffer " (:amount this) " meat damage"))
@@ -553,7 +565,7 @@
                 (str "suffers " (:amount this) " meat damage")))))
 (register-cost ->MeatDamage)
 
-(extend-type BrainDamage
+(defrecord BrainDamage [amount]
   CostFns
   (cost-name [this] :brain)
   (label [this] (str "suffer " (:amount this) " brain damage"))
@@ -568,7 +580,7 @@
                 (str "suffers " (:amount this) " brain damage")))))
 (register-cost ->BrainDamage)
 
-(extend-type ShuffleInstalledToDeck
+(defrecord ShuffleInstalledToDeck [amount]
   CostFns
   (cost-name [this] :shuffle-installed-to-stack)
   (label [this] (str "shuffle " (quantify (:amount this) "installed card") " into your deck"))
@@ -596,7 +608,7 @@
       nil nil)))
 (register-cost ->ShuffleInstalledToDeck)
 
-(extend-type AddInstalledToBottomOfDeck
+(defrecord AddInstalledToBottomOfDeck [amount]
   CostFns
   (cost-name [this] :add-installed-to-bottom-of-deck)
   (label [this] (str "add " (quantify (:amount this) "installed card") " to the bottom of your deck"))
@@ -624,7 +636,7 @@
         card nil))))
 (register-cost ->AddInstalledToBottomOfDeck)
 
-(extend-type AnyAgendaCounter
+(defrecord AnyAgendaCounter [amount]
   CostFns
   (cost-name [this] :any-agenda-counter)
   (label [this] "any agenda counter")
@@ -646,7 +658,7 @@
       nil nil)))
 (register-cost ->AnyAgendaCounter)
 
-(extend-type AnyVirusCounter
+(defrecord AnyVirusCounter [amount]
   CostFns
   (cost-name [this] :any-virus-counter)
   (label [this] (str "any " (quantify (:amount this) "virus counter")))
@@ -659,7 +671,7 @@
               (complete-with-result state side eid (str "spends " (:msg async-result))))))
 (register-cost ->AnyVirusCounter)
 
-(extend-type AdvancementCounter
+(defrecord AdvancementCounter [amount]
   CostFns
   (cost-name [this] :advancement)
   (label [this] (if (< 1 (:amount this))
@@ -679,7 +691,7 @@
                      " from on " (:title card))))))
 (register-cost ->AdvancementCounter)
 
-(extend-type AgendaCounter
+(defrecord AgendaCounter [amount]
   CostFns
   (cost-name [this] :agenda)
   (label [this] (if (< 1 (:amount this))
@@ -699,7 +711,7 @@
                      " from on " (:title card))))))
 (register-cost ->AgendaCounter)
 
-(extend-type PowerCounter
+(defrecord PowerCounter [amount]
   CostFns
   (cost-name [this] :power)
   (label [this] (if (< 1 (:amount this))
@@ -719,7 +731,7 @@
                      " from on " (:title card))))))
 (register-cost ->PowerCounter)
 
-(extend-type VirusCounter
+(defrecord VirusCounter [amount]
   CostFns
   (cost-name [this] :virus)
   (label [this] (if (< 1 (:amount this))

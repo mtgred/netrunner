@@ -21,19 +21,10 @@
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
-            [game.quotes :as quotes]
-            [game.cost-interfaces :refer :all])
+            [game.quotes :as quotes])
   (:import [game.core.state State]
            [game.core.player Corp Runner]
-           [game.core.card Card]
-           [game.cost_interfaces Click Credit Trash Forfeit ForfeitSelf Tag
-            ReturnToHand RemoveFromGame RfgProgram
-            TrashInstalledRunnerCard TrashInstalledHardware TrashInstalledProgram TrashInstalledResource TrashInstalledConnection
-            TrashRezzedIce TrashFromDeck TrashFromHand RandomlyTrashFromHand TrashEntireHand
-            TrashHardwareFromHand TrashProgramFromHand TrashResourceFromHand
-            NetDamage MeatDamage BrainDamage
-            ShuffleInstalledToDeck AddInstalledToBottomOfDeck
-            AnyAgendaCounter AnyVirusCounter AdvancementCounter AgendaCounter PowerCounter VirusCounter]))
+           [game.core.card Card]))
 
 (load "core/events")       ; triggering of events
 (load "core/cards")        ; retrieving and updating cards
