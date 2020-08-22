@@ -732,7 +732,7 @@
                 (render-icons (add-cost-to-label ab))]
                [:div {:key i
                       :on-click #(send-command "ability" {:card card
-                                                          :ability (- i dynabi-count)})}
+                                                          :ability i})}
                 (render-icons (add-cost-to-label ab))]))
            abilities))
        (when (seq (remove :fired subroutines))
