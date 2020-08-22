@@ -551,7 +551,8 @@
   "Image element of a facedown card"
   ([side] (facedown-card side [] nil))
   ([side class-list alt-alt-text]
-   (let [s (lower-case side)
+   (let [card-back (get-in @app-state [:options :card-back])
+         s (lower-case side)
          alt (if (nil? alt-alt-text)
                (str "Facedown " s " card")
                alt-alt-text)
@@ -560,7 +561,7 @@
                   (concat ["img" "card"])
                   (join ".")
                   keyword)]
-     [tag {:src (str "/img/" s ".png")
+     [tag {:src (str "/img/" card-back "-" s ".png")
            :alt alt}])))
 
 (defn card-img
@@ -1396,7 +1397,8 @@
   [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
   (let [visible-quote (r/atom true)
         mulliganed (r/atom false)
-        start-shown (r/cursor app-state [:start-shown])]
+        start-shown (r/cursor app-state [:start-shown])
+        card-back (get-in @app-state [:options :card-back])]
     (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
       (when (and (not @start-shown)
                  (:username @op-user)
@@ -1440,7 +1442,7 @@
                                                     :key (str (:cid card) "-" i "-" @mulliganed)}
                              [:div.flipper
                               [:div.card-back
-                               [:img.start-card {:src (str "/img/nisei-" (lower-case (:side @my-ident)) ".png")}]]
+                               [:img.start-card {:src (str "/img/" card-back "-" (lower-case (:side @my-ident)) ".png")}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put! zoom-channel card)
