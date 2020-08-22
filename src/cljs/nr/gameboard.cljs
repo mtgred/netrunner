@@ -1440,7 +1440,7 @@
                                                     :key (str (:cid card) "-" i "-" @mulliganed)}
                              [:div.flipper
                               [:div.card-back
-                               [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
+                               [:img.start-card {:src (str "/img/nisei-" (lower-case (:side @my-ident)) ".png")}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put! zoom-channel card)
