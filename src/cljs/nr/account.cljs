@@ -60,6 +60,7 @@
   (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
+  (swap! app-state assoc-in [:options :card-back] (:card-back @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
@@ -76,6 +77,7 @@
   (.setItem js/localStorage "log-top" (:log-top @s))
   (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
+  (.setItem js/localStorage "card-back" (:card-back @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -197,6 +199,7 @@
 (defn account-view [user]
   (let [s (r/atom {:flash-message ""
                    :background (get-in @app-state [:options :background])
+                   :card-back (get-in @app-state [:options :card-back])
                    :pronouns (get-in @app-state [:options :pronouns])
                    :sounds (get-in @app-state [:options :sounds])
                    :lobby-sounds (get-in @app-state [:options :lobby-sounds])
@@ -317,6 +320,18 @@
                                      :value (:ref option)
                                      :on-change #(swap! s assoc-in [:background] (.. % -target -value))
                                      :checked (= (:background @s) (:ref option))}]
+                     (:name option)]]))]
+
+         [:section
+          [:h3  "Card backs"]
+          (doall (for [option [{:name "NISEI" :ref "nisei"}
+                               {:name "FFG" :ref "ffg"}]]
+                   [:div.radio {:key (:name option)}
+                    [:label [:input {:type "radio"
+                                     :name "card-back"
+                                     :value (:ref option)
+                                     :on-change #(swap! s assoc :card-back (.. % -target -value))
+                                     :checked (= (:card-back @s) (:ref option))}]
                      (:name option)]]))]
 
          [:section
