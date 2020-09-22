@@ -1150,23 +1150,27 @@
              :req (req (and (or (= target :meat) (= target :net))
                             (pos? (last targets))))
              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
-             :async true
              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                           (damage-prevent state side :net Integer/MAX_VALUE)
-                          (if (< (:credit runner) 4)
-                            (trash state side eid card nil)
-                            (continue-ability
-                              state :runner
-                              {:optional
-                               {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
-                                :player :runner
-                                :yes-ability
-                                {:effect (effect (lose-credits :runner 4)
-                                                 (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
-                                                                  "from being trashed")))}
-                                :no-ability {:async true
-                                             :effect (effect (trash eid card nil))}}}
-                              card nil)))}]})
+                          (register-events
+                            state side card
+                            [{:event :pre-resolve-damage
+                              :unregister-once-resolved true
+                              :async true
+                              :effect (req (if (< (:credit runner) 4)
+                                             (trash state side eid card nil)
+                                             (continue-ability
+                                               state :runner
+                                               {:optional
+                                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
+                                                 :player :runner
+                                                 :yes-ability
+                                                 {:effect (effect (lose-credits :runner 4)
+                                                                  (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
+                                                                                   "from being trashed")))}
+                                                 :no-ability {:async true
+                                                              :effect (effect (trash eid card nil))}}}
+                                               card nil)))}]))}]})
 
 (define-card "Hades Shard"
   (shard-constructor "Hades Shard" :archives "access all cards in Archives"

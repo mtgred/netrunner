@@ -1968,8 +1968,8 @@
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
 (deftest guru-davinder
-  ;; Guru Davinder - no prompt/trash for 'preventing' 0 damage
-  (testing "Basic test"
+  ;; Guru Davinder
+  (testing "no prompt/trash for preventing 0 damage"
     (do-game
       (new-game {:corp {:deck ["Punitive Counterstrike"]}
                  :runner {:deck ["Guru Davinder"]}})
@@ -1994,7 +1994,21 @@
       (is (= ["No action"] (prompt-buttons :runner)) "Should only have No action choice")
       (click-prompt state :runner "No action")
       (is (zero? (count (:discard (get-runner)))) "Runner did not pay damage")
-      (is (not= :runner (:winner @state)) "Runner has not won"))))
+      (is (not= :runner (:winner @state)) "Runner has not won")))
+  (testing "Uses async handle mid-run steals #5283"
+    (do-game
+      (new-game {:corp {:id "Argus Security: Protection Guaranteed"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project"]}
+                 :runner {:deck ["Guru Davinder"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Guru Davinder")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "2 meat damage")
+      (click-prompt state :runner "Yes")
+      (is (not (get-run))))))
 
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
