@@ -129,28 +129,29 @@
 (defn command-counter-smart [state side args]
   (resolve-ability
     state side
-    {:effect (req (let [existing (:counter target)
+    {:choices {:card (fn [t] (same-side? (:side t) side))}
+     :effect (req (let [existing (:counter target)
                         value (if-let [n (string->num (first args))] n 0)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
                                      (and (agenda? target) (is-scored? state side target)) :agenda
                                      (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]
-                    (cond
-                      advance
-                      (set-adv-counter state side target value)
+                    (when (not (neg? value))
+                      (cond
+                        advance
+                        (set-adv-counter state side target value)
 
-                      (not counter-type)
-                      (toast state side
-                             (str "Could not infer what counter type you mean. Please specify one manually, by typing "
-                                  "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
-                             "error" {:time-out 0 :close-button true})
+                        (not counter-type)
+                        (toast state side
+                               (str "Could not infer what counter type you mean. Please specify one manually, by typing "
+                                    "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
+                               "error" {:time-out 0 :close-button true})
 
-                      :else
-                      (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
-                          (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
-                                                      (card-str state target)))))))
-     :choices {:card (fn [t] (same-side? (:side t) side))}}
+                        :else
+                        (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
+                            (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
+                                                        (card-str state target))))))))}
     (map->Card {:title "/counter command"}) nil))
 
 (defn command-facedown [state side]
@@ -180,14 +181,15 @@
                              (= "ag" two-letter) :agenda
                              :else :advance-counter)
           advance (= :advance-counter counter-type)]
-      (if advance
-        (command-adv-counter state side value)
-        (resolve-ability state side
-                       {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
-                                        (system-msg (str "sets " (name counter-type) " counters to " value " on "
-                                                         (card-str state target))))
-                        :choices {:card (fn [t] (same-side? (:side t) side))}}
-                       (map->Card {:title "/counter command"}) nil)))))
+      (when (not (neg? value))
+        (if advance
+          (command-adv-counter state side value)
+          (resolve-ability state side
+                           {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
+                                            (system-msg (str "sets " (name counter-type) " counters to " value " on "
+                                                             (card-str state target))))
+                            :choices {:card (fn [t] (same-side? (:side t) side))}}
+                           (map->Card {:title "/counter command"}) nil))))))
 
 (defn command-rezall [state side value]
   (resolve-ability state side
