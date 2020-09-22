@@ -101,15 +101,16 @@
 (defn name-zone
   "Gets a string representation for the given zone."
   [side zone]
-  (match (vec zone)
-         [:hand] (if (= side "Runner") "Grip" "HQ")
-         [:discard] (if (= side "Runner") "Heap" "Archives")
-         [:deck] (if (= side "Runner") "Stack" "R&D")
-         [:rig _] "Rig"
-         [:servers :hq _] "the root of HQ"
-         [:servers :rd _] "the root of R&D"
-         [:servers :archives _] "the root of Archives"
-         :else (zone->name (second zone))))
+  (let [zone (vec zone)]
+  (cond
+    (= zone [:hand]) (if (= side "Runner") "Grip" "HQ")
+    (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
+    (= zone [:deck]) (if (= side "Runner") "Stack" "R&D")
+    (= (take 1 zone) [:rig]) "Rig"
+    (= (take 2 zone) [:servers :hq]) "the root of HQ"
+    (= (take 2 zone) [:servers :rd]) "the root of R&D"
+    (= (take 2 zone) [:servers :archives]) "the root of Archives"
+    :else (zone->name (second zone)))))
 
 
 ;;; In-game chat commands

@@ -249,11 +249,11 @@
   (let [cdef (card-def card)
         ;; Add more kw here as the maybe become relevant. Only think rd is relevant,
         ;; everything else should not be "unseen".
-        reveal-kw (match (vec zone)
-                         [:deck] :rd-reveal
-                         [:hand] :hq-reveal
-                         [:discard] :archives-reveal
-                         :else :reveal)]
+        reveal-kw (case (first zone)
+                         :deck :rd-reveal
+                         :hand :hq-reveal
+                         :discard :archives-reveal
+                         :reveal)]
     ;; Check if the zone-reveal keyword exists in the flags property of the card definition
     (when-let [reveal-fn (get-in cdef [:flags reveal-kw])]
       (reveal-fn state side (make-eid state) card nil))))

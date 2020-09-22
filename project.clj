@@ -10,7 +10,6 @@
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
                  [danhut/monger "3.1.0"]
-                 [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.3"]
                  [com.taoensso/sente "1.11.0"]
                  [ring "1.6.2"]
