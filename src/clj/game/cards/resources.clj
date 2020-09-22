@@ -2843,10 +2843,12 @@
    :abilities [{:cost [:click 1]
                 :label "move hosted virus counter"
                 :req (req (pos? (get-counters card :virus)))
-                :effect (req (resolve-ability
+                :async true
+                :effect (req (continue-ability
                                state side
                                {:msg (msg "move 1 virus counter to " (:title target))
-                                :choices {:card #(pos? (get-virus-counters state %))}
+                                :choices {:not-self true
+                                          :card #(pos? (get-virus-counters state %))}
                                 :effect (req (add-counter state side card :virus -1)
                                              (add-counter state side target :virus 1))}
                                card nil))}]})
