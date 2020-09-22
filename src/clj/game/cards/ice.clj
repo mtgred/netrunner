@@ -2770,20 +2770,24 @@
                  first
                  (keep :type)
                  (into #{})
-                 count))]
-    {:on-encounter {:effect (req (move state :runner (first (:deck runner)) :deck)
-                              (let [t3 (top-3 state)
-                                    effect-type (effect-type card)]
-                                (register-floating-effect
-                                  state side card
-                                  {:type effect-type
-                                   :duration :end-of-encounter
-                                   :value t3})
-                                (reveal state side t3)
-                                (system-msg state side
-                                            (str "uses Slot Machine to put the top card of the stack to the bottom,"
-                                                 " then reveal the top 3 cards in the stack: "
-                                                 (join ", " (top-3-names t3))))))}
+                 count))
+          (ability []
+            {:label "Encounter ability (manual)"
+             :effect (req (move state :runner (first (:deck runner)) :deck)
+                          (let [t3 (top-3 state)
+                                effect-type (effect-type card)]
+                            (register-floating-effect
+                              state side card
+                              {:type effect-type
+                               :duration :end-of-encounter
+                               :value t3})
+                            (reveal state side t3)
+                            (system-msg state side
+                                        (str "uses Slot Machine to put the top card of the stack to the bottom,"
+                                             " then reveal the top 3 cards in the stack: "
+                                             (join ", " (top-3-names t3))))))})]
+    {:on-encounter (ability)
+     :abilities [(ability)]
      :subroutines [{:label "Runner loses 3 [Credits]"
                     :msg "force the Runner to lose 3 [Credits]"
                     :effect (effect (lose-credits :runner 3))}
