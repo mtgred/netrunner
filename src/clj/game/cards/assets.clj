@@ -353,6 +353,7 @@
    :flags {:corp-phase-12 (req (and (some operation? (:discard corp))
                                     unprotected))}
    :abilities [{:label "Add 1 operation from Archives to HQ"
+                :async true
                 :effect (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
                                 (continue-ability
                                   {:prompt "Select an operation in Archives to add to HQ"
@@ -365,8 +366,8 @@
                                                (:title target)
                                                "a facedown card")
                                              " to HQ")
-                                   :effect (effect (move target :hand))
-                                   :end-effect (effect (clear-wait-prompt :runner))}
+                                   :effect (effect (move target :hand)
+                                                   (clear-wait-prompt :runner))}
                                   card nil))}]})
 
 (define-card "Clyde Van Rite"
