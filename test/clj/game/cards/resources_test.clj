@@ -4651,7 +4651,7 @@
        (take-credits state :runner)
        (core/purge state :corp)
        (take-credits state :corp)
-       (is (empty? (:prompt (get-runner))) "Runner gets no prompt when they have no virus tokens to spend")))))
+       (is (seq (:prompt (get-runner))) "Runner gets a prompt cuz we don't know what they have")))))
 
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal

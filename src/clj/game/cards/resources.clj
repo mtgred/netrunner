@@ -2606,8 +2606,7 @@
                 :effect (effect (pump target 2 :end-of-turn))}]})
 
 (define-card "The Nihilist"
-  (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))
-        corp-choice {:optional {:player :corp
+  (let [corp-choice {:optional {:player :corp
                                 :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
                                 :yes-ability {:async true
                                               :effect (effect (clear-wait-prompt :runner)
@@ -2620,7 +2619,8 @@
         maybe-spend-2 {:prompt "Spend 2 virus counters on The Nihilist?"
                        :async true
                        :yes-ability
-                       {:effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
+                       {:req (req (<= 2 (number-of-virus-counters state)))
+                        :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
                                                (if (:number async-result)
                                                  (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
                                                      (show-wait-prompt state :runner "Corp to decide")
@@ -2628,7 +2628,6 @@
                                                  (effect-completed state side eid))))}}]
     {:events [{:event :runner-turn-begins
                :interactive (req true)
-               :req has-2-virus-tokens?
                :optional maybe-spend-2}
               {:event :runner-install
                :msg "add 2 virus tokens to The Nihilist"
