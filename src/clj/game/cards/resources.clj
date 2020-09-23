@@ -776,7 +776,7 @@
                           (register-turn-flag!
                             card :can-rez
                             (fn [state side card]
-                              (let [idx (ice-index state card)]
+                              (let [idx (card-index state card)]
                                 (if (and (ice? card)
                                          idx
                                          (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
@@ -2293,7 +2293,7 @@
              :req (req (and (rezzed? (get-card state target))
                             (some #(and (ice? %)
                                         (not (protecting-same-server? target %))
-                                        (= run-position (ice-index state %))
+                                        (= run-position (card-index state %))
                                         (is-central? (second (get-zone %))))
                                   (all-installed state :corp))))
              :optional
@@ -2308,7 +2308,7 @@
                       :prompt "Choose a piece of ICE protecting a central server at the same position"
                       :choices {:req (req (and (ice? target)
                                                (not (protecting-same-server? passed-ice target))
-                                               (= run-position (ice-index state target))
+                                               (= run-position (card-index state target))
                                                (not (same-card? target passed-ice))
                                                (is-central? (second (get-zone target)))))}
                       :msg (msg "approach " (card-str state target))

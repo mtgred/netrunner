@@ -1,16 +1,6 @@
 (in-ns 'game.core)
 
-;; These functions are called by main.clj in response to commands sent by users.
-
-(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
-         enforce-msg get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge make-run runner-install trash get-strength
-         update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
-         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
-         update-all-ice update-all-icebreakers continue play-ability
-         play-heap-breaker-auto-pump-and-break installable-servers get-runnable-zones
-         pump get-current-ice)
+(declare play-ability play-heap-breaker-auto-pump-and-break)
 
 ;;; Neutral actions
 (defn play
@@ -305,9 +295,7 @@
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
-        (wait-for (resolve-ability state side eid (assoc ability :cost cost) card targets)
-                  (when (check-for-empty-server state)
-                    (handle-end-run state side)))))))
+        (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
-         make-card turn-message add-sub create-basic-action-cards)
-
+;; Deck construction and initialization
 (defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
   If implemented also looks for `:implementation` key which may contain special notes.
@@ -17,13 +15,77 @@
       (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
+(defn- subroutines-init
+  "Initialised the subroutines associated with the card, these work as abilities"
+  [card cdef]
+  (->> (:subroutines cdef)
+       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
+       :subroutines
+       (into [])))
+
+(defn ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (into [] (for [ab (:abilities cdef)
+                 :let [ab (assoc ab :label (make-label ab))]]
+             (add-cost-label-to-ability ab))))
+
+(defn make-card
+  "Makes or remakes (with current cid) a proper card from a server card"
+  ([card] (make-card card (make-cid)))
+  ([card cid]
+   (-> card
+       (assoc :cid cid
+              :implementation (card-implemented card)
+              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
+              :abilities (ability-init (card-def card)))
+       (dissoc :setname :text :_id :influence :number :influencelimit
+               :image_url :factioncost :format :quantity)
+       (map->Card))))
+
+(defn build-card
+  [card]
+  (let [s-card (or (server-card (:title card)) card)]
+    (assoc (make-card s-card) :art (:art card))))
+
+(defn create-deck
+  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
+  Loads card data from the server-card map if available."
+  ([deck] (create-deck deck nil))
+  ([deck user]
+   (shuffle (mapcat #(map build-card (repeat (:qty %) (assoc (:card %) :art (:art %))))
+                    (shuffle (vec (:cards deck)))))))
+
 ;;; Functions for the creation of games and the progression of turns.
-(defn init-identity
-  "Initialise the identity"
-  [state side identity]
-  (card-init state side identity)
-  (when-let [baselink (:baselink identity)]
-    (gain state side :link baselink)))
+(defn mulligan
+  "Mulligan starting hand."
+  [state side args]
+  (shuffle-into-deck state side :hand)
+  (draw state side 5 {:suppress-event true})
+  (let [card (get-in @state [side :identity])]
+    (when-let [cdef (card-def card)]
+      (when-let [mul (:mulligan cdef)]
+        (mul state side (make-eid state) card nil))))
+  (swap! state assoc-in [side :keep] :mulligan)
+  (system-msg state side "takes a mulligan")
+  (trigger-event state side :pre-first-turn)
+  (when (and (= side :corp) (-> @state :runner :identity :title))
+    (clear-wait-prompt state :runner)
+    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
+  (when (and (= side :runner)  (-> @state :corp :identity :title))
+    (clear-wait-prompt state :corp)))
+
+(defn keep-hand
+  "Choose not to mulligan."
+  [state side args]
+  (swap! state assoc-in [side :keep] :keep)
+  (system-msg state side "keeps their hand")
+  (trigger-event state side :pre-first-turn)
+  (when (and (= side :corp) (-> @state :runner :identity :title))
+    (clear-wait-prompt state :runner)
+    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
+  (when (and (= side :runner)  (-> @state :corp :identity :title))
+    (clear-wait-prompt state :corp)))
 
 (defn- init-hands [state]
   (draw state :corp 5 {:suppress-event true})
@@ -66,6 +128,18 @@
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
         (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
 
+(defn init-identity
+  "Initialise the identity"
+  [state side identity]
+  (card-init state side identity)
+  (when-let [baselink (:baselink identity)]
+    (gain state side :link baselink)))
+
+(defn create-basic-action-cards
+  [state]
+  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
+  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
+
 (defn init-game
   "Initializes a new game with the given players vector."
   [game]
@@ -84,86 +158,15 @@
                             (init-hands state)))))
     state))
 
-(defn create-basic-action-cards
-  [state]
-  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
-  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
-
-(defn- subroutines-init
-  "Initialised the subroutines associated with the card, these work as abilities"
-  [card cdef]
-  (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines
-       (into [])))
-
-(defn ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (into [] (for [ab (:abilities cdef)
-                 :let [ab (assoc ab :label (make-label ab))]]
-             (add-cost-label-to-ability ab))))
-
-(defn make-card
-  "Makes or remakes (with current cid) a proper card from a server card"
-  ([card] (make-card card (make-cid)))
-  ([card cid]
-   (-> card
-       (assoc :cid cid
-              :implementation (card-implemented card)
-              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
-              :abilities (ability-init (card-def card)))
-       (dissoc :setname :text :_id :influence :number :influencelimit
-               :image_url :factioncost :format :quantity)
-       (map->Card))))
-
-(defn build-card
-  [card]
-  (let [server-card (or (server-card (:title card)) card)]
-    (assoc (make-card server-card) :art (:art card))))
-
-(defn create-deck
-  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
-  Loads card data from the server-card map if available."
-  ([deck] (create-deck deck nil))
-  ([deck user]
-   (shuffle (mapcat #(map build-card (repeat (:qty %) (assoc (:card %) :art (:art %))))
-                    (shuffle (vec (:cards deck)))))))
-
-(defn make-rid
-  "Returns a progressively-increasing integer to identify a new remote server."
-  [state]
-  (get-in (swap! state update-in [:rid] inc) [:rid]))
-
-(defn mulligan
-  "Mulligan starting hand."
-  [state side args]
-  (shuffle-into-deck state side :hand)
-  (draw state side 5 {:suppress-event true})
-  (let [card (get-in @state [side :identity])]
-    (when-let [cdef (card-def card)]
-      (when-let [mul (:mulligan cdef)]
-        (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] :mulligan)
-  (system-msg state side "takes a mulligan")
-  (trigger-event state side :pre-first-turn)
-  (when (and (= side :corp) (-> @state :runner :identity :title))
-    (clear-wait-prompt state :runner)
-    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
-  (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
-
-(defn keep-hand
-  "Choose not to mulligan."
-  [state side args]
-  (swap! state assoc-in [side :keep] :keep)
-  (system-msg state side "keeps their hand")
-  (trigger-event state side :pre-first-turn)
-  (when (and (= side :corp) (-> @state :runner :identity :title))
-    (clear-wait-prompt state :runner)
-    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
-  (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
+(defn turn-message
+  "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
+  [state side start-of-turn]
+  (let [pre (if start-of-turn "started" "is ending")
+        hand (if (= side :runner) "their Grip" "HQ")
+        cards (count (get-in @state [side :hand]))
+        credits (get-in @state [side :credit])
+        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
+    (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."

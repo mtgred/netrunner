@@ -28,16 +28,6 @@
   [n]
   ((fnil zero? 1) n))
 
-(defn safe-inc-n
-  "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
-  [n]
-  (partial (fnil + 0 0) n))
-
-(defn sub->0
-  "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."
-  [n]
-  #(max 0 ((fnil - 0 0) % n)))
-
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]
     (vec (concat head (rest tail)))))
@@ -71,6 +61,26 @@
 
     :else
     string))
+
+(defn unknown->kw
+  "Given a string ('Archives'), a keyword corresponding to a server (:archives)
+  or a zone ([:servers :archives]), return the keyword.
+  NOTE: return keyword even if server does not exist."
+  [name-or-kw-or-zone]
+  (cond
+    (keyword? name-or-kw-or-zone)
+    name-or-kw-or-zone
+
+    (string? name-or-kw-or-zone)
+    (case name-or-kw-or-zone
+      "HQ" :hq
+      "R&D" :rd
+      "Archives" :archives
+      ;; assume "Server N"
+      (->> (split name-or-kw-or-zone #" ") last (str "remote") keyword))
+
+    :else
+    (second name-or-kw-or-zone)))
 
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))

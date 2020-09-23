@@ -41,6 +41,11 @@
    winning-deck-id
    winning-user])
 
+(defn make-rid
+  "Returns a progressively-increasing integer to identify a new remote server."
+  [state]
+  (get-in (swap! state update-in [:rid] inc) [:rid]))
+
 (defn new-state
   [gameid room now spectatorhands corp runner]
   (map->State

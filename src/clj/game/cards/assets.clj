@@ -1628,7 +1628,7 @@
                                                                           (in-discard? %))}
                                                     :msg (msg "lose [Click], reveal " (:title hqcard) " from HQ, and swap it for " (:title target) " from Archives")
                                                     :effect (req (let [swappedcard (assoc hqcard :zone [:discard])
-                                                                       archndx (ice-index state target)
+                                                                       archndx (card-index state target)
                                                                        arch (get-in @state [:corp :discard])
                                                                        newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
                                                                    (reveal state side hqcard)

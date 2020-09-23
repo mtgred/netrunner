@@ -1561,37 +1561,35 @@
                  runner-loses-click]})
 
 (define-card "Howler"
-  (let [ice-index (fn [state i] (first (keep-indexed #(when (same-card? %2 i) %1)
-                                                     (get-in @state (cons :corp (get-zone i))))))]
-    {:subroutines
-     [{:label "Install a piece of Bioroid ICE from HQ or Archives"
-       :async true
-       :prompt "Install ICE from HQ or Archives?"
-       :choices ["HQ" "Archives"]
-       :effect (effect
-                 (continue-ability
-                   (let [fr target]
-                     {:prompt "Choose a Bioroid ICE to install"
-                      :choices (req (filter #(and (ice? %)
-                                                  (has-subtype? % "Bioroid"))
-                                            ((if (= fr "HQ") :hand :discard) corp)))
-                      :effect (req (let [newice (assoc target :zone (get-zone card) :rezzed true)
-                                         hndx (ice-index state card)
-                                         ices (get-in @state (cons :corp (get-zone card)))
-                                         newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
-                                     (swap! state assoc-in (cons :corp (get-zone card)) newices)
-                                     (swap! state update-in (cons :corp (get-zone target))
-                                            (fn [coll] (remove-once #(same-card? % target) coll)))
-                                     (update! state side (assoc card :howler-target newice))
-                                     (card-init state side newice {:resolve-effect false
-                                                                   :init-data true})
-                                     (trigger-event state side :corp-install newice)))})
-                   card nil))}]
-     :events [{:event :run-ends
-               :req (req (:howler-target card))
-               :async true
-               :effect (effect (derez (get-card state (:howler-target card)))
-                               (trash eid card {:cause :subroutine}))}]}))
+  {:subroutines
+   [{:label "Install a piece of Bioroid ICE from HQ or Archives"
+     :async true
+     :prompt "Install ICE from HQ or Archives?"
+     :choices ["HQ" "Archives"]
+     :effect (effect
+               (continue-ability
+                 (let [fr target]
+                   {:prompt "Choose a Bioroid ICE to install"
+                    :choices (req (filter #(and (ice? %)
+                                                (has-subtype? % "Bioroid"))
+                                          ((if (= fr "HQ") :hand :discard) corp)))
+                    :effect (req (let [newice (assoc target :zone (get-zone card) :rezzed true)
+                                       hndx (card-index state card)
+                                       ices (get-in @state (cons :corp (get-zone card)))
+                                       newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
+                                   (swap! state assoc-in (cons :corp (get-zone card)) newices)
+                                   (swap! state update-in (cons :corp (get-zone target))
+                                          (fn [coll] (remove-once #(same-card? % target) coll)))
+                                   (update! state side (assoc card :howler-target newice))
+                                   (card-init state side newice {:resolve-effect false
+                                                                 :init-data true})
+                                   (trigger-event state side :corp-install newice)))})
+                 card nil))}]
+   :events [{:event :run-ends
+             :req (req (:howler-target card))
+             :async true
+             :effect (effect (derez (get-card state (:howler-target card)))
+                             (trash eid card {:cause :subroutine}))}]})
 
 (define-card "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"

@@ -1,8 +1,13 @@
 (in-ns 'game.core)
 
-(declare can-trigger? event-title
-         register-suppress resolve-ability
-         unregister-suppress)
+(declare can-trigger? register-suppress resolve-ability unregister-suppress)
+
+(defn event-title
+  "Gets a string describing the internal engine event keyword"
+  [event]
+  (if (keyword? event)
+    (name event)
+    (str event)))
 
 (defn default-locations
   [card]

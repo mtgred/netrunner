@@ -856,7 +856,7 @@
        :effect (req (let [hqice target
                           c current-ice
                           newice (assoc hqice :zone (get-zone c))
-                          cndx (ice-index state c)
+                          cndx (card-index state c)
                           ices (get-in @state (cons :corp (get-zone c)))
                           newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
                       (swap! state assoc-in (cons :corp (get-zone c)) newices)
@@ -892,8 +892,8 @@
                                  {:prompt (msg "Select a piece of ICE to swap with " (:title passed-ice))
                                   :choices {:card #(and (= ice-zone (get-zone %))
                                                         (ice? %))}
-                                  :effect (req (let [fndx (ice-index state passed-ice)
-                                                     sndx (ice-index state target)
+                                  :effect (req (let [fndx (card-index state passed-ice)
+                                                     sndx (card-index state target)
                                                      fnew (assoc passed-ice :zone (get-zone target))
                                                      snew (assoc target :zone (get-zone passed-ice))]
                                                  (swap! state update-in (cons :corp ice-zone)

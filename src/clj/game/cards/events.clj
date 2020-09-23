@@ -1095,7 +1095,7 @@
    :async true
    :effect (req (let [ice target
                       serv (zone->name (second (get-zone ice)))
-                      icepos (ice-index state ice)]
+                      icepos (card-index state ice)]
                   (continue-ability
                     state :corp
                     {:prompt (str "Rez " (:title ice) " at position " icepos

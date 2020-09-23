@@ -320,3 +320,9 @@
                      c
                      (some #(when-let [s (search % target)] s) (:hosted card)))))]
     (helper root-host card)))
+
+(defn card-index
+  "Get the zero-based index of the given card in its server's list of content"
+  [state card]
+  (or (:index card)
+      (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (get-zone card)))))))

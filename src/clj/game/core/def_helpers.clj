@@ -123,8 +123,8 @@
 (defn swap-ice
   "Swaps two pieces of ICE."
   [state side a b]
-  (let [a-index (ice-index state a)
-        b-index (ice-index state b)
+  (let [a-index (card-index state a)
+        b-index (card-index state b)
         a-new (assoc a :zone (:zone b))
         b-new (assoc b :zone (:zone a))]
     (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
@@ -147,12 +147,6 @@
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)
     (set-current-ice state)))
-
-(defn card-index
-  "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
-  [state card]
-  (or (:index card)
-      (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (:zone card)))))))
 
 (defn swap-installed
   "Swaps two installed corp cards - like swap ICE except no strength update"
@@ -208,6 +202,29 @@
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true}))})
+
+(defn shuffle-into-rd-effect
+  ([state side card n] (shuffle-into-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (shuffle-into-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
+   (continue-ability state side
+                    {:show-discard  true
+                     :choices {:max (min (-> @state :corp :discard count) n)
+                               :card #(and (corp? %)
+                                           (in-discard? %))
+                               :all all?}
+                     :msg (msg "shuffle "
+                               (let [seen (filter :seen targets)
+                                     m (count (filter #(not (:seen %)) targets))]
+                                 (str (join ", " (map :title seen))
+                                      (when (pos? m)
+                                        (str (when-not (empty? seen) " and ")
+                                             (quantify m "unseen card")))))
+                               " into R&D")
+                     :effect (req (doseq [c targets] (move state side c :deck))
+                                  (shuffle! state side :deck))
+                     :cancel-effect (req (shuffle! state side :deck))}
+                    card nil)))
 
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.

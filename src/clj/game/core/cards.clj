@@ -1,11 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-installed all-active-installed cards card-init deactivate
-         card-flag? gain get-all-installed lose handle-end-run
-         register-events remove-from-host remove-icon make-card
-         toast-check-mu trash trigger-event
-         update-breaker-strength update-hosted! update-ice-strength unregister-events
-         use-mu)
+(declare card-init deactivate remove-from-host make-card trash update-breaker-strength update-hosted! update-ice-strength)
 
 ;;; Functions for loading card information.
 (defn find-card
@@ -172,8 +167,9 @@
 
 (defn update-installed-card-indices
   [state side server]
-  (swap! state update-in (cons side server)
-         #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %))))
+  (when (seq (get-in @state (cons side server)))
+    (swap! state update-in (cons side server)
+           #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))))
 
 (defn move
   "Moves the given card to the given new zone."
@@ -249,7 +245,9 @@
                         card)]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
-       (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
+       (do (when (and (ice? updated-card)
+                      (rezzed? updated-card))
+             (update-ice-strength state side updated-card))
            (if-not placed
              (trigger-event-sync state side eid :advance (get-card state updated-card))
              (trigger-event-sync state side eid :advancement-placed (get-card state updated-card))))

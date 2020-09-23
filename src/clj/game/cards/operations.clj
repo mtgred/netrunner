@@ -1289,7 +1289,7 @@
    :choices {:card #(and (ice? %)
                          (rezzed? %))}
    :async true
-   :effect (req (let [index (ice-index state target)
+   :effect (req (let [index (card-index state target)
                       [revealed-cards r] (split-with (complement ice?) (get-in @state [:corp :deck]))
                       titles (->> (conj (vec revealed-cards) (first r))
                                   (filter identity)

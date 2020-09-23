@@ -2,7 +2,7 @@
 
 (defn create-cost
   [cost-kw qty]
-  (let [constructor (get cost-records cost-kw)]
+  (let [constructor (get @cost-records cost-kw)]
     (constructor qty)))
 
 (defn convert-to-cost-records

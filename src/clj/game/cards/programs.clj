@@ -758,7 +758,7 @@
                                          (= (:title target) (:title current-ice))))}
                 :msg "redirect the run"
                 :effect (req (let [dest (second (get-zone target))
-                                   tgtndx (ice-index state target)]
+                                   tgtndx (card-index state target)]
                                (swap! state update-in [:run]
                                       #(assoc % :position tgtndx :server [dest]))
                                (set-current-ice state)
@@ -1543,7 +1543,7 @@
     {:abilities [{:label "Host Knight on a piece of ICE"
                   :effect (req (let [k (get-card state card)
                                      hosted (ice? (:host k))
-                                     icepos (ice-index state (get-card state (:host k)))]
+                                     icepos (card-index state (get-card state (:host k)))]
                                  (resolve-ability
                                    state side
                                    {:prompt (msg "Host Knight on a piece of ICE"
@@ -1551,7 +1551,7 @@
                                     :cost [:click 1]
                                     :choices {:card #(if hosted
                                                        (and (or (when (= (get-zone %) (get-zone (:host k)))
-                                                                  (not= 1 (abs (- (ice-index state %) icepos))))
+                                                                  (not= 1 (abs (- (card-index state %) icepos))))
                                                                 (not= (get-zone %) (get-zone (:host k))))
                                                             (ice? %)
                                                             (can-host? %)
@@ -2239,7 +2239,7 @@
                 :label "move to another ice"
                 :effect (req (let [r (get-card state card)
                                    hosted? (ice? (:host r))
-                                   icepos (ice-index state (get-card state (:host r)))]
+                                   icepos (card-index state (get-card state (:host r)))]
                                (resolve-ability
                                  state side
                                  {:prompt (if hosted?
@@ -2248,7 +2248,7 @@
                                             (msg "Host Rook on a piece of ICE protecting any server"))
                                   :choices {:card #(if hosted?
                                                      (and (or (= (get-zone %) (get-zone (:host r)))
-                                                              (= (ice-index state %) icepos))
+                                                              (= (card-index state %) icepos))
                                                           (= (last (get-zone %)) :ices)
                                                           (ice? %)
                                                           (can-host? %)
@@ -2455,10 +2455,10 @@
             {:prompt (msg "Choose an ICE before or after " (:title cice))
              :choices {:card #(and (ice? %)
                                    (= (get-zone %) (get-zone cice))
-                                   (= 1 (abs (- (ice-index state %)
-                                                (ice-index state cice)))))}
-             :effect (req (let [tgtndx (ice-index state target)
-                                cidx (ice-index state cice)]
+                                   (= 1 (abs (- (card-index state %)
+                                                (card-index state cice)))))}
+             :effect (req (let [tgtndx (card-index state target)
+                                cidx (card-index state cice)]
                             (system-msg state :runner (str "uses Surfer to swap "
                                                            (card-str state cice)
                                                            " and "

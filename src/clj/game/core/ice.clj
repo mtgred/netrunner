@@ -1,6 +1,10 @@
 (in-ns 'game.core)
 
-(declare card-flag?)
+;; Should be in runs.clj, but `req` needs it and we use req in core here first
+(defn get-current-ice
+  [state]
+  (let [ice (get-in @state [:run :current-ice])]
+    (or (get-card state ice) ice)))
 
 ;;; Ice subroutine functions
 (defn add-sub
@@ -348,14 +352,6 @@
   ([state side n duration]
    (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
      (pump state side icebreaker n duration))))
-
-;;; Others
-(defn ice-index
-  "Get the zero-based index of the given ice in its server's list of ice, where index 0
-  is the innermost ice."
-  [state ice]
-  (or (:index ice)
-      (first (keep-indexed #(when (same-card? %2 ice) %1) (get-in @state (cons :corp (get-zone ice)))))))
 
 ;; Break abilities
 (defn- break-subroutines-impl

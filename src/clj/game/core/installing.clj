@@ -1,7 +1,6 @@
 (in-ns 'game.core)
 
-(declare host rez installable-servers server->zone system-msg turn-flag?
-         in-play? update-breaker-strength use-mu get-remotes)
+(declare rez)
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -227,6 +226,11 @@
          (swap! state dissoc-in [:corp :install-list])
          (corp-install-pay state side eid card server args slot))))))
 
+;; Unused in the corp install system, necessary for card definitions
+(defn corp-install-msg
+  "Gets a message describing where a card has been installed from. Example: Interns."
+  [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 ;;; Installing a runner card
 (defn- runner-can-install-reason

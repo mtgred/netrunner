@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare free-mu)
-
 ;;; Deactivate a card
 (defn- dissoc-card
   "Dissoc relevant keys in card"

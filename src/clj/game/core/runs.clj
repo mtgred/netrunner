@@ -1,10 +1,10 @@
 (in-ns 'game.core)
 
-(declare any-flag-fn? clear-run-register! run-cleanup gain-run-credits
-         update-ice-in-server update-all-ice get-agenda-points get-remote-names
-         card-name can-access-loud can-steal? prevent-jack-out card-flag? can-run?
-         update-all-agenda-points reset-all-ice no-action make-run encounter-ends
-         pass-ice do-access successful-run unknown->kw)
+(declare handle-end-run jack-out run-cleanup gain-run-credits encounter-ends pass-ice successful-run)
+
+(defn get-run-ices
+  [state]
+  (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
 
 (defn add-run-effect
   [state side run-effect]
@@ -35,26 +35,6 @@
        (set-current-ice state (nth run-ice (dec pos))))))
   ([state card]
    (swap! state assoc-in [:run :current-ice] (get-card state card))))
-
-(defn get-current-ice
-  [state]
-  (let [ice (get-in @state [:run :current-ice])]
-    (or (get-card state ice) ice)))
-
-(defn toggle-auto-no-action
-  [state side args]
-  (swap! state update-in [:run :corp-auto-no-action] not)
-  (when (and (rezzed? (get-current-ice state))
-             (or (= :approach-ice (get-in @state [:run :phase]))
-                 (= :encounter-ice (get-in @state [:run :phase]))))
-    (continue state :corp nil)))
-
-(defn check-auto-no-action
-  "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
-  [state]
-  (when (and (get-in @state [:run :corp-auto-no-action])
-             (rezzed? (get-current-ice state)))
-    (continue state :corp nil)))
 
 (defn set-phase
   [state phase]
@@ -137,6 +117,21 @@
                                          (start-next-phase state side nil)))))
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
+
+(defn toggle-auto-no-action
+  [state side args]
+  (swap! state update-in [:run :corp-auto-no-action] not)
+  (when (and (rezzed? (get-current-ice state))
+             (or (= :approach-ice (get-in @state [:run :phase]))
+                 (= :encounter-ice (get-in @state [:run :phase]))))
+    (continue state :corp nil)))
+
+(defn check-auto-no-action
+  "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
+  [state]
+  (when (and (get-in @state [:run :corp-auto-no-action])
+             (rezzed? (get-current-ice state)))
+    (continue state :corp nil)))
 
 (defn check-for-empty-server
   [state]
@@ -654,22 +649,6 @@
            (empty? (get-in @state [:corp :prompt])))
     (run-cleanup state side)
     (swap! state assoc-in [:run :ended] true)))
-
-(defn close-access-prompt
-  "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."
-  [state side]
-  (let [prompt (-> @state side :prompt first)
-        eid (:eid prompt)]
-    (swap! state update-in [side :prompt] rest)
-    (effect-completed state side eid)
-    (when-let [run (:run @state)]
-      (when (and (:ended run)
-                 (empty? (get-in @state [:runner :prompt])))
-        (handle-end-run state :runner)))))
-
-(defn get-run-ices
-  [state]
-  (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
 
 (defn total-cards-accessed
   ([run]

@@ -2231,17 +2231,16 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Desperado")
         (run-on state :remote1)
-        (is (changes-credits
-             (get-runner) 0
-             (do (card-ability state :corp jhow 1)
-                 (click-card state :corp "Enigma")
-                 (click-prompt state :corp "Done")
-                 (is (find-card "Jackson Howard" (:rfg (get-corp))) "Jackson is rfg'd")
-                 (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
-                 (is (nil? (refresh jhow)))
-                 (run-continue state)
-                 (is (nil? (:run @state)))))
-            "A server vanishing by mid-run does not trigger Desperado even if players proceed to access")))))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "A server vanishing by mid-run does not trigger Desperado even if players proceed to access"
+          (card-ability state :corp jhow 1)
+          (click-card state :corp "Enigma")
+          (click-prompt state :corp "Done")
+          (is (find-card "Jackson Howard" (:rfg (get-corp))) "Jackson is rfg'd")
+          (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
+          (is (nil? (refresh jhow)))
+          (is (nil? (:run @state))))))))
 
 (deftest jeeves-model-bioroids
   ;; Jeeves Model Bioroids

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare any-flag-fn? init-trace optional-ability prompt!
-         do-choices do-ability psi-game resolve-ability-eid resolve-psi resolve-trace
-         check-optional check-psi check-trace check-prompt check-ability)
+(declare init-trace optional-ability prompt! do-choices do-ability psi-game resolve-ability-eid check-optional check-psi check-trace check-prompt check-ability)
 
 ;;;; Functions for implementing card abilities and prompts
 
@@ -345,25 +343,6 @@
        (wrap-function args :cancel-effect)))))
 
 ;;; Psi games
-(defn psi-game
-  "Starts a psi game by showing the psi prompt to both players. psi is a map containing
-  :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
-  ([state side card psi] (psi-game state side (make-eid state {:source-type :psi}) card psi))
-  ([state side eid card psi]
-   (swap! state assoc :psi {})
-   (register-once state side psi card)
-   (let [eid (assoc eid :source-type :psi)]
-     (doseq [s [:corp :runner]]
-       (let [all-amounts (range (min 3 (inc (total-available-credits state s eid card))))
-             valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
-                                        (any-flag-fn? state :runner :prevent-secretly-spend %))
-                                   all-amounts)]
-         (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
-                                (map #(str % " [Credits]") valid-amounts)
-                                #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
-                                {:priority 2
-                                 :prompt-type :psi}))))))
-
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
   resolution ability."
@@ -386,6 +365,24 @@
       (show-wait-prompt
         state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
 
+(defn psi-game
+  "Starts a psi game by showing the psi prompt to both players. psi is a map containing
+  :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
+  ([state side card psi] (psi-game state side (make-eid state {:source-type :psi}) card psi))
+  ([state side eid card psi]
+   (swap! state assoc :psi {})
+   (register-once state side psi card)
+   (let [eid (assoc eid :source-type :psi)]
+     (doseq [s [:corp :runner]]
+       (let [all-amounts (range (min 3 (inc (total-available-credits state s eid card))))
+             valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                        (any-flag-fn? state :runner :prevent-secretly-spend %))
+                                   all-amounts)]
+         (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
+                                (map #(str % " [Credits]") valid-amounts)
+                                #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
+                                {:priority 2
+                                 :prompt-type :psi}))))))
 
 ;;; Traces
 (defn init-trace-bonus
@@ -520,26 +517,3 @@
                                        :corp-credits corp-credits
                                        :runner-credits runner-credits})]
                (trace-start state side eid card trace)))))
-
-(defn shuffle-into-rd-effect
-  ([state side card n] (shuffle-into-rd-effect state side (make-eid state) card n false))
-  ([state side card n all?] (shuffle-into-rd-effect state side (make-eid state) card n all?))
-  ([state side eid card n all?]
-   (continue-ability state side
-                    {:show-discard  true
-                     :choices {:max (min (-> @state :corp :discard count) n)
-                               :card #(and (corp? %)
-                                           (in-discard? %))
-                               :all all?}
-                     :msg (msg "shuffle "
-                               (let [seen (filter :seen targets)
-                                     m (count (filter #(not (:seen %)) targets))]
-                                 (str (join ", " (map :title seen))
-                                      (when (pos? m)
-                                        (str (when-not (empty? seen) " and ")
-                                             (quantify m "unseen card")))))
-                               " into R&D")
-                     :effect (req (doseq [c targets] (move state side c :deck))
-                                  (shuffle! state side :deck))
-                     :cancel-effect (req (shuffle! state side :deck))}
-                    card nil)))

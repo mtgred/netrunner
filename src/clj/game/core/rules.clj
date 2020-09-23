@@ -1,10 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-run? can-trash? card-init card-str cards-can-prevent? check-winner close-access-prompt
-         enforce-msg get-prevent-list get-agenda-points in-corp-scored? play-sfx
-         prevent-draw remove-old-current should-trigger? system-say system-msg steal-trigger-events
-         trash-cards untrashable-while-rezzed? update-all-agenda-points update-all-ice
-         untrashable-while-resources? win win-decked)
+(declare remove-old-current should-trigger? trash-cards)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -118,6 +114,44 @@
        ;; card's req or other effects was not satisfied; mark the effect as being over.
        (effect-completed state side eid)))))
 
+;;; Winning
+(defn win
+  "Records a win reason for statistics."
+  [state side reason]
+  (when-not (:winner @state)
+    (let [started (get-in @state [:stats :time :started])
+          now (t/now)]
+      (system-msg state side "wins the game")
+      (play-sfx state side "game-end")
+      (swap! state assoc-in [:stats :time :ended] now)
+      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
+      (swap! state assoc
+             :winner side
+             :loser (other-side side)
+             :winning-user (get-in @state [side :user :username])
+             :losing-user (get-in @state [(other-side side) :user :username])
+             :reason reason
+             :end-time (java.util.Date.)
+             :winning-deck-id (get-in @state [side :deck-id])
+             :losing-deck-id (get-in @state [(other-side side) :deck-id])))))
+
+(defn win-decked
+  "Records a win via decking the corp."
+  [state]
+  (system-msg state :corp "is decked")
+  (win state :runner "Decked"))
+
+(defn clear-win
+  "Clears the current win condition. Requires both sides to have issued the command"
+  [state side]
+  (swap! state assoc-in [side :clear-win] true)
+  (when (and (-> @state :runner :clear-win) (-> @state :corp :clear-win))
+    (system-msg state side "cleared the win condition")
+    (swap! state dissoc-in [:runner :clear-win])
+    (swap! state dissoc-in [:corp :clear-win])
+    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
+
+;; Draw cards
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
   [state side n]
@@ -497,6 +531,37 @@
        (filter agenda?)
        (mapv #(update-advancement-cost state side %))))
 
+(defn update-agenda-points-card
+  [state side card]
+  (update! state side (assoc card :current-points (get-agenda-points state side card))))
+
+(defn sum-agenda-points
+  [state side]
+  (let [user-adjusted-points (sum-effects state side side :user-agenda-points nil)
+        scored-points (->> (get-in @state [side :scored])
+                           (keep :current-points)
+                           (reduce + 0))
+        total-points (+ user-adjusted-points scored-points)]
+    (swap! state assoc-in [side :agenda-point] total-points)))
+
+(defn update-agenda-points
+  [state side]
+  (doseq [card (get-in @state [side :scored])]
+    (update-agenda-points-card state side card))
+  (sum-agenda-points state side))
+
+(defn update-all-agenda-points
+  [state side]
+  (doseq [side [:corp :runner]]
+    (update-agenda-points state side)))
+
+(defn check-winner
+  [state side]
+  (doseq [side [:corp :runner]]
+    (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+               (not (any-effects state side :cannot-win-on-points)))
+      (win state side "Agenda"))))
+
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
   ([state side card n] (as-agenda state side (make-eid state) card n nil))
@@ -534,37 +599,6 @@
      (update-all-agenda-points state side)
      (check-winner state side)
      (trigger-event-sync state side eid (keyword (str (name side) "-forfeit-agenda")) card))))
-
-(defn check-winner
-  [state side]
-  (doseq [side [:corp :runner]]
-    (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-               (not (any-effects state side :cannot-win-on-points)))
-      (win state side "Agenda"))))
-
-(defn update-agenda-points-card
-  [state side card]
-  (update! state side (assoc card :current-points (get-agenda-points state side card))))
-
-(defn sum-agenda-points
-  [state side]
-  (let [user-adjusted-points (sum-effects state side side :user-agenda-points nil)
-        scored-points (->> (get-in @state [side :scored])
-                           (map :current-points)
-                           (reduce + 0))
-        total-points (+ user-adjusted-points scored-points)]
-    (swap! state assoc-in [side :agenda-point] total-points)))
-
-(defn update-agenda-points
-  [state side]
-  (doseq [card (get-in @state [side :scored])]
-    (update-agenda-points-card state side card))
-  (sum-agenda-points state side))
-
-(defn update-all-agenda-points
-  [state side]
-  (doseq [side [:corp :runner]]
-    (update-agenda-points state side)))
 
 
 ;;; Miscellaneous
@@ -654,38 +688,3 @@
   "Trigger the event for revealing one or more cards."
   [state side & targets]
   (apply trigger-event-sync state side (make-eid state) (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
-
-(defn clear-win
-  "Clears the current win condition.  Requires both sides to have issued the command"
-  [state side]
-  (swap! state assoc-in [side :clear-win] true)
-  (when (and (-> @state :runner :clear-win) (-> @state :corp :clear-win))
-    (system-msg state side "cleared the win condition")
-    (swap! state dissoc-in [:runner :clear-win])
-    (swap! state dissoc-in [:corp :clear-win])
-    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
-
-(defn win
-  "Records a win reason for statistics."
-  [state side reason]
-  (when-not (:winner @state)
-    (let [started (get-in @state [:stats :time :started])
-          now (t/now)]
-      (system-msg state side "wins the game")
-      (play-sfx state side "game-end")
-      (swap! state assoc-in [:stats :time :ended] now)
-      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
-      (swap! state assoc
-             :winner side
-             :loser (other-side side)
-             :winning-user (get-in @state [side :user :username])
-             :losing-user (get-in @state [(other-side side) :user :username])
-             :reason reason :end-time (java.util.Date.)
-             :winning-deck-id (get-in @state [side :deck-id])
-             :losing-deck-id (get-in @state [(other-side side) :deck-id])))))
-
-(defn win-decked
-  "Records a win via decking the corp."
-  [state]
-  (system-msg state :corp "is decked")
-  (win state :runner "Decked"))

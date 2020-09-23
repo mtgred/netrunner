@@ -63,7 +63,7 @@
                  (effect-completed state side eid))))))
      (effect-completed state side eid))))
 
-(declare get-current-ice set-current-ice)
+(declare set-current-ice)
 
 (defn update-current-ice-to-trash
   "If the current ice is going to be trashed, update it with any changes"

@@ -13,49 +13,6 @@
   {"typing" core/typing
    "typingstop" core/typingstop})
 
-(def commands
-  {"ability" core/play-ability
-   "advance" core/click-advance
-   "change" core/change
-   "choice" core/resolve-prompt
-   "close-deck" core/close-deck
-   "concede" core/concede
-   "continue" core/continue
-   "corp-ability" core/play-corp-ability
-   "corp-phase-43" core/corp-phase-43
-   "credit" core/click-credit
-   "derez" #(core/derez %1 %2 (:card %3))
-   "draw" core/click-draw
-   "dynamic-ability" core/play-dynamic-ability
-   "end-phase-12" core/end-phase-12
-   "start-next-phase" core/start-next-phase
-   "end-turn" core/end-turn
-   "generate-install-list" core/generate-install-list
-   "generate-runnable-zones" core/generate-runnable-zones
-   "indicate-action" core/indicate-action
-   "jack-out" core/jack-out
-   "keep" core/keep-hand
-   "move" core/move-card
-   "mulligan" core/mulligan
-   "play" core/play
-   "purge" core/do-purge
-   "remove-tag" core/remove-tag
-   "rez" #(core/rez %1 %2 (:card %3) (dissoc %3 :card))
-   "run" core/click-run
-   "runner-ability" core/play-runner-ability
-   "score" #(core/score %1 %2 (get-card %1 (:card %3)))
-   "select" core/select
-   "shuffle" core/shuffle-deck
-   "start-turn" core/start-turn
-   "subroutine" core/play-subroutine
-   "system-msg" #(core/system-msg %1 %2 (:msg %3))
-   "toast" toast
-   "toggle-auto-no-action" core/toggle-auto-no-action
-   "trash" #(core/trash %1 %2 (eid/make-eid %1) (get-card %1 (:card %3)) nil)
-   "trash-resource" core/trash-resource
-   "unbroken-subroutines" core/play-unbroken-subroutines
-   "view-deck" core/view-deck})
-
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
   [state user]
@@ -72,9 +29,7 @@
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
   (if (not-spectator? state user)
-    (when-let [c (get commands command)]
-      (c state side args)
-      (core/update-all-card-labels state)
+    (when (core/process-action command state side args)
       (set-action-id state side))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))

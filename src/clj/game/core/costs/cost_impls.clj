@@ -1,10 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit damage mill is-scored?
-         discard-from-hand card-str trash trash-cards
-         all-installed-runner-type pick-credit-providing-cards all-active
-         lose-tags number-of-virus-counters
-         pick-virus-counters-to-spend)
+(declare forfeit damage mill discard-from-hand card-str trash trash-cards pick-credit-providing-cards lose-tags pick-virus-counters-to-spend)
 
 (defprotocol CostFns
   (cost-name [this])
@@ -18,11 +14,11 @@
            [this state side eid card actions]
            [this state side eid card actions extra]))
 
-(def cost-records {})
+(def cost-records (atom {}))
 
 (defn register-cost
   [cost-constructor]
-  (alter-var-root #'cost-records assoc (cost-name (cost-constructor 1)) cost-constructor))
+  (swap! cost-records assoc (cost-name (cost-constructor 1)) cost-constructor))
 
 (defrecord Click [amount]
   CostFns
