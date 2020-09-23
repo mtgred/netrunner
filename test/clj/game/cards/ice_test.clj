@@ -3090,6 +3090,26 @@
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run ended"))))
 
+(deftest red-tape
+  ;; Red Tape
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Red Tape"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Red Tape" "R&D")
+    (let [iw (get-ice state :hq 0)
+          red-tape (get-ice state :rd 0)]
+      (core/rez state :corp iw)
+      (core/rez state :corp red-tape)
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (changes-val-macro
+        3 (core/get-strength (refresh iw))
+        "Ice Wal should gain strengh"
+        (fire-subs state red-tape)))))
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (testing "Strength based on tags"

@@ -2496,7 +2496,7 @@
 (define-card "Red Tape"
   {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
                   :msg "give +3 strength to all ICE for the remainder of the run"
-                  :effect (effect (pump-ice target 3 :end-of-run))}]})
+                  :effect (effect (pump-all-ice 3 :end-of-run))}]})
 
 (define-card "Resistor"
   (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))

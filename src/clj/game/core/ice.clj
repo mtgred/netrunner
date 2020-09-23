@@ -300,6 +300,11 @@
       :value n})
    (update-ice-strength state side (get-card state card))))
 
+(defn pump-all-ice
+  ([state side n] (pump-all-ice state side n :end-of-encounter))
+  ([state side n duration]
+   (doseq [ice (filter ice? (all-active-installed state :corp))]
+     (pump-ice state side ice n duration))))
 
 ;;; Icebreaker functions
 (defn breaker-strength
