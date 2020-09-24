@@ -1337,7 +1337,9 @@
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                 :async true
-                :effect (req (when-not (and (used-this-turn? (:cid card) state) (active-prompt? state side card))
+                :effect (req (when-not (and (used-this-turn? (:cid card) state)
+                                            (some #(when (same-card? card (:card %)) %)
+                                                  (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
                                (show-wait-prompt state :runner "Corp to use Skorpios' ability" {:card card})
                                (continue-ability state side
                                                  {:prompt "Choose a card in the Runner's Heap that was just trashed"

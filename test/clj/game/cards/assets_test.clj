@@ -730,7 +730,8 @@
   (testing "Runner has 1+ card in Stack and chooses to trash 1 card"
     (do-game
       (new-game {:corp {:deck ["Clyde Van Rite"]}
-                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Restructure" 2) (qty "John Masanori" 2)]}})
+                 :runner {:deck [(qty "Sure Gamble" 2)]
+                          :hand ["Sure Gamble"]}})
       (play-from-hand state :corp "Clyde Van Rite" "New remote")
       (let [clyde (get-content state :remote1 0)]
         (core/rez state :corp clyde)

@@ -301,7 +301,9 @@
 (defn constellation-ice
   "Generates map for Constellation ICE with specified effect."
   [ability]
-  {:subroutines [(assoc-in (trace-ability 2 ability) [:trace :kicker] (assoc ability :min 5))]})
+  {:subroutines [(-> (trace-ability 2 ability)
+                     (assoc-in [:trace :kicker] ability)
+                     (assoc-in [:trace :kicker-min] 5))]})
 
 ;; For advance-only-while-rezzed, sub-growing ICE
 (defn zero-to-hero

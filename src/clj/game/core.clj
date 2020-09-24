@@ -43,7 +43,13 @@
 (load "core/rules")        ; core game rules
 (load "core/trashing")     ; trashing cards
 (load "core/turns")        ; the turn sequence
+
+;; Abilities
 (load "core/resolve_ability") ; support for card abilities and prompts
+(load "core/optional")
+(load "core/psi")
+(load "core/traces")
+
 (load "core/initializing") ; initializing cards
 (load "core/hosting")      ; hosting routines
 (load "core/installing")   ; installing and interacting with installed cards and servers
