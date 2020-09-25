@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-trigger? register-suppress resolve-ability unregister-suppress)
+(declare register-suppress unregister-suppress)
 
 (defn event-title
   "Gets a string describing the internal engine event keyword"

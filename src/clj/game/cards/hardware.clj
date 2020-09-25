@@ -1,17 +1,9 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.effects :refer [register-floating-effect unregister-floating-effects]]
-            [game.core.eid :refer [make-eid make-result effect-completed]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.set :as clj-set]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]
+            [clojure.set :as clj-set]))
 
 ;; Card definitions
 
@@ -130,7 +122,7 @@
                                     state side
                                     {:optional
                                      {:prompt (msg (build-cost-string [:credit cost])
-                                                   ", plus " (lower-case (build-cost-string additional-costs))
+                                                   ", plus " (string/lower-case (build-cost-string additional-costs))
                                                    " as an additional cost to rez " cname "?")
                                       :player :corp
                                       :yes-ability {:effect (effect (rez :corp c))}
@@ -280,7 +272,7 @@
                                            (wait-for (draw state side (count (filter overlap trashed-card-names)) nil)
                                                      (system-msg state side
                                                                  (str "spends [Click] to use Capstone to trash "
-                                                                      (join ", " (map :title trashed-cards))
+                                                                      (string/join ", " (map :title trashed-cards))
                                                                       " from the grip and draw "
                                                                       (quantify (count async-result) "card")))
                                                      (effect-completed state side eid))))))}]})
@@ -738,8 +730,8 @@
 
 (define-card "Gachapon"
   (letfn [(shuffle-end [remove-from-game shuffle-back]
-            {:msg (msg "shuffle " (join ", " (map :title shuffle-back)) " into the stack"
-                       " and remove " (join ", " (map :title remove-from-game)) " from the game")
+            {:msg (msg "shuffle " (string/join ", " (map :title shuffle-back)) " into the stack"
+                       " and remove " (string/join ", " (map :title remove-from-game)) " from the game")
              :effect (req
                        (doseq [c remove-from-game]
                          (move state side c :rfg))
@@ -756,14 +748,14 @@
                                 (empty? set-aside))]
               {:prompt (msg (if finished?
                               (str "Removing: " (if (not-empty set-aside)
-                                                  (join ", " (map :title set-aside))
+                                                  (string/join ", " (map :title set-aside))
                                                   "nothing")
                                    "[br]Shuffling: " (if (not-empty to-shuffle)
-                                                       (join ", " (map :title to-shuffle))
+                                                       (string/join ", " (map :title to-shuffle))
                                                        "nothing"))
                               (str "Choose " (- 3 (count to-shuffle)) " more cards to shuffle back."
                                    (when (not-empty to-shuffle)
-                                     (str "[br]Currently shuffling back: " (join ", " (map :title to-shuffle)))))))
+                                     (str "[br]Currently shuffling back: " (string/join ", " (map :title to-shuffle)))))))
                :async true
                :not-distinct true ; show cards separately
                :choices (req (if finished?
@@ -788,7 +780,7 @@
                                  (show-wait-prompt state :corp "Runner to resolve Gachapon")
                                  (wait-for
                                    (resolve-ability state side
-                                                    {:prompt (msg "The set aside cards are: " (join ", " (map :title set-aside)))
+                                                    {:prompt (msg "The set aside cards are: " (string/join ", " (map :title set-aside)))
                                                      :choices ["OK"]}
                                                     card nil)
                                    (continue-ability
@@ -1414,7 +1406,7 @@
                           :msg "look at the top 2 cards of the stack"
                           :choices ["OK"]
                           :prompt (msg "The top two cards of your Stack are "
-                                  (join ", " (map :title (take 2 (:deck runner))))
+                                  (string/join ", " (map :title (take 2 (:deck runner))))
                                   ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of stack"
@@ -1500,7 +1492,7 @@
                                  {:async true
                                   :prompt "Choose how much damage to prevent"
                                   :choices {:number (req (min n (count (:deck runner))))}
-                                  :msg (msg "trash " (join ", " (map :title (take target (:deck runner))))
+                                  :msg (msg "trash " (string/join ", " (map :title (take target (:deck runner))))
                                             " from their Stack and prevent " target " damage")
                                   :cost [:trash]
                                   :effect (effect (damage-prevent :net target)
@@ -1908,7 +1900,7 @@
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
-                                 :msg (msg "trash " (join ", " (map :title targets)))
+                                 :msg (msg "trash " (string/join ", " (map :title targets)))
                                  :effect (req (clear-wait-prompt state :corp)
                                               (chosen-damage state :runner targets)
                                               (effect-completed state side eid))})

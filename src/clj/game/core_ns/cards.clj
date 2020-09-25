@@ -1,54 +1,6 @@
 (in-ns 'game.core)
 
-(declare card-init deactivate remove-from-host make-card trash update-breaker-strength update-hosted! update-ice-strength)
-
-;;; Functions for loading card information.
-(defn find-card
-  "Return a card with given title from given sequence"
-  [title from]
-  (some #(when (= (:title %) title) %) from))
-
-(defn find-cid
-  "Return a card with specific :cid from given sequence"
-  [cid from]
-  (some #(when (= (:cid %) cid) %) from))
-
-(defn find-latest
-  "Returns the newest version of a card where-ever it may be"
-  [state card]
-  (find-cid (:cid card) (concat (all-installed state (-> card :side to-keyword))
-                                (-> (map #(-> @state :corp %) [:hand :discard :deck :rfg :scored]) concat flatten)
-                                (-> (map #(-> @state :runner %) [:hand :discard :deck :rfg :scored]) concat flatten))))
-
-(defn get-scoring-owner
-  "Returns the owner of the scoring area the card is in"
-  [state {:keys [cid] :as card}]
-  (cond
-    (find-cid cid (get-in @state [:corp :scored]))
-    :corp
-    (find-cid cid (get-in @state [:runner :scored]))
-    :runner))
-
-;;; Functions for updating cards
-(defn update!
-  "Updates the state so that its copy of the given card matches the argument given."
-  [state side {:keys [type zone cid host] :as card}]
-  (cond
-    (= type "Identity")
-    (when (= side (to-keyword (:side card)))
-      (swap! state assoc-in [side :identity] card)
-      card)
-
-    host
-    (do (update-hosted! state side card)
-        (get-card state card))
-
-    :else
-    (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
-              [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-          (when (not-empty tail)
-            (swap! state assoc-in z (vec (concat head [card] (rest tail))))
-            card))))
+(declare card-init deactivate remove-from-host make-card trash update-breaker-strength update-ice-strength)
 
 ;; Helpers for move
 (defn- remove-old-card
@@ -126,7 +78,7 @@
             (deactivate state side c to-facedown)
             c)
         c (if (and from-installed
-                   (not (facedown? c))) 
+                   (not (facedown? c)))
             (uninstall state side c)
             c)
         c (if to-installed

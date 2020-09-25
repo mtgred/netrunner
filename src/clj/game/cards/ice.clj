@@ -1,16 +1,8 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.eid :refer [make-eid effect-completed complete-with-result]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
-            [game.core.effects :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 ;;;; Helper functions specific for ICE
 (defn reset-variable-subs
@@ -246,7 +238,7 @@
              :card grail-in-hand}
    :effect (effect (reveal targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-          (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+          (msg "reveal " (string/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
   "Ability for resolving a subroutine on a Grail ICE in HQ."
@@ -383,7 +375,7 @@
                   :label "Trash the top 3 cards of the Stack. Trash Aimor."
                   :effect (req (system-msg state :corp
                                            (str "uses Aimor to trash "
-                                                (join ", " (map :title (take 3 (:deck runner))))
+                                                (string/join ", " (map :title (take 3 (:deck runner))))
                                                 " from the Runner's Stack"))
                                (wait-for (mill state :corp :runner 3)
                                          (system-msg state side (str "trashes Aimor"))
@@ -747,7 +739,7 @@
    :abilities [{:async true
                 :label "Trash the top 2 cards of the Runner's Stack"
                 :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
-                :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
+                :msg (msg (str "trash " (string/join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
                 :effect (effect (mill :corp eid :runner 2))}]
    :subroutines [(do-net-damage 2)
                  (do-net-damage 2)
@@ -1093,7 +1085,7 @@
   (let [sub {:async true
              :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
-                       " from grip: " (join ", " (map :title (:hand runner))))
+                       " from grip: " (string/join ", " (map :title (:hand runner))))
              ;; This has to be manual instead of calling `reveal` because `reveal` isn't
              ;; async and I don't feel like trying to make it async just for this interaction.
              ;; TODO: Make `reveal` async
@@ -1220,7 +1212,7 @@
                    {:label "Do 1 brain damage or end the run"
                     :prompt "Choose one"
                     :choices ["Do 1 brain damage" "End the run"]
-                    :msg (msg (lower-case target))
+                    :msg (msg (string/lower-case target))
                     :async true
                     :effect (req (if (= target "Do 1 brain damage")
                                    (damage state side eid :brain 1 {:card card})
@@ -1334,7 +1326,7 @@
                             :cancel-effect (effect (shuffle! :deck)
                                                    (effect-completed eid))
                             :msg (msg "add "
-                                      (str (join ", " (map :title targets)))
+                                      (str (string/join ", " (map :title targets)))
                                       " to R&D")}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
@@ -1433,7 +1425,7 @@
                                            :effect (req (wait-for (trash-cards state :runner targets)
                                                                   (system-msg
                                                                     state :runner
-                                                                    (str "trashes " (join ", " (map :title targets))))
+                                                                    (str "trashes " (string/join ", " (map :title targets))))
                                                                   (effect-completed state side eid)))}))
                                       card nil)))}]
     {:subroutines [sub
@@ -1892,7 +1884,7 @@
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
                     :effect (effect (system-msg (str "uses Loot Box to reveal the top 3 cards of the stack: "
-                                                     (join ", " (top-3-names state))))
+                                                     (string/join ", " (top-3-names state))))
                               (reveal (top-3 state))
                               (show-wait-prompt :runner "Corp to choose a card to add to the Grip")
                               (continue-ability
@@ -2177,7 +2169,7 @@
                                                 (damage state :runner eid :net net-dmg {:card card}))
                                             (do (system-msg state :corp
                                                             (str "uses Mlinzi to trash "
-                                                                 (join ", " (map :title (take mill-cnt (:deck runner))))
+                                                                 (string/join ", " (map :title (take mill-cnt (:deck runner))))
                                                                  " from the runner's stack"))
                                                 (mill state :runner eid :runner mill-cnt))))}
                             card nil))})]
@@ -2189,10 +2181,10 @@
   (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                (filter #(and (rezzed? %)
                                                              (not (same-card? card %))))
-                                               (mapcat #(split (:subtype %) #" - "))
+                                               (mapcat #(string/split (:subtype %) #" - "))
                                                (cons "Mythic")
                                                distinct
-                                               (join " - "))]
+                                               (string/join " - "))]
                               (assoc card
                                      :subtype-target (remove-subtypes subtype "Mythic")
                                      :subtype subtype))))
@@ -2328,7 +2320,7 @@
                   :msg (msg "add "
                             (let [seen (filter :seen targets)
                                   m (count (filter #(not (:seen %)) targets))]
-                              (str (join ", " (map :title seen))
+                              (str (string/join ", " (map :title seen))
                                    (when (pos? m)
                                      (str (when-not (empty? seen) " and ")
                                           (quantify m "unseen card")))))
@@ -2448,7 +2440,7 @@
                     :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                    (system-msg state side
                                                (str "uses Peeping Tom to name " target ", then reveals "
-                                                    (join ", " (map :title (:hand runner)))
+                                                    (string/join ", " (map :title (:hand runner)))
                                                     " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
                                    (reveal state side (:hand runner))
                                    (gain-variable-subs state side card n sub)))}
@@ -2785,7 +2777,7 @@
                             (system-msg state side
                                         (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                              " then reveal the top 3 cards in the stack: "
-                                             (join ", " (top-3-names t3))))))})]
+                                             (string/join ", " (top-3-names t3))))))})]
     {:on-encounter (ability)
      :abilities [(ability)]
      :subroutines [{:label "Runner loses 3 [Credits]"
@@ -2818,7 +2810,7 @@
                                 card nil))}]}))
 
 (define-card "Snoop"
-  {:on-encounter {:msg (msg "reveal the Runner's Grip (" (join ", " (map :title (:hand runner))) ")")
+  {:on-encounter {:msg (msg "reveal the Runner's Grip (" (string/join ", " (map :title (:hand runner))) ")")
                   :effect (effect (reveal (:hand runner)))}
    :abilities [{:async true
                 :req (req (pos? (get-counters card :power)))
@@ -3190,13 +3182,13 @@
 (define-card "Waiver"
   {:subroutines [(trace-ability
                    5 {:label "Reveal the grip and trash cards"
-                      :msg (msg "reveal all cards in the grip: " (join ", " (map :title (:hand runner))))
+                      :msg (msg "reveal all cards in the grip: " (string/join ", " (map :title (:hand runner))))
                       :async true
                       :effect (req (reveal state side (:hand runner))
                                    (let [delta (- target (second targets))
                                          cards (filter #(<= (:cost %) delta) (:hand runner))]
                                      (system-msg state side (str "uses Waiver to trash "
-                                                                 (join ", " (map :title cards))))
+                                                                 (string/join ", " (map :title cards))))
                                      (trash-cards state side eid cards {:cause :subroutine})))})]})
 
 (define-card "Wall of Static"

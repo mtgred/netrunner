@@ -1,14 +1,24 @@
 (ns game.core
-  (:require [game.core.eid :refer :all]
-            [game.core.card :refer :all]
-            [game.core.card-defs :refer [card-def] :as card-defs]
-            [game.core.prompts :refer :all]
-            [game.core.toasts :refer [toast show-error-toast]]
+  (:require [game.core.abilities]
+            [game.core.board]
+            [game.core.card]
+            [game.core.card-defs]
+            [game.core.effects]
+            [game.core.eid]
+            [game.core.finding]
+            [game.core.flags]
+            [game.core.io]
+            [game.core.player]
+            [game.core.prompts]
+            [game.core.state]
+            [game.core.to-string]
+            [game.core.toasts]
+            [game.core.update]
+            [game.macros]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [game.core.state :refer :all]
-            [game.core.player :refer :all]
-            [game.core.effects :refer :all]
+            [game.quotes :as quotes]
+            [jinteki.utils :refer :all]
+            [jinteki.cards :refer [all-cards]]
             [clj-time.core :as t]
             [clj-uuid :as uuid]
             [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with? blank?]]
@@ -16,47 +26,38 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
             [clojure.set :as clj-set]
-            [jinteki.utils :refer :all]
-            [jinteki.cards :refer [all-cards]]
-            [tasks.nrdb :refer [replace-collection update-config]]
-            [tasks.altart :refer [add-art]]
-            [game.quotes :as quotes])
+            [potemkin :refer [import-vars]]
+            )
   (:import [game.core.state State]
            [game.core.player Corp Runner]
            [game.core.card Card]))
 
-(load "core/to_string")    ; "toString" functions
-(load "core/board")        ; Helpers for retrieving installed cards
-(load "core/flags")        ; various miscellaneous manipulations of specific effects
-(load "core/events")       ; triggering of events
-(load "core/gaining")      ; gain/lose credits and clicks and other base values
-(load "core/cards")        ; retrieving and updating cards
+(load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
+(load "core_ns/events")       ; triggering of events
+(load "core_ns/gaining")      ; gain/lose credits and clicks and other base values
+(load "core_ns/cards")        ; retrieving and updating cards
 
 ;; Cost section
-(load "core/costs/cost_impls") ; implementations of cost functions
-(load "core/costs/payment") ; payment related functions
-(load "core/costs/cost_labels") ; cost-aware ability label generation and application
-(load "core/costs/cost_generation") ; state-aware cost-generating functions
+(load "core_ns/cost_impls") ; implementations of cost functions
+(load "core_ns/cost_generation") ; state-aware cost-generating functions
 
-(load "core/io")           ; routines for parsing input or printing to the log
-(load "core/ice")          ; ice and icebreaker interactions
-(load "core/rules")        ; core game rules
-(load "core/trashing")     ; trashing cards
-(load "core/turns")        ; the turn sequence
+(load "core_ns/ice")          ; ice and icebreaker interactions
+(load "core_ns/rules")        ; core game rules
+(load "core_ns/trashing")     ; trashing cards
+(load "core_ns/turns")        ; the turn sequence
 
 ;; Abilities
-(load "core/resolve_ability") ; support for card abilities and prompts
-(load "core/optional")
-(load "core/psi")
-(load "core/traces")
+(load "core_ns/optional")
+(load "core_ns/psi")
+(load "core_ns/traces")
 
-(load "core/initializing") ; initializing cards
-(load "core/hosting")      ; hosting routines
-(load "core/installing")   ; installing and interacting with installed cards and servers
-(load "core/access")       ; accessing rules
-(load "core/runs")         ; the run sequence
-(load "core/commands")     ; chat commands
-(load "core/misc")         ; misc stuff
-(load "core/actions")      ; functions linked to UI actions
-(load "core/def_helpers")  ; card definitions
-(load "core/process_actions") ; things that need to be run after every action
+(load "core_ns/initializing") ; initializing cards
+(load "core_ns/hosting")      ; hosting routines
+(load "core_ns/installing")   ; installing and interacting with installed cards and servers
+(load "core_ns/access")       ; accessing rules
+(load "core_ns/runs")         ; the run sequence
+(load "core_ns/commands")     ; chat commands
+(load "core_ns/misc")         ; misc stuff
+(load "core_ns/actions")      ; functions linked to UI actions
+(load "core_ns/def_helpers")  ; card definitions
+(load "core_ns/process_actions") ; things that need to be run after every action

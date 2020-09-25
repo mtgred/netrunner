@@ -19,6 +19,16 @@
   (when (check-for-empty-server state)
     (handle-end-run state :corp)))
 
+(defn command-parser
+  [state side {:keys [user text] :as args}]
+  (let [author (or user (get-in @state [side :user]))
+        text (if (= (string/trim text) "null") " null" text)]
+    (if-let [command (parse-command text)]
+      (when (and (not= side nil) (not= side :spectator))
+        (command state side)
+        (swap! state update :log conj {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))
+      (say state side args))))
+
 (def commands
   {"ability" play-ability
    "advance" click-advance
@@ -55,7 +65,7 @@
    "start-turn" start-turn
    "subroutine" play-subroutine
    "system-msg" #(system-msg %1 %2 (:msg %3))
-   "toast"  toast
+   "toast" toast
    "toggle-auto-no-action" toggle-auto-no-action
    "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
    "trash-resource" trash-resource

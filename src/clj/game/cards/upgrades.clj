@@ -1,16 +1,8 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 ;; Card definitions
 
@@ -110,7 +102,7 @@
      :abilities [{:cost [:click 1]
                   :req (req (pos? (count (:deck corp))))
                   :async true
-                  :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
+                  :msg (msg (str "reveal " (string/join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
                   :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
                   :effect (req (reveal state side (take 3 (:deck corp)))
                             (show-wait-prompt state :runner "Corp to use Bamboo Dome")
@@ -511,7 +503,7 @@
                 :label "Trash the top 2 cards from the Stack"
                 :msg (msg (let [deck (:deck runner)]
                             (if (pos? (count deck))
-                              (str "trash " (join ", " (map :title (take 2 deck))) " from the Stack")
+                              (str "trash " (string/join ", " (map :title (take 2 deck))) " from the Stack")
                               "trash the top 2 cards from their Stack - but the Stack is empty")))
                 :effect (effect (mill :corp eid :runner 2))}]})
 
@@ -1458,7 +1450,7 @@
                        :max n
                        :card #(and (runner? %)
                                    (installed? %))}
-             :msg (msg "force the Runner to trash " (join ", " (map :title targets)))
+             :msg (msg "force the Runner to trash " (string/join ", " (map :title targets)))
              :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true})
                                     (clear-wait-prompt state :corp)
                                     (effect-completed state side eid)

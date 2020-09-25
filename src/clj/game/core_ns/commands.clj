@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare swap-installed swap-ice)
+
 ;;; In-game chat commands
 (defn set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)

@@ -1,18 +1,14 @@
-(in-ns 'game.core)
-
-(declare parse-command swap-ice swap-installed)
+(ns game.core.io
+  (:require [game.core.toasts :refer [toast]]
+            [clojure.string :as string]))
 
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
   __system__ shows no user name."
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
-        text (if (= (.trim text) "null") " null" text)]
-    (if-let [command (parse-command text)]
-      (when (and (not= side nil) (not= side :spectator))
-        (command state side)
-        (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
-      (swap! state update-in [:log] #(conj % {:user author :text text})))
+        text (if (= (string/trim text) "null") " null" text)]
+    (swap! state update :log conj {:user author :text text})
     (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))))
 
 (defn typing

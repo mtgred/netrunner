@@ -1,16 +1,8 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [make-eid effect-completed complete-with-result]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -834,7 +826,7 @@
                 (trash-event :runner-trash)])}))
 
 (define-card "DJ Fenris"
-  (let [is-draft-id? #(starts-with? (:code %) "00")
+  (let [is-draft-id? #(string/starts-with? (:code %) "00")
         sorted-id-list (fn [runner] (->> (server-cards)
                                          (filter #(and (identity? %)
                                                        (has-subtype? % "g-mod")
@@ -1073,7 +1065,7 @@
 (define-card "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))
+                       (string/join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))
              :effect (effect (reveal (get-in @state [:runner :register :most-recent-drawn])))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
@@ -1411,7 +1403,7 @@
                                 (effect-completed state side eid))))})]
     {:abilities [{:cost [:click 1]
                   :label "reveal cards"
-                  :msg (msg "reveal 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
+                  :msg (msg "reveal 4 cards: " (string/join ", " (map :title (take 4 (:deck runner)))))
                   :async true
                   :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
                             (let [from (take 4 (:deck runner))]
@@ -2115,7 +2107,7 @@
    :trash-effect {:async true
                   :effect (req (system-msg state :runner
                                            (str "trashes "
-                                                (join ", " (map :title (take 3 (:deck runner))))
+                                                (string/join ", " (map :title (take 3 (:deck runner))))
                                                 " from their Stack due to Rolodex being trashed"))
                                (mill state :runner eid :runner 3))}})
 
@@ -2169,7 +2161,7 @@
                                               (:hand runner))]
                             (str "to prevent all damage, trash "
                                  (quantify (count cards) "card")
-                                 " (" (join ", " (map :title cards)) "),"
+                                 " (" (string/join ", " (map :title cards)) "),"
                                  " lose " (quantify (:credit (:runner @state)) "credit")
                                  ", and lose " (quantify (count-tags state) "tag"))))
                 :effect (req (damage-prevent state side :net Integer/MAX_VALUE)
@@ -2394,7 +2386,7 @@
                                                           [:credit (install-cost state side target {:cost-bonus -1})])))
                                         (:hosted card))))
                 :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                          (join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
+                          (string/join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
                           " are trashed as a result")
                 :effect (req (let [card (update! state side (update card :hosted (fn [coll] (remove-once #(same-card? % target) coll))))]
                                (wait-for (trash state side card {:cause :ability-cost})
@@ -2549,7 +2541,7 @@
                           :req (req (and (runner? target)
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
-                :msg (msg "shuffle " (join ", " (map :title targets))
+                :msg (msg "shuffle " (string/join ", " (map :title targets))
                           " into their Stack")
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)

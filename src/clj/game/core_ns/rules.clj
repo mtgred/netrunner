@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare remove-old-current should-trigger? trash-cards)
+(declare remove-old-current trash-cards)
 
 ;;;; Functions for applying core Netrunner game rules.
 

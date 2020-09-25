@@ -1,16 +1,8 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [effect-completed make-eid complete-with-result]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
-            [game.core.card :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -974,7 +966,7 @@
 (define-card "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                               (str "trash " (string/join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn

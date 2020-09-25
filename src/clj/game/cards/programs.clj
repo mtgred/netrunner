@@ -1,15 +1,8 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
-            [game.core.eid :refer :all]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
-            [game.core.card :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 (defn- power-counter-break
   "Only break ability uses power counters
@@ -866,7 +859,7 @@
                                                     card nil))))}))]
     {:async true
      :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-     :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
+     :msg (msg "reveal the top 5 cards of their Stack: " (string/join ", " (map :title (take 5 (:deck runner)))))
      :effect (req (let [from (take 5 (:deck runner))]
                     (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
                     (reveal state side from)
@@ -1189,7 +1182,7 @@
                 :effect (effect (make-run :hq {:req (req (= target :hq))
                                                :replace-access
                                                {:msg (msg "reveal cards in HQ: "
-                                                          (join ", " (map :title (:hand corp))))
+                                                          (string/join ", " (map :title (:hand corp))))
                                                 :effect (effect (reveal (:hand corp)))}}
                                           card))}]})
 
@@ -1878,7 +1871,7 @@
                                  {:prompt (msg "Choose a subtype")
                                   :choices ["Sentry" "Code Gate" "Barrier"]
                                   :msg (msg "spend [Click] and make " (card-str state ice)
-                                            " gain " (lower-case target)
+                                            " gain " (string/lower-case target)
                                             " until the end of the next run this turn")
                                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
                                                   (update-ice-strength (get-card state ice))
@@ -1902,7 +1895,7 @@
                :choices (req (->> (server-cards)
                                   (reduce (fn [acc card]
                                             (if (ice? card)
-                                              (apply conj acc (split (:subtype card) #" - "))
+                                              (apply conj acc (string/split (:subtype card) #" - "))
                                               acc))
                                           #{})
                                   (#(disj % "Barrier" "Code Gate" "Sentry"))
@@ -2064,7 +2057,7 @@
                 :choices (req (->> (server-cards)
                                    (reduce (fn [acc card]
                                              (if (ice? card)
-                                               (apply conj acc (split (:subtype card) #" - "))
+                                               (apply conj acc (string/split (:subtype card) #" - "))
                                                acc))
                                            #{})
                                    sort))
@@ -2266,7 +2259,7 @@
 
 (define-card "Sadyojata"
   (swap-with-in-hand "Sadyojata"
-                     {:req (req (and (<= 3 (count (split (:subtype current-ice "") #" - ")))
+                     {:req (req (and (<= 3 (count (string/split (:subtype current-ice "") #" - ")))
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
 (define-card "Sage"
@@ -2414,7 +2407,7 @@
                       :msg (msg "reveal " (->> (:deck corp)
                                                (take 3)
                                                (map :title)
-                                               (join ", ")))
+                                               (string/join ", ")))
                       :effect
                       (effect
                         (reveal (take 3 (:deck corp)))
@@ -2551,7 +2544,7 @@
                                :all true
                                :card #(and (runner? %)
                                            (in-discard? %))}
-                     :msg (msg "shuffle " (join ", " (map :title targets))
+                     :msg (msg "shuffle " (string/join ", " (map :title targets))
                                " into their Stack")
                      :effect (req (doseq [c targets] (move state side c :deck))
                                   (shuffle! state side :deck))}

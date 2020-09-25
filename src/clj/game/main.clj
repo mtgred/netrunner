@@ -44,12 +44,13 @@
   "Adds a message from a user to the chat log."
   [state side user message]
   (when (and state side)
-    (core/say state side {:user (select-keys user [:username :emailhash]) :text message})))
+    (core/command-parser state side {:user (select-keys user [:username :emailhash])
+                                     :text message})))
 
 (defn handle-notification
   [state text]
   (when state
-    (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
+    (swap! state update :log conj {:user "__system__" :text text})))
 
 (defn handle-announcement
   [state text]

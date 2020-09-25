@@ -1,4 +1,7 @@
-(in-ns 'game.core)
+(ns game.core.to-string
+  (:require [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def]]
+            [game.utils :refer :all]))
 
 (defn card-str
   "Gets a string description of an installed card, reflecting whether it is rezzed,

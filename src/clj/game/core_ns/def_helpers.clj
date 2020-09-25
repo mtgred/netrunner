@@ -402,4 +402,4 @@
 
 (defn define-card
   [title ability]
-  (card-defs/define-card title (make-recurring-ability ability)))
+  (game.core.card-defs/define-card title (make-recurring-ability ability)))

@@ -1,4 +1,11 @@
-(in-ns 'game.core)
+(ns game.core.board
+  (:require [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def] :as card-defs]
+            [game.core.eid :refer :all]
+            [game.core.state :refer :all]
+            [game.utils :refer :all]
+            [clojure.string :as string]
+            ))
 
 (defn all-installed
   "Returns a vector of all installed cards for the given side, including those hosted on other cards,
@@ -108,4 +115,4 @@
       "R&D" [:servers :rd]
       "Archives" [:servers :archives]
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
-      [:servers (->> (split server #" ") last (str "remote") keyword)])))
+      [:servers (->> (string/split server #" ") last (str "remote") keyword)])))

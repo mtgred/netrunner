@@ -1,17 +1,9 @@
 (ns game.cards.agendas
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [effect-completed]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.set :as clj-set]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]
+            [clojure.set :as clj-set]))
 
 (defn ice-boost-agenda [subtype]
   (letfn [(count-ice [corp]
@@ -84,7 +76,7 @@
                       [{:event :corp-shuffle-deck
                         :effect (effect (update! (assoc-in card [:special :shuffle-occurred] true)))}])
                  (let [choices (take 3 (:deck corp))
-                       titles (join ", " (map :title choices))]
+                       titles (string/join ", " (map :title choices))]
                    (continue-ability
                      state side
                      (if (seq (filter ice? choices))
@@ -133,7 +125,7 @@
   {:interactive (req true)
    :async true
    :msg "look at the top 5 cards of R&D"
-   :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (:deck corp)))))
+   :prompt (msg "The top cards of R&D are (top->bottom) " (string/join ", " (map :title (take 5 (:deck corp)))))
    :choices ["OK"]
    :effect (effect (continue-ability
                      {:prompt "Install a card?"
@@ -1073,7 +1065,7 @@
                                         (installed? %))}
                   :async true
                   :effect (req (wait-for (trash-cards state side targets)
-                                         (system-msg state side (str "trashes " (join ", " (map :title targets))))
+                                         (system-msg state side (str "trashes " (string/join ", " (map :title targets))))
                                          (clear-wait-prompt state :corp)
                                          (gain-bad-publicity state :corp eid 1)))}
                  card nil))}))
@@ -1276,13 +1268,13 @@
                :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))}
      :leave-play (req (doseq [c (get-assets state corp)]
                         (update! state side (assoc-in c [:persistent :subtype]
-                                                      (->> (split (or (-> c :persistent :subtype) "") #" - ")
+                                                      (->> (string/split (or (-> c :persistent :subtype) "") #" - ")
                                                            (drop 1) ;so that all actual ads remain ads if agenda leaves play
-                                                           (join " - "))))))}))
+                                                           (string/join " - "))))))}))
 
 (define-card "Reeducation"
   (letfn [(corp-final [chosen original]
-            {:prompt (str "The bottom cards of R&D will be " (join  ", " (map :title chosen)) ".")
+            {:prompt (str "The bottom cards of R&D will be " (string/join  ", " (map :title chosen)) ".")
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
@@ -1623,7 +1615,7 @@
                :req (req (same-card? card target))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
-                                (join ", " (map :title (take (adv4? state card) (:deck runner))))
+                                (string/join ", " (map :title (take (adv4? state card) (:deck runner))))
                                 " from the Runner's stack")
                            "trash from the Runner's stack but it is empty"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))

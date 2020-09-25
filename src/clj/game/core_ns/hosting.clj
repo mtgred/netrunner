@@ -1,15 +1,5 @@
 (in-ns 'game.core)
 
-(defn update-hosted!
-  "Updates a card that is hosted on another, by recursively updating the host card's
-  :hosted vector."
-  [state side {:keys [cid] :as card}]
-  (if-let [h (get-card state (:host card))]
-    (recur state side (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
-                        (assoc h :hosted (vec (concat head [card] (rest tail))))))
-    (when-not (:host card)
-      (update! state side card))))
-
 (defn remove-from-host
   "Removes a card from its host."
   [state side {:keys [cid] :as card}]

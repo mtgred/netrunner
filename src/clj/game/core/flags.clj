@@ -1,6 +1,12 @@
-(in-ns 'game.core)
-
-;;;; Various functions for checking small "flag" values of cards, runs, players, etc.
+(ns game.core.flags
+  (:require [game.core.board :refer :all]
+            [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.eid :refer :all]
+            [game.core.toasts :refer [toast]]
+            [game.core.to-string :refer [card-str]]
+            [game.utils :refer :all]
+            [clojure.string :as string]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -265,7 +271,7 @@
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot run due to " (join ", " (map :title cards))))
+      (do (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
         false))))
 
 (defn can-access?
@@ -279,7 +285,7 @@
   (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot access " (card-str state card) " because of " (join ", " (map :title cards))) "info")
+      (do (toast state side (str "Cannot access " (card-str state card) " because of " (string/join ", " (map :title cards))) "info")
           false))))
 
 (defn can-advance?

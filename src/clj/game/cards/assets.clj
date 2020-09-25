@@ -1,16 +1,8 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
-            [game.core.card :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [effect-completed]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -92,7 +84,7 @@
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (program? %))}
-                     :msg (msg "trash " (join ", " (map :title targets)))
+                     :msg (msg "trash " (string/join ", " (map :title targets)))
                      :async true
                      :effect (effect (trash-cards eid targets))}))
 
@@ -865,7 +857,7 @@
                         :req (req (seq (:hand runner)))
                         :prompt "Choose a card type"
                         :choices ["Event" "Hardware" "Program" "Resource"]
-                        :msg (msg "reveal " (join ", " (map :title (:hand runner))))
+                        :msg (msg "reveal " (string/join ", " (map :title (:hand runner))))
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [:forfeit]
@@ -1247,7 +1239,7 @@
                 :msg (msg "shuffle "
                           (let [seen (filter :seen targets)
                                 n (count (filter #(not (:seen %)) targets))]
-                            (str (join ", " (map :title seen))
+                            (str (string/join ", " (map :title seen))
                                  (when (pos? n)
                                    (str (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
@@ -1331,7 +1323,7 @@
                                        :choices {:card #(and (installed? %)
                                                              (runner? %))
                                                  :max cnt}
-                                       :msg (msg "shuffle " (join ", " (map :title targets)) " into the stack")
+                                       :msg (msg "shuffle " (string/join ", " (map :title targets)) " into the stack")
                                        :effect (req (doseq [c targets]
                                                       (move state :runner c :deck))
                                                     (shuffle! state :runner :deck))}
@@ -1847,7 +1839,7 @@
   (advance-ambush 1 {:async true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Select " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
-                     :msg (msg "trash " (join ", " (map :title targets)))
+                     :msg (msg "trash " (string/join ", " (map :title targets)))
                      :cost [:credit 1]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
