@@ -9,9 +9,12 @@
             [game.core.events]
             [game.core.finding]
             [game.core.flags]
+            [game.core.gaining]
             [game.core.ice]
+            [game.core.initializing]
             [game.core.player]
             [game.core.prompts]
+            [game.core.props]
             [game.core.say]
             [game.core.state]
             [game.core.to-string]
@@ -37,7 +40,6 @@
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
 
-(load "core_ns/gaining")      ; gain/lose credits and clicks and other base values
 (load "core_ns/cards")        ; retrieving and updating cards
 
 ;; Cost section

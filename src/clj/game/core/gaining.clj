@@ -1,4 +1,7 @@
-(in-ns 'game.core)
+(ns game.core.gaining
+  (:require [game.core.eid :refer [make-eid effect-completed]]
+            [game.core.events :refer [trigger-event trigger-event-sync]]
+            [game.core.toasts :refer [toast]]))
 
 (defn safe-inc-n
   "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
@@ -10,7 +13,7 @@
   [n]
   #(max 0 ((fnil - 0 0) % n)))
 
-(defn- deduct
+(defn deduct
   "Deduct the value from the player's attribute."
   [state side [attr value]]
   (cond

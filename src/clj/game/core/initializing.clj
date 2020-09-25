@@ -1,4 +1,34 @@
-(in-ns 'game.core)
+(ns game.core.initializing
+  (:require [game.core.abilities :refer [add-cost-label-to-ability is-ability? resolve-ability]]
+            [game.core.board :refer [all-active all-active-installed]]
+            [game.core.card :refer [get-card runner?]]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.cost-fns :refer [card-ability-cost]]
+            [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+            [game.core.eid :refer [effect-completed make-eid]]
+            [game.core.events :refer [register-events unregister-events]]
+            [game.core.finding :refer [find-cid]]
+            [game.core.gaining :refer [free-mu gain lose]]
+            [game.core.ice :refer [add-sub]]
+            [game.core.props :refer [set-prop]]
+            [game.core.update :refer [update!]]
+            [game.macros :refer [effect req]]
+            [jinteki.utils :refer [make-label]]))
+
+(defn subroutines-init
+  "Initialised the subroutines associated with the card, these work as abilities"
+  [card cdef]
+  (->> (:subroutines cdef)
+       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
+       :subroutines
+       (into [])))
+
+(defn ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (into [] (for [ab (:abilities cdef)
+                 :let [ab (assoc ab :label (make-label ab))]]
+             (add-cost-label-to-ability ab))))
 
 ;;; Deactivate a card
 (defn- dissoc-card

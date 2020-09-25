@@ -15,21 +15,6 @@
       (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
-(defn- subroutines-init
-  "Initialised the subroutines associated with the card, these work as abilities"
-  [card cdef]
-  (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines
-       (into [])))
-
-(defn ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (into [] (for [ab (:abilities cdef)
-                 :let [ab (assoc ab :label (make-label ab))]]
-             (add-cost-label-to-ability ab))))
-
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
   ([card] (make-card card (make-cid)))

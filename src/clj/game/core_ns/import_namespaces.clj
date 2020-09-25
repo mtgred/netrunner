@@ -224,6 +224,21 @@
    when-scored?
    zone-locked?]
 
+  [game.core.gaining
+   available-mu
+   base-mod-size
+   deduct
+   free-mu
+   gain
+   gain-credits
+   hand-size
+   lose
+   lose-credits
+   safe-inc-n
+   sub->0
+   toast-check-mu
+   use-mu]
+
   [game.core.ice
    add-extra-sub!
    add-sub
@@ -274,6 +289,20 @@
    update-breaker-strength
    update-ice-in-server
    update-ice-strength]
+
+  [game.core.initializing
+   ability-init
+   card-init
+   deactivate
+   subroutines-init
+   update-abilities-cost-str
+   update-ability-cost-str
+   update-all-card-labels]
+
+  [game.core.props
+   add-counter
+   add-prop
+   set-prop]
 
   [game.core.player
    map->Corp
