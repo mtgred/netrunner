@@ -1,4 +1,13 @@
-(in-ns 'game.core)
+(ns game.core.hosting
+  (:require
+    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card rezzed? runner?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [register-events unregister-events]]
+    [game.core.initializing :refer [card-init]]
+    [game.core.update :refer [update! update-hosted!]]
+    [game.utils :refer [remove-once]]))
 
 (defn remove-from-host
   "Removes a card from its host."

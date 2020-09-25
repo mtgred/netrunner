@@ -10,6 +10,7 @@
             [game.core.finding]
             [game.core.flags]
             [game.core.gaining]
+            [game.core.hosting]
             [game.core.ice]
             [game.core.initializing]
             [game.core.player]

@@ -239,6 +239,10 @@
    toast-check-mu
    use-mu]
 
+  [game.core.hosting
+   host
+   remove-from-host]
+
   [game.core.ice
    add-extra-sub!
    add-sub

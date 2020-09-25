@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare card-init deactivate remove-from-host make-card trash)
+(declare remove-from-host make-card trash)
 
 ;; Helpers for move
 (defn- remove-old-card
