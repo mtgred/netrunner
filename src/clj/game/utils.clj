@@ -1,5 +1,5 @@
 (ns game.utils
-  (:require [clojure.string :refer [split-lines split join]]
+  (:require [clojure.string :refer [split join]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.cards :refer [all-cards]]
             [clj-uuid :as uuid]))

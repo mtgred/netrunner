@@ -3,7 +3,7 @@
 (defn make-eid
   ([state] (make-eid state nil))
   ([state {:keys [source source-type source-info]}]
-   (merge {:eid (:eid (swap! state update-in [:eid] inc))}
+   (merge {:eid (:eid (swap! state update :eid inc))}
           (when source {:source source})
           (when source-type {:source-type source-type})
           (when source-info {:source-info source-info}))))
@@ -12,7 +12,7 @@
   "Set default values for fields in the `eid` if they are not already set."
   [eid & args]
   (let
-    [remove-fn (fn [[k v]]
+    [remove-fn (fn [[k _]]
                  (contains? eid k))
      kvs (remove remove-fn (partition 2 args))]
     (if (not-empty kvs)
@@ -20,8 +20,8 @@
       eid)))
 
 (defn register-effect-completed
-  [state side eid effect]
-  (swap! state update-in [:effect-completed (:eid eid)] #(conj % effect)))
+  [state _ eid effect]
+  (swap! state update-in [:effect-completed (:eid eid)] conj effect))
 
 (defn effect-completed
   [state side eid]

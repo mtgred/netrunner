@@ -258,7 +258,7 @@
       ;; Req check
       (and card-req (not (card-req state side (make-eid state) card nil))) :req
       ;; Nothing preventing install
-      :default true)))
+      :else true)))
 
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"

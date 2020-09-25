@@ -1,17 +1,17 @@
 (ns game.core.abilities
-  (:require [game.core.board :refer :all]
-            [game.core.card :refer :all]
-            [game.core.eid :refer :all]
-            [game.core.flags :refer [card-flag?]]
-            [game.core.io :refer [system-msg]]
-            [game.core.prompts :refer :all]
-            [game.core.toasts :refer [toast]]
-            [game.core.update :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
+  (:require [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.string :as string]
-            [clojure.stacktrace :refer [print-stack-trace]]))
+            [game.core.board :refer [all-active-installed]]
+            [game.core.card :refer [ice?]]
+            [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+            [game.core.flags :refer [card-flag?]]
+            [game.core.prompts :refer [show-prompt show-select]]
+            [game.core.say :refer [system-msg]]
+            [game.core.toasts :refer [toast]]
+            [game.core.update :refer [update!]]
+            [game.macros :refer [wait-for]]
+            [game.utils :refer [distinct-by server-cards to-keyword]]
+            [jinteki.utils :refer [capitalize]]))
 
 ;; resolve-ability docs
 
@@ -224,7 +224,7 @@
          :else true)))))
 
 (defn not-used-once?
-  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
+  [state {:keys [once once-key]} {:keys [cid]}]
   (not (get-in @state [once (or once-key cid)])))
 
 (defn can-trigger?
@@ -300,8 +300,9 @@
 
 (defn register-once
   "Register ability as having happened if :once specified"
-  [state side {:keys [once once-key] :as ability} {:keys [cid] :as card}]
-  (when once (swap! state assoc-in [once (or once-key cid)] true)))
+  [state _ {:keys [once once-key]} {:keys [cid]}]
+  (when once
+    (swap! state assoc-in [once (or once-key cid)] true)))
 
 (defn- do-effect
   "Trigger the effect"
@@ -391,11 +392,11 @@
                   (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
                   args))))
 
-(defmulti cost-name (fn [[cost-type cost-value]] cost-type))
-(defmulti label (fn [[cost-type cost-value]] cost-type))
-(defmulti value (fn [[cost-type cost-value]] cost-type))
-(defmulti payable? (fn [[cost-type cost-value] & args] cost-type))
-(defmulti handler (fn [[cost-type cost-value] & args] cost-type))
+(defmulti cost-name (fn [[cost-type]] cost-type))
+(defmulti label (fn [[cost-type]] cost-type))
+(defmulti value (fn [[cost-type]] cost-type))
+(defmulti payable? (fn [[cost-type] & _] cost-type))
+(defmulti handler (fn [[cost-type] & _] cost-type))
 
 (defn- add-default-to-costs
   "Take a sequence of costs (nested or otherwise) and add a default value of 1
@@ -442,7 +443,7 @@
         vals
         (map (fn [cost-pairs]
                (reduce
-                 (fn [[ct acc] [cost-type cost-value]]
+                 (fn [[_ acc] [cost-type cost-value]]
                    ;; Using the multi-method value here in case a cost-type
                    ;; shouldn't have more than 1 (e.g. :trash)
                    [cost-type (value [cost-type ((fnil + 0 0) acc cost-value)])])

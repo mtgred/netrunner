@@ -4,7 +4,8 @@
 
 (def forms
   (->>
-    '[runner (:runner @state)
+    '[
+      runner (:runner @state)
       corp (:corp @state)
       run (:run @state)
       run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
@@ -33,7 +34,8 @@
                             (:run-id (first targets))))
       this-server (let [s (get-zone card)
                         r (:server (:run @state))]
-                    (= (second s) (first r)))]
+                    (= (second s) (first r)))
+      ]
     (partition 2)
     (map (juxt first identity))
     (into {})))

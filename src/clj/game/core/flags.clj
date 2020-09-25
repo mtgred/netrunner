@@ -1,12 +1,12 @@
 (ns game.core.flags
-  (:require [game.core.board :refer :all]
-            [game.core.card :refer :all]
+  (:require [clojure.string :as string]
+            [game.core.board :refer [all-active all-installed]]
+            [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
-            [game.core.eid :refer :all]
-            [game.core.toasts :refer [toast]]
+            [game.core.eid :refer [make-eid]]
             [game.core.to-string :refer [card-str]]
-            [game.utils :refer :all]
-            [clojure.string :as string]))
+            [game.core.toasts :refer [toast]]
+            [game.utils :refer [same-side? zone->name same-card?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -41,7 +41,7 @@
 ;;; Generic flag functions
 (defn- register-flag!
   "Register a flag of the specific type."
-  [state side card flag-type flag condition]
+  [state _ card flag-type flag condition]
   (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
 
 (defn- check-flag?
@@ -67,7 +67,7 @@
 
 (defn has-flag?
   "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
-  [state side flag-type flag]
+  [state _ flag-type flag]
   (not-empty (get-in @state [:stack flag-type flag])))
 
 (defn- clear-all-flags!
@@ -77,7 +77,7 @@
 
 (defn- clear-flag-for-card!
   "Remove all entries for specified card for flag-type and flag"
-  [state side card flag-type flag]
+  [state _ card flag-type flag]
   (swap! state update-in [:stack flag-type flag]
          (fn [flag-map] (remove #(= (get-cid %) (:cid card)) flag-map))))
 
@@ -182,19 +182,19 @@
 
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.
-(defn prevent-draw [state side]
+(defn prevent-draw [state _]
   (swap! state assoc-in [:runner :register :cannot-draw] true))
 
-(defn prevent-jack-out [state side]
+(defn prevent-jack-out [state _]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
-(defn prevent-current [state side]
+(defn prevent-current [state _]
   (swap! state assoc-in [:runner :register :cannot-play-current] true))
 
-(defn lock-zone [state side cid tside tzone]
+(defn lock-zone [state _ cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(conj % cid)))
 
-(defn release-zone [state side cid tside tzone]
+(defn release-zone [state _ cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
 (defn zone-locked?
@@ -229,12 +229,12 @@
       ;; Rez req check
       (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true
-      :default true)))
+      :else true)))
 
 (defn can-rez?
   "Checks if the card can be rezzed. Toasts the reason if not."
   ([state side card] (can-rez? state side card nil))
-  ([state side card {:keys [ignore-unique] :as args}]
+  ([state side card {:keys [ignore-unique]}]
    (let [reason (can-rez-reason state side card)
          reason-toast #(do (toast state side %) false)
          title (:title card)]
@@ -317,12 +317,12 @@
 
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
-  [state side card]
+  [state _ card]
   (is-scored? state :corp card))
 
 (defn in-runner-scored?
   "Checks if the specified card is in the Runner score area."
-  [state side card]
+  [state _ card]
   (is-scored? state :runner card))
 
 (defn card-is-public?

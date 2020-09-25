@@ -1,4 +1,4 @@
-(ns game.core.io-test
+(ns game.core.say-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.core-test :refer :all]

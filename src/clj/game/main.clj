@@ -1,11 +1,7 @@
 (ns game.main
-  (:require [cheshire.core :refer [parse-string generate-string]]
-            [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [card-is-public?] :as core]
-            [game.core.eid :as eid]
-            [game.core.toasts :refer [toast]]
-            [game.core.card :refer [private-card get-card]]
-            [game.utils :refer [dissoc-in]]))
+  (:require [cheshire.generate :refer [add-encoder encode-str]]
+            [game.core :as core]
+            [game.core.toasts :refer [toast]]))
 
 (add-encoder java.lang.Object encode-str)
 

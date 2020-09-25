@@ -2,7 +2,6 @@
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [card-def]]
             [game.cards.ice :as ice]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]

@@ -129,6 +129,45 @@
    make-result
    register-effect-completed]
 
+  [game.core.events
+   ability-as-handler
+   card-as-handler
+   card-for-ability
+   default-locations
+   effect-as-handler
+   event-count
+   event-title
+   first-event?
+   first-installed-trash-own?
+   first-installed-trash?
+   first-run-event?
+   first-successful-run-on-server?
+   first-trash?
+   gather-events
+   get-installed-trashed
+   get-turn-damage
+   last-turn?
+   log-event
+   no-event?
+   no-run-event?
+   not-last-turn?
+   register-events
+   register-suppress
+   run-event-count
+   run-events
+   second-event?
+   trigger-event
+   trigger-event-simult
+   trigger-event-sync
+   trigger-suppress
+   turn-events
+   unregister-event-by-uuid
+   unregister-events
+   unregister-floating-events
+   unregister-floating-events-for-card
+   unregister-suppress
+   unregister-suppress-by-uuid]
+
   [game.core.finding
    find-card
    find-cid
@@ -185,15 +224,56 @@
    when-scored?
    zone-locked?]
 
-  [game.core.io
-   enforce-msg
-   indicate-action
-   play-sfx
-   say
-   system-msg
-   system-say
-   typing
-   typingstop]
+  [game.core.ice
+   add-extra-sub!
+   add-sub
+   add-sub!
+   all-subs-broken-by-card?
+   all-subs-broken?
+   any-subs-broken-by-card?
+   any-subs-broken?
+   auto-icebreaker
+   break-all-subroutines
+   break-all-subroutines!
+   break-sub
+   break-subroutine
+   break-subroutine!
+   break-subroutines
+   break-subroutines-msg
+   breakable-subroutines-choice
+   breaker-strength
+   dont-resolve-all-subroutines
+   dont-resolve-all-subroutines!
+   dont-resolve-subroutine
+   dont-resolve-subroutine!
+   get-current-ice
+   get-strength
+   ice-strength
+   pump
+   pump-all-ice
+   pump-all-icebreakers
+   pump-ice
+   remove-extra-subs!
+   remove-sub
+   remove-sub!
+   remove-subs
+   remove-subs!
+   reset-all-ice
+   reset-all-subs
+   reset-all-subs!
+   reset-sub
+   reset-sub!
+   resolve-subroutine
+   resolve-subroutine!
+   resolve-unbroken-subs!
+   strength-pump
+   sum-ice-strength-effects
+   unbroken-subroutines-choice
+   update-all-ice
+   update-all-icebreakers
+   update-breaker-strength
+   update-ice-in-server
+   update-ice-strength]
 
   [game.core.player
    map->Corp
@@ -210,6 +290,16 @@
    show-select
    show-trace-prompt
    show-wait-prompt]
+
+  [game.core.say
+   enforce-msg
+   indicate-action
+   play-sfx
+   say
+   system-msg
+   system-say
+   typing
+   typingstop]
 
   [game.core.state
    make-rid

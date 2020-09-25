@@ -286,9 +286,9 @@
                :effect (ability "installing an icebreaker")}]}))
 
 (define-card "Bifrost Array"
-  {:req (req (not (empty? (filter #(not= (:title %)
-                                         "Bifrost Array")
-                                  (:scored corp)))))
+  {:req (req (seq (filter #(not= (:title %)
+                                 "Bifrost Array")
+                          (:scored corp))))
    :optional {:prompt "Trigger the ability of a scored agenda?"
               :yes-ability {:prompt "Select an agenda to trigger the \"when scored\" ability of"
                             :choices {:card #(and (agenda? %)
@@ -1044,7 +1044,7 @@
    :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
    :effect (req (let [bp (count-bad-pub state)]
                   (gain-bad-publicity state :corp eid (str->int target))
-                  (if (< bp (count-bad-pub state))
+                  (when (< bp (count-bad-pub state))
                     (gain-credits state :corp (* 5 (str->int target))))))})
 
 (define-card "Project Ares"
@@ -1368,7 +1368,7 @@
                       :choices {:card #(= (:title %) "Research Grant")}
                       :interactive (req true)
                       :async true
-                      :req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
+                      :req (req (seq (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
                       :effect (effect (set-prop target :advance-counter (:advancementcost target))
                                       (score eid (get-card state target)))
                       :msg "score another installed copy of Research Grant"}

@@ -1,6 +1,6 @@
-(ns game.core.io
-  (:require [game.core.toasts :refer [toast]]
-            [clojure.string :as string]))
+(ns game.core.say
+  (:require [clojure.string :as string]
+            [game.core.toasts :refer [toast]]))
 
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
@@ -21,7 +21,7 @@
 
 (defn typingstop
   "Clears typing flag from game state for user"
-  [state side {:keys [user text]}]
+  [state side {:keys [user]}]
   (let [author (or user (get-in @state [side :user]))]
     (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))
     ;; say something to force update in client side rendering
@@ -47,7 +47,7 @@
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
 
 (defn indicate-action
-  [state side args]
+  [state side _]
   (system-say state side
               (str "[!] Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
   (toast state side
@@ -63,8 +63,7 @@
   "Adds a sound effect to play to the sfx queue.
   Each SFX comes with a unique ID, so each client can track for themselves which sounds have already been played.
   The sfx queue has size limited to 3 to limit the sound torrent tabbed out or lagged players will experience."
-  [state side sfx]
+  [state _ sfx]
   (when-let [current-id (get-in @state [:sfx-current-id])]
-    (do
-      (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
-      (swap! state update-in [:sfx-current-id] inc))))
+    (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
+    (swap! state update-in [:sfx-current-id] inc)))

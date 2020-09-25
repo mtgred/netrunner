@@ -22,7 +22,7 @@
 
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
-  [state {:keys [cid] :as card}]
+  [state {:keys [cid]}]
   (cond
     (find-cid cid (get-in @state [:corp :scored]))
     :corp

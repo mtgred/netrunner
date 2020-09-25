@@ -3,7 +3,7 @@
 ;;; Trashing
 (defn trash-resource-bonus
   "Applies a cost increase of n to trashing a resource with the click action. (SYNC.)"
-  [state side n]
+  [state _ n]
   (swap! state update-in [:corp :trash-cost-bonus] (fnil #(+ % n) 0)))
 
 (defn trash-prevent [state side type n]
@@ -13,7 +13,7 @@
   ([state side card oid] (prevent-trash state side (make-eid state) card oid nil))
   ([state side card oid args] (prevent-trash state side (make-eid state) card oid args))
   ([state side eid {:keys [zone type] :as card} oid
-    {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
+    {:keys [unpreventable cause] :as args}]
    (if (and card (not-any? #{:discard} zone))
      (cond
 

@@ -1,16 +1,12 @@
 (ns game.core.prompts
-  (:require [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.toasts :refer [toast]]
-            [clj-uuid :as uuid]))
+  (:require [clj-uuid :as uuid]
+            [game.core.eid :refer [effect-completed make-eid]]
+            [game.core.toasts :refer [toast]]))
 
 (defn- add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
-  [state side {:keys [priority] :as prompt}]
-  (let [priority-comp #(case % true 1 nil 0 %)
-        split-fn #(>= (priority-comp (:priority %)) (priority-comp priority))
-        ;; insert the new prompt into the already-sorted queue based on its priority.
-        update-fn #(let [[head tail] (split-with split-fn %)] (concat head (cons prompt tail)))]
-    (swap! state update-in [side :prompt] #(cons prompt %))))
+  [state side prompt]
+  (swap! state update-in [side :prompt] #(cons prompt %)))
 
 (defn choice-parser
   [choices]
@@ -28,7 +24,7 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
+    {:keys [prompt-type show-discard cancel-effect end-effect]}]
    (let [prompt (if (string? message) message (message state side eid card nil))
          choices (choice-parser choices)
          newitem {:eid eid
@@ -68,7 +64,7 @@
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
    Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [corp-credits runner-credits priority player other base bonus strength link] :as args}]
+  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link]}]
    (let [prompt (if (string? message) message (message state side nil card nil))
          corp-credits (corp-credits eid)
          runner-credits (runner-credits eid)
@@ -109,7 +105,7 @@
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
-  ([state side card ability update! resolve-ability] (show-select state side card ability update! nil))
+  ([state side card ability update! resolve-ability] (show-select state side card ability update! resolve-ability nil))
   ([state side card ability update! resolve-ability args]
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
@@ -136,10 +132,10 @@
                         (str "Select a target for " (:title card))))
                     (if all ["Hide"] ["Done"])
                     (if all
-                      (fn [choice]
+                      (fn [_]
                         (toast state side (str "You must choose " m))
-                        (show-select state side card ability args))
-                      (fn [choice]
+                        (show-select state side card ability update! resolve-ability args))
+                      (fn [_]
                         (resolve-select state side card
                                         (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
                                         update! resolve-ability)))
@@ -150,13 +146,11 @@
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
-  The prompt cannot be closed except by a later call to clear-wait-prompt.
-  The prompt has default priority 1, but can be overridden."
-  ([state side message] (show-wait-prompt state side message {:priority 1}))
-  ([state side message {:keys [priority card] :as args}]
+  The prompt cannot be closed except by a later call to clear-wait-prompt."
+  ([state side message] (show-wait-prompt state side message nil))
+  ([state side message {:keys [card]}]
    (show-prompt state side card (str "Waiting for " message) nil nil
-                {:priority priority
-                 :prompt-type :waiting})))
+                {:prompt-type :waiting})))
 
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."

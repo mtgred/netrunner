@@ -7,7 +7,7 @@
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
   ([state side eid c] (access-end state side eid c nil))
-  ([state side eid c {:keys [trashed stolen] :as args}]
+  ([state side eid c {:keys [trashed stolen]}]
    ;; Do not trigger :no-trash if card has already been trashed
    (wait-for (trigger-event-sync state side (when-not trashed :no-trash) c)
              (wait-for (trigger-event-sync state side (when-not stolen :no-steal) c)

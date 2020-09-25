@@ -1,4 +1,13 @@
-(in-ns 'game.core)
+(ns game.core.events
+  (:require [clj-uuid :as uuid]
+            [game.core.abilities :refer [can-trigger? resolve-ability]]
+            [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.eid :refer [effect-completed make-eid]]
+            [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
+            [game.macros :refer [continue-ability req wait-for]]
+            [game.utils :refer [in-coll? remove-once same-card? side-str to-keyword]]
+            [jinteki.utils :refer [other-side]]))
 
 (declare register-suppress unregister-suppress)
 
@@ -62,7 +71,7 @@
 
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
-  [state side duration]
+  [state _ duration]
   (when (not= :while-installed duration)
     (swap! state assoc :events
            (->> (:events @state)
@@ -71,7 +80,7 @@
 
 (defn unregister-floating-events-for-card
   "Removes all event handlers with a non-persistent duration on a single card"
-  [state side card duration]
+  [state _ card duration]
   (swap! state assoc :events
          (->> (:events @state)
               (remove #(and (same-card? card (:card %))
@@ -80,7 +89,7 @@
 
 (defn unregister-event-by-uuid
   "Removes a single event handler with matching uuid"
-  [state side uuid]
+  [state _ uuid]
   (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
 
 ; Functions for registering trigger suppression events.
@@ -88,7 +97,7 @@
   "Registers each suppression handler in the given card definition. Suppression handlers
   can prevent the dispatching of a particular event."
   ([state side card] (register-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
+  ([state _ card events]
    (when events
      (let [abilities
            (->> (for [ability events]
@@ -104,7 +113,7 @@
 (defn unregister-suppress
   "Removes all event handler suppression effects as defined for the given card"
   ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
+  ([state _ card events]
    (let [abilities (map :event events)]
      (swap! state assoc :suppress
             (->> (:suppress @state)
@@ -114,7 +123,7 @@
 
 (defn unregister-suppress-by-uuid
   "Removes a single event handler with matching uuid"
-  [state side uuid]
+  [state _ uuid]
   (swap! state assoc :suppress (remove-once #(= uuid (:uuid %)) (:suppress @state))))
 
 (declare card-for-ability)
@@ -192,9 +201,7 @@
   [state side event & targets]
   (when (some? event)
     (log-event state event targets)
-    (let [get-side #(-> % :card :side game.utils/to-keyword)
-          is-active-player #(= (:active-player @state) (get-side %))
-          handlers (gather-events state side event targets)]
+    (let [handlers (gather-events state side event targets)]
       (doseq [to-resolve handlers]
         (when-let [card (card-for-ability state to-resolve)]
           (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
@@ -219,9 +226,7 @@
   (if (nil? event)
     (effect-completed state side eid)
     (do (log-event state event targets)
-        (let [get-side #(-> % :card :side game.utils/to-keyword)
-              is-active-player #(= (:active-player @state) (get-side %))
-              handlers (gather-events state side event targets)]
+        (let [handlers (gather-events state side event targets)]
           (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player
@@ -231,7 +236,7 @@
   choose the order of resolution.
 
   :silent abilities are not shown in the list of handlers, and are resolved last in an arbitrary order."
-  [state side eid event handlers cancel-fn event-targets]
+  [state side eid handlers cancel-fn event-targets]
   (if (not-empty handlers)
     (letfn [;; Allow resolution as long as there is no cancel-fn, or if the cancel-fn returns false.
             (should-continue [state handlers]
@@ -331,7 +336,7 @@
                  process, likely because an event handler caused a change to the game state that cancels future handlers.
                  (Film Critic)
   targets:       a varargs list of targets to the event, as usual"
-  [state side eid event {:keys [first-ability card-abilities after-active-player cancel-fn] :as options} & targets]
+  [state side eid event {:keys [first-ability card-abilities after-active-player cancel-fn]} & targets]
   (if (nil? event)
     (effect-completed state side eid)
     (do (log-event state event targets)
@@ -355,21 +360,21 @@
                                       (str (side-str active-player) " to resolve " (event-title event) " triggers")
                                       {:priority -1})
                     ; let active player activate their events first
-                    (wait-for (trigger-event-simult-player state side (make-eid state eid) event active-player-events cancel-fn targets)
+                    (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)
                               (show-wait-prompt state active-player
                                                 (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                                 {:priority -1})
-                              (wait-for (trigger-event-simult-player state opponent (make-eid state eid) event opponent-events cancel-fn targets)
+                              (wait-for (trigger-event-simult-player state opponent (make-eid state eid) opponent-events cancel-fn targets)
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))
 
 ;; Functions for event parsing
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
-  [state side ev]
+  [state _ ev]
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
 (defn last-turn? [state side event]
@@ -434,7 +439,7 @@
 
 (defn get-turn-damage
   "Returns the value of damage take this turn"
-  [state side]
+  [state _]
   (apply + (map #(nth % 2) (turn-events state :runner :damage))))
 
 (defn get-installed-trashed
@@ -456,7 +461,7 @@
 ;; Functions for run event parsing
 (defn run-events
   "Returns the targets vectors of each run event with the given key that was triggered this run."
-  [state side ev]
+  [state _ ev]
   (when (:run @state)
     (mapcat rest (filter #(= ev (first %)) (get-in @state [:run :events])))))
 

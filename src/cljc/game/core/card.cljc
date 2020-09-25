@@ -312,7 +312,7 @@
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
-  [state {:keys [cid zone side host] :as card}]
+  [state card]
   (let [root-host (get-card state (get-nested-host card))
         helper (fn search [card target]
                  (when-not (nil? card)

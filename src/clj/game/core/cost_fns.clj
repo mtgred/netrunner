@@ -1,8 +1,8 @@
 (ns game.core.cost-fns
   (:require [game.core.abilities :refer [merge-costs]]
-            [game.core.card :refer :all]
+            [game.core.card :refer [runner?]]
             [game.core.card-defs :refer [card-def]]
-            [game.core.effects :refer :all]
+            [game.core.effects :refer [any-effects get-effects sum-effects]]
             [game.core.eid :refer [make-eid]]))
 
 ;; State-aware cost-generating functions
@@ -113,17 +113,15 @@
 
 (defn card-ability-cost
   "Returns a list of all costs (printed and additional) required to use a given ability"
-  ([state side ability card] (card-ability-cost state side ability card nil nil))
-  ([state side ability card targets] (card-ability-cost state side ability card targets nil))
-  ([state side ability card targets {:keys [cost-bonus] :as args}]
+  ([state side ability card] (card-ability-cost state side ability card nil))
+  ([state side ability card targets]
    (concat (:cost ability)
            (:additional-cost ability)
            (get-effects state side card :card-ability-additional-cost (flatten [ability targets])))))
 
 (defn break-sub-ability-cost
-  ([state side ability card] (break-sub-ability-cost state side ability card nil nil))
-  ([state side ability card targets] (break-sub-ability-cost state side ability card targets nil))
-  ([state side ability card targets {:keys [cost-bonus] :as args}]
+  ([state side ability card] (break-sub-ability-cost state side ability card nil))
+  ([state side ability card targets]
    (concat (:cost ability)
            (:additional-cost ability)
            (get-effects state side card :break-sub-additional-cost (flatten [ability targets])))))
