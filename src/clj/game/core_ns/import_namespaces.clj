@@ -95,6 +95,22 @@
   [game.core.card-defs
    card-def]
 
+  [game.core.cost-fns
+   break-sub-ability-cost
+   card-ability-cost
+   has-trash-ability?
+   ignore-install-cost?
+   install-additional-cost-bonus
+   install-cost
+   jack-out-cost
+   play-additional-cost-bonus
+   play-cost
+   rez-additional-cost-bonus
+   rez-cost
+   run-additional-cost-bonus
+   run-cost
+   trash-cost]
+
   [game.core.effects
    any-effects
    gather-effects

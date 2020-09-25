@@ -3,6 +3,7 @@
             [game.core.board]
             [game.core.card]
             [game.core.card-defs]
+            [game.core.cost-fns]
             [game.core.effects]
             [game.core.eid]
             [game.core.finding]
@@ -33,13 +34,13 @@
            [game.core.card Card]))
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
+
 (load "core_ns/events")       ; triggering of events
 (load "core_ns/gaining")      ; gain/lose credits and clicks and other base values
 (load "core_ns/cards")        ; retrieving and updating cards
 
 ;; Cost section
 (load "core_ns/cost_impls") ; implementations of cost functions
-(load "core_ns/cost_generation") ; state-aware cost-generating functions
 
 (load "core_ns/ice")          ; ice and icebreaker interactions
 (load "core_ns/rules")        ; core game rules

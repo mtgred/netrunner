@@ -1,4 +1,9 @@
-(in-ns 'game.core)
+(ns game.core.cost-fns
+  (:require [game.core.abilities :refer [merge-costs]]
+            [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.effects :refer :all]
+            [game.core.eid :refer [make-eid]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
