@@ -82,6 +82,7 @@
    all-active-installed
    all-installed
    all-installed-runner-type
+   card->server
    get-all-installed
    get-remote-names
    get-remote-zones
@@ -90,7 +91,6 @@
    in-play?
    installable-servers
    installed-byname
-   number-of-virus-counters
    server->zone
    server-list]
 
@@ -355,6 +355,14 @@
    update-ice-in-server
    update-ice-strength]
 
+  [game.core.identities
+   disable-card
+   disable-identity
+   enable-card
+   enable-identity
+   flip-facedown
+   flip-faceup]
+
   [game.core.initializing
    ability-init
    card-init
@@ -475,6 +483,11 @@
   [game.core.update
    update!
    update-hosted!]
+
+  [game.core.virus
+   count-virus-programs
+   get-virus-counters
+   number-of-virus-counters]
 
   [game.core.winning
    check-winner

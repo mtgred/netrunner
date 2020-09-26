@@ -17,6 +17,7 @@
     [game.core.gaining]
     [game.core.hosting]
     [game.core.ice]
+    [game.core.identities]
     [game.core.initializing]
     [game.core.moving]
     [game.core.player]
@@ -31,6 +32,7 @@
     [game.core.to-string]
     [game.core.toasts]
     [game.core.update]
+    [game.core.virus]
     [game.core.winning]
     [game.macros]
     [game.utils :refer :all]
@@ -51,8 +53,6 @@
            [game.core.card Card]))
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
-
-(load "core_ns/cards")        ; retrieving and updating cards
 
 ;; Cost section
 (load "core_ns/cost_impls") ; implementations of cost functions

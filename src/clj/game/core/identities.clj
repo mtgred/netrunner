@@ -1,23 +1,17 @@
-(in-ns 'game.core)
-
-;;; Misc card functions
-(defn get-virus-counters
-  "Calculate the number of virus counters on the given card, taking Hivemind into account."
-  [state card]
-  (let [hiveminds (when (virus-program? card)
-                    (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
-    (reduce + (map #(get-counters % :virus) (cons card hiveminds)))))
-
-(defn count-virus-programs
-  "Calculate the number of virus programs in play"
-  [state]
-  (count (filter virus-program? (all-active-installed state :runner))))
-
-(defn card->server
-  "Returns the server map that this card is installed in or protecting."
-  [state card]
-  (let [z (:zone card)]
-    (get-in @state [:corp :servers (second z)])))
+(ns game.core.identities
+  (:require
+    [game.core.abilities :refer [resolve-ability]]
+    [game.core.card :refer [active? get-card has-subtype?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.eid :refer [make-eid]]
+    [game.core.events :refer [register-events unregister-events]]
+    [game.core.gaining :refer [toast-check-mu use-mu]]
+    [game.core.ice :refer [update-breaker-strength]]
+    [game.core.initializing :refer [card-init deactivate]]
+    [game.core.moving :refer [move]]
+    [game.core.update :refer [update!]]
+    [game.utils :refer [type->rig-zone]]))
 
 (defn- actual-disable-identity
   "Actually disables the side's identity"

@@ -38,11 +38,6 @@
   [state card-type]
   (filter (every-pred #(is-type? % card-type) (complement facedown?)) (all-installed state :runner)))
 
-(defn number-of-virus-counters
-  "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
-  [state]
-  (reduce + (map #(get-counters % :virus) (get-all-installed state))))
-
 (defn all-active-installed
   "Returns a vector of active AND installed cards for the given side. This is all face-up installed cards."
   [state side]
@@ -115,3 +110,9 @@
       "Archives" [:servers :archives]
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (string/split server #" ") last (str "remote") keyword)])))
+
+(defn card->server
+  "Returns the server map that this card is installed in or protecting."
+  [state card]
+  (let [z (:zone card)]
+    (get-in @state [:corp :servers (second z)])))
