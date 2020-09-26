@@ -1,4 +1,28 @@
-(in-ns 'game.core)
+(ns game.core.access
+  (:require
+    [game.core.abilities :refer [add-cost-label-to-ability build-cost-string can-pay? can-trigger? merge-costs pay resolve-ability should-trigger?]]
+    [game.core.agendas :refer [get-agenda-points update-all-agenda-points]]
+    [game.core.board :refer [all-active]]
+    [game.core.card :refer [agenda? corp? get-card get-zone in-discard? in-hand? in-scored? installed? operation? rezzed?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.cost-fns :refer [card-ability-cost trash-cost]]
+    [game.core.effects :refer [any-effects register-floating-effect sum-effects unregister-floating-effects]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+    [game.core.events :refer [ability-as-handler register-events trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.finding :refer [find-cid]]
+    [game.core.flags :refer [can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
+    [game.core.moving :refer [move remove-old-current trash]]
+    [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
+    [game.core.revealing :refer [reveal]]
+    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.to-string :refer [name-zone]]
+    [game.core.update :refer [update!]]
+    [game.core.winning :refer [check-winner]]
+    [game.utils :refer [get-server-type quantify same-card?]]
+    [game.macros :refer [continue-ability req wait-for]]
+    [jinteki.utils :refer [add-cost-to-label]]
+    [clojure.set :as clj-set]
+    [clojure.string :as string]))
 
 (defn no-trash-or-steal
   [state]
@@ -192,12 +216,12 @@
         ability-strs (mapv #(access-ab-label state %) access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
-                    (if (not (blank? cost-strs))
+                    (if (not (string/blank? cost-strs))
                       ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
-        prompt-str (if (not (blank? cost-strs))
+        prompt-str (if (not (string/blank? cost-strs))
                      (str " " cost-strs " to steal?")
                      "")
         prompt-str (str "You accessed " (:title card) "." prompt-str)
@@ -520,7 +544,7 @@
                           already-accessed (if shuffled-during-run
                                              (set (filter already-accessed-fn root))
                                              (conj already-accessed (:cid card-to-access)))]
-                      (if shuffled-during-run
+                      (when shuffled-during-run
                         (swap! state update-in [:run :shuffled-during-access] dissoc :rd))
                       (continue-ability
                         state side
@@ -594,7 +618,7 @@
                                       card nil)))))}))))
 
 (defmethod choose-access :rd
-  [{:keys [base total] :as access-amount} server {:keys [no-root] :as args}]
+  [{:keys [base total] :as access-amount} _ {:keys [no-root] :as args}]
   {:async true
    :effect (req (let [only-card (get-only-card-to-access state)
                       total-cards (or (when only-card [only-card])
@@ -755,7 +779,7 @@
                                       card nil)))))}))))
 
 (defmethod choose-access :hq
-  [{:keys [base total] :as access-amount} server {:keys [no-root] :as args}]
+  [{:keys [base total] :as access-amount} _ {:keys [no-root] :as args}]
   {:async true
    :effect (req (let [only-card (get-only-card-to-access state)
                       total-cards (or (when only-card [only-card])
@@ -992,7 +1016,7 @@
                                       nil nil)))))}))))
 
 (defmethod choose-access :archives
-  [{:keys [base total] :as access-amount} server {:keys [no-root] :as args}]
+  [{:keys [base total] :as access-amount} _ {:keys [no-root] :as args}]
   {:async true
    :effect (req (let [only-card (get-only-card-to-access state)
                       total-cards (or (when only-card [only-card])
@@ -1061,7 +1085,7 @@
       (get-server-type server))))
 
 (defmethod num-cards-to-access :only
-  [state side server {:keys [no-root]}]
+  [state side server _]
   (let [card (get-only-card-to-access state)
         total-mod (access-count state side :total)
         sum (inc total-mod)

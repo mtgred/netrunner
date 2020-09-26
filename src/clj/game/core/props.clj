@@ -35,7 +35,7 @@
   "Adds n counters of the specified type to a card"
   ([state side card type n] (add-counter state side (make-eid state) card type n nil))
   ([state side card type n args] (add-counter state side (make-eid state) card type n args))
-  ([state side eid card type n {:keys [placed] :as args}]
+  ([state side eid card type n args]
    (let [updated-card (if (= type :virus)
                         (assoc card :added-virus-counter true)
                         card)]

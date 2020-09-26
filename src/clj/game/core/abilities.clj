@@ -392,9 +392,9 @@
                   (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
                   args))))
 
-(defmulti cost-name (fn [[cost-type]] cost-type))
-(defmulti label (fn [[cost-type]] cost-type))
-(defmulti value (fn [[cost-type]] cost-type))
+(defmulti cost-name (fn [[cost-type _]] cost-type))
+(defmulti value (fn [[cost-type _]] cost-type))
+(defmulti label (fn [[cost-type _]] cost-type))
 (defmulti payable? (fn [[cost-type] & _] cost-type))
 (defmulti handler (fn [[cost-type] & _] cost-type))
 

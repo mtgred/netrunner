@@ -16,11 +16,27 @@
             [clojure.string :as string]
             ))
 
-;; Should be in runs.clj, but `req` needs it and we use req in core here first
+;; These should be in runs.clj, but `req` needs get-current-ice and
+;; moving.clj needs set-current-ice
+(defn get-run-ices
+  [state]
+  (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
+
 (defn get-current-ice
   [state]
   (let [ice (get-in @state [:run :current-ice])]
     (or (get-card state ice) ice)))
+
+(defn set-current-ice
+  ([state]
+   (let [run-ice (get-run-ices state)
+         pos (get-in @state [:run :position])]
+     (when (and pos
+                (pos? pos)
+                (<= pos (count run-ice)))
+       (set-current-ice state (nth run-ice (dec pos))))))
+  ([state card]
+   (swap! state assoc-in [:run :current-ice] (get-card state card))))
 
 ;;; Ice subroutine functions
 (defn add-sub

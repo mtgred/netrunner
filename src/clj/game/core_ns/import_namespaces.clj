@@ -1,4 +1,5 @@
 (in-ns 'game.core)
+(require '[potemkin :refer [import-vars]])
 
 (import-vars
 
@@ -27,6 +28,54 @@
    sentence-join
    should-trigger?
    value]
+
+  [game.core.access
+   access-bonus
+   access-bonus-count
+   access-card
+   access-cost
+   access-cost-bonus
+   access-count
+   access-end
+   access-helper-archives
+   access-helper-hq
+   access-helper-rd
+   access-helper-remote
+   access-non-agenda
+   clean-access-args
+   choose-access
+   do-access
+   facedown-cards
+   faceup-accessible
+   get-all-content
+   get-all-hosted
+   get-only-card-to-access
+   interactions
+   max-access
+   msg-handle-access
+   must-continue?
+   no-trash-or-steal
+   num-cards-central
+   num-cards-to-access
+   root-content
+   set-only-card-to-access
+   steal
+   steal-cost
+   steal-cost-bonus
+   turn-archives-faceup]
+
+  [game.core.agendas
+   advancement-cost
+   advancement-cost-bonus
+   as-agenda
+   forfeit
+   get-agenda-points
+   sum-agenda-points
+   update-advancement-cost
+   update-agenda-points
+   update-agenda-points-card
+   update-all-advancement-costs
+   update-all-agenda-points]
 
   [game.core.board
    all-active
@@ -111,6 +160,12 @@
    run-cost
    trash-cost]
 
+  [game.core.drawing
+   draw
+   draw-bonus
+   max-draw
+   remaining-draws]
+
   [game.core.effects
    any-effects
    gather-effects
@@ -167,6 +222,10 @@
    unregister-floating-events-for-card
    unregister-suppress
    unregister-suppress-by-uuid]
+
+  [game.core.expose
+   expose
+   expose-prevent]
 
   [game.core.finding
    find-card
@@ -266,6 +325,7 @@
    dont-resolve-subroutine
    dont-resolve-subroutine!
    get-current-ice
+   get-run-ices
    get-strength
    ice-strength
    pump
@@ -285,6 +345,7 @@
    resolve-subroutine
    resolve-subroutine!
    resolve-unbroken-subs!
+   set-current-ice
    strength-pump
    sum-ice-strength-effects
    unbroken-subroutines-choice
@@ -298,10 +359,23 @@
    ability-init
    card-init
    deactivate
+   make-card
    subroutines-init
    update-abilities-cost-str
    update-ability-cost-str
    update-all-card-labels]
+
+  [game.core.moving
+   move
+   move-zone
+   remove-old-current
+   trash
+   trash-cards
+   trash-prevent
+   trash-resource-bonus
+   uninstall
+   update-current-ice-to-trash
+   update-installed-card-indices]
 
   [game.core.props
    add-counter
@@ -324,6 +398,45 @@
    show-trace-prompt
    show-wait-prompt]
 
+  [game.core.revealing
+   conceal-hand
+   reveal
+   reveal-hand]
+
+  [game.core.runs
+   add-run-effect
+   bypass-ice
+   can-bypass-ice
+   check-auto-no-action
+   check-for-empty-server
+   complete-run
+   continue
+   corp-phase-43
+   encounter-ends
+   end-run
+   end-run-prevent
+   gain-next-run-credits
+   gain-run-credits
+   handle-end-run
+   jack-out
+   jack-out-prevent
+   make-run
+   pass-ice
+   prevent-access
+   redirect-run
+   register-successful-run
+   replace-access
+   run-cleanup
+   run-cleanup-2
+   set-next-phase
+   set-phase
+   start-next-phase
+   successful-run
+   successful-run-effect-impl
+   toggle-auto-no-action
+   total-cards-accessed
+   total-run-cost]
+
   [game.core.say
    enforce-msg
    indicate-action
@@ -333,6 +446,18 @@
    system-say
    typing
    typingstop]
+
+  [game.core.set-up
+   build-card
+   create-deck
+   init-game
+   init-identity
+   keep-hand
+   mulligan]
+
+  [game.core.shuffling
+   shuffle!
+   shuffle-into-deck]
 
   [game.core.state
    make-rid
@@ -350,6 +475,12 @@
   [game.core.update
    update!
    update-hosted!]
+
+  [game.core.winning
+   check-winner
+   clear-win
+   win
+   win-decked]
 
   [game.macros
    continue-ability

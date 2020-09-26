@@ -1,7 +1,7 @@
 (ns game.core.initializing
   (:require [game.core.abilities :refer [add-cost-label-to-ability is-ability? resolve-ability]]
             [game.core.board :refer [all-active all-active-installed]]
-            [game.core.card :refer [get-card runner?]]
+            [game.core.card :refer [get-card runner? map->Card]]
             [game.core.card-defs :refer [card-def]]
             [game.core.cost-fns :refer [card-ability-cost]]
             [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
@@ -13,6 +13,7 @@
             [game.core.props :refer [set-prop]]
             [game.core.update :refer [update!]]
             [game.macros :refer [effect req]]
+            [game.utils :refer [make-cid server-card]]
             [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
@@ -30,7 +31,6 @@
                  :let [ab (assoc ab :label (make-label ab))]]
              (add-cost-label-to-ability ab))))
 
-;;; Deactivate a card
 (defn- dissoc-card
   "Dissoc relevant keys in card"
   [card keep-counter]
@@ -92,7 +92,7 @@
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
   ([state side card args] (card-init state side (make-eid state) card args))
-  ([state side eid card {:keys [resolve-effect init-data] :as args}]
+  ([state side eid card {:keys [resolve-effect init-data]}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          run-abs (runner-ability-init cdef)
@@ -142,3 +142,41 @@
   (doseq [side [:corp :runner]
           card (all-active state side)]
     (update! state side (update-abilities-cost-str state side card))))
+
+(defn- card-implemented
+  "Checks if the card is implemented. Looks for a valid return from `card-def`.
+  If implemented also looks for `:implementation` key which may contain special notes.
+  Returns either:
+    nil - not implemented
+    :full - implemented fully
+    msg - string with implementation notes"
+  [card]
+  (when-let [cdef (card-def card)]
+    ;; Card is defined - hence implemented
+    (if-let [impl (:implementation cdef)]
+      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
+
+(defn make-card
+  "Makes or remakes (with current cid) a proper card from a server card"
+  ([card] (make-card card (make-cid)))
+  ([card cid]
+   (-> card
+       (assoc :cid cid
+              :implementation (card-implemented card)
+              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
+              :abilities (ability-init (card-def card)))
+       (dissoc :setname :text :_id :influence :number :influencelimit
+               :image_url :factioncost :format :quantity)
+       (map->Card))))
+
+(defn reset-card
+  "Resets a card back to its original state - retaining any data in the :persistent key"
+  ([state side {:keys [cid persistent previous-zone seen title zone]}]
+   (swap! state update-in [:per-turn] dissoc cid)
+   (let [new-card (make-card (server-card title) cid)]
+     (update! state side (assoc new-card
+                                :persistent persistent
+                                :previous-zone previous-zone
+                                :seen seen
+                                :zone zone)))))

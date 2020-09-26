@@ -3,7 +3,7 @@
     [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
-    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.eid :refer [make-eid]]
     [game.core.events :refer [register-events unregister-events]]
     [game.core.initializing :refer [card-init]]
     [game.core.update :refer [update! update-hosted!]]
@@ -20,7 +20,7 @@
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))
-  ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
+  ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown]}]
    (when (not= cid (:cid card))
      (when installed
        (unregister-events state side target)
