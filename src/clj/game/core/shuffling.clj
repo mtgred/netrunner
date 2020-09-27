@@ -1,7 +1,11 @@
 (ns game.core.shuffling
   (:require
+    [game.core.card :refer [corp? in-discard?]]
     [game.core.events :refer [trigger-event]]
-    [game.core.moving :refer [move-zone]]))
+    [game.core.moving :refer [move move-zone]]
+    [game.macros :refer [continue-ability msg req]]
+    [game.utils :refer [quantify]]
+    [clojure.string :as string]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -18,3 +22,27 @@
   (doseq [zone (filter keyword? args)]
     (move-zone state side zone :deck))
   (shuffle! state side :deck))
+
+(defn shuffle-into-rd-effect
+  ([state side eid card n] (shuffle-into-rd-effect state side eid card n false))
+  ([state side eid card n all?]
+   (continue-ability
+     state side
+     {:show-discard  true
+      :choices {:max (min (-> @state :corp :discard count) n)
+                :card #(and (corp? %)
+                            (in-discard? %))
+                :all all?}
+      :msg (msg "shuffle "
+                (let [seen (filter :seen targets)
+                      m (count (filter #(not (:seen %)) targets))]
+                  (str (string/join ", " (map :title seen))
+                       (when (pos? m)
+                         (str (when-not (empty? seen) " and ")
+                              (quantify m "unseen card")))))
+                " into R&D")
+      :effect (req (doseq [c targets]
+                     (move state side c :deck))
+                   (shuffle! state side :deck))
+      :cancel-effect (req (shuffle! state side :deck))}
+     card nil)))

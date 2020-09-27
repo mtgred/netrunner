@@ -32,6 +32,13 @@
   (system-msg state :corp "is decked")
   (win state :runner "Decked"))
 
+(defn flatline
+  [state]
+  "Records a win via dealing damage to the runner."
+  (when-not (:winner state)
+    (system-msg state :runner "is flatlined")
+    (win state :corp "Flatline")))
+
 (defn clear-win
   "Clears the current win condition. Requires both sides to have issued the command"
   [state side]

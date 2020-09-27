@@ -77,6 +77,11 @@
    update-all-advancement-costs
    update-all-agenda-points]
 
+  [game.core.bad-publicity
+   bad-publicity-prevent
+   gain-bad-publicity
+   lose-bad-publicity]
+
   [game.core.board
    all-active
    all-active-installed
@@ -159,6 +164,20 @@
    run-additional-cost-bonus
    run-cost
    trash-cost]
+
+  [game.core.costs
+   total-available-credits]
+
+  [game.core.damage
+   chosen-damage
+   corp-can-choose-damage?
+   damage
+   damage-bonus
+   damage-count
+   damage-prevent
+   enable-corp-damage-choice
+   enable-runner-damage-choice
+   runner-can-choose-damage?]
 
   [game.core.drawing
    draw
@@ -286,6 +305,7 @@
   [game.core.gaining
    available-mu
    base-mod-size
+   change-hand-size
    deduct
    free-mu
    gain
@@ -374,9 +394,13 @@
    update-all-card-labels]
 
   [game.core.moving
+   discard-from-hand
+   mill
    move
    move-zone
    remove-old-current
+   swap-ice
+   swap-installed
    trash
    trash-cards
    trash-prevent
@@ -384,6 +408,13 @@
    uninstall
    update-current-ice-to-trash
    update-installed-card-indices]
+
+  [game.core.play-instants
+   play-instant]
+
+  [game.core.pick-counters
+   pick-credit-providing-cards
+   pick-virus-counters-to-spend]
 
   [game.core.props
    add-counter
@@ -405,6 +436,9 @@
    show-select
    show-trace-prompt
    show-wait-prompt]
+
+  [game.core.purging
+   purge]
 
   [game.core.revealing
    conceal-hand
@@ -465,12 +499,18 @@
 
   [game.core.shuffling
    shuffle!
-   shuffle-into-deck]
+   shuffle-into-deck
+   shuffle-into-rd-effect]
 
   [game.core.state
    make-rid
    map->State
    new-state]
+
+  [game.core.tags
+   gain-tags
+   lose-tags
+   tag-prevent]
 
   [game.core.to-string
    card-str
@@ -492,6 +532,7 @@
   [game.core.winning
    check-winner
    clear-win
+   flatline
    win
    win-decked]
 

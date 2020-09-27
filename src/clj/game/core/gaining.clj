@@ -113,6 +113,11 @@
   [state side]
   (base-mod-size state side :hand-size))
 
+(defn change-hand-size
+  "Changes a side's hand-size modification by specified amount (positive or negative)"
+  [state side n]
+  (gain state side :hand-size {:mod n}))
+
 (defn available-mu
   "Returns the available MU the runner has"
   [state]

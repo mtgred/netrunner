@@ -489,7 +489,7 @@
 
 (define-card "Distract the Masses"
   (let [shuffle-two {:async true
-                     :effect (effect (shuffle-into-rd-effect eid card 2 false))}
+                     :effect (effect (shuffle-into-rd-effect eid card 2))}
         trash-from-hq {:async true
                        :prompt "Select up to 2 cards in HQ to trash"
                        :choices {:max 2
@@ -852,7 +852,7 @@
    :msg "trash the top 2 cards of R&D"
    :rfg-instead-of-trashing true
    :effect (req (wait-for (mill state :corp :corp 2)
-                          (shuffle-into-rd-effect state side eid card 4 false)))})
+                          (shuffle-into-rd-effect state side eid card 4)))})
 
 (define-card "Green Level Clearance"
   {:msg "gain 3 [Credits] and draw 1 card"

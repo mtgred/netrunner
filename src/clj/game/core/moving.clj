@@ -1,7 +1,7 @@
 (ns game.core.moving
   (:require
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [facedown? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [card-index facedown? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -9,7 +9,7 @@
     [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
-    [game.core.ice :refer [get-current-ice set-current-ice]]
+    [game.core.ice :refer [get-current-ice set-current-ice update-ice-strength]]
     [game.core.initializing :refer [deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg system-say]]
@@ -339,6 +339,18 @@
 (defn trash
   [state side eid card args] (trash-cards state side eid [card] args))
 
+(defn mill
+  "Force the discard of n cards from the deck by trashing them"
+  [state from-side eid to-side n]
+  (let [cards (take n (get-in @state [to-side :deck]))]
+    (trash-cards state from-side eid cards {:unpreventable true})))
+
+(defn discard-from-hand
+  "Force the discard of n cards from the hand by trashing them"
+  [state from-side eid to-side n]
+  (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
+    (trash-cards state from-side eid cards {:unpreventable true})))
+
 (defn remove-old-current
   "Trashes or RFG the existing current when a new current is played, or an agenda is stolen / scored"
   [state side eid current-side]
@@ -354,3 +366,51 @@
                 (trash state (to-keyword (:side current)) eid current nil)))))
     (effect-completed state side eid)))
 
+(defn swap-ice
+  "Swaps two pieces of ICE."
+  [state side a b]
+  (let [a-index (card-index state a)
+        b-index (card-index state b)
+        a-new (assoc a :zone (:zone b))
+        b-new (assoc b :zone (:zone a))]
+    (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
+    (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (update-installed-card-indices state :corp (:zone a))
+    (update-installed-card-indices state :corp (:zone b))
+    (doseq [newcard [a-new b-new]]
+      (unregister-events state side newcard)
+      (when (rezzed? newcard)
+        (register-events state side newcard))
+      (doseq [h (:hosted newcard)]
+        (let [newh (-> h
+                       (assoc-in [:zone] '(:onhost))
+                       (assoc-in [:host :zone] (:zone newcard)))]
+          (update! state side newh)
+          (unregister-events state side h)
+          (when (rezzed? h)
+            (register-events state side newh)))))
+    (trigger-event state side :swap a-new b-new)
+    (update-ice-strength state side a-new)
+    (update-ice-strength state side b-new)
+    (set-current-ice state)))
+
+(defn swap-installed
+  "Swaps two installed corp cards - like swap ICE except no strength update"
+  [state side a b]
+  (let [a-index (card-index state a)
+        b-index (card-index state b)
+        a-new (assoc a :zone (:zone b))
+        b-new (assoc b :zone (:zone a))]
+    (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
+    (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (update-installed-card-indices state :corp (:zone a))
+    (update-installed-card-indices state :corp (:zone b))
+    (doseq [newcard [a-new b-new]]
+      (doseq [h (:hosted newcard)]
+        (let [newh (-> h
+                       (assoc-in [:zone] '(:onhost))
+                       (assoc-in [:host :zone] (:zone newcard)))]
+          (update! state side newh)
+          (unregister-events state side h)
+          (register-events state side newh))))
+    (trigger-event state side :swap a-new b-new)))

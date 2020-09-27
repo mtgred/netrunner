@@ -3,10 +3,13 @@
     [game.core.abilities]
     [game.core.access]
     [game.core.agendas]
+    [game.core.bad-publicity]
     [game.core.board]
     [game.core.card]
     [game.core.card-defs]
     [game.core.cost-fns]
+    [game.core.costs]
+    [game.core.damage]
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]
@@ -20,15 +23,19 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.moving]
+    [game.core.pick-counters]
     [game.core.player]
+    [game.core.play-instants]
     [game.core.prompts]
     [game.core.props]
+    [game.core.purging]
     [game.core.revealing]
     [game.core.runs]
     [game.core.say]
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
+    [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
     [game.core.update]
@@ -54,10 +61,6 @@
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
 
-;; Cost section
-(load "core_ns/cost_impls") ; implementations of cost functions
-
-(load "core_ns/rules")        ; core game rules
 (load "core_ns/turns")        ; the turn sequence
 
 ;; Abilities

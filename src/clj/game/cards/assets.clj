@@ -90,9 +90,10 @@
 
 (define-card "Alexa Belsky"
   {:abilities [{:label "Shuffle all cards in HQ into R&D"
+                :async true
                 :cost [:trash]
                 :effect (effect (show-wait-prompt :corp "Runner to decide whether or not to prevent Alexa Belsky")
-                                (resolve-ability
+                                (continue-ability
                                   {:prompt "Prevent Alexa Belsky from shuffling back in 1 card for every 2 [Credits] spent. How many credits?"
                                    :choices :credit
                                    :player :runner
@@ -920,7 +921,8 @@
                 :effect (effect (draw 2))}
                {:label "Shuffle up to 3 cards from Archives into R&D"
                 :cost [:remove-from-game]
-                :effect (effect (shuffle-into-rd-effect card 3))}]})
+                :async true
+                :effect (effect (shuffle-into-rd-effect card eid 3))}]})
 
 (define-card "Jeeves Model Bioroids"
   (let [ability {:label "Gain [Click]"

@@ -211,6 +211,50 @@
                                              (effect-completed eid))}
                      card nil))})
 
+(def trash-program-sub
+  {:prompt "Select a program to trash"
+   :label "Trash a program"
+   :msg (msg "trash " (:title target))
+   :choices {:card #(and (installed? %)
+                         (program? %))}
+   :async true
+   :effect (effect (clear-wait-prompt :runner)
+                   (trash eid target {:cause :subroutine}))})
+
+(def trash-hardware-sub
+  {:prompt "Select a piece of hardware to trash"
+   :label "Trash a piece of hardware"
+   :msg (msg "trash " (:title target))
+   :choices {:card #(and (installed? %)
+                         (hardware? %))}
+   :async true
+   :effect (effect (trash eid target {:cause :subroutine}))})
+
+(def trash-resource-sub
+  {:prompt "Select a resource to trash"
+   :label "Trash a resource"
+   :msg (msg "trash " (:title target))
+   :choices {:card #(and (installed? %)
+                         (resource? %))}
+   :async true
+   :effect (effect (trash eid target {:cause :subroutine}))})
+
+(def trash-installed-sub
+  {:async true
+   :prompt "Select an installed card to trash"
+   :label "Trash an installed Runner card"
+   :msg (msg "trash " (:title target))
+   :choices {:card #(and (installed? %)
+                         (runner? %))}
+   :effect (effect (trash eid target {:cause :subroutine}))})
+
+(def runner-trash-installed-sub
+  (assoc trash-installed-sub
+         :player :runner
+         :label "Force the Runner to trash an installed card"
+         :msg (msg "force the Runner to trash " (:title target))))
+
+
 ;;; For Advanceable ICE
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
@@ -467,8 +511,8 @@
 (define-card "Archer"
   {:additional-cost [:forfeit]
    :subroutines [(gain-credits-sub 2)
-                 trash-program
-                 trash-program
+                 trash-program-sub
+                 trash-program-sub
                  end-the-run]})
 
 (define-card "Architect"
@@ -507,7 +551,7 @@
 
 (define-card "Assassin"
   {:subroutines [(trace-ability 5 (do-net-damage 3))
-                 (trace-ability 4 trash-program)]})
+                 (trace-ability 4 trash-program-sub)]})
 
 (define-card "Asteroid Belt"
   (space-ice end-the-run))
@@ -591,7 +635,7 @@
                                                      (if (and (= target "Trash top 2 of Stack") (> (count (:deck runner)) 1))
                                                        (do (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
                                                            (mill state :runner eid :runner 2))
-                                                       (continue-ability state :runner trash-program card nil)))}
+                                                       (continue-ability state :runner trash-program-sub card nil)))}
                                        card nil))))}]})
 
 (define-card "Bloom"
@@ -672,7 +716,7 @@
      :on-encounter {:req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
                     :msg "gain 2 [Credits] if there is an installed AI"
                     :effect (effect (gain-credits 2))}
-     :subroutines [(assoc trash-program
+     :subroutines [(assoc trash-program-sub
                           :player :runner
                           :msg "force the Runner to trash 1 program"
                           :label "The Runner trashes 1 program")
@@ -680,7 +724,7 @@
                    sub]}))
 
 (define-card "Burke Bugs"
-  {:subroutines [(trace-ability 0 (assoc trash-program
+  {:subroutines [(trace-ability 0 (assoc trash-program-sub
                                          :not-distinct true
                                          :player :runner
                                          :msg "force the Runner to trash a program"
@@ -802,7 +846,7 @@
                                           (end-run eid card))})]})
 
 (define-card "Cobra"
-  {:subroutines [trash-program (do-net-damage 2)]})
+  {:subroutines [trash-program-sub (do-net-damage 2)]})
 
 (define-card "Colossus"
   {:advanceable :always
@@ -813,7 +857,7 @@
                  {:label "Trash 1 program (Trash 1 program and 1 resource)"
                   :async true
                   :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
-                  :effect (req (wait-for (resolve-ability state side trash-program card nil)
+                  :effect (req (wait-for (resolve-ability state side trash-program-sub card nil)
                                          (if (wonder-sub card 3)
                                            (continue-ability
                                              state side
@@ -839,7 +883,7 @@
                                   (gain-credits :runner 1))}]})
 
 (define-card "Conundrum"
-  {:subroutines [(assoc trash-program
+  {:subroutines [(assoc trash-program-sub
                         :player :runner
                         :msg "force the Runner to trash 1 program"
                         :label "The Runner trashes 1 program")
@@ -1067,7 +1111,7 @@
 
 (define-card "Enforcer 1.0"
   {:additional-cost [:forfeit]
-   :subroutines [trash-program
+   :subroutines [trash-program-sub
                  (do-brain-damage 1)
                  {:label "Trash a console"
                   :prompt "Select a console to trash"
@@ -1353,7 +1397,7 @@
 
 (define-card "Grim"
   {:effect take-bad-pub
-   :subroutines [trash-program]})
+   :subroutines [trash-program-sub]})
 
 (define-card "Guard"
   {:constant-effects [{:type :bypass-ice
@@ -1620,7 +1664,7 @@
    :strength-bonus advance-counters})
 
 (define-card "Ichi 1.0"
-  {:subroutines [trash-program trash-program
+  {:subroutines [trash-program-sub trash-program-sub
                  (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                    :msg "give the Runner 1 tag and do 1 brain damage"
                                    :async true
@@ -1629,7 +1673,7 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (define-card "Ichi 2.0"
-  {:subroutines [trash-program trash-program
+  {:subroutines [trash-program-sub trash-program-sub
                  (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                    :msg "give the Runner 1 tag and do 1 brain damage"
                                    :async true
@@ -1841,7 +1885,7 @@
                                          (trash state side eid card {:cause :subroutine})))}]})
 
 (define-card "Lancelot"
-  (grail-ice trash-program))
+  (grail-ice trash-program-sub))
 
 (define-card "Little Engine"
   {:subroutines [end-the-run end-the-run
@@ -1905,7 +1949,7 @@
    :flags {:cannot-lower-strength true}})
 
 (define-card "Lycan"
-  (morph-ice "Sentry" "Code Gate" trash-program))
+  (morph-ice "Sentry" "Code Gate" trash-program-sub))
 
 (define-card "Macrophage"
   {:subroutines [(trace-ability 4 {:label "Purge virus counters"
@@ -2209,11 +2253,11 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (define-card "Nebula"
-  (space-ice trash-program))
+  (space-ice trash-program-sub))
 
 (define-card "Negotiator"
   {:subroutines [(gain-credits-sub 2)
-                 trash-program]
+                 trash-program-sub]
    :runner-abilities [(break-sub [:credit 2] 1)]})
 
 (define-card "Nerine 2.0"
@@ -2283,7 +2327,7 @@
   {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
                   :msg (msg "do " (next-ice-count corp) " net damage")
                   :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
-                 trash-program]})
+                 trash-program-sub]})
 
 (define-card "NEXT Opal"
   (let [sub {:label "Install a card from HQ, paying all costs"
@@ -2373,7 +2417,7 @@
                  end-the-run]})
 
 (define-card "Orion"
-  (space-ice trash-program
+  (space-ice trash-program-sub
              (resolve-another-subroutine)
              end-the-run))
 
@@ -2516,7 +2560,7 @@
              :effect (effect (update-ice-strength target))}]})
 
 (define-card "Rototurret"
-  {:subroutines [trash-program
+  {:subroutines [trash-program-sub
                  end-the-run]})
 
 (define-card "Sadaka"
@@ -2588,7 +2632,7 @@
                            (trash state :corp eid card nil)))}]}))
 
 (define-card "Sagittarius"
-  (constellation-ice trash-program))
+  (constellation-ice trash-program-sub))
 
 (define-card "Saisentan"
   (let [sub {:label "Do 1 net damage"
@@ -2641,7 +2685,7 @@
 
 (define-card "Sapper"
   {:flags {:rd-reveal (req true)}
-   :subroutines [trash-program]
+   :subroutines [trash-program-sub]
    :access {:async true
             :req (req (and (not (in-discard? card))
                            (some program? (all-active-installed state :runner))))
@@ -2885,7 +2929,7 @@
              :choices ["Corp trash"
                        "Pay 3 [Credits]"]
              :effect (req (if (= "Corp trash" target)
-                            (continue-ability state :corp trash-program card nil)
+                            (continue-ability state :corp trash-program-sub card nil)
                             (pay state :runner eid card [:credit 3])))}
         ability {:req (req (same-card? card target))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
@@ -2927,7 +2971,7 @@
                   :effect (effect (move target :deck {:front true}))}]})
 
 (define-card "Taurus"
-  (constellation-ice trash-hardware))
+  (constellation-ice trash-hardware-sub))
 
 (define-card "Thimblerig"
   (let [ability {:optional
@@ -2958,8 +3002,8 @@
   {:alternative-cost [:forfeit]
    :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"
    :cannot-host true
-   :subroutines [trash-program
-                 trash-program
+   :subroutines [trash-program-sub
+                 trash-program-sub
                  {:label "Trash a resource and end the run"
                   :async true
                   :effect (req (wait-for
@@ -3240,8 +3284,8 @@
             :effect (effect (continue-ability
                               (reset-variable-subs state side card 1 (trace-ability 3 end-the-run) {:back true})
                               card nil))}]
-    {:subroutines [(trace-ability 4 trash-program)
-                   (trace-ability 3 trash-hardware)]
+    {:subroutines [(trace-ability 4 trash-program-sub)
+                   (trace-ability 3 trash-hardware-sub)]
      :effect (effect (continue-ability ab card nil))
      :events [(assoc ab :event :rez)
               (assoc ab :event :card-moved)
@@ -3262,7 +3306,7 @@
                  (end-the-run-unless-runner
                    "trashes an installed program"
                    "trash an installed program"
-                   trash-program)
+                   trash-program-sub)
                  (end-the-run-unless-runner
                    "takes 1 brain damage"
                    "take 1 brain damage"
@@ -3296,7 +3340,7 @@
 
 (define-card "Zed 2.0"
   {:implementation "Restriction on having spent [click] is not implemented"
-   :subroutines [trash-hardware
-                 trash-hardware
+   :subroutines [trash-hardware-sub
+                 trash-hardware-sub
                  (do-brain-damage 2)]
    :runner-abilities [(bioroid-break 2 2)]})
