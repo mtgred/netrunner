@@ -38,6 +38,7 @@
     [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
+    [game.core.turns]
     [game.core.update]
     [game.core.virus]
     [game.core.winning]
@@ -60,8 +61,6 @@
            [game.core.card Card]))
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
-
-(load "core_ns/turns")        ; the turn sequence
 
 ;; Abilities
 (load "core_ns/optional")

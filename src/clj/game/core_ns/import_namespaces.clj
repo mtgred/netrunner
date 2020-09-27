@@ -520,6 +520,11 @@
    show-error-toast
    toast]
 
+  [game.core.turns
+   end-phase-12
+   end-turn
+   start-turn]
+
   [game.core.update
    update!
    update-hosted!]

@@ -1,6 +1,26 @@
-(in-ns 'game.core)
+(ns game.core.turns
+  (:require
+    [game.core.agendas :refer [update-all-advancement-costs]]
+    [game.core.board :refer [all-active all-active-installed all-installed]]
+    [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
+    [game.core.drawing :refer [draw]]
+    [game.core.effects :refer [unregister-floating-effects]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
+    [game.core.gaining :refer [gain hand-size lose]]
+    [game.core.ice :refer [update-all-ice update-breaker-strength]]
+    [game.core.moving :refer [move]]
+    [game.core.props :refer [set-prop]]
+    [game.core.say :refer [system-msg]]
+    [game.core.toasts :refer [toast]]
+    [game.core.update :refer [update!]]
+    [game.core.winning :refer [flatline]]
+    [game.macros :refer [continue-ability req wait-for]]
+    [game.utils :refer [abs dissoc-in quantify]]
+    [clojure.string :as string]))
 
-(defn turn-message
+(defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
   [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
@@ -12,8 +32,8 @@
 
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."
-  ([state side args] (end-phase-12 state side (make-eid state) args))
-  ([state side eid args]
+  ([state side _] (end-phase-12 state side (make-eid state) nil))
+  ([state side eid _]
    (turn-message state side true)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
              (unregister-floating-effects state side :start-of-turn)
@@ -29,7 +49,7 @@
 
 (defn start-turn
   "Start turn."
-  [state side args]
+  [state side _]
   ; Don't clear :turn-events until the player clicks "Start Turn"
   ; Fix for Hayley triggers
   (swap! state assoc :turn-events nil)
@@ -67,38 +87,37 @@
                     " between the start of your turn and your mandatory draw."
                     " before taking your first click."))
              "info")
-      (end-phase-12 state side args))))
+      (end-phase-12 state side _))))
 
-(defn handle-end-of-turn-discard
-  ([state side _card _targets] (handle-end-of-turn-discard state side (make-eid state) _card _targets))
-  ([state side eid _card _targets]
-   (let [cur-hand-size (count (get-in @state [side :hand]))
-         max-hand-size (max (hand-size state side) 0)]
-     (if (> cur-hand-size max-hand-size)
-       (continue-ability
-         state side
-         {:prompt (str "Discard down to " (quantify max-hand-size "card"))
-          :choices {:card in-hand?
-                    :max (- cur-hand-size max-hand-size)
-                    :all true}
-          :effect (req (system-msg state side
-                                   (str "discards "
-                                        (if (= :runner side)
-                                          (join ", " (map :title targets))
-                                          (quantify (count targets) "card"))
-                                        " from " (if (= :runner side) "their Grip" "HQ")
-                                        " at end of turn"))
-                       (doseq [t targets]
-                         (move state side t :discard))
-                       (effect-completed state side eid))}
-         nil nil)
-       (effect-completed state side eid)))))
+(defn- handle-end-of-turn-discard
+  [state side eid _]
+  (let [cur-hand-size (count (get-in @state [side :hand]))
+        max-hand-size (max (hand-size state side) 0)]
+    (if (> cur-hand-size max-hand-size)
+      (continue-ability
+        state side
+        {:prompt (str "Discard down to " (quantify max-hand-size "card"))
+         :choices {:card in-hand?
+                   :max (- cur-hand-size max-hand-size)
+                   :all true}
+         :effect (req (system-msg state side
+                                  (str "discards "
+                                       (if (= :runner side)
+                                         (string/join ", " (map :title targets))
+                                         (quantify (count targets) "card"))
+                                       " from " (if (= :runner side) "their Grip" "HQ")
+                                       " at end of turn"))
+                      (doseq [t targets]
+                        (move state side t :discard))
+                      (effect-completed state side eid))}
+        nil nil)
+      (effect-completed state side eid))))
 
 (defn end-turn
-  ([state side args] (end-turn state side (make-eid state) args))
-  ([state side eid args]
+  ([state side _] (end-turn state side (make-eid state) nil))
+  ([state side eid _]
    (wait-for
-     (handle-end-of-turn-discard state side nil nil)
+     (handle-end-of-turn-discard state side nil)
      (turn-message state side false)
      (when (and (= side :runner)
                 (neg? (hand-size state side)))
@@ -118,7 +137,7 @@
                  ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
                  (when (has-subtype? card "Virus")
                    (set-prop state :runner (get-card state card) :added-virus-counter false))
-                 ;; Remove all-turn strength from icebreakers.
+                 ;; Remove all :turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
                  (when (has-subtype? card "Icebreaker")
                    (update-breaker-strength state :runner (get-card state card))))
