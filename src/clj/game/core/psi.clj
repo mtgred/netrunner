@@ -1,6 +1,18 @@
-(in-ns 'game.core)
+(ns game.core.psi
+(:require
+    [game.core.abilities :refer [can-trigger? pay register-ability-type register-once resolve-ability]]
+    [game.core.card :refer [corp?]]
+    [game.core.costs :refer [total-available-credits]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [trigger-event-simult]]
+    [game.core.flags :refer [any-flag-fn?]]
+    [game.core.prompts :refer [clear-wait-prompt show-prompt-with-dice show-wait-prompt]]
+    [game.core.say :refer [system-msg]]
+    [game.macros :refer [continue-ability effect wait-for]]
+    [jinteki.utils :refer [str->int]]
+    [clojure.string :as string]))
 
-(defn resolve-psi
+(defn- resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
   resolution ability."
   [state side eid card psi bet]
@@ -37,7 +49,7 @@
                                    all-amounts)]
          (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                                 (map #(str % " [Credits]") valid-amounts)
-                                #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
+                                #(resolve-psi state s eid card psi (str->int (first (string/split % #" "))))
                                 {:priority 2
                                  :prompt-type :psi}))))))
 

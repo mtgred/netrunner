@@ -23,11 +23,13 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.moving]
+    [game.core.optional]
     [game.core.pick-counters]
     [game.core.player]
     [game.core.play-instants]
     [game.core.prompts]
     [game.core.props]
+    [game.core.psi]
     [game.core.purging]
     [game.core.revealing]
     [game.core.runs]
@@ -38,6 +40,7 @@
     [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
+    [game.core.trace]
     [game.core.turns]
     [game.core.update]
     [game.core.virus]
@@ -61,11 +64,6 @@
            [game.core.card Card]))
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
-
-;; Abilities
-(load "core_ns/optional")
-(load "core_ns/psi")
-(load "core_ns/traces")
 
 (load "core_ns/installing")   ; installing and interacting with installed cards and servers
 (load "core_ns/commands")     ; chat commands

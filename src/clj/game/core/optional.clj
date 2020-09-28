@@ -1,4 +1,14 @@
-(in-ns 'game.core)
+(ns game.core.optional
+  (:require
+    [game.core.abilities :refer [can-pay? can-trigger? register-ability-type resolve-ability]]
+    [game.core.card :refer [get-card]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.prompts :refer [show-prompt]]
+    [game.core.toasts :refer [toast]]
+    [game.core.update :refer [update!]]
+    [game.macros :refer [effect req wait-for]]
+    [clojure.string :as string])
+  )
 
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability's :yes-ability if Yes is chosen, and :no-ability otherwise.
@@ -57,7 +67,7 @@
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
-   :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (lower-case target)))))
+   :effect (effect (update! (update-in card [:special toggle-kw] (fn [_] (keyword (string/lower-case target)))))
                    (toast (str "From now on, " ability-name " will "
                                ({:always "always" :never "never" :ask "ask whether it should"}
                                 (get-in (get-card state card) [:special toggle-kw]))

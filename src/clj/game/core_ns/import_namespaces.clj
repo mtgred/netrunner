@@ -409,6 +409,12 @@
    update-current-ice-to-trash
    update-installed-card-indices]
 
+  [game.core.optional
+   get-autoresolve
+   never?
+   optional-ability
+   set-autoresolve]
+
   [game.core.play-instants
    play-instant]
 
@@ -436,6 +442,9 @@
    show-select
    show-trace-prompt
    show-wait-prompt]
+
+  [game.core.psi
+   psi-game]
 
   [game.core.purging
    purge]
@@ -519,6 +528,10 @@
   [game.core.toasts
    show-error-toast
    toast]
+
+  [game.core.trace
+   init-trace
+   init-trace-bonus]
 
   [game.core.turns
    end-phase-12
