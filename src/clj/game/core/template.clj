@@ -37,6 +37,7 @@
     [game.core.rezzing :refer :all]
     [game.core.runs :refer :all]
     [game.core.say :refer :all]
+    [game.core.servers :refer :all]
     [game.core.set-up :refer :all]
     [game.core.shuffling :refer :all]
     [game.core.state :refer :all]

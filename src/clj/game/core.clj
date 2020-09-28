@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.commands]
     [game.core.cost-fns]
     [game.core.costs]
     [game.core.damage]

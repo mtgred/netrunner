@@ -150,6 +150,9 @@
   [game.core.change-vals
    change]
 
+  [game.core.commands
+   parse-command]
+
   [game.core.cost-fns
    break-sub-ability-cost
    card-ability-cost

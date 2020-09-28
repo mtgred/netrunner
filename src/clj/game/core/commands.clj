@@ -1,19 +1,48 @@
-(in-ns 'game.core)
+(ns game.core.commands
+  (:require
+    [game.core.board :refer [all-installed get-zones server->zone]]
+    [game.core.card :refer [agenda? can-be-advanced? corp? get-card has-subtype? ice? in-hand? installed? map->Card rezzed? runner?]]
+    [game.core.damage :refer [damage]]
+    [game.core.drawing :refer [draw]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [trigger-event]]
+    [game.core.flags :refer [is-scored?]]
+    [game.core.hosting :refer [host]]
+    [game.core.identities :refer [disable-identity]]
+    [game.core.initializing :refer [card-init deactivate make-card]]
+    [game.core.installing :refer [corp-install runner-install]]
+    [game.core.moving :refer [move swap-ice swap-installed trash]]
+    [game.core.prompts :refer [show-prompt]]
+    [game.core.props :refer [set-prop]]
+    [game.core.psi :refer [psi-game]]
+    [game.core.resolve-ability :refer [resolve-ability]]
+    [game.core.rezzing :refer [rez]]
+    [game.core.runs :refer [end-run jack-out]]
+    [game.core.say :refer [system-msg]]
+    [game.core.servers :refer [zones->sorted-names]]
+    [game.core.set-up :refer [build-card]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [show-error-toast toast]]
+    [game.core.trace :refer [init-trace]]
+    [game.core.winning :refer [clear-win]]
+    [game.macros :refer [continue-ability effect msg req]]
+    [game.utils :refer [dissoc-in quantify safe-split same-card? same-side? server-card string->num]]
+    [jinteki.utils :refer [str->int]]
+    [clojure.string :as string]))
 
-;;; In-game chat commands
-(defn set-adv-counter [state side target value]
+(defn- set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
   (system-msg state side (str "sets advancement counters to " value " on "
                               (card-str state target)))
   (trigger-event state side :advancement-placed target))
 
-(defn command-adv-counter [state side value]
+(defn- command-adv-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-adv-counter target value))
                     :choices {:card (fn [t] (same-side? (:side t) side))}}
                    (map->Card {:title "/adv-counter command"}) nil))
 
-(defn command-counter-smart [state side args]
+(defn- command-counter-smart [state side args]
   (resolve-ability
     state side
     {:choices {:card (fn [t] (same-side? (:side t) side))}
@@ -41,7 +70,7 @@
                                                         (card-str state target))))))))}
     (map->Card {:title "/counter command"}) nil))
 
-(defn command-facedown [state side]
+(defn- command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Select a card to install facedown"
                     :choices {:card #(and (runner? %)
@@ -49,7 +78,7 @@
                     :effect (effect (runner-install target {:facedown true}))}
                    (map->Card {:title "/faceup command"}) nil))
 
-(defn command-counter [state side args]
+(defn- command-counter [state side args]
   (cond
     (empty? args)
     (command-counter-smart state side `("1"))
@@ -78,7 +107,8 @@
                             :choices {:card (fn [t] (same-side? (:side t) side))}}
                            (map->Card {:title "/counter command"}) nil))))))
 
-(defn command-rezall [state side value]
+(defn- command-rezall
+  [state side]
   (resolve-ability state side
     {:optional {:prompt "Rez all cards and turn cards in archives faceup?"
                 :yes-ability {:effect (req
@@ -88,10 +118,10 @@
                                             (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     (map->Card {:title "/rez-all command"}) nil))
 
-(defn command-roll [state side value]
+(defn- command-roll [state side value]
   (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
 
-(defn command-undo-click
+(defn- command-undo-click
   "Resets the game state back to start of the click"
   [state side]
   (when-let [click-state (:click-state @state)]
@@ -100,7 +130,7 @@
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 
-(defn command-undo-turn
+(defn- command-undo-turn
   "Resets the entire game state to how it was at end-of-turn if both players agree"
   [state side]
   (when-let [turn-state (:turn-state @state)]
@@ -110,7 +140,7 @@
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of turn")))))
 
-(defn command-unique
+(defn- command-unique
   "Toggles :uniqueness of the selected card"
   [state side]
   (resolve-ability state side
@@ -121,13 +151,13 @@
                     :choices {:card (fn [t] (same-side? (:side t) side))}}
                    (map->Card {:title "/unique command" :side side}) nil))
 
-(defn command-close-prompt [state side]
+(defn- command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
     (swap! state dissoc-in [side :selected])
     (effect-completed state side (:eid fprompt))))
 
-(defn command-install-ice
+(defn- command-install-ice
   [state side]
   (when (= side :corp)
     (resolve-ability
@@ -154,7 +184,7 @@
                    card nil))}
       (map->Card {:title "/install-ice command"}) nil)))
 
-(defn command-peek
+(defn- command-peek
   [state side n]
   (show-prompt
     state side
@@ -169,7 +199,7 @@
     identity
     {:priority 10}))
 
-(defn command-summon
+(defn- command-summon
   [state side args]
   (let [s-card (server-card (string/join " " args))
         card (when (and s-card (same-side? (:side s-card) side))
@@ -177,7 +207,7 @@
     (when card
       (swap! state update-in [side :hand] #(concat % [(assoc card :zone [:hand])])))))
 
-(defn command-replace-id
+(defn- command-replace-id
   [state side args]
   (let [s-card (server-card (string/join " " args))
         card (when (and s-card (same-side? (:side s-card) side))
@@ -188,7 +218,7 @@
         (swap! state assoc-in [side :identity] new-id)
         (card-init state side new-id {:resolve-effect true :init-data true})))))
 
-(defn command-host
+(defn- command-host
   [state side]
   (let [f (if (= :corp side) corp? runner?)]
     (resolve-ability
@@ -208,7 +238,7 @@
                    nil nil))}
       nil nil)))
 
-(defn command-trash
+(defn- command-trash
   [state side]
   (let [f (if (= :corp side) corp? runner?)]
     (resolve-ability
@@ -218,8 +248,9 @@
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 
-(defn parse-command [text]
-  (let [[command & args] (split text #" ")
+(defn parse-command
+  [text]
+  (let [[command & args] (safe-split text #" ")
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (if (= (ffirst args) \#)
@@ -296,7 +327,7 @@
                                           {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
                                             :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                           (map->Card {:title "/rez command"}) nil))
-        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
+        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2))
         "/rfg"        #(resolve-ability %1 %2
                                         {:prompt "Select a card to remove from the game"
                                           :effect (req (let [c (deactivate %1 %2 target)]
