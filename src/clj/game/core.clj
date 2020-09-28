@@ -201,7 +201,8 @@
    virus-program?]
 
   [game.core.card-defs
-   card-def]
+   card-def
+   defcard-impl]
 
   [game.core.change-vals
    change]
@@ -246,10 +247,11 @@
   [game.core.def-helpers
    combine-abilities
    corp-rez-toast
-   define-card
+   defcard
    do-brain-damage
    do-meat-damage
    do-net-damage
+   make-recurring-ability
    reorder-choice
    trash-on-empty]
 

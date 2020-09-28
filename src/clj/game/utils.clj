@@ -79,7 +79,7 @@
   (try
     (let [num (bigdec s)]
       (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
-  (catch Exception e nil)))
+  (catch Exception _ nil)))
 
 (def safe-split (fnil string/split ""))
 
@@ -87,7 +87,7 @@
   "Dissociates an entry from a nested associative structure returning a new
   nested structure. keys is a sequence of keys. Any empty maps that result
   will not be present in the new structure."
-  [m [k & ks :as keys]]
+  [m [k & ks]]
   (if ks
     (if-let [nextmap (get m k)]
       (let [newmap (dissoc-in nextmap ks)]

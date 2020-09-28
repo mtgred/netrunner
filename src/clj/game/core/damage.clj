@@ -6,7 +6,7 @@
     [game.core.moving :refer [trash-cards]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
-    [game.core.winning :refer [flatline win]]
+    [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in]]
     [jinteki.utils :refer [str->int]]

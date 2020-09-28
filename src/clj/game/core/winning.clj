@@ -33,8 +33,8 @@
   (win state :runner "Decked"))
 
 (defn flatline
-  [state]
   "Records a win via dealing damage to the runner."
+  [state]
   (when-not (:winner state)
     (system-msg state :runner "is flatlined")
     (win state :corp "Flatline")))

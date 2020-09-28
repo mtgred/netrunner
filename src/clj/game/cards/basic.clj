@@ -5,7 +5,7 @@
 
 ;; Card definitions
 
-(define-card "Corp Basic Action Card"
+(defcard "Corp Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
                 :msg "gain 1 [Credits]"
@@ -61,7 +61,7 @@
                 :effect (effect (purge)
                                 (play-sfx "virus-purge"))}]})
 
-(define-card "Runner Basic Action Card"
+(defcard "Runner Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
                 :msg "gain 1 [Credits]"

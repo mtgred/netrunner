@@ -1,6 +1,5 @@
 (ns game.core.def-helpers
   (:require
-    [game.core.card-defs :as card-defs]
     [game.core.card :refer [get-counters]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
@@ -133,7 +132,7 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true}))})
 
-(defn- make-recurring-ability
+(defn make-recurring-ability
   [ability]
   (if (:recurring ability)
     (let [recurring-ability
@@ -146,6 +145,6 @@
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
-(defn define-card
+(defmacro defcard
   [title ability]
-  (card-defs/define-card title (make-recurring-ability ability)))
+  `(defmethod ~'defcard-impl ~title [~'_] (make-recurring-ability ~ability)))

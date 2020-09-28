@@ -50,7 +50,7 @@
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
-  [state side {:keys [close] :as args}]
+  [state side {:keys [close]}]
   (swap! state update-in [side :deck] shuffle)
   (if close
     (do
