@@ -23,6 +23,7 @@
     [game.core.initializing]
     [game.core.moving]
     [game.core.optional]
+    [game.core.payment]
     [game.core.pick-counters]
     [game.core.player]
     [game.core.play-instants]

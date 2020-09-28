@@ -3,8 +3,9 @@
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.events :refer [trigger-event-simult trigger-event-sync]]
+    [game.core.payment :refer [pay]]
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? pay register-ability-type resolve-ability]]
+    [game.core.resolve-ability :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.say :refer [system-msg system-say]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [dissoc-in]]))

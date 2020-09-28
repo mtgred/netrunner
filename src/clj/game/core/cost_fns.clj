@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects get-effects sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.resolve-ability :refer [merge-costs]]))
+    [game.core.payment :refer [merge-costs]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost

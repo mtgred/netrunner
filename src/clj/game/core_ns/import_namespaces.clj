@@ -389,6 +389,23 @@
    optional-ability
    set-autoresolve]
 
+  [game.core.payment
+   add-cost-label-to-ability
+   build-cost-label
+   build-cost-string
+   build-spend-msg
+   can-pay?
+   cost->string
+   cost-name
+   cost-ranks
+   handler
+   label
+   merge-costs
+   pay
+   payable?
+   sentence-join
+   value]
+
   [game.core.play-instants
    play-instant]
 
@@ -424,30 +441,14 @@
    purge]
 
   [game.core.resolve-ability
-   add-cost-label-to-ability
-   build-cost-label
-   build-cost-string
-   build-spend-msg
-   can-pay?
    can-trigger?
-   cost->string
-   cost-name
-   cost-ranks
-   handler
    is-ability?
-   label
-   merge-costs
    not-used-once?
-   pay
-   payable?
    prompt!
    register-ability-type
    register-once
    resolve-ability
-   select-ability-kw
-   sentence-join
-   should-trigger?
-   value]
+   should-trigger?]
 
   [game.core.revealing
    conceal-hand

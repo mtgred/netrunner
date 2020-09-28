@@ -10,7 +10,8 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move remove-old-current trash]]
-    [game.core.resolve-ability :refer [build-spend-msg merge-costs pay resolve-ability should-trigger?]]
+    [game.core.payment :refer [build-spend-msg merge-costs pay]]
+    [game.core.resolve-ability :refer [resolve-ability should-trigger?]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card?]]))
