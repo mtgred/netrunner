@@ -33,6 +33,7 @@
     [game.core.purging]
     [game.core.resolve-ability]
     [game.core.revealing]
+    [game.core.rezzing]
     [game.core.runs]
     [game.core.say]
     [game.core.set-up]

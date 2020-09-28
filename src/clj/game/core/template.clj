@@ -16,6 +16,7 @@
     [game.core.identities :refer :all]
     [game.core.initializing :refer :all]
     [game.core.moving :refer :all]
+    [game.core.payment :refer :all]
     [game.core.player :refer :all]
     [game.core.prompts :refer :all]
     [game.core.props :refer :all]

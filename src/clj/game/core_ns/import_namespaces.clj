@@ -455,6 +455,11 @@
    reveal
    reveal-hand]
 
+  [game.core.rezzing
+   derez
+   get-rez-cost
+   rez]
+
   [game.core.runs
    add-run-effect
    bypass-ice
