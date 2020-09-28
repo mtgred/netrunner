@@ -157,3 +157,12 @@
   [state side]
   (when-let [wait (first (filter #(= :waiting (:prompt-type %)) (-> @state side :prompt)))]
     (swap! state update-in [side :prompt] (fn [pr] (remove #(= % wait) pr)))))
+
+(defn cancellable
+  "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
+  with Cancel always last."
+  ([choices] (cancellable choices false))
+  ([choices sorted]
+   (if sorted
+     (conj (vec (sort-by :title choices)) "Cancel")
+     (conj (vec choices) "Cancel"))))

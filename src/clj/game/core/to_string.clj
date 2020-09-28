@@ -1,6 +1,6 @@
 (ns game.core.to-string
   (:require [game.core.card :refer [rezzed? ice? corp? card-index]]
-            [game.utils :refer [zone->name zone->name is-root?]]))
+            [game.core.servers :refer [is-root? zone->name]]))
 
 (defn card-str
   "Gets a string description of an installed card, reflecting whether it is rezzed,
@@ -28,17 +28,3 @@
            "a facedown card"
            title))
        (when host (str " hosted on " (card-str state host))))))
-
-(defn name-zone
-  "Gets a string representation for the given zone."
-  [side zone]
-  (let [zone (vec zone)]
-  (cond
-    (= zone [:hand]) (if (= side "Runner") "Grip" "HQ")
-    (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
-    (= zone [:deck]) (if (= side "Runner") "Stack" "R&D")
-    (= (take 1 zone) [:rig]) "Rig"
-    (= (take 2 zone) [:servers :hq]) "the root of HQ"
-    (= (take 2 zone) [:servers :rd]) "the root of R&D"
-    (= (take 2 zone) [:servers :archives]) "the root of Archives"
-    :else (zone->name (second zone)))))

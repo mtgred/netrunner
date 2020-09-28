@@ -15,10 +15,11 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [enforce-msg system-msg system-say]]
+    [game.core.servers :refer [is-remote?]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-winner]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in is-remote? make-cid remove-once same-card? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid remove-once same-card? to-keyword]]
     [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 

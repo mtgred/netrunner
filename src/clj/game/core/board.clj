@@ -3,8 +3,9 @@
             [game.core.card :refer [agenda? asset? corp? facedown? get-counters installed? is-type? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.servers :refer [is-remote? zones->sorted-names]]
             [game.core.state :refer [make-rid]]
-            [game.utils :refer [is-remote? zones->sorted-names to-keyword]]))
+            [game.utils :refer [to-keyword]]))
 
 (defn all-installed
   "Returns a vector of all installed cards for the given side, including those hosted on other cards,

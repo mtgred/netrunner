@@ -17,10 +17,11 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [play-sfx system-msg]]
+    [game.core.servers :refer [is-remote? unknown->kw zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
-    [game.utils :refer [dissoc-in is-remote? same-card? unknown->kw zone->name]]
+    [game.utils :refer [dissoc-in same-card?]]
     [jinteki.utils :refer [count-bad-pub]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))

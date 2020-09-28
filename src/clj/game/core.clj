@@ -39,6 +39,7 @@
     [game.core.rezzing]
     [game.core.runs]
     [game.core.say]
+    [game.core.servers]
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
@@ -70,9 +71,6 @@
 
 (load "core_ns/import_namespaces") ; Import and re-export all of the separate core namespaces
 
-(load "core_ns/installing")   ; installing and interacting with installed cards and servers
 (load "core_ns/commands")     ; chat commands
-(load "core_ns/misc")         ; misc stuff
-(load "core_ns/actions")      ; functions linked to UI actions
 (load "core_ns/def_helpers")  ; card definitions
 (load "core_ns/process_actions") ; things that need to be run after every action

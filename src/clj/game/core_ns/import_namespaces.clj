@@ -465,6 +465,7 @@
    new-runner]
 
   [game.core.prompts
+   cancellable
    choice-parser
    clear-wait-prompt
    resolve-select
@@ -544,6 +545,27 @@
    typing
    typingstop]
 
+  [game.core.servers
+   central->name
+   central->zone
+   from-same-server?
+   get-server-type
+   in-same-server?
+   is-central?
+   is-remote?
+   is-root?
+   name-zone
+   protecting-same-server?
+   remote->name
+   remote-num->name
+   same-server?
+   target-server
+   type->rig-zone
+   unknown->kw
+   zone->name
+   zone->sort-key
+   zones->sorted-names]
+
   [game.core.set-up
    build-card
    create-deck
@@ -569,8 +591,7 @@
    tag-prevent]
 
   [game.core.to-string
-   card-str
-   name-zone]
+   card-str]
 
   [game.core.toasts
    show-error-toast

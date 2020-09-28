@@ -4,9 +4,10 @@
             [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.servers :refer [zone->name]]
             [game.core.to-string :refer [card-str]]
             [game.core.toasts :refer [toast]]
-            [game.utils :refer [same-side? zone->name same-card?]]))
+            [game.utils :refer [same-side? same-card?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"

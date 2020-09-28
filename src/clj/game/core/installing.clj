@@ -17,11 +17,12 @@
     [game.core.payment :refer [build-spend-msg merge-costs pay]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
-    [game.core.to-string :refer [card-str name-zone]]
+    [game.core.servers :refer [name-zone remote-num->name]]
+    [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? remote-num->name to-keyword]]
+    [game.utils :refer [dissoc-in in-coll? to-keyword]]
     )
   )
 

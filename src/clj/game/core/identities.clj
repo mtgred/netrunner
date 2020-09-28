@@ -10,8 +10,8 @@
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [move]]
     [game.core.resolve-ability :refer [resolve-ability]]
-    [game.core.update :refer [update!]]
-    [game.utils :refer [type->rig-zone]]))
+    [game.core.servers :refer [type->rig-zone]]
+    [game.core.update :refer [update!]]))
 
 (defn- actual-disable-identity
   "Actually disables the side's identity"
