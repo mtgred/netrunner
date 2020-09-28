@@ -369,6 +369,14 @@
    update-ability-cost-str
    update-all-card-labels]
 
+  [game.core.installing
+   corp-install
+   corp-install-list
+   corp-install-msg
+   install-locked?
+   runner-can-install?
+   runner-install]
+
   [game.core.moving
    discard-from-hand
    mill

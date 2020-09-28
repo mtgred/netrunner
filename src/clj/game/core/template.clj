@@ -21,6 +21,7 @@
     [game.core.prompts :refer :all]
     [game.core.props :refer :all]
     [game.core.resolve-ability :refer :all]
+    [game.core.rezzing :refer :all]
     [game.core.say :refer :all]
     [game.core.shuffling :refer :all]
     [game.core.state :refer :all]

@@ -21,6 +21,7 @@
     [game.core.ice]
     [game.core.identities]
     [game.core.initializing]
+    [game.core.installing]
     [game.core.moving]
     [game.core.optional]
     [game.core.payment]
