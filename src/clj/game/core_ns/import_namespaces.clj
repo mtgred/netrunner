@@ -464,6 +464,10 @@
    pick-credit-providing-cards
    pick-virus-counters-to-spend]
 
+  [game.core.process-actions
+   command-parser
+   process-action]
+
   [game.core.props
    add-counter
    add-icon

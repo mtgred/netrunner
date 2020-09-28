@@ -32,6 +32,7 @@
     [game.core.pick-counters]
     [game.core.player]
     [game.core.play-instants]
+    [game.core.process-actions]
     [game.core.prompts]
     [game.core.props]
     [game.core.psi]

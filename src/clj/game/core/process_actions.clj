@@ -1,6 +1,26 @@
-(in-ns 'game.core)
+(ns game.core.process-actions
+  (:require
+    [game.core.actions :refer [click-advance click-credit click-draw click-run close-deck do-purge generate-install-list generate-runnable-zones move-card play play-ability play-corp-ability play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag resolve-prompt score select trash-resource view-deck]]
+    [game.core.board :refer [get-remotes]]
+    [game.core.card :refer [get-card]]
+    [game.core.change-vals :refer [change]]
+    [game.core.commands :refer [parse-command]]
+    [game.core.eid :refer [make-eid]]
+    [game.core.ice :refer [update-all-ice update-all-icebreakers]]
+    [game.core.initializing :refer [update-all-card-labels]]
+    [game.core.moving :refer [trash]]
+    [game.core.rezzing :refer [derez rez]]
+    [game.core.runs :refer [check-for-empty-server continue corp-phase-43 handle-end-run jack-out start-next-phase toggle-auto-no-action]]
+    [game.core.say :refer [indicate-action say system-msg]]
+    [game.core.set-up :refer [keep-hand mulligan]]
+    [game.core.shuffling :refer [shuffle-deck]]
+    [game.core.toasts :refer [toast]]
+    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
+    [game.core.winning :refer [concede]]
+    [game.utils :refer [dissoc-in]]
+    [clojure.string :as string]))
 
-(defn clear-empty-remotes
+(defn- clear-empty-remotes
   [state]
   (doseq [remote (get-remotes state)]
     (let [zone [:corp :servers (first remote)]]
@@ -8,7 +28,7 @@
                  (empty? (get-in @state (conj zone :ices))))
         (swap! state dissoc-in zone)))))
 
-(defn fake-checkpoint [state]
+(defn- fake-checkpoint [state]
   ;; Update strength and labels
   (update-all-icebreakers state :runner)
   (update-all-ice state :corp)
