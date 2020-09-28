@@ -383,6 +383,7 @@
    move
    move-zone
    remove-old-current
+   swap-agendas
    swap-ice
    swap-installed
    trash
@@ -425,7 +426,9 @@
 
   [game.core.props
    add-counter
+   add-icon
    add-prop
+   remove-icon
    set-prop]
 
   [game.core.player

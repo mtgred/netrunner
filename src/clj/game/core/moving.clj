@@ -414,3 +414,34 @@
           (unregister-events state side h)
           (register-events state side newh))))
     (trigger-event state side :swap a-new b-new)))
+
+(defn swap-agendas
+  "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
+  [state side scored stolen]
+  ;; Update location information
+  (let [scored (assoc scored :scored-side :runner)
+        stolen (assoc stolen :scored-side :corp)]
+    ;; Move agendas
+    (swap! state update-in [:corp :scored]
+           (fn [coll] (conj (remove-once #(same-card? % scored) coll) stolen)))
+    (swap! state update-in [:runner :scored]
+           (fn [coll] (conj (remove-once #(same-card? % stolen) coll)
+                            (if-not (card-flag? scored :has-abilities-when-stolen true)
+                              (dissoc scored :abilities :events) scored))))
+    ;; Set up abilities and events for new scored agenda
+    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))
+          abilities (:abilities (card-def new-scored))
+          new-scored (merge new-scored {:abilities abilities})]
+      (update! state :corp new-scored)
+      (unregister-events state side new-scored)
+      (register-events state side new-scored)
+      (unregister-constant-effects state side new-scored)
+      (register-constant-effects state side new-scored)
+      (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
+    ;; Set up abilities and events for new stolen agenda
+    (when-not (card-flag? scored :has-events-when-stolen true)
+      (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
+        (deactivate state :corp new-stolen)))
+    ;; Update agenda points
+    (update-all-agenda-points state side)
+    (check-winner state side)))

@@ -2,6 +2,7 @@
   (:require
     [game.core.card :refer [get-card has-subtype? ice? rezzed?]]
     [game.core.eid :refer [make-eid]]
+    [game.core.finding :refer [find-latest]]
     [game.core.events :refer [trigger-event-sync]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.update :refer [update!]]))
@@ -44,3 +45,19 @@
        ;; if advancement counter use existing system
        (add-prop state side eid card :advance-counter n args)
        (trigger-event-sync state side eid :counter-added (get-card state updated-card))))))
+
+(defn add-icon
+  "Adds an icon to a card. E.g. a Femme Fatale token.
+  Card is the card adding the icon, target is card receiving the icon."
+  [state side card target char color]
+  ;; add icon
+  (set-prop state side target :icon {:char char :color color :card card})
+  ;; specify icon target on card
+  (set-prop state side card :icon-target target))
+
+(defn remove-icon
+  "Remove the icon associated with the card and target."
+  ([state side card] (remove-icon state side card (:icon-target card)))
+  ([state side card target]
+   (when target (set-prop state side (find-latest state target) :icon nil))
+   (set-prop state side (find-latest state card) :icon-target nil)))
