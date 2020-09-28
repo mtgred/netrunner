@@ -1,6 +1,5 @@
 (ns game.core.identities
   (:require
-    [game.core.abilities :refer [resolve-ability]]
     [game.core.card :refer [active? get-card has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
@@ -10,6 +9,7 @@
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [move]]
+    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.update :refer [update!]]
     [game.utils :refer [type->rig-zone]]))
 

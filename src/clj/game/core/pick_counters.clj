@@ -1,12 +1,12 @@
 (ns game.core.pick-counters
   (:require
-    [game.core.abilities :refer [resolve-ability]]
     [game.core.card :refer [get-card get-counters installed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
     [game.core.events :refer [trigger-event-sync]]
     [game.core.gaining :refer [lose]]
     [game.core.props :refer [add-counter set-prop]]
+    [game.core.resolve-ability :refer [resolve-ability]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [in-coll? quantify]]
     [clojure.string :as string]))

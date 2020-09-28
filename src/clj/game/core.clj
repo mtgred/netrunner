@@ -1,6 +1,5 @@
 (ns game.core
   (:require
-    [game.core.abilities]
     [game.core.access]
     [game.core.agendas]
     [game.core.bad-publicity]
@@ -31,6 +30,7 @@
     [game.core.props]
     [game.core.psi]
     [game.core.purging]
+    [game.core.resolve-ability]
     [game.core.revealing]
     [game.core.runs]
     [game.core.say]

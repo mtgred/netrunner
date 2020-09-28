@@ -286,8 +286,6 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
 
-(declare check-for-empty-server handle-end-run)
-
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
     (when (or (nil? cost)

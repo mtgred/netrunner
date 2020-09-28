@@ -1,13 +1,14 @@
 (ns game.core.events
-  (:require [clj-uuid :as uuid]
-            [game.core.abilities :refer [can-trigger? resolve-ability]]
-            [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.eid :refer [effect-completed make-eid]]
-            [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
-            [game.macros :refer [continue-ability req wait-for]]
-            [game.utils :refer [in-coll? remove-once same-card? side-str to-keyword]]
-            [jinteki.utils :refer [other-side]]))
+  (:require
+    [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
+    [game.core.resolve-ability :refer [can-trigger? resolve-ability]]
+    [game.macros :refer [continue-ability req wait-for]]
+    [game.utils :refer [in-coll? remove-once same-card? side-str to-keyword]]
+    [jinteki.utils :refer [other-side]]
+    [clj-uuid :as uuid]))
 
 (declare register-suppress unregister-suppress)
 

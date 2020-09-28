@@ -1,12 +1,12 @@
 (ns game.core.psi
 (:require
-    [game.core.abilities :refer [can-trigger? pay register-ability-type register-once resolve-ability]]
     [game.core.card :refer [corp?]]
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.events :refer [trigger-event-simult]]
     [game.core.flags :refer [any-flag-fn?]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt-with-dice show-wait-prompt]]
+    [game.core.resolve-ability :refer [can-trigger? pay register-ability-type register-once resolve-ability]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability effect wait-for]]
     [jinteki.utils :refer [str->int]]

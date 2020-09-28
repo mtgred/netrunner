@@ -3,32 +3,6 @@
 
 (import-vars
 
-  [game.core.abilities
-   add-cost-label-to-ability
-   build-cost-label
-   build-cost-string
-   build-spend-msg
-   can-pay?
-   can-trigger?
-   cost->string
-   cost-name
-   cost-ranks
-   handler
-   is-ability?
-   label
-   merge-costs
-   not-used-once?
-   pay
-   payable?
-   prompt!
-   register-ability-type
-   register-once
-   resolve-ability
-   select-ability-kw
-   sentence-join
-   should-trigger?
-   value]
-
   [game.core.access
    access-bonus
    access-bonus-count
@@ -448,6 +422,32 @@
 
   [game.core.purging
    purge]
+
+  [game.core.resolve-ability
+   add-cost-label-to-ability
+   build-cost-label
+   build-cost-string
+   build-spend-msg
+   can-pay?
+   can-trigger?
+   cost->string
+   cost-name
+   cost-ranks
+   handler
+   is-ability?
+   label
+   merge-costs
+   not-used-once?
+   pay
+   payable?
+   prompt!
+   register-ability-type
+   register-once
+   resolve-ability
+   select-ability-kw
+   sentence-join
+   should-trigger?
+   value]
 
   [game.core.revealing
    conceal-hand

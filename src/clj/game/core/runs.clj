@@ -1,6 +1,5 @@
 (ns game.core.runs
   (:require
-    [game.core.abilities :refer [build-cost-string build-spend-msg can-pay? merge-costs pay resolve-ability]]
     [game.core.access :refer [do-access]]
     [game.core.board :refer [server->zone]]
     [game.core.card :refer [get-card rezzed?]]
@@ -15,6 +14,7 @@
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice update-all-ice update-all-icebreakers]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+    [game.core.resolve-ability :refer [build-cost-string build-spend-msg can-pay? merge-costs pay resolve-ability]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]

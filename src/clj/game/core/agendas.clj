@@ -1,6 +1,5 @@
 (ns game.core.agendas
   (:require
-    [game.core.abilities :refer [resolve-ability]]
     [game.core.card :refer [agenda? get-card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [sum-effects]]
@@ -8,6 +7,7 @@
     [game.core.events :refer [trigger-event trigger-event-sync]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [move trash]]
+    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-winner]]

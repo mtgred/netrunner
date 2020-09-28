@@ -1,20 +1,21 @@
 (ns game.core.initializing
-  (:require [game.core.abilities :refer [add-cost-label-to-ability is-ability? resolve-ability]]
-            [game.core.board :refer [all-active all-active-installed]]
-            [game.core.card :refer [get-card runner? map->Card]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.cost-fns :refer [card-ability-cost]]
-            [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
-            [game.core.eid :refer [effect-completed make-eid]]
-            [game.core.events :refer [register-events unregister-events]]
-            [game.core.finding :refer [find-cid]]
-            [game.core.gaining :refer [free-mu gain lose]]
-            [game.core.ice :refer [add-sub]]
-            [game.core.props :refer [set-prop]]
-            [game.core.update :refer [update!]]
-            [game.macros :refer [effect req]]
-            [game.utils :refer [make-cid server-card]]
-            [jinteki.utils :refer [make-label]]))
+  (:require
+    [game.core.board :refer [all-active all-active-installed]]
+    [game.core.card :refer [get-card runner? map->Card]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.cost-fns :refer [card-ability-cost]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [register-events unregister-events]]
+    [game.core.finding :refer [find-cid]]
+    [game.core.gaining :refer [free-mu gain lose]]
+    [game.core.ice :refer [add-sub]]
+    [game.core.props :refer [set-prop]]
+    [game.core.resolve-ability :refer [add-cost-label-to-ability is-ability? resolve-ability]]
+    [game.core.update :refer [update!]]
+    [game.macros :refer [effect req]]
+    [game.utils :refer [make-cid server-card]]
+    [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"

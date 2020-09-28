@@ -1,20 +1,20 @@
 (ns game.core.ice
-  (:require [game.core.abilities :refer [can-pay? merge-costs pay resolve-ability]]
-            [game.core.board :refer [all-active-installed all-installed]]
-            [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.cost-fns :refer [break-sub-ability-cost]]
-            [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-            [game.core.effects :refer [get-effects register-floating-effect sum-effects]]
-            [game.core.events :refer [ability-as-handler trigger-event trigger-event-simult]]
-            [game.core.flags :refer [card-flag?]]
-            [game.core.say :refer [system-msg]]
-            [game.core.update :refer [update!]]
-            [game.macros :refer [req effect msg continue-ability wait-for]]
-            [game.utils :refer [same-card? pluralize quantify remove-once]]
-            [jinteki.utils :refer [make-label]]
-            [clojure.string :as string]
-            ))
+  (:require
+    [game.core.board :refer [all-active-installed all-installed]]
+    [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.cost-fns :refer [break-sub-ability-cost]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
+    [game.core.effects :refer [get-effects register-floating-effect sum-effects]]
+    [game.core.events :refer [ability-as-handler trigger-event trigger-event-simult]]
+    [game.core.flags :refer [card-flag?]]
+    [game.core.resolve-ability :refer [can-pay? merge-costs pay resolve-ability]]
+    [game.core.say :refer [system-msg]]
+    [game.core.update :refer [update!]]
+    [game.macros :refer [req effect msg continue-ability wait-for]]
+    [game.utils :refer [same-card? pluralize quantify remove-once]]
+    [jinteki.utils :refer [make-label]]
+    [clojure.string :as string]))
 
 ;; These should be in runs.clj, but `req` needs get-current-ice and
 ;; moving.clj needs set-current-ice

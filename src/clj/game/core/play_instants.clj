@@ -1,6 +1,5 @@
 (ns game.core.play-instants
   (:require
-    [game.core.abilities :refer [build-spend-msg merge-costs pay resolve-ability should-trigger?]]
     [game.core.card :refer [get-card has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
@@ -11,6 +10,7 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move remove-old-current trash]]
+    [game.core.resolve-ability :refer [build-spend-msg merge-costs pay resolve-ability should-trigger?]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card?]]))

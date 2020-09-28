@@ -1,6 +1,5 @@
 (ns game.core.template
   (:require
-    [game.core.abilities :refer :all]
     [game.core.board :refer :all]
     [game.core.card :refer :all]
     [game.core.card-defs :refer :all]
@@ -20,6 +19,7 @@
     [game.core.player :refer :all]
     [game.core.prompts :refer :all]
     [game.core.props :refer :all]
+    [game.core.resolve-ability :refer :all]
     [game.core.say :refer :all]
     [game.core.shuffling :refer :all]
     [game.core.state :refer :all]

@@ -1,6 +1,5 @@
 (ns game.core.costs
   (:require
-    [game.core.abilities :refer [cost-name handler label payable? resolve-ability value]]
     [game.core.agendas :refer [forfeit]]
     [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
     [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
@@ -13,6 +12,7 @@
     [game.core.moving :refer [discard-from-hand mill move trash trash-cards]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
     [game.core.props :refer [add-counter]]
+    [game.core.resolve-ability :refer [cost-name handler label payable? resolve-ability value]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.tags :refer [lose-tags]]
     [game.core.to-string :refer [card-str]]

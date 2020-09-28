@@ -1,4 +1,4 @@
-(ns game.core.abilities
+(ns game.core.resolve-ability
   (:require [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.string :as string]
             [game.core.board :refer [all-active-installed]]

@@ -1,6 +1,5 @@
 (ns game.core.access
   (:require
-    [game.core.abilities :refer [add-cost-label-to-ability build-cost-string can-pay? can-trigger? merge-costs pay resolve-ability should-trigger?]]
     [game.core.agendas :refer [get-agenda-points update-all-agenda-points]]
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? corp? get-card get-zone in-discard? in-hand? in-scored? installed? operation? rezzed?]]
@@ -13,6 +12,7 @@
     [game.core.flags :refer [can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move remove-old-current trash]]
     [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
+    [game.core.resolve-ability :refer [add-cost-label-to-ability build-cost-string can-pay? can-trigger? merge-costs pay resolve-ability should-trigger?]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.to-string :refer [name-zone]]
