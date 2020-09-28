@@ -12,6 +12,7 @@
     [game.core.cost-fns]
     [game.core.costs]
     [game.core.damage]
+    [game.core.def-helpers]
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]

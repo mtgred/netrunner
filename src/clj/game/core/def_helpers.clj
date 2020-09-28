@@ -1,4 +1,23 @@
-(in-ns 'game.core)
+(ns game.core.def-helpers
+  (:require
+    [game.core.card-defs :as card-defs]
+    [game.core.card :refer [get-counters]]
+    [game.core.damage :refer [damage]]
+    [game.core.eid :refer [effect-completed]]
+    [game.core.events :refer [trigger-event-sync]]
+    [game.core.gaining :refer [gain]]
+    [game.core.moving :refer [trash]]
+    [game.core.prompts :refer [clear-wait-prompt]]
+    [game.core.props :refer [add-prop]]
+    [game.core.resolve-ability :refer [resolve-ability]]
+    [game.core.say :refer [system-msg]]
+    [game.core.toasts :refer [toast]]
+    [game.macros :refer [continue-ability effect req wait-for]]
+    [game.utils :refer [remove-once same-card?]]
+    [jinteki.utils :refer [other-side]]
+    [clojure.string :as string]
+    )
+  )
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
@@ -54,9 +73,9 @@
   ([reorder-side wait-side chosen original dest]
    {:prompt (if (= dest "bottom")
               (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "your Stack")
-                   " will be " (join  ", " (map :title (reverse chosen))) ".")
+                   " will be " (string/join  ", " (map :title (reverse chosen))) ".")
               (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
-                   " will be " (join  ", " (map :title chosen)) "."))
+                   " will be " (string/join  ", " (map :title chosen)) "."))
    :choices ["Done" "Start over"]
    :async true
    :effect (req
@@ -114,7 +133,7 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true}))})
 
-(defn make-recurring-ability
+(defn- make-recurring-ability
   [ability]
   (if (:recurring ability)
     (let [recurring-ability
@@ -129,4 +148,4 @@
 
 (defn define-card
   [title ability]
-  (game.core.card-defs/define-card title (make-recurring-ability ability)))
+  (card-defs/define-card title (make-recurring-ability ability)))

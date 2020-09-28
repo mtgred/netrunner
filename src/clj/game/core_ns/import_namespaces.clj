@@ -183,6 +183,16 @@
    enable-runner-damage-choice
    runner-can-choose-damage?]
 
+  [game.core.def-helpers
+   combine-abilities
+   corp-rez-toast
+   define-card
+   do-brain-damage
+   do-meat-damage
+   do-net-damage
+   reorder-choice
+   trash-on-empty]
+
   [game.core.drawing
    draw
    draw-bonus
