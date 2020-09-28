@@ -39,6 +39,13 @@
     (system-msg state :runner "is flatlined")
     (win state :corp "Flatline")))
 
+(defn concede
+  "Trigger game concede by specified side. Takes a third argument for use with user commands."
+  ([state side _] (concede state side))
+  ([state side]
+   (system-msg state side "concedes")
+   (win state (if (= side :corp) :runner :corp) "Concede")))
+
 (defn clear-win
   "Clears the current win condition. Requires both sides to have issued the command"
   [state side]

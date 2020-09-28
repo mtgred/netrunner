@@ -39,11 +39,13 @@
    turn-archives-faceup]
 
   [game.core.agendas
+   advance
    advancement-cost
    advancement-cost-bonus
    as-agenda
    forfeit
    get-agenda-points
+   score
    sum-agenda-points
    update-advancement-cost
    update-agenda-points
@@ -556,6 +558,7 @@
   [game.core.winning
    check-winner
    clear-win
+   concede
    flatline
    win
    win-decked]
