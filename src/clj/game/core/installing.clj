@@ -14,7 +14,7 @@
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.resolve-ability :refer [build-spend-msg merge-costs pay]]
+    [game.core.payment :refer [build-spend-msg merge-costs pay]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.to-string :refer [card-str name-zone]]

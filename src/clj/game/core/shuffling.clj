@@ -3,6 +3,7 @@
     [game.core.card :refer [corp? in-discard?]]
     [game.core.events :refer [trigger-event]]
     [game.core.moving :refer [move move-zone]]
+    [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
     [game.utils :refer [quantify]]
     [clojure.string :as string]))
@@ -46,3 +47,13 @@
                    (shuffle! state side :deck))
       :cancel-effect (req (shuffle! state side :deck))}
      card nil)))
+
+(defn shuffle-deck
+  "Shuffle R&D/Stack."
+  [state side {:keys [close] :as args}]
+  (swap! state update-in [side :deck] shuffle)
+  (if close
+    (do
+      (swap! state update-in [side] dissoc :view-deck)
+      (system-msg state side "stops looking at their deck and shuffles it"))
+    (system-msg state side "shuffles their deck")))

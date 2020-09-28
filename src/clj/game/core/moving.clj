@@ -1,19 +1,22 @@
 (ns game.core.moving
   (:require
+    [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [card-index facedown? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.events :refer [ability-as-handler register-events trigger-event trigger-event-simult unregister-events]]
-    [game.core.finding :refer [get-scoring-owner]]
+    [game.core.events :refer [ability-as-handler register-events trigger-event trigger-event-simult trigger-event-sync unregister-events]]
+    [game.core.finding :refer [find-cid get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
     [game.core.ice :refer [get-current-ice set-current-ice update-ice-strength]]
-    [game.core.initializing :refer [deactivate reset-card]]
+    [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [enforce-msg system-msg system-say]]
     [game.core.update :refer [update!]]
+    [game.core.winning :refer [check-winner]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in is-remote? make-cid remove-once same-card? to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -445,3 +448,41 @@
     ;; Update agenda points
     (update-all-agenda-points state side)
     (check-winner state side)))
+
+(defn as-agenda
+  "Adds the given card to the given side's :scored area as an agenda worth n points."
+  ([state side card n] (as-agenda state side (make-eid state) card n nil))
+  ([state side eid card n] (as-agenda state side eid card n nil))
+  ([state side eid card n {:keys [register-events force]}]
+   (let [card (deactivate state side card)
+         card (move state side (assoc card :agendapoints n) :scored {:force force})]
+     (if register-events
+       (wait-for (card-init state side card {:resolve-effect false})
+                 (wait-for (resolve-ability state side (make-eid state eid) (:swapped (card-def card)) card nil)
+                           (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                                     (update-all-agenda-points state side)
+                                     (check-winner state side)
+                                     (effect-completed state side eid))))
+       (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                 (update-all-agenda-points state side)
+                 (check-winner state side)
+                 (effect-completed state side eid))))))
+
+(defn forfeit
+  "Forfeits the given agenda to the :rfg zone."
+  ([state side card] (forfeit state side (make-eid state) card))
+  ([state side eid card] (forfeit state side eid card {:msg true}))
+  ([state side eid card args]
+   ;; Remove all hosted cards first
+   (doseq [h (:hosted card)]
+     (trash state side
+            (make-eid state)
+            (update-in h [:zone] #(map to-keyword %))
+            {:unpreventable true :suppress-event true}))
+   (let [card (get-card state card)]
+     (when (:msg args)
+       (system-msg state side (str "forfeits " (:title card))))
+     (move state (to-keyword (:side card)) card :rfg)
+     (update-all-agenda-points state side)
+     (check-winner state side)
+     (trigger-event-sync state side eid (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) card))))

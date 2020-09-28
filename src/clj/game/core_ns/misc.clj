@@ -1,18 +1,5 @@
 (in-ns 'game.core)
 
-(defn get-runnable-zones
-  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
-  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
-  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
-  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
-  ([state side eid card {:keys [zones ignore-costs] :as args}]
-   (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
-         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
-     (if ignore-costs
-       permitted-zones
-       (filter #(can-pay? state :runner eid (total-run-cost state side card {:server (unknown->kw %)}))
-               permitted-zones)))))
-
 (defn same-server?
   "True if the two cards are IN or PROTECTING the same server."
   [card1 card2]

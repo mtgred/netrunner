@@ -1,6 +1,5 @@
 (ns game.core.costs
   (:require
-    [game.core.agendas :refer [forfeit]]
     [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
     [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
@@ -9,7 +8,7 @@
     [game.core.events :refer [trigger-event trigger-event-sync]]
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
-    [game.core.moving :refer [discard-from-hand mill move trash trash-cards]]
+    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
     [game.core.payment :refer [cost-name handler label payable? value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
     [game.core.props :refer [add-counter]]

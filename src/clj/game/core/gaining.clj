@@ -1,7 +1,8 @@
 (ns game.core.gaining
-  (:require [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.events :refer [trigger-event trigger-event-sync]]
-            [game.core.toasts :refer [toast]]))
+  (:require
+    [game.core.eid :refer [make-eid effect-completed]]
+    [game.core.events :refer [trigger-event trigger-event-sync]]
+    [game.core.toasts :refer [toast]]))
 
 (defn safe-inc-n
   "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"

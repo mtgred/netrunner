@@ -38,18 +38,40 @@
    steal-cost-bonus
    turn-archives-faceup]
 
-  [game.core.agendas
+  [game.core.actions
    advance
+   click-advance
+   click-credit
+   click-draw
+   click-run
+   close-deck
+   do-purge
+   generate-install-list
+   generate-runnable-zones
+   get-runnable-zones
+   move-card
+   play
+   play-ability
+   play-auto-pump
+   play-auto-pump-and-break
+   play-corp-ability
+   play-dynamic-ability
+   play-heap-breaker-auto-pump-and-break
+   play-runner-ability
+   play-subroutine
+   play-unbroken-subroutines
+   remove-tag
+   resolve-prompt
+   score
+   select
+   trash-resource
+   view-deck]
+
+  [game.core.agendas
    advancement-cost
    advancement-cost-bonus
-   as-agenda
-   forfeit
    get-agenda-points
-   score
-   sum-agenda-points
    update-advancement-cost
-   update-agenda-points
-   update-agenda-points-card
    update-all-advancement-costs
    update-all-agenda-points]
 
@@ -124,6 +146,9 @@
 
   [game.core.card-defs
    card-def]
+
+  [game.core.change-vals
+   change]
 
   [game.core.cost-fns
    break-sub-ability-cost
@@ -378,7 +403,9 @@
    runner-install]
 
   [game.core.moving
+   as-agenda
    discard-from-hand
+   forfeit
    mill
    move
    move-zone
@@ -527,6 +554,7 @@
 
   [game.core.shuffling
    shuffle!
+   shuffle-deck
    shuffle-into-deck
    shuffle-into-rd-effect]
 
