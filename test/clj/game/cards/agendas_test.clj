@@ -431,7 +431,7 @@
                           :deck ["Wyrm"]}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Wyrm")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program"))))
 

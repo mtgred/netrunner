@@ -710,7 +710,7 @@
         (is (empty? (:discard (get-runner))) "No cards in discard")
         (take-credits state :runner)
         (take-credits state :corp)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 19 (:credit (get-runner))))
         (is (empty? (:deck (get-runner))) "No cards in deck")
         (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
@@ -1948,7 +1948,7 @@
     (let [gsec (get-resource state 0)]
       (card-ability state :runner gsec 0)
       (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :runner))) "GSec revealed Hedge Fund")
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
 
 (deftest grifter
@@ -2359,7 +2359,7 @@
         (card-subroutine state :corp (refresh eni) 0)
         (run-continue state)
         (run-continue state)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 3 (:click (get-runner))) "Enigma took a click")))))
 
 (deftest john-masanori
@@ -2424,7 +2424,7 @@
     (is (:runner-phase-12 @state) "Runner is in Step 1.2")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 5 (:click (get-runner))) "Gained extra click from Joshua")
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (is (zero? (count-tags state)) "Runner has no tags during turn")
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
@@ -3292,7 +3292,7 @@
         (card-ability state :runner j 0)
         (click-prompt state :runner "Archives")
         (run-continue state)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
 (deftest paule-s-cafe

@@ -453,7 +453,7 @@
       (is (= 3 (hosted-credits)) "Three credit counter on Bankroll after three successful runs")
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (run-continue state)
@@ -2138,7 +2138,7 @@
       (is (:runner-phase-12 @state) "Runner in Step 1.2")
       (let [hyp (get-program state 0)]
         (card-ability state :runner hyp 0)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 7 (:click (get-runner))) "Gained 3 clicks")
         (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
   (testing "triggering a Dhegdeered Hyperdriver should not grant +3 MU"
@@ -2157,7 +2157,7 @@
         (is (:runner-phase-12 @state) "Runner in Step 1.2")
         (let [hyp (first (:hosted (refresh dheg)))]
           (card-ability state :runner hyp 0)
-          (core/end-phase-12 state :runner nil)
+          (end-phase-12 state :runner)
           (is (= 7 (:click (get-runner))) "Used Hyperdriver")
           (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game"))))))
 
@@ -3429,7 +3429,7 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck ["Parasite"]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner (find-card "Parasite" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
       (is (= 1 (count (get-runner-facedown state))) "Parasite installed face down")))

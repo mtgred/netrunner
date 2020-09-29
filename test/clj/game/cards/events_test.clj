@@ -2643,7 +2643,7 @@
     (starting-hand state :runner ["Fan Site" "Fan Site" "Neutralize All Threats"
                                   "Independent Thinking" "Independent Thinking"])
     (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (click-card state :runner (find-card "Neutralize All Threats" (:hand (get-runner))))
     (play-from-hand state :runner "Fan Site")
     (let [fs (get-resource state 0)

@@ -489,13 +489,13 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck [(qty "Heartbeat" 2)]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-prompt state :runner "Done")
       (play-from-hand state :runner "Heartbeat")
       (is (= 1 (count (get-hardware state))))
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
       (is (= 1 (count (get-runner-facedown state))) "2nd console installed facedown")))
   (testing "Don't fire events when installed facedown. Issue #4085"
@@ -503,7 +503,7 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck ["Sure Gamble"]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Sure Gamble")
         (is (= credits (:credit (get-runner)))))))
@@ -512,7 +512,7 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck ["Spec Work" "Sure Gamble" "Cache"]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown"))))
 
@@ -627,7 +627,7 @@
                           :hand ["Sure Gamble"]}})
       (take-credits state :corp)
       (click-prompt state :corp "Event")
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (let [credits (:credit (get-corp))]
         (click-card state :runner "Sure Gamble")
         (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) ))
@@ -2158,7 +2158,7 @@
             wyld (find-card "Wyldside" (get-resource state))]
         (card-ability state :runner wyld 0)
         (card-ability state :runner maxx 0)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total")))))
@@ -2474,7 +2474,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (is (zero? (count (:hand (get-runner)))))
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (is (zero? (count (get-resource state))))
       (is (= 1 (count (:hand (get-runner)))))
       (run-empty-server state "Server 1")

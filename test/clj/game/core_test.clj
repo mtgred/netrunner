@@ -387,8 +387,7 @@
      (when (and (rezzed? ice#)
                 (some? run#)
                 (= :encounter-ice (:phase run#)))
-       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#})
-       true)))
+       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#}))))
 
 (defmacro play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
@@ -414,8 +413,13 @@
      (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
      (when (and (installed? card#)
                 (not (rezzed? card#)))
-       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args)))
-       true)))
+       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args))))))
+
+(defmacro end-phase-12
+  [state side]
+  `(let [phase# (keyword (str (name ~side) "-phase-12"))]
+     (is (phase# @~state) (str (jutils/capitalize (name ~side)) " in Step 1.2"))
+     (core/process-action "end-phase-12" ~state ~side nil)))
 
 ;;; Misc functions
 (defn score-agenda

@@ -410,7 +410,7 @@
                  :corp {:deck ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Boomerang")
       (play-from-hand state :runner "Assimilator")
       (card-ability state :runner (get-resource state 0) 0)
@@ -828,7 +828,7 @@
       (click-prompt state :runner "Remove 1 tag")
       (is (= 1 (count (:discard (get-runner)))) "Spy Camera trashed")
       (is (= 1 (count-tags state)) "Runner lost 1 tag")
-      (core/end-phase-12 state :runner nil))))
+      (end-phase-12 state :runner))))
 
 (deftest clone-chip
   ;; Test clone chip usage- outside and during run
@@ -1566,7 +1566,7 @@
     (new-game {:runner {:id "Apex: Invasive Predator"
                         :deck [(qty "Heartbeat" 2) (qty "Sure Gamble" 2) "Cache"]}})
     (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
     (play-from-hand state :runner "Heartbeat")
     (is (= 5 (core/available-mu state)) "Gained 1 MU")

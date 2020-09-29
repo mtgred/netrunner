@@ -736,10 +736,9 @@
     (core/runner-install state :runner (find-card "Security Testing" (:hand (get-runner))) {:facedown true})
     (take-credits state :runner)
     (is (:corp-phase-12 @state) "Facedown corp cards can be rezzed so trigger phase 1.2")
-    (core/end-phase-12 state :corp nil)
+    (end-phase-12 state :corp)
     (take-credits state :corp)
-    (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")
-    (core/end-phase-12 state :runner nil)))
+    (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")))
 
 (deftest move-removes-icon
   ;; Moving a marked ice to HQ removes icon #5196
