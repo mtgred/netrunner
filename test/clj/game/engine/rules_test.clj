@@ -12,9 +12,9 @@
     (new-game {:corp {:deck [(qty "Caprice Nisei" 2)]}})
     (play-from-hand state :corp "Caprice Nisei" "HQ")
     (play-from-hand state :corp "Caprice Nisei" "R&D")
-    (core/rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-content state :hq 0))
     (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
-    (core/rez state :corp (get-content state :rd 0))
+    (rez state :corp (get-content state :rd 0))
     (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
 
 (deftest runner-install-program
@@ -91,7 +91,7 @@
     (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ctown (get-content state :remote2 0)]
-      (core/rez state :corp ctown)
+      (rez state :corp ctown)
       (click-card state :corp (get-scored state :corp 0))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 
@@ -112,7 +112,7 @@
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
         (is (zero? (get-counters (refresh cehosted) :recurring)))
-        (core/rez state :corp iwall)
+        (rez state :corp iwall)
         (is (= 5 (:credit (get-runner))) "Compromised Employee gave 1 credit from ice rez")
         (take-credits state :runner)
         (take-credits state :corp)
@@ -144,8 +144,8 @@
           corr (get-program state 0)
           cchip (get-hardware state 0)
           pap (get-resource state 0)]
-      (core/rez state :corp hqiwall0)
-      (core/rez state :corp jh1)
+      (rez state :corp hqiwall0)
+      (rez state :corp jh1)
       (click-card state :runner (refresh hqiwall0))
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
       (is (= (core/card-str state (refresh hqiwall1)) "ICE protecting HQ at position 1"))
@@ -179,11 +179,11 @@
     (new-game {:corp {:deck ["Full Immersion RecStudio" "Worlds Plaza" "Director Haas"]}})
     (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
     (let [fir (get-content state :remote1 0)]
-      (core/rez state :corp fir)
+      (rez state :corp fir)
       (card-ability state :corp fir 0)
       (click-card state :corp (find-card "Worlds Plaza" (:hand (get-corp))))
       (let [wp (first (:hosted (refresh fir)))]
-        (core/rez state :corp wp)
+        (rez state :corp wp)
         (card-ability state :corp wp 0)
         (click-card state :corp (find-card "Director Haas" (:hand (get-corp))))
         (let [dh (first (:hosted (refresh wp)))]
@@ -266,7 +266,7 @@
                :runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
-      (core/rez state :corp wrap)
+      (rez state :corp wrap)
       (take-credits state :corp)
       (core/draw state :runner)
       (core/gain state :runner :credit 7)
@@ -350,7 +350,7 @@
     (play-from-hand state :corp "Caprice Nisei" "New remote")
     (take-credits state :corp)
     (let [caprice (get-content state :remote1 0)]
-      (core/rez state :corp caprice)
+      (rez state :corp caprice)
       (run-on state "Server 1")
       (is (prompt-is-card? state :corp caprice) "Caprice prompt even with no ice, once runner makes run")
       (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
@@ -433,7 +433,7 @@
     (run-on state "HQ")
     (is (= [:hq] (get-in @state [:run :server])))
     (let [iwall (get-ice state :hq 0)]
-      (core/rez state :corp iwall)
+      (rez state :corp iwall)
       (run-continue state)
       (card-subroutine state :corp iwall 0)
       (is (not (:run @state)) "Run is ended")
@@ -450,7 +450,7 @@
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Laamb")
       (run-on state "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [laamb (get-program state 0)]
         (is (= 2 (:current-strength (refresh laamb))) "Laamb starts at 2 strength")
@@ -467,7 +467,7 @@
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Ankusa")
       (run-on state "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [ank (get-program state 0)]
         (is (zero? (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
@@ -673,7 +673,7 @@
                :runner {:id "Leela Patel: Trained Pragmatist"
                         :hand ["Corporate \"Grant\"" (qty "Sure Gamble" 2)]}})
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
     (play-from-hand state :corp "Surveillance Sweep")
     (take-credits state :corp)
     (play-from-hand state :runner "Corporate \"Grant\"")
@@ -688,9 +688,9 @@
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
     (play-from-hand state :corp "Marilyn Campaign" "New remote")
     (play-from-hand state :corp "Calvin B4L3Y" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (core/rez state :corp (get-content state :remote2 0))
-    (core/rez state :corp (get-content state :remote3 0))
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (rez state :corp (get-content state :remote3 0))
     (take-credits state :corp)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -717,7 +717,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Saker")
     (run-on state "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
     (click-prompt state :runner "End the run")

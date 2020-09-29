@@ -87,7 +87,7 @@
                  :runner {:deck ["Medium"]}})
       (play-from-hand state :corp "Keegan Lane" "R&D")
       (play-from-hand state :corp "Midway Station Grid" "R&D")
-      (core/rez state :corp (get-content state :rd 1))
+      (rez state :corp (get-content state :rd 1))
       (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Sweeps Week" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Manhunt" (:hand (get-corp))) :deck)
@@ -183,7 +183,7 @@
                         :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
       (play-from-hand state :corp "Bryan Stinson" "HQ")
       (let [bryan (get-content state :hq 0)]
-        (core/rez state :corp bryan)
+        (rez state :corp bryan)
         (take-credits state :corp)
         (run-on state "HQ")
         (core/set-only-card-to-access state :corp bryan))
@@ -297,7 +297,7 @@
                           :discard ["Hedge Fund" "Hostile Takeover"]}
                    :runner {:credits 10}})
         (play-from-hand state :corp "Bryan Stinson" "Archives")
-        (core/rez state :corp (get-content state :archives 0))
+        (rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
         (core/access-bonus state :corp :archives -1)
@@ -318,7 +318,7 @@
                           :discard ["Hedge Fund" "Hostile Takeover" "Shock!"]}
                    :runner {:credits 10}})
         (play-from-hand state :corp "Bryan Stinson" "Archives")
-        (core/rez state :corp (get-content state :archives 0))
+        (rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
         (core/access-bonus state :corp :archives -2)
@@ -340,7 +340,7 @@
                         :discard ["Hostile Takeover" "Cyberdex Virus Suite"]}})
       (play-from-hand state :corp "Bryan Stinson" "Archives")
       (let [bryan (get-content state :archives 0)]
-        (core/rez state :corp bryan)
+        (rez state :corp bryan)
         (take-credits state :corp)
         (run-on state "Archives")
         (core/set-only-card-to-access state :corp bryan))
@@ -356,7 +356,7 @@
                         :hand ["Bryan Stinson"]
                         :discard ["Hostile Takeover" "Cyberdex Virus Suite" "Hedge Fund"]}})
       (play-from-hand state :corp "Bryan Stinson" "Archives")
-      (core/rez state :corp (get-content state :archives 0))
+      (rez state :corp (get-content state :archives 0))
       (take-credits state :corp)
       (run-on state "Archives")
       (run-continue state)
@@ -411,7 +411,7 @@
                         :discard ["Hedge Fund" "Hostile Takeover"]}
                  :runner {:credits 10}})
       (play-from-hand state :corp "Bryan Stinson" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-on state "Server 1")
       (core/access-bonus state :runner :remote1 -1)

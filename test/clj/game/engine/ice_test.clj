@@ -22,12 +22,12 @@
             p2 (get-content state :remote2 0)
             tg (get-ice state :hq 0)
             buk (get-program state 0)]
-        (core/rez state :corp p1)
-        (core/rez state :corp tg)
+        (rez state :corp p1)
+        (rez state :corp tg)
         (is (= 1 (count (:subroutines (refresh tg)))))
         (run-on state :hq)
         (is (= "Add 1 strength" (-> (refresh buk) :abilities last :label)) "Not encountered an ice yet")
-        (core/rez state :corp p2)
+        (rez state :corp p2)
         (run-continue state)
         (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
         (is (= 2 (count (:subroutines (refresh tg))))))))
@@ -43,8 +43,8 @@
       (let [p1 (get-content state :remote1 0)
             tg (get-ice state :hq 0)
             buk (get-program state 0)]
-        (core/rez state :corp p1)
-        (core/rez state :corp tg)
+        (rez state :corp p1)
+        (rez state :corp tg)
         (run-on state :hq)
         (run-continue state)
         (is (= "Fully break Tour Guide" (-> (refresh buk) :abilities last :label)))
@@ -65,7 +65,7 @@
       (run-on state :hq)
       (let [afshar (get-ice state :hq 0)
             gord (get-program state 0)]
-        (core/rez state :corp afshar)
+        (rez state :corp afshar)
         (run-continue state)
         (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "No auto break dynamic ability"))))
   (testing "Breaking restrictions on auto-pump-and-break - Auto pumping if (:breakable sub) returns :unrestricted"
@@ -79,7 +79,7 @@
       (run-on state :rd)
       (let [afshar (get-ice state :rd 0)
             gord (get-program state 0)]
-        (core/rez state :corp afshar)
+        (rez state :corp afshar)
         (run-continue state)
         (is (not-empty (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "Autobreak is active")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh gord)})
@@ -93,7 +93,7 @@
     (play-from-hand state :corp "Eli 1.0" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
-    (core/rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (let [undo-click (:click-state @state)
           clicks (:click (get-runner))]

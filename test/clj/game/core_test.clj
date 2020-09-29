@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.core.card :refer [get-card rezzed? active? get-counters]]
+            [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
@@ -406,6 +406,16 @@
   ([state] (get-in @state [:runner :play-area]))
   ([state pos]
    (get-in @state [:runner :play-area pos])))
+
+(defmacro rez
+  [state side card & args]
+  `(let [card# (get-card ~state ~card)]
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
+     (when (and (installed? card#)
+                (not (rezzed? card#)))
+       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args)))
+       true)))
 
 ;;; Misc functions
 (defn score-agenda

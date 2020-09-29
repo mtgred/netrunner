@@ -104,8 +104,8 @@
       (let [adon (get-content state :remote1 0)
             bbg (get-content state :remote1 1)
             ash (get-content state :hq 0)]
-        (core/rez state :corp bbg)
-        (core/rez state :corp adon)
+        (rez state :corp bbg)
+        (rez state :corp adon)
         (is (= 10 (:credit (get-corp))) "Breaker Bay Grid allowed rez of Adonis for free")
         (take-credits state :corp)
         (core/draw state :runner 1)
@@ -116,7 +116,7 @@
         (play-from-hand state :runner "Desperado")
         (is (= 1 (:credit (get-runner))))
         (run-on state "HQ")
-        (core/rez state :corp ash)
+        (rez state :corp ash)
         (run-continue state)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -146,7 +146,7 @@
         (run-on state "Server 1")
         (let [tur (get-ice state :remote1 0)
               cap (get-content state :remote1 2)]
-          (core/rez state :corp tur)
+          (rez state :corp tur)
           (run-continue state)
           (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
@@ -155,7 +155,7 @@
           (click-card state :runner tur)
           (is (not (:rezzed (refresh tur))) "Turing derezzed")
           (run-on state "Server 1") ; letting Runner in this time to use Caprice
-          (core/rez state :corp cap)
+          (rez state :corp cap)
           (run-continue state)
           ;; Caprice psi game started automatically
           (click-prompt state :corp "1 [Credits]")
