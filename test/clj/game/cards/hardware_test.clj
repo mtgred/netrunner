@@ -637,7 +637,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "Corroder")
-      (trash-from-hand state :corp "Yog.0")
+      (trash-from-hand state :runner "Yog.0")
       (is empty? (:prompt (get-runner)))))
   (testing "Trashing a corp card must not trigger Buffer Drive"
     (do-game

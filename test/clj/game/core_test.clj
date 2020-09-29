@@ -419,7 +419,8 @@
   [state side]
   `(let [phase# (keyword (str (name ~side) "-phase-12"))]
      (is (phase# @~state) (str (jutils/capitalize (name ~side)) " in Step 1.2"))
-     (core/process-action "end-phase-12" ~state ~side nil)))
+     (when (phase# @~state)
+       (core/process-action "end-phase-12" ~state ~side nil))))
 
 (defmacro click-draw
   [state side]
@@ -434,51 +435,58 @@
   `(let [card# (get-card ~state ~card)]
      (is (some? card#) (str (:title card#) " exists"))
      (is (installed? card#) (str (:title card#) " is installed"))
-     (core/process-action "advance" ~state ~side {:card card#})))
+     (when (and (some? card#)
+                (installed? card#))
+       (core/process-action "advance" ~state ~side {:card card#}))))
+
+(defmacro trash
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (core/process-action "trash" ~state ~side {:card card#}))))
 
 ;;; Misc functions
-(defn score-agenda
+(defmacro score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
-  ([state _ card]
-   (let [title (:title card)
-         advancementcost (:advancementcost card)]
-     (core/gain state :corp :click advancementcost :credit advancementcost)
-     (dotimes [n advancementcost]
-       (core/process-action "advance" state :corp {:card (get-card state card)}))
-     (is (= advancementcost (get-counters (get-card state card) :advancement)))
-     (core/score state :corp {:card (get-card state card)})
-     (is (find-card title (get-scored state :corp))))))
+  [state _ card]
+  `(let [card# (get-card ~state ~card)
+         advancementcost# (:advancementcost ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (core/gain ~state :corp :click advancementcost# :credit advancementcost#)
+       (dotimes [_# advancementcost#]
+         (core/process-action "advance" ~state :corp {:card ~card}))
+       (is (= advancementcost# (get-counters (get-card ~state ~card) :advancement)))
+       (when (= advancementcost# (get-counters (get-card ~state ~card) :advancement))
+         (core/process-action "score" ~state :corp {:card ~card})
+         (is (find-card (:title card#) (get-scored ~state :corp)))))))
 
-(defn advance
+(defmacro advance
   "Advance the given card."
-  ([state card] (advance state card 1))
-  ([state card n]
-   (dotimes [_ n]
-     (core/advance state :corp {:card (get-card state card)}))))
+  [state card & n]
+  `(dotimes [_# (or ~(first n) 1)]
+     (click-advance ~state :corp ~card)))
 
-(defn trash
-  [state side card]
-  (is (:cid card) "It's a card object")
-  (when (:cid card)
-    (core/trash state side (eid/make-eid state) card nil)))
-
-(defn trash-from-hand
+(defmacro trash-from-hand
   "Trash specified card from hand of specified side"
   [state side title]
-  (core/trash state side (eid/make-eid state) (find-card title (get-in @state [side :hand])) nil))
+  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
+     (trash ~state ~side card#)))
 
-(defn trash-resource
+(defmacro trash-resource
   "Trash specified card from rig of the runner"
   [state title]
-  (core/trash state :runner (eid/make-eid state) (find-card title (get-in @state [:runner :rig :resource])) nil))
+  `(let [card# (find-card ~title (get-in @~state [:runner :rig :resource]))]
+     (trash ~state :runner card#)))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
 
-(defn play-and-score
+(defmacro play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
-  (play-from-hand state :corp title "New remote")
-  (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0)))
+  `(do (play-from-hand ~state :corp ~title "New remote")
+       (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
