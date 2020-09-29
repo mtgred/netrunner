@@ -2,7 +2,6 @@
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [card-def]]
             [game.cards.ice :as ice]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -17,7 +16,7 @@
     (do-game
       (new-game {:corp {:deck ["Enigma"]}})
       (play-from-hand state :corp "Enigma" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (let [cr (:credit (get-corp))]
         (core/resolve-ability state :corp (eid/make-eid state)
                               (core/combine-abilities (ice/gain-credits-sub 1)
@@ -28,7 +27,7 @@
     (do-game
       (new-game {:corp {:deck ["Enigma"]}})
       (play-from-hand state :corp "Enigma" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (let [cr (:credit (get-corp))]
         (core/resolve-ability state :corp (eid/make-eid state)
                               (core/combine-abilities (ice/gain-credits-sub 1)
@@ -40,7 +39,7 @@
     (do-game
       (new-game {:corp {:deck ["Enigma"]}})
       (play-from-hand state :corp "Enigma" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (let [cr (:credit (get-corp))]
         (core/resolve-ability state :corp (eid/make-eid state)
                               (core/combine-abilities (ice/trace-ability 1 (ice/gain-credits-sub 1))
@@ -81,14 +80,10 @@
                           :credits 10}})
       (take-credits state :corp)
       (play-from-hand state :runner "Simulchip")
-      ;; Needs to be called manually because it's only run in main.clj and we don't interact
-      ;; with that in tests
-      (core/update-all-card-labels state)
       (is (= "[trash], trash 1 installed program: Install a program from the heap"
              (add-cost-to-label (first (:abilities (get-hardware state 0))))))
       (play-from-hand state :runner "Gorman Drip v1")
       (card-ability state :runner (get-program state 0) 0)
-      (core/update-all-card-labels state)
       (is (= "[trash]: Install a program from the heap"
              (add-cost-to-label (first (:abilities (get-hardware state 0))))))))
   (testing "trash icon"
@@ -96,6 +91,5 @@
       (new-game {:runner {:hand ["Recon Drone"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Recon Drone")
-      (core/update-all-card-labels state)
       (is (= "[trash]: Prevent damage"
              (add-cost-to-label (first (:abilities (get-hardware state 0)))))))))

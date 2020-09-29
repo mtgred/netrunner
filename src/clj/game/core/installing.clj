@@ -1,7 +1,30 @@
-(in-ns 'game.core)
-
-(declare host rez installable-servers server->zone system-msg turn-flag?
-         in-play? update-breaker-strength use-mu get-remotes)
+(ns game.core.installing
+  (:require
+    [game.core.agendas :refer [update-advancement-cost]]
+    [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
+    [game.core.card :refer [agenda? asset? get-card get-counters get-zone has-subtype? ice? program? resource? rezzed?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
+    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
+    [game.core.events :refer [card-as-handler register-events trigger-event-simult]]
+    [game.core.finding :refer [find-latest]]
+    [game.core.flags :refer [turn-flag?]]
+    [game.core.gaining :refer [toast-check-mu use-mu]]
+    [game.core.hosting :refer [host]]
+    [game.core.ice :refer [update-breaker-strength]]
+    [game.core.initializing :refer [card-init]]
+    [game.core.moving :refer [move trash]]
+    [game.core.payment :refer [build-spend-msg merge-costs pay]]
+    [game.core.rezzing :refer [rez]]
+    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.servers :refer [name-zone remote-num->name]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [toast]]
+    [game.core.update :refer [update!]]
+    [game.macros :refer [continue-ability effect req wait-for]]
+    [game.utils :refer [dissoc-in in-coll? to-keyword]]
+    )
+  )
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -38,7 +61,7 @@
          (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
     :earth-station
     ;; no restrictions
-    :default true))
+    :else true))
 
 (defn- corp-can-install?
   "Checks `corp-can-install-reason` if not true, toasts reason and returns false"
@@ -170,7 +193,7 @@
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
-  [state side eid card server {:keys [base-cost ignore-install-cost ignore-all-cost host-card action cost-bonus] :as args} slot]
+  [state side eid card server {:keys [base-cost ignore-install-cost ignore-all-cost action cost-bonus] :as args} slot]
   (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
                           (not ignore-install-cost)
@@ -227,6 +250,11 @@
          (swap! state dissoc-in [:corp :install-list])
          (corp-install-pay state side eid card server args slot))))))
 
+;; Unused in the corp install system, necessary for card definitions
+(defn corp-install-msg
+  "Gets a message describing where a card has been installed from. Example: Interns."
+  [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 ;;; Installing a runner card
 (defn- runner-can-install-reason
@@ -254,7 +282,7 @@
       ;; Req check
       (and card-req (not (card-req state side (make-eid state) card nil))) :req
       ;; Nothing preventing install
-      :default true)))
+      :else true)))
 
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
@@ -281,7 +309,7 @@
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"
-  [state side card {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus] :as params}]
+  [state side card {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus]}]
   (if (or ignore-all-cost facedown)
     [:credit 0]
     (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
@@ -296,7 +324,7 @@
 (defn- runner-install-message
   "Prints the correct msg for the card install"
   [state side card-title cost-str
-   {:keys [no-cost host-card facedown custom-message] :as params}]
+   {:keys [no-cost host-card facedown custom-message]}]
   (if facedown
     (system-msg state side "installs a card facedown")
     (if custom-message
@@ -309,7 +337,7 @@
 (defn- handle-virus-counter-flag
   "Deal with setting the added-virus-counter flag"
   [state side installed-card]
-  (if (and (has-subtype? installed-card "Virus")
+  (when (and (has-subtype? installed-card "Virus")
            (pos? (get-counters installed-card :virus)))
     (update! state side (assoc installed-card :added-virus-counter true))))
 
@@ -317,7 +345,7 @@
   "Installs specified runner card if able"
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
-  ([state side eid card {:keys [host-card facedown no-mu no-msg cost-bonus] :as params}]
+  ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
    (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
      (if (and (empty? (get-in @state [side :locked (first (get-zone card))]))
               (not (install-locked? state :runner)))
@@ -364,7 +392,7 @@
                                       (has-subtype? installed-card "Icebreaker"))
                              (update-breaker-strength state side installed-card))
                            (let [new-eid (make-eid state eid)]
-                             (wait-for (trigger-event-simult state side :runner-install
+                             (wait-for (trigger-event-simult state side new-eid :runner-install
                                                              (when-not facedown
                                                                {:card-abilities (card-as-handler (get-card state installed-card))})
                                                              (get-card state installed-card))

@@ -1,119 +1,36 @@
-(in-ns 'game.core)
+(ns game.core.commands
+  (:require
+    [game.core.board :refer [all-installed get-zones server->zone]]
+    [game.core.card :refer [agenda? can-be-advanced? corp? get-card has-subtype? ice? in-hand? installed? map->Card rezzed? runner?]]
+    [game.core.damage :refer [damage]]
+    [game.core.drawing :refer [draw]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [trigger-event]]
+    [game.core.flags :refer [is-scored?]]
+    [game.core.hosting :refer [host]]
+    [game.core.identities :refer [disable-identity]]
+    [game.core.initializing :refer [card-init deactivate make-card]]
+    [game.core.installing :refer [corp-install runner-install]]
+    [game.core.moving :refer [move swap-ice swap-installed trash]]
+    [game.core.prompts :refer [show-prompt]]
+    [game.core.props :refer [set-prop]]
+    [game.core.psi :refer [psi-game]]
+    [game.core.resolve-ability :refer [resolve-ability]]
+    [game.core.rezzing :refer [rez]]
+    [game.core.runs :refer [end-run jack-out]]
+    [game.core.say :refer [system-msg]]
+    [game.core.servers :refer [zones->sorted-names]]
+    [game.core.set-up :refer [build-card]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [show-error-toast toast]]
+    [game.core.trace :refer [init-trace]]
+    [game.core.winning :refer [clear-win]]
+    [game.macros :refer [continue-ability effect msg req]]
+    [game.utils :refer [dissoc-in quantify safe-split same-card? same-side? server-card string->num]]
+    [jinteki.utils :refer [str->int]]
+    [clojure.string :as string]))
 
-(declare get-zones ice-index parse-command swap-ice swap-installed)
-
-(defn say
-  "Prints a message to the log as coming from the given username. The special user string
-  __system__ shows no user name."
-  [state side {:keys [user text]}]
-  (let [author (or user (get-in @state [side :user]))
-        text (if (= (.trim text) "null") " null" text)]
-    (if-let [command (parse-command text)]
-      (when (and (not= side nil) (not= side :spectator))
-        (command state side)
-        (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
-      (swap! state update-in [:log] #(conj % {:user author :text text})))
-    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))))
-
-(defn typing
-  "Updates game state list with username of whoever is typing"
-  [state side {:keys [user]}]
-  (let [author (:username (or user (get-in @state [side :user])))]
-    (swap! state assoc :typing (distinct (conj (:typing @state) author)))
-    ;; say something to force update in client side rendering
-    (say state side {:user "__system__" :text "typing"})))
-
-(defn typingstop
-  "Clears typing flag from game state for user"
-  [state side {:keys [user text]}]
-  (let [author (or user (get-in @state [side :user]))]
-    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))
-    ;; say something to force update in client side rendering
-    (say state side {:user "__system__" :text "typing"})))
-
-(defn system-say
-  "Prints a system message to log (`say` from user __system__)"
-  ([state side text] (system-say state side text nil))
-  ([state side text {:keys [hr]}]
-   (say state side {:user "__system__" :text (str text (when hr "[hr]"))})))
-
-(defn system-msg
-  "Prints a message to the log without a username."
-  ([state side text] (system-msg state side text nil))
-  ([state side text args]
-   (let [username (get-in @state [side :user :username])]
-     (system-say state side (str username " " text ".") args))))
-
-(defn enforce-msg
-  "Prints a message related to a rules enforcement on a given card.
-  Example: 'Architect cannot be trashed while installed.'"
-  [state card text]
-  (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
-
-(defn indicate-action
-  [state side args]
-  (system-say state side
-              (str "[!] Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
-  (toast state side
-         "You have indicated action to your opponent"
-         "info"
-         {:time-out 2000 :close-button false})
-  (toast state (if (= side :corp) :runner :corp)
-         "Pause please, opponent is acting"
-         "info"
-         {:time-out 5000 :close-button true}))
-
-(defn play-sfx
-  "Adds a sound effect to play to the sfx queue.
-  Each SFX comes with a unique ID, so each client can track for themselves which sounds have already been played.
-  The sfx queue has size limited to 3 to limit the sound torrent tabbed out or lagged players will experience."
-  [state side sfx]
-  (when-let [current-id (get-in @state [:sfx-current-id])]
-    (do
-      (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
-      (swap! state update-in [:sfx-current-id] inc))))
-
-;;; "ToString"-like methods
-(defn card-str
-  "Gets a string description of an installed card, reflecting whether it is rezzed,
-  in/protecting a server, facedown, or hosted."
-  ([state card] (card-str state card nil))
-  ([state {:keys [zone host title facedown] :as card} {:keys [visible] :as args}]
-  (str (if (corp? card)
-         ; Corp card messages
-         (str (if (or (rezzed? card) visible) title (if (ice? card) "ICE" "a card"))
-              ; Hosted cards do not need "in server 1" messages, host has them
-              (if-not host
-                (str (cond (ice? card)
-                           " protecting "
-
-                           (is-root? zone)
-                           " in the root of "
-
-                           :else " in ")
-                     ;TODO add naming of scoring area of corp/runner
-                     (zone->name (or (second zone) zone)) ;; handles [:hand] as well as [:servers :hq]
-                     (if (ice? card) (str " at position " (ice-index state card))))))
-         ; Runner card messages
-         (if (or facedown visible) "a facedown card" title))
-       (if host (str " hosted on " (card-str state host))))))
-
-(defn name-zone
-  "Gets a string representation for the given zone."
-  [side zone]
-  (match (vec zone)
-         [:hand] (if (= side "Runner") "Grip" "HQ")
-         [:discard] (if (= side "Runner") "Heap" "Archives")
-         [:deck] (if (= side "Runner") "Stack" "R&D")
-         [:rig _] "Rig"
-         [:servers :hq _] "the root of HQ"
-         [:servers :rd _] "the root of R&D"
-         [:servers :archives _] "the root of Archives"
-         :else (zone->name (second zone))))
-
-
-;;; In-game chat commands
-(defn set-adv-counter [state side target value]
+(defn- set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
   (system-msg state side (str "sets advancement counters to " value " on "
                               (card-str state target)))
@@ -128,28 +45,29 @@
 (defn command-counter-smart [state side args]
   (resolve-ability
     state side
-    {:effect (req (let [existing (:counter target)
+    {:choices {:card (fn [t] (same-side? (:side t) side))}
+     :effect (req (let [existing (:counter target)
                         value (if-let [n (string->num (first args))] n 0)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
                                      (and (agenda? target) (is-scored? state side target)) :agenda
                                      (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]
-                    (cond
-                      advance
-                      (set-adv-counter state side target value)
+                    (when (not (neg? value))
+                      (cond
+                        advance
+                        (set-adv-counter state side target value)
 
-                      (not counter-type)
-                      (toast state side
-                             (str "Could not infer what counter type you mean. Please specify one manually, by typing "
-                                  "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
-                             "error" {:time-out 0 :close-button true})
+                        (not counter-type)
+                        (toast state side
+                               (str "Could not infer what counter type you mean. Please specify one manually, by typing "
+                                    "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
+                               "error" {:time-out 0 :close-button true})
 
-                      :else
-                      (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
-                          (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
-                                                      (card-str state target)))))))
-     :choices {:card (fn [t] (same-side? (:side t) side))}}
+                        :else
+                        (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
+                            (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
+                                                        (card-str state target))))))))}
     (map->Card {:title "/counter command"}) nil))
 
 (defn command-facedown [state side]
@@ -179,16 +97,18 @@
                              (= "ag" two-letter) :agenda
                              :else :advance-counter)
           advance (= :advance-counter counter-type)]
-      (if advance
-        (command-adv-counter state side value)
-        (resolve-ability state side
-                       {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
-                                        (system-msg (str "sets " (name counter-type) " counters to " value " on "
-                                                         (card-str state target))))
-                        :choices {:card (fn [t] (same-side? (:side t) side))}}
-                       (map->Card {:title "/counter command"}) nil)))))
+      (when (not (neg? value))
+        (if advance
+          (command-adv-counter state side value)
+          (resolve-ability state side
+                           {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
+                                            (system-msg (str "sets " (name counter-type) " counters to " value " on "
+                                                             (card-str state target))))
+                            :choices {:card (fn [t] (same-side? (:side t) side))}}
+                           (map->Card {:title "/counter command"}) nil))))))
 
-(defn command-rezall [state side value]
+(defn command-rezall
+  [state side]
   (resolve-ability state side
     {:optional {:prompt "Rez all cards and turn cards in archives faceup?"
                 :yes-ability {:effect (req
@@ -328,8 +248,9 @@
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 
-(defn parse-command [text]
-  (let [[command & args] (split text #" ")
+(defn parse-command
+  [text]
+  (let [[command & args] (safe-split text #" ")
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (if (= (ffirst args) \#)
@@ -406,7 +327,7 @@
                                           {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
                                             :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                           (map->Card {:title "/rez command"}) nil))
-        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
+        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2))
         "/rfg"        #(resolve-ability %1 %2
                                         {:prompt "Select a card to remove from the game"
                                           :effect (req (let [c (deactivate %1 %2 target)]
@@ -449,25 +370,3 @@
         "/undo-turn"  #(command-undo-turn %1 %2)
         "/unique"     #(command-unique %1 %2)
         nil))))
-
-(defn corp-install-msg
-  "Gets a message describing where a card has been installed from. Example: Interns."
-  [card]
-  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
-
-(defn turn-message
-  "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
-  [state side start-of-turn]
-  (let [pre (if start-of-turn "started" "is ending")
-        hand (if (= side :runner) "their Grip" "HQ")
-        cards (count (get-in @state [side :hand]))
-        credits (get-in @state [side :credit])
-        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
-    (system-msg state side text {:hr (not start-of-turn)})))
-
-(defn event-title
-  "Gets a string describing the internal engine event keyword"
-  [event]
-  (if (keyword? event)
-    (name event)
-    (str event)))

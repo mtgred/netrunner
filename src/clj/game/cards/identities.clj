@@ -1,16 +1,8 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.core.effects :refer [register-floating-effect]]
-            [game.core.eid :refer [effect-completed make-eid complete-with-result]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
-            [game.core.toasts :refer [toast]]
-            [game.core.card :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer :all]))
+            [jinteki.utils :refer :all]
+            [clojure.string :as string]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -39,7 +31,7 @@
 
 ;; Card definitions
 
-(define-card "419: Amoral Scammer"
+(defcard "419: Amoral Scammer"
   {:events [{:event :corp-install
              :async true
              :req (req (and (first-event? state :corp :corp-install)
@@ -85,7 +77,7 @@
                       card nil)))}]
    :abilities [(set-autoresolve :auto-419 "419")]})
 
-(define-card "Acme Consulting: The Truth You Need"
+(defcard "Acme Consulting: The Truth You Need"
   (letfn [(activate [state card active]
             (update! state :corp (assoc-in card [:special :acme-active] active))
             (system-msg state :corp
@@ -116,7 +108,7 @@
                :req (req (some #(same-card? % current-ice) targets))
                :effect (req (activate state card false))}]}))
 
-(define-card "Adam: Compulsive Hacker"
+(defcard "Adam: Compulsive Hacker"
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
@@ -142,7 +134,7 @@
                                                             (clear-wait-prompt state :corp))}
                                               card nil)))}]})
 
-(define-card "AgInfusion: New Miracles for a New World"
+(defcard "AgInfusion: New Miracles for a New World"
   {:abilities [{:label "Trash a piece of ice to choose another server- the runner is now running that server"
                 :once :per-turn
                 :async true
@@ -162,7 +154,7 @@
                                (start-next-phase state side nil)
                                (trash state side eid current-ice {:unpreventable true})))}]})
 
-(define-card "Akiko Nisei: Head Case"
+(defcard "Akiko Nisei: Head Case"
   {:events [{:event :pre-access
              :req (req (= target :rd))
              :interactive (req true)
@@ -171,7 +163,7 @@
                            :effect (effect (access-bonus :rd 1)
                                            (effect-completed eid))}}}]})
 
-(define-card "Alice Merchant: Clan Agitator"
+(defcard "Alice Merchant: Clan Agitator"
   {:events [{:event :successful-run
              :async true
              :interactive (req true)
@@ -191,13 +183,13 @@
                                                 (trash :corp eid target nil))}
                                card nil))}]})
 
-(define-card "Andromeda: Dispossessed Ristie"
+(defcard "Andromeda: Dispossessed Ristie"
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
              :effect (effect (draw 4 {:suppress-event true}))}]
    :mulligan (effect (draw 4 {:suppress-event true}))})
 
-(define-card "Apex: Invasive Predator"
+(defcard "Apex: Invasive Predator"
   (let [ability {:prompt "Select a card to install facedown"
                  :label "Install a card facedown (start of turn)"
                  :once :per-turn
@@ -213,7 +205,7 @@
      :flags {:runner-phase-12 (req true)}
      :abilities [ability]}))
 
-(define-card "Argus Security: Protection Guaranteed"
+(defcard "Argus Security: Protection Guaranteed"
   {:events [{:event :agenda-stolen
              :prompt "Take 1 tag or suffer 2 meat damage?"
              :async true
@@ -225,7 +217,7 @@
                             (do (system-msg state side "chooses to suffer 2 meat damage")
                                 (damage state :runner eid :meat 2 {:unboostable true :card card}))))}]})
 
-(define-card "Armand \"Geist\" Walker: Tech Lord"
+(defcard "Armand \"Geist\" Walker: Tech Lord"
   {:events [{:event :runner-trash
              :async true
              :interactive (req true)
@@ -234,7 +226,7 @@
              :msg "draw a card"
              :effect (effect (draw eid 1 nil))}]})
 
-(define-card "Asa Group: Security Through Vigilance"
+(defcard "Asa Group: Security Through Vigilance"
   {:events [{:event :corp-install
              :async true
              :req (req (first-event? state :corp :corp-install))
@@ -257,7 +249,7 @@
                                :effect (effect (corp-install eid target (zone->name z) nil))}
                               card nil)))}]})
 
-(define-card "Ayla \"Bios\" Rahim: Simulant Specialist"
+(defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
   {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
                 :cost [:click 1]
                 :async true
@@ -289,7 +281,7 @@
                                           (effect-completed state side eid))}
                             card nil))}]})
 
-(define-card "Azmari EdTech: Shaping the Future"
+(defcard "Azmari EdTech: Shaping the Future"
   (let [choose-type {:prompt "Name a Runner card type"
                      :choices ["Event" "Resource" "Program" "Hardware"]
                      :effect (effect (update! (assoc card :az-target target))
@@ -305,7 +297,7 @@
                                     (not (facedown? target)))))
               (assoc check-type :event :play-event)]}))
 
-(define-card "Az McCaffrey: Mechanical Prodigy"
+(defcard "Az McCaffrey: Mechanical Prodigy"
   ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
   (letfn [(az-type? [card] (or (hardware? card)
                                (and (resource? card)
@@ -322,7 +314,7 @@
                :silent (req true)
                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]}))
 
-(define-card "Blue Sun: Powering the Future"
+(defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                     (some rezzed? (all-installed state :corp))))}
    :abilities [{:choices {:card rezzed?}
@@ -331,7 +323,7 @@
                 :effect (effect (gain-credits (rez-cost state side target))
                                 (move target :hand))}]})
 
-(define-card "Boris \"Syfr\" Kovac: Crafty Veteran"
+(defcard "Boris \"Syfr\" Kovac: Crafty Veteran"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-turn-begins
@@ -341,7 +333,7 @@
              :async true
              :effect (effect (lose-tags eid 1))}]})
 
-(define-card "Cerebral Imaging: Infinite Frontiers"
+(defcard "Cerebral Imaging: Infinite Frontiers"
   {:effect (req (when (> (:turn @state) 1)
                   (swap! state assoc-in [:corp :hand-size :base] (:credit corp)))
                 (add-watch state :cerebral-imaging
@@ -352,11 +344,11 @@
    :leave-play (req (remove-watch state :cerebral-imaging)
                     (swap! state assoc-in [:corp :hand-size :base] 5))})
 
-(define-card "Chaos Theory: Wünderkind"
+(defcard "Chaos Theory: Wünderkind"
   {:effect (effect (gain :memory 1))
    :leave-play (effect (lose :runner :memory 1))})
 
-(define-card "Chronos Protocol: Selective Mind-mapping"
+(defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
    :effect (effect (enable-corp-damage-choice))
    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))
@@ -387,13 +379,13 @@
                                                         (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}
                             card nil))}]})
 
-(define-card "Cybernetics Division: Humanity Upgraded"
+(defcard "Cybernetics Division: Humanity Upgraded"
   {:effect (effect (lose :hand-size 1)
                    (lose :runner :hand-size 1))
    :leave-play (effect (gain :hand-size 1)
                        (gain :runner :hand-size 1))})
 
-(define-card "Earth Station: SEA Headquarters"
+(defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
                                        (do (system-msg state :corp "flip their identity to Earth Station: SEA Headquarters")
                                            (assoc card
@@ -438,7 +430,7 @@
                   :msg "flip their identity to Earth Station: Ascending to Orbit"
                   :effect flip-effect}]}))
 
-(define-card "Edward Kim: Humanity's Hammer"
+(defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
              :once :per-turn
              :req (req (and (operation? target)
@@ -455,13 +447,13 @@
                                                  " at no cost"))
                                 (trash state side eid target nil))))}]})
 
-(define-card "Ele \"Smoke\" Scovak: Cynosure of the Net"
+(defcard "Ele \"Smoke\" Scovak: Cynosure of the Net"
   {:recurring 1
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
-(define-card "Exile: Streethawk"
+(defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
    :events [{:event :runner-install
              :silent (req (not (and (program? target)
@@ -472,7 +464,7 @@
              :msg (msg "draw a card")
              :effect (req (draw state side eid 1 nil))}]})
 
-(define-card "Freedom Khumalo: Crypto-Anarchist"
+(defcard "Freedom Khumalo: Crypto-Anarchist"
   {:interactions
    {:access-ability
     {:async true
@@ -504,7 +496,7 @@
                                       (do (swap! state dissoc-in [:per-turn (:cid card)])
                                           (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}})
 
-(define-card "Fringe Applications: Tomorrow, Today"
+(defcard "Fringe Applications: Tomorrow, Today"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-turn-begins
@@ -518,7 +510,7 @@
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}]})
 
-(define-card "Gabriel Santiago: Consummate Professional"
+(defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
              :silent (req true)
              :req (req (and (= (target-server target) :hq)
@@ -526,25 +518,25 @@
              :msg "gain 2 [Credits]"
              :effect (effect (gain-credits 2))}]})
 
-(define-card "Gagarin Deep Space: Expanding the Horizon"
+(defcard "Gagarin Deep Space: Expanding the Horizon"
   {:events [{:event :pre-access-card
              :req (req (is-remote? (second (get-zone target))))
              :effect (effect (access-cost-bonus [:credit 1]))
              :msg "make the Runner spend 1 [Credits] to access"}]})
 
-(define-card "GameNET: Where Dreams are Real"
+(defcard "GameNET: Where Dreams are Real"
   {:implementation "Credit gain not implemented. You can use shortcut ability."
    :abilities [{:msg "gain 1 [Credits] (shortcut)"
                 :effect (req (gain-credits state :corp 1))}]})
 
-(define-card "GRNDL: Power Unleashed"
+(defcard "GRNDL: Power Unleashed"
   {:events [{:event :pre-start-game
              :req (req (= :corp side))
              :effect (req (gain-credits state :corp 5)
                           (when (zero? (count-bad-pub state))
                             (gain-bad-publicity state :corp 1)))}]})
 
-(define-card "Haarpsichord Studios: Entertainment Unleashed"
+(defcard "Haarpsichord Studios: Entertainment Unleashed"
   (let [haarp (fn [state side card]
                 (if (agenda? card)
                   ((constantly false)
@@ -556,7 +548,7 @@
                     (register-turn-flag! state side card :can-steal haarp)))
      :leave-play (effect (clear-turn-flag! card :can-steal))}))
 
-(define-card "Haas-Bioroid: Architects of Tomorrow"
+(defcard "Haas-Bioroid: Architects of Tomorrow"
   {:events [{:event :pass-ice
              :async true
              :once :per-turn
@@ -580,20 +572,20 @@
                                                 (rez eid target {:cost-bonus -4}))}
                                card nil))}]})
 
-(define-card "Haas-Bioroid: Engineering the Future"
+(defcard "Haas-Bioroid: Engineering the Future"
   {:events [{:event :corp-install
              :req (req (first-event? state corp :corp-install))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]})
 
-(define-card "Haas-Bioroid: Stronger Together"
+(defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength
                        :req (req (has-subtype? target "Bioroid"))
                        :value 1}]
    :leave-play (effect (update-all-ice))
    :effect (effect (update-all-ice))})
 
-(define-card "Harishchandra Ent.: Where You're the Star"
+(defcard "Harishchandra Ent.: Where You're the Star"
   (let [ab {:effect (req (if (is-tagged? state)
                            (reveal-hand state :runner)
                            (conceal-hand state :runner)))}]
@@ -611,11 +603,11 @@
      :leave-play (req (when (is-tagged? state)
                         (conceal-hand state :runner)))}))
 
-(define-card "Harmony Medtech: Biomedical Pioneer"
+(defcard "Harmony Medtech: Biomedical Pioneer"
   {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))
    :leave-play (effect (gain :agenda-point-req 1) (gain :runner :agenda-point-req 1))})
 
-(define-card "Hayley Kaplan: Universal Scholar"
+(defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
              :silent (req (not (and (first-event? state side :runner-install)
                                     (some #(is-type? % (:type target)) (:hand runner)))))
@@ -646,7 +638,7 @@
                          :effect (effect (clear-wait-prompt :corp))})
                       card nil)))}]})
 
-(define-card "Hoshiko Shiro: Untold Protagonist"
+(defcard "Hoshiko Shiro: Untold Protagonist"
   (let [flip-effect (req (update! state side (if (:flipped card)
                                                (assoc card
                                                       :flipped false
@@ -691,7 +683,7 @@
                   :msg "flip their ID manually"
                   :effect flip-effect}]}))
 
-(define-card "Hyoubu Institute: Absolute Clarity"
+(defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
              :once :per-turn
              :req (req (first-event? state side :corp-reveal))
@@ -708,7 +700,7 @@
                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " (:title revealed-card)))
                                (reveal state side revealed-card)))}]})
 
-(define-card "Iain Stirling: Retired Spook"
+(defcard "Iain Stirling: Retired Spook"
   (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                  :once :per-turn
                  :msg "gain 2 [Credits]"
@@ -717,11 +709,11 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
-(define-card "Industrial Genomics: Growing Solutions"
+(defcard "Industrial Genomics: Growing Solutions"
   {:constant-effects [{:type :trash-cost
                        :value (req (count (remove :seen (:discard corp))))}]})
 
-(define-card "Information Dynamics: All You Need To Know"
+(defcard "Information Dynamics: All You Need To Know"
   {:events (let [inf {:req (req (and (not (:disabled card))
                                      (has-most-faction? state :corp "NBN")))
                       :msg "give the Runner 1 tag"
@@ -732,7 +724,7 @@
               (assoc inf :event :agenda-scored)
               (assoc inf :event :agenda-stolen)])})
 
-(define-card "Jamie \"Bzzz\" Micken: Techno Savant"
+(defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-install
@@ -743,7 +735,7 @@
              :async true
              :effect (effect (draw eid 1 nil))}]})
 
-(define-card "Jemison Astronautics: Sacrifice. Audacity. Success."
+(defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
              :async true
              :effect (req (show-wait-prompt state :runner "Corp to place advancement tokens")
@@ -759,7 +751,7 @@
                                                (clear-wait-prompt :runner))}
                               card nil)))}]})
 
-(define-card "Jesminder Sareen: Girl Behind the Curtain"
+(defcard "Jesminder Sareen: Girl Behind the Curtain"
   {:events [{:event :pre-tag
              :async true
              :once :per-run
@@ -767,7 +759,7 @@
              :msg "avoid the first tag during this run"
              :effect (effect (tag-prevent :runner eid 1))}]})
 
-(define-card "Jinteki Biotech: Life Imagined"
+(defcard "Jinteki Biotech: Life Imagined"
   {:events [{:event :pre-first-turn
              :req (req (= side :corp))
              :prompt "Choose a copy of Jinteki Biotech to use this game"
@@ -807,7 +799,7 @@
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))
                                (update! state side (assoc (get-card state card) :biotech-used true))))}]})
 
-(define-card "Jinteki: Personal Evolution"
+(defcard "Jinteki: Personal Evolution"
   (let [ability {:async true
                  :req (req (not (:winner @state)))
                  :msg "do 1 net damage"
@@ -817,7 +809,7 @@
                      :interactive (req true))
               (assoc ability :event :agenda-stolen)]}))
 
-(define-card "Jinteki: Potential Unleashed"
+(defcard "Jinteki: Potential Unleashed"
   {:events [{:async true
              :event :pre-resolve-damage
              :req (req (and (-> @state :corp :disable-id not)
@@ -828,7 +820,7 @@
                                                          " from the top of the Runner's Stack"))
                             (mill state :corp eid :runner 1)))}]})
 
-(define-card "Jinteki: Replicating Perfection"
+(defcard "Jinteki: Replicating Perfection"
   {:events [{:event :runner-phase-12
              :effect (req (apply prevent-run-on-server
                                  state card (map first (get-remotes state))))}
@@ -842,7 +834,7 @@
    :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
    :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))})
 
-(define-card "Kabonesa Wu: Netspace Thrillseeker"
+(defcard "Kabonesa Wu: Netspace Thrillseeker"
   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                 :cost [:click 1]
                 :prompt "Choose a program"
@@ -869,7 +861,7 @@
                                                 (assoc-in target [:special :kabonesa] true)
                                                 {:cost-bonus -1}))}]})
 
-(define-card "Kate \"Mac\" McCaffrey: Digital Tinker"
+(defcard "Kate \"Mac\" McCaffrey: Digital Tinker"
   ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
   (letfn [(kate-type? [card] (or (hardware? card)
                                  (program? card)))
@@ -884,14 +876,14 @@
                :silent (req true)
                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]}))
 
-(define-card "Ken \"Express\" Tenma: Disappeared Clone"
+(defcard "Ken \"Express\" Tenma: Disappeared Clone"
   {:events [{:event :play-event
              :req (req (and (has-subtype? target "Run")
                             (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]})
 
-(define-card "Khan: Savvy Skiptracer"
+(defcard "Khan: Savvy Skiptracer"
   {:events [{:event :pass-ice
              :req (req (first-event? state :runner :pass-ice))
              :async true
@@ -913,7 +905,7 @@
                             :effect (effect (runner-install eid target {:cost-bonus -1}))})
                          card nil))}]})
 
-(define-card "Laramy Fisk: Savvy Investor"
+(defcard "Laramy Fisk: Savvy Investor"
   {:events [{:event :successful-run
              :async true
              :interactive (get-autoresolve :auto-fisk (complement never?))
@@ -931,7 +923,7 @@
                                card nil))}]
    :abilities [(set-autoresolve :auto-fisk "force Corp draw")]})
 
-(define-card "Lat: Ethical Freelancer"
+(defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
              :req (req (= (count (:hand runner)) (count (:hand corp))))
              :optional {:autoresolve (get-autoresolve :auto-lat)
@@ -942,7 +934,7 @@
                         :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}]
    :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]})
 
-(define-card "Leela Patel: Trained Pragmatist"
+(defcard "Leela Patel: Trained Pragmatist"
   (let [leela {:interactive (req true)
                :prompt "Select an unrezzed card to return to HQ"
                :choices {:card #(and (not (rezzed? %))
@@ -953,7 +945,7 @@
     {:events [(assoc leela :event :agenda-scored)
               (assoc leela :event :agenda-stolen)]}))
 
-(define-card "Liza Talking Thunder: Prominent Legislator"
+(defcard "Liza Talking Thunder: Prominent Legislator"
   {:implementation "Needs to be resolved manually with Crisium Grid"
    :events [{:event :successful-run
              :async true
@@ -964,17 +956,17 @@
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (draw state :runner eid 2 nil)))}]})
 
-(define-card "Los: Data Hijacker"
+(defcard "Los: Data Hijacker"
   {:events [{:event :rez
              :once :per-turn
              :req (req (ice? target))
              :msg "gain 2 [Credits]"
              :effect (effect (gain-credits :runner 2))}]})
 
-(define-card "MaxX: Maximum Punk Rock"
+(defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                               (str "trash " (string/join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn
@@ -987,7 +979,7 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
-(define-card "MirrorMorph: Endless Iteration"
+(defcard "MirrorMorph: Endless Iteration"
   (let [mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
                     :choices ["Gain [Click]" "Gain 1 [Credits]"]
                     :msg (msg (decapitalize target))
@@ -1029,7 +1021,7 @@
                                                     (= 4 (count (distinct actions))))))))
                          :value true}]}))
 
-(define-card "Mti Mwekundu: Life Improved"
+(defcard "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
              :optional
              {:req (req (and (not-used-once? state {:once :per-turn} card)
@@ -1052,7 +1044,7 @@
                                       (effect-completed state side eid)
                                       (start-next-phase state side nil)))}}}]})
 
-(define-card "Nasir Meidan: Cyber Explorer"
+(defcard "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice
              :req (req (not (rezzed? target)))
              :effect (effect
@@ -1068,7 +1060,7 @@
                              :effect (effect (lose-credits :runner (:credit runner))
                                              (gain-credits :runner cost))}])))}]})
 
-(define-card "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+(defcard "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
                  :interactive (req true)
@@ -1082,7 +1074,7 @@
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
-(define-card "NBN: Controlling the Message"
+(defcard "NBN: Controlling the Message"
   {:events [{:event :runner-trash
              :async true
              :interactive (req true)
@@ -1105,23 +1097,23 @@
                             card nil))}]
    :abilities [(set-autoresolve :auto-ctm "CtM")]})
 
-(define-card "NBN: Making News"
+(defcard "NBN: Making News"
   {:recurring 2
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 
-(define-card "NBN: The World is Yours*"
+(defcard "NBN: The World is Yours*"
   {:effect (effect (gain :hand-size 1))
    :leave-play (effect (lose :hand-size 1))})
 
-(define-card "Near-Earth Hub: Broadcast Center"
+(defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created
              :req (req (first-event? state :corp :server-created))
              :msg "draw 1 card"
              :async true
              :effect (effect (draw :corp eid 1 nil))}]})
 
-(define-card "Nero Severn: Information Broker"
+(defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
              :optional
              {:req (req (and (not-used-once? state {:once :per-turn} card)
@@ -1132,7 +1124,7 @@
                             :msg "jack out"
                             :effect (effect (jack-out eid))}}}]})
 
-(define-card "New Angeles Sol: Your News"
+(defcard "New Angeles Sol: Your News"
   (let [nasol {:optional
                {:prompt "Play a Current?"
                 :player :corp
@@ -1149,7 +1141,7 @@
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)]}))
 
-(define-card "NEXT Design: Guarding the Net"
+(defcard "NEXT Design: Guarding the Net"
   (let [ndhelper (fn nd [n] {:prompt (str "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
                                           "Select a piece of ICE in HQ to install:")
                              :choices {:card #(and (corp? %)
@@ -1171,21 +1163,21 @@
                                (update! state side (dissoc card :fill-hq))
                                (swap! state assoc :turn-events nil))}]}))
 
-(define-card "Nisei Division: The Next Generation"
+(defcard "Nisei Division: The Next Generation"
   {:events [{:event :reveal-spent-credits
              :req (req (and (some? (first targets))
                             (some? (second targets))))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits :corp 1))}]})
 
-(define-card "Noise: Hacker Extraordinaire"
+(defcard "Noise: Hacker Extraordinaire"
   {:events [{:async true
              :event :runner-install
              :req (req (has-subtype? target "Virus"))
              :msg "force the Corp to trash the top card of R&D"
              :effect (effect (mill :runner eid :corp 1))}]})
 
-(define-card "Null: Whistleblower"
+(defcard "Null: Whistleblower"
   {:events [{:event :encounter-ice
              :optional
              {:req (req (and (not-used-once? state {:once :per-turn} card)
@@ -1209,7 +1201,7 @@
                                (update-all-ice)
                                (trash eid target {:unpreventable true}))}}}]})
 
-(define-card "Omar Keung: Conspiracy Theorist"
+(defcard "Omar Keung: Conspiracy Theorist"
   {:abilities [{:cost [:click 1]
                 :msg "make a run on Archives"
                 :once :per-turn
@@ -1231,17 +1223,17 @@
             {:event :run-ends
              :effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}]})
 
-(define-card "Pālanā Foods: Sustainable Growth"
+(defcard "Pālanā Foods: Sustainable Growth"
   {:events [{:event :runner-draw
              :req (req (and (first-event? state :corp :runner-draw)
                             (pos? target)))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits :corp 1))}]})
 
-(define-card "Quetzal: Free Spirit"
+(defcard "Quetzal: Free Spirit"
   {:abilities [(assoc (break-sub nil 1 "Barrier") :once :per-turn)]})
 
-(define-card "Reina Roja: Freedom Fighter"
+(defcard "Reina Roja: Freedom Fighter"
   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
@@ -1253,7 +1245,7 @@
                               (not-triggered? state card)))
                :msg (msg "increased the rez cost of " (:title target) " by 1 [Credits]")}]}))
 
-(define-card "Rielle \"Kit\" Peddler: Transhuman"
+(defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
              :once :per-turn
              :msg (msg "make " (:title target) " gain Code Gate until the end of the run")
@@ -1274,7 +1266,7 @@
                             (update-all-ice state side)
                             (trigger-event state side :ice-subtype-changed ice)))}]})
 
-(define-card "Saraswati Mnemonics: Endless Exploration"
+(defcard "Saraswati Mnemonics: Endless Exploration"
   (letfn [(install-card [chosen]
             {:prompt "Select a remote server"
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
@@ -1308,7 +1300,7 @@
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]}))
 
-(define-card "Seidr Laboratories: Destiny Defined"
+(defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
    :abilities [{:req (req (:run @state))
                 :label "add card from Archives to HQ"
@@ -1320,7 +1312,7 @@
                 :effect (effect (move target :deck {:front true}))
                 :msg (msg "add " (if (:seen target) (:title target) "a card") " to the top of R&D")}]})
 
-(define-card "Silhouette: Stealth Operative"
+(defcard "Silhouette: Stealth Operative"
   {:events [{:event :successful-run
              :interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
              :async true
@@ -1333,11 +1325,13 @@
                                                 :async true}
                                                card nil))}]})
 
-(define-card "Skorpios Defense Systems: Persuasive Power"
+(defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                 :async true
-                :effect (req (when-not (and (used-this-turn? (:cid card) state) (active-prompt? state side card))
+                :effect (req (when-not (and (used-this-turn? (:cid card) state)
+                                            (some #(when (same-card? card (:card %)) %)
+                                                  (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
                                (show-wait-prompt state :runner "Corp to use Skorpios' ability" {:card card})
                                (continue-ability state side
                                                  {:prompt "Choose a card in the Runner's Heap that was just trashed"
@@ -1354,14 +1348,14 @@
                                                                       (effect-completed state side eid))}
                                                  card nil)))}]})
 
-(define-card "Spark Agency: Worldswide Reach"
+(defcard "Spark Agency: Worldswide Reach"
   {:events [{:event :rez
              :req (req (and (has-subtype? target "Advertisement")
                             (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
              :effect (effect (lose-credits :runner 1))
              :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
 
-(define-card "Sportsmetal: Go Big or Go Home"
+(defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
             :player :corp
             :choices ["Gain 2 credits" "Draw 2 cards"]
@@ -1377,7 +1371,7 @@
     {:events [(assoc ab :event :agenda-scored)
               (assoc ab :event :agenda-stolen)]}))
 
-(define-card "SSO Industries: Fueling Innovation"
+(defcard "SSO Industries: Fueling Innovation"
   (letfn [(installed-faceup-agendas [state]
             (->> (all-installed state :corp)
                  (filter agenda?)
@@ -1419,7 +1413,7 @@
                                card nil)))}}}]
      :abilities [(set-autoresolve :auto-sso "SSO")]}))
 
-(define-card "Steve Cambridge: Master Grifter"
+(defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
              :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)
@@ -1451,7 +1445,7 @@
                                             (clear-wait-prompt state :runner))}
                               card nil)))}]})
 
-(define-card "Strategic Innovations: Future Forward"
+(defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-turn-ends
@@ -1468,11 +1462,11 @@
              :effect (effect (move :corp target :deck)
                              (shuffle! :corp :deck))}]})
 
-(define-card "Sunny Lebeau: Security Specialist"
+(defcard "Sunny Lebeau: Security Specialist"
   ;; No special implementation
   {})
 
-(define-card "SYNC: Everything, Everywhere"
+(defcard "SYNC: Everything, Everywhere"
   {:constant-effects [{:type :card-ability-additional-cost
                        :req (req (let [targetcard (first targets)
                                        target (second targets)]
@@ -1494,7 +1488,7 @@
                 :label "Flip this identity"
                 :msg (msg "flip their ID")}]})
 
-(define-card "Synthetic Systems: The World Re-imagined"
+(defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game
              :effect draft-points-target}]
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
@@ -1511,7 +1505,7 @@
                 :msg (msg "swap the positions of " (card-str state (first targets))
                           " and " (card-str state (second targets)))}]})
 
-(define-card "Tennin Institute: The Secrets Within"
+(defcard "Tennin Institute: The Secrets Within"
   {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (not-last-turn? state :runner :successful-run)))}
    :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
@@ -1521,7 +1515,7 @@
                 :once :per-turn
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
-(define-card "The Foundry: Refining the Process"
+(defcard "The Foundry: Refining the Process"
   {:events [{:event :rez
              :req (req (and (ice? target) ;; Did you rez and ice just now
                             (first-event? state :runner :rez #(ice? (first %)))))
@@ -1536,41 +1530,41 @@
                               (do (system-msg state side (str "fails to find a target for The Foundry, and shuffles their deck"))
                                   (shuffle! state side :deck))))}}}]})
 
-(define-card "The Masque: Cyber General"
+(defcard "The Masque: Cyber General"
   {:events [{:event :pre-start-game
              :effect draft-points-target}]})
 
-(define-card "The Outfit: Family Owned and Operated"
+(defcard "The Outfit: Family Owned and Operated"
   {:events [{:event :corp-gain-bad-publicity
              :msg "gain 3 [Credit]"
              :effect (effect (gain-credits 3))}]})
 
-(define-card "The Professor: Keeper of Knowledge"
+(defcard "The Professor: Keeper of Knowledge"
   ;; No special implementation
   {})
 
-(define-card "The Shadow: Pulling the Strings"
+(defcard "The Shadow: Pulling the Strings"
   {:events [{:event :pre-start-game
              :effect draft-points-target}]})
 
-(define-card "Titan Transnational: Investing In Your Future"
+(defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
              :msg (msg "add 1 agenda counter to " (:title target))
              :effect (effect (add-counter (get-card state target) :agenda 1))}]})
 
-(define-card "Valencia Estevez: The Angel of Cayambe"
+(defcard "Valencia Estevez: The Angel of Cayambe"
   {:events [{:event :pre-start-game
              :req (req (and (= side :runner)
                             (zero? (count-bad-pub state))))
              ;; This doesn't use `gain-bad-publicity` to avoid the event
              :effect (effect (gain :corp :bad-publicity 1))}]})
 
-(define-card "Weyland Consortium: Because We Built It"
+(defcard "Weyland Consortium: Because We Built It"
   {:recurring 1
    :interactions {:pay-credits {:req (req (= :advance (:source-type eid)))
                                 :type :recurring}}})
 
-(define-card "Weyland Consortium: Builder of Nations"
+(defcard "Weyland Consortium: Builder of Nations"
   {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
    :events [{:event :encounter-ice-ends
              :async true
@@ -1580,19 +1574,19 @@
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
-(define-card "Weyland Consortium: Building a Better World"
+(defcard "Weyland Consortium: Building a Better World"
   {:events [{:event :play-operation
              :req (req (has-subtype? target "Transaction"))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]})
 
-(define-card "Whizzard: Master Gamer"
+(defcard "Whizzard: Master Gamer"
   {:recurring 3
    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                (corp? target)))
                                 :type :recurring}}})
 
-(define-card "Wyvern: Chemically Enhanced"
+(defcard "Wyvern: Chemically Enhanced"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-trash

@@ -204,7 +204,7 @@
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
@@ -223,7 +223,7 @@
       (play-from-hand state :runner "Berserker")
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
@@ -243,7 +243,7 @@
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-jack-out state)
       (click-card state :runner "Sure Gamble")
@@ -263,7 +263,7 @@
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
       (card-ability state :corp (get-scored state :corp 1) 0)
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
@@ -474,7 +474,7 @@
         (is (= 2 (get-counters (refresh scored-bt) :agenda))
             "Scored w/ 4 over-advancements; 2 agenda counters")
         (play-from-hand state :corp "Ichi 1.0" "HQ")
-        (core/rez state :corp (get-ice state :hq 0))
+        (rez state :corp (get-ice state :hq 0))
         (is (= 2 (:credit (get-corp))) "2c discount to rez Ichi")))))
 
 (deftest breaking-news
@@ -522,7 +522,7 @@
       (new-game {:corp {:deck ["Broad Daylight" "Broadcast Square"]}})
       (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
@@ -536,7 +536,7 @@
       (new-game {:corp {:deck ["Broad Daylight" "Broadcast Square"]}})
       (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
@@ -564,7 +564,7 @@
                  :runner {:id "Reina Roja: Freedom Fighter"
                           :hand [(qty "Stimhack" 5)]}})
       (play-from-hand state :corp "Storgotic Resonator" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
@@ -582,7 +582,7 @@
       (is (= 15 (:credit (get-corp))) "Should start with 5 credits")
       (dotimes [_ n]
         (play-from-hand state :corp "Eli 1.0" "New remote")
-        (core/rez state :corp (get-ice state (keyword (str "remote" (:rid @state))) 0)))
+        (rez state :corp (get-ice state (keyword (str "remote" (:rid @state))) 0)))
       (let [credit (:credit (get-corp))]
         (play-and-score state "CFC Excavation Contract")
         (is (= (+ credit (* 2 n)) (:credit (get-corp)))
@@ -701,7 +701,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
       (let [cvs (get-content state :hq 0)]
-        (core/rez state :corp cvs)
+        (rez state :corp cvs)
         (is (changes-credits (get-corp) 4
                              (card-ability state :corp cvs 0))))))
   (testing "Only triggers on the first purge each turn #5174"
@@ -764,7 +764,7 @@
                  :runner {:deck ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "HQ Interface")
       (run-empty-server state "HQ")
@@ -824,7 +824,7 @@
       (play-from-hand state :corp "Strongbox" "Server 1")
       (let [dm (get-content state :remote1 0)
             sb (get-content state :remote1 1)]
-        (core/rez state :corp sb)
+        (rez state :corp sb)
         (take-credits state :corp)
         (play-from-hand state :runner "Ice Analyzer")
         (play-from-hand state :runner "All-nighter")
@@ -936,7 +936,7 @@
       (let [sleepers (get-scored state :corp 0)
             yale (get-content state :remote1 0)]
         (card-ability state :corp sleepers 0)
-        (core/rez state :corp yale)
+        (rez state :corp yale)
         (card-ability state :corp yale 1)
         (click-card state :corp "Domestic Sleepers")
         (is (zero? (:agenda-point (get-corp))) "Domestic Sleepers is worth 0 points after losing the agenda counter")))))
@@ -1026,7 +1026,7 @@
     (new-game {:corp {:deck ["Encrypted Portals" "Lotus Field"]}})
     (play-from-hand state :corp "Lotus Field" "HQ")
     (let [lf (get-ice state :hq 0)]
-      (core/rez state :corp lf)
+      (rez state :corp lf)
       (is (= 4 (:current-strength (refresh lf))) "Should start with base strength of 4")
       (is (zero? (:credit (get-corp))) "Should have 0 credits after rez")
       (play-and-score state "Encrypted Portals")
@@ -1155,7 +1155,7 @@
     (let [fu (get-scored state :corp 0)
           iw (get-ice state :hq 0)]
       (is (= 3 (get-counters (refresh fu) :agenda)) "Firmware Updates should start with 3 agenda counters")
-      (core/rez state :corp iw)
+      (rez state :corp iw)
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should start with 0 advancement tokens")
       (card-ability state :corp fu 0)
       (click-card state :corp (refresh iw))
@@ -1222,7 +1222,7 @@
       (is (= 0 (count (:hand (get-corp)))) "No cards in HQ")
       (let [fs (get-scored state :corp 0)
             dbs (get-content state :remote1 0)]
-        (core/rez state :corp dbs)
+        (rez state :corp dbs)
         (card-ability state :corp fs 0)
         (is (= (count (:hand (get-corp))) 3) "Drew 3 cards with DBS")
         (click-card state :corp (find-card "Chiyashi" (:hand (get-corp))))
@@ -1284,7 +1284,7 @@
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (let [gf-scored (get-scored state :corp 0)
             bs (get-content state :remote2 0)]
-        (core/rez state :corp bs)
+        (rez state :corp bs)
         (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
         (card-ability state :corp gf-scored 0)
         (click-prompt state :corp "0")
@@ -1407,8 +1407,8 @@
     (let [cs (get-content state :remote1 0)
           iw (get-ice state :hq 0)]
       (is (zero? (get-counters (refresh cs) :power)) "Chief Slee should start with 0 power counters")
-      (core/rez state :corp iw)
-      (core/rez state :corp cs)
+      (rez state :corp iw)
+      (rez state :corp cs)
       (run-on state "HQ")
       (run-continue state)
       (fire-subs state iw)
@@ -1592,8 +1592,8 @@
     (play-from-hand state :corp "Information Overload" "R&D")
     (let [nh (get-ice state :hq 0)
           io (get-ice state :rd 0)]
-      (core/rez state :corp nh)
-      (core/rez state :corp io)
+      (rez state :corp nh)
+      (rez state :corp io)
       (is (= 4 (:current-strength (refresh nh))) "Should start with base strength of 4")
       (is (= 7 (:credit (get-corp))) "Should have 7 credits after rez")
       (play-and-score state "Improved Tracers")
@@ -1744,12 +1744,12 @@
           ch (get-ice state :archives 1)
           rs (get-ice state :rd 1)
           sn (get-ice state :hq 1)]
-      (core/rez state :corp iw)
-      (core/rez state :corp fw)
-      (core/rez state :corp kk)
-      (core/rez state :corp ch)
-      (core/rez state :corp rs)
-      (core/rez state :corp sn)
+      (rez state :corp iw)
+      (rez state :corp fw)
+      (rez state :corp kk)
+      (rez state :corp ch)
+      (rez state :corp rs)
+      (rez state :corp sn)
       (play-and-score state "Mandatory Seed Replacement")
       (click-card state :corp (refresh iw))
       (click-card state :corp (refresh fw))
@@ -1768,7 +1768,7 @@
       (is (= 2 (:agenda-point (get-corp))))
       (play-from-hand state :corp "Melange Mining Corp." "New remote")
       (let [mmc (get-content state :remote2 0)]
-        (core/rez state :corp mmc)
+        (rez state :corp mmc)
         (take-credits state :corp)
         (take-credits state :runner)
         (is (= 4 (:click (get-corp))))
@@ -1786,7 +1786,7 @@
       (let [arc (get-ice state :hq 0)
             mu (get-scored state :corp 0)]
         (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
-        (core/rez state :corp arc)
+        (rez state :corp arc)
         (click-card state :corp (refresh mu))
         (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice")))))
 
@@ -2012,7 +2012,7 @@
       (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
-        (core/rez state :corp nxbr))
+        (rez state :corp nxbr))
       (play-and-score state "NEXT Wave 2")
       (click-prompt state :corp "No")
       (is (zero? (:brain-damage (get-runner))) "Runner should stay at 0 brain damage")
@@ -2026,7 +2026,7 @@
       (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
-        (core/rez state :corp nxbr))
+        (rez state :corp nxbr))
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -2339,7 +2339,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Project Kusanagi" 2) "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0))
     (core/gain state :corp :click 10 :credit 10)
     (play-and-score state "Project Kusanagi")
     (let [pk-scored (get-scored state :corp 0)]
@@ -2479,7 +2479,7 @@
     (take-credits state :corp)
     (let [wot-scored (get-scored state :corp 0)
           eli (get-ice state :hq 0)]
-      (core/rez state :corp eli)
+      (rez state :corp eli)
       (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
       (run-on state "HQ")
       (card-ability state :corp wot-scored 0)
@@ -2810,7 +2810,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Research Grant" 3) (qty "Team Sponsorship" 1)]}})
       (play-from-hand state :corp "Team Sponsorship" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-and-score state "Research Grant")
       (click-card state :corp (find-card "Research Grant" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
@@ -2898,9 +2898,9 @@
                  :runner {:hand ["Cache" "Corroder"]
                           :credits 10}})
       (play-from-hand state :corp "Amani Senai" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-from-hand state :corp "Team Sponsorship" "New remote")
-      (core/rez state :corp (get-content state :remote2 0))
+      (rez state :corp (get-content state :remote2 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Corroder")
@@ -2970,7 +2970,7 @@
     (let [viktor (get-ice state :hq 0)
           ff (get-hardware state 0)]
       (run-on state "HQ")
-      (core/rez state :corp viktor)
+      (rez state :corp viktor)
       (run-continue state)
       (card-subroutine state :corp viktor 0)
       (click-prompt state :runner "Done")  ;; Don't prevent the brain damage
@@ -3182,7 +3182,7 @@
     (new-game {:corp {:deck ["Superior Cyberwalls" "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (let [iw (get-ice state :hq 0)]
-      (core/rez state :corp iw)
+      (rez state :corp iw)
       (is (= 1 (:current-strength (refresh iw))) "Should start with base strength of 1")
       (is (= 4 (:credit (get-corp))) "Should have 4 credits after rez")
       (play-and-score state "Superior Cyberwalls")
@@ -3200,7 +3200,7 @@
     (take-credits state :corp)
     (let [tg1 (get-content state :remote1 0)
           ohg (get-content state :remote1 1)]
-      (core/rez state :corp ohg)
+      (rez state :corp ohg)
       (run-empty-server state "Server 1")
       (click-card state :runner tg1)
       ;; Accesses TGTBT but can't steal
@@ -3319,7 +3319,7 @@
         (new-game {:corp {:deck ["Enigma" "Ice Wall" "Timely Public Release"]}})
         (play-and-score state "Timely Public Release")
         (play-from-hand state :corp "Ice Wall" "R&D")
-        (core/rez state :corp (get-ice state :rd 0))
+        (rez state :corp (get-ice state :rd 0))
         (take-credits state :corp)
         (let [tpr (get-scored state :corp 0)
               corp-credits (:credit (get-corp))]
@@ -3341,9 +3341,9 @@
                           :credits 10}})
         (play-and-score state "Timely Public Release")
         (play-from-hand state :corp "Vanilla" "R&D")
-        (core/rez state :corp (get-ice state :rd 0))
+        (rez state :corp (get-ice state :rd 0))
         (play-from-hand state :corp "Ice Wall" "R&D")
-        (core/rez state :corp (get-ice state :rd 1))
+        (rez state :corp (get-ice state :rd 1))
         (take-credits state :corp)
         (let [tpr (get-scored state :corp 0)
               corp-credits (:credit (get-corp))]

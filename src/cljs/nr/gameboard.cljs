@@ -1814,7 +1814,7 @@
                [cond-button "Remove Tag"
                 (and (not (or @runner-phase-12 @corp-phase-12))
                      (pos? (:click @me))
-                     (>= (:credit @me) (- 2 (or (:tag-remove-bonus @me) 0)))
+                     (>= (:credit @me) 2)
                      (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button

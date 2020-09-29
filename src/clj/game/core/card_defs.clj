@@ -1,21 +1,15 @@
 (ns game.core.card-defs
-  (:require [clojure.string :refer [starts-with? ends-with?]]
-            [clojure.java.io :refer [file]]
-            [clojure.stacktrace :refer [print-stack-trace]]))
+  (:require [clojure.stacktrace :refer [print-stack-trace]]))
 
-(def card-defs (atom {}))
+(defmulti defcard-impl (fn [title] title))
+(defmethod defcard-impl :default [_] nil)
 
 (defn card-def
   "Retrieves a card's abilities definition map."
   [card]
   (if-let [title (:title card)]
-    (get @card-defs title {})
+    (or (defcard-impl title) {})
     (.println *err* (with-out-str
                       (print-stack-trace
                         (Exception. (str "Tried to select card def for non-existent card: " card))
                         2500)))))
-
-(defn define-card
-  [title ability]
-  (swap! card-defs assoc title ability)
-  ability)

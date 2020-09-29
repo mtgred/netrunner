@@ -1,7 +1,6 @@
 (ns game.cards.basic-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.core.card-defs :refer [card-defs]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]

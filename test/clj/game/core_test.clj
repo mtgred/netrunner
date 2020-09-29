@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.core.card :refer [get-card rezzed? active? get-counters]]
+            [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
@@ -75,10 +75,10 @@
    (let  [remaining-clicks (get-in @state [side :click])
           n (or n remaining-clicks)
           other (if (= side :corp) :runner :corp)]
-     (dotimes [i n] (core/click-credit state side nil))
+     (dotimes [i n] (core/process-action "credit" state side nil))
      (when (zero? (get-in @state [side :click]))
-       (core/end-turn state side nil)
-       (core/start-turn state other nil)))))
+       (core/process-action "end-turn" state side nil)
+       (core/process-action "start-turn" state other nil)))))
 
 
 ;; Deck construction helpers
@@ -195,9 +195,9 @@
      (is (active? card#) (str (:title card#) " is active"))
      (is (nth (:abilities card#) ~ability nil) (str (:title card#) " has ability #" ~ability))
      (when (nth (:abilities card#) ~ability nil)
-       (core/play-ability ~state ~side {:card card#
-                                        :ability ~ability
-                                        :targets (first ~targets)}))))
+       (core/process-action "ability" ~state ~side {:card card#
+                                                    :ability ~ability
+                                                    :targets (first ~targets)}))))
 
 (defmacro card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
@@ -210,8 +210,8 @@
      (when (and (some? run#)
                 (not (:no-action run#))
                 (= :encounter-ice (:phase run#)))
-       (core/play-subroutine ~state :corp {:card ice#
-                                           :subroutine ~ability})
+       (core/process-action "subroutine" ~state :corp {:card ice#
+                                                       :subroutine ~ability})
        true)))
 
 (defn card-side-ability
@@ -221,8 +221,8 @@
              :ability ability
              :targets targets}]
      (if (= :corp side)
-       (core/play-corp-ability state side ab)
-       (core/play-runner-ability state side ab)))))
+       (core/process-action "corp-ability" state side ab)
+       (core/process-action "runner-ability" state side ab)))))
 
 (def count-tags jutils/count-tags)
 (def is-tagged? jutils/is-tagged?)
@@ -300,8 +300,8 @@
   `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
      (is (some? card#) (str ~title " is in the hand"))
      (when (some? card#)
-       (core/play ~state ~side {:card card#
-                                :server ~(first server)})
+       (core/process-action "play" ~state ~side {:card card#
+                                                 :server ~(first server)})
        true)))
 
 
@@ -314,7 +314,7 @@
      (is (pos? (get-in @~state [:runner :click])) "Runner can make a run")
      (when (and (not run#)
                 (get-in @~state [:runner :click]))
-       (core/click-run ~state :runner {:server ~server})
+       (core/process-action "run" ~state :runner {:server ~server})
        true)))
 
 (defmacro run-next-phase
@@ -324,7 +324,7 @@
      (is (:next-phase run#) "The next phase has been set")
      (when (and (some? run#)
                 (:next-phase run#))
-       (core/start-next-phase ~state :runner nil)
+       (core/process-action "start-next-phase" ~state :runner nil)
        true)))
 
 (defmacro run-continue
@@ -341,8 +341,8 @@
       (when (and (some? run#)
                  (not (:no-action run#))
                  (not= :access-server (:phase run#)))
-        (core/continue ~state :corp nil)
-        (core/continue ~state :runner nil))
+        (core/process-action "continue" ~state :corp nil)
+        (core/process-action "continue" ~state :runner nil))
       (if (not= :any ~phase)
         (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase"))
       true)))
@@ -358,8 +358,8 @@
      (when (and (some? run#)
                 (zero? (:position run#))
                 (= :approach-server (:phase run#)))
-       (core/corp-phase-43 ~state :corp nil)
-       (core/continue ~state :runner nil)
+       (core/process-action "corp-phase-43" ~state :corp nil)
+       (core/process-action "continue" ~state :runner nil)
        true)))
 
 (defmacro run-jack-out
@@ -368,7 +368,7 @@
   `(let [run# (:run @~state)]
      (is (some? run#) "There is a run happening")
      (is (:jack-out run#) "Runner is allowed to jack out")
-     (core/jack-out ~state :runner (eid/make-eid ~state))
+     (core/process-action "jack-out" ~state :runner nil)
      true))
 
 (defmacro run-empty-server
@@ -387,7 +387,7 @@
      (when (and (rezzed? ice#)
                 (some? run#)
                 (= :encounter-ice (:phase run#)))
-       (core/resolve-unbroken-subs! ~state :corp ice#)
+       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#})
        true)))
 
 (defmacro play-run-event
@@ -406,6 +406,16 @@
   ([state] (get-in @state [:runner :play-area]))
   ([state pos]
    (get-in @state [:runner :play-area pos])))
+
+(defmacro rez
+  [state side card & args]
+  `(let [card# (get-card ~state ~card)]
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
+     (when (and (installed? card#)
+                (not (rezzed? card#)))
+       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args)))
+       true)))
 
 ;;; Misc functions
 (defn score-agenda

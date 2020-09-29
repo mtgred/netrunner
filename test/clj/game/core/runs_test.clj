@@ -23,7 +23,7 @@
       (run-on state :remote1)
       (is (:run @state))
       (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (run-continue state)
       (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)) "ice Wall subroutine ends the run")))
@@ -38,7 +38,7 @@
       (run-on state :rd)
       (is (:run @state))
       (is (= :approach-ice (:phase (:run @state))))
-      (core/rez state :corp (get-ice state :rd 0))
+      (rez state :corp (get-ice state :rd 0))
       (run-continue state)
       (is (= :encounter-ice (:phase (:run @state))))
       (card-ability state :runner (get-program state 0) 0) ; Icebreaker
@@ -56,7 +56,7 @@
       (play-from-hand state :corp "Tollbooth" "New remote")
       (take-credits state :corp)
       (run-on state :remote1)
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
         (run-continue state)
@@ -78,7 +78,7 @@
       (run-on state :remote1)
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
-        (core/rez state :corp (get-ice state :remote1 0))
+        (rez state :corp (get-ice state :remote1 0))
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "Corroder")
         (is (zero? (:credit (get-runner))) "Can't afford Tollbooth")
@@ -92,7 +92,7 @@
                  :runner {:hand ["Inside Job"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
       (let [iw (get-ice state :remote1 0)]
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (take-credits state :corp))
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
@@ -109,7 +109,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
       (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
@@ -125,7 +125,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (let [credits (:credit (get-runner))]
         (run-continue state)
@@ -139,14 +139,14 @@
                         :hand ["Border Control" "Tollbooth"]
                         :credits 20}})
       (play-from-hand state :corp "Tollbooth" "New remote")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (play-from-hand state :corp "Border Control" "Server 1")
       (take-credits state :corp)
       (run-on state :remote1)
       (is (:run @state))
       (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
       (let [credits (:credit (get-runner))]
-        (core/rez state :corp (get-ice state :remote1 1))
+        (rez state :corp (get-ice state :remote1 1))
         (card-ability state :corp (get-ice state :remote1 1) 0)
         (is (nil? (:run @state)) "Pressing Done properly handles the ended run")
         (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth"))))
@@ -161,7 +161,7 @@
       (play-from-hand state :runner "Corroder")
       (play-from-hand state :runner "Knifed")
       (click-prompt state :runner "Server 1")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
@@ -172,9 +172,9 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Vanilla" "Ice Wall"]}})
       (play-from-hand state :corp "Vanilla" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (play-from-hand state :corp "Ice Wall" "Archives")
-      (core/rez state :corp (get-ice state :archives 0))
+      (rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :hq)
       (is (= "Vanilla" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
@@ -227,7 +227,7 @@
       (let [iw (get-ice state :remote1 0)]
         (take-credits state :corp)
         (run-on state :remote1)
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
         (is (not (:no-action (:run @state))) "no-action is not set yet")
@@ -245,7 +245,7 @@
       (let [iw (get-ice state :remote1 0)]
         (take-credits state :corp)
         (run-on state :remote1)
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
         (is (not (:no-action (:run @state))) "no-action is not set yet")
@@ -269,8 +269,8 @@
       (let [v0 (get-ice state :hq 0)
             v1 (get-ice state :hq 1)
             cor (get-program state 0)]
-        (core/rez state :corp v0)
-        (core/rez state :corp v1)
+        (rez state :corp v0)
+        (rez state :corp v1)
         (run-on state :hq)
         (core/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
@@ -304,7 +304,7 @@
       (let [v0 (get-ice state :hq 0)
             v1 (get-ice state :hq 1)
             cor (get-program state 0)]
-        (core/rez state :corp v1)
+        (rez state :corp v1)
         (run-on state :hq)
         (core/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
@@ -316,7 +316,7 @@
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/rez state :corp v0 {:press-continue true})
+        (rez state :corp v0 {:press-continue true})
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
   (testing "auto-no-action on toggling setting"
     (do-game
@@ -329,7 +329,7 @@
       (play-from-hand state :runner "Corroder")
       (let [v0 (get-ice state :hq 0)
             cor (get-program state 0)]
-        (core/rez state :corp v0)
+        (rez state :corp v0)
         (run-on state :hq)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (core/continue state :runner nil)
@@ -385,7 +385,7 @@
       (let [iw (get-ice state :remote1 0)]
         (take-credits state :corp)
         (run-on state :remote1)
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
         (core/continue state :runner nil)
@@ -398,7 +398,7 @@
       (let [iw (get-ice state :remote1 0)]
         (take-credits state :corp)
         (run-on state :remote1)
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
         (core/continue state :corp nil)
@@ -418,7 +418,7 @@
             iw1 (get-ice state :remote1 1)
             cor (get-program state 0)]
         (run-on state :remote1)
-        (core/rez state :corp iw1)
+        (rez state :corp iw1)
         (run-continue state)
         (core/continue state :corp nil)
         (card-ability state :runner cor 0)
@@ -438,7 +438,7 @@
     (play-from-hand state :runner "Devil Charm")
     (run-on state :rd)
     (core/continue state :runner nil)
-    (core/rez state :corp (get-ice state :rd 0) {:press-continue true})
+    (rez state :corp (get-ice state :rd 0) {:press-continue true})
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
 
 (deftest multi-access
@@ -564,7 +564,7 @@
         (core/move state :corp (find-card "Efficiency Committee" (:hand (get-corp))) :deck)
         (play-from-hand state :corp "Shannon Claire" "New remote")
         (let [sc (get-content state :remote1 0)]
-          (core/rez state :corp sc)
+          (rez state :corp sc)
           ; Deck is now ABCD from top to bottom
           (take-credits state :corp)
           (run-on state :rd)
@@ -607,13 +607,13 @@
         (play-from-hand state :corp "Anansi" "R&D")
         (let [mb (get-content state :rd 0)
               an (get-ice state :rd 0)]
-          (core/rez state :corp mb)
+          (rez state :corp mb)
           ; Deck is now ABCDE from top to bottom
           (take-credits state :corp)
           (run-on state :rd)
           (core/access-bonus state :runner :rd 3)
           (run-continue state :approach-server)
-          (core/rez state :corp an)
+          (rez state :corp an)
           (run-continue state :access-server)
           (click-prompt state :runner "Marcus Batty")
           (click-prompt state :runner "No action")

@@ -15,7 +15,7 @@
     (take-credits state :corp 1)
     (play-from-hand state :corp "Amazon Industrial Zone" "New remote")
     (let [aiz (get-content state :remote1 0)]
-      (core/rez state :corp aiz)
+      (rez state :corp aiz)
       (is (= 2 (:credit (get-corp))))
       (play-from-hand state :corp "Spiderweb" "Server 1")
       (click-prompt state :corp "Yes") ; optional ability
@@ -34,7 +34,7 @@
       (let [arella (get-content state :remote1 0)
             same-tg (get-content state :remote1 1)
             diff-tg (get-content state :remote2 0)]
-        (core/rez state :corp arella)
+        (rez state :corp arella)
         (score-agenda state :corp (refresh diff-tg))
         (is (empty? (:prompt (get-corp))) "Arella not triggered for different remote score")
         (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
@@ -53,7 +53,7 @@
       (play-from-hand state :corp "Domestic Sleepers" "Server 1")
       (let [arella (get-content state :remote1 0)
             domest (get-content state :remote1 1)]
-        (core/rez state :corp arella)
+        (rez state :corp arella)
         (score-agenda state :corp (refresh domest))
         ;; Simultaneous prompt: Sportsmetal automatically triggers, as Arella is silent because there are no installable cards in HQ
         (click-prompt state :corp "Draw 2 cards")
@@ -72,7 +72,7 @@
       (is (= 1 (count (get-ice state :hq))) "One ice on hq")
       (let [arella (get-content state :remote1 0)
             tg (get-content state :remote1 1)]
-        (core/rez state :corp arella)
+        (rez state :corp arella)
         (score-agenda state :corp (refresh tg))
         (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
         (click-prompt state :corp "HQ")
@@ -87,7 +87,7 @@
       (play-from-hand state :corp "Project Vitruvius" "Server 1")
       (let [arella (get-content state :remote1 0)
             vit (get-content state :remote1 1)]
-        (core/rez state :corp arella)
+        (rez state :corp arella)
         (advance state vit 4)
         (is (= 4 (get-counters (refresh vit) :advancement)) "Vitruvius should have 4 advancement tokens")
         (core/score state :corp {:card (refresh vit)}))
@@ -103,7 +103,7 @@
       (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
       (take-credits state :corp)
       (let [ash (get-content state :hq 0)]
-        (core/rez state :corp ash)
+        (rez state :corp ash)
         (run-empty-server state "HQ")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -115,7 +115,7 @@
       (new-game {:corp {:deck ["Ash 2X3ZB9CY"]}
                  :runner {:deck ["Dirty Laundry"]}})
       (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Dirty Laundry")
       (click-prompt state :runner "Server 1")
@@ -136,7 +136,7 @@
       (play-from-hand state :corp "Ash 2X3ZB9CY" "Archives")
       (take-credits state :corp)
       (let [ash (get-content state :archives 0)]
-        (core/rez state :corp ash)
+        (rez state :corp ash)
         (run-empty-server state "Archives")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -150,7 +150,7 @@
       (new-game {:corp {:deck ["Awakening Center" "Fairchild"]}})
       (play-from-hand state :corp "Awakening Center" "New remote")
       (let [ac (get-content state :remote1 0)]
-        (core/rez state :corp ac)
+        (rez state :corp ac)
         (card-ability state :corp (refresh ac) 0)
         (click-card state :corp (find-card "Fairchild" (:hand (get-corp))))
         (let [fc (first (:hosted (refresh ac)))]
@@ -172,7 +172,7 @@
                  :runner {:deck ["DDoS"]}})
       (play-from-hand state :corp "Awakening Center" "New remote")
       (let [ac (get-content state :remote1 0)]
-        (core/rez state :corp ac)
+        (rez state :corp ac)
         (card-ability state :corp (refresh ac) 0)
         (click-card state :corp (find-card "Fairchild" (:hand (get-corp))))
         (let [fc (first (:hosted (refresh ac)))]
@@ -199,7 +199,7 @@
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
       (play-from-hand state :corp "Bamboo Dome" "R&D")
       (let [bd (get-content state :rd 0)]
-        (core/rez state :corp bd)
+        (rez state :corp bd)
         (card-ability state :corp (refresh bd) 0)
         (click-prompt state :corp "Border Control")
         (click-prompt state :corp "Fairchild")
@@ -220,7 +220,7 @@
       (take-credits state :corp 1)
       (let [bm (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp bm)
+        (rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner hok)
@@ -244,7 +244,7 @@
       (play-from-hand state :corp "Ben Musashi" "R&D")
       (take-credits state :corp)
       (let [bm (get-content state :rd 0)]
-        (core/rez state :corp bm)
+        (rez state :corp bm)
         (run-empty-server state "R&D")
         ;; runner now chooses which to access.
         (click-prompt state :runner "Card from deck")
@@ -270,7 +270,7 @@
       (core/gain state :runner :credit 1)
       (let [bm (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp bm)
+        (rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner bm)
@@ -289,7 +289,7 @@
       (take-credits state :corp)
       (let [bm (get-content state :remote1 0)
             op (get-content state :remote1 1)]
-        (core/rez state :corp bm)
+        (rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner op)
@@ -308,7 +308,7 @@
       (take-credits state :corp)
       (let [bm (get-content state :remote1 0)
             fai (get-content state :remote1 1)]
-        (core/rez state :corp bm)
+        (rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner fai)
@@ -329,7 +329,7 @@
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Bernice Mai" "R&D")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "0")
@@ -337,14 +337,14 @@
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 1 (count-tags state)))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
-      (core/rez state :corp (get-content state :remote2 0))
+      (rez state :corp (get-content state :remote2 0))
       (core/gain state :runner :credit 20)
       (run-empty-server state :remote2)
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
       (is (not (get-content state :remote2 0)) "Bernice auto-trashed from unsuccessful trace")
       (is (not (:run @state)) "Run ended when Bernice was trashed from server")
-      (core/rez state :corp (get-content state :rd 0))
+      (rez state :corp (get-content state :rd 0))
       (run-empty-server state :rd)
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
@@ -354,8 +354,8 @@
       (new-game {:corp {:deck [(qty "Bernice Mai" 3) "Dedicated Response Team"]}})
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
-      (core/rez state :corp (get-content state :remote2 0))
+      (rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote2 0))
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "0")
@@ -373,7 +373,7 @@
     (take-credits state :corp)
     (let [bv (get-content state :remote1 0)]
       (run-on state "Server 1")
-      (core/rez state :corp (refresh bv))
+      (rez state :corp (refresh bv))
       (card-ability state :corp (refresh bv) 0)
       (is (:run @state) "Bio Vault doesn't fire if less than 2 advancements")
       (run-continue state)
@@ -393,7 +393,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Black Level Clearance"]}})
       (play-from-hand state :corp "Black Level Clearance" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (changes-val-macro
@@ -407,7 +407,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Black Level Clearance"]}})
       (play-from-hand state :corp "Black Level Clearance" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (changes-val-macro
@@ -427,15 +427,15 @@
     (play-from-hand state :corp "Off the Grid" "Server 1")
     (let [bbg1 (get-content state :remote1 0)
           otg (get-content state :remote1 1)]
-      (core/rez state :corp bbg1)
-      (core/rez state :corp otg)
+      (rez state :corp bbg1)
+      (rez state :corp otg)
       (is (= 4 (:credit (get-corp))) "Paid only 1 to rez Off the Grid")
       (play-from-hand state :corp "Breaker Bay Grid" "R&D")
       (play-from-hand state :corp "Strongbox" "R&D")
       (let [bbg2 (get-content state :rd 0)
             sbox (get-content state :rd 1)]
-        (core/rez state :corp bbg2)
-        (core/rez state :corp sbox)
+        (rez state :corp bbg2)
+        (rez state :corp sbox)
         (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
 (deftest bryan-stinson
@@ -448,7 +448,7 @@
     (trash-from-hand state :corp "Death and Taxes")
     (play-from-hand state :corp "Bryan Stinson" "New remote")
     (let [bs (get-content state :remote1 0)]
-      (core/rez state :corp (refresh bs))
+      (rez state :corp (refresh bs))
       (card-ability state :corp (refresh bs) 0)
       (click-prompt state :corp (find-card "Death and Taxes" (:discard (get-corp))))
       (is (find-card "Death and Taxes" (:current (get-corp))) "Death and Taxes is active Current")
@@ -486,7 +486,7 @@
     (play-from-hand state :corp "Project Junebug" "Server 1")
     (let [ct (get-content state :remote1 0)
           pj (get-content state :remote1 1)]
-      (core/rez state :corp ct)
+      (rez state :corp ct)
       (card-ability state :corp ct 0)
       (click-card state :corp pj)
       (is (= 1 (get-counters (refresh pj) :advancement)) "Project Junebug advanced")
@@ -495,7 +495,7 @@
     (play-from-hand state :corp "PAD Campaign" "Server 2")
     (let [ct (get-content state :remote2 0)
           pad (get-content state :remote2 1)]
-      (core/rez state :corp ct)
+      (rez state :corp ct)
       (card-ability state :corp ct 0)
       (click-card state :corp pad)
       (is (= 1 (get-counters (refresh pad) :advancement)) "PAD Campaign advanced")
@@ -509,7 +509,7 @@
     (take-credits state :corp)
     (let [caprice (get-content state :remote1 0)]
       ;; Check Caprice triggers properly on no ice (and rezzed)
-      (core/rez state :corp caprice)
+      (rez state :corp caprice)
       (run-on state "Server 1")
       (is (prompt-is-card? state :corp caprice)
           "Caprice prompt even with no ice, once runner makes run")
@@ -545,7 +545,7 @@
                           :hand ["Cayambe Grid"]}})
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)]
-          (core/rez state :corp cg))
+          (rez state :corp cg))
         (take-credits state :corp)
         (take-credits state :runner)
         (is (empty? (:prompt (get-corp))) "corp has no prompts when no ice is installed in this server")))
@@ -556,7 +556,7 @@
         (play-from-hand state :corp "Enigma" "HQ")
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)]
-          (core/rez state :corp cg))
+          (rez state :corp cg))
         (take-credits state :corp)
         (take-credits state :runner)
         (let [enigma (get-ice state :hq 0)]
@@ -571,7 +571,7 @@
         (play-from-hand state :corp "Enigma" "New remote")
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)]
-          (core/rez state :corp cg))
+          (rez state :corp cg))
         (take-credits state :corp)
         (take-credits state :runner)
         (let [enigma (get-ice state :remote1 0)]
@@ -584,7 +584,7 @@
                           :hand ["Cayambe Grid"]}})
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)]
-          (core/rez state :corp cg)
+          (rez state :corp cg)
           (take-credits state :corp)
           (run-on state :hq)
           (let [credits (:credit (get-runner))]
@@ -600,7 +600,7 @@
         (play-from-hand state :corp "Enigma" "HQ")
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)]
-          (core/rez state :corp cg)
+          (rez state :corp cg)
           (take-credits state :corp)
           (run-on state :hq)
           (run-continue state)
@@ -618,7 +618,7 @@
         (play-from-hand state :corp "Cayambe Grid" "HQ")
         (let [cg (get-content state :hq 0)
               iw (get-ice state :hq 0)]
-          (core/rez state :corp cg)
+          (rez state :corp cg)
           (advance state (refresh iw) 1)
           (take-credits state :corp)
           (run-on state :hq)
@@ -640,7 +640,7 @@
         (let [cg (get-content state :hq 0)
               iw1 (get-ice state :hq 0)
               iw2 (get-ice state :hq 1)]
-          (core/rez state :corp cg)
+          (rez state :corp cg)
           (advance state (refresh iw1) 1)
           (advance state (refresh iw2) 1)
           (take-credits state :corp)
@@ -666,7 +666,7 @@
               iw1 (get-ice state :hq 0)
               iw2 (get-ice state :hq 1)
               iw3 (get-ice state :hq 2)]
-          (core/rez state :corp cg)
+          (rez state :corp cg)
           (advance state (refresh iw1) 1)
           (advance state (refresh iw2) 1)
           (advance state (refresh iw3) 1)
@@ -695,8 +695,8 @@
             cg2 (get-content state :remote1 0)
             iw1 (get-ice state :hq 0)
             iw2 (get-ice state :remote1 0)]
-          (core/rez state :corp cg1)
-          (core/rez state :corp cg2)
+          (rez state :corp cg1)
+          (rez state :corp cg2)
           (take-credits state :corp)
           (take-credits state :runner)
           (click-prompt state :corp cg1)
@@ -719,8 +719,8 @@
           res-r1 (get-ice state :remote1 0)
           res-rd (get-ice state :rd 0)]
       (run-on state "R&D")
-      (core/rez state :corp res-rd)
-      (core/rez state :corp chilo)
+      (rez state :corp res-rd)
+      (rez state :corp chilo)
       (run-continue state)
       (card-subroutine state :corp res-rd 0)
       (click-prompt state :corp "0")
@@ -728,7 +728,7 @@
       (is (not (:run @state)) "Trace was successful")
       (is (zero? (count-tags state)) "No tags given for run on different server")
       (run-on state "Server 1")
-      (core/rez state :corp res-r1)
+      (rez state :corp res-r1)
       (run-continue state)
       (card-subroutine state :corp res-r1 0)
       (click-prompt state :corp "0")
@@ -757,9 +757,9 @@
           i2 (get-ice state :hq 1)
           i3 (get-ice state :hq 2)
           corr (get-program state 0)]
-      (core/rez state :corp cr)
+      (rez state :corp cr)
       (is (= 5 (:credit (get-corp))))
-      (core/rez state :corp i3)
+      (rez state :corp i3)
       (run-continue state)
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card corr})
       (core/continue state :corp nil)
@@ -780,7 +780,7 @@
      (play-from-hand state :corp "Test Ground" "New remote")
      (let [css (get-content state :hq 0)
            tg (get-content state :remote1 0)]
-       (core/rez state :corp (refresh css))
+       (rez state :corp (refresh css))
        (advance state (refresh tg) 1)
        (card-ability state :corp (refresh css) 0)
        (card-ability state :corp (refresh css) 0)
@@ -792,7 +792,7 @@
        (is (= 3 (:credit (get-runner))) "2 creds spent to run HQ")
        (is (= 1 (:click (get-runner))) "2 extra clicks spent to run HQ")
        (run-jack-out state)
-       (core/rez state :corp (refresh tg))
+       (rez state :corp (refresh tg))
        (card-ability state :corp (refresh tg) 0)
        (click-card state :corp (refresh css))
        (is (not (rezzed? (refresh css))) "CSS derezzed")
@@ -802,7 +802,7 @@
        (is (= 2 (:click (get-runner))) "Only 1 click spent to run HQ")
        (is (:run @state) "Run initiated")
        (run-jack-out state)
-       (core/rez state :corp (refresh css))
+       (rez state :corp (refresh css))
        (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
        (play-from-hand state :runner "Dirty Laundry")
        (is (not (some #{"HQ"} (prompt-buttons :runner)))
@@ -831,9 +831,9 @@
     (let [ct (get-content state :hq 0)
           q1 (get-ice state :hq 0)
           q2 (get-ice state :hq 1)]
-      (core/rez state :corp q1)
+      (rez state :corp q1)
       (is (= 8 (:credit (get-corp))))
-      (core/rez state :corp ct)
+      (rez state :corp ct)
       (card-ability state :corp ct 0)
       (click-prompt state :corp "5")
       (click-card state :corp q2)
@@ -853,7 +853,7 @@
       (new-game {:corp {:deck [(qty "Crisium Grid" 2)]}
                  :runner {:deck ["Desperado" "Temüjin Contract"]}})
       (play-from-hand state :corp "Crisium Grid" "HQ")
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (is (= 4 (:credit (get-corp))) "Corp has 4 credits")
       (core/gain state :runner :credit 4)
@@ -873,13 +873,13 @@
                  :runner {:deck ["The Gauntlet" "Corroder"]}})
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (core/gain state :runner :credit 4)
       (play-from-hand state :runner "The Gauntlet")
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
       (core/continue state :corp nil)
@@ -892,7 +892,7 @@
                 :runner {:hand ["Bhagat"]
                          :credits 20}})
      (play-from-hand state :corp "Crisium Grid" "HQ")
-     (core/rez state :corp (get-content state :hq 0))
+     (rez state :corp (get-content state :hq 0))
      (take-credits state :corp)
      (play-from-hand state :runner "Bhagat")
      (run-empty-server state "HQ")
@@ -918,7 +918,7 @@
         (is (= 3 (virus-counters cache)))
         (play-from-hand state :runner "Medium")
         (take-credits state :runner 2)
-        (core/rez state :corp cvs)
+        (rez state :corp cvs)
         (card-ability state :corp cvs 0)
         ;; nothing in hq content
         (is (empty? (get-content state :hq)) "CVS was trashed")
@@ -981,7 +981,7 @@
       (play-from-hand state :corp "Enigma" "Server 1")
       (play-from-hand state :corp "Dedicated Technician Team" "Server 1")
       (let [dtt (get-content state :remote1 0)]
-        (core/rez state :corp dtt)
+        (rez state :corp dtt)
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 3 credits from Dedicated Technician Team"
                            (play-from-hand state :corp "Enigma" "Server 1")
@@ -1025,7 +1025,7 @@
     (new-game {:corp {:deck ["Drone Screen"]}})
     (play-from-hand state :corp "Drone Screen" "New remote")
     (let [drone (get-content state :remote1 0)]
-      (core/rez state :corp drone)
+      (rez state :corp drone)
       (gain-tags state :runner 1)
       (take-credits state :corp)
       (run-on state "Server 1")
@@ -1041,7 +1041,7 @@
     (play-from-hand state :corp "Embolus" "New remote")
     (take-credits state :corp)
     (let [em (get-content state :remote1 0)]
-      (core/rez state :corp em)
+      (rez state :corp em)
       (take-credits state :runner)
       (let [credits (:credit (get-corp))
             powers (get-counters (refresh em) :power)]
@@ -1096,7 +1096,7 @@
     (new-game {:corp {:deck ["Georgia Emelyov"]}})
     (play-from-hand state :corp "Georgia Emelyov" "New remote")
     (let [geo (get-content state :remote1 0)]
-      (core/rez state :corp geo)
+      (rez state :corp geo)
       (take-credits state :corp)
       (run-on state "Server 1")
       (run-jack-out state)
@@ -1119,7 +1119,7 @@
       (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
                  :runner {:deck [(qty "Fan Site" 3)]}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Fan Site")
@@ -1142,7 +1142,7 @@
                  :runner {:hand [(qty "Fan Site" 2) "John Masanori"]
                           :credit 10}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (play-from-hand state :runner "John Masanori")
       (play-from-hand state :runner "Fan Site")
@@ -1170,9 +1170,9 @@
     (let [helheim (get-content state :rd 0)
           gutenberg (get-ice state :rd 0)
           vanilla (get-ice state :rd 1)]
-      (core/rez state :corp helheim)
-      (core/rez state :corp gutenberg)
-      (core/rez state :corp vanilla)
+      (rez state :corp helheim)
+      (rez state :corp gutenberg)
+      (rez state :corp vanilla)
       (is (= 6 (:current-strength (refresh gutenberg))))
       (is (zero? (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
@@ -1200,7 +1200,7 @@
      (play-from-hand state :corp "Accelerated Beta Test" "New remote")
      (take-credits state :corp)
      (core/gain state :runner :click 1)
-     (core/rez state :corp (get-content state :remote1 0))
+     (rez state :corp (get-content state :remote1 0))
      (let [hh (get-content state :remote1 0)]
        (run-on state :remote1)
        (is (prompt-is-card? state :runner (refresh hh)) "Runner prompt is on Hired Help")
@@ -1224,7 +1224,7 @@
      (play-from-hand state :corp "Hired Help" "New remote")
      (play-from-hand state :corp "Crisium Grid" "HQ")
      (take-credits state :corp)
-     (core/rez state :corp (get-content state :remote1 0))
+     (rez state :corp (get-content state :remote1 0))
      (let [hh (get-content state :remote1 0)]
        (run-empty-server state :archives)
        (run-empty-server state :rd)
@@ -1242,7 +1242,7 @@
        (is (= 1 (count (:discard (get-runner)))) "Notoriety is in Runner discard")
        (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
        (run-jack-out state)
-       (core/rez state :corp (get-content state :hq 0)) ;rez crisium
+       (rez state :corp (get-content state :hq 0)) ;rez crisium
        (run-empty-server state :hq)
        (click-prompt state :runner "No action")
        (run-on state :remote1)
@@ -1255,7 +1255,7 @@
     (new-game {:corp {:deck ["Hokusai Grid"]}})
     (play-from-hand state :corp "Hokusai Grid" "HQ")
     (take-credits state :corp)
-    (core/rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-content state :hq 0))
     (run-empty-server state :rd)
     (is (empty? (:discard (get-runner))) "No net damage done for successful run on R&D")
     (run-empty-server state :hq)
@@ -1328,7 +1328,7 @@
                         :hand ["Jinja City Grid"]}})
       (core/gain state :corp :click 6)
       (play-from-hand state :corp "Jinja City Grid" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
@@ -1346,7 +1346,7 @@
                  :runner {:id "Laramy Fisk: Savvy Investor"
                           :deck ["Eden Shard"]}})
       (play-from-hand state :corp "Jinja City Grid" "HQ")
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
       (click-prompt state :runner "Eden Shard")
@@ -1365,7 +1365,7 @@
     (play-from-hand state :runner "Corroder")
     (run-on state :hq)
     (let [keeg (get-content state :hq 0)]
-      (core/rez state :corp keeg)
+      (rez state :corp keeg)
       (card-ability state :corp keeg 0)
       (is (= 1 (count (get-content state :hq))) "Keegan didn't fire, Runner has no tags")
       (gain-tags state :runner 2)
@@ -1387,11 +1387,11 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [kh (get-content state :remote1 0)
             en (get-ice state :remote1 0)]
-        (core/rez state :corp kh)
+        (rez state :corp kh)
         (is (= 4 (get-counters (refresh kh) :recurring)) "4 recurring credits on Khondi")
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 3 credits from Khondi Plaza"
-                           (core/rez state :corp en)
+                           (rez state :corp en)
                            (dotimes [c 3] (click-card state :corp kh)))))))
 
 (deftest la-costa-grid
@@ -1405,7 +1405,7 @@
       (play-from-hand state :corp "La Costa Grid" "New remote")
       (play-from-hand state :corp "Breaking News" "Server 1")
       (let [[la-costa breaking-news] (get-content state :remote1)]
-        (core/rez state :corp la-costa)
+        (rez state :corp la-costa)
         (take-credits state :corp)
         (take-credits state :runner)
         (is (not (empty? (:prompt (get-corp)))) "The Corp is prompted to place one advancement token on a card")
@@ -1420,7 +1420,7 @@
       (new-game {:corp {:hand ["La Costa Grid", (qty "Mumbad Virtual Tour" 2), (qty "Vanilla" 3)]}})
       (play-from-hand state :corp "La Costa Grid" "New remote")
       (let [[la-costa] (get-content state :remote1)]
-        (core/rez state :corp la-costa)
+        (rez state :corp la-costa)
         (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
         (let [[remote-mvt] (get-content state :remote2)]
           (take-credits state :corp)
@@ -1462,11 +1462,11 @@
       (play-from-hand state :corp "La Costa Grid" "New remote")
       (play-from-hand state :corp "Full Immersion RecStudio" "Server 1")
       (let [[la-costa recstudio] (get-content state :remote1)]
-        (core/rez state :corp recstudio)
+        (rez state :corp recstudio)
         (card-ability state :corp recstudio 0)
         (click-card state :corp (first (:hand (get-corp))))
         (let [[beale] (:hosted (refresh recstudio))]
-          (core/rez state :corp la-costa)
+          (rez state :corp la-costa)
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp beale)
@@ -1477,9 +1477,9 @@
                         :hand ["Daily Business Show" "La Costa Grid" "Project Beale"]
                         :credits 10}})
       (play-from-hand state :corp "Daily Business Show" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-from-hand state :corp "La Costa Grid" "New remote")
-      (core/rez state :corp (get-content state :remote2 0))
+      (rez state :corp (get-content state :remote2 0))
       (play-from-hand state :corp "Project Beale" "Server 2")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -1506,9 +1506,9 @@
     (play-from-hand state :runner "Corroder")
     (let [letheia (get-content state :rd 0)
           cor (get-program state 0)]
-      (core/rez state :corp letheia)
+      (rez state :corp letheia)
       (run-on state "R&D")
-      (core/rez state :corp (get-ice state :rd 1))
+      (rez state :corp (get-ice state :rd 1))
       (run-continue state)
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
       (core/continue state :corp nil)
@@ -1528,7 +1528,7 @@
     (starting-hand state :runner [])
     (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
     (play-from-hand state :corp "Manta Grid" "HQ")
-    (core/rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
     (core/click-draw state :runner nil)
     (core/click-draw state :runner nil)
@@ -1560,10 +1560,10 @@
       (play-from-hand state :corp "Marcus Batty" "HQ")
       (let [iw (get-ice state :hq 0)
             mb (get-content state :hq 0)]
-        (core/rez state :corp mb)
+        (rez state :corp mb)
         (take-credits state :corp)
         (run-on state "HQ")
-        (core/rez state :corp iw)
+        (rez state :corp iw)
         (card-ability state :corp mb 0)
         (is (= :psi (prompt-type :corp)))
         (click-prompt state :corp "1 [Credits]")
@@ -1579,9 +1579,9 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Midori" "Ice Wall" "Anansi"]}})
     (play-from-hand state :corp "Midori" "HQ")
-    (core/rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-content state :hq 0))
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
     (run-on state "HQ")
     (click-prompt state :corp "Yes")
@@ -1601,14 +1601,14 @@
                :runner {:hand ["Corroder"]
                         :credits 10}})
     (play-from-hand state :corp "Midway Station Grid" "HQ")
-    (core/rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-content state :hq 0))
     (play-from-hand state :corp "Battlement" "HQ")
     (play-from-hand state :corp "Battlement" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
     (let [corroder (get-program state 0)]
       (run-on state "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (changes-val-macro
         -1 (:credit (get-runner))
@@ -1622,7 +1622,7 @@
         (click-prompt state :runner "Done"))
       (run-jack-out state)
       (run-on state "Server 1")
-      (core/rez state :corp (get-ice state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
       (run-continue state)
       (changes-val-macro
         -1 (:credit (get-runner))
@@ -1638,7 +1638,7 @@
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
       (let [mcg (get-content state :remote1 0)]
-        (core/rez state :corp mcg)
+        (rez state :corp mcg)
         (take-credits state :corp)
         (run-on state "Server 1")
         (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
@@ -1654,7 +1654,7 @@
       (play-from-hand state :corp "Quandary" "Server 1")
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (let [mcg (get-content state :remote1 0)]
-        (core/rez state :corp mcg)
+        (rez state :corp mcg)
         (take-credits state :corp)
         (run-on state "Server 1")
         (is (= 2 (:position (:run @state))) "Runner at position 2")
@@ -1793,7 +1793,7 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (let [mcg (get-content state :hq 0)]
-        (core/rez state :corp mcg)
+        (rez state :corp mcg)
         (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
         (run-continue state)
         (click-prompt state :runner "Mwanza City Grid")
@@ -1809,7 +1809,7 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (let [mcg (get-content state :hq 0)]
-        (core/rez state :corp mcg)
+        (rez state :corp mcg)
         (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
         (run-continue state)
         (click-prompt state :runner "Mwanza City Grid")
@@ -1825,7 +1825,7 @@
                  :runner {:deck ["Embezzle"]}})
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (take-credits state :corp)
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (play-run-event state "Embezzle" :hq)
       (click-prompt state :runner "ICE")
@@ -1845,9 +1845,9 @@
       (let [mwanza (get-content state :hq 0)
             k-hq (get-ice state :hq 0)
             k-rd (get-ice state :rd 0)]
-        (core/rez state :corp mwanza)
+        (rez state :corp mwanza)
         (run-on state "HQ")
-        (core/rez state :corp k-hq)
+        (rez state :corp k-hq)
         (run-continue state)
         (card-subroutine state :corp k-hq 0)
         (click-prompt state :corp "Yes")
@@ -1859,7 +1859,7 @@
           (click-prompt state :runner "No action"))
         (run-jack-out state)
         (run-on state "R&D")
-        (core/rez state :corp k-rd)
+        (rez state :corp k-rd)
         (run-continue state)
         (card-subroutine state :corp k-rd 0)
         (click-prompt state :corp "Yes")
@@ -1893,8 +1893,8 @@
             cor (get-program state 1)
             ddos (get-resource state 0)]
         (run-on state :hq)
-        (core/rez state :corp nmcg)
-        (core/rez state :corp fire)
+        (rez state :corp nmcg)
+        (rez state :corp fire)
         (run-continue state)
         (card-ability state :runner d4 0)
         (is (empty? (:prompt (get-runner))) "Could not use D4v1d")
@@ -1915,8 +1915,8 @@
         (core/add-counter state :corp ngo :advancement 2)
         (take-credits state :corp)
         (run-on state :remote1)
-        (core/rez state :corp navi)
-        (core/rez state :corp ngo)
+        (rez state :corp navi)
+        (rez state :corp ngo)
         (changes-val-macro 5 (:credit (get-corp))
                            "+5 credits from NGO"
                            (card-ability state :corp (refresh ngo) 0))))))
@@ -1929,7 +1929,7 @@
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
     (play-from-hand state :corp "Nisei MK II" "Server 1")
-    (core/rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
     (let [nis (get-content state :remote1 1)]
       (play-from-hand state :corp "Shipment from SanSan")
       (click-prompt state :corp "2")
@@ -1959,7 +1959,7 @@
       (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
       (play-from-hand state :corp "Nihongai Grid" "R&D")
-      (core/rez state :corp (get-content state :rd 0))
+      (rez state :corp (get-content state :rd 0))
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (= ["Yes" "No"] (prompt-buttons :corp)) "Has Nihongai Grid prompt")
@@ -1990,7 +1990,7 @@
       (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
       (play-from-hand state :corp "Nihongai Grid" "HQ")
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "RNG Key")
       (run-empty-server state "HQ")
@@ -2023,7 +2023,7 @@
     (take-credits state :runner)
     (let [oberth (get-content state :remote1 0)
           oak (get-content state :remote1 1) ]
-      (core/rez state :corp (refresh oberth))
+      (rez state :corp (refresh oberth))
       (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
       (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
@@ -2038,7 +2038,7 @@
     (play-from-hand state :corp "Mental Health Clinic" "Server 1")
     (let [otg (get-content state :remote1 0)]
       (take-credits state :corp)
-      (core/rez state :corp (refresh otg))
+      (rez state :corp (refresh otg))
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
       (run-empty-server state "R&D")
       (is (not (core/can-run-server? state "Server 1")) "Runner cannot run on Off the Grid")
@@ -2060,7 +2060,7 @@
       (let [ohg (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
         (run-on state "Server 1")
-        (core/rez state :corp ohg)
+        (rez state :corp ohg)
         (run-continue state)
         ;; runner now chooses which to access.
         (click-card state :runner hok)
@@ -2080,7 +2080,7 @@
       (take-credits state :corp 2)
       (let [ohg (get-content state :hq 0)]
         (run-on state "HQ")
-        (core/rez state :corp ohg)
+        (rez state :corp ohg)
         (run-continue state)
         ;; runner now chooses which to access.
         (is (= ["Card from hand" "Old Hollywood Grid"] (prompt-buttons :runner)))
@@ -2101,7 +2101,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
-      (core/rez state :corp (get-content state :hq 0))
+      (rez state :corp (get-content state :hq 0))
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Gang sign fires
       (is (= "You accessed Project Beale." (:msg (prompt-map :runner))))
@@ -2117,7 +2117,7 @@
       (let [ohg (get-content state :remote1 0)
             pb (get-content state :remote1 1)]
         (run-on state "Server 1")
-        (core/rez state :corp ohg)
+        (rez state :corp ohg)
         (run-continue state)
         (is (empty? (:scored (get-runner))) "Start with no stolen agendas")
         ;; runner now chooses which to access.
@@ -2138,7 +2138,7 @@
       (take-credits state :corp)
       (let [ohg (get-content state :remote1 0)
             pb (get-content state :remote1 1)]
-        (core/rez state :corp ohg)
+        (rez state :corp ohg)
         (run-empty-server state "Server 2")
         (click-prompt state :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
@@ -2149,7 +2149,7 @@
                         :discard ["Hostile Takeover" "Merger" "Vanity Project"]}
                  :runner {:hand ["Apocalypse"]}})
       (play-from-hand state :corp "Old Hollywood Grid" "Archives")
-      (core/rez state :corp (get-content state :archives 0))
+      (rez state :corp (get-content state :archives 0))
       (take-credits state :corp)
       (run-empty-server state "Archives")
       (click-prompt state :runner "Hostile Takeover")
@@ -2187,7 +2187,7 @@
       (let [om (get-content state :remote1 0)
             rh (get-content state :remote1 1)]
         (run-on state "Server 1")
-        (core/rez state :corp om)
+        (rez state :corp om)
         (run-continue state)
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner rh)
@@ -2209,7 +2209,7 @@
       (let [om (get-content state :remote1 0)
             rh (get-content state :remote1 1)]
         (run-on state "Server 1")
-        (core/rez state :corp om)
+        (rez state :corp om)
         (run-continue state)
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
@@ -2231,7 +2231,7 @@
       (let [om (get-content state :remote1 0)
             rh (get-content state :remote1 1)]
         (run-on state "Server 1")
-        (core/rez state :corp om)
+        (rez state :corp om)
         (run-continue state)
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
@@ -2260,7 +2260,7 @@
       (run-empty-server state "R&D")
       (click-prompt state :runner "No action")
       (run-empty-server state "HQ")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Apocalypse")
       (is (= {:number 3 :default 0} (:choices (prompt-map :corp))))
       (click-prompt state :corp "3")
@@ -2273,7 +2273,7 @@
                           :credits 10}})
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "PAD Campaign" "New remote")
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Spy Camera")
       (run-on state :remote1)
@@ -2297,7 +2297,7 @@
                           :hand ["Spy Camera"]
                           :credits 10}})
       (play-from-hand state :corp "Overseer Matrix" "R&D")
-      (core/rez state :corp (get-content state :rd 0))
+      (rez state :corp (get-content state :rd 0))
       (take-credits state :corp)
       (is (empty? (:prompt (get-corp)))))))
 
@@ -2310,7 +2310,7 @@
     (take-credits state :corp)
     (let [pag (get-content state :remote1 0)]
       (run-on state "Server 1")
-      (core/rez state :corp pag)
+      (rez state :corp pag)
       (run-jack-out state)
       (is (get-run) "Can't jack out when no programs are installed")
       (run-continue state)
@@ -2347,7 +2347,7 @@
       (play-from-hand state :corp "Prisec" "Archives")
       (play-from-hand state :corp "Prisec" "Archives")
       (core/gain state :corp :click 1 :credit 14)
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-empty-server state :archives)
       (is (:run @state) "Run still active")
@@ -2385,7 +2385,7 @@
       (take-credits state :corp 1)
       (let [rh (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp rh)
+        (rez state :corp rh)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner hok)
@@ -2411,7 +2411,7 @@
       (core/gain state :runner :credit 1)
       (let [rh (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp rh)
+        (rez state :corp rh)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (click-card state :runner rh)
@@ -2437,7 +2437,7 @@
       (play-from-hand state :corp "House of Knives" "New remote")
       (take-credits state :corp 1)
       (let [rh (get-content state :remote1 0)]
-        (core/rez state :corp rh)
+        (rez state :corp rh)
         (run-empty-server state "Server 2")
         ;; access is automatic
         (click-prompt state :runner "Steal")
@@ -2453,7 +2453,7 @@
      (play-from-hand state :corp "Reduced Service" "HQ")
      (take-credits state :corp)
      (let [rs (get-content state :hq 0)]
-       (core/rez state :corp rs)
+       (rez state :corp rs)
        (is (changes-credits (get-corp) -4
                             (click-prompt state :corp "4")))
        (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
@@ -2482,7 +2482,7 @@
      (play-from-hand state :corp "Ruhr Valley" "HQ")
      (take-credits state :corp)
      (let [ruhr (get-content state :hq 0)]
-       (core/rez state :corp ruhr)
+       (rez state :corp ruhr)
        (is (= 4 (:click (get-runner))))
        (run-on state :hq)
        (run-jack-out state)
@@ -2507,7 +2507,7 @@
      (play-from-hand state :corp "Ruhr Valley" "HQ")
      (take-credits state :corp)
      (let [ruhr (get-content state :hq 0)]
-       (core/rez state :corp ruhr)
+       (rez state :corp ruhr)
        (is (= 4 (:click (get-runner))))
        (run-on state :rd)
        (run-jack-out state)
@@ -2527,7 +2527,7 @@
     (take-credits state :corp)
     (let [ryon (get-content state :hq 0)]
       (run-on state :hq)
-      (core/rez state :corp ryon)
+      (rez state :corp ryon)
       (card-ability state :corp ryon 0)
       (is (= 3 (:click (get-runner))))
       (is (zero? (:brain-damage (get-runner))))
@@ -2552,12 +2552,12 @@
           sg (get-content state :hq 0)]
       (core/gain state :corp :click 1)
       (advance state iw1)
-      (core/rez state :corp sg)
-      (core/rez state :corp (refresh iw1))
+      (rez state :corp sg)
+      (rez state :corp (refresh iw1))
       (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
       (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
       (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
-      (core/rez state :corp (refresh iw2))
+      (rez state :corp (refresh iw2))
       (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
@@ -2573,7 +2573,7 @@
     (let [self (get-content state :remote1 0)]
       (take-credits state :corp)
       (run-on state "Server 1")
-      (core/rez state :corp self)
+      (rez state :corp self)
       (card-ability state :corp (refresh self) 0)
       (is (= 3 (-> (get-corp) :discard count)) "All 3 cards from Server 1 should be in discard")
       (is (= 2 (:base (prompt-map :corp))) "Self-destruct base trace should start at 2")
@@ -2596,7 +2596,7 @@
     (let [smc1 (get-program state 0)
           smc2 (get-program state 1)
           sj (get-content state :hq 0)]
-      (core/rez state :corp sj)
+      (rez state :corp sj)
       (run-on state "HQ")
       (card-ability state :corp sj 0)
       (card-ability state :runner smc1 0)
@@ -2617,7 +2617,7 @@
       (let [sd (get-content state :remote1 0)
             pj (get-content state :remote1 1)
             iw (get-ice state :remote1 0)]
-        (core/rez state :corp sd)
+        (rez state :corp sd)
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Simone Diego to advance Ice Wall"
                            (core/advance state :corp {:card (refresh iw)})
@@ -2637,7 +2637,7 @@
       (take-credits state :corp 1)
       (let [sb (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp sb)
+        (rez state :corp sb)
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
         (is (= "House of Knives" (:title (:card (prompt-map :runner))))
@@ -2661,7 +2661,7 @@
       (core/gain state :runner :credit 1)
       (let [sb (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
-        (core/rez state :corp sb)
+        (rez state :corp sb)
         (run-empty-server state "Server 1")
         (click-card state :runner sb)
         (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay to trash
@@ -2682,8 +2682,8 @@
     (let [scg1 (get-content state :remote1 0)
           cvs1 (get-content state :remote1 1)
           wrap (get-ice state :remote1 0)]
-      (core/rez state :corp scg1)
-      (core/rez state :corp cvs1)
+      (rez state :corp scg1)
+      (rez state :corp cvs1)
       (is (= 15 (:credit (get-corp))))
       (is (= (:cid scg1) (-> (prompt-map :corp) :card :cid)) "Surat City Grid triggered from upgrade in same remote")
       (click-prompt state :corp "Yes")
@@ -2696,11 +2696,11 @@
       (let [scg2 (get-content state :hq 0)
             cvs2 (get-content state :hq 1)
             enig (get-ice state :hq 0)]
-        (core/rez state :corp scg2)
-        (core/rez state :corp cvs2)
+        (rez state :corp scg2)
+        (rez state :corp cvs2)
         (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
         (core/derez state :corp (refresh wrap))
-        (core/rez state :corp enig)
+        (rez state :corp enig)
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
 (deftest tranquility-home-grid
@@ -2711,7 +2711,7 @@
                         :hand ["Tranquility Home Grid" "PAD Campaign"]}})
       (play-from-hand state :corp "Tranquility Home Grid" "New remote")
       (let [thg (get-content state :remote1 0)]
-        (core/rez state :corp thg)
+        (rez state :corp thg)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
         (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
         (take-credits state :corp)
@@ -2747,7 +2747,7 @@
                         :hand ["Tranquility Home Grid" "PAD Campaign" "Ice Wall"]}})
       (play-from-hand state :corp "Tranquility Home Grid" "New remote")
       (let [thg (get-content state :remote1 0)]
-        (core/rez state :corp thg)
+        (rez state :corp thg)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
         (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
         (take-credits state :corp)
@@ -2769,7 +2769,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Tranquility Home Grid" "New remote")
       (let [thg (get-content state :remote1 0)]
-        (core/rez state :corp thg)
+        (rez state :corp thg)
         (take-credits state :corp)
         (take-credits state :runner)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
@@ -2834,9 +2834,9 @@
     (let [twins (get-content state :remote1 0)
           quicksand (get-ice state :remote1 0)
           cor (get-program state 0)]
-      (core/rez state :corp twins)
+      (rez state :corp twins)
       (run-on state "Server 1")
-      (core/rez state :corp quicksand)
+      (rez state :corp quicksand)
       (run-continue state)
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
@@ -2863,8 +2863,8 @@
       (let [pup (get-ice state :hq 0)
             tori (get-content state :hq 0)
             nshld (get-program state 0)]
-        (core/rez state :corp pup)
-        (core/rez state :corp tori)
+        (rez state :corp pup)
+        (rez state :corp tori)
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
@@ -2893,8 +2893,8 @@
       (run-on state "Archives")
       (let [hg (get-content state :archives 0)
             tori (get-content state :archives 1)]
-        (core/rez state :corp hg)
-        (core/rez state :corp tori)
+        (rez state :corp hg)
+        (rez state :corp tori)
         (run-continue state)
         (click-prompt state :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
@@ -2922,8 +2922,8 @@
       (run-on state "Server 1")
       (let [tori (get-content state :remote1 0)
             pup (get-ice state :remote1 0)]
-        (core/rez state :corp pup)
-        (core/rez state :corp tori)
+        (rez state :corp pup)
+        (rez state :corp tori)
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
@@ -2944,7 +2944,7 @@
     (play-from-hand state :corp "Underway Grid" "New remote")
     (play-from-hand state :corp "Eve Campaign" "Server 1")
     (take-credits state :corp)
-    (core/rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
     (let [eve1 (get-content state :remote1 1)]
       (play-from-hand state :runner "Drive By")
       (click-card state :runner eve1)
@@ -2959,7 +2959,7 @@
       (take-credits state :corp 2)
       (run-on state "Server 1")
       (let [vg (get-content state :remote1 0)]
-        (core/rez state :corp vg)
+        (rez state :corp vg)
         (card-ability state :corp vg 0)
         (card-ability state :corp vg 0)
         (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
@@ -2982,7 +2982,7 @@
       (let [war (get-content state :remote1 0)
             cor (get-program state 0)
             mem (get-hardware state 0)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (run-on state "Server 1")
         (run-continue state)
         (click-prompt state :runner "Pay 4 [Credits] to trash")
@@ -3006,7 +3006,7 @@
             clv (get-resource state 0)
             cor (get-program state 0)
             mem (get-hardware state 0)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (core/add-counter state :runner clv :power 2)
         (card-ability state :runner (refresh clv) 0)
         ;; Prompt choice checks there is a trace prompt from Warroid
@@ -3026,7 +3026,7 @@
                           :hand ["Corroder" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Warroid Tracker" "HQ")
       (let [war (get-content state :hq 0)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Dyson Mem Chip")
@@ -3047,7 +3047,7 @@
       (play-from-hand state :corp "Warroid Tracker" "New remote")
       (play-from-hand state :corp "Launch Campaign" "Remote 1")
       (let [war (get-content state :remote1 0)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Dyson Mem Chip")
@@ -3075,7 +3075,7 @@
       (core/gain state :runner :click 10)
       (dotimes [_ 5]
         (play-from-hand state :runner "Self-modifying Code"))
-      (core/rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Singularity")
       (click-prompt state :runner "Server 1")
       (run-continue state)
@@ -3097,7 +3097,7 @@
                           :credits 20}})
       (play-from-hand state :corp "Warroid Tracker" "HQ")
       (let [war (get-content state :hq 0)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Dyson Mem Chip")
@@ -3117,8 +3117,8 @@
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (let [war (get-content state :hq 0)
             cg (get-content state :hq 1)]
-        (core/rez state :corp war)
-        (core/rez state :corp cg)
+        (rez state :corp war)
+        (rez state :corp cg)
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Dyson Mem Chip")
@@ -3144,7 +3144,7 @@
       (take-credits state :corp)
       (let [war (get-content state :remote1 0)
             mar1 (get-content state :remote1 1)]
-        (core/rez state :corp war)
+        (rez state :corp war)
         (run-empty-server state :remote2)
         (click-prompt state :runner "Pay 3 [Credits] to trash")
         (take-credits state :runner)

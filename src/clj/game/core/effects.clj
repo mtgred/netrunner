@@ -1,12 +1,12 @@
 (ns game.core.effects
-  (:require [game.core.card-defs :refer [card-def]]
-            [game.core.eid :refer [make-eid]]
+  (:require [clj-uuid :as uuid]
             [game.core.card :refer [get-card]]
-            [game.utils :refer [same-card? to-keyword]]
-            [clj-uuid :as uuid]))
+            [game.core.card-defs :refer [card-def]]
+            [game.core.eid :refer [make-eid]]
+            [game.utils :refer [same-card? to-keyword]]))
 
 (defn register-constant-effects
-  [state side card]
+  [state _ card]
   (when (:constant-effects (card-def card))
     (let [constant-effects (:constant-effects (card-def card))
           abilities (for [ability constant-effects]
@@ -20,7 +20,7 @@
       abilities)))
 
 (defn unregister-constant-effects
-  [state side card]
+  [state _ card]
   (when (:constant-effects (card-def card))
     (swap! state assoc :effects
            (->> (:effects @state)
@@ -29,7 +29,7 @@
                 (into [])))))
 
 (defn register-floating-effect
-  [state side card ability]
+  [state _ card ability]
   (let [ability (assoc
                   (select-keys ability [:type :duration :req :value])
                   :card card
@@ -38,14 +38,14 @@
     ability))
 
 (defn unregister-floating-effects
-  [state side duration]
+  [state _ duration]
   (swap! state assoc :effects
          (->> (:effects @state)
               (remove #(= duration (:duration %)))
               (into []))))
 
 (defn gather-effects
-  [state side effect-type]
+  [state _ effect-type]
   (let [get-side #(-> % :card :side to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
