@@ -1730,7 +1730,7 @@
                              "Ice Wall" "Fire Wall"
                              "Kakugo" "Chum"
                              "RSVP" "Sensei"]}})
-    (core/click-draw state :corp 2)
+    (click-draw state :corp)
     (core/gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "Archives")
     (play-from-hand state :corp "Fire Wall" "R&D")
@@ -2500,7 +2500,7 @@
                                "Prisec"
                                "Hedge Fund"]}})
       (core/gain state :corp :click 10 :credit 10)
-      (core/click-draw state :corp 2)
+      (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (let [pyu (get-content state :remote1 0)]
@@ -2531,7 +2531,7 @@
                                "Prisec"
                                "Hedge Fund"]}})
       (core/gain state :corp :click 10 :credit 10)
-      (core/click-draw state :corp 2)
+      (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (let [pyu (get-content state :remote1 0)]
@@ -2652,7 +2652,7 @@
     (new-game {:corp {:deck ["Rebranding Team" "Launch Campaign" "City Surveillance"
                              "Jackson Howard" "Museum of History" "Advanced Assembly Lines"]}})
     (play-and-score state "Rebranding Team")
-    (core/click-draw state :runner 1)
+    (click-draw state :runner)
     (is (has-subtype? (find-card "Advanced Assembly Lines" (:hand (get-corp))) "Advertisement"))
     ; #2608 part 2 - retain Advertisement always
     (trash-from-hand state :corp "Advanced Assembly Lines")
@@ -3518,7 +3518,7 @@
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :corp)
       (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn")
-      (core/click-draw state :runner 1)
+      (click-draw state :runner)
       (take-credits state :runner)
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")

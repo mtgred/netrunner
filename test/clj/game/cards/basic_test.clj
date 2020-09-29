@@ -13,13 +13,13 @@
       (new-game)
       (changes-val-macro 1 (:credit (get-corp))
                          "Gain 1 credit"
-                         (core/click-credit state :corp nil))))
+                         (click-credit state :corp))))
   (testing "Draw card"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}})
       (changes-val-macro 1 (count (:hand (get-corp)))
                          "Drew 1 card"
-                         (core/click-draw state :corp nil))))
+                         (click-draw state :corp))))
   (testing "Install agenda"
     (do-game
       (new-game {:corp {:deck ["Project Beale"]}})
@@ -50,13 +50,13 @@
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (core/click-advance state :corp {:card (get-ice state :hq 0)})
+      (click-advance state :corp (get-ice state :hq 0))
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "Placed 1 advancement on Ice Wall")))
   (testing "Advance agenda"
     (do-game
       (new-game {:corp {:deck ["Project Beale"]}})
       (play-from-hand state :corp "Project Beale" "New remote")
-      (core/click-advance state :corp {:card (get-content state :remote1 0)})
+      (click-advance state :corp (get-content state :remote1 0))
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Placed 1 advancement on Project Beale")))
   (testing "Trash resource if runner is tagged"
     (do-game
@@ -84,14 +84,14 @@
       (new-game {:options {:start-as :runner}})
       (changes-val-macro 1 (:credit (get-runner))
                          "Gain 1 credit"
-                         (core/click-credit state :runner nil))))
+                         (click-credit state :runner))))
   (testing "Draw card"
     (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
       (changes-val-macro 1 (count (:hand (get-runner)))
                          "Drew 1 card"
-                         (core/click-draw state :runner nil))))
+                         (click-draw state :runner))))
   (testing "Install program"
     (do-game
       (new-game {:options {:start-as :runner}

@@ -421,6 +421,21 @@
      (is (phase# @~state) (str (jutils/capitalize (name ~side)) " in Step 1.2"))
      (core/process-action "end-phase-12" ~state ~side nil)))
 
+(defmacro click-draw
+  [state side]
+  `(core/process-action "draw" ~state ~side nil))
+
+(defmacro click-credit
+  [state side]
+  `(core/process-action "credit" ~state ~side nil))
+
+(defmacro click-advance
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (core/process-action "advance" ~state ~side {:card card#})))
+
 ;;; Misc functions
 (defn score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
@@ -429,7 +444,7 @@
          advancementcost (:advancementcost card)]
      (core/gain state :corp :click advancementcost :credit advancementcost)
      (dotimes [n advancementcost]
-       (core/advance state :corp {:card (get-card state card)}))
+       (core/process-action "advance" state :corp {:card (get-card state card)}))
      (is (= advancementcost (get-counters (get-card state card) :advancement)))
      (core/score state :corp {:card (get-card state card)})
      (is (find-card title (get-scored state :corp))))))

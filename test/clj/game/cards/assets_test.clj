@@ -925,10 +925,10 @@
     (rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (let [credits (:credit (get-corp))]
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (is (= 1 (- (:credit (get-corp)) credits)) "Should gain one from CPC Generator"))
     (let [credits (:credit (get-corp))]
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (is (zero? (- (:credit (get-corp)) credits)) "Shouldn't gain another credit from CPC Generator"))))
 
 (deftest csr-campaign
@@ -2283,7 +2283,8 @@
         (rez state :corp (get-content state :remote1 0))
         (take-credits state :corp)
         (take-credits state :runner)
-        (dotimes [_ 3] (core/click-advance state :corp {:card (get-content state :remote2 0)}))
+        (dotimes [_ 3]
+          (click-advance state :corp (get-content state :remote2 0)))
         (is (= 1 (:click (get-corp))) "Jeeves triggered")))
     (testing "Use 3 clicks on a single card ability - Melange"
       (do-game
@@ -2322,9 +2323,9 @@
         (rez state :corp (get-content state :remote1 0))
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/click-advance state :corp {:card (get-content state :remote2 0)})
-        (core/click-credit state :corp nil)
-        (core/click-advance state :corp {:card (get-content state :remote2 0)})
+        (click-advance state :corp (get-content state :remote2 0))
+        (click-credit state :corp)
+        (click-advance state :corp (get-content state :remote2 0))
         (is (= 0 (:click (get-corp))) "Jeeves did not trigger")))
     (testing "Three different asset abilities"
       (do-game

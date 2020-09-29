@@ -10,7 +10,7 @@
     (do-game
       (new-game {:corp {:deck ["Hedge Fund"]
                         :hand [(qty "Hedge Fund" 4)]}})
-      (core/click-draw state :corp nil)
+      (click-draw state :corp)
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (nil? (get-run)))

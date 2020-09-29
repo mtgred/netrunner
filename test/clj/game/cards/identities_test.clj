@@ -2170,8 +2170,8 @@
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
         (changes-val-macro 1 (:credit (get-corp))
                            "Gained 1 credit from MM ability"
@@ -2180,7 +2180,7 @@
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Capital Investors" 10)]}})
-        (core/click-draw state :corp nil)
+        (click-draw state :corp)
         (play-from-hand state :corp "Capital Investors" "New remote")
         (let [ci (get-content state :remote1 0)
               mm (get-in @state [:corp :identity])]
@@ -2190,13 +2190,13 @@
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
           (card-ability state :corp (refresh ci) 0)
           (is (= 1 (:click (get-corp))) "Could not use Capital Investors again with MM click")
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
     (testing "Gain click from using Upgrade ability"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Cold Site Server" 10)]}})
-        (core/click-draw state :corp nil)
+        (click-draw state :corp)
         (play-from-hand state :corp "Cold Site Server" "New remote")
         (let [css (get-content state :remote1 0)
               mm (get-in @state [:corp :identity])]
@@ -2206,14 +2206,14 @@
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
           (card-ability state :corp (refresh css) 0)
           (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
     (testing "Gain click from playing an Operation"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
         (click-prompt state :corp "Gain [Click]")
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
@@ -2223,8 +2223,8 @@
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "PAD Campaign" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (click-prompt state :corp "Gain [Click]")
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
@@ -2255,8 +2255,8 @@
         (play-and-score state "Mandatory Upgrades")
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/click-credit state :corp nil)
-        (core/click-draw state :corp nil)
+        (click-credit state :corp)
+        (click-draw state :corp)
         (play-from-hand state :corp "Blue Level Clearance")
         (changes-val-macro 1 (:credit (get-corp))
                            "Gained 1 credit from MM ability"
@@ -2275,7 +2275,7 @@
             (take-credits state :corp)
             (take-credits state :runner)
             (card-ability state :corp mcaap 0))
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (card-ability state :corp mcaap 1)
           (changes-val-macro 1 (:credit (get-corp))
                              "Gained 1 credit from MM ability"
@@ -2626,7 +2626,7 @@
     (is (= 4 (count (:deck (get-corp)))) "Card trashed to Archives by Noise should come from R&D")
     (play-from-hand state :runner "Sure Gamble")
     (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")
-    (core/click-draw state :runner nil)
+    (click-draw state :runner)
     (play-from-hand state :runner "Clone Chip")
     (play-from-hand state :runner "Clone Chip")
     (trash-from-hand state :runner "Cache")
@@ -2836,7 +2836,7 @@
       (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (refresh q) 0)
@@ -2844,7 +2844,7 @@
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (refresh q) 0)

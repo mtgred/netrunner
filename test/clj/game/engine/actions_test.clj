@@ -106,7 +106,7 @@
       (testing "Turn 1 Runner"
         (core/start-turn state :runner nil)
         (take-credits state :runner 3)
-        (core/click-credit state :runner nil)
+        (click-credit state :runner)
         (core/end-turn state :runner nil)
         (rez state :corp (refresh adonis))
         (rez state :corp (refresh publics1)))

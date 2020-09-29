@@ -757,7 +757,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
       (play-from-hand state :runner "Buffer Drive")
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (click-card state :corp "Hostile Takeover")
