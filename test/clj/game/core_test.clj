@@ -67,18 +67,16 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
-(defn take-credits
+(defmacro take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
   If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-   (let  [remaining-clicks (get-in @state [side :click])
-          n (or n remaining-clicks)
-          other (if (= side :corp) :runner :corp)]
-     (dotimes [i n] (core/process-action "credit" state side nil))
-     (when (zero? (get-in @state [side :click]))
-       (core/process-action "end-turn" state side nil)
-       (core/process-action "start-turn" state other nil)))))
+  [state side & n]
+  `(let [other# (if (= ~side :corp) :runner :corp)]
+     (dotimes [_# (or ~(first n) (get-in @~state [~side :click]))]
+       (core/process-action "credit" ~state ~side nil))
+     (when (zero? (get-in @~state [~side :click]))
+       (core/process-action "end-turn" ~state ~side nil)
+       (core/process-action "start-turn" ~state other# nil))))
 
 
 ;; Deck construction helpers
@@ -214,15 +212,14 @@
                                                        :subroutine ~ability})
        true)))
 
-(defn card-side-ability
-  ([state side card ability] (card-side-ability state side card ability nil))
-  ([state side card ability targets]
-   (let [ab {:card (get-card state card)
-             :ability ability
-             :targets targets}]
-     (if (= :corp side)
-       (core/process-action "corp-ability" state side ab)
-       (core/process-action "runner-ability" state side ab)))))
+(defmacro card-side-ability
+  [state side card ability & targets]
+  `(let [ab# {:card (get-card ~state ~card)
+              :ability ~ability
+              :targets ~(first targets)}]
+     (if (= :corp ~side)
+       (core/process-action "corp-ability" ~state ~side ab#)
+       (core/process-action "runner-ability" ~state ~side ab#))))
 
 (def count-tags jutils/count-tags)
 (def is-tagged? jutils/is-tagged?)
@@ -340,12 +337,14 @@
           "The run has not reached the server yet")
       (when (and (some? run#)
                  (not (:no-action run#))
+                 (empty? (get-in @~state [:runner :prompt]))
+                 (empty? (get-in @~state [:corp :prompt]))
+                 (not (:no-action run#))
                  (not= :access-server (:phase run#)))
         (core/process-action "continue" ~state :corp nil)
         (core/process-action "continue" ~state :runner nil))
-      (if (not= :any ~phase)
-        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase"))
-      true)))
+      (when-not (= :any ~phase)
+        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase")))))
 
 (defmacro run-phase-43
   "Ask for triggered abilities phase 4.3"
@@ -357,6 +356,7 @@
      (is (= :approach-server (:phase run#)) "Runner is approaching the server")
      (when (and (some? run#)
                 (zero? (:position run#))
+                (not (:no-action run#))
                 (= :approach-server (:phase run#)))
        (core/process-action "corp-phase-43" ~state :corp nil)
        (core/process-action "continue" ~state :runner nil)
@@ -488,5 +488,5 @@
 (defmacro play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
-  `(do (play-from-hand ~state :corp ~title "New remote")
-       (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
+  `(when (play-from-hand ~state :corp ~title "New remote")
+     (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
