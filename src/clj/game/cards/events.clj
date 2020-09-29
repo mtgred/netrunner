@@ -1057,8 +1057,8 @@
                                              :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
                                                        " forcing the Corp to trash " (count targets)
                                                        " additional cards from the top of R&D")
-                                             :effect (effect (reveal targets)
-                                                             (mill eid :corp (count targets)))})
+                                             :effect (req (reveal state :runner targets)
+                                                          (mill state :corp eid :corp (count targets)))})
                                           card nil)))}}
                card))})
 
