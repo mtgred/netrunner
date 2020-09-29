@@ -141,7 +141,8 @@
                                                    (agenda? %)
                                                    (or (in-hand? %)
                                                        (in-discard? %)))}
-                             :effect (req (gain-credits state side (* 2 (count targets)))
+                             :effect (req (reveal state side targets)
+                                          (gain-credits state side (* 2 (count targets)))
                                           (doseq [c targets]
                                             (move state :corp c :deck))
                                           (shuffle! state :corp :deck)
