@@ -4067,7 +4067,7 @@
     (new-game {:runner {:id "Nasir Meidan: Cyber Explorer"
                         :deck ["Shiv" (qty "Inti" 2)
                                "Access to Globalsec"]}})
-    (is (= 1 (:link (get-runner))) "1 link")
+    (is (= 1 (get-link state)) "1 link")
     (take-credits state :corp)
     (play-from-hand state :runner "Shiv")
     (let [shiv (get-program state 0)]
@@ -4078,7 +4078,7 @@
       (is (= 3 (:current-strength (refresh shiv))) "3 installed breakers; 3 strength")
       (is (= 1 (core/available-mu state)) "3 MU consumed")
       (play-from-hand state :runner "Access to Globalsec")
-      (is (= 2 (:link (get-runner))) "2 link")
+      (is (= 2 (get-link state)) "2 link")
       (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
 (deftest sneakdoor-beta

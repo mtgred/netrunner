@@ -93,7 +93,8 @@
               (assoc am :event :agenda-stolen)]}))
 
 (defcard "Access to Globalsec"
-  {:in-play [:link 1]})
+  {:constant-effects [{:type :link
+                       :value 1}]})
 
 (defcard "Activist Support"
   {:events [{:event :corp-turn-begins
@@ -385,7 +386,9 @@
                                 (move target :rfg))}]})
 
 (defcard "Borrowed Satellite"
-  {:in-play [:hand-size 1 :link 1]})
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:hand-size 1]})
 
 (defcard "Bug Out Bag"
   {:prompt "How many power counters?"
@@ -696,7 +699,8 @@
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (defcard "Cybertrooper Talut"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :runner-install
              :silent (req true)
              :req (req (and (has-subtype? target "Icebreaker")
@@ -897,11 +901,11 @@
              :async true
              :req (req (first-event? state :runner :successful-run))
              :msg (msg "draw 1 card"
-                       (when (or (<= 2 (:link (:runner @state)))
+                       (when (or (<= 2 (get-link state))
                                  (has-subtype? (:identity (:runner @state)) "Digital"))
                          " and gain 1 [Credit]"))
              :effect (req (wait-for (draw state :runner 1 nil)
-                                    (when (or (<= 2 (:link (:runner @state)))
+                                    (when (or (<= 2 (get-link state))
                                               (has-subtype? (:identity (:runner @state)) "Digital"))
                                       (gain-credits state :runner 1))
                                     (effect-completed state side eid)))}]})
@@ -1115,7 +1119,7 @@
                                 :type :credit}}})
 
 (defcard "Globalsec Security Clearance"
-  {:req (req (< 1 (:link runner)))
+  {:req (req (< 1 (get-link state)))
    :flags {:runner-phase-12 (req true)}
    :abilities [{:msg "lose [Click] and look at the top card of R&D"
                 :once :per-turn
@@ -1293,7 +1297,7 @@
                  :effect (effect (make-run target nil card))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
-     :install-cost-bonus (req (- (:link runner)))
+     :install-cost-bonus (req (- (get-link state)))
      :events [{:event :runner-turn-begins
                :optional
                {:req (req (not (get-in @state [:per-turn (:cid card)])))
@@ -1507,7 +1511,8 @@
              :effect (effect (trash-cards eid (filter program? (:hosted card))))}]})
 
 (defcard "Maxwell James"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
                 :prompt "Choose a piece of ICE protecting a remote server"
                 :choices {:card #(and (ice? %)
@@ -2476,7 +2481,8 @@
                             (gain-credits state side credits)))}]})
 
 (defcard "The Archivist"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :agenda-scored
              :req (req (or (has-subtype? target "Initiative")
                            (has-subtype? target "Security")))
@@ -2593,7 +2599,8 @@
                                   card nil))))}]}))
 
 (defcard "The Helpful AI"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
@@ -2817,7 +2824,7 @@
 (defcard "Underworld Contact"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
-                 :effect (req (when (and (>= (:link runner) 2)
+                 :effect (req (when (and (<= 2 (get-link state))
                                          (:runner-phase-12 @state))
                                 (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
                                 (gain-credits state :runner 1)))}]

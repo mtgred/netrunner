@@ -86,10 +86,10 @@
         runner-deck-id (get-in runner [:deck :_id])
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
-        corp-identity (make-card (or (get-in corp [:deck :identity])
-                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
-        runner-identity (make-card (or (get-in runner [:deck :identity])
-                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
+        corp-identity (build-card (or (get-in corp [:deck :identity])
+                                      {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
+        runner-identity (build-card (or (get-in runner [:deck :identity])
+                                        {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
@@ -100,13 +100,6 @@
         spectatorhands
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
         (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
-
-(defn init-identity
-  "Initialise the identity"
-  [state side identity]
-  (card-init state side identity)
-  (when-let [baselink (:baselink identity)]
-    (gain state side :link baselink)))
 
 (defn- create-basic-action-cards
   [state]
@@ -121,8 +114,8 @@
         runner-identity (get-in @state [:runner :identity])]
     (when-let [messages (seq (:messages game))]
       (swap! state assoc :log (conj (vec messages) {:user "__system__" :text "[hr]"})))
-    (init-identity state :corp corp-identity)
-    (init-identity state :runner runner-identity)
+    (card-init state :corp corp-identity)
+    (card-init state :runner runner-identity)
     (create-basic-action-cards state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game nil)

@@ -4158,7 +4158,7 @@
                       [professor whizzard jamie]))
         (click-prompt state :runner kate)
         (is (= kate (-> (get-runner) :identity :title)))
-        (is (= 1 (:link (get-runner))) "1 link")
+        (is (= 1 (get-link state)) "1 link")
         (is (empty? (:discard (get-runner))))
         (is (= "Rebirth" (-> (get-runner) :rfg first :title)))
         (is (changes-credits (get-runner) -4
@@ -4183,20 +4183,20 @@
                             :deck ["Rebirth" "Access to Globalsec"]}
                    :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
-        (is (= 2 (:link (get-runner))) "2 link before rebirth")
+        (is (= 2 (get-link state)) "2 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner chaos)
-        (is (= 1 (:link (get-runner))) "1 link after rebirth")))
+        (is (= 1 (get-link state)) "1 link after rebirth")))
     (testing "Gain link from ID"
       (do-game
         (new-game {:runner {:id professor
                             :deck ["Rebirth" "Access to Globalsec"]}
                    :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
-        (is (= 1 (:link (get-runner))) "1 link before rebirth")
+        (is (= 1 (get-link state)) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner kate)
-        (is (= 2 (:link (get-runner))) "2 link after rebirth")))
+        (is (= 2 (get-link state)) "2 link after rebirth")))
     (testing "Implementation notes are kept, regression test for #3722"
       (do-game
         (new-game {:runner {:id professor

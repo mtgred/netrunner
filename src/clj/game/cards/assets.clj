@@ -1308,8 +1308,8 @@
                      :req (req (seq (filter #(some #{:tag} %) targets))))]}))
 
 (defcard "Net Police"
-  {:recurring (effect (set-prop card :rec-counter (:link runner)))
-   :effect (effect (set-prop card :rec-counter (:link runner)))
+  {:recurring (effect (set-prop card :rec-counter (get-link state)))
+   :effect (effect (set-prop card :rec-counter (get-link state)))
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 

@@ -2974,7 +2974,7 @@
                         :deck ["Dyson Mem Chip"
                                "Access to Globalsec"]}})
     (play-from-hand state :corp "Net Police" "New remote")
-    (is (= 2 (:link (get-runner))))
+    (is (= 2 (get-link state)))
     (let [netpol (get-content state :remote1 0)]
       (rez state :corp netpol)
       (is (= 2 (get-counters (refresh netpol) :recurring)) "2 recurring for Runner's 2 link")

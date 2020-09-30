@@ -74,6 +74,7 @@
   (sum-agenda-points state side))
 
 (defn update-all-agenda-points
-  [state _]
-  (doseq [side [:corp :runner]]
-    (update-agenda-points state side)))
+  ([state] (update-all-agenda-points state nil))
+  ([state _]
+   (doseq [side [:corp :runner]]
+     (update-agenda-points state side))))

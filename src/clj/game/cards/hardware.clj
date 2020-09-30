@@ -540,7 +540,9 @@
                                 :type :recurring}}})
 
 (defcard "Dyson Mem Chip"
-  {:in-play [:memory 1 :link 1]})
+  {:in-play [:memory 1]
+   :constant-effects [{:type :link
+                       :value 1}]})
 
 (defcard "e3 Feedback Implants"
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
@@ -684,7 +686,8 @@
 (defcard "Forger"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :in-play [:link 1]
+   :constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
@@ -956,8 +959,9 @@
                 :msg "expose 1 card"}]})
 
 (defcard "LLDS Memory Diamond"
-  {:in-play [:link 1
-             :memory 1
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:memory 1
              :hand-size 1]})
 
 (defcard "LLDS Processor"
@@ -1372,7 +1376,9 @@
                                                    (draw state :corp eid 1 nil)))}
               :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                         (effect-completed state side eid))}}}]
-    {:in-play [:link 1 :memory 1]
+    {:constant-effects [{:type :link
+                       :value 1}]
+     :in-play [:memory 1]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
                               (= (:position run) 1) ; trigger when last ICE passed
@@ -1468,7 +1474,8 @@
   {:in-play [:rd-access 1]})
 
 (defcard "Rabbit Hole"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
               :prompt "Install another Rabbit Hole?"
               :msg "install another Rabbit Hole"
@@ -1535,7 +1542,9 @@
                          :effect (effect (move :corp target :deck {:front true}))}}))}]})
 
 (defcard "Reflection"
-  {:in-play [:memory 1 :link 1]
+  {:in-play [:memory 1]
+   :constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :jack-out
              :effect (req (let [card (first (shuffle (:hand corp)))]
                             (reveal state :corp card)
@@ -1616,16 +1625,20 @@
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"
-                :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
+                :msg (msg "add " (get-link state)
+                          " strength to " (:title target)
+                          " until the end of the run")
                 :req (req (:run @state))
                 :prompt "Select one non-Cloud icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
                 :cost [:trash]
-                :effect (effect (pump target (:link runner) :end-of-run))}
+                :effect (effect (pump target (get-link state) :end-of-run))}
                {:label "Add [Link] strength to any Cloud icebreakers until the end of the run"
-                :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
+                :msg (msg "add " (get-link state)
+                          " strength to " (count targets)
+                          " Cloud icebreakers until the end of the run")
                 :req (req (:run @state))
                 :prompt "Select any number of Cloud icebreakers"
                 :choices {:max 50
@@ -1634,11 +1647,13 @@
                                       (installed? %))}
                 :cost [:trash]
                 :effect (req (doseq [t targets]
-                               (pump state side t (:link runner) :end-of-run)
+                               (pump state side t (get-link state) :end-of-run)
                                (update-breaker-strength state side t)))}]})
 
 (defcard "Security Nexus"
-  {:in-play [:memory 1 :link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:memory 1]
    :events [{:event :encounter-ice
              :optional
              {:req (req (not-used-once? state {:once :per-turn} card))
@@ -1779,7 +1794,8 @@
                                 :type :recurring}}})
 
 (defcard "Sports Hopper"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
@@ -1866,7 +1882,9 @@
                        :value 1}]})
 
 (defcard "The Toolbox"
-  {:in-play [:link 2 :memory 2]
+  {:constant-effects [{:type :link
+                       :value 2}]
+   :in-play [:memory 2]
    :recurring 2
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))

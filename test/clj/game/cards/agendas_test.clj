@@ -1963,12 +1963,12 @@
   ;; Net Quarantine
   (do-game
     (new-game {:corp {:deck ["Net Quarantine"]}})
-    (core/gain state :runner :link 1)
+    (swap! state assoc-in [:runner :identity :baselink] 1)
     (core/gain state :corp :click 3)
     (play-and-score state "Net Quarantine")
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
-      (is (= 1 (:link (get-runner))) "Runner has 1 link")
+      (is (= 1 (get-link state)) "Runner has 1 link")
       (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")

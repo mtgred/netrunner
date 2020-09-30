@@ -2886,10 +2886,10 @@
     (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Rabbit Hole")
-    (is (= 1 (:link (get-runner))))
+    (is (= 1 (get-link state)))
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Yes")
-    (is (= 3 (:link (get-runner))))
+    (is (= 3 (get-link state)))
     (is (= 3 (count (get-hardware state))))
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
@@ -3441,11 +3441,11 @@
     (starting-hand state :runner ["Sports Hopper"])
     (take-credits state :corp)
     (play-from-hand state :runner "Sports Hopper")
-    (is (= 1 (:link (get-runner))) "Gained 1 link")
+    (is (= 1 (get-link state)) "Gained 1 link")
     (card-ability state :runner (get-hardware state 0) 0)
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
-    (is (zero? (:link (get-runner))) "Lost link")))
+    (is (zero? (get-link state)) "Lost link")))
 
 (deftest spy-camera
   ;; Spy Camera - Full test

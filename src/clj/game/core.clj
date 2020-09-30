@@ -477,6 +477,10 @@
    runner-can-install?
    runner-install]
 
+  [game.core.link
+   get-link
+   update-link]
+
   [game.core.moving
    as-agenda
    discard-from-hand
@@ -528,6 +532,7 @@
 
   [game.core.process-actions
    command-parser
+   fake-checkpoint
    process-action]
 
   [game.core.props
@@ -649,7 +654,6 @@
    build-card
    create-deck
    init-game
-   init-identity
    keep-hand
    mulligan]
 

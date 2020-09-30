@@ -221,9 +221,18 @@
        (core/process-action "corp-ability" ~state ~side ab#)
        (core/process-action "runner-ability" ~state ~side ab#))))
 
+(defmacro change
+  [state side value-key delta]
+  `(let [target# {:key ~value-key
+                  :delta ~delta}]
+     (is (and (keyword? ~value-key) (number? ~delta)) "Passed in value-key and delta")
+     (when (and ~value-key ~delta)
+       (core/process-action "change" ~state ~side target#))))
+
 (def count-tags jutils/count-tags)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
+(def get-link core/get-link)
 
 (defn gain-tags
   [state side n]

@@ -647,12 +647,11 @@
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital")))
-                         (if (:flipped card)
-                           (lose state :runner :link 1)
-                           (gain state :runner :link 1))
-                         (effect-completed state side eid))]
-    {:events [{:event :pre-first-turn
+                                                      :subtype "Digital"))))]
+    {:constant-effects [{:type :link
+                         :req (req (:flipped card))
+                         :value 1}]
+     :events [{:event :pre-first-turn
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :runner-turn-ends

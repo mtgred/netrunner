@@ -33,7 +33,7 @@
            (or (map? card)
                (string? card)))
       (if (map? card)
-        (core/select state side {:card card})
+        (core/process-action "select" state side {:card card})
         (let [all-cards (concat (core/get-all-installed state)
                                 (mapcat (fn [side]
                                           (mapcat #(-> @state side %)
@@ -41,7 +41,7 @@
                                         [:corp :runner]))
               matching-cards (filter #(= card (:title %)) all-cards)]
           (if (= (count matching-cards) 1)
-            (core/select state side {:card (first matching-cards)})
+            (core/process-action "select" state side {:card (first matching-cards)})
             (is (= (count matching-cards) 1)
                 (str "Expected to click card [ " card
                      " ] but found " (count matching-cards)

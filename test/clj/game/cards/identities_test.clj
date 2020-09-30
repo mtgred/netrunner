@@ -463,7 +463,7 @@
       (new-game {:runner {:id "Andromeda: Dispossessed Ristie"
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
                                  (qty "Security Testing" 3) (qty "Bank Job" 3)]}})
-      (is (= 1 (:link (get-runner))) "1 link")
+      (is (= 1 (get-link state)) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "9 card starting hand after mulligan"
     (do-game
@@ -471,7 +471,7 @@
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
                                  (qty "Security Testing" 3) (qty "Bank Job" 3)]}
                  :options {:mulligan :runner}})
-      (is (= 1 (:link (get-runner))) "1 link")
+      (is (= 1 (get-link state)) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "should not grant Palana credits"
     (do-game
@@ -1480,14 +1480,26 @@
       (take-credits state :corp)
       (let [ho (get-in @state [:runner :identity])]
         (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
-        (is (= 0 (:link (get-runner))) "Hoshiko starts with 0 link")
+        (is (= 0 (get-link state)) "Hoshiko starts with 0 link")
         (is (has-subtype? (refresh ho) "Natural") "Hoshiko starts with subtype Natural")
         (run-empty-server state :hq)
         (click-prompt state :runner "No action")
         (take-credits state :runner)
         (is (:flipped (refresh ho)) "Hoshiko is flipped")
-        (is (= 1 (:link (get-runner))) "Hoshiko now has 1 link")
+        (is (= 1 (get-link state)) "Hoshiko now has 1 link")
         (is (has-subtype? (refresh ho) "Digital") "Hoshiko now has the subtype Digital"))))
+  (testing "Rebirth while flipped resets link #5289"
+    (do-game
+      (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
+                          :hand ["Rebirth"]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rebirth")
+      (click-prompt state :runner "Alice Merchant: Clan Agitator")
+      (is (zero? (get-link state)) "Runner has 0 link")))
   (testing "Interaction with DreamNet"
     (do-game
       (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
@@ -1497,7 +1509,7 @@
       (play-from-hand state :runner "DreamNet")
       (let [ho (get-in @state [:runner :identity])]
         (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
-        (is (= 0 (:link (get-runner))) "Hoshiko starts with 0 link")
+        (is (= 0 (get-link state)) "Hoshiko starts with 0 link")
         (is (has-subtype? (refresh ho) "Natural") "Hoshiko starts with subtype Natural")
         (let [cards (count (:hand (get-runner)))
               credits (:credit (get-runner))]
@@ -1508,7 +1520,7 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (is (:flipped (refresh ho)) "Hoshiko is flipped")
-        (is (= 1 (:link (get-runner))) "Hoshiko now has 1 link")
+        (is (= 1 (get-link state)) "Hoshiko now has 1 link")
         (is (has-subtype? (refresh ho) "Digital") "Hoshiko now has the subtype Digital")
         (let [cards (count (:hand (get-runner)))
               credits (:credit (get-runner))]

@@ -837,9 +837,9 @@
                                 "Aumakua"]}})
      (take-credits state :corp)
      (core/gain state :runner :credit 10)
-     (is (= 0 (:link (get-runner))) "Start with 0 link")
+     (is (= 0 (get-link state)) "Start with 0 link")
      (play-from-hand state :runner "Cybertrooper Talut")
-     (is (= 1 (:link (get-runner))) "Gained 1 link")
+     (is (= 1 (get-link state)) "Gained 1 link")
      (play-from-hand state :runner "Corroder")
      (play-from-hand state :runner "Aumakua")
      (let [cor (get-program state 0)
@@ -1139,7 +1139,7 @@
         (click-prompt state :runner chaos)
         (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
         (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
-        (is (= 2 (:link (get-runner))) "2 link from Sunny")
+        (is (= 2 (get-link state)) "2 link from Sunny")
         (is (= 5 (core/available-mu state)) "+1 MU from Chaos Theory")
         ;; Trash DJ Fenris
         (trash-resource state "DJ Fenris")
@@ -1180,7 +1180,7 @@
         (click-prompt state :runner geist)
         (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
         (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
-        (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
+        (is (= 2 (get-link state)) "2 link from Sunny, no extra link from Geist")
         (let [hand-count (count (:hand (get-runner)))]
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
           (is (= (inc hand-count) (count (:hand (get-runner))))
@@ -1937,12 +1937,14 @@
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
-    (new-game {:runner {:deck ["Globalsec Security Clearance"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                      :hand ["Hedge Fund"]}
+               :runner {:deck ["Globalsec Security Clearance"]}})
     (take-credits state :corp)
-    (core/gain state :runner :link 2)
+    (swap! state assoc-in [:runner :identity :baselink] 2)
+    (core/fake-checkpoint state)
     (play-from-hand state :runner "Globalsec Security Clearance")
     (take-credits state :runner)
-    (starting-hand state :corp ["Hedge Fund"]) ; Hedge Fund on top
     (take-credits state :corp)
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
     (let [gsec (get-resource state 0)]
@@ -4602,14 +4604,14 @@
     (new-game {:runner {:deck ["The Helpful AI" "Corroder"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Helpful AI")
-    (is (= 1 (:link (get-runner))) "Gained 1 link")
+    (is (= 1 (get-link state)) "Gained 1 link")
     (play-from-hand state :runner "Corroder")
     (let [corr (get-program state 0)]
       (card-ability state :runner (get-resource state 0) 0)
       (click-card state :runner corr)
       (is (= 4 (:current-strength (refresh corr))) "Corroder has +2 strength")
       (is (= 1 (count (:discard (get-runner)))) "Helpful AI trashed")
-      (is (zero? (:link (get-runner))))
+      (is (zero? (get-link state)))
       (take-credits state :runner)
       (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
 
