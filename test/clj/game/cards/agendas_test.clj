@@ -1027,10 +1027,10 @@
     (play-from-hand state :corp "Lotus Field" "HQ")
     (let [lf (get-ice state :hq 0)]
       (rez state :corp lf)
-      (is (= 4 (:current-strength (refresh lf))) "Should start with base strength of 4")
+      (is (= 4 (get-strength (refresh lf))) "Should start with base strength of 4")
       (is (zero? (:credit (get-corp))) "Should have 0 credits after rez")
       (play-and-score state "Encrypted Portals")
-      (is (= 5 (:current-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
+      (is (= 5 (get-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
       (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
 
 (deftest escalate-vitriol
@@ -1594,10 +1594,10 @@
           io (get-ice state :rd 0)]
       (rez state :corp nh)
       (rez state :corp io)
-      (is (= 4 (:current-strength (refresh nh))) "Should start with base strength of 4")
+      (is (= 4 (get-strength (refresh nh))) "Should start with base strength of 4")
       (is (= 7 (:credit (get-corp))) "Should have 7 credits after rez")
       (play-and-score state "Improved Tracers")
-      (is (= 5 (:current-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
+      (is (= 5 (get-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -3183,10 +3183,10 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (let [iw (get-ice state :hq 0)]
       (rez state :corp iw)
-      (is (= 1 (:current-strength (refresh iw))) "Should start with base strength of 1")
+      (is (= 1 (get-strength (refresh iw))) "Should start with base strength of 1")
       (is (= 4 (:credit (get-corp))) "Should have 4 credits after rez")
       (play-and-score state "Superior Cyberwalls")
-      (is (= 2 (:current-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
+      (is (= 2 (get-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
       (is (= 5 (:credit (get-corp))) "Should gain 1 credit for rezzed barrier"))))
 
 (deftest tgtbt

@@ -456,13 +456,13 @@
     (play-from-hand state :corp "Hunter" "HQ")
     (let [hunter (get-ice state :hq 0)]
       (rez state :corp hunter)
-      (is (= 4 (:current-strength (refresh hunter))))
+      (is (= 4 (get-strength (refresh hunter))))
       (play-from-hand state :corp "Casting Call")
       (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
       (let [imptrac (get-content state :remote1 0)]
         (is (rezzed? (refresh imptrac)) "Improved Tracers is faceup")
-        (is (= 4 (:current-strength (refresh hunter))) "Hunter hasn't gained strength")
+        (is (= 4 (get-strength (refresh hunter))) "Hunter hasn't gained strength")
         (play-from-hand state :corp "Casting Call")
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
         (click-prompt state :corp "New remote")
@@ -2054,8 +2054,8 @@
     (play-from-hand state :corp "Lag Time")
     (rez state :corp (get-ice state :hq 0))
     (rez state :corp (get-ice state :rd 0))
-    (is (= 1 (:current-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
-    (is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
+    (is (= 1 (get-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
+    (is (= 5 (get-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
 
 (deftest lateral-growth
   (do-game
@@ -2500,7 +2500,7 @@
     (rez state :corp (get-ice state :hq 0))
     (play-from-hand state :corp "Patch")
     (click-card state :corp (get-ice state :hq 0))
-    (is (= 2 (:current-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
+    (is (= 2 (get-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
 
 (deftest paywall-implementation
   ;; Paywall Implementation - Gain 1 credit for every successful run

@@ -1954,7 +1954,7 @@
             {:event :ice-strength-changed
              :req (req (and (same-card? target (:host card))
                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
-                            (<= (:current-strength target) 0)))
+                            (<= (get-strength target) 0)))
              :async true
              :effect (req (unregister-events state side card)
                           (when (get-in card [:special :installing])

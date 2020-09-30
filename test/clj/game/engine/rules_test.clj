@@ -453,10 +453,10 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [laamb (get-program state 0)]
-        (is (= 2 (:current-strength (refresh laamb))) "Laamb starts at 2 strength")
+        (is (= 2 (get-strength (refresh laamb))) "Laamb starts at 2 strength")
         (is (= 6 (:credit (get-runner))) "Spent 4 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
-        (is (= 8 (:current-strength (refresh laamb))) "Laamb is at 8 strength")
+        (is (= 8 (get-strength (refresh laamb))) "Laamb is at 8 strength")
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
   (testing "Multi pump"
     (do-game
@@ -470,10 +470,10 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [ank (get-program state 0)]
-        (is (zero? (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
+        (is (zero? (get-strength (refresh ank))) "Ankusa starts at 1 strength")
         (is (= 4 (:credit (get-runner))) "Spent 6 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
-        (is (= 3 (:current-strength (refresh ank))) "Ankusa is at 3 strength")
+        (is (= 3 (get-strength (refresh ank))) "Ankusa is at 3 strength")
         (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
 
 (deftest autoresolve

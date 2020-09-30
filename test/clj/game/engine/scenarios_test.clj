@@ -148,7 +148,7 @@
               cap (get-content state :remote1 2)]
           (rez state :corp tur)
           (run-continue state)
-          (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
+          (is (= 5 (get-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
           (click-prompt state :runner "End the run")
           (play-from-hand state :runner "Emergency Shutdown")

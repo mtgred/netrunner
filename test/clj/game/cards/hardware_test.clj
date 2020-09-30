@@ -1036,12 +1036,12 @@
             enig (get-ice state :hq 0)]
         (rez state :corp (refresh enig))
         (run-continue state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
+        (is (= 2 (get-strength (refresh enig))) "Enigma starts at 2 strength")
         (click-prompt state :runner "Yes")
-        (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
+        (is (= -4 (get-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
         (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
         (run-jack-out state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
+        (is (= 2 (get-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
 (deftest dinosaurus
   ;; Dinosaurus
@@ -1055,12 +1055,12 @@
       (is (= 2 (core/available-mu state)) "2 MU used")
       (let [dino (get-hardware state 0)
             adpt (get-program state 0)]
-        (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
         (card-ability state :runner dino 1)
         (click-card state :runner (refresh adpt))
         (let [hosted-adpt (first (:hosted (refresh dino)))]
           (is (= 4 (core/available-mu state)) "0 MU used")
-          (is (= 8 (:current-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
+          (is (= 8 (get-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
   (testing "Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
     (do-game
       (new-game {:runner {:deck ["Dinosaurus" "Battering Ram"]}})
@@ -1074,7 +1074,7 @@
         (is (zero? (:credit (get-runner))))
         (is (= 4 (core/available-mu state)) "Battering Ram 2 MU not deducted from available MU")
         (let [ram (first (:hosted (refresh dino)))]
-          (is (= 5 (:current-strength (refresh ram)))
+          (is (= 5 (get-strength (refresh ram)))
               "Dinosaurus giving +2 strength to Battering Ram")
           ;; Trash Battering Ram
           (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
@@ -1532,22 +1532,22 @@
       (card-ability state :runner geb 0)
       (click-card state :runner cor)
       (run-on state :hq)
-      (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
-      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
+      (is (= 2 (get-strength (refresh cor))) "Corroder starts with 2 strength")
+      (is (= 1 (get-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
       (run-continue state)
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 1)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder has 5 strength")
+      (is (= 5 (get-strength (refresh cor))) "Corroder has 5 strength")
       (card-ability state :runner bukh 1)
-      (is (= 2 (:current-strength (refresh bukh))) "Bukhgalter has 2 strength")
+      (is (= 2 (get-strength (refresh bukh))) "Bukhgalter has 2 strength")
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
-      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
+      (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength")
+      (is (= 1 (get-strength (refresh bukh))) "Bukhgalter has reset to 1")
       (run-jack-out state)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength"))))
+      (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
@@ -1886,11 +1886,11 @@
     (play-from-hand state :runner "Passport")
     (let [inti (get-program state 0)
           pass (get-program state 1)]
-      (is (= 2 (:current-strength (refresh inti))) "Strength boosted by 1; 1 copy of LLDS when installed")
-      (is (= 4 (:current-strength (refresh pass))) "Strength boosted by 2; 2 copies of LLDS when installed")
+      (is (= 2 (get-strength (refresh inti))) "Strength boosted by 1; 1 copy of LLDS when installed")
+      (is (= 4 (get-strength (refresh pass))) "Strength boosted by 2; 2 copies of LLDS when installed")
       (take-credits state :runner)
-      (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
-      (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
+      (is (= 1 (get-strength (refresh inti))) "Strength reduced to default")
+      (is (= 2 (get-strength (refresh pass))) "Strength reduced to default"))))
 
 (deftest lockpick
   ;; Lockpick
@@ -2408,10 +2408,10 @@
       (run-on state "HQ")
       (let [pea (get-program state 0)]
         (click-card state :runner pea)
-        (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
+        (is (= 3 (get-strength (refresh pea))) "Peacock strength boosted")
         (run-continue state)
         (click-prompt state :runner "No action")
-        (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+        (is (= 2 (get-strength (refresh pea))) "Peacock strength back to default"))))
   (testing "Do not display prompt without an installed icebreaker"
     (do-game
       (new-game {:runner {:deck [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 2)]}})
@@ -3221,13 +3221,13 @@
           sifr (get-hardware state 0)]
       (rez state :corp arch)
       (rez state :corp ip)
-      (is (= 4 (:current-strength (refresh ip))))
+      (is (= 4 (get-strength (refresh ip))))
       (run-on state "HQ")
       (run-continue state)
       (is (= 2 (:position (:run @state))))
       (is (= "Use Şifr?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (zero? (:current-strength (refresh ip))))
+      (is (zero? (get-strength (refresh ip))))
       (run-continue state)
       (run-continue state)
       (is (= 1 (:position (:run @state))))
@@ -3240,11 +3240,11 @@
       (click-card state :corp sifr)
       (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
       (run-jack-out state)
-      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
+      (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
       (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
       (click-card state :runner "Şifr")
-      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength"))))
+      (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
 
 (deftest silencer
   ;; Silencer
@@ -3717,13 +3717,13 @@
     (play-from-hand state :runner "Faerie")
     (let [par (get-program state 0)
           fae (get-program state 1)]
-      (is (= 2 (:current-strength (refresh fae))))
+      (is (= 2 (get-strength (refresh fae))))
       (play-from-hand state :runner "The Personal Touch")
       (click-card state :runner par)
       (is (nil? (:hosted (refresh par))) "TPT can't be hosted on a non-icebreaker")
       (click-card state :runner fae)
       (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
-      (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
+      (is (= 3 (get-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
 
 (deftest the-toolbox
   ;; The Toolbox

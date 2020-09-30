@@ -283,8 +283,11 @@
 ;;; Ice strength functions
 (defn get-strength
   [card]
-  (or (:current-strength card)
-      (:strength card)))
+  (when (or (ice? card)
+            (has-subtype? card "Icebreaker"))
+    (or (:current-strength card)
+        (:strength card)
+        0)))
 
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
@@ -308,10 +311,11 @@
   "Updates the given ice's strength by triggering strength events and updating the card."
   [state side ice]
   (let [ice (get-card state ice)
-        oldstren (get-strength ice)]
+        old-strength (get-strength ice)
+        new-strength (ice-strength state side ice)]
     (when (rezzed? ice)
-      (update! state side (assoc ice :current-strength (ice-strength state side ice)))
-      (trigger-event state side :ice-strength-changed (get-card state ice) oldstren))))
+      (update! state side (assoc ice :current-strength new-strength))
+      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength))))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
@@ -358,9 +362,10 @@
   "Updates a breaker's current strength by triggering updates and applying their effects."
   [state side breaker]
   (let [breaker (get-card state breaker)
-        oldstren (get-strength breaker)]
-    (update! state side (assoc (get-card state breaker) :current-strength (breaker-strength state side breaker)))
-    (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
+        old-strength (get-strength breaker)
+        new-strength (breaker-strength state side breaker)]
+    (update! state side (assoc (get-card state breaker) :current-strength new-strength))
+    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)))
 
 (defn update-all-icebreakers
   [state side]

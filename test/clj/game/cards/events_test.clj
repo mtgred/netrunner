@@ -2758,13 +2758,13 @@
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Injection Attack")
     (click-prompt state :runner "Archives")
-    (is (= 2 (:current-strength (get-program state 0))) "Corroder at 2 strength")
+    (is (= 2 (get-strength (get-program state 0))) "Corroder at 2 strength")
     (click-card state :runner (get-program state 0))
-    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (is (= 4 (get-strength (get-program state 0))) "Corroder at 4 strength")
     (run-continue state)
-    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (is (= 4 (get-strength (get-program state 0))) "Corroder at 4 strength")
     (run-continue state)
-    (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+    (is (= 2 (get-strength (get-program state 0))) "Corroder reset to 2 strength")))
 
 (deftest inside-job
   ;; Inside Job
@@ -4061,22 +4061,22 @@
     (click-prompt state :runner "0")
     (let [atman (get-program state 1)
           corr (get-program state 0)]
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength")
       (play-from-hand state :runner "Pushing the Envelope")
       (click-prompt state :runner "Archives")
       (run-continue state)
       ; 3 cards in hand - no boost
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength")
       (play-from-hand state :runner "Pushing the Envelope")
       (click-prompt state :runner "Archives")
       ; 2 cards in hand - boost
-      (is (= 2 (:current-strength (refresh atman))) "Atman 2 current strength")
-      (is (= 4 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (= 2 (get-strength (refresh atman))) "Atman 2 current strength")
+      (is (= 4 (get-strength (refresh corr))) "Corroder 2 current strength")
       (run-continue state)
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength"))))
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength"))))
 
 (deftest quality-time
   ;; Quality Time
@@ -4670,15 +4670,15 @@
     (play-from-hand state :runner "Street Peddler")
     (let [turing (get-ice state :hq 0)]
       (rez state :corp turing)
-      (is (= 2 (:current-strength (refresh turing))))
+      (is (= 2 (get-strength (refresh turing))))
       (run-on state "HQ")
       (run-continue state)
-      (is (= 2 (:current-strength (refresh turing))) "Scrubbed not active when on Peddler")
+      (is (= 2 (get-strength (refresh turing))) "Scrubbed not active when on Peddler")
       (run-jack-out state)
       (play-from-hand state :runner "Scrubbed")
       (run-on state "HQ")
       (run-continue state)
-      (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
+      (is (zero? (get-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-jack-out state))))
 
 (deftest showing-off

@@ -844,15 +844,15 @@
      (play-from-hand state :runner "Aumakua")
      (let [cor (get-program state 0)
            aum (get-program state 1)]
-       (is (= 4 (:current-strength (refresh cor))) "+2 strength by Talut")
-       (is (= 0 (:current-strength (refresh aum))) "No strength boost for AI")
+       (is (= 4 (get-strength (refresh cor))) "+2 strength by Talut")
+       (is (= 0 (get-strength (refresh aum))) "No strength boost for AI")
        (run-on state :hq)
        (card-ability state :runner cor 1)
-       (is (= 5 (:current-strength (refresh cor))) "+1 strength by hand")
+       (is (= 5 (get-strength (refresh cor))) "+1 strength by hand")
        (run-jack-out state)
-       (is (= 4 (:current-strength (refresh cor))) "Strength back down to 4")
+       (is (= 4 (get-strength (refresh cor))) "Strength back down to 4")
        (take-credits state :runner)
-       (is (= 2 (:current-strength (refresh cor))) "Corroder strength back down to normal")))))
+       (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal")))))
 
 (deftest dadiana-chacon
   ;; gain 1 cr at start of turn if you have less than 6,
@@ -963,17 +963,17 @@
     (run-on state :archives)
     (let [faust (get-program state 0)
           dean (get-resource state 0)]
-      (is (= 2 (:current-strength faust)) "Faust at 2 strength")
+      (is (= 2 (get-strength faust)) "Faust at 2 strength")
       (is (zero? (-> (get-runner) :discard count)) "Dean Lister not discarded yet")
       (card-ability state :runner dean 0)
       (click-card state :runner faust)
       (is (= 1 (-> (get-runner) :discard count)) "Dean Lister trashed to use its abilitiy")
-      (is (= 5 (:current-strength (refresh faust))) "Faust at 5 strength (2 base + 3 from Dean)")
+      (is (= 5 (get-strength (refresh faust))) "Faust at 5 strength (2 base + 3 from Dean)")
       (card-ability state :runner faust 1) ;boost by 2
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-      (is (= 6 (:current-strength (refresh faust))) "Faust at 6 strength (2 base + 2 from Dean + 2 from boost)")
+      (is (= 6 (get-strength (refresh faust))) "Faust at 6 strength (2 base + 2 from Dean + 2 from boost)")
       (run-jack-out state)
-      (is (= 2 (:current-strength (refresh faust))) "Dean Lister effect ends after run"))))
+      (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
@@ -2242,9 +2242,9 @@
       (run-on state "Archives")
       (rez state :corp iwall)
       (run-continue state)
-      (is (zero? (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-jack-out state)
-      (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
+      (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
 (deftest inside-man
   ;; Inside Man
@@ -2646,9 +2646,9 @@
       (click-card state :runner (find-card "Study Guide" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
       (let [sg (second (:hosted (refresh lib)))]
-        (is (zero? (:current-strength (refresh sg))) "Study Guide at 0 strength")
+        (is (zero? (get-strength (refresh sg))) "Study Guide at 0 strength")
         (card-ability state :runner sg 1) ; Place 1 power counter
-        (is (= 1 (:current-strength (refresh sg))) "Study Guide at 1 strength"))
+        (is (= 1 (get-strength (refresh sg))) "Study Guide at 1 strength"))
       (card-ability state :runner lib 0)
       (click-card state :runner (find-card "Chameleon" (:hand (get-runner))))
       (click-prompt state :runner "Sentry")
@@ -4609,11 +4609,11 @@
     (let [corr (get-program state 0)]
       (card-ability state :runner (get-resource state 0) 0)
       (click-card state :runner corr)
-      (is (= 4 (:current-strength (refresh corr))) "Corroder has +2 strength")
+      (is (= 4 (get-strength (refresh corr))) "Corroder has +2 strength")
       (is (= 1 (count (:discard (get-runner)))) "Helpful AI trashed")
       (is (zero? (get-link state)))
       (take-credits state :runner)
-      (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
+      (is (= 2 (get-strength (refresh corr))) "Corroder back to default strength"))))
 
 (deftest the-nihilist
   ;; The Nihilist

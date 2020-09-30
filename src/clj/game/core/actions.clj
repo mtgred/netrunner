@@ -261,7 +261,7 @@
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (system-msg state side (str (build-spend-msg async-result "increase")
                                             "the strength of " (:title card) " to "
-                                            (:current-strength (get-card state card))))
+                                            (get-strength (get-card state card))))
                 (effect-completed state side eid)))))
 
 (defn- play-heap-breaker-auto-pump-and-break-impl

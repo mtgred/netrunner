@@ -233,6 +233,7 @@
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
 (def get-link core/get-link)
+(def get-strength core/get-strength)
 
 (defn gain-tags
   [state side n]

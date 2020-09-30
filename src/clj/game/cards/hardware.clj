@@ -1736,7 +1736,7 @@
                                {:type :ice-strength
                                 :duration :end-of-encounter
                                 :req (req (same-card? target ice))
-                                :value (req (- (+ (:strength target 0)
+                                :value (req (- (+ (get-strength target)
                                                   (gather-pre-sifr-effects card state side eid target (rest targets)))))}))
                            (update-all-ice :runner))}}}]}))
 

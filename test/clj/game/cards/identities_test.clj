@@ -1363,7 +1363,7 @@
     (play-from-hand state :corp "Eli 1.0" "Archives")
     (let [eli (get-ice state :archives 0)]
       (rez state :corp eli)
-      (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+      (is (= 5 (get-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
 (deftest hayley-kaplan-universal-scholar
   (testing "Basic test"
@@ -2680,13 +2680,13 @@
         (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-        (is (= 5 (:current-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
+        (is (= 5 (get-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
         (run-continue state)
         (rez state :corp wrap1)
         (run-continue state)
         (is (empty? (:prompt (get-runner))) "Ability already used this turn")
         (run-jack-out state)
-        (is (= 7 (:current-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
+        (is (= 7 (get-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
   (testing "does not affect next ice when current is trashed. Issue #1788."
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Spiderweb"]}
@@ -2707,7 +2707,7 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (first (:hand (get-runner))))
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
-        (is (= 1 (:current-strength (refresh iw))) "Ice Wall not reduced by Null"))))
+        (is (= 1 (get-strength (refresh iw))) "Ice Wall not reduced by Null"))))
   (testing "Receives prompt on second run, if ability not used"
     (do-game
       (new-game {:runner {:id "Null: Whistleblower"
