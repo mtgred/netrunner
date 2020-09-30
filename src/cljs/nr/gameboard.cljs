@@ -4,7 +4,7 @@
             [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
             [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
-                                    faceup? installed? same-card?]]
+                                    faceup? installed? same-card? get-counters]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -174,46 +174,77 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
+(defn abilities-panel-visible
+  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state desired-state]
+  (let [card-side (keyword (.toLowerCase (:side card)))]
+    (when (= side card-side)
+      (if desired-state
+        (swap! c-state assoc :abilities true)
+        (swap! c-state dissoc :abilities)))
+    (when (and (= :runner card-side)
+               (= :corp side)
+               (:corp-abilities card))
+        (if desired-state
+          (swap! c-state assoc :corp-abilities true)
+          (swap! c-state dissoc :corp-abilities)))
+    (when (and (= :corp card-side)
+               (= :runner side)
+               (:runner-abilities card))
+        (if desired-state
+          (swap! c-state assoc :runner-abilities true)
+          (swap! c-state dissoc :runner-abilities)))))
+
 (defn handle-abilities
-  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
+  [side {:keys [abilities corp-abilities runner-abilities facedown c-type] :as card} c-state]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))
         card-side (keyword (.toLowerCase (:side card)))]
-    (when-not (and (= card-side :runner) facedown)
+    (when-not (or (:close-menu @c-state false)
+                  (and (= card-side :runner) facedown))
       (cond
+        (:keep-ability-menu-open card)
+        (let [open-params (:keep-ability-menu-open card)
+              behavior (if (vector? open-params)
+                         (first open-params)
+                         open-params)
+              args (rest open-params)]
+          (cond
+            (= behavior "has-at-least-n-counters")
+            (let [counter-type (first args)
+                  n (second args)]
+              (abilities-panel-visible side card c-state (<= n (get-counters card counter-type))))
+
+            (= behavior "clicks-left")
+            (abilities-panel-visible side card c-state (pos? (get-in @game-state [:runner :click])))
+
+            (= behavior "always")
+            (abilities-panel-visible side card c-state true)))
+
+        (has-subtype? card "Icebreaker") ; ToDo would love to have access to ice.clj here
+        (let [ices (get-in @game-state (concat [:corp :servers] (map keyword (:server (:run @game-state))) [:ices]))
+              ice (nth ices (dec (get-in @game-state [:run :position])))
+              subroutines (:subroutines ice)]
+          (abilities-panel-visible side card c-state (not (and (seq subroutines)
+                                                              (every? :broken subroutines)))))
 
         ;; Toggle abilities panel
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
                      (count runner-abilities)))
             (some #{"rez" "derez" "advance" "trash"} actions)
-            (and (= type "ICE")
+            (and (= c-type "ICE")
                  (not (:run @game-state)))
             (and (corp? card)
                  (not (faceup? card))))
-        (do (when (= side card-side)
-              (if (:abilities @c-state)
-                (swap! c-state dissoc :abilities)
-                (swap! c-state assoc :abilities true)))
-            (when (and (= :runner card-side)
-                       (= :corp side)
-                       (:corp-abilities card))
-              (if (:corp-abilities @c-state)
-                (swap! c-state dissoc :corp-abilities)
-                (swap! c-state assoc :corp-abilities true)))
-            (when (and (= :corp card-side)
-                       (= :runner side)
-                       (:runner-abilities card))
-              (if (:runner-abilities @c-state)
-                (swap! c-state dissoc :runner-abilities)
-                (swap! c-state assoc :runner-abilities true))))
+        (abilities-panel-visible side card c-state (not (:abilities @c-state false)))
 
         ;; Trigger first (and only) ability / action
         (and (= c 1)
              (= side card-side))
         (if (= (count abilities) 1)
           (send-command "ability" {:card card :ability 0})
-          (send-command (first actions) {:card card}))))))
+          (send-command (first actions) {:card card}))))
+    (swap! c-state dissoc :close-menu)))
 
 (defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
@@ -655,6 +686,7 @@
 (defn runner-abs [card c-state runner-abilities subroutines title]
   (when (:runner-abilities @c-state)
     [:div.panel.blue-shade.runner-abilities {:style {:display "inline"}}
+     [:button.win-right {:on-click #((swap! c-state assoc :runner-abilities false :abilities false :close-menu true)) :type "button"} "✘"]
      (when (or (seq runner-abilities)
                (seq subroutines))
        [:span.float-center "Abilities:"])
@@ -690,6 +722,7 @@
 (defn corp-abs [card c-state corp-abilities]
   (when (:corp-abilities @c-state)
     [:div.panel.blue-shade.corp-abilities {:style {:display "inline"}}
+     [:button.win-right {:on-click #((swap! c-state assoc :corp-abilities false :abilities false :close-menu true)) :type "button"} "✘"]
      (when (seq corp-abilities)
        [:span.float-center "Abilities:"])
      (map-indexed
@@ -709,6 +742,7 @@
                    (some #{"derez" "rez" "advance" "trash"} actions)
                    (= type "ICE")))
       [:div.panel.blue-shade.abilities {:style {:display "inline"}}
+       [:button.win-right {:on-click #((swap! c-state assoc :abilities false :close-menu true)) :type "button"} "✘"]
        (when (seq actions)
          [:span.float-center "Actions:"])
        (when (seq actions)

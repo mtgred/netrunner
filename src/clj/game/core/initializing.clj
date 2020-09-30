@@ -168,6 +168,8 @@
               :implementation (card-implemented card)
               :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
               :abilities (ability-init (card-def card)))
+       (merge (if-let [option (get-in (card-def card) [:interactions :keep-ability-menu-open])]
+                {:keep-ability-menu-open option}))
        (dissoc :setname :text :_id :influence :number :influencelimit
                :image_url :factioncost :format :quantity)
        (map->Card))))

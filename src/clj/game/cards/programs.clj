@@ -1641,7 +1641,8 @@
 (defcard "Magnum Opus"
   {:abilities [{:cost [:click 1]
                 :effect (effect (gain-credits 2))
-                :msg "gain 2 [Credits]"}]})
+                :msg "gain 2 [Credits]"}]
+   :interactions {:keep-ability-menu-open :clicks-left}})
 
 (defcard "Makler"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
