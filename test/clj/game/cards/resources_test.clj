@@ -681,7 +681,7 @@
       (let [cs (get-resource state 0)]
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credit from Crash Space"
-                           (core/remove-tag state :runner nil)
+                           (remove-tag state :runner)
                            (click-card state :runner cs)
                            (click-card state :runner cs))))))
 
@@ -4497,7 +4497,7 @@
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/gain state :runner :tag 1)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
@@ -4514,8 +4514,7 @@
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (gain-tags state :runner 1)
-      (core/trash-resource state :corp nil)
-      (click-card state :corp "The Black File")
+      (trash-resource state "The Black File")
       (is (= :corp (:winner @state)) "Corp has now won"))))
 
 (deftest the-class-act
@@ -4904,7 +4903,7 @@
       (play-from-hand state :runner "Thunder Art Gallery")
       (core/gain-credits state :runner 1)
       (gain-tags state :corp 1)
-      (core/remove-tag state :runner nil)
+      (remove-tag state :runner)
       (click-card state :runner "New Angeles City Hall")
       (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
       (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
@@ -4927,7 +4926,7 @@
             rara (get-program state 0)]
         (changes-val-macro -2 (:credit (get-runner))
                            "Used TAG and Sahasrara to install Darwin for free"
-                           (core/remove-tag state :runner nil)
+                           (remove-tag state :runner)
                            (click-card state :runner "Darwin")
                            (click-card state :runner rara)
                            (click-card state :runner rara))

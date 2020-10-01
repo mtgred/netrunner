@@ -5,6 +5,7 @@
     [game.core.events :refer [trigger-event]]
     [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
     [game.core.link :refer [get-link update-link]]
+    [game.core.tags :refer [update-tag-status]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [req]]))
 
@@ -31,15 +32,15 @@
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags
-  "Change a player's base tag count"
+  "Change a player's tag count, using floating effects"
   [state delta]
-  (if (pos? delta)
-    (do (gain state :runner :tag delta)
-        (trigger-event state :runner :manual-gain-tag delta))
-    (do (deduct state :runner [:tag (Math/abs delta)])
-        (trigger-event state :runner :manual-lose-tag delta)))
+  (register-floating-effect
+    state :runner nil
+    {:type :user-tags
+     :value delta})
+  (update-tag-status state)
   (system-msg state :runner
-              (str "sets Tags to " (get-in @state [:runner :tag :base])
+              (str "sets Tags to " (get-in @state [:runner :tag :total])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-bad-pub

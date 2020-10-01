@@ -971,7 +971,7 @@
         (run-continue state)
         (is (= 1 (get-counters (refresh chisel) :virus)) "Chisel now has 1 counter")
         (core/jack-out state :runner nil)
-        (core/derez state :corp iw)
+        (derez state :corp iw)
         (run-on state "HQ")
         (run-continue state)
         (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
@@ -4231,7 +4231,7 @@
         (is (= 1 (get-strength (refresh snow))) "Snowball starts at 1 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
         (is (= 5 (get-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
-        (core/continue state :corp nil)
+        (core/process-action "continue" state :corp nil)
         (is (= 4 (get-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate

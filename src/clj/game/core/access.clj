@@ -132,7 +132,9 @@
                                   (system-msg state side (str async-result " to trash "
                                                               (:title card) " from "
                                                               (name-zone :corp (get-zone card))))
+                                  (println "before trashing shit" (get-in @state [:runner :tag :base]))
                                   (wait-for (trash state side card nil)
+                                            (println "after trashing shit" (get-in @state [:runner :tag :base]))
                                             (access-end state side eid (first async-result) {:trashed true})))
 
                         ; Use access ability

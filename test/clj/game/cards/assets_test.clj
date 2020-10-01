@@ -1085,7 +1085,7 @@
       (let [dq (get-content state :remote1 0)]
         (rez state :corp dq)
         (is (rezzed? (refresh dq)) "Can rez on Corp turn")
-        (core/derez state :corp dq)
+        (derez state :corp dq)
         (take-credits state :corp)
         (rez state :corp dq)
         (is (not (rezzed? (refresh dq))) "Cannot rez on Runner turn"))))
@@ -1856,7 +1856,7 @@
         (let [hopper (get-hardware state 0)]
           (card-ability state :runner hopper 0)
           (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
-          (core/derez state :corp (refresh gp))
+          (derez state :corp (refresh gp))
           (take-credits state :corp)))))
   (testing "Disables further draws after drawing"
     (do-game
@@ -2593,7 +2593,7 @@
         (take-credits state :corp)
         (is (= N (:credit (get-runner))) "Daily casts did not trigger when blanked"))
       (take-credits state :runner)
-      (core/derez state :corp malia1)
+      (derez state :corp malia1)
       (let [N (:credit (get-runner))]
         (take-credits state :corp)
         (is (= (+ N 2) (:credit (get-runner))) "Daily casts triggers again when unblanked"))
@@ -2602,7 +2602,7 @@
       (rez state :corp malia1)
       (click-card state :corp (get-resource state 1))
       (is (= 3 (:click (get-runner))) "Runner doesn't gain a click when Beckman is blanked")
-      (core/derez state :corp malia1)
+      (derez state :corp malia1)
       (is (= 3 (:click (get-runner))) "Runner still has 3 clicks after Beckman is unblanked")
       (rez state :corp malia1)
       (click-card state :corp (get-resource state 1))
@@ -2657,7 +2657,7 @@
       (let [marilyn (get-content state :remote1 0)]
         (rez state :corp (refresh marilyn))
         (is (= 8 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should start with 8 credits")
-        (core/derez state :corp (refresh marilyn))
+        (derez state :corp (refresh marilyn))
         (rez state :corp (refresh marilyn))
         (is (= 16 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should now have 16 credits")))))
 
@@ -2961,7 +2961,7 @@
       ; tag removal
       (gain-tags state :runner 1)
       (click-prompt state :runner "Done") ; Don't prevent the tag
-      (core/remove-tag state :runner 1)
+      (remove-tag state :runner)
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
@@ -5117,7 +5117,7 @@
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
       (is (= 4 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 4 subs")
       (is (= 4 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 4 subs")
-      (core/derez state :corp (refresh wf))
+      (derez state :corp (refresh wf))
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))

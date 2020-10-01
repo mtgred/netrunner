@@ -1707,12 +1707,10 @@
                                                  :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
 
 (defcard "Information Overload"
-  (let [ef (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))
-        ability {:effect ef}]
-    {:on-encounter (tag-trace 1)
-     :effect ef
-     :events [(assoc ability :event :runner-gain-tag)
-              (assoc ability :event :runner-lose-tag)]}))
+  {:on-encounter (tag-trace 1)
+   :events [{:event :tags-changed
+             :req (req (not= target (second targets)))
+             :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}]})
 
 (defcard "Interrupt 0"
   (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
@@ -2535,13 +2533,8 @@
                   :effect (effect (pump-all-ice 3 :end-of-run))}]})
 
 (defcard "Resistor"
-  (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
-                                         (update-ice-strength (get-card state card)))}]
-    {:events [(assoc resistor-effect :event :runner-gain-tag)
-              (assoc resistor-effect :event :runner-lose-tag)
-              (assoc resistor-effect :event :runner-additional-tag-change)]
-     :strength-bonus (req (count-tags state))
-     :subroutines [(trace-ability 4 end-the-run)]}))
+  {:strength-bonus (req (count-tags state))
+   :subroutines [(trace-ability 4 end-the-run)]})
 
 (defcard "Rime"
   {:implementation "Can be rezzed anytime already"

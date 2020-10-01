@@ -276,7 +276,7 @@
         (rez state :corp architect)
         (trash state :corp (refresh architect))
         (is (get-ice state :hq 0) "Architect was trashed, but should be untrashable")
-        (core/derez state :corp (refresh architect))
+        (derez state :corp (refresh architect))
         (trash state :corp (refresh architect))
         (is (nil? (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
         (trash state :corp (get-in @state [:corp :hand 0]))
@@ -882,7 +882,7 @@
         (click-prompt state :runner "Take 1 tag")
         (fire-subs state (refresh dw))
         (is (not (:run @state)) "Run ended")
-        (core/remove-tag state :runner nil)
+        (remove-tag state :runner)
         (run-on state "HQ")
         (run-continue state)
         (click-prompt state :runner "Pay 3 [Credits]")
@@ -2299,7 +2299,7 @@
         (is (zero? (core/get-virus-counters state (first (:hosted (refresh m)))))
           "Parasite does not gain a virus counter")
         (take-credits state :runner)
-        (core/derez state :corp (refresh m))
+        (derez state :corp (refresh m))
         (take-credits state :corp)
         (is (= 1 (core/get-virus-counters state (first (:hosted (refresh m)))))
           "Parasite gains a virus counter on derezzed Magnet")
@@ -2320,7 +2320,7 @@
         (is (zero? (core/get-virus-counters state (second (:hosted (refresh m)))))
           "Second parasite does not gain a virus counter on derezzed Magnet")
         (take-credits state :runner)
-        (core/derez state :corp (refresh m))
+        (derez state :corp (refresh m))
         (take-credits state :corp)
         (is (= 2 (core/get-virus-counters state (first (:hosted (refresh m)))))
           "First parasite gains a virus counter on derezzed Magnet")
@@ -3123,7 +3123,7 @@
         (is (= 2 (count-tags state)))
         (is (= 2 (get-strength (refresh resistor))) "2 Runner tags; 2 strength")
         (take-credits state :corp)
-        (core/remove-tag state :runner 1)
+        (remove-tag state :runner)
         (is (= 1 (get-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
   (testing "Subroutine is trace 4 etr"
     (do-game
@@ -4062,7 +4062,7 @@
         (rez state :corp ti)
         (click-prompt state :corp "No") ; don't use alternative cost
         (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
-        (core/derez state :corp (refresh ti))
+        (derez state :corp (refresh ti))
         (rez state :corp ti)
         (click-prompt state :corp "Yes") ; use alternative cost
         (click-card state :corp "Hostile Takeover")
@@ -4074,7 +4074,7 @@
         (click-card state :corp (refresh ti))
         (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
         (take-credits state :corp)
-        (core/derez state :corp (refresh ti))
+        (derez state :corp (refresh ti))
         (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
         (play-from-hand state :runner "Wasteland")
         (let [wast (get-resource state 0)]

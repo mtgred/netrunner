@@ -2437,8 +2437,10 @@
         (click-prompt state :runner "No action")
         (play-from-hand state :runner "Obelus")
         (gain-tags state :runner 1)
+        (core/fake-checkpoint state)
         (is (= 6 (hand-size :runner)) "Max hand size is 6")
         (core/lose-tags state :runner (game.core.eid/make-eid state) 1)
+        (core/fake-checkpoint state)
         (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
@@ -2508,9 +2510,9 @@
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
   (testing "works with Paper Tripping"
     (do-game
-      (new-game {:runner {:deck ["Obelus" "Paper Tripping"]}})
+      (new-game {:runner {:deck ["Obelus" "Paper Tripping"]
+                          :tags 3}})
       (take-credits state :corp)
-      (gain-tags state :runner 3)
       (is (= 3 (count-tags state)) "Runner starts with 3 tags")
       (play-from-hand state :runner "Obelus")
       (take-credits state :runner)

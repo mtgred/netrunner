@@ -1817,7 +1817,7 @@
       (is (refresh iw2) "Ice Wall on the remote hasn't been trashed")
       (rez state :corp iw)
       (is (refresh iw) "Ice Wall on HQ hasn't been trashed as it's rezzed")
-      (core/derez state :corp iw)
+      (derez state :corp iw)
       (click-card state :runner (refresh iw))
       (is (not (refresh iw)) "Ice Wall on HQ has been trashed")
       (play-from-hand state :runner "En Passant")
@@ -4549,7 +4549,7 @@
       (rez state :corp (get-content state :remote7 0))
       (click-card state :corp (get-in (get-corp) [:scored 0]))
       (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
-      (core/derez state :corp (get-content state :remote4 0))
+      (derez state :corp (get-content state :remote4 0))
       (rez state :corp (get-content state :remote4 0))
       (is (zero? (count-bad-pub state)) "Corp has 0 bad publicity")
       (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt

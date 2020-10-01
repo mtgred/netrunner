@@ -1,5 +1,6 @@
 (ns game.core.tags
   (:require
+    [game.core.effects :refer [any-effects sum-effects]]
     [game.core.eid :refer [effect-completed]]
     [game.core.events :refer [trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
@@ -10,12 +11,29 @@
     [game.macros :refer [wait-for]]
     [game.utils :refer [quantify]]))
 
-(defn tag-prevent
-  ([state side eid n]
-   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n))))
+(defn sum-tag-effects
+  [state]
+  (+ (or (get-in @state [:runner :tag :base]) 0)
+     (sum-effects state :runner nil :user-tags nil)
+     (sum-effects state :runner nil :tags nil)))
 
-(defn- tag-count
+(defn update-tag-status
+  ([state] (update-tag-status state nil))
+  ([state _]
+   (let [old-total (get-in @state [:runner :tag :total])
+         new-total (sum-tag-effects state)
+         is-tagged? (or (any-effects state :runner :is-tagged)
+                        (pos? new-total))]
+     (swap! state assoc-in [:runner :tag :total] new-total)
+     (swap! state assoc-in [:runner :tag :is-tagged] is-tagged?)
+     (trigger-event state :runner :tags-changed new-total old-total is-tagged?))))
+
+(defn tag-prevent
+  [state side eid n]
+  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
+  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
+
+(defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
   [state _ n {:keys [unpreventable unboostable]}]
   (-> n
@@ -25,11 +43,11 @@
 
 (defn- resolve-tag
   "Resolve runner gain tags. Always gives `:base` tags."
-  [state side eid n _]
-  (trigger-event state side :pre-resolve-tag n)
+  [state side eid n]
   (if (pos? n)
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
+        (update-tag-status state)
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 
@@ -39,13 +57,13 @@
   ([state side eid n {:keys [unpreventable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
-             (let [n (tag-count state side n args)
+             (let [n (number-of-tags-to-gain state side n args)
                    prevent (get-prevent-list state :runner :tag)]
                (if (and (pos? n)
                         (not unpreventable)
                         (cards-can-prevent? state :runner prevent :tag))
                  (do (system-msg state :runner "has the option to avoid tags")
-                     (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
+                     (show-wait-prompt state :corp "Runner to prevent tags")
                      (swap! state assoc-in [:prevent :current] :tag)
                      (show-prompt
                        state :runner nil
@@ -59,15 +77,15 @@
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
-                           (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
-                       {:priority 10}))
-                 (resolve-tag state side eid n args))))))
+                           (resolve-tag state side eid (max 0 (- n (or prevent 0))))))))
+                 (resolve-tag state side eid n))))))
 
 (defn lose-tags
   "Always removes `:base` tags"
-  ([state side eid n]
-   (if (= n :all)
-     (lose-tags state side eid (get-in @state [:runner :tag :base]))
-     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
-         (deduct state :runner [:tag {:base n}])
-         (trigger-event-sync state side eid :runner-lose-tag n side)))))
+  [state side eid n]
+  (if (= n :all)
+    (lose-tags state side eid (get-in @state [:runner :tag :base]))
+    (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
+        (deduct state :runner [:tag {:base n}])
+        (update-tag-status state)
+        (trigger-event-sync state side eid :runner-lose-tag n side))))

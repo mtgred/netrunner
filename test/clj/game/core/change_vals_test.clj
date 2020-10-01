@@ -25,12 +25,12 @@
         (is (zero? (count-tags state)) "Runner starts with 0 tags")
         (change state :runner :tag 1)
         (is (= 1 (count-tags state)) "Runner has gained 1 tag")
-        (is (= 1 (get-in @state [:runner :tag :base])) "Only gained in the base")
-        (is (zero? (get-in @state [:runner :tag :additional])) "Only gained in the base")
+        (is (zero? (get-in @state [:runner :tag :base])))
+        (is (= 1 (core/sum-effects state :runner nil :user-tags nil)))
         (change state :runner :tag -1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
-        (is (zero? (get-in @state [:runner :tag :base])) "Only gained in the base")
-        (is (zero? (get-in @state [:runner :tag :additional])) "No change on loss either"))))
+        (is (zero? (get-in @state [:runner :tag :base])))
+        (is (zero? (core/sum-effects state :runner nil :user-tags nil))))))
   (testing "Generic changes"
     (do-game
       (new-game)
@@ -49,7 +49,4 @@
         (change state :runner :link -1)
         (is (zero? (get-link state)) "Runner has lost 1 link")
         (change state :runner :link -1)
-        (is (= -1 (get-link state)) "Runner can go below 0 link"))
-      ))
-  )
-
+        (is (= -1 (get-link state)) "Runner can go below 0 link")))))

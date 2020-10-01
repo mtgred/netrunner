@@ -2559,7 +2559,7 @@
       (is (= 3 (get-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
       (rez state :corp (refresh iw2))
       (is (= 1 (get-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
-      (core/derez state :corp sg)
+      (derez state :corp sg)
       (is (= 2 (get-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
 (deftest self-destruct
@@ -2699,7 +2699,7 @@
         (rez state :corp scg2)
         (rez state :corp cvs2)
         (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
-        (core/derez state :corp (refresh wrap))
+        (derez state :corp (refresh wrap))
         (rez state :corp enig)
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 

@@ -1202,12 +1202,10 @@
                          (has-subtype? % "Connection")
                          (installed? %))}
    :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
-   :effect (req (host state side (get-card state target) (assoc card :seen true :condition true))
-                (swap! state update-in [:runner :tag :additional] inc)
-                (trigger-event state :corp :runner-additional-tag-change 1))
-   :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
-                    (trigger-event state :corp :runner-additional-tag-change -1)
-                    (system-msg state :corp "trashes MCA Informant"))
+   :constant-effects [{:type :tags
+                       :value 1}]
+   :effect (req (host state side (get-card state target) (assoc card :seen true :condition true)))
+   :leave-play (req (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
                        :cost [:click 1 :credit 2]
                        :req (req (= :runner side))

@@ -1246,13 +1246,11 @@
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
              :effect (effect (draw eid (total-cards-accessed target) nil))}
-            ;; Events for tracking hand size
-            {:event :runner-gain-tag
-             :effect (req (change-hand-size state :runner target))}
-            {:event :runner-lose-tag
-             :effect (req (change-hand-size state :runner (- target)))}
-            {:event :runner-additional-tag-change
-             :effect (req (change-hand-size state :runner target))}]})
+            {:event :tags-changed
+             :req (req (not= target (second targets)))
+             :effect (req (let [old-total (second targets)
+                                new-total (first targets)]
+                            (change-hand-size state :runner (- new-total old-total))))}]})
 
 (defcard "Omni-drive"
   {:recurring 1
@@ -1696,7 +1694,10 @@
                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]}))
 
 (defcard "Şifr"
-  (letfn [(gather-pre-sifr-effects [sifr state side eid target targets]
+  (letfn [(index-of [pred coll]
+            (some (fn [[idx item]] (if (pred item) idx))
+                  (map-indexed vector coll)))
+          (gather-pre-sifr-effects [sifr state side eid target targets]
             ;; This is needed because of the stupid ass rulings about how Sifr modifies
             ;; ice strength: Sifr only lowers the ice to 0 at the point it's activated,
             ;; and then other abilities (Sandburg, etc) can raise it back after, which
@@ -1709,7 +1710,7 @@
                    (filter #(if-not (:req %)
                               true
                               ((:req %) state side eid (get-card state (:card %)) (cons target targets))))
-                   (split-with #(same-card? sifr %))
+                   (#(split-at (index-of (fn [item] (same-card? sifr (:card item))) %) %))
                    (first)
                    (mapv #(if-not (fn? (:value %))
                             (:value %)
@@ -1736,9 +1737,8 @@
                                {:type :ice-strength
                                 :duration :end-of-encounter
                                 :req (req (same-card? target ice))
-                                :value (req (- (+ (get-strength target)
-                                                  (gather-pre-sifr-effects card state side eid target (rest targets)))))}))
-                           (update-all-ice :runner))}}}]}))
+                                :value (req (- (+ (:strength target)
+                                                  (gather-pre-sifr-effects card state side eid target (rest targets)))))})))}}}]}))
 
 (defcard "Silencer"
   {:recurring 1

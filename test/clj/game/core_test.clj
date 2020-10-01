@@ -9,6 +9,7 @@
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
+            [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -237,7 +238,12 @@
 
 (defn gain-tags
   [state side n]
-  (core/gain-tags state side (eid/make-eid state) n))
+  (wait-for (core/gain-tags state side n)
+            (core/fake-checkpoint state)))
+
+(defmacro remove-tag
+  [state side]
+  `(core/process-action "remove-tag" ~state ~side nil))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -425,6 +431,15 @@
                 (not (rezzed? card#)))
        (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args))))))
 
+(defmacro derez
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (is (rezzed? card#) (str (:title card#) " is rezzed"))
+     (when (and (installed? card#)
+                (rezzed? card#))
+       (core/process-action "derez" ~state ~side {:card card#}))))
+
 (defmacro end-phase-12
   [state side]
   `(let [phase# (keyword (str (name ~side) "-phase-12"))]
@@ -456,7 +471,6 @@
      (when (some? card#)
        (core/process-action "trash" ~state ~side {:card card#}))))
 
-;;; Misc functions
 (defmacro score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
   [state _ card]
@@ -465,6 +479,7 @@
      (is (some? card#) (str (:title card#) " exists"))
      (when (some? card#)
        (core/gain ~state :corp :click advancementcost# :credit advancementcost#)
+       (core/fake-checkpoint ~state)
        (dotimes [_# advancementcost#]
          (core/process-action "advance" ~state :corp {:card ~card}))
        (is (= advancementcost# (get-counters (get-card ~state ~card) :advancement)))

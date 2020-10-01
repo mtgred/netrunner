@@ -23,6 +23,5 @@
    (let [id (get-in @state [:runner :identity])
          old-link (get-link state :runner)
          new-link (sum-link-effects state id)]
-     (when (not= old-link new-link)
-       (swap! state assoc-in [:runner :link] new-link)
-       (trigger-event state :runner :link-changed id old-link new-link)))))
+     (swap! state assoc-in [:runner :link] new-link)
+     (trigger-event state :runner :link-changed new-link old-link))))

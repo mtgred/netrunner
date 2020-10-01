@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
     [game.core.costs]
@@ -206,6 +207,9 @@
 
   [game.core.change-vals
    change]
+
+  [game.core.checkpoint
+   fake-checkpoint]
 
   [game.core.commands
    command-adv-counter
@@ -532,7 +536,6 @@
 
   [game.core.process-actions
    command-parser
-   fake-checkpoint
    process-action]
 
   [game.core.props

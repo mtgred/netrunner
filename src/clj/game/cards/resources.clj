@@ -35,15 +35,14 @@
 
 (defn- trash-when-tagged-contructor
   "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
-  [name definition]
+  [card-name definition]
   (let [trash-effect {:async true
                       :effect (req (if tagged
-                                     (do (system-msg state :runner (str "trashes " name " for being tagged"))
+                                     (do (system-msg state :runner (str "trashes " card-name " for being tagged"))
                                          (trash state :runner eid card {:unpreventable true}))
                                      (effect-completed state side eid)))}]
     (-> definition
-        (update :events #(apply conj % [(assoc trash-effect :event :runner-gain-tag)
-                                        (assoc trash-effect :event :runner-is-tagged)]))
+        (update :events conj (assoc trash-effect :event :tags-changed))
         (assoc :reactivate trash-effect))))
 
 (defn companion-builder
@@ -483,7 +482,7 @@
                 :cost [:trash :trash-entire-hand]
                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
    :events [{:event :runner-turn-ends
-             :req (req (pos? (count-tags state)))
+             :req (req tagged)
              :interactive (req true)
              :msg "force the Corp to initiate a trace"
              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
@@ -1859,13 +1858,11 @@
                      (gain-credits 1))}))
 
 (defcard "Paparazzi"
-  {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
-                (trigger-event state :runner :runner-is-tagged true))
+  {:constant-effects [{:type :is-tagged
+                       :val true}]
    :events [{:event :pre-damage
              :req (req (= target :meat)) :msg "prevent all meat damage"
-             :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
-   :leave-play (req (swap! state update-in [:runner :tag :is-tagged] dec)
-                    (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))})
+             :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]})
 
 (defcard "Patron"
   (let [ability {:prompt "Choose a server for Patron"
@@ -2746,8 +2743,9 @@
                     (swap! state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
-  (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
-                                                   (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
+  (let [first-event-check (fn [state fn1 fn2]
+                            (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
+                                 (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
                  :prompt "Select a card to install with Thunder Art Gallery"
                  :choices

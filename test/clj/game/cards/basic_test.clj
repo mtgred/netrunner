@@ -127,5 +127,5 @@
       (new-game {:options {:start-as :runner}})
       (gain-tags state :runner 1)
       (is (= 1 (count-tags state)) "Runner has 1 tag")
-      (core/remove-tag state :runner nil)
+      (remove-tag state :runner)
       (is (= 0 (count-tags state)) "Runner removed tag"))))

@@ -190,7 +190,7 @@
       (run-on state :archives)
       (run-continue state)
       (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
-      (core/derez state :corp (get-ice state :archives 0))
+      (derez state :corp (get-ice state :archives 0))
       (is (not (is-tagged? state)) "Runner no longer encountering the derezzed ice")))
   (testing "No tag on empty server"
     (do-game
@@ -237,10 +237,10 @@
       (is (not (is-tagged? state)) "Runner is not yet tagged when encountering outermost ice")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (= 1 (get-in @state [:runner :tag :additional])) "Runner gains 1 additional tag when ice rezzed")
+      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner gains 1 additional tag when ice rezzed")
       (rez state :corp (get-content state :remote1 0))
       (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
-      (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
+      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
       (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
   (testing "Trashing the ice removes the tag #4984"
@@ -2449,7 +2449,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 0 meat damage from DRT cuz it's trashed")))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
   (testing "Trace shouldn't fire on second trash after trash during Direct Access run. #4168"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
@@ -3181,7 +3181,7 @@
     (is (= 1 (count-tags state)) "Runner has 1 tag")
     (changes-val-macro -3 (:credit (get-runner))
                        "Paid 3c to remove tag"
-                       (core/remove-tag state :runner nil))
+                       (remove-tag state :runner))
     (is (= 0 (count-tags state)) "Runner removed tag")
     (take-credits state :runner)
     (gain-tags state :runner 1)
