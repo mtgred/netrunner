@@ -10,7 +10,7 @@
     (testing "No defaults, already merged"
       (is (= [[:credit 1]] (core/merge-costs [[:credit 1]]))))
     (testing "Costs are already flattened"
-      (is (= [[:credit 1] [:click 1]] (core/merge-costs [[:credit 1 :click 1]]))))
+      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click 1]]))))
     (testing "Passed as a flattened vec"
       (is (= [[:credit 1]] (core/merge-costs [:credit 1]))))
     (testing "Default type is only element"
@@ -18,7 +18,7 @@
     (testing "Default plus explicit"
       (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit 1]]))))
     (testing "Costs ending with defaults expand"
-      (is (= [[:credit 1] [:click 1]] (core/merge-costs [[:credit 1 :click]]))))
+      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click]]))))
     (testing "Non-damage costs aren't reordered"
       (is (not= [[:credit 1] [:click 1]] (core/merge-costs [[:click 1 :credit 1]]))))
     (testing "Costs with all defaults are expanded"
@@ -35,8 +35,8 @@
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
       (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
-    (testing "Damage isn't combined"
-      (is (= [[:net 1] [:net 1]] (core/merge-costs [[:net 1 :net 1]]))))
+    (testing "Damage is combined"
+      (is (= [[:net 2]] (core/merge-costs [[:net 1 :net 1]]))))
     (testing "Net, meat, and brain damage are recognized"
       (is (= [[:net 1] [:meat 1] [:brain 1]]
              (core/merge-costs [[:net 1] [:meat 1] [:brain 1]]))))))
@@ -113,7 +113,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
-        (core/rez state :corp hive)
+        (rez state :corp hive)
         (run-continue state)
         (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
@@ -131,7 +131,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
-        (core/rez state :corp hive)
+        (rez state :corp hive)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
@@ -150,7 +150,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
-        (core/rez state :corp hive)
+        (rez state :corp hive)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder is now at 3 strength")
@@ -170,7 +170,7 @@
      (play-from-hand state :corp "Ruhr Valley" "HQ")
      (take-credits state :corp)
      (let [ruhr (get-content state :hq 0)]
-       (core/rez state :corp ruhr)
+       (rez state :corp ruhr)
        (core/gain state :runner :click -3)
        (is (= 1 (:click (get-runner))))
        (play-from-hand state :runner "Dirty Laundry")

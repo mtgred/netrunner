@@ -1,14 +1,45 @@
-(in-ns 'game.core)
+(ns game.core.initializing
+  (:require
+    [game.core.board :refer [all-active all-active-installed]]
+    [game.core.card :refer [get-card runner? map->Card]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.cost-fns :refer [card-ability-cost]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [register-events unregister-events]]
+    [game.core.finding :refer [find-cid]]
+    [game.core.gaining :refer [free-mu gain lose]]
+    [game.core.ice :refer [add-sub]]
+    [game.core.payment :refer [add-cost-label-to-ability]]
+    [game.core.props :refer [set-prop]]
+    [game.core.resolve-ability :refer [is-ability? resolve-ability]]
+    [game.core.update :refer [update!]]
+    [game.macros :refer [effect req]]
+    [game.utils :refer [make-cid server-card]]
+    [jinteki.utils :refer [make-label]]))
 
-(declare free-mu)
+(defn subroutines-init
+  "Initialised the subroutines associated with the card, these work as abilities"
+  [card cdef]
+  (->> (:subroutines cdef)
+       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
+       :subroutines
+       (into [])))
 
-;;; Deactivate a card
+(defn ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (into [] (for [ab (:abilities cdef)
+                 :let [ab (assoc ab :label (make-label ab))]]
+             (add-cost-label-to-ability ab))))
+
 (defn- dissoc-card
   "Dissoc relevant keys in card"
   [card keep-counter]
-  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
+  (let [cdef (card-def card)
+        c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
                   :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
-        c (assoc c :subroutines (subroutines-init c (card-def card)))
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
 
@@ -47,15 +78,6 @@
 
 
 ;;; Initialising a card
-(defn- ability-init
-  "Gets abilities associated with the card"
-  [cdef]
-  (let [abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
-                    (:abilities cdef))]
-    (for [ab abilities]
-      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
-
 (defn- corp-ability-init
   "Gets abilities associated with the card"
   [cdef]
@@ -72,16 +94,14 @@
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
   ([state side card args] (card-init state side (make-eid state) card args))
-  ([state side eid card {:keys [resolve-effect init-data] :as args}]
+  ([state side eid card {:keys [resolve-effect init-data]}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
-         abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
          c (merge card
                   (when init-data (:data cdef))
-                  {:abilities abilities
-                   :runner-abilities run-abs
+                  {:runner-abilities run-abs
                    :corp-abilities corp-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
@@ -103,3 +123,62 @@
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
      (get-card state c))))
+
+(defn update-ability-cost-str
+  [state side card ability-kw]
+  (into [] (for [ab (get card ability-kw)
+                 :let [ab-cost (if (:break-cost ab)
+                                 (assoc ab :cost (:break-cost ab))
+                                 ab)]]
+             (add-cost-label-to-ability ab (card-ability-cost state side ab-cost card)))))
+
+(defn update-abilities-cost-str
+  [state side card]
+  (-> card
+      (assoc :abilities (update-ability-cost-str state side card :abilities))
+      (assoc :corp-abilities (update-ability-cost-str state side card :corp-abilities))
+      (assoc :runner-abilities (update-ability-cost-str state side card :runner-abilities))))
+
+(defn update-all-card-labels
+  [state]
+  (doseq [side [:corp :runner]
+          card (all-active state side)]
+    (update! state side (update-abilities-cost-str state side card))))
+
+(defn- card-implemented
+  "Checks if the card is implemented. Looks for a valid return from `card-def`.
+  If implemented also looks for `:implementation` key which may contain special notes.
+  Returns either:
+    nil - not implemented
+    :full - implemented fully
+    msg - string with implementation notes"
+  [card]
+  (when-let [cdef (card-def card)]
+    ;; Card is defined - hence implemented
+    (if-let [impl (:implementation cdef)]
+      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
+
+(defn make-card
+  "Makes or remakes (with current cid) a proper card from a server card"
+  ([card] (make-card card (make-cid)))
+  ([card cid]
+   (-> card
+       (assoc :cid cid
+              :implementation (card-implemented card)
+              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
+              :abilities (ability-init (card-def card)))
+       (dissoc :setname :text :_id :influence :number :influencelimit
+               :image_url :factioncost :format :quantity)
+       (map->Card))))
+
+(defn reset-card
+  "Resets a card back to its original state - retaining any data in the :persistent key"
+  ([state side {:keys [cid persistent previous-zone seen title zone]}]
+   (swap! state update-in [:per-turn] dissoc cid)
+   (let [new-card (make-card (server-card title) cid)]
+     (update! state side (assoc new-card
+                                :persistent persistent
+                                :previous-zone previous-zone
+                                :seen seen
+                                :zone zone)))))

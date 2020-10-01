@@ -1,7 +1,6 @@
 (ns game.quotes
   (:require [aero.core :refer [read-config]]
-            [clojure.java.io :as io]
-            [hawk.core :as hawk]))
+            [clojure.java.io :as io]))
 
 
 (def quotes-corp-filename "data/quotes-corp.edn")

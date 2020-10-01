@@ -41,3 +41,6 @@ data/WiredTiger
 data/diagnostic.data
 data/journal
 data/storage.bson
+
+#Calva
+.calva/*

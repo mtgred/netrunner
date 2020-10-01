@@ -1,14 +1,13 @@
 (ns web.auth
   (:require [web.config :refer [server-config]]
             [web.db :refer [db object-id]]
-            [web.utils :refer [response]]
+            [web.utils :refer [response md5]]
             [aero.core :refer [read-config]]
             [clj-time.core :refer [days from-now]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
             [buddy.sign.jwt :as jwt]
-            [digest]
             [buddy.auth :refer [authenticated?]]
             [buddy.auth.backends.session :refer [session-backend]]
             [crypto.password.bcrypt :as password]
@@ -82,7 +81,7 @@
 
     :else
     (let [first-user (not (mc/any? db "users"))
-          email-hash (digest/md5 email)
+          email-hash (md5 email)
           registration-date (java.util.Date.)
           last-connection registration-date
           hash-pw (password/encrypt password)

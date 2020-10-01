@@ -5,7 +5,7 @@
             [differ.core :as differ]
             [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card?]]
-            [jinteki.utils :refer [str->int is-tagged?] :as utils]
+            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
@@ -551,7 +551,8 @@
   "Image element of a facedown card"
   ([side] (facedown-card side [] nil))
   ([side class-list alt-alt-text]
-   (let [s (lower-case side)
+   (let [card-back (get-in @app-state [:options :card-back])
+         s (lower-case side)
          alt (if (nil? alt-alt-text)
                (str "Facedown " s " card")
                alt-alt-text)
@@ -560,7 +561,7 @@
                   (concat ["img" "card"])
                   (join ".")
                   keyword)]
-     [tag {:src (str "/img/" s ".png")
+     [tag {:src (str "/img/" card-back "-" s ".png")
            :alt alt}])))
 
 (defn card-img
@@ -662,7 +663,7 @@
          [:div {:key i
                 :on-click #(send-command "runner-ability" {:card card
                                                            :ability i})}
-          (render-icons (:label ab))])
+          (render-icons (add-cost-to-label ab))])
        runner-abilities)
      (when (seq subroutines)
        [:div {:on-click #(send-command "system-msg"
@@ -695,7 +696,7 @@
        (fn [i ab]
          [:div {:on-click #(send-command "corp-ability" {:card card
                                                          :ability i})}
-          (render-icons (:label ab))])
+          (render-icons (add-cost-to-label ab))])
        corp-abilities)]))
 
 (defn card-abilities [card c-state abilities subroutines]
@@ -717,20 +718,22 @@
                     :on-click #(do (send-command action {:card card}))}
               (capitalize action)])
            actions))
-       (when (seq abilities)
+       (when (and (active? card)
+                  (seq abilities))
          [:span.float-center "Abilities:"])
-       (when (seq abilities)
+       (when (and (active? card)
+                  (seq abilities))
          (map-indexed
            (fn [i ab]
              (if (:dynamic ab)
                [:div {:key i
                       :on-click #(send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
                                                                         :card card))}
-                (render-icons (:label ab))]
+                (render-icons (add-cost-to-label ab))]
                [:div {:key i
                       :on-click #(send-command "ability" {:card card
-                                                          :ability (- i dynabi-count)})}
-                (render-icons (:label ab))]))
+                                                          :ability i})}
+                (render-icons (add-cost-to-label ab))]))
            abilities))
        (when (seq (remove :fired subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
@@ -749,7 +752,7 @@
                            (false? (:resolve sub))
                            {:class :dont-resolve
                             :style {:text-decoration :line-through}})
-               (render-icons (str " [Subroutine]" " " (:label sub)))]
+               (render-icons (str " [Subroutine] " (:label sub)))]
               [:span.float-right
                (cond (:broken sub) banned-span
                      (:fired sub) "✅")]])
@@ -1101,7 +1104,6 @@
   [:div.namearea [avatar user {:opts {:size 32}}]
    [:div.namebox
     [:div.username (:username user)]
-    (println "pronouns" (get-in user [:options :pronouns]))
     (if-let [pronouns (case (get-in user [:options :pronouns])
                         "they" "they/them"
                         "she" "she/her"
@@ -1174,8 +1176,6 @@
                                   "encounter"
                                   :else
                                   "")}]])
-
-(enable-console-print!)
 
 (defn server-view [{:keys [server central-view run]} opts]
   (let [content (:content server)
@@ -1397,7 +1397,8 @@
   [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
   (let [visible-quote (r/atom true)
         mulliganed (r/atom false)
-        start-shown (r/cursor app-state [:start-shown])]
+        start-shown (r/cursor app-state [:start-shown])
+        card-back (get-in @app-state [:options :card-back])]
     (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
       (when (and (not @start-shown)
                  (:username @op-user)
@@ -1441,7 +1442,7 @@
                                                     :key (str (:cid card) "-" i "-" @mulliganed)}
                              [:div.flipper
                               [:div.card-back
-                               [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
+                               [:img.start-card {:src (str "/img/" card-back "-" (lower-case (:side @my-ident)) ".png")}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put! zoom-channel card)
@@ -1813,7 +1814,7 @@
                [cond-button "Remove Tag"
                 (and (not (or @runner-phase-12 @corp-phase-12))
                      (pos? (:click @me))
-                     (>= (:credit @me) (- 2 (or (:tag-remove-bonus @me) 0)))
+                     (>= (:credit @me) 2)
                      (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button

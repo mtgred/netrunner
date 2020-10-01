@@ -204,7 +204,7 @@
       (not-any? #(= username %) (blocked-users game))
       (some #(= username %) (map :username (superusers)))))
 
-(defn handle-ws-connect [{:keys [client-id] :as msg}]
+(defn handle-lobby-list [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
 
 (defn handle-lobby-create
@@ -372,7 +372,8 @@
                     :date (java.util.Date.)})))))
 
 (ws/register-ws-handlers!
-  :chsk/uidport-open #'handle-ws-connect
+  :chsk/uidport-open #'handle-lobby-list
+  :lobby/list #'handle-lobby-list
   :lobby/create #'handle-lobby-create
   :lobby/leave #'handle-lobby-leave
   :lobby/join #'handle-lobby-join

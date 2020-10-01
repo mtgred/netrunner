@@ -4,7 +4,8 @@
 
 (def forms
   (->>
-    '[runner (:runner @state)
+    '[
+      runner (:runner @state)
       corp (:corp @state)
       run (:run @state)
       run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
@@ -26,9 +27,15 @@
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
       tagged (is-tagged? state)
+      ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
+      ;; true if the run was initiated by this card
+      this-card-run (and (get-in card [:special :run-id])
+                         (= (get-in card [:special :run-id])
+                            (:run-id (first targets))))
       this-server (let [s (get-zone card)
                         r (:server (:run @state))]
-                    (= (second s) (first r)))]
+                    (= (second s) (first r)))
+      ]
     (partition 2)
     (map (juxt first identity))
     (into {})))
@@ -81,7 +88,7 @@
                      ~@expr))
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
-         totake (if (= 'apply (first action)) 4 3)
+         totake (if (#{'apply 'handler 'payable?} (first action)) 4 3)
          th (nth action totake)]
      `(let [~'use-eid# (and (map? ~th) (:eid ~th))
             ~'new-eid# (if ~'use-eid# ~th (game.core.eid/make-eid ~'state))]
@@ -92,7 +99,7 @@
 
 (defmacro continue-ability
   [state side ability card targets]
-  `(game.core/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
+  `(game.core.resolve-ability/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
 
 (defmacro when-let*
   ([bindings & body]

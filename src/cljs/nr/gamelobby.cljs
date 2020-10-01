@@ -256,6 +256,10 @@
 (defn games-list-panel [s games gameid password-gameid user]
   [:div.games
    [:div.button-bar
+    [:div.rooms
+     [room-tab user s games "tournament" "Tournament"]
+     [room-tab user s games "competitive" "Competitive"]
+     [room-tab user s games "casual" "Casual"]]
     [cond-button "New game"
      (and (not (or @gameid
                    (:editing @s)
@@ -266,10 +270,8 @@
                empty?))
      #(do (new-game s)
           (resume-sound))]
-    [:div.rooms
-     [room-tab user s games "tournament" "Tournament"]
-     [room-tab user s games "competitive" "Competitive"]
-     [room-tab user s games "casual" "Casual"]]]
+    [:button {:type "button"
+              :on-click #(ws/ws-send! [:lobby/list])} "Reload list"]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
