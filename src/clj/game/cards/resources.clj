@@ -872,7 +872,7 @@
   {:constant-effects [{:type :play-cost
                        :value 1}]})
 
-(define-card "Dr. Lovegood"
+(defcard "Dr. Lovegood"
   {:events [{:event :runner-turn-begins
               :label "blank a card"
               :prompt "Select an installed card to make its text box blank for the remainder of the turn"
