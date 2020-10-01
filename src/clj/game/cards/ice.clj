@@ -1868,7 +1868,8 @@
                           :prompt "Choose a piece of ice"
                           :choices {:card ice?
                                     :not-self true}
-                          :msg (msg "force the Runner to encounter " (card-str state target))})})
+                          :msg (msg "force the Runner to encounter " (card-str state target))
+                          :effect (req (effect-completed state side eid))})})
 
 (defcard "Lab Dog"
   {:subroutines [{:label "Force the Runner to trash an installed piece of hardware"
