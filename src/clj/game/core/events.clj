@@ -245,7 +245,9 @@
                    (not (and cancel-fn (cancel-fn state)))))
             (choose-handler [handlers]
               (let [handlers (when-not (and cancel-fn (cancel-fn state))
-                               (filter #(card-for-ability state %) handlers))
+                               (filter #(and (card-for-ability state %)
+                                             (not (:disabled (card-for-ability state %))))
+                                handlers))
                     non-silent (filter #(let [silent-fn (:silent (:ability %))]
                                           (not (and silent-fn
                                                     (silent-fn state side (make-eid state) (:card %) event-targets))))
@@ -293,9 +295,7 @@
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
-                                                          ;;check if any card has been disabled (Dr. Lovegood)
-                                                          (remove-once #( true? (:disabled (get-card state (:card %))))
-                                                            (remove-once #(same-card? target (:card %)) handlers)))
+                                                          (remove-once #(same-card? target (:card %)) handlers))  
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
 
