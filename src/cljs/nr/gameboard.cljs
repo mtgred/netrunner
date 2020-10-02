@@ -646,7 +646,7 @@
 (defn handle-post-ability
   ; Checks whether the card has a special :keep-open condition. If not, closes the menu.
   [c-state card]
-  (if (:keep-ability-menu-open card)
+  (if (:keep-card-menu-open card)
     (swap! c-state assoc :show-menu :keep-open)
     (swap! c-state dissoc :show-menu)))
 
@@ -656,7 +656,7 @@
   ; keep-open condition needs to be continuously checked with every update
   [c-state card]
   (if (= :keep-open (:show-menu @c-state))
-    (let [open-params (:keep-ability-menu-open card)
+    (let [open-params (:keep-card-menu-open card)
           behavior (if (vector? open-params)
                      (first open-params)
                      open-params)

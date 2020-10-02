@@ -2725,7 +2725,7 @@
                  (ttw-ab "HQ" :hq)
                  (ttw-bounce "R&D" :rd)
                  (ttw-bounce "HQ" :hq)]
-     :interactions {:keep-ability-menu-open [:has-at-least-n-counters :power 2]}}))
+     :interactions {:keep-card-menu-open [:has-at-least-n-counters :power 2]}}))
 
 (defcard "Theophilius Bagbiter"
   {:effect (req (lose-credits state :runner :all)
