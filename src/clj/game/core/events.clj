@@ -295,7 +295,7 @@
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
-                                                          (remove-once #(same-card? target (:card %)) handlers))  
+                                                          (remove-once #(same-card? target (:card %)) handlers))
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
 
