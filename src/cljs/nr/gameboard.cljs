@@ -174,77 +174,11 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn abilities-panel-visible
-  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state desired-state]
-  (let [card-side (keyword (.toLowerCase (:side card)))]
-    (when (= side card-side)
-      (if desired-state
-        (swap! c-state assoc :abilities true)
-        (swap! c-state dissoc :abilities)))
-    (when (and (= :runner card-side)
-               (= :corp side)
-               (:corp-abilities card))
-        (if desired-state
-          (swap! c-state assoc :corp-abilities true)
-          (swap! c-state dissoc :corp-abilities)))
-    (when (and (= :corp card-side)
-               (= :runner side)
-               (:runner-abilities card))
-        (if desired-state
-          (swap! c-state assoc :runner-abilities true)
-          (swap! c-state dissoc :runner-abilities)))))
-
-(defn handle-abilities
-  [side {:keys [abilities corp-abilities runner-abilities facedown c-type] :as card} c-state]
-  (let [actions (action-list card)
-        c (+ (count actions) (count abilities))
-        card-side (keyword (.toLowerCase (:side card)))]
-    (when-not (or (:close-menu @c-state false)
-                  (and (= card-side :runner) facedown))
-      (cond
-        (:keep-ability-menu-open card)
-        (let [open-params (:keep-ability-menu-open card)
-              behavior (if (vector? open-params)
-                         (first open-params)
-                         open-params)
-              args (rest open-params)]
-          (cond
-            (= behavior "has-at-least-n-counters")
-            (let [counter-type (first args)
-                  n (second args)]
-              (abilities-panel-visible side card c-state (<= n (get-counters card counter-type))))
-
-            (= behavior "clicks-left")
-            (abilities-panel-visible side card c-state (pos? (get-in @game-state [:runner :click])))
-
-            (= behavior "always")
-            (abilities-panel-visible side card c-state true)))
-
-        (has-subtype? card "Icebreaker") ; ToDo would love to have access to ice.clj here
-        (let [ices (get-in @game-state (concat [:corp :servers] (map keyword (:server (:run @game-state))) [:ices]))
-              ice (nth ices (dec (get-in @game-state [:run :position])))
-              subroutines (:subroutines ice)]
-          (abilities-panel-visible side card c-state (not (and (seq subroutines)
-                                                              (every? :broken subroutines)))))
-
-        ;; Toggle abilities panel
-        (or (< 1 c)
-            (pos? (+ (count corp-abilities)
-                     (count runner-abilities)))
-            (some #{"rez" "derez" "advance" "trash"} actions)
-            (and (= c-type "ICE")
-                 (not (:run @game-state)))
-            (and (corp? card)
-                 (not (faceup? card))))
-        (abilities-panel-visible side card c-state (not (:abilities @c-state false)))
-
-        ;; Trigger first (and only) ability / action
-        (and (= c 1)
-             (= side card-side))
-        (if (= (count abilities) 1)
-          (send-command "ability" {:card card :ability 0})
-          (send-command (first actions) {:card card}))))
-    (swap! c-state dissoc :close-menu)))
+(defn toggle-card-menu
+  [c-state]
+  (if (:show-menu @c-state)
+    (swap! c-state dissoc :show-menu)
+    (swap! c-state assoc :show-menu true)))
 
 (defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
@@ -254,36 +188,13 @@
         (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
         (send-command "select" {:card card})
 
-        ;; Card is an identity of player's side
-        (and (= (:type card) "Identity")
-             (= side (keyword (.toLowerCase (:side card)))))
-        (handle-abilities side card c-state)
+        ;; Playing card from hand
+        (= "hand" (first zone))
+        (send-command "play" {:card card})
 
-        ;; Runner side
-        (= side :runner)
-        (case (first zone)
-          "hand" (if (:host card)
-                   (when (:installed card)
-                     (handle-abilities side card c-state))
-                   (send-command "play" {:card card}))
-          ("current" "onhost" "play-area" "scored" "servers" "rig")
-          (handle-abilities side card c-state)
-          nil)
-
-        ;; Corp side
-        (= side :corp)
-        (case (first zone)
-          "hand" (case type
-                   ("Agenda" "Asset" "ICE" "Upgrade")
-                   (if (:servers @c-state)
-                     (do (swap! c-state dissoc :servers)
-                         (send-command "generate-install-list" nil))
-                     (do (swap! c-state assoc :servers true)
-                         (send-command "generate-install-list" {:card card})))
-                   (send-command "play" {:card card}))
-          ("current" "onhost" "play-area" "scored" "servers" "rig")
-          (handle-abilities side card c-state)
-          nil)))))
+        ;; Toggle card-menu
+        :else
+        (toggle-card-menu c-state)))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -732,6 +643,104 @@
           (render-icons (add-cost-to-label ab))])
        corp-abilities)]))
 
+(defn handle-post-ability
+  ; Checks whether the card has a special :keep-open condition. If not, closes the menu.
+  [c-state card]
+  (if (:keep-ability-menu-open card)
+    (swap! c-state assoc :show-menu :keep-open)
+    (swap! c-state dissoc :show-menu)))
+
+(defn check-card-menu-status
+  ; Returns whether card menu should be displayed. Takes into account that
+  ; some cards will need the state to be :keep-open meaning that their
+  ; keep-open condition needs to be continuously checked with every update
+  [c-state card]
+  (if (= :keep-open (:show-menu @c-state))
+    (let [open-params (:keep-ability-menu-open card)
+          behavior (if (vector? open-params)
+                     (first open-params)
+                     open-params)
+          args (rest open-params)
+          keep-open
+          (cond
+            (= behavior "has-at-least-n-counters")
+            (let [counter-type (first args)
+                  n (second args)]
+              (<= n (get-counters card counter-type)))
+
+            (= behavior "clicks-left")
+            (pos? (get-in @game-state [:runner :click]))
+
+            (= behavior "always")
+            true)]
+        ; (has-subtype? card "Icebreaker") ; ToDo would love to have access to ice.clj here
+        ; (let [ices (get-in @game-state (concat [:corp :servers] (map keyword (:server (:run @game-state))) [:ices]))
+              ; ice (nth ices (dec (get-in @game-state [:run :position])))
+              ; subroutines (:subroutines ice)]
+          ; (abilities-panel-visible side card c-state (not (and (seq subroutines)
+                                                              ; (every? :broken subroutines)))))
+      (when-not keep-open (swap! c-state dissoc :show-menu))
+      keep-open)
+    (:show-menu @c-state)))
+
+(defn card-menu [card c-state abilities subroutines]
+  (let [actions (action-list card)
+        dynabi-count (count (filter :dynamic abilities))]
+    (when (check-card-menu-status c-state card)
+      [:div.panel.blue-shade.card-menu {:style {:display "block"}}
+       [:button.win-right {:on-click #(swap! c-state dissoc :show-menu) :type "button"} "✘"]
+       (when (seq actions)
+         [:span.float-center "Actions:"])
+       (when (seq actions)
+         (map-indexed
+           (fn [i action]
+             [:div {:key i
+                    :on-click #(do (send-command action {:card card})
+                                   (handle-post-ability c-state card))}
+              (capitalize action)])
+           actions))
+       (when (and (active? card)
+                  (seq abilities))
+         [:span.float-center "Abilities:"])
+       (when (and (active? card)
+                  (seq abilities))
+         (map-indexed
+           (fn [i ab]
+             (if (:dynamic ab)
+               [:div {:key i
+                      :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
+                                                                            :card card))
+                                     (handle-post-ability c-state card))}
+                (render-icons (add-cost-to-label ab))]
+               [:div {:key i
+                      :on-click #(do (send-command "ability" {:card card
+                                                              :ability i})
+                                     (handle-post-ability c-state card))}
+                (render-icons (add-cost-to-label ab))]))
+           abilities))
+       (when (seq (remove :fired subroutines))
+         [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
+          "Fire unbroken subroutines"])
+       (when (seq subroutines)
+         [:span.float-center "Subroutines:"])
+       (when (seq subroutines)
+         (map-indexed
+           (fn [i sub]
+             [:div {:key i
+                    :on-click #(send-command "subroutine" {:card card
+                                                           :subroutine i})}
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (false? (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
+               (render-icons (str " [Subroutine] " (:label sub)))]
+              [:span.float-right
+               (cond (:broken sub) banned-span
+                     (:fired sub) "✅")]])
+           subroutines))])))
+
 (defn card-abilities [card c-state abilities subroutines]
   (let [actions (action-list card)
         dynabi-count (count (filter :dynamic abilities))]
@@ -802,6 +811,14 @@
           :as card}
          flipped]
       [:div.card-frame
+      ; (when (pos? (+ (count runner-abilities) (count subroutines)))
+        ; [runner-abs card c-state runner-abilities subroutines title])
+
+      ; (when (pos? (count corp-abilities))
+        ; [corp-abs card c-state corp-abilities])
+
+      ; [card-abilities card c-state abilities subroutines]
+       [card-menu card c-state abilities subroutines]
        [:div.blue-shade.card {:class (str (when selected "selected")
                                           (when new " new")
                                           (when (same-card? card (:button @app-state)) " hovered"))
@@ -858,14 +875,6 @@
       (when (and (= zone ["hand"])
                  (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
         [server-menu card c-state])
-
-      (when (pos? (+ (count runner-abilities) (count subroutines)))
-        [runner-abs card c-state runner-abilities subroutines title])
-
-      (when (pos? (count corp-abilities))
-        [corp-abs card c-state corp-abilities])
-
-      [card-abilities card c-state abilities subroutines]
 
       (when (#{"servers" "onhost"} (first zone))
         (cond
