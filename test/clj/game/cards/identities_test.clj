@@ -258,7 +258,26 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
-      (is (zero? (count-tags state)) "Acme additional tag falls off"))))
+      (is (zero? (count-tags state)) "Acme additional tag falls off")))
+  (testing "various issues with tags #5227"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Fly on the Wall" "Ice Wall"]}
+                 :runner {:hand ["Xanadu"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-and-score state "Fly on the Wall")
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Fly on the Wall gives 1 tag")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 2 (count-tags state)) "Acme gives real tags")
+      (fire-subs state (get-ice state :remote1 0))
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Acme's tag falls off"))))
 
 (deftest adam-compulsive-hacker
   ;; Adam
