@@ -2442,7 +2442,23 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (click-prompt state :runner "Steal")
-      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it"))))
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it")))
+  (testing "Still adds counters when swapped with Turntable #5036"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron" "Hostile Takeover"]}
+                 :runner {:hand ["Turntable"]}})
+      (play-and-score state "Project Vacheron")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Turntable")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (is (prompt-is-card? state :runner (get-hardware state 0)))
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Project Vacheron" (:scored (get-corp))))
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Gains the counters on swap")
+      (is (zero? (:agenda-point (get-runner))) "Got the Project Vacheron")
+      (is (= 1 (:agenda-point (get-corp))) "Swapped into an HT"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius

@@ -441,7 +441,10 @@
       (register-events state side new-scored)
       (unregister-constant-effects state side new-scored)
       (register-constant-effects state side new-scored)
-      (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
+      (resolve-ability state side (:swapped (card-def new-scored)) new-scored new-scored))
+    ;; Overload :scored for interrupts like Project Vacheron I guess
+    (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
+      (resolve-ability state side (:stolen (card-def new-stolen)) new-stolen [new-stolen]))
     ;; Set up abilities and events for new stolen agenda
     (when-not (card-flag? scored :has-events-when-stolen true)
       (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
