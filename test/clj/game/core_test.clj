@@ -499,11 +499,17 @@
   `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
      (trash ~state ~side card#)))
 
+(defmacro trash-card
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (trash ~state ~side card#))))
+
 (defmacro trash-resource
-  "Trash specified card from rig of the runner"
-  [state title]
-  `(let [card# (find-card ~title (get-in @~state [:runner :rig :resource]))]
-     (trash ~state :runner card#)))
+  "Click-trash a resource as the corp"
+  [state]
+  `(core/process-action "trash-resource" ~state :corp nil))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"

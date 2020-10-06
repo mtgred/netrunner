@@ -259,12 +259,11 @@
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
       (is (zero? (count-tags state)) "Acme additional tag falls off")))
-  (testing "various issues with tags #5227"
+  (testing "Interactions with Fly on the Wall #5227"
     (do-game
       (new-game {:corp {:id "Acme Consulting: The Truth You Need"
                         :deck [(qty "Hedge Fund" 5)]
-                        :hand ["Fly on the Wall" "Ice Wall"]}
-                 :runner {:hand ["Xanadu"]}})
+                        :hand ["Fly on the Wall" "Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-and-score state "Fly on the Wall")
       (is (is-tagged? state) "Runner should be tagged")
@@ -277,7 +276,37 @@
       (is (= 2 (count-tags state)) "Acme gives real tags")
       (fire-subs state (get-ice state :remote1 0))
       (is (is-tagged? state) "Runner should be tagged")
-      (is (= 1 (count-tags state)) "Acme's tag falls off"))))
+      (is (= 1 (count-tags state)) "Acme's tag falls off")))
+  (testing "Interactions with Data Ward #5178"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Data Ward"]
+                        :credits 10}
+                 :runner {:hand ["Corroder" "Xanadu"]
+                          :credits 15}})
+      (play-from-hand state :corp "Data Ward" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Xanadu")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Acme gives real tags")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 2 (count-tags state)))
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (core/continue state :corp nil)
+      (run-continue state)
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (is-tagged? state) "Runner should still be tagged")
+      (is (= 1 (count-tags state)) "Acme's tag falls off")
+      (take-credits state :runner)
+      (trash-resource state)
+      (click-card state :corp (get-resource state 0))
+      (is (= "Xanadu" (:title (get-discarded state :runner 0)))))))
 
 (deftest adam-compulsive-hacker
   ;; Adam
@@ -3208,7 +3237,7 @@
     (swap! state assoc-in [:corp :credit] 0)
     (changes-val-macro 0 (:credit (get-runner))
                        "Paid 0c to trash resource"
-                       (core/trash-resource state :corp nil)
+                       (trash-resource state)
                        (click-card state :corp (get-resource state 0)))
     (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
 

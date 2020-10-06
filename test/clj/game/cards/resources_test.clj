@@ -1142,7 +1142,7 @@
         (is (= 2 (get-link state)) "2 link from Sunny")
         (is (= 5 (core/available-mu state)) "+1 MU from Chaos Theory")
         ;; Trash DJ Fenris
-        (trash-resource state "DJ Fenris")
+        (trash-card state :runner (get-resource state 0))
         (is (not= chaos (-> (get-runner) :rfg last :title)) "Chaos Theory not moved to rfg")
         (is (not= chaos (-> (get-runner) :discard last :title)) "Chaos Theory not moved to discard")
         (is (not= chaos (-> (get-runner) :hand last :title)) "Chaos Theory not moved to hand")
@@ -1185,7 +1185,7 @@
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
           (is (= (inc hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability")
-          (trash-resource state "DJ Fenris")
+          (trash-card state :runner (find-card "DJ Fenris" (get-in @state [:runner :rig :resource])))
           (is (not= geist (-> (get-runner) :rfg last :title)) "Geist not moved to rfg")
           (is (not= geist (-> (get-runner) :discard last :title)) "Geist not moved to discard")
           (is (not= geist (-> (get-runner) :hand last :title)) "Geist not moved to hand")
@@ -1670,7 +1670,7 @@
         (take-credits state :runner)
         (core/gain state :corp :credit 10)
         (gain-tags state :runner 1)
-        (core/trash-resource state :corp nil)
+        (trash-resource state)
         (click-card state :corp fc)
         (is (= 1 (count (:discard (get-runner)))) "FC trashed")
         (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
@@ -4193,7 +4193,7 @@
     (let [street-peddler (get-resource state 0)]
       (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner street-peddler 0)
-      (trash-resource state "Street Peddler")
+      (trash-card state :runner street-peddler)
       (is (zero? (count (prompt-buttons :runner)))))))
 
 (deftest symmetrical-visage
@@ -4514,7 +4514,7 @@
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (gain-tags state :runner 1)
-      (trash-resource state "The Black File")
+      (trash-card state :runner (get-resource state 0))
       (is (= :corp (:winner @state)) "Corp has now won"))))
 
 (deftest the-class-act
@@ -4756,7 +4756,7 @@
         (click-prompt state :runner "Steal")
         (take-credits state :runner)
         (gain-tags state :runner 1)
-        (core/trash-resource state :corp nil)
+        (trash-resource state)
         (click-card state :corp (get-resource state 0))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
@@ -4888,7 +4888,7 @@
     (is (= 7 (hand-size :runner)) "Max hand size is 7")
     (take-credits state :runner)
     (gain-tags state :runner 1)
-    (core/trash-resource state :corp nil)
+    (trash-resource state)
     (click-card state :corp (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))) "Theo is trashed")
     (is (empty? (get-resource state)) "No resources installed")
@@ -4965,7 +4965,7 @@
       (play-from-hand state :runner "Tri-maf Contact")
       (gain-tags state :runner 1)
       (take-credits state :runner)
-      (core/trash-resource state :corp nil)
+      (trash-resource state)
       (click-card state :corp (get-resource state 0))
       (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
 

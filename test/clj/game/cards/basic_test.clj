@@ -66,7 +66,7 @@
       (let [fs (get-resource state 0)]
         (take-credits state :runner)
         (gain-tags state :runner 1)
-        (core/trash-resource state :corp nil)
+        (trash-resource state)
         (click-card state :corp fs)
         (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed"))))
   (testing "Purge"

@@ -2310,7 +2310,7 @@
         (take-credits state :runner)
         (gain-tags state :runner 1)
         (dotimes [n 3]
-          (core/trash-resource state :corp nil)
+          (trash-resource state)
           (click-card state :corp (get-resource state 0))
           (is (= (inc n) (count (:discard (get-runner)))) "Correct number of cards in Runner discard"))
         (is (= 1 (:click (get-corp))) "Jeeves triggered"))))

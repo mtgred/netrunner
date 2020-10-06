@@ -69,7 +69,7 @@
           (click-prompt state :runner "0")
           (is (= 1 (count-tags state)) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
-          (core/trash-resource state :corp nil)
+          (trash-resource state)
           (click-card state :corp "Off-Campus Apartment")
           (is (= 3 (:credit (get-corp))) "WNP increased cost to trash a resource by 2")
           (card-ability state :runner fg 0) ; Trash Fall Guy to save the Apartment!
