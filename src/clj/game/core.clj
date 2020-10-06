@@ -22,6 +22,7 @@
     [game.core.finding]
     [game.core.flags]
     [game.core.gaining]
+    [game.core.hand-size]
     [game.core.hosting]
     [game.core.ice]
     [game.core.identities]
@@ -385,18 +386,21 @@
   [game.core.gaining
    available-mu
    base-mod-size
-   change-hand-size
    deduct
    free-mu
    gain
    gain-credits
-   hand-size
    lose
    lose-credits
    safe-inc-n
    sub->0
    toast-check-mu
    use-mu]
+
+  [game.core.hand-size
+   hand-size
+   sum-hand-size-effects
+   update-hand-size]
 
   [game.core.hosting
    host

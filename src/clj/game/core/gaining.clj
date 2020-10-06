@@ -28,7 +28,7 @@
                                                    (sub->0 value))))
 
     ;; values that expect map, if passed a number use default subattr of :mod
-    (#{:hand-size :memory} attr)
+    (#{:memory} attr)
     (deduct state side [attr {:mod value}])
 
     ;; default case for tags and bad-publicity is `:base`
@@ -108,16 +108,6 @@
   (let [base (get-in @state [side prop :base] 0)
         mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
-
-(defn hand-size
-  "Returns the current maximum hand-size of the specified side."
-  [state side]
-  (base-mod-size state side :hand-size))
-
-(defn change-hand-size
-  "Changes a side's hand-size modification by specified amount (positive or negative)"
-  [state side n]
-  (gain state side :hand-size {:mod n}))
 
 (defn available-mu
   "Returns the available MU the runner has"

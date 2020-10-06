@@ -198,28 +198,30 @@
                           card nil))))]})
 
 (defcard "Box-E"
-  {:in-play [:memory 2 :hand-size 2]})
+  {:in-play [:memory 2]
+   :constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 2}]})
 
 (defcard "Brain Cage"
-  {:in-play [:hand-size 3]
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 3}]
    :effect (effect (damage eid :brain 1 {:card card}))})
 
 (defcard "Brain Chip"
-  (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
-    {:effect (req (gain state :runner
-                        :memory (runner-points @state)
-                        :hand-size (runner-points @state))
+  (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
+    {:constant-effects [{:type :hand-size
+                         :req (req (= :runner side))
+                         :value (req (runner-points state))}]
+     :effect (req (gain state :runner :memory (runner-points state))
                   (add-watch state (keyword (str "brainchip" (:cid card)))
                              (fn [k ref old new]
-                               (let [bonus (- (runner-points new) (runner-points old))]
+                               (let [bonus (- (runner-points (atom new)) (runner-points (atom old)))]
                                  (when-not (zero? bonus)
-                                   (gain state :runner
-                                         :memory bonus
-                                         :hand-size bonus))))))
+                                   (gain state :runner :memory bonus))))))
      :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
-                      (lose state :runner
-                            :memory (runner-points @state)
-                            :hand-size (runner-points @state)))}))
+                      (lose state :runner :memory (runner-points state)))}))
 
 (defcard "Buffer Drive"
   (let [triggered-ability
@@ -960,9 +962,11 @@
 
 (defcard "LLDS Memory Diamond"
   {:constant-effects [{:type :link
+                       :value 1}
+                      {:type :hand-size
+                       :req (req (= :runner side))
                        :value 1}]
-   :in-play [:memory 1
-             :hand-size 1]})
+   :in-play [:memory 1]})
 
 (defcard "LLDS Processor"
   {:events [{:event :runner-install
@@ -978,7 +982,10 @@
                                 :type :recurring}}})
 
 (defcard "Logos"
-  {:in-play [:memory 1 :hand-size 1]
+  {:in-play [:memory 1]
+   :constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 1}]
    :events [{:event :agenda-scored
              :player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
              :choices (req (cancellable (:deck runner)))
@@ -1234,8 +1241,9 @@
 
 (defcard "Obelus"
   {:in-play [:memory 1]
-   :effect (req (change-hand-size state :runner (count-tags state)))
-   :leave-play (req (change-hand-size state :runner (- (count-tags state))))
+   :constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value (req (count-tags state))}]
    :events [{:event :run-ends
              :once :per-turn
              :req (req (and (:successful target)
@@ -1245,12 +1253,7 @@
                                                 (#{:rd :hq} (target-server (first %)))))))
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
-             :effect (effect (draw eid (total-cards-accessed target) nil))}
-            {:event :tags-changed
-             :req (req (not= target (second targets)))
-             :effect (req (let [old-total (second targets)
-                                new-total (first targets)]
-                            (change-hand-size state :runner (- new-total old-total))))}]})
+             :effect (effect (draw eid (total-cards-accessed target) nil))}]})
 
 (defcard "Omni-drive"
   {:recurring 1
@@ -1726,12 +1729,13 @@
                 :yes-ability
                 {:once :per-turn
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size 1)
-                           (register-events
-                             :runner card
-                             [{:event :runner-turn-begins
-                               :duration :until-runner-turn-begins
-                               :effect (effect (gain :runner :hand-size 1))}])
+                 :effect (effect
+                           (register-floating-effect
+                             card
+                             {:type :hand-size
+                              :duration :until-runner-turn-begins
+                              :req (req (= :runner side))
+                              :value -1})
                            (register-floating-effect
                              :runner card
                              (let [ice current-ice]
@@ -1823,7 +1827,10 @@
                 :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {}))}]})
 
 (defcard "Supercorridor"
-  {:in-play [:memory 2 :hand-size 1]
+  {:in-play [:memory 2]
+   :constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 1}]
    :events [{:event :runner-turn-ends
              :req (req (= (:credit runner) (:credit corp)))
              :interactive (get-autoresolve :autofire (complement never?))

@@ -570,13 +570,14 @@
     (new-game {:runner {:deck ["Brain Chip"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Brain Chip")
-    (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
+    (change state :runner :agenda-point -2)
     (is (= 5 (hand-size :runner)) "Hand size unaffected")
     (is (= 4 (core/available-mu state)) "Memory limit unaffected")
-    (swap! state assoc-in [:runner :agenda-point] 2)
+    (change state :runner :agenda-point 4)
     (is (= 7 (hand-size :runner)) "Hand size increased by 2")
     (is (= 6 (core/available-mu state)) "Memory limit increased by 2")
     (core/move state :runner (get-hardware state 0) :discard)
+    (core/fake-checkpoint state)
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 

@@ -1846,12 +1846,10 @@
                                 (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]}))
 
 (defcard "Origami"
-  {:effect (effect (gain :hand-size
-                         {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                        (all-active-installed state :runner)))))}))
-   :leave-play (effect (lose :hand-size
-                             {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                            (all-active-installed state :runner)))))}))})
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value (req (count (filter #(= (:title %) "Origami")
+                                                  (all-active-installed state :runner))))}]})
 
 (defcard "Overmind"
   (auto-icebreaker {:effect (effect (add-counter card :power (available-mu state)))

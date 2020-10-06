@@ -310,8 +310,9 @@
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
 
 (defcard "Chairman Hiro"
-  {:effect (effect (lose :runner :hand-size 2))
-   :leave-play (effect (gain :runner :hand-size 2))
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value -2}]
    :trash-effect executive-trash-effect})
 
 (defcard "Chief Slee"
@@ -495,7 +496,9 @@
      :abilities [ability]}))
 
 (defcard "Cybernetics Court"
-  {:in-play [:hand-size 4]})
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :corp side))
+                       :value 4}]})
 
 (defcard "Daily Business Show"
   {:derezzed-events [corp-rez-toast]
@@ -1168,8 +1171,9 @@
                  :label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
                  :effect (effect (gain-credits 1))}]
-    {:effect (effect (gain :runner :hand-size 1))
-     :leave-play (effect (lose :runner :hand-size 1))
+    {:constant-effects [{:type :hand-size
+                         :req (req (= :runner side))
+                         :value 1}]
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))

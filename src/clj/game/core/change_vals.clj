@@ -4,6 +4,7 @@
     [game.core.effects :refer [register-floating-effect]]
     [game.core.events :refer [trigger-event]]
     [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
+    [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]
     [game.core.tags :refer [update-tag-status]]
     [game.core.say :refer [system-msg]]
@@ -81,6 +82,20 @@
               (str "sets their link to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
+(defn- change-hand-size
+  "Change the player's hand-size, using floating effects."
+  [state side delta]
+  (register-floating-effect
+    state side nil
+    (let [user-side side]
+      {:type :user-hand-size
+       :req (req (= side user-side))
+       :value delta}))
+  (update-hand-size state side)
+  (system-msg state side
+              (str "sets their hand size to " (hand-size state side)
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
 (defn- change-generic
   "Change a player's base generic property."
   [state side key delta]
@@ -94,7 +109,7 @@
   [state side {:keys [key delta]}]
   (case key
     :memory (change-mu state side delta)
-    :hand-size (change-map state side key delta)
+    :hand-size (change-hand-size state side delta)
     :tag (change-tags state delta)
     :bad-publicity (change-bad-pub state delta)
     :agenda-point (change-agenda-points state side delta)

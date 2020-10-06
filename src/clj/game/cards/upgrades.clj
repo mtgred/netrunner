@@ -1164,7 +1164,9 @@
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
-   :in-play [:hand-size 2]})
+   :constant-effects [{:type :hand-size
+                       :req (req (= :corp value))
+                       :value 2}]})
 
 (defcard "Ruhr Valley"
   {:constant-effects [{:type :run-additional-cost
@@ -1428,17 +1430,15 @@
                        :value false}]})
 
 (defcard "Valley Grid"
-  {:implementation "Activation is manual"
-   :abilities [{:req (req this-server)
-                :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
-                :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
-                :effect (req (change-hand-size state :runner -1)
-                             (register-events
-                               state side card
-                               [{:event :corp-turn-begins
-                                 :duration :until-corp-turn-begins
-                                 :msg "increase the Runner's maximum hand size by 1"
-                                 :effect (effect (change-hand-size :runner 1))}]))}]})
+  {:events [{:event :subroutines-broken
+             :req (req (and this-server (all-subs-broken? target)))
+             :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
+             :effect (effect (register-floating-effect
+                               card
+                               {:type :hand-size
+                                :duration :until-corp-turn-begins
+                                :req (req (= :runner side))
+                                :value -1}))}]})
 
 (defcard "Warroid Tracker"
   (letfn [(wt [n]

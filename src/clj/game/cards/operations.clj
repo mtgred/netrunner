@@ -579,8 +579,9 @@
 
 (defcard "Enforced Curfew"
   {:msg "reduce the Runner's maximum hand size by 1"
-   :effect (effect (lose :runner :hand-size 1))
-   :leave-play (effect (gain :runner :hand-size 1))})
+   :constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value -1}]})
 
 (defcard "Enforcing Loyalty"
   {:trace {:base 3
