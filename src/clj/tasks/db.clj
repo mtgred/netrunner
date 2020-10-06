@@ -1,8 +1,27 @@
 (ns tasks.db
   "Database maintenance tasks"
-  (:require [web.db :refer [db] :as webdb]
-            [monger.collection :as mc]))
-            ;; [monger.operators :refer :all]))
+  (:require [web.db :refer [db object-id] :as webdb]
+            [web.decks :refer [update-deck prepare-deck-for-db]]
+            [monger.collection :as mc]
+            [monger.operators :refer :all]
+            [jinteki.cards :refer [all-cards]]
+            [jinteki.validator :refer [calculate-deck-status]]))
+
+(defn update-all-decks
+  "Run after fetching the data to update all decks"
+  [& args]
+  (webdb/connect)
+  (try
+    (doseq [deck (mc/find-maps db "decks" nil)
+            :when (:identity deck)
+            :let [deck-id (:_id deck)
+                  status (calculate-deck-status (update-deck deck))]]
+      (mc/update db "decks"
+                 {:_id (object-id deck-id)}
+                 {"$set" {"status" status}}))
+    (catch Exception e (do (println "Something got hecked" (.getMessage e))
+                           (.printStackTrace e)))
+    (finally (webdb/disconnect))))
 
 (defn- get-all-users
   "Get all users in the database. Takes a list of fields."
