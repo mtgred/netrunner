@@ -1406,12 +1406,12 @@
                         :autoresolve (get-autoresolve :auto-fire)
                         :player :runner
                         :prompt "Look at top 2 cards of the stack?"
-                        :yes-ability {
-                          :msg "look at the top 2 cards of the stack"
-                          :choices ["OK"]
-                          :prompt (msg "The top two cards of your Stack are "
-                                  (string/join ", " (map :title (take 2 (:deck runner))))
-                                  ".")}}}]
+                        :yes-ability
+                        {:msg "look at the top 2 cards of the stack"
+                         :choices ["OK"]
+                         :prompt (msg "The top two cards of your Stack are "
+                                      (string/join ", " (map :title (take 2 (:deck runner))))
+                                      ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of stack"
                 :once :per-turn
@@ -1427,8 +1427,9 @@
                        {:req (req (or (program? top-card)
                                       (hardware? top-card)))
                         :prompt (msg "Install " (:title top-card) "?")
-                        :yes-ability {:async true
-                                      :effect (effect (runner-install eid top-card nil))}}})
+                        :yes-ability
+                        {:async true
+                         :effect (effect (runner-install (assoc eid :source-type :runner-install) top-card nil))}}})
                     card nil))}]})
 
 (defcard "Public Terminal"

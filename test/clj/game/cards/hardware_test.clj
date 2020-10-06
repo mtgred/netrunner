@@ -2815,7 +2815,24 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner)))))))
+      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
+  (testing "Works with Paladin Poemu #5304"
+    (do-game
+      (new-game {:runner {:hand ["Prognostic Q-Loop" "Paladin Poemu" "Spy Camera" "Au Revoir" "Bankroll" "Clone Chip"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (play-from-hand state :runner "Paladin Poemu")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-hardware state 0) 1)
+      (click-prompt state :runner "Yes")
+      (is (prompt-is-type? state :runner :select))
+      (is (= "Select a credit providing card (0 of 1 credits)" (:msg (prompt-map)))
+          "Credit selection prompt is opened"))))
 
 (deftest public-terminal
   ;; Public Terminal
