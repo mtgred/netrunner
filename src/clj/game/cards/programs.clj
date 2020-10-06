@@ -2215,7 +2215,7 @@
               {:event :successful-run
                :req (req (and (#{:hq :rd} (target-server target))
                               (first-event? state :runner :successful-run
-                                            (fn [targets] #{:hq :rd} (first (:server (first targets)))))))
+                                            (fn [targets] (#{:hq :rd} (first (:server (first targets))))))))
                :optional
                {:prompt "Fire RNG Key?"
                 :autoresolve (get-autoresolve :auto-fire)

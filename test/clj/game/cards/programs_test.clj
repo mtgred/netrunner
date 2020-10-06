@@ -3914,6 +3914,19 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
       (click-prompt state :runner "Unrezzed upgrade")
+      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+  (testing "Works when running a different server first"
+    (do-game
+      (new-game {:corp {:deck ["Hokusai Grid" "Hedge Fund"]}
+                 :runner {:deck ["RNG Key"]}})
+      (play-from-hand state :corp "Hokusai Grid" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "RNG Key")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "5")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
 (deftest sage
