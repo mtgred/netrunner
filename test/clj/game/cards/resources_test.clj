@@ -1107,7 +1107,20 @@
           (take-credits state :corp)
           (card-ability state :runner ap 0)
           (click-card state :runner (get-runner-facedown state 0))
-          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed")))))
+          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
+  (testing "interaction with MaxX #5293"
+    (do-game
+      (new-game {:runner {:id "MaxX: Maximum Punk Rock"
+                          :hand ["Sure Gamble" "Corroder" "District 99"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (take-credits state :runner)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+      (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
+      (take-credits state :corp)
+      (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards"))))
 
 (let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
