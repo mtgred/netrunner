@@ -1090,6 +1090,70 @@
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     (is (= 2 (count-tags state)) "Runner doesn't take tags when trace won")))
 
+(deftest ganked
+  ;; Ganked!
+  (testing "Access ability and firing subs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (last-log-contains? state "Runner accesses Ganked!")
+        (is (= "Trash Ganked! to force the Runner to encounter a piece of ice?"
+               (:msg (prompt-map :corp))) "Corp has Ganked! prompt")
+        (click-prompt state :corp "Yes")
+        (is (= :select (prompt-type :corp)))
+        (is (= :waiting (prompt-type :runner)))
+        (click-card state :corp iw)
+        (is (= "You are encountering Ice Wall. Allow its subroutine to fire?"
+               (:msg (prompt-map :runner))) "Runner has Ice Wall fake encounter prompt")
+        (is (= :waiting (prompt-type :corp)))
+        (click-prompt state :runner "Yes")
+        (is (not (get-run)) "Run has been ended")
+        (last-log-contains? state "Corp resolves 1 unbroken subroutine on Ice Wall")
+        (is (empty? (:prompt (get-corp))) "No more prompts")
+        (is (empty? (:prompt (get-runner))) "No more prompts"))))
+  (testing "Access ability and not firing subs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (last-log-contains? state "Runner accesses Ganked!")
+        (is (= "Trash Ganked! to force the Runner to encounter a piece of ice?"
+               (:msg (prompt-map :corp))) "Corp has Ganked! prompt")
+        (click-prompt state :corp "Yes")
+        (is (= :select (prompt-type :corp)))
+        (is (= :waiting (prompt-type :runner)))
+        (click-card state :corp iw)
+        (is (= "You are encountering Ice Wall. Allow its subroutine to fire?"
+               (:msg (prompt-map :runner))) "Runner has Ice Wall fake encounter prompt")
+        (is (= :waiting (prompt-type :corp)))
+        (click-prompt state :runner "No")
+        (is (not (get-run)) "Run has been ended")
+        (last-log-contains? state "Corp resolves 1 unbroken subroutine on Ice Wall")
+        (is (empty? (:prompt (get-corp))) "No more prompts")
+        (is (empty? (:prompt (get-runner))) "No more prompts"))))
+  (testing "No access ability when there are no rezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (last-log-contains? state "Runner accesses Ganked!")
+      (is (= "You accessed Ganked!." (:msg (prompt-map :runner))) "Runner has normal access prompt")
+      (click-prompt state :runner "No action")
+      (is (not (get-run)) "Run has been ended")
+      (is (empty? (:prompt (get-corp))) "No more prompts")
+      (is (empty? (:prompt (get-runner))) "No more prompts"))))
+
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game

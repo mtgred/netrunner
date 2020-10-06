@@ -269,7 +269,7 @@
                               :source-type :subroutine})]
      (resolve-unbroken-subs! state side eid ice)))
   ([state side eid ice]
-   (if-let [subroutines (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice))]
+   (if-let [subroutines (seq (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice)))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
                (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)
