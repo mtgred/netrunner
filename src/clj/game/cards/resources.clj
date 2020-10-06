@@ -35,15 +35,14 @@
 
 (defn- trash-when-tagged-contructor
   "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
-  [name definition]
+  [card-name definition]
   (let [trash-effect {:async true
                       :effect (req (if tagged
-                                     (do (system-msg state :runner (str "trashes " name " for being tagged"))
+                                     (do (system-msg state :runner (str "trashes " card-name " for being tagged"))
                                          (trash state :runner eid card {:unpreventable true}))
                                      (effect-completed state side eid)))}]
     (-> definition
-        (update :events #(apply conj % [(assoc trash-effect :event :runner-gain-tag)
-                                        (assoc trash-effect :event :runner-is-tagged)]))
+        (update :events conj (assoc trash-effect :event :tags-changed))
         (assoc :reactivate trash-effect))))
 
 (defn companion-builder
@@ -93,7 +92,8 @@
               (assoc am :event :agenda-stolen)]}))
 
 (defcard "Access to Globalsec"
-  {:in-play [:link 1]})
+  {:constant-effects [{:type :link
+                       :value 1}]})
 
 (defcard "Activist Support"
   {:events [{:event :corp-turn-begins
@@ -385,7 +385,9 @@
                                 (move target :rfg))}]})
 
 (defcard "Borrowed Satellite"
-  {:in-play [:hand-size 1 :link 1]})
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:hand-size 1]})
 
 (defcard "Bug Out Bag"
   {:prompt "How many power counters?"
@@ -480,7 +482,7 @@
                 :cost [:trash :trash-entire-hand]
                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
    :events [{:event :runner-turn-ends
-             :req (req (pos? (count-tags state)))
+             :req (req tagged)
              :interactive (req true)
              :msg "force the Corp to initiate a trace"
              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
@@ -696,7 +698,8 @@
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (defcard "Cybertrooper Talut"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :runner-install
              :silent (req true)
              :req (req (and (has-subtype? target "Icebreaker")
@@ -815,8 +818,7 @@
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
                   :msg "manually add a power counter"}]
-     :events (let [prog-or-hw #(or (program? (first %))
-                                   (hardware? (first %)))
+     :events (let [prog-or-hw (fn [targets] (some #(or (program? %) (hardware? %)) targets))
                    trash-event (fn [side-trash] {:event side-trash
                                                  :once :per-turn
                                                  :req (req (first-event? state side side-trash prog-or-hw))
@@ -897,11 +899,11 @@
              :async true
              :req (req (first-event? state :runner :successful-run))
              :msg (msg "draw 1 card"
-                       (when (or (<= 2 (:link (:runner @state)))
+                       (when (or (<= 2 (get-link state))
                                  (has-subtype? (:identity (:runner @state)) "Digital"))
                          " and gain 1 [Credit]"))
              :effect (req (wait-for (draw state :runner 1 nil)
-                                    (when (or (<= 2 (:link (:runner @state)))
+                                    (when (or (<= 2 (get-link state))
                                               (has-subtype? (:identity (:runner @state)) "Digital"))
                                       (gain-credits state :runner 1))
                                     (effect-completed state side eid)))}]})
@@ -1115,7 +1117,7 @@
                                 :type :credit}}})
 
 (defcard "Globalsec Security Clearance"
-  {:req (req (< 1 (:link runner)))
+  {:req (req (< 1 (get-link state)))
    :flags {:runner-phase-12 (req true)}
    :abilities [{:msg "lose [Click] and look at the top card of R&D"
                 :once :per-turn
@@ -1293,7 +1295,7 @@
                  :effect (effect (make-run target nil card))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
-     :install-cost-bonus (req (- (:link runner)))
+     :install-cost-bonus (req (- (get-link state)))
      :events [{:event :runner-turn-begins
                :optional
                {:req (req (not (get-in @state [:per-turn (:cid card)])))
@@ -1507,7 +1509,8 @@
              :effect (effect (trash-cards eid (filter program? (:hosted card))))}]})
 
 (defcard "Maxwell James"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
                 :prompt "Choose a piece of ICE protecting a remote server"
                 :choices {:card #(and (ice? %)
@@ -1854,13 +1857,11 @@
                      (gain-credits 1))}))
 
 (defcard "Paparazzi"
-  {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
-                (trigger-event state :runner :runner-is-tagged true))
+  {:constant-effects [{:type :is-tagged
+                       :val true}]
    :events [{:event :pre-damage
              :req (req (= target :meat)) :msg "prevent all meat damage"
-             :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
-   :leave-play (req (swap! state update-in [:runner :tag :is-tagged] dec)
-                    (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))})
+             :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]})
 
 (defcard "Patron"
   (let [ability {:prompt "Choose a server for Patron"
@@ -2476,7 +2477,8 @@
                             (gain-credits state side credits)))}]})
 
 (defcard "The Archivist"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :agenda-scored
              :req (req (or (has-subtype? target "Initiative")
                            (has-subtype? target "Security")))
@@ -2593,7 +2595,8 @@
                                   card nil))))}]}))
 
 (defcard "The Helpful AI"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
@@ -2739,8 +2742,9 @@
                     (swap! state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
-  (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
-                                                   (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
+  (let [first-event-check (fn [state fn1 fn2]
+                            (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
+                                 (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
                  :prompt "Select a card to install with Thunder Art Gallery"
                  :choices
@@ -2817,7 +2821,7 @@
 (defcard "Underworld Contact"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
-                 :effect (req (when (and (>= (:link runner) 2)
+                 :effect (req (when (and (<= 2 (get-link state))
                                          (:runner-phase-12 @state))
                                 (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
                                 (gain-credits state :runner 1)))}]

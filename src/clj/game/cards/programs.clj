@@ -292,7 +292,7 @@
   (Cloud subtype: Creeper, ZU.13 Key Master, B&E, GlobalSec)"
   [cdef]
   (assoc cdef
-         :effect (req (let [link (get-in @state [:runner :link] 0)]
+         :effect (req (let [link (get-link state)]
                         (when (<= 2 link)
                           (free-mu state (:memoryunits card))))
                       (add-watch state (keyword (str "cloud" (:cid card)))
@@ -309,7 +309,7 @@
                                        cloud-turned-off
                                        (use-mu state (:memoryunits card)))))))
          :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                          (let [link (get-in @state [:runner :link] 0)]
+                          (let [link (get-link state)]
                             (when (>= link 2)
                               ;; To counteract the normal freeing of MU on program `:leave-play`
                               (use-mu state (:memoryunits card)))))))
@@ -1954,7 +1954,7 @@
             {:event :ice-strength-changed
              :req (req (and (same-card? target (:host card))
                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
-                            (<= (:current-strength target) 0)))
+                            (<= (get-strength target) 0)))
              :async true
              :effect (req (unregister-events state side card)
                           (when (get-in card [:special :installing])

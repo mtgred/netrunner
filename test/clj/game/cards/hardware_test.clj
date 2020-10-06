@@ -410,7 +410,7 @@
                  :corp {:deck ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Boomerang")
       (play-from-hand state :runner "Assimilator")
       (card-ability state :runner (get-resource state 0) 0)
@@ -637,7 +637,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "Corroder")
-      (trash-from-hand state :corp "Yog.0")
+      (trash-from-hand state :runner "Yog.0")
       (is empty? (:prompt (get-runner)))))
   (testing "Trashing a corp card must not trigger Buffer Drive"
     (do-game
@@ -757,7 +757,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
       (play-from-hand state :runner "Buffer Drive")
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (click-card state :corp "Hostile Takeover")
@@ -828,7 +828,7 @@
       (click-prompt state :runner "Remove 1 tag")
       (is (= 1 (count (:discard (get-runner)))) "Spy Camera trashed")
       (is (= 1 (count-tags state)) "Runner lost 1 tag")
-      (core/end-phase-12 state :runner nil))))
+      (end-phase-12 state :runner))))
 
 (deftest clone-chip
   ;; Test clone chip usage- outside and during run
@@ -1036,12 +1036,12 @@
             enig (get-ice state :hq 0)]
         (rez state :corp (refresh enig))
         (run-continue state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
+        (is (= 2 (get-strength (refresh enig))) "Enigma starts at 2 strength")
         (click-prompt state :runner "Yes")
-        (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
+        (is (= -4 (get-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
         (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
         (run-jack-out state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
+        (is (= 2 (get-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
 (deftest dinosaurus
   ;; Dinosaurus
@@ -1055,12 +1055,12 @@
       (is (= 2 (core/available-mu state)) "2 MU used")
       (let [dino (get-hardware state 0)
             adpt (get-program state 0)]
-        (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
         (card-ability state :runner dino 1)
         (click-card state :runner (refresh adpt))
         (let [hosted-adpt (first (:hosted (refresh dino)))]
           (is (= 4 (core/available-mu state)) "0 MU used")
-          (is (= 8 (:current-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
+          (is (= 8 (get-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
   (testing "Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
     (do-game
       (new-game {:runner {:deck ["Dinosaurus" "Battering Ram"]}})
@@ -1074,7 +1074,7 @@
         (is (zero? (:credit (get-runner))))
         (is (= 4 (core/available-mu state)) "Battering Ram 2 MU not deducted from available MU")
         (let [ram (first (:hosted (refresh dino)))]
-          (is (= 5 (:current-strength (refresh ram)))
+          (is (= 5 (get-strength (refresh ram)))
               "Dinosaurus giving +2 strength to Battering Ram")
           ;; Trash Battering Ram
           (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
@@ -1532,22 +1532,22 @@
       (card-ability state :runner geb 0)
       (click-card state :runner cor)
       (run-on state :hq)
-      (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
-      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
+      (is (= 2 (get-strength (refresh cor))) "Corroder starts with 2 strength")
+      (is (= 1 (get-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
       (run-continue state)
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 1)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder has 5 strength")
+      (is (= 5 (get-strength (refresh cor))) "Corroder has 5 strength")
       (card-ability state :runner bukh 1)
-      (is (= 2 (:current-strength (refresh bukh))) "Bukhgalter has 2 strength")
+      (is (= 2 (get-strength (refresh bukh))) "Bukhgalter has 2 strength")
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
-      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
+      (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength")
+      (is (= 1 (get-strength (refresh bukh))) "Bukhgalter has reset to 1")
       (run-jack-out state)
-      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength"))))
+      (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
@@ -1566,7 +1566,7 @@
     (new-game {:runner {:id "Apex: Invasive Predator"
                         :deck [(qty "Heartbeat" 2) (qty "Sure Gamble" 2) "Cache"]}})
     (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
     (play-from-hand state :runner "Heartbeat")
     (is (= 5 (core/available-mu state)) "Gained 1 MU")
@@ -1886,11 +1886,11 @@
     (play-from-hand state :runner "Passport")
     (let [inti (get-program state 0)
           pass (get-program state 1)]
-      (is (= 2 (:current-strength (refresh inti))) "Strength boosted by 1; 1 copy of LLDS when installed")
-      (is (= 4 (:current-strength (refresh pass))) "Strength boosted by 2; 2 copies of LLDS when installed")
+      (is (= 2 (get-strength (refresh inti))) "Strength boosted by 1; 1 copy of LLDS when installed")
+      (is (= 4 (get-strength (refresh pass))) "Strength boosted by 2; 2 copies of LLDS when installed")
       (take-credits state :runner)
-      (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
-      (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
+      (is (= 1 (get-strength (refresh inti))) "Strength reduced to default")
+      (is (= 2 (get-strength (refresh pass))) "Strength reduced to default"))))
 
 (deftest lockpick
   ;; Lockpick
@@ -2408,10 +2408,10 @@
       (run-on state "HQ")
       (let [pea (get-program state 0)]
         (click-card state :runner pea)
-        (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
+        (is (= 3 (get-strength (refresh pea))) "Peacock strength boosted")
         (run-continue state)
         (click-prompt state :runner "No action")
-        (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+        (is (= 2 (get-strength (refresh pea))) "Peacock strength back to default"))))
   (testing "Do not display prompt without an installed icebreaker"
     (do-game
       (new-game {:runner {:deck [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 2)]}})
@@ -2437,8 +2437,10 @@
         (click-prompt state :runner "No action")
         (play-from-hand state :runner "Obelus")
         (gain-tags state :runner 1)
+        (core/fake-checkpoint state)
         (is (= 6 (hand-size :runner)) "Max hand size is 6")
         (core/lose-tags state :runner (game.core.eid/make-eid state) 1)
+        (core/fake-checkpoint state)
         (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
@@ -2508,9 +2510,9 @@
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
   (testing "works with Paper Tripping"
     (do-game
-      (new-game {:runner {:deck ["Obelus" "Paper Tripping"]}})
+      (new-game {:runner {:deck ["Obelus" "Paper Tripping"]
+                          :tags 3}})
       (take-credits state :corp)
-      (gain-tags state :runner 3)
       (is (= 3 (count-tags state)) "Runner starts with 3 tags")
       (play-from-hand state :runner "Obelus")
       (take-credits state :runner)
@@ -2813,7 +2815,24 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner)))))))
+      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
+  (testing "Works with Paladin Poemu #5304"
+    (do-game
+      (new-game {:runner {:hand ["Prognostic Q-Loop" "Paladin Poemu" "Spy Camera" "Au Revoir" "Bankroll" "Clone Chip"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (play-from-hand state :runner "Paladin Poemu")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-hardware state 0) 1)
+      (click-prompt state :runner "Yes")
+      (is (prompt-is-type? state :runner :select))
+      (is (= "Select a credit providing card (0 of 1 credits)" (:msg (prompt-map :runner)))
+          "Credit selection prompt is opened"))))
 
 (deftest public-terminal
   ;; Public Terminal
@@ -2886,10 +2905,10 @@
     (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Rabbit Hole")
-    (is (= 1 (:link (get-runner))))
+    (is (= 1 (get-link state)))
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Yes")
-    (is (= 3 (:link (get-runner))))
+    (is (= 3 (get-link state)))
     (is (= 3 (count (get-hardware state))))
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
@@ -3221,13 +3240,13 @@
           sifr (get-hardware state 0)]
       (rez state :corp arch)
       (rez state :corp ip)
-      (is (= 4 (:current-strength (refresh ip))))
+      (is (= 4 (get-strength (refresh ip))))
       (run-on state "HQ")
       (run-continue state)
       (is (= 2 (:position (:run @state))))
       (is (= "Use Şifr?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (zero? (:current-strength (refresh ip))))
+      (is (zero? (get-strength (refresh ip))))
       (run-continue state)
       (run-continue state)
       (is (= 1 (:position (:run @state))))
@@ -3240,11 +3259,11 @@
       (click-card state :corp sifr)
       (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
       (run-jack-out state)
-      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
+      (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
       (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
       (click-card state :runner "Şifr")
-      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength"))))
+      (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
 
 (deftest silencer
   ;; Silencer
@@ -3441,11 +3460,11 @@
     (starting-hand state :runner ["Sports Hopper"])
     (take-credits state :corp)
     (play-from-hand state :runner "Sports Hopper")
-    (is (= 1 (:link (get-runner))) "Gained 1 link")
+    (is (= 1 (get-link state)) "Gained 1 link")
     (card-ability state :runner (get-hardware state 0) 0)
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
-    (is (zero? (:link (get-runner))) "Lost link")))
+    (is (zero? (get-link state)) "Lost link")))
 
 (deftest spy-camera
   ;; Spy Camera - Full test
@@ -3717,13 +3736,13 @@
     (play-from-hand state :runner "Faerie")
     (let [par (get-program state 0)
           fae (get-program state 1)]
-      (is (= 2 (:current-strength (refresh fae))))
+      (is (= 2 (get-strength (refresh fae))))
       (play-from-hand state :runner "The Personal Touch")
       (click-card state :runner par)
       (is (nil? (:hosted (refresh par))) "TPT can't be hosted on a non-icebreaker")
       (click-card state :runner fae)
       (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
-      (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
+      (is (= 3 (get-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
 
 (deftest the-toolbox
   ;; The Toolbox

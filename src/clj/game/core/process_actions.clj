@@ -4,10 +4,9 @@
     [game.core.board :refer [get-remotes]]
     [game.core.card :refer [get-card]]
     [game.core.change-vals :refer [change]]
+    [game.core.checkpoint :refer [fake-checkpoint]]
     [game.core.commands :refer [parse-command]]
     [game.core.eid :refer [make-eid]]
-    [game.core.ice :refer [update-all-ice update-all-icebreakers]]
-    [game.core.initializing :refer [update-all-card-labels]]
     [game.core.moving :refer [trash]]
     [game.core.rezzing :refer [derez rez]]
     [game.core.runs :refer [check-for-empty-server continue corp-phase-43 handle-end-run jack-out start-next-phase toggle-auto-no-action]]
@@ -20,21 +19,9 @@
     [game.utils :refer [dissoc-in]]
     [clojure.string :as string]))
 
-(defn- clear-empty-remotes
+(defn checkpoint+clean-up
   [state]
-  (doseq [remote (get-remotes state)]
-    (let [zone [:corp :servers (first remote)]]
-      (when (and (empty? (get-in @state (conj zone :content)))
-                 (empty? (get-in @state (conj zone :ices))))
-        (swap! state dissoc-in zone)))))
-
-(defn- fake-checkpoint [state]
-  ;; Update strength and labels
-  (update-all-icebreakers state :runner)
-  (update-all-ice state :corp)
-  (update-all-card-labels state)
-  ;; Clear empty remotes
-  (clear-empty-remotes state)
+  (fake-checkpoint state)
   ;; End the run if running an empty remote
   (when (check-for-empty-server state)
     (handle-end-run state :corp)))
@@ -96,5 +83,5 @@
   [command state side args]
   (when-let [c (get commands command)]
     (c state side args)
-    (fake-checkpoint state)
+    (checkpoint+clean-up state)
     true))

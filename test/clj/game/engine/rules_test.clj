@@ -453,10 +453,10 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [laamb (get-program state 0)]
-        (is (= 2 (:current-strength (refresh laamb))) "Laamb starts at 2 strength")
+        (is (= 2 (get-strength (refresh laamb))) "Laamb starts at 2 strength")
         (is (= 6 (:credit (get-runner))) "Spent 4 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
-        (is (= 8 (:current-strength (refresh laamb))) "Laamb is at 8 strength")
+        (is (= 8 (get-strength (refresh laamb))) "Laamb is at 8 strength")
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
   (testing "Multi pump"
     (do-game
@@ -470,10 +470,10 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [ank (get-program state 0)]
-        (is (zero? (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
+        (is (zero? (get-strength (refresh ank))) "Ankusa starts at 1 strength")
         (is (= 4 (:credit (get-runner))) "Spent 6 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
-        (is (= 3 (:current-strength (refresh ank))) "Ankusa is at 3 strength")
+        (is (= 3 (get-strength (refresh ank))) "Ankusa is at 3 strength")
         (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
 
 (deftest autoresolve
@@ -736,10 +736,9 @@
     (core/runner-install state :runner (find-card "Security Testing" (:hand (get-runner))) {:facedown true})
     (take-credits state :runner)
     (is (:corp-phase-12 @state) "Facedown corp cards can be rezzed so trigger phase 1.2")
-    (core/end-phase-12 state :corp nil)
+    (end-phase-12 state :corp)
     (take-credits state :corp)
-    (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")
-    (core/end-phase-12 state :runner nil)))
+    (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")))
 
 (deftest move-removes-icon
   ;; Moving a marked ice to HQ removes icon #5196

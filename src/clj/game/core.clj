@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
     [game.core.costs]
@@ -206,6 +207,9 @@
 
   [game.core.change-vals
    change]
+
+  [game.core.checkpoint
+   fake-checkpoint]
 
   [game.core.commands
    command-adv-counter
@@ -477,6 +481,10 @@
    runner-can-install?
    runner-install]
 
+  [game.core.link
+   get-link
+   update-link]
+
   [game.core.moving
    as-agenda
    discard-from-hand
@@ -649,7 +657,6 @@
    build-card
    create-deck
    init-game
-   init-identity
    keep-hand
    mulligan]
 

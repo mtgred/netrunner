@@ -431,7 +431,7 @@
                           :deck ["Wyrm"]}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Wyrm")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program"))))
 
@@ -1027,10 +1027,10 @@
     (play-from-hand state :corp "Lotus Field" "HQ")
     (let [lf (get-ice state :hq 0)]
       (rez state :corp lf)
-      (is (= 4 (:current-strength (refresh lf))) "Should start with base strength of 4")
+      (is (= 4 (get-strength (refresh lf))) "Should start with base strength of 4")
       (is (zero? (:credit (get-corp))) "Should have 0 credits after rez")
       (play-and-score state "Encrypted Portals")
-      (is (= 5 (:current-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
+      (is (= 5 (get-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
       (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
 
 (deftest escalate-vitriol
@@ -1594,10 +1594,10 @@
           io (get-ice state :rd 0)]
       (rez state :corp nh)
       (rez state :corp io)
-      (is (= 4 (:current-strength (refresh nh))) "Should start with base strength of 4")
+      (is (= 4 (get-strength (refresh nh))) "Should start with base strength of 4")
       (is (= 7 (:credit (get-corp))) "Should have 7 credits after rez")
       (play-and-score state "Improved Tracers")
-      (is (= 5 (:current-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
+      (is (= 5 (get-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -1730,7 +1730,7 @@
                              "Ice Wall" "Fire Wall"
                              "Kakugo" "Chum"
                              "RSVP" "Sensei"]}})
-    (core/click-draw state :corp 2)
+    (click-draw state :corp)
     (core/gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "Archives")
     (play-from-hand state :corp "Fire Wall" "R&D")
@@ -1963,12 +1963,12 @@
   ;; Net Quarantine
   (do-game
     (new-game {:corp {:deck ["Net Quarantine"]}})
-    (core/gain state :runner :link 1)
+    (swap! state assoc-in [:runner :identity :baselink] 1)
     (core/gain state :corp :click 3)
     (play-and-score state "Net Quarantine")
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
-      (is (= 1 (:link (get-runner))) "Runner has 1 link")
+      (is (= 1 (get-link state)) "Runner has 1 link")
       (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
@@ -2442,7 +2442,23 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (click-prompt state :runner "Steal")
-      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it"))))
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it")))
+  (testing "Still adds counters when swapped with Turntable #5036"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron" "Hostile Takeover"]}
+                 :runner {:hand ["Turntable"]}})
+      (play-and-score state "Project Vacheron")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Turntable")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (is (prompt-is-card? state :runner (get-hardware state 0)))
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Project Vacheron" (:scored (get-corp))))
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Gains the counters on swap")
+      (is (zero? (:agenda-point (get-runner))) "Got the Project Vacheron")
+      (is (= 1 (:agenda-point (get-corp))) "Swapped into an HT"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius
@@ -2500,7 +2516,7 @@
                                "Prisec"
                                "Hedge Fund"]}})
       (core/gain state :corp :click 10 :credit 10)
-      (core/click-draw state :corp 2)
+      (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (let [pyu (get-content state :remote1 0)]
@@ -2531,7 +2547,7 @@
                                "Prisec"
                                "Hedge Fund"]}})
       (core/gain state :corp :click 10 :credit 10)
-      (core/click-draw state :corp 2)
+      (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (let [pyu (get-content state :remote1 0)]
@@ -2652,7 +2668,7 @@
     (new-game {:corp {:deck ["Rebranding Team" "Launch Campaign" "City Surveillance"
                              "Jackson Howard" "Museum of History" "Advanced Assembly Lines"]}})
     (play-and-score state "Rebranding Team")
-    (core/click-draw state :runner 1)
+    (click-draw state :runner)
     (is (has-subtype? (find-card "Advanced Assembly Lines" (:hand (get-corp))) "Advertisement"))
     ; #2608 part 2 - retain Advertisement always
     (trash-from-hand state :corp "Advanced Assembly Lines")
@@ -3183,10 +3199,10 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (let [iw (get-ice state :hq 0)]
       (rez state :corp iw)
-      (is (= 1 (:current-strength (refresh iw))) "Should start with base strength of 1")
+      (is (= 1 (get-strength (refresh iw))) "Should start with base strength of 1")
       (is (= 4 (:credit (get-corp))) "Should have 4 credits after rez")
       (play-and-score state "Superior Cyberwalls")
-      (is (= 2 (:current-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
+      (is (= 2 (get-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
       (is (= 5 (:credit (get-corp))) "Should gain 1 credit for rezzed barrier"))))
 
 (deftest tgtbt
@@ -3518,7 +3534,7 @@
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :corp)
       (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn")
-      (core/click-draw state :runner 1)
+      (click-draw state :runner)
       (take-credits state :runner)
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")

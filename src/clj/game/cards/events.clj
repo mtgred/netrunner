@@ -1930,7 +1930,7 @@
    :msg "add it to their score area as an agenda worth 1 agenda point"})
 
 (defcard "Office Supplies"
-  {:play-cost-bonus (req (- (:link runner 0)))
+  {:play-cost-bonus (req (- (get-link state)))
    :prompt "Gain 4 [Credits] or draw 4 cards?"
    :choices ["Gain 4 [Credits]" "Draw 4 cards"]
    :async true
@@ -2201,14 +2201,11 @@
                   (doseq [c (:hosted old-runner-identity)]
                     (move state side c :temp-hosted))
                   (disable-identity state side)
-                  ;; Manually reduce the runner's link by old link
-                  (lose state :runner :link (:baselink old-runner-identity))
                   ;; Move the selected ID to [:runner :identity] and set the zone
                   (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))
                         num-old-blanks (:num-disabled old-runner-identity)]
                     (swap! state assoc-in [side :identity] new-id)
-                    ;; enable-identity does not do everything that init-identity does
-                    (init-identity state side new-id)
+                    (card-init state side new-id)
                     (when num-old-blanks
                       (dotimes [_ num-old-blanks]
                         (disable-identity state side)))))

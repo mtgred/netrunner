@@ -3,6 +3,7 @@
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.events :refer [trigger-event-simult trigger-event-sync]]
+    [game.core.link :refer [get-link]]
     [game.core.payment :refer [pay]]
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
     [game.core.resolve-ability :refer [can-trigger? register-ability-type resolve-ability]]
@@ -127,8 +128,7 @@
                    base (cond force-base force-base
                               (fn? base) (base state :corp (make-eid state) card nil)
                               :else base)
-                   link (or force-link
-                            (get-in @state [:runner :link] 0))
+                   link (or force-link (get-link state))
                    bonus (get-in @state [:bonus :trace] 0)
                    initiator (determine-initiator state trace)
                    eid (assoc eid :source-type :trace)

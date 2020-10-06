@@ -176,14 +176,14 @@
       (let [akhet (get-ice state :hq 0)]
         (rez state :corp akhet)
         (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
-        (is (= 2 (:current-strength (refresh akhet))) "Akhet starts at 2 strength")
+        (is (= 2 (get-strength (refresh akhet))) "Akhet starts at 2 strength")
         (dotimes [n 2]
           (advance state akhet)
           (is (= (inc n) (get-counters (refresh akhet) :advancement)) (str "Akhet has " (inc n) " adv tokens"))
-          (is (= 2 (:current-strength (refresh akhet))) "Akhet stays at 2 strength"))
+          (is (= 2 (get-strength (refresh akhet))) "Akhet stays at 2 strength"))
         (advance state akhet)
         (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet has 3 adv tokens")
-        (is (= 5 (:current-strength (refresh akhet))) "Akhet is now at 5 strength"))))
+        (is (= 5 (get-strength (refresh akhet))) "Akhet is now at 5 strength"))))
   (testing "Akhet subroutines"
     (do-game
       (new-game {:corp {:deck ["Akhet"]}})
@@ -276,7 +276,7 @@
         (rez state :corp architect)
         (trash state :corp (refresh architect))
         (is (get-ice state :hq 0) "Architect was trashed, but should be untrashable")
-        (core/derez state :corp (refresh architect))
+        (derez state :corp (refresh architect))
         (trash state :corp (refresh architect))
         (is (nil? (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
         (trash state :corp (get-in @state [:corp :hand 0]))
@@ -564,20 +564,20 @@
         (rez state :corp enigma)
         (run-on state :hq)
         (run-continue state)
-        (is (= 4 (:current-strength (refresh chum))) "Chum is at 4 strength")
+        (is (= 4 (get-strength (refresh chum))) "Chum is at 4 strength")
         (card-subroutine state :corp (refresh chum) 0)
-        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")
-        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength")
+        (is (= 4 (get-strength (refresh chum))) "Chum stays at 4 strength")
+        (is (= 1 (get-strength (refresh icewall))) "Ice Wall still at 1 strength")
         (run-continue state)
-        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength while passing unrezzed ice")
+        (is (= 1 (get-strength (refresh icewall))) "Ice Wall still at 1 strength while passing unrezzed ice")
         (run-continue state)
         (run-continue state)
-        (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
-        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
+        (is (= 3 (get-strength (refresh icewall))) "Ice Wall now at 3 strength")
+        (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (core/continue state :corp nil)
         (run-continue state)
-        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
+        (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
         (run-jack-out state))))
   (testing "Net damage from ice ending the run"
     (do-game
@@ -702,8 +702,8 @@
           cr2 (get-ice state :archives 0)]
       (rez state :corp cr1)
       (rez state :corp cr2)
-      (is (= 3 (:current-strength (refresh cr1))) "Normal strength over HQ")
-      (is (= 6 (:current-strength (refresh cr2))) "+3 strength over Archives")
+      (is (= 3 (get-strength (refresh cr1))) "Normal strength over HQ")
+      (is (= 6 (get-strength (refresh cr2))) "+3 strength over Archives")
       (run-on state "Archives")
       (run-continue state)
       (card-subroutine state :corp cr2 0)
@@ -719,12 +719,12 @@
     (play-from-hand state :corp "Curtain Wall" "HQ")
     (let [curt (get-ice state :hq 0)]
       (rez state :corp curt)
-      (is (= 10 (:current-strength (refresh curt)))
+      (is (= 10 (get-strength (refresh curt)))
           "Curtain Wall has +4 strength as outermost ICE")
       (play-from-hand state :corp "Paper Wall" "HQ")
       (let [paper (get-ice state :hq 1)]
         (rez state :corp paper)
-        (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
+        (is (= 6 (get-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
 (deftest data-hound
   ;; Data Hound - Full test
@@ -882,7 +882,7 @@
         (click-prompt state :runner "Take 1 tag")
         (fire-subs state (refresh dw))
         (is (not (:run @state)) "Run ended")
-        (core/remove-tag state :runner nil)
+        (remove-tag state :runner)
         (run-on state "HQ")
         (run-continue state)
         (click-prompt state :runner "Pay 3 [Credits]")
@@ -960,7 +960,7 @@
       (click-prompt state :corp "4")
       (run-continue state)
       (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
-      (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
+      (is (= 4 (get-strength (refresh drac))) "Dracō is 4 strength")
       (card-subroutine state :corp drac 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -1332,7 +1332,7 @@
       (run-on state "Server 1")
       (rez state :corp gate)
       (run-continue state)
-      (is (= 6 (:current-strength (refresh gate))))
+      (is (= 6 (get-strength (refresh gate))))
       (card-subroutine state :corp gate 0)
       (click-prompt state :corp "3")
       (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Corp should draw 3 cards")
@@ -1347,7 +1347,7 @@
       (is (not (:run @state)) "Gatekeeper subroutine should end the run")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (zero? (:current-strength (refresh gate))) "Gatekeeper strength should be reset"))))
+      (is (zero? (get-strength (refresh gate))) "Gatekeeper strength should be reset"))))
 
 (deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
@@ -1571,26 +1571,26 @@
         (run-on state "HQ")
         (rez state :corp hag)
         (run-continue state)
-        (is (= 6 (:current-strength (refresh hag))) "Hagen is at base strength of 6.")
+        (is (= 6 (get-strength (refresh hag))) "Hagen is at base strength of 6.")
         (run-jack-out state)
         (play-from-hand state :runner "Inti")
         (run-on state "HQ")
-        (is (= 5 (:current-strength (refresh hag))) "Inti lowered strength to 5.")
+        (is (= 5 (get-strength (refresh hag))) "Inti lowered strength to 5.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Gordian Blade")
         (run-on state "HQ")
-        (is (= 4 (:current-strength (refresh hag))) "Gordian Blade lowered strength to 4.")
+        (is (= 4 (get-strength (refresh hag))) "Gordian Blade lowered strength to 4.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Pipeline")
         (run-on state "HQ")
-        (is (= 3 (:current-strength (refresh hag))) "Pipeline lowered strength to 3.")
+        (is (= 3 (get-strength (refresh hag))) "Pipeline lowered strength to 3.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Misdirection")
         (run-on state "HQ")
-        (is (= 3 (:current-strength (refresh hag))) "Misdirection didn't lower strength.")))))
+        (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength.")))))
 
 (deftest harvester
   ;; Harvester - draw 3, then discard
@@ -1862,14 +1862,14 @@
     (let [iq1 (get-ice state :rd 0)]
       (rez state :corp iq1)
       (is (and (= 4 (count (:hand (get-corp))))
-               (= 4 (:current-strength (refresh iq1)))
+               (= 4 (get-strength (refresh iq1)))
                (= 5 (:credit (get-corp)))) "4 cards in HQ: paid 4 to rez, has 4 strength")
       (play-from-hand state :corp "IQ" "HQ")
       (let [iq2 (get-ice state :hq 0)]
         (rez state :corp iq2)
         (is (and (= 3 (count (:hand (get-corp))))
-                 (= 3 (:current-strength (refresh iq1)))
-                 (= 3 (:current-strength (refresh iq2)))
+                 (= 3 (get-strength (refresh iq1)))
+                 (= 3 (get-strength (refresh iq2)))
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
 
 (deftest ireress
@@ -2208,7 +2208,7 @@
       (play-from-hand state :runner "Ice Carver")
       (run-on state "Archives")
       (run-continue state)
-      (is (= 4 (:current-strength (refresh lotus))) "Lotus Field strength unchanged")
+      (is (= 4 (get-strength (refresh lotus))) "Lotus Field strength unchanged")
       (run-jack-out state)
       (play-from-hand state :runner "Parasite")
       (click-card state :runner lotus)
@@ -2217,12 +2217,12 @@
       (take-credits state :corp)
       (is (= 1 (core/get-virus-counters state (first (:hosted (refresh lotus)))))
           "Parasite has 1 virus counter")
-      (is (= 4 (:current-strength (refresh lotus))) "Lotus Field strength unchanged")
+      (is (= 4 (get-strength (refresh lotus))) "Lotus Field strength unchanged")
       (take-credits state :runner)
       (play-from-hand state :corp "Lag Time")
-      (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased")
+      (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased")
       (take-credits state :corp 2)
-      (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
+      (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased"))))
 
 (deftest magnet
   ;; Magnet - host program when rezzed
@@ -2299,7 +2299,7 @@
         (is (zero? (core/get-virus-counters state (first (:hosted (refresh m)))))
           "Parasite does not gain a virus counter")
         (take-credits state :runner)
-        (core/derez state :corp (refresh m))
+        (derez state :corp (refresh m))
         (take-credits state :corp)
         (is (= 1 (core/get-virus-counters state (first (:hosted (refresh m)))))
           "Parasite gains a virus counter on derezzed Magnet")
@@ -2320,7 +2320,7 @@
         (is (zero? (core/get-virus-counters state (second (:hosted (refresh m)))))
           "Second parasite does not gain a virus counter on derezzed Magnet")
         (take-credits state :runner)
-        (core/derez state :corp (refresh m))
+        (derez state :corp (refresh m))
         (take-credits state :corp)
         (is (= 2 (core/get-virus-counters state (first (:hosted (refresh m)))))
           "First parasite gains a virus counter on derezzed Magnet")
@@ -2446,8 +2446,8 @@
     (play-from-hand state :corp "Meru Mati" "R&D")
     (rez state :corp (get-ice state :hq 0))
     (rez state :corp (get-ice state :rd 0))
-    (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
-    (is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+    (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
+    (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
@@ -2753,17 +2753,17 @@
           nb2 (get-ice state :rd 0)
           ns1 (get-ice state :archives 0)]
       (rez state :corp nb1)
-      (is (= 1 (:current-strength (refresh nb1)))
+      (is (= 1 (get-strength (refresh nb1)))
           "NEXT Bronze at 1 strength: 1 rezzed NEXT ice")
       (rez state :corp nb2)
-      (is (= 2 (:current-strength (refresh nb1)))
+      (is (= 2 (get-strength (refresh nb1)))
           "NEXT Bronze at 2 strength: 2 rezzed NEXT ice")
-      (is (= 2 (:current-strength (refresh nb2)))
+      (is (= 2 (get-strength (refresh nb2)))
           "NEXT Bronze at 2 strength: 2 rezzed NEXT ice")
       (rez state :corp ns1)
-      (is (= 3 (:current-strength (refresh nb1)))
+      (is (= 3 (get-strength (refresh nb1)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice")
-      (is (= 3 (:current-strength (refresh nb2)))
+      (is (= 3 (get-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
 
 (deftest next-diamond
@@ -3118,13 +3118,13 @@
       (play-from-hand state :corp "Resistor" "HQ")
       (let [resistor (get-ice state :hq 0)]
         (rez state :corp resistor)
-        (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
+        (is (zero? (get-strength (refresh resistor))) "No Runner tags; 0 strength")
         (gain-tags state :runner 2)
         (is (= 2 (count-tags state)))
-        (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
+        (is (= 2 (get-strength (refresh resistor))) "2 Runner tags; 2 strength")
         (take-credits state :corp)
-        (core/remove-tag state :runner 1)
-        (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
+        (remove-tag state :runner)
+        (is (= 1 (get-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
   (testing "Subroutine is trace 4 etr"
     (do-game
       (new-game {:corp {:deck ["Resistor"]}})
@@ -3452,13 +3452,13 @@
     (play-from-hand state :corp "Seidr Adaptive Barrier" "HQ")
     (let [sab (get-ice state :hq 0)]
       (rez state :corp sab)
-      (is (= 3 (:current-strength (refresh sab))) "Seidr gained 1 strength for itself")
+      (is (= 3 (get-strength (refresh sab))) "Seidr gained 1 strength for itself")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
+      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
+      (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
-      (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
+      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
 
 (deftest self-adapting-code-wall
   ;; Self-Adapting Code Wall
@@ -3472,7 +3472,7 @@
       (run-on state "Archives")
       (rez state :corp sacw)
       (run-continue state)
-      (is (= 1 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
+      (is (= 1 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
       (run-jack-out state)
       (play-from-hand state :runner "Parasite")
       (click-card state :runner sacw)
@@ -3481,12 +3481,12 @@
       (take-credits state :corp)
       (is (= 1 (core/get-virus-counters state (first (:hosted (refresh sacw)))))
           "Parasite has 1 virus counter")
-      (is (= 1 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
+      (is (= 1 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
       (take-credits state :runner)
       (play-from-hand state :corp "Lag Time")
-      (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
+      (is (= 2 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
       (take-credits state :corp)
-      (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
+      (is (= 2 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
 
 (deftest sensei
   ;; Sensei
@@ -3880,11 +3880,11 @@
     (play-from-hand state :corp "Surveyor" "HQ")
     (let [surv (get-ice state :hq 0)]
       (rez state :corp surv)
-      (is (= 2 (:current-strength (refresh surv))) "Surveyor has 2 strength for itself")
+      (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength for itself")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE")
+      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
+      (is (= 6 (get-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -3903,7 +3903,7 @@
       (click-prompt state :runner "6")
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
-      (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
+      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
 (deftest susanoo-no-mikoto
   ;;Susanoo-no-Mikoto
@@ -4062,7 +4062,7 @@
         (rez state :corp ti)
         (click-prompt state :corp "No") ; don't use alternative cost
         (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
-        (core/derez state :corp (refresh ti))
+        (derez state :corp (refresh ti))
         (rez state :corp ti)
         (click-prompt state :corp "Yes") ; use alternative cost
         (click-card state :corp "Hostile Takeover")
@@ -4074,7 +4074,7 @@
         (click-card state :corp (refresh ti))
         (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
         (take-credits state :corp)
-        (core/derez state :corp (refresh ti))
+        (derez state :corp (refresh ti))
         (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
         (play-from-hand state :runner "Wasteland")
         (let [wast (get-resource state 0)]
@@ -4306,10 +4306,10 @@
     (let [t1 (get-ice state :hq 0)
           t2 (get-ice state :remote1 0)]
       (rez state :corp t1)
-      (is (= 2 (:current-strength (refresh t1)))
+      (is (= 2 (get-strength (refresh t1)))
           "Turing default 2 strength over a central server")
       (rez state :corp t2)
-      (is (= 5 (:current-strength (refresh t2)))
+      (is (= 5 (get-strength (refresh t2)))
           "Turing increased to 5 strength over a remote server"))))
 
 (deftest turnpike
@@ -4391,17 +4391,17 @@
       (play-from-hand state :corp "Wendigo" "HQ")
       (let [wend (get-ice state :hq 0)]
         (rez state :corp wend)
-        (is (= 4 (:current-strength (refresh wend))) "Wendigo at normal 4 strength")
+        (is (= 4 (get-strength (refresh wend))) "Wendigo at normal 4 strength")
         (core/advance state :corp {:card (refresh wend)})
         (is (has-subtype? (refresh wend) "Barrier") "Wendigo gained Barrier")
         (is (not (has-subtype? (refresh wend) "Code Gate")) "Wendigo lost Code Gate")
-        (is (= 5 (:current-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
+        (is (= 5 (get-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
         (play-from-hand state :corp "Shipment from SanSan")
         (click-prompt state :corp "1")
         (click-card state :corp wend)
         (is (not (has-subtype? (refresh wend) "Barrier")) "Wendigo lost Barrier")
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
-        (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+        (is (= 4 (get-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
 (deftest whirlpool
   ;; Whirlpool
@@ -4592,9 +4592,9 @@
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (rez state :corp wrap)
-      (is (= 7 (:current-strength (refresh wrap)))
+      (is (= 7 (get-strength (refresh wrap)))
           "Wraparound +7 strength with no fracter in play")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (is (zero? (:current-strength (refresh wrap)))
+      (is (zero? (get-strength (refresh wrap)))
           "Wraparound 0 strength after Corroder installed"))))

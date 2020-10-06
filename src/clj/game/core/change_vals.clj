@@ -4,6 +4,8 @@
     [game.core.effects :refer [register-floating-effect]]
     [game.core.events :refer [trigger-event]]
     [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
+    [game.core.link :refer [get-link update-link]]
+    [game.core.tags :refer [update-tag-status]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [req]]))
 
@@ -30,15 +32,15 @@
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags
-  "Change a player's base tag count"
+  "Change a player's tag count, using floating effects"
   [state delta]
-  (if (pos? delta)
-    (do (gain state :runner :tag delta)
-        (trigger-event state :runner :manual-gain-tag delta))
-    (do (deduct state :runner [:tag (Math/abs delta)])
-        (trigger-event state :runner :manual-lose-tag delta)))
+  (register-floating-effect
+    state :runner nil
+    {:type :user-tags
+     :value delta})
+  (update-tag-status state)
   (system-msg state :runner
-              (str "sets Tags to " (get-in @state [:runner :tag :base])
+              (str "sets Tags to " (get-in @state [:runner :tag :total])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-bad-pub
@@ -52,10 +54,7 @@
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-agenda-points
-  "Change a player's total agenda points. This is done through registering an agenda
-  point effect that's only used when tallying total agenda points. Instead of adding or
-  removing these effects, we allow for creating as many as needed to properly adjust
-  the total."
+  "Change a player's total agenda points, using floating effects."
   [state side delta]
   (register-floating-effect
     state side nil
@@ -68,6 +67,18 @@
   (update-all-agenda-points state side)
   (system-msg state side
               (str "sets their agenda points to " (get-in @state [side :agenda-point])
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
+(defn- change-link
+  "Change the runner's link, using floating effects."
+  [state side delta]
+  (register-floating-effect
+    state side nil
+    {:type :user-link
+     :value delta})
+  (update-link state)
+  (system-msg state side
+              (str "sets their link to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-generic
@@ -87,5 +98,6 @@
     :tag (change-tags state delta)
     :bad-publicity (change-bad-pub state delta)
     :agenda-point (change-agenda-points state side delta)
+    :link (change-link state side delta)
     ; else
     (change-generic state side key delta)))

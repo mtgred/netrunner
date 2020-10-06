@@ -69,7 +69,7 @@
           (click-prompt state :runner "0")
           (is (= 1 (count-tags state)) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
-          (core/trash-resource state :corp nil)
+          (trash-resource state)
           (click-card state :corp "Off-Campus Apartment")
           (is (= 3 (:credit (get-corp))) "WNP increased cost to trash a resource by 2")
           (card-ability state :runner fg 0) ; Trash Fall Guy to save the Apartment!
@@ -148,7 +148,7 @@
               cap (get-content state :remote1 2)]
           (rez state :corp tur)
           (run-continue state)
-          (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
+          (is (= 5 (get-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
           (click-prompt state :runner "End the run")
           (play-from-hand state :runner "Emergency Shutdown")

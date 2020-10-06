@@ -12,11 +12,9 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [remove-once same-card?]]
+    [game.utils :refer [remove-once same-card? server-card]]
     [jinteki.utils :refer [other-side]]
-    [clojure.string :as string]
-    )
-  )
+    [clojure.string :as string]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
@@ -145,6 +143,13 @@
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
+(def card-defs-cache (atom {}))
+
 (defmacro defcard
   [title ability]
-  `(defmethod ~'defcard-impl ~title [~'_] (make-recurring-ability ~ability)))
+  `(defmethod ~'defcard-impl ~title [~'_]
+     (if-let [cached-ability# (get card-defs-cache ~title)]
+       cached-ability#
+       (let [ability# (make-recurring-ability ~ability)]
+         (swap! card-defs-cache assoc ~title ability#)
+         ability#))))

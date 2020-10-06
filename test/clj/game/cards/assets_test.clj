@@ -243,12 +243,12 @@
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should start with 0 advancement counters")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= 1 (get-counters (refresh ar) :advancement)) "Anson Rose should gain 1 advancement counter at start of turn")
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should still have 0 counters so far")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= 2 (get-counters (refresh ar) :advancement)) "Anson Rose should gain 1 advancement counter at start of turn")
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should still have 0 counters so far")
       (rez state :corp (refresh iw))
@@ -512,17 +512,17 @@
       (card-ability state :corp ci 0)
       (click-prompt state :corp "3")
       (is (= 3 (get-counters (refresh ci) :credit)))
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (take-credits state :corp)
       (take-credits state :runner)
       (card-ability state :corp ci 0)
       (click-prompt state :corp "3")
       (is (= 6 (get-counters (refresh ci) :credit)))
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= 8 (get-counters (refresh ci) :credit)))
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= 10 (get-counters (refresh ci) :credit)))
       (let [credits (:credit (get-corp))]
         (card-ability state :corp ci 1)
@@ -683,7 +683,7 @@
       ;; Runner has 1+ credit and chooses to pay 1 credit
       (card-ability state :corp csm 0)
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -822,7 +822,7 @@
         (click-card state :corp (refresh fw))
         (is (zero? (get-counters (refresh iw) :advancement)))
         (is (= 2 (get-counters (refresh fw) :advancement)))
-        (core/end-phase-12 state :corp nil)
+        (end-phase-12 state :corp)
         (is (empty? (:prompt (get-runner)))))))
   (testing "Variable number of advanceable cards"
     (do-game
@@ -912,7 +912,7 @@
       (card-ability state :corp ct 0)
       (click-card state :corp (get-resource state 0))
       (is (= 1 (-> (get-runner) :discard count)) "Corporate Town should trash Data Dealer")
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (take-credits state :corp)
       (take-credits state :runner)
       (is (not (:corp-phase-12 @state)) "Corporate Town shouldn't activate if there are no resources"))))
@@ -925,10 +925,10 @@
     (rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (let [credits (:credit (get-corp))]
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (is (= 1 (- (:credit (get-corp)) credits)) "Should gain one from CPC Generator"))
     (let [credits (:credit (get-corp))]
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (is (zero? (- (:credit (get-corp)) credits)) "Shouldn't gain another credit from CPC Generator"))))
 
 (deftest csr-campaign
@@ -951,7 +951,7 @@
       (card-ability state :corp csr2 0)
       (click-prompt state :corp "No")                 ;; Corp declines to fire second CSR
       (is (= (+ 1 cards) (count (:hand (get-corp)))) "Should not draw another card" )
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= (+ 2 cards) (count (:hand (get-corp)))) "Should draw from mandatory draw"))))
 
 (deftest cybernetics-court
@@ -1072,7 +1072,7 @@
       (click-prompt state :corp "Yes")
       (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw"))))
 
 (deftest daily-quest
@@ -1085,7 +1085,7 @@
       (let [dq (get-content state :remote1 0)]
         (rez state :corp dq)
         (is (rezzed? (refresh dq)) "Can rez on Corp turn")
-        (core/derez state :corp dq)
+        (derez state :corp dq)
         (take-credits state :corp)
         (rez state :corp dq)
         (is (not (rezzed? (refresh dq))) "Cannot rez on Runner turn"))))
@@ -1505,7 +1505,7 @@
         (click-card state :corp eve)
         (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
         (is (= 16 (get-counters (refresh eve) :credit)))
-        (core/end-phase-12 state :corp nil)
+        (end-phase-12 state :corp)
         (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
         (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
         (take-credits state :corp)
@@ -1554,7 +1554,7 @@
           (click-card state :corp mum))
         (is (= 2 (:credit (get-corp))) "EBC + Mumba saved 3 credit on the rez of Eve")
         (is (= 16 (get-counters (refresh eve) :credit)))
-        (core/end-phase-12 state :corp nil)
+        (end-phase-12 state :corp)
         (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
         (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
         (take-credits state :corp)
@@ -1708,7 +1708,7 @@
         (click-card state :corp (find-card "Sandburg" (:hand (get-corp))))
         (core/gain state :corp :credit 7 :click 3)
         (rez state :corp (first (:hosted (refresh fir))))
-        (is (= 2 (:current-strength (refresh van))) "Vanilla at 2 strength")
+        (is (= 2 (get-strength (refresh van))) "Vanilla at 2 strength")
         (card-ability state :corp fir 0)
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
         (core/advance state :corp {:card (last (:hosted (refresh fir)))})
@@ -1856,7 +1856,7 @@
         (let [hopper (get-hardware state 0)]
           (card-ability state :runner hopper 0)
           (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
-          (core/derez state :corp (refresh gp))
+          (derez state :corp (refresh gp))
           (take-credits state :corp)))))
   (testing "Disables further draws after drawing"
     (do-game
@@ -2098,7 +2098,7 @@
         (card-ability state :corp ibrahim 0)
         (click-prompt state :corp card-type)
         (click-prompt state :corp (find-card card-name (:hand (get-runner))))
-        (core/end-phase-12 state :corp nil)
+        (end-phase-12 state :corp)
         (is (= (inc i) (-> (get-runner) :discard count)))))))
 
 (deftest illegal-arms-factory
@@ -2181,22 +2181,22 @@
       (card-ability state :corp itd 1)
       (click-card state :corp wos)
       ;; refer to online guides for summary of how this ludicrous formula is calculated
-      (is (= 8 (:current-strength (refresh wos))) "Gained 5 strength")
+      (is (= 8 (get-strength (refresh wos))) "Gained 5 strength")
       (is (= 4 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 1)
       (click-card state :corp wos)
-      (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
+      (is (= 11 (get-strength (refresh wos))) "Gained total of 8 strength")
       (is (= 3 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 1)
       (click-card state :corp wos)
-      (is (= 12 (:current-strength (refresh wos))) "Gained total of 9 strength")
+      (is (= 12 (get-strength (refresh wos))) "Gained total of 9 strength")
       (is (= 2 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 1)
       (click-card state :corp wos)
-      (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
+      (is (= 11 (get-strength (refresh wos))) "Gained total of 8 strength")
       (is (= 1 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (take-credits state :corp)
-      (is (= 3 (:current-strength (refresh wos))) "Back to default strength"))))
+      (is (= 3 (get-strength (refresh wos))) "Back to default strength"))))
 
 (deftest jackson-howard
   ;; Jackson Howard - Draw 2 cards
@@ -2283,7 +2283,8 @@
         (rez state :corp (get-content state :remote1 0))
         (take-credits state :corp)
         (take-credits state :runner)
-        (dotimes [_ 3] (core/click-advance state :corp {:card (get-content state :remote2 0)}))
+        (dotimes [_ 3]
+          (click-advance state :corp (get-content state :remote2 0)))
         (is (= 1 (:click (get-corp))) "Jeeves triggered")))
     (testing "Use 3 clicks on a single card ability - Melange"
       (do-game
@@ -2309,7 +2310,7 @@
         (take-credits state :runner)
         (gain-tags state :runner 1)
         (dotimes [n 3]
-          (core/trash-resource state :corp nil)
+          (trash-resource state)
           (click-card state :corp (get-resource state 0))
           (is (= (inc n) (count (:discard (get-runner)))) "Correct number of cards in Runner discard"))
         (is (= 1 (:click (get-corp))) "Jeeves triggered"))))
@@ -2322,9 +2323,9 @@
         (rez state :corp (get-content state :remote1 0))
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/click-advance state :corp {:card (get-content state :remote2 0)})
-        (core/click-credit state :corp nil)
-        (core/click-advance state :corp {:card (get-content state :remote2 0)})
+        (click-advance state :corp (get-content state :remote2 0))
+        (click-credit state :corp)
+        (click-advance state :corp (get-content state :remote2 0))
         (is (= 0 (:click (get-corp))) "Jeeves did not trigger")))
     (testing "Three different asset abilities"
       (do-game
@@ -2386,7 +2387,7 @@
       (click-prompt state :runner "0")
       (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
       (is (= 1 (get-counters (refresh kuwinda) :power)) "Kuwinda should gain 1 power counter")
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (take-credits state :corp)
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
@@ -2396,7 +2397,7 @@
       (click-prompt state :runner "1")
       (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
       (is (= 2 (get-counters (refresh kuwinda) :power)) "Kuwinda should gain another power counter")
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (take-credits state :corp)
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
@@ -2408,7 +2409,7 @@
       (is (= 1 (-> (get-runner) :discard count)) "Trace succeeded so runner should discard card from damage")
       (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
-      (core/end-phase-12 state :corp nil))))
+      (end-phase-12 state :corp))))
 
 (deftest lady-liberty
   ;; Lady Liberty - Score agenda from hand equal to number of power counters on Lady Libery
@@ -2592,7 +2593,7 @@
         (take-credits state :corp)
         (is (= N (:credit (get-runner))) "Daily casts did not trigger when blanked"))
       (take-credits state :runner)
-      (core/derez state :corp malia1)
+      (derez state :corp malia1)
       (let [N (:credit (get-runner))]
         (take-credits state :corp)
         (is (= (+ N 2) (:credit (get-runner))) "Daily casts triggers again when unblanked"))
@@ -2601,7 +2602,7 @@
       (rez state :corp malia1)
       (click-card state :corp (get-resource state 1))
       (is (= 3 (:click (get-runner))) "Runner doesn't gain a click when Beckman is blanked")
-      (core/derez state :corp malia1)
+      (derez state :corp malia1)
       (is (= 3 (:click (get-runner))) "Runner still has 3 clicks after Beckman is unblanked")
       (rez state :corp malia1)
       (click-card state :corp (get-resource state 1))
@@ -2656,7 +2657,7 @@
       (let [marilyn (get-content state :remote1 0)]
         (rez state :corp (refresh marilyn))
         (is (= 8 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should start with 8 credits")
-        (core/derez state :corp (refresh marilyn))
+        (derez state :corp (refresh marilyn))
         (rez state :corp (refresh marilyn))
         (is (= 16 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should now have 16 credits")))))
 
@@ -2960,7 +2961,7 @@
       ; tag removal
       (gain-tags state :runner 1)
       (click-prompt state :runner "Done") ; Don't prevent the tag
-      (core/remove-tag state :runner 1)
+      (remove-tag state :runner)
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
@@ -2973,7 +2974,7 @@
                         :deck ["Dyson Mem Chip"
                                "Access to Globalsec"]}})
     (play-from-hand state :corp "Net Police" "New remote")
-    (is (= 2 (:link (get-runner))))
+    (is (= 2 (get-link state)))
     (let [netpol (get-content state :remote1 0)]
       (rez state :corp netpol)
       (is (= 2 (get-counters (refresh netpol) :recurring)) "2 recurring for Runner's 2 link")
@@ -3174,7 +3175,7 @@
     (rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (take-credits state :runner)
-    (core/end-phase-12 state :corp nil)
+    (end-phase-12 state :corp)
     (is (= 2 (count (:hand (get-corp)))) "Corp drew 1 from Agroplex")
     (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 from Agroplex")))
 
@@ -3718,7 +3719,7 @@
         (rez state :corp rj)
         (take-credits state :runner)
         (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-        (core/end-phase-12 state :corp nil)
+        (end-phase-12 state :corp)
         (is (= 2 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger")
         (click-prompt state :corp "Marilyn Campaign")
         (click-prompt state :corp "Yes")
@@ -3925,18 +3926,18 @@
         (is (= 6 (:credit (get-corp))))
         (play-from-hand state :corp "Hedge Fund")
         (is (= 10 (:credit (get-corp))))
-        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
-        (is (= 3 (:current-strength (refresh iwall2))) "Strength boosted by 2")
+        (is (= 3 (get-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 3 (get-strength (refresh iwall2))) "Strength boosted by 2")
         (play-from-hand state :corp "Hedge Fund")
         (play-from-hand state :corp "Hedge Fund")
         (is (= 18 (:credit (get-corp))))
-        (is (= 4 (:current-strength (refresh iwall1))) "Strength boosted by 3")
-        (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
+        (is (= 4 (get-strength (refresh iwall1))) "Strength boosted by 3")
+        (is (= 4 (get-strength (refresh iwall2))) "Strength boosted by 3")
         (take-credits state :corp)
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Pay 4 [Credits] to trash")
-        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
-        (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
+        (is (= 1 (get-strength (refresh iwall1))) "Strength back to default")
+        (is (= 1 (get-strength (refresh iwall2))) "Strength back to default"))))
   (testing "Changes on rez"
     (do-game
       (new-game {:corp {:hand ["Sandburg" (qty "Ice Wall" 2) "Mlinzi" "Hedge Fund"]
@@ -3956,11 +3957,11 @@
         (rez state :corp sb)
         (is (= 8 (:credit (get-corp))))
         (play-from-hand state :corp "Hedge Fund")
-        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 3 (get-strength (refresh iwall1))) "Strength boosted by 2")
         (is (= 12 (:credit (get-corp))))
         (rez state :corp mlinzi)
         (is (= 5 (:credit (get-corp))))
-        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to base")))))
+        (is (= 1 (get-strength (refresh iwall1))) "Strength back to base")))))
 
 (deftest sealed-vault
   ;; Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click
@@ -4023,7 +4024,7 @@
       (is (= 3 (count (:hand (get-corp)))) "Corp should draw 3 cards from Sensie Actors Union's ability")
       (click-card state :corp (find-card "Ronin" (:hand (get-corp))))
       (is (= "Ronin" (-> (get-corp) :deck last :title)) "Ronin should be on bottom of deck")
-      (core/end-phase-12 state :corp nil)
+      (end-phase-12 state :corp)
       (is (= 3 (count (:hand (get-corp)))) "Corp should have 3 cards in hand after putting one on bottom of R&D and mandatory draw")
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (take-credits state :corp)
@@ -5116,7 +5117,7 @@
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
       (is (= 4 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 4 subs")
       (is (= 4 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 4 subs")
-      (core/derez state :corp (refresh wf))
+      (derez state :corp (refresh wf))
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))

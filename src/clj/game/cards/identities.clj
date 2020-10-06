@@ -78,35 +78,15 @@
    :abilities [(set-autoresolve :auto-419 "419")]})
 
 (defcard "Acme Consulting: The Truth You Need"
-  (letfn [(activate [state card active]
-            (update! state :corp (assoc-in card [:special :acme-active] active))
-            (system-msg state :corp
-                        (str "uses Acme Consulting: The Truth You Need to"
-                             (if active
-                               " give the runner 1 additional tag"
-                               " remove 1 additional tag")))
-            (swap! state update-in [:runner :tag :additional] (if active inc dec))
-            (trigger-event state :corp :runner-additional-tag-change (if active 1 -1)))
-          (outermost? [run-position run-ices]
+  (letfn [(outermost? [run-position run-ices]
             (and run-position
                  (pos? run-position)
                  (= run-position (count run-ices))))]
-    {:events [{:event :encounter-ice
-               :effect (req (when (outermost? run-position run-ices)
-                              (activate state card true)))}
-              {:event :encounter-ice-ends
-               :effect (req (when (outermost? run-position run-ices)
-                              (activate state card false)))}
-              {:event :derez
-               :req (req (same-card? target current-ice))
-               :effect (req (when (outermost? run-position run-ices)
-                              (activate state card false)))}
-              {:event :corp-trash
-               :req (req (some #(same-card? % current-ice) targets))
-               :effect (req (activate state card false))}
-              {:event :runner-trash
-               :req (req (some #(same-card? % current-ice) targets))
-               :effect (req (activate state card false))}]}))
+    {:constant-effects [{:type :tags
+                         :req (req (and (rezzed? current-ice)
+                                        (= :encounter-ice (:phase run))
+                                        (outermost? run-position run-ices)))
+                         :value 1}]}))
 
 (defcard "Adam: Compulsive Hacker"
   {:events [{:event :pre-start-game
@@ -586,26 +566,20 @@
    :effect (effect (update-all-ice))})
 
 (defcard "Harishchandra Ent.: Where You're the Star"
-  (let [ab {:effect (req (if (is-tagged? state)
-                           (reveal-hand state :runner)
-                           (conceal-hand state :runner)))}]
-    {:events [(assoc ab :event :runner-gain-tag)
-              (assoc ab :event :runner-lose-tag)
-              ;; Triggered when the runner clicks the '+' and '-' buttons
-              (assoc ab :event :manual-gain-tag)
-              (assoc ab :event :manual-lose-tag)
-              ;; Triggered when Paparazzi enters / leaves
-              (assoc ab :event :runner-is-tagged)
-              ;; Triggered when gaining or losing additional tag
-              (assoc ab :event :runner-additional-tag-change)]
-     :effect (req (when (is-tagged? state)
-                    (reveal-hand state :runner)))
-     :leave-play (req (when (is-tagged? state)
-                        (conceal-hand state :runner)))}))
+  {:events [{:event :tags-changed
+             :effect (req (if (is-tagged? state)
+                            (reveal-hand state :runner)
+                            (conceal-hand state :runner)))}]
+   :effect (req (when (is-tagged? state)
+                  (reveal-hand state :runner)))
+   :leave-play (req (when (is-tagged? state)
+                      (conceal-hand state :runner)))})
 
 (defcard "Harmony Medtech: Biomedical Pioneer"
-  {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))
-   :leave-play (effect (gain :agenda-point-req 1) (gain :runner :agenda-point-req 1))})
+  {:effect (effect (lose :agenda-point-req 1)
+                   (lose :runner :agenda-point-req 1))
+   :leave-play (effect (gain :agenda-point-req 1)
+                       (gain :runner :agenda-point-req 1))})
 
 (defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
@@ -647,12 +621,11 @@
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital")))
-                         (if (:flipped card)
-                           (lose state :runner :link 1)
-                           (gain state :runner :link 1))
-                         (effect-completed state side eid))]
-    {:events [{:event :pre-first-turn
+                                                      :subtype "Digital"))))]
+    {:constant-effects [{:type :link
+                         :req (req (:flipped card))
+                         :value 1}]
+     :events [{:event :pre-first-turn
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :runner-turn-ends

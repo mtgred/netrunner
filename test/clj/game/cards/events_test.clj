@@ -1397,13 +1397,13 @@
      (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access shuffled into stack")
      (run-on state "Server 1")
      (is (and (= 3 (:click (get-runner))) (not (:run @state))) "RP prevented running on remote")
-     (core/click-draw state :runner 1)
+     (click-draw state :runner)
      (play-from-hand state :runner "Direct Access")
      (click-prompt state :runner "Archives")
      (run-continue state)
      (is (= "Waiting for Runner to resolve run-ends triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
      (click-prompt state :runner "Yes")
-     (core/click-draw state :runner 1)
+     (click-draw state :runner)
      (take-credits state :runner)
      (take-credits state :corp)
      (play-from-hand state :runner "Employee Strike")
@@ -1817,7 +1817,7 @@
       (is (refresh iw2) "Ice Wall on the remote hasn't been trashed")
       (rez state :corp iw)
       (is (refresh iw) "Ice Wall on HQ hasn't been trashed as it's rezzed")
-      (core/derez state :corp iw)
+      (derez state :corp iw)
       (click-card state :runner (refresh iw))
       (is (not (refresh iw)) "Ice Wall on HQ has been trashed")
       (play-from-hand state :runner "En Passant")
@@ -2671,7 +2671,7 @@
     (starting-hand state :runner ["Fan Site" "Fan Site" "Neutralize All Threats"
                                   "Independent Thinking" "Independent Thinking"])
     (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (click-card state :runner (find-card "Neutralize All Threats" (:hand (get-runner))))
     (play-from-hand state :runner "Fan Site")
     (let [fs (get-resource state 0)
@@ -2786,13 +2786,13 @@
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Injection Attack")
     (click-prompt state :runner "Archives")
-    (is (= 2 (:current-strength (get-program state 0))) "Corroder at 2 strength")
+    (is (= 2 (get-strength (get-program state 0))) "Corroder at 2 strength")
     (click-card state :runner (get-program state 0))
-    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (is (= 4 (get-strength (get-program state 0))) "Corroder at 4 strength")
     (run-continue state)
-    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (is (= 4 (get-strength (get-program state 0))) "Corroder at 4 strength")
     (run-continue state)
-    (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+    (is (= 2 (get-strength (get-program state 0))) "Corroder reset to 2 strength")))
 
 (deftest inside-job
   ;; Inside Job
@@ -4089,22 +4089,22 @@
     (click-prompt state :runner "0")
     (let [atman (get-program state 1)
           corr (get-program state 0)]
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength")
       (play-from-hand state :runner "Pushing the Envelope")
       (click-prompt state :runner "Archives")
       (run-continue state)
       ; 3 cards in hand - no boost
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength")
       (play-from-hand state :runner "Pushing the Envelope")
       (click-prompt state :runner "Archives")
       ; 2 cards in hand - boost
-      (is (= 2 (:current-strength (refresh atman))) "Atman 2 current strength")
-      (is (= 4 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (is (= 2 (get-strength (refresh atman))) "Atman 2 current strength")
+      (is (= 4 (get-strength (refresh corr))) "Corroder 2 current strength")
       (run-continue state)
-      (is (zero? (:current-strength (refresh atman))) "Atman 0 current strength")
-      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength"))))
+      (is (zero? (get-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (get-strength (refresh corr))) "Corroder 2 current strength"))))
 
 (deftest quality-time
   ;; Quality Time
@@ -4186,7 +4186,7 @@
                       [professor whizzard jamie]))
         (click-prompt state :runner kate)
         (is (= kate (-> (get-runner) :identity :title)))
-        (is (= 1 (:link (get-runner))) "1 link")
+        (is (= 1 (get-link state)) "1 link")
         (is (empty? (:discard (get-runner))))
         (is (= "Rebirth" (-> (get-runner) :rfg first :title)))
         (is (changes-credits (get-runner) -4
@@ -4211,20 +4211,20 @@
                             :deck ["Rebirth" "Access to Globalsec"]}
                    :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
-        (is (= 2 (:link (get-runner))) "2 link before rebirth")
+        (is (= 2 (get-link state)) "2 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner chaos)
-        (is (= 1 (:link (get-runner))) "1 link after rebirth")))
+        (is (= 1 (get-link state)) "1 link after rebirth")))
     (testing "Gain link from ID"
       (do-game
         (new-game {:runner {:id professor
                             :deck ["Rebirth" "Access to Globalsec"]}
                    :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
-        (is (= 1 (:link (get-runner))) "1 link before rebirth")
+        (is (= 1 (get-link state)) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner kate)
-        (is (= 2 (:link (get-runner))) "2 link after rebirth")))
+        (is (= 2 (get-link state)) "2 link after rebirth")))
     (testing "Implementation notes are kept, regression test for #3722"
       (do-game
         (new-game {:runner {:id professor
@@ -4577,7 +4577,7 @@
       (rez state :corp (get-content state :remote7 0))
       (click-card state :corp (get-in (get-corp) [:scored 0]))
       (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
-      (core/derez state :corp (get-content state :remote4 0))
+      (derez state :corp (get-content state :remote4 0))
       (rez state :corp (get-content state :remote4 0))
       (is (zero? (count-bad-pub state)) "Corp has 0 bad publicity")
       (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
@@ -4698,15 +4698,15 @@
     (play-from-hand state :runner "Street Peddler")
     (let [turing (get-ice state :hq 0)]
       (rez state :corp turing)
-      (is (= 2 (:current-strength (refresh turing))))
+      (is (= 2 (get-strength (refresh turing))))
       (run-on state "HQ")
       (run-continue state)
-      (is (= 2 (:current-strength (refresh turing))) "Scrubbed not active when on Peddler")
+      (is (= 2 (get-strength (refresh turing))) "Scrubbed not active when on Peddler")
       (run-jack-out state)
       (play-from-hand state :runner "Scrubbed")
       (run-on state "HQ")
       (run-continue state)
-      (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
+      (is (zero? (get-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-jack-out state))))
 
 (deftest showing-off
@@ -4953,17 +4953,17 @@
     (take-credits state :corp) ; corp at 8cr
     (play-from-hand state :runner "Street Peddler")
     (take-credits state :runner)
-    (core/click-draw state :corp 1)
+    (click-draw state :corp)
     (is (= 8 (:credit (get-corp))) "1st card drawn for free - System Outage on Peddler")
-    (core/click-draw state :corp 1)
+    (click-draw state :corp)
     (is (= 8 (:credit (get-corp))) "2nd card drawn for free - System Outage on Peddler")
     (take-credits state :corp) ; corp at 9cr
     (is (= 9 (:credit (get-corp))) "Corp at 9")
     (play-from-hand state :runner "System Outage")
     (take-credits state :runner)
-    (core/click-draw state :corp 1)
+    (click-draw state :corp)
     (is (= 8 (:credit (get-corp))) "1st card drawn cost 1cr - System Outage active")
-    (core/click-draw state :corp 1)
+    (click-draw state :corp)
     (is (= 7 (:credit (get-corp))) "2nd card drawn cost 1cr - System Outage active")))
 
 (deftest system-seizure

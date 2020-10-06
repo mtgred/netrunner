@@ -681,7 +681,7 @@
       (let [cs (get-resource state 0)]
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credit from Crash Space"
-                           (core/remove-tag state :runner nil)
+                           (remove-tag state :runner)
                            (click-card state :runner cs)
                            (click-card state :runner cs))))))
 
@@ -710,7 +710,7 @@
         (is (empty? (:discard (get-runner))) "No cards in discard")
         (take-credits state :runner)
         (take-credits state :corp)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 19 (:credit (get-runner))))
         (is (empty? (:deck (get-runner))) "No cards in deck")
         (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
@@ -837,22 +837,22 @@
                                 "Aumakua"]}})
      (take-credits state :corp)
      (core/gain state :runner :credit 10)
-     (is (= 0 (:link (get-runner))) "Start with 0 link")
+     (is (= 0 (get-link state)) "Start with 0 link")
      (play-from-hand state :runner "Cybertrooper Talut")
-     (is (= 1 (:link (get-runner))) "Gained 1 link")
+     (is (= 1 (get-link state)) "Gained 1 link")
      (play-from-hand state :runner "Corroder")
      (play-from-hand state :runner "Aumakua")
      (let [cor (get-program state 0)
            aum (get-program state 1)]
-       (is (= 4 (:current-strength (refresh cor))) "+2 strength by Talut")
-       (is (= 0 (:current-strength (refresh aum))) "No strength boost for AI")
+       (is (= 4 (get-strength (refresh cor))) "+2 strength by Talut")
+       (is (= 0 (get-strength (refresh aum))) "No strength boost for AI")
        (run-on state :hq)
        (card-ability state :runner cor 1)
-       (is (= 5 (:current-strength (refresh cor))) "+1 strength by hand")
+       (is (= 5 (get-strength (refresh cor))) "+1 strength by hand")
        (run-jack-out state)
-       (is (= 4 (:current-strength (refresh cor))) "Strength back down to 4")
+       (is (= 4 (get-strength (refresh cor))) "Strength back down to 4")
        (take-credits state :runner)
-       (is (= 2 (:current-strength (refresh cor))) "Corroder strength back down to normal")))))
+       (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal")))))
 
 (deftest dadiana-chacon
   ;; gain 1 cr at start of turn if you have less than 6,
@@ -963,17 +963,17 @@
     (run-on state :archives)
     (let [faust (get-program state 0)
           dean (get-resource state 0)]
-      (is (= 2 (:current-strength faust)) "Faust at 2 strength")
+      (is (= 2 (get-strength faust)) "Faust at 2 strength")
       (is (zero? (-> (get-runner) :discard count)) "Dean Lister not discarded yet")
       (card-ability state :runner dean 0)
       (click-card state :runner faust)
       (is (= 1 (-> (get-runner) :discard count)) "Dean Lister trashed to use its abilitiy")
-      (is (= 5 (:current-strength (refresh faust))) "Faust at 5 strength (2 base + 3 from Dean)")
+      (is (= 5 (get-strength (refresh faust))) "Faust at 5 strength (2 base + 3 from Dean)")
       (card-ability state :runner faust 1) ;boost by 2
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-      (is (= 6 (:current-strength (refresh faust))) "Faust at 6 strength (2 base + 2 from Dean + 2 from boost)")
+      (is (= 6 (get-strength (refresh faust))) "Faust at 6 strength (2 base + 2 from Dean + 2 from boost)")
       (run-jack-out state)
-      (is (= 2 (:current-strength (refresh faust))) "Dean Lister effect ends after run"))))
+      (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
@@ -1034,8 +1034,8 @@
       (play-from-hand state :corp "Grim" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :click 10)
-      (core/click-draw state :runner nil)
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
+      (click-draw state :runner)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "District 99")
       (play-from-hand state :runner "Rebirth")
@@ -1107,7 +1107,20 @@
           (take-credits state :corp)
           (card-ability state :runner ap 0)
           (click-card state :runner (get-runner-facedown state 0))
-          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed")))))
+          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
+  (testing "interaction with MaxX #5293"
+    (do-game
+      (new-game {:runner {:id "MaxX: Maximum Punk Rock"
+                          :hand ["Sure Gamble" "Corroder" "District 99"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (take-credits state :runner)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+      (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
+      (take-credits state :corp)
+      (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards"))))
 
 (let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
@@ -1139,10 +1152,10 @@
         (click-prompt state :runner chaos)
         (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
         (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
-        (is (= 2 (:link (get-runner))) "2 link from Sunny")
+        (is (= 2 (get-link state)) "2 link from Sunny")
         (is (= 5 (core/available-mu state)) "+1 MU from Chaos Theory")
         ;; Trash DJ Fenris
-        (trash-resource state "DJ Fenris")
+        (trash-card state :runner (get-resource state 0))
         (is (not= chaos (-> (get-runner) :rfg last :title)) "Chaos Theory not moved to rfg")
         (is (not= chaos (-> (get-runner) :discard last :title)) "Chaos Theory not moved to discard")
         (is (not= chaos (-> (get-runner) :hand last :title)) "Chaos Theory not moved to hand")
@@ -1180,12 +1193,12 @@
         (click-prompt state :runner geist)
         (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
         (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
-        (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
+        (is (= 2 (get-link state)) "2 link from Sunny, no extra link from Geist")
         (let [hand-count (count (:hand (get-runner)))]
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
           (is (= (inc hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability")
-          (trash-resource state "DJ Fenris")
+          (trash-card state :runner (find-card "DJ Fenris" (get-in @state [:runner :rig :resource])))
           (is (not= geist (-> (get-runner) :rfg last :title)) "Geist not moved to rfg")
           (is (not= geist (-> (get-runner) :discard last :title)) "Geist not moved to discard")
           (is (not= geist (-> (get-runner) :hand last :title)) "Geist not moved to hand")
@@ -1670,7 +1683,7 @@
         (take-credits state :runner)
         (core/gain state :corp :credit 10)
         (gain-tags state :runner 1)
-        (core/trash-resource state :corp nil)
+        (trash-resource state)
         (click-card state :corp fc)
         (is (= 1 (count (:discard (get-runner)))) "FC trashed")
         (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
@@ -1937,18 +1950,20 @@
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
-    (new-game {:runner {:deck ["Globalsec Security Clearance"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                      :hand ["Hedge Fund"]}
+               :runner {:deck ["Globalsec Security Clearance"]}})
     (take-credits state :corp)
-    (core/gain state :runner :link 2)
+    (swap! state assoc-in [:runner :identity :baselink] 2)
+    (core/fake-checkpoint state)
     (play-from-hand state :runner "Globalsec Security Clearance")
     (take-credits state :runner)
-    (starting-hand state :corp ["Hedge Fund"]) ; Hedge Fund on top
     (take-credits state :corp)
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
     (let [gsec (get-resource state 0)]
       (card-ability state :runner gsec 0)
       (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :runner))) "GSec revealed Hedge Fund")
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
 
 (deftest grifter
@@ -2240,9 +2255,9 @@
       (run-on state "Archives")
       (rez state :corp iwall)
       (run-continue state)
-      (is (zero? (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-jack-out state)
-      (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
+      (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
 (deftest inside-man
   ;; Inside Man
@@ -2359,7 +2374,7 @@
         (card-subroutine state :corp (refresh eni) 0)
         (run-continue state)
         (run-continue state)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 3 (:click (get-runner))) "Enigma took a click")))))
 
 (deftest john-masanori
@@ -2424,7 +2439,7 @@
     (is (:runner-phase-12 @state) "Runner is in Step 1.2")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 5 (:click (get-runner))) "Gained extra click from Joshua")
-    (core/end-phase-12 state :runner nil)
+    (end-phase-12 state :runner)
     (is (zero? (count-tags state)) "Runner has no tags during turn")
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
@@ -2614,8 +2629,8 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Logic Bomb")
-      (core/click-credit state :runner nil)
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
+      (click-credit state :runner)
       (run-on state :hq)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
@@ -2644,9 +2659,9 @@
       (click-card state :runner (find-card "Study Guide" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
       (let [sg (second (:hosted (refresh lib)))]
-        (is (zero? (:current-strength (refresh sg))) "Study Guide at 0 strength")
+        (is (zero? (get-strength (refresh sg))) "Study Guide at 0 strength")
         (card-ability state :runner sg 1) ; Place 1 power counter
-        (is (= 1 (:current-strength (refresh sg))) "Study Guide at 1 strength"))
+        (is (= 1 (get-strength (refresh sg))) "Study Guide at 1 strength"))
       (card-ability state :runner lib 0)
       (click-card state :runner (find-card "Chameleon" (:hand (get-runner))))
       (click-prompt state :runner "Sentry")
@@ -3089,7 +3104,7 @@
             tap (get-resource state 0)]
         (take-credits state :runner)
         (let [credits (:credit (get-runner))]
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (is (zero? (count (prompt-buttons :runner))) "Runner should have no prompts from PAD Tap")
           (is (= credits (:credit (get-runner))) "Runner shouldn't gain PAD Tap credits from clicking for a credit"))
         (let [credits (:credit (get-runner))]
@@ -3117,7 +3132,7 @@
       (play-from-hand state :runner "PAD Tap")
       ;; Manually ending the turn to trigger Rashida early
       (dotimes [i (get-in @state [:runner :click])]
-        (core/click-credit state :runner nil))
+        (click-credit state :runner))
       (core/end-turn state :runner nil)
       (let [credits (:credit (get-runner))]
         (rez state :corp (get-content state :remote1 0))
@@ -3292,7 +3307,7 @@
         (card-ability state :runner j 0)
         (click-prompt state :runner "Archives")
         (run-continue state)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
 (deftest paule-s-cafe
@@ -4191,7 +4206,7 @@
     (let [street-peddler (get-resource state 0)]
       (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner street-peddler 0)
-      (trash-resource state "Street Peddler")
+      (trash-card state :runner street-peddler)
       (is (zero? (count (prompt-buttons :runner)))))))
 
 (deftest symmetrical-visage
@@ -4204,9 +4219,9 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Symmetrical Visage")
       (is (= 3 (:credit (get-runner))))
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
       (is (= 4 (:credit (get-runner))) "Gained 1 credit from first click spent to draw")
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
       (is (= 4 (:credit (get-runner))) "No credit gained from second click spent to draw")))
   (testing "Gain 1 credit the first and second time you click to draw each turn when GCS is installed"
     (do-game
@@ -4219,14 +4234,14 @@
       (is (= 3 (:credit (get-runner))))
       (play-from-hand state :runner "Gene Conditioning Shoppe")
       (is (= 1 (:credit (get-runner))))
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
       (is (= 2 (:credit (get-runner))) "Gained 1 credit from first click spent to draw")
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
       (is (= 3 (:credit (get-runner)))
           "Gained 1 credit from second click spent to draw with Gene Conditioning Shoppe")
       ;; Move Fall Guy back to deck
       (core/move state :runner (find-card "Fall Guy" (:hand (get-runner))) :deck)
-      (core/click-draw state :runner nil)
+      (click-draw state :runner)
       (is (= 3 (:credit (get-runner)))
           "No credit gained from third click spent to draw with Gene Conditioning Shoppe"))))
 
@@ -4495,7 +4510,7 @@
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/gain state :runner :tag 1)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
@@ -4512,8 +4527,7 @@
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (gain-tags state :runner 1)
-      (core/trash-resource state :corp nil)
-      (click-card state :corp "The Black File")
+      (trash-card state :runner (get-resource state 0))
       (is (= :corp (:winner @state)) "Corp has now won"))))
 
 (deftest the-class-act
@@ -4545,14 +4559,14 @@
      (is (= 2 (count (:deck (get-runner)))) "The Class Act does not trigger at the end of a turn it wasn't installed, so no cards were drawn")
      (is (empty? (:prompt (get-runner))) "The Class Act does not trigger at the end of a turn it wasn't installed, so there is no prompt")
      (take-credits state :corp)
-     (core/click-draw state :runner nil)
+     (click-draw state :runner)
      (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
      (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
      (click-prompt state :runner "Easy Mark")
      (is (empty? (:prompt (get-runner))) "The Class Act is no longer prompting the runner to choose")
      (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")
      (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was bottomed again")
-     (core/click-draw state :runner nil)
+     (click-draw state :runner)
      (is (zero? (count (:deck (get-runner)))) "Runner only drew one")
      (is (empty? (:prompt (get-runner))) "The Class Act did not trigger")
      (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")))
@@ -4565,7 +4579,7 @@
      (play-from-hand state :runner "The Class Act")
      (play-from-hand state :runner "Laguna Velasco District")
      (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
-     (core/click-draw state :runner nil)
+     (click-draw state :runner)
      (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
      (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
      (click-prompt state :runner "Sure Gamble")
@@ -4602,16 +4616,16 @@
     (new-game {:runner {:deck ["The Helpful AI" "Corroder"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Helpful AI")
-    (is (= 1 (:link (get-runner))) "Gained 1 link")
+    (is (= 1 (get-link state)) "Gained 1 link")
     (play-from-hand state :runner "Corroder")
     (let [corr (get-program state 0)]
       (card-ability state :runner (get-resource state 0) 0)
       (click-card state :runner corr)
-      (is (= 4 (:current-strength (refresh corr))) "Corroder has +2 strength")
+      (is (= 4 (get-strength (refresh corr))) "Corroder has +2 strength")
       (is (= 1 (count (:discard (get-runner)))) "Helpful AI trashed")
-      (is (zero? (:link (get-runner))))
+      (is (zero? (get-link state)))
       (take-credits state :runner)
-      (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
+      (is (= 2 (get-strength (refresh corr))) "Corroder back to default strength"))))
 
 (deftest the-nihilist
   ;; The Nihilist
@@ -4755,7 +4769,7 @@
         (click-prompt state :runner "Steal")
         (take-credits state :runner)
         (gain-tags state :runner 1)
-        (core/trash-resource state :corp nil)
+        (trash-resource state)
         (click-card state :corp (get-resource state 0))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
@@ -4887,7 +4901,7 @@
     (is (= 7 (hand-size :runner)) "Max hand size is 7")
     (take-credits state :runner)
     (gain-tags state :runner 1)
-    (core/trash-resource state :corp nil)
+    (trash-resource state)
     (click-card state :corp (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))) "Theo is trashed")
     (is (empty? (get-resource state)) "No resources installed")
@@ -4902,7 +4916,7 @@
       (play-from-hand state :runner "Thunder Art Gallery")
       (core/gain-credits state :runner 1)
       (gain-tags state :corp 1)
-      (core/remove-tag state :runner nil)
+      (remove-tag state :runner)
       (click-card state :runner "New Angeles City Hall")
       (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
       (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
@@ -4925,7 +4939,7 @@
             rara (get-program state 0)]
         (changes-val-macro -2 (:credit (get-runner))
                            "Used TAG and Sahasrara to install Darwin for free"
-                           (core/remove-tag state :runner nil)
+                           (remove-tag state :runner)
                            (click-card state :runner "Darwin")
                            (click-card state :runner rara)
                            (click-card state :runner rara))
@@ -4964,7 +4978,7 @@
       (play-from-hand state :runner "Tri-maf Contact")
       (gain-tags state :runner 1)
       (take-credits state :runner)
-      (core/trash-resource state :corp nil)
+      (trash-resource state)
       (click-card state :corp (get-resource state 0))
       (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
 

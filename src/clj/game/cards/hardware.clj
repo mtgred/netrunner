@@ -540,7 +540,9 @@
                                 :type :recurring}}})
 
 (defcard "Dyson Mem Chip"
-  {:in-play [:memory 1 :link 1]})
+  {:in-play [:memory 1]
+   :constant-effects [{:type :link
+                       :value 1}]})
 
 (defcard "e3 Feedback Implants"
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
@@ -684,7 +686,8 @@
 (defcard "Forger"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :in-play [:link 1]
+   :constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
@@ -956,8 +959,9 @@
                 :msg "expose 1 card"}]})
 
 (defcard "LLDS Memory Diamond"
-  {:in-play [:link 1
-             :memory 1
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:memory 1
              :hand-size 1]})
 
 (defcard "LLDS Processor"
@@ -1242,13 +1246,11 @@
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
              :effect (effect (draw eid (total-cards-accessed target) nil))}
-            ;; Events for tracking hand size
-            {:event :runner-gain-tag
-             :effect (req (change-hand-size state :runner target))}
-            {:event :runner-lose-tag
-             :effect (req (change-hand-size state :runner (- target)))}
-            {:event :runner-additional-tag-change
-             :effect (req (change-hand-size state :runner target))}]})
+            {:event :tags-changed
+             :req (req (not= target (second targets)))
+             :effect (req (let [old-total (second targets)
+                                new-total (first targets)]
+                            (change-hand-size state :runner (- new-total old-total))))}]})
 
 (defcard "Omni-drive"
   {:recurring 1
@@ -1372,7 +1374,9 @@
                                                    (draw state :corp eid 1 nil)))}
               :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                         (effect-completed state side eid))}}}]
-    {:in-play [:link 1 :memory 1]
+    {:constant-effects [{:type :link
+                       :value 1}]
+     :in-play [:memory 1]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
                               (= (:position run) 1) ; trigger when last ICE passed
@@ -1402,12 +1406,12 @@
                         :autoresolve (get-autoresolve :auto-fire)
                         :player :runner
                         :prompt "Look at top 2 cards of the stack?"
-                        :yes-ability {
-                          :msg "look at the top 2 cards of the stack"
-                          :choices ["OK"]
-                          :prompt (msg "The top two cards of your Stack are "
-                                  (string/join ", " (map :title (take 2 (:deck runner))))
-                                  ".")}}}]
+                        :yes-ability
+                        {:msg "look at the top 2 cards of the stack"
+                         :choices ["OK"]
+                         :prompt (msg "The top two cards of your Stack are "
+                                      (string/join ", " (map :title (take 2 (:deck runner))))
+                                      ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of stack"
                 :once :per-turn
@@ -1423,8 +1427,9 @@
                        {:req (req (or (program? top-card)
                                       (hardware? top-card)))
                         :prompt (msg "Install " (:title top-card) "?")
-                        :yes-ability {:async true
-                                      :effect (effect (runner-install eid top-card nil))}}})
+                        :yes-ability
+                        {:async true
+                         :effect (effect (runner-install (assoc eid :source-type :runner-install) top-card nil))}}})
                     card nil))}]})
 
 (defcard "Public Terminal"
@@ -1468,7 +1473,8 @@
   {:in-play [:rd-access 1]})
 
 (defcard "Rabbit Hole"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
               :prompt "Install another Rabbit Hole?"
               :msg "install another Rabbit Hole"
@@ -1535,7 +1541,9 @@
                          :effect (effect (move :corp target :deck {:front true}))}}))}]})
 
 (defcard "Reflection"
-  {:in-play [:memory 1 :link 1]
+  {:in-play [:memory 1]
+   :constant-effects [{:type :link
+                       :value 1}]
    :events [{:event :jack-out
              :effect (req (let [card (first (shuffle (:hand corp)))]
                             (reveal state :corp card)
@@ -1616,16 +1624,20 @@
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"
-                :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
+                :msg (msg "add " (get-link state)
+                          " strength to " (:title target)
+                          " until the end of the run")
                 :req (req (:run @state))
                 :prompt "Select one non-Cloud icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
                 :cost [:trash]
-                :effect (effect (pump target (:link runner) :end-of-run))}
+                :effect (effect (pump target (get-link state) :end-of-run))}
                {:label "Add [Link] strength to any Cloud icebreakers until the end of the run"
-                :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
+                :msg (msg "add " (get-link state)
+                          " strength to " (count targets)
+                          " Cloud icebreakers until the end of the run")
                 :req (req (:run @state))
                 :prompt "Select any number of Cloud icebreakers"
                 :choices {:max 50
@@ -1634,11 +1646,13 @@
                                       (installed? %))}
                 :cost [:trash]
                 :effect (req (doseq [t targets]
-                               (pump state side t (:link runner) :end-of-run)
+                               (pump state side t (get-link state) :end-of-run)
                                (update-breaker-strength state side t)))}]})
 
 (defcard "Security Nexus"
-  {:in-play [:memory 1 :link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
+   :in-play [:memory 1]
    :events [{:event :encounter-ice
              :optional
              {:req (req (not-used-once? state {:once :per-turn} card))
@@ -1681,7 +1695,10 @@
                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]}))
 
 (defcard "Şifr"
-  (letfn [(gather-pre-sifr-effects [sifr state side eid target targets]
+  (letfn [(index-of [pred coll]
+            (some (fn [[idx item]] (if (pred item) idx))
+                  (map-indexed vector coll)))
+          (gather-pre-sifr-effects [sifr state side eid target targets]
             ;; This is needed because of the stupid ass rulings about how Sifr modifies
             ;; ice strength: Sifr only lowers the ice to 0 at the point it's activated,
             ;; and then other abilities (Sandburg, etc) can raise it back after, which
@@ -1694,7 +1711,7 @@
                    (filter #(if-not (:req %)
                               true
                               ((:req %) state side eid (get-card state (:card %)) (cons target targets))))
-                   (split-with #(same-card? sifr %))
+                   (#(split-at (index-of (fn [item] (same-card? sifr (:card item))) %) %))
                    (first)
                    (mapv #(if-not (fn? (:value %))
                             (:value %)
@@ -1721,9 +1738,8 @@
                                {:type :ice-strength
                                 :duration :end-of-encounter
                                 :req (req (same-card? target ice))
-                                :value (req (- (+ (:strength target 0)
-                                                  (gather-pre-sifr-effects card state side eid target (rest targets)))))}))
-                           (update-all-ice :runner))}}}]}))
+                                :value (req (- (+ (:strength target)
+                                                  (gather-pre-sifr-effects card state side eid target (rest targets)))))})))}}}]}))
 
 (defcard "Silencer"
   {:recurring 1
@@ -1779,7 +1795,8 @@
                                 :type :recurring}}})
 
 (defcard "Sports Hopper"
-  {:in-play [:link 1]
+  {:constant-effects [{:type :link
+                       :value 1}]
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
@@ -1866,7 +1883,9 @@
                        :value 1}]})
 
 (defcard "The Toolbox"
-  {:in-play [:link 2 :memory 2]
+  {:constant-effects [{:type :link
+                       :value 2}]
+   :in-play [:memory 2]
    :recurring 2
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
