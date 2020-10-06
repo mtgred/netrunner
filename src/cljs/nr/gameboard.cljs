@@ -4,7 +4,7 @@
             [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
             [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
-                                    faceup? installed? same-card?]]
+                                    faceup? installed? same-card? in-scored?]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -718,10 +718,10 @@
                     :on-click #(do (send-command action {:card card}))}
               (capitalize action)])
            actions))
-       (when (and (active? card)
+       (when (and (or (active? card) (in-scored? card))
                   (seq abilities))
          [:span.float-center "Abilities:"])
-       (when (and (active? card)
+       (when (and (or (active? card) (in-scored? card))
                   (seq abilities))
          (map-indexed
            (fn [i ab]
