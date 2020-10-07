@@ -1324,39 +1324,58 @@
              :effect (effect (add-counter :runner card :virus 1))}]})
 
 (defcard "Grappling Hook"
-  {:abilities [{:label "break all but 1 subroutine"
-                :req (req (and current-ice
-                               (rezzed? current-ice)
-                               (< 1 (count (remove :broken (:subroutines current-ice))))))
-                :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
-                :breaks "All"
-                :break-cost [:trash]
-                :cost [:trash]
-                :prompt "Select the subroutine to NOT break"
-                :choices (req (unbroken-subroutines-choice current-ice))
-                :msg (msg (let [subroutines (:subroutines current-ice)
-                                target (->> subroutines
-                                            (filter #(and (not (:broken %))
-                                                          (= target (make-label (:sub-effect %)))))
-                                            first)
-                                broken-subs (->> (:subroutines current-ice)
-                                                 (remove #(= (:index %) (:index target))))]
-                            (break-subroutines-msg current-ice broken-subs card)))
-                :async true
-                :effect (req (let [subroutines (:subroutines current-ice)
-                                   target (->> subroutines
-                                               (filter #(and (not (:broken %))
-                                                             (= target (make-label (:sub-effect %)))))
-                                               first)
-                                   broken-subs (->> subroutines
-                                                    (remove #(= (:index %) (:index target))))]
-                               (doseq [sub broken-subs]
-                                 (break-subroutine! state (get-card state current-ice) sub))
-                               (let [ice (get-card state current-ice)
-                                     on-break-subs (when ice (:on-break-subs (card-def ice)))
-                                     event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
-                                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
-                                           (effect-completed state side eid)))))}]})
+  (let [break-subs (fn [state ice subroutines]
+                     (doseq [sub subroutines]
+                       (break-subroutine! state (get-card state ice) sub)))]
+    {:abilities [{:label "break all but 1 subroutine"
+                  :req (req (and current-ice
+                                 (rezzed? current-ice)
+                                 (< 1 (count (remove :broken (:subroutines current-ice))))))
+                  :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
+                  :breaks "All"
+                  :break-cost [:trash]
+                  :cost [:trash]
+                  :prompt "Select the subroutine to NOT break"
+                  :choices (req (unbroken-subroutines-choice current-ice))
+                  :msg (msg (let [subroutines (:subroutines current-ice)
+                                  target (->> subroutines
+                                              (filter #(and (not (:broken %))
+                                                            (= target (make-label (:sub-effect %)))))
+                                              first)
+                                  broken-subs (->> (:subroutines current-ice)
+                                                   (remove #(= (:index %) (:index target))))]
+                              (break-subroutines-msg current-ice broken-subs card)))
+                  :async true
+                  :effect (req (let [subroutines (:subroutines current-ice)
+                                     selected (filter #(and (not (:broken %))
+                                                            (= target (make-label (:sub-effect %))))
+                                                      subroutines)]
+                                 (if (pos? (count selected))
+                                   (continue-ability
+                                     state side
+                                     {:async true
+                                      :prompt (str "Which of the \"" target "\" subroutines did you want to not break? "
+                                                   "(Top to bottom)")
+                                      :choices (map
+                                                 (fn [sub] (str (inc (:index sub)) ": " (make-label (:sub-effect sub))))
+                                                 selected)
+                                      :effect (req
+                                                (let [idx (dec (str->int (first (string/split target #": "))))
+                                                      subs-to-break (remove #(= idx (:index %)) subroutines)]
+                                                  (break-subs state current-ice subs-to-break)
+                                                  (let [ice (get-card state current-ice)
+                                                        on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                                        event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                                    (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                                                              (effect-completed state side eid)))))}
+                                     card nil)
+                                   (let [subs-to-break (remove #(= (:index %) (:index (first selected))) subroutines)]
+                                     (break-subs state current-ice subs-to-break)
+                                     (let [ice (get-card state current-ice)
+                                           on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                           event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                       (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                                                 (effect-completed state side eid)))))))}]}))
 
 (defcard "Gravedigger"
   (let [e {:req (req (some #(and (installed? %)

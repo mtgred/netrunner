@@ -2051,6 +2051,7 @@
         (card-ability state :runner gh1 0)
         (is (seq (:prompt (get-runner))) "Grappling Hook creates break prompt")
         (click-prompt state :runner "End the run")
+        (click-prompt state :runner "1: End the run")
         (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
         (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
         (run-jack-out state)
@@ -2080,13 +2081,36 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Trace 3 - Give the Runner 1 tag")
+      (click-prompt state :runner "1: Trace 3 - Give the Runner 1 tag")
       (fire-subs state (get-ice state :hq 0))
       (click-prompt state :runner "10")
       (click-prompt state :corp "1")
       (is (zero? (count-tags state)) "Runner gained no tags")
       (is (get-run) "Run hasn't ended")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt")))
+  (testing "Selecting a sub when multiple of the same title exist #5291"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hive"]
+                        :credits 10}
+                 :runner {:hand ["Grappling Hook" "Gbahali"]
+                          :credits 10}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (play-from-hand state :runner "Gbahali")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (= "Which of the \"End the run\" subroutines did you want to not break? (Top to bottom)"
+             (:msg (prompt-map :runner))))
+      (click-prompt state :runner "5: End the run")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (core/all-subs-broken? (get-ice state :hq 0))
+          "Grappling Hook and Gbahali worked together"))))
 
 (deftest gravedigger
   ;; Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp
