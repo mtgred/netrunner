@@ -314,15 +314,11 @@
              :effect (effect (lose-tags eid 1))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:effect (req (when (> (:turn @state) 1)
-                  (swap! state assoc-in [:corp :hand-size :base] (:credit corp)))
-                (add-watch state :cerebral-imaging
-                           (fn [k ref old new]
-                             (let [credit (get-in new [:corp :credit])]
-                               (when (not= (get-in old [:corp :credit]) credit)
-                                 (swap! ref assoc-in [:corp :hand-size :base] credit))))))
-   :leave-play (req (remove-watch state :cerebral-imaging)
-                    (swap! state assoc-in [:corp :hand-size :base] 5))})
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :corp side))
+                       :value (req (:credit corp))}]
+   :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
+   :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
 (defcard "Chaos Theory: Wünderkind"
   {:effect (effect (gain :memory 1))
@@ -360,10 +356,8 @@
                             card nil))}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
-  {:effect (effect (lose :hand-size 1)
-                   (lose :runner :hand-size 1))
-   :leave-play (effect (gain :hand-size 1)
-                       (gain :runner :hand-size 1))})
+  {:constant-effects [{:type :hand-size
+                       :value -1}]})
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
@@ -1076,8 +1070,9 @@
                                 :type :recurring}}})
 
 (defcard "NBN: The World is Yours*"
-  {:effect (effect (gain :hand-size 1))
-   :leave-play (effect (lose :hand-size 1))})
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :corp value))
+                       :value 1}]})
 
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created

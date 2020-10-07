@@ -2051,6 +2051,7 @@
         (card-ability state :runner gh1 0)
         (is (seq (:prompt (get-runner))) "Grappling Hook creates break prompt")
         (click-prompt state :runner "End the run")
+        (click-prompt state :runner "1: End the run")
         (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
         (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
         (run-jack-out state)
@@ -2080,13 +2081,36 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Trace 3 - Give the Runner 1 tag")
+      (click-prompt state :runner "1: Trace 3 - Give the Runner 1 tag")
       (fire-subs state (get-ice state :hq 0))
       (click-prompt state :runner "10")
       (click-prompt state :corp "1")
       (is (zero? (count-tags state)) "Runner gained no tags")
       (is (get-run) "Run hasn't ended")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt")))
+  (testing "Selecting a sub when multiple of the same title exist #5291"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hive"]
+                        :credits 10}
+                 :runner {:hand ["Grappling Hook" "Gbahali"]
+                          :credits 10}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (play-from-hand state :runner "Gbahali")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (= "Which of the \"End the run\" subroutines did you want to not break? (Top to bottom)"
+             (:msg (prompt-map :runner))))
+      (click-prompt state :runner "5: End the run")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (core/all-subs-broken? (get-ice state :hq 0))
+          "Grappling Hook and Gbahali worked together"))))
 
 (deftest gravedigger
   ;; Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp
@@ -3914,6 +3938,39 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
       (click-prompt state :runner "Unrezzed upgrade")
+      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+  (testing "Works when running a different server first #5292"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hokusai Grid" "Hedge Fund"]}
+                 :runner {:deck ["RNG Key"]}})
+      (play-from-hand state :corp "Hokusai Grid" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "RNG Key")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "5")
+      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+  (testing "Works after running vs Crisium Grid #3772"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Crisium Grid" "Hedge Fund"]
+                        :credits 10}
+                 :runner {:hand ["RNG Key"]
+                          :credits 10}})
+      (play-from-hand state :corp "Crisium Grid" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "RNG Key")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Crisium Grid")
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "5")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
 (deftest sage

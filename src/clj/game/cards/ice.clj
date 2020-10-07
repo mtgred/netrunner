@@ -1410,18 +1410,14 @@
    :strength-bonus (req (if (= (second (get-zone card)) :rd) 3 0))})
 
 (defcard "Gyri Labyrinth"
-  {:implementation "Hand size is not restored if trashed or derezzed after firing"
-   :subroutines [{:req (req (:run @state))
-                  :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
+  {:subroutines [{:req (req run)
+                  :label "Reduce Runner's hand size by 2"
                   :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                  :effect (effect (lose :runner :hand-size 2)
-                                  (register-events
-                                    card
-                                    [{:event :corp-turn-begins
-                                      :msg "increase the Runner's maximum hand size by 2"
-                                      :effect (effect (gain :runner :hand-size 2)
-                                                      (unregister-events card))}]))}]
-   :events [{:event :corp-turn-begins}]})
+                  :effect (effect (register-floating-effect
+                                    {:type :hand-size
+                                     :duration :until-start-of-corp-turn
+                                     :req (req (= :runner side))
+                                     :value -2}))}]})
 
 (defcard "Hadrian's Wall"
   {:advanceable :always

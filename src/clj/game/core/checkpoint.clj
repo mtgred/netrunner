@@ -3,6 +3,7 @@
     [game.core.agendas :refer [update-all-advancement-costs update-all-agenda-points]]
     [game.core.board :refer [get-remotes]]
     [game.core.ice :refer [update-all-ice update-all-icebreakers]]
+    [game.core.hand-size :refer [update-hand-size]]
     [game.core.initializing :refer [update-all-card-labels]]
     [game.core.link :refer [update-link]]
     [game.core.tags :refer [update-tag-status]]
@@ -24,5 +25,7 @@
   (update-all-advancement-costs state :corp)
   (update-all-agenda-points state)
   (update-link state)
+  (update-hand-size state :corp)
+  (update-hand-size state :runner)
   (update-tag-status state)
   (clear-empty-remotes state))

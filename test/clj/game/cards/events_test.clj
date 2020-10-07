@@ -234,11 +234,11 @@
       (play-from-hand state :corp "Launch Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Logos")
-      (is (= 1 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos")
+      (is (= 6 (hand-size :runner)) "Hand-size increased from Logos")
       (is (= 5 (core/available-mu state)) "Memory increased from Logos")
       (play-from-hand state :runner "Origami")
       (play-from-hand state :runner "Origami")
-      (is (= 5 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos and Origami")
+      (is (= 10 (hand-size :runner)) "Hand-size increased from Logos and Origami")
       (is (= 3 (core/available-mu state)) "Memory decreased from Origamis")
       (core/gain state :runner :click 3 :credit 2)
       (run-empty-server state "Archives")
@@ -249,7 +249,7 @@
       (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
       (let [logos (find-card "Logos" (get-in (get-runner) [:rig :facedown]))]
         (is (:facedown (refresh logos)) "Logos is facedown")
-        (is (zero? (get-in (get-runner) [:hand-size :mod])) "Hand-size reset with Logos and Origami facedown")
+        (is (= 5 (hand-size :runner)) "Hand-size reset with Logos and Origami facedown")
         (is (= 4 (core/available-mu state)) "Memory reset with Logos and Origami facedown"))))
   (testing "Turn Runner cards facedown without firing their trash effects"
     (do-game
@@ -2894,9 +2894,9 @@
     (take-credits state :corp)
     (is (= 5 (hand-size :corp)) "Corp starts with handsize of 5")
     (play-from-hand state :runner "Itinerant Protesters")
-    (core/gain state :corp :bad-publicity 1)
+    (change state :corp :bad-publicity 1)
     (is (= 4 (hand-size :corp)) "Corp's handsize is lowered by 1 for a bad publicity")
-    (core/gain state :corp :bad-publicity 3)
+    (change state :corp :bad-publicity 3)
     (is (= 1 (hand-size :corp)))))
 
 (deftest khusyuk
@@ -4542,15 +4542,15 @@
       (score-agenda state :corp (get-content state :remote5 0))
       (take-credits state :corp)
       (core/gain state :runner :credit 100 :click 100)
-      (is (= 4 (get-in (get-corp) [:hand-size :mod])) "Corp has +4 hand size")
-      (is (= -2 (get-in (get-runner) [:hand-size :mod])) "Runner has -2 hand size")
+      (is (= 9 (hand-size :corp)) "Corp has +4 hand size")
+      (is (= 3 (hand-size :runner)) "Runner has -2 hand size")
       (play-from-hand state :runner "Rumor Mill")
       ;; Additional costs to rez should NOT be applied
       (rez state :corp (get-content state :remote6 0))
       (is (= 1 (count (:scored (get-corp)))) "No agenda was auto-forfeit to rez Ibrahim Salem")
       ;; In-play effects
-      (is (zero? (get-in (get-corp) [:hand-size :mod])) "Corp has original hand size")
-      (is (zero? (get-in (get-runner) [:hand-size :mod])) "Runner has original hand size")
+      (is (= 5 (hand-size :corp)) "Corp has original hand size")
+      (is (= 5 (hand-size :runner)) "Runner has original hand size")
       ;; "When you rez" effects should not apply
       (rez state :corp (get-content state :remote4 0))
       (is (= 1 (count-bad-pub state)) "Corp still has 1 bad publicity")
@@ -4571,8 +4571,8 @@
       (take-credits state :runner)
       ;; Trash RM, make sure everything works again
       (play-from-hand state :corp "Housekeeping")
-      (is (= 4 (get-in (get-corp) [:hand-size :mod])) "Corp has +4 hand size")
-      (is (zero? (get-in (get-runner) [:hand-size :mod])) "Runner has +0 hand size")
+      (is (= 9 (hand-size :corp)) "Corp has +4 hand size")
+      (is (= 5 (hand-size :runner)) "Runner has +0 hand size")
       ;; Additional costs to rez should now be applied again
       (rez state :corp (get-content state :remote7 0))
       (click-card state :corp (get-in (get-corp) [:scored 0]))

@@ -3018,18 +3018,29 @@
   ;; Valley Grid
   (testing "Reduce Runner max hand size and restore it even if trashed"
     (do-game
-      (new-game {:corp {:deck [(qty "Valley Grid" 3) (qty "Ice Wall" 3)]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Valley Grid" 3) (qty "Ice Wall" 3)]
+                        :credits 10}
+                 :runner {:hand ["Corroder"]
+                          :credits 10}})
       (play-from-hand state :corp "Valley Grid" "New remote")
-      (take-credits state :corp 2)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
       (run-on state "Server 1")
-      (let [vg (get-content state :remote1 0)]
+      (let [vg (get-content state :remote1 0)
+            iw (get-ice state :remote1 0)
+            cor (get-program state 0)]
         (rez state :corp vg)
-        (card-ability state :corp vg 0)
-        (card-ability state :corp vg 0)
-        (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
+        (rez state :corp iw)
+        (run-continue state)
+        (card-ability state :runner (refresh cor) 0)
+        (click-prompt state :runner "End the run")
+        (is (= 4 (hand-size :runner)) "Runner max hand size reduced by 1")
+        (run-continue state)
         (run-continue state)
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
 
 (deftest warroid-tracker

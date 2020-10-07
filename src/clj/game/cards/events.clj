@@ -1550,16 +1550,9 @@
 
 (defcard "Itinerant Protesters"
   {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-   :effect (req (change-hand-size state :corp (- (count-bad-pub state)))
-                (add-watch state :itin
-                           (fn [k ref old new]
-                             (let [bpnew (count-bad-pub (atom new))
-                                   bpold (count-bad-pub (atom old))
-                                   bpchange (- bpnew bpold)]
-                               (when-not (zero? bpchange)
-                                 (change-hand-size state :corp (- bpchange)))))))
-   :leave-play (req (remove-watch state :itin)
-                    (change-hand-size state :corp (count-bad-pub state)))})
+   :constant-effects [{:type :hand-size
+                       :req (req (= :corp side))
+                       :value (req (- (count-bad-pub state)))}]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]

@@ -296,7 +296,9 @@
                                  card nil))}]}))
 
 (defcard "Beach Party"
-  {:in-play [:hand-size 5]
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 5}]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
              :effect (effect (lose :click 1))}]})
@@ -386,8 +388,10 @@
 
 (defcard "Borrowed Satellite"
   {:constant-effects [{:type :link
-                       :value 1}]
-   :in-play [:hand-size 1]})
+                       :value 1}
+                      {:type :hand-size
+                       :req (req (= :runner side))
+                       :value 1}]})
 
 (defcard "Bug Out Bag"
   {:prompt "How many power counters?"
@@ -1416,23 +1420,26 @@
 (defcard "Lewi Guilherme"
   (let [ability {:once :per-turn
                  :label "lose 1 [Credits] or trash"
-                 :optional {:once :per-turn
-                            :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
-                            :yes-ability {:async true
-                                          :effect (req (if (pos? (:credit runner))
-                                                         (do (lose-credits state side 1)
-                                                             (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme"))
-                                                         (do (system-msg state side "must trash Lewi Guilherme")
-                                                             (trash state side eid card nil))))}
-                            :no-ability {:async true
-                                         :effect (effect (system-msg "chooses to trash Lewi Guilherme")
-                                                         (trash eid card nil))}}}]
+                 :optional
+                 {:once :per-turn
+                  :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                  :yes-ability
+                  {:async true
+                   :effect (req (if (pos? (:credit runner))
+                                  (do (lose-credits state side 1)
+                                      (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme"))
+                                  (do (system-msg state side "must trash Lewi Guilherme")
+                                      (trash state side eid card nil))))}
+                  :no-ability
+                  {:async true
+                   :effect (effect (system-msg "chooses to trash Lewi Guilherme")
+                                   (trash eid card nil))}}}]
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
-     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
-     :effect (effect (lose :corp :hand-size 1))
-     :leave-play (effect (gain :corp :hand-size 1))
+     :constant-effects [{:type :hand-size
+                         :req (req (= :corp side))
+                         :value -1}]
      :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
@@ -1449,7 +1456,7 @@
   {:abilities [{:cost [:click 5 :forfeit]
                 :msg "add it to their score area"
                 :async true
-                :effect (req (if (not (empty? (:scored corp)))
+                :effect (req (if (seq (:scored corp))
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                    (continue-ability
                                      state side
@@ -2040,7 +2047,9 @@
              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}]})
 
 (defcard "Public Sympathy"
-  {:in-play [:hand-size 2]})
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value 2}]})
 
 (defcard "Rachel Beckman"
   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
@@ -2189,7 +2198,9 @@
                                 (trash-prevent :hardware 1))}]})
 
 (defcard "Safety First"
-  {:in-play [:hand-size -2]
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value -2}]
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
@@ -2731,16 +2742,13 @@
                  (ttw-bounce "HQ" :hq)]}))
 
 (defcard "Theophilius Bagbiter"
-  {:effect (req (lose-credits state :runner :all)
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :runner side))
+                       :value (req (:credit runner))}]
+   :effect (req (lose-credits state :runner :all)
                 (lose state :runner :run-credit :all)
-                (swap! state assoc-in [:runner :hand-size :base] 0)
-                (add-watch state :theophilius-bagbiter
-                           (fn [k ref old new]
-                             (let [credit (get-in new [:runner :credit])]
-                               (when (not= (get-in old [:runner :credit]) credit)
-                                 (swap! ref assoc-in [:runner :hand-size :base] credit))))))
-   :leave-play (req (remove-watch state :theophilius-bagbiter)
-                    (swap! state assoc-in [:runner :hand-size :base] 5))})
+                (swap! state assoc-in [:runner :hand-size :base] 0))
+   :leave-play (req (swap! state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
   (let [first-event-check (fn [state fn1 fn2]

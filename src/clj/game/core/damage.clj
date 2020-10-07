@@ -98,8 +98,7 @@
                       leftovers (remove #(contains? chosen-cids (:cid %)) hand)
                       cards-trashed (filter identity (flatten (conj chosen-cards (seq (take (- n (count chosen-cards)) (shuffle leftovers))))))]
                   (when (= type :brain)
-                    (swap! state update-in [:runner :brain-damage] #(+ % n))
-                    (swap! state update-in [:runner :hand-size :mod] #(- % n)))
+                    (swap! state update-in [:runner :brain-damage] #(+ % n)))
                   (when-let [trashed-msg (string/join ", " (map :title cards-trashed))]
                     (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
                   (if (< (count hand) n)
