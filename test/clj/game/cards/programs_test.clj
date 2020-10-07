@@ -3915,14 +3915,34 @@
       (click-prompt state :runner "2")
       (click-prompt state :runner "Unrezzed upgrade")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
-  (testing "Works when running a different server first"
+  (testing "Works when running a different server first #5292"
     (do-game
-      (new-game {:corp {:deck ["Hokusai Grid" "Hedge Fund"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hokusai Grid" "Hedge Fund"]}
                  :runner {:deck ["RNG Key"]}})
       (play-from-hand state :corp "Hokusai Grid" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "RNG Key")
       (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "5")
+      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+  (testing "Works after running vs Crisium Grid #3772"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Crisium Grid" "Hedge Fund"]
+                        :credits 10}
+                 :runner {:hand ["RNG Key"]
+                          :credits 10}})
+      (play-from-hand state :corp "Crisium Grid" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "RNG Key")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Crisium Grid")
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
       (click-prompt state :runner "No action")
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
