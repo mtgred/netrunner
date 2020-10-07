@@ -507,6 +507,43 @@
                               "trash the top 2 cards from their Stack - but the Stack is empty")))
                 :effect (effect (mill :corp eid :runner 2))}]})
 
+(defcard "Ganked!"
+  {:implementation "Forced encounter is completely manual. All breaking and costs must be done manually"
+   :flags {:rd-reveal (req true)}
+   :access
+   {:async true
+    :req (req (and (not (in-discard? card))
+                   (some ice? (all-active-installed state :corp))))
+    :effect (effect (show-wait-prompt :runner (str "Corp to decide to trigger " (:title card)))
+                    (continue-ability
+                      {:optional
+                       {:prompt "Trash Ganked! to force the Runner to encounter a piece of ice?"
+                        :yes-ability
+                        {:async true
+                         :choices {:card #(and (ice? %)
+                                               (installed? %)
+                                               (rezzed? %))}
+                         :msg (msg "to encounter " (:title target))
+                         :effect (req (clear-wait-prompt state :runner)
+                                      (wait-for (trash state :corp card {:unpreventable true})
+                                                (show-wait-prompt state :corp (str "Runner to decide about encountering " (:title target)))
+                                                (continue-ability
+                                                  state :runner
+                                                  {:optional
+                                                   {:player :runner
+                                                    :prompt (str "You are encountering " (:title target)". Allow its subroutine to fire?")
+                                                    :yes-ability
+                                                    {:async true
+                                                     :effect (effect (clear-wait-prompt :corp)
+                                                                     (resolve-unbroken-subs! :corp eid target))}
+                                                    :no-ability
+                                                    {:effect (effect (clear-wait-prompt :corp)
+                                                                     (effect-completed eid))}}}
+                                                  card targets)))}
+                        :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter " (:title target)))
+                                                     (clear-wait-prompt :runner))}}}
+                      card nil))}})
+
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
              :req (req (= (target-server target)
