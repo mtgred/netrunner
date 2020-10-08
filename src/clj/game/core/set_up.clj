@@ -2,6 +2,7 @@
   (:require
     [game.core.card :refer [corp? runner?]]
     [game.core.card-defs :refer [card-def]]
+    [game.core.checkpoint :refer [fake-checkpoint]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
     [game.core.events :refer [trigger-event trigger-event-sync]]
@@ -117,9 +118,11 @@
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (create-basic-action-cards state)
+    (fake-checkpoint state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game nil)
                 (let [side :runner]
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
-                            (init-hands state)))))
+                            (init-hands state)
+                            (fake-checkpoint state)))))
     state))

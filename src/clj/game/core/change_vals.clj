@@ -33,12 +33,9 @@
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags
-  "Change a player's tag count, using floating effects"
+  "Change a player's tag count"
   [state delta]
-  (register-floating-effect
-    state :runner nil
-    {:type :user-tags
-     :value delta})
+  (gain state :runner :tag delta)
   (update-tag-status state)
   (system-msg state :runner
               (str "sets Tags to " (get-in @state [:runner :tag :total])

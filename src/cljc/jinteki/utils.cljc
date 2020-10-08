@@ -39,6 +39,11 @@
   [state]
   (or (get-in @state [:runner :tag :total]) 0))
 
+(defn count-real-tags
+  "Count number of non-additional tags"
+  [state]
+  (or (get-in @state [:runner :tag :base]) 0))
+
 (defn is-tagged?
   "Returns truthy if runner is tagged"
   [state]

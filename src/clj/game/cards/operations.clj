@@ -1358,7 +1358,7 @@
 (defcard "Observe and Destroy"
   {:async true
    :additional-cost [:tag 1]
-   :req (req (and (pos? (count-tags state))
+   :req (req (and (pos? (count-real-tags state))
                   (< (:credit runner) 6)))
    :prompt "Select an installed card to trash"
    :choices {:card #(and (runner? %)
