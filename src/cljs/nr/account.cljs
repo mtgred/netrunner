@@ -313,6 +313,7 @@
                                {:name "Find The Truth"  :ref "find-the-truth-bg"}
                                {:name "Push Your Luck"  :ref "push-your-luck-bg"}
                                {:name "Apex"            :ref "apex-bg"}
+                               {:name "Worlds 2020"     :ref "worlds2020"}
                                {:name "Monochrome"      :ref "monochrome-bg"}]]
                    [:div.radio {:key (:name option)}
                     [:label [:input {:type "radio"
