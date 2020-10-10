@@ -23,14 +23,13 @@
         (is (zero? (get-in @state [:corp :bad-publicity :additional])) "No change on loss either"))
       (testing "Tags"
         (is (zero? (count-tags state)) "Runner starts with 0 tags")
+        (is (zero? (count-real-tags state)))
         (change state :runner :tag 1)
         (is (= 1 (count-tags state)) "Runner has gained 1 tag")
-        (is (zero? (get-in @state [:runner :tag :base])))
-        (is (= 1 (core/sum-effects state :runner nil :user-tags nil)))
+        (is (= 1 (count-real-tags state)))
         (change state :runner :tag -1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
-        (is (zero? (get-in @state [:runner :tag :base])))
-        (is (zero? (core/sum-effects state :runner nil :user-tags nil))))))
+        (is (zero? (count-real-tags state))))))
   (testing "Generic changes"
     (testing "Agenda points"
       (do-game

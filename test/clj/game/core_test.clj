@@ -231,6 +231,7 @@
        (core/process-action "change" ~state ~side target#))))
 
 (def count-tags jutils/count-tags)
+(def count-real-tags jutils/count-real-tags)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
 (def get-link core/get-link)

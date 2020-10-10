@@ -4052,7 +4052,32 @@
       (click-card state :corp "Drafter")
       (run-jack-out state)
       (is (= ["Thimblerig"] (map :title (get-ice state :rd))))
-      (is (= ["Drafter" "Vanilla"] (map :title (get-ice state :hq)))))))
+      (is (= ["Drafter" "Vanilla"] (map :title (get-ice state :hq))))))
+  (testing "Duplication bug"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Thimblerig" "Ice Wall" "Vanilla" "Hostile Takeover"]
+                        :credits 10}
+                 :runner {:id "Leela Patel: Trained Pragmatist"
+                          :hand ["Gordian Blade"]
+                          :credits 10}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (rez state :corp (get-ice state :hq 2))
+      (play-and-score state "Hostile Takeover")
+      (click-card state :runner "Vanilla")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Ice Wall")
+      (is (= ["Thimblerig" "Ice Wall"] (map :title (get-ice state :hq)))))))
 
 (deftest tithonium
   ;; Tithonium - Forfeit option as rez cost, can have hosted condition counters

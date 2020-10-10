@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
+            [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
@@ -699,6 +699,46 @@
           (render-icons (add-cost-to-label ab))])
        corp-abilities)]))
 
+;; TODO (2020-10-08): We're using json as the transport layer for server-client
+;; communication, so every non-key keyword is converted to a string, which blows.
+;; Until this is changed, it's better to redefine this stuff in here and just not
+;; worry about it.
+(letfn
+  [(is-type?  [card value] (= value (:type card)))
+   (identity? [card] (or (is-type? card "Fake-Identity")
+                         (is-type? card "Identity")))
+   (get-nested-host [card] (if (:host card)
+                             (recur (:host card))
+                             card))
+   (get-zone [card] (:zone (get-nested-host card)))
+   (in-play-area? [card] (= (get-zone card) ["play-area"]))
+   (in-current? [card] (= (get-zone card) ["current"]))
+   (in-scored? [card] (= (get-zone card) ["scored"]))
+   (corp? [card] (= (:side card) "Corp"))
+   (installed? [card] (or (:installed card)
+                          (= "servers" (first (get-zone card)))))
+   (rezzed? [card] (:rezzed card))
+   (runner? [card] (= (:side card) "Runner"))
+   (condition-counter? [card] (and (:condition card)
+                                   (or (is-type? card "Event")
+                                       (is-type? card "Operation"))))
+   (facedown? [card] (or (when (not (condition-counter? card))
+                           (= (get-zone card) ["rig" "facedown"]))
+                         (:facedown card)))]
+  (defn active?
+    "Checks if the card is active and should receive game events/triggers."
+    [card]
+    (or (identity? card)
+        (in-play-area? card)
+        (in-current? card)
+        (in-scored? card)
+        (and (corp? card)
+             (installed? card)
+             (rezzed? card))
+        (and (runner? card)
+             (installed? card)
+             (not (facedown? card))))))
+
 (defn card-abilities [card c-state abilities subroutines]
   (let [actions (action-list card)
         dynabi-count (count (filter :dynamic abilities))]
@@ -718,10 +758,10 @@
                     :on-click #(do (send-command action {:card card}))}
               (capitalize action)])
            actions))
-       (when (and (or (active? card) (in-scored? card))
+       (when (and (active? card)
                   (seq abilities))
          [:span.float-center "Abilities:"])
-       (when (and (or (active? card) (in-scored? card))
+       (when (and (active? card)
                   (seq abilities))
          (map-indexed
            (fn [i ab]
@@ -1137,16 +1177,16 @@
          [:div (str agenda-point " Agenda Point"
                     (when (not= agenda-point 1) "s"))
           (when me? (controls :agenda-point))]
-         (let [{:keys [base additional is-tagged]} tag
-               tag-count (+ base additional)
-               show-tagged (or (pos? tag-count) (pos? is-tagged))]
-           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= tag-count 1) "s" ""))
+         (let [{:keys [base total is-tagged]} tag
+               additional (- total base)
+               show-tagged (or is-tagged (pos? total))]
+           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" ""))
             (when show-tagged [:div.warning "!"])
             (when me? (controls :tag))])
          [:div (str brain-damage " Brain Damage")
           (when me? (controls :brain-damage))]
-         (let [{:keys [base mod]} hand-size]
-           [:div (str (+ base mod) " Max hand size")
+         (let [{:keys [total]} hand-size]
+           [:div (str total " Max hand size")
             (when me? (controls :hand-size))])]))))
 
 (defmethod stats-view "Corp" [corp]

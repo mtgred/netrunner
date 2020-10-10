@@ -1901,7 +1901,7 @@
 
 (defcard "Networking"
   {:async true
-   :req (req (pos? (count-tags state)))
+   :req (req (pos? (count-real-tags state)))
    :msg "remove 1 tag"
    :effect (req (wait-for (lose-tags state side 1)
                           (continue-ability
@@ -1994,7 +1994,7 @@
 
 (defcard "Paper Tripping"
   {:async true
-   :req (req (pos? (count-tags state)))
+   :req (req (pos? (count-real-tags state)))
    :msg "remove all tags"
    :effect (effect (lose-tags eid :all))})
 

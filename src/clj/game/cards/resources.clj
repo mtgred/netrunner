@@ -2174,7 +2174,7 @@
                                  (quantify (count cards) "card")
                                  " (" (string/join ", " (map :title cards)) "),"
                                  " lose " (quantify (:credit (:runner @state)) "credit")
-                                 ", and lose " (quantify (count-tags state) "tag"))))
+                                 ", and lose " (quantify (count-real-tags state) "tag"))))
                 :effect (req (damage-prevent state side :net Integer/MAX_VALUE)
                              (damage-prevent state side :meat Integer/MAX_VALUE)
                              (damage-prevent state side :brain Integer/MAX_VALUE)

@@ -292,7 +292,7 @@
                                        (continue-ability
                                          state side
                                          (let [deck (pos? (count (:deck runner)))
-                                               tags (pos? (count-tags state))]
+                                               tags (pos? (count-real-tags state))]
                                            {:req (req (or deck tags))
                                             :prompt "Draw 1 card or remove 1 tag"
                                             :choices (concat (when deck ["Draw 1 card"])
@@ -678,7 +678,7 @@
                 :async true
                 :effect (effect (jack-out eid))}
                {:label "Remove 1 tag"
-                :req (req (and (pos? (count-tags state))
+                :req (req (and (pos? (count-real-tags state))
                                (= :runner (:active-player @state))))
                 :msg "remove 1 tag"
                 :cost [:trash]

@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [card-index facedown? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [card-index facedown? faceup? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -158,6 +158,8 @@
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
              (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
+           (when (seq zone)
+             (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
@@ -390,12 +392,10 @@
                        (assoc-in [:zone] '(:onhost))
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
-          (unregister-events state side h)
-          (when (rezzed? h)
+          (unregister-events state side newh)
+          (when (faceup? newh)
             (register-events state side newh)))))
     (trigger-event state side :swap a-new b-new)
-    (update-ice-strength state side a-new)
-    (update-ice-strength state side b-new)
     (set-current-ice state)))
 
 (defn swap-installed
