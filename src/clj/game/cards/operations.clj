@@ -1789,6 +1789,7 @@
    :events [{:event :pass-ice
              :condition :hosted
              :req (req (same-card? target (:host card)))
+             :msg (msg "add 1 power counter to itself")
              :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Sacrifice"
@@ -2074,6 +2075,11 @@
              :async true
              :effect (req (if (= (count targets) 2)
                             (do (swap-ice state side (first targets) (second targets))
+                                (system-msg state side
+                                            (str "uses Sunset to swap "
+                                                 (card-str state (first targets))
+                                                 " with "
+                                                 (card-str state (second targets))))
                                 (continue-ability state side (sun serv) card nil))
                             (do (system-msg state side "has finished rearranging ICE")
                                 (effect-completed state side eid))))})]

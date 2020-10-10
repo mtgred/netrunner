@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [card-index facedown? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [card-index facedown? faceup? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -392,8 +392,8 @@
                        (assoc-in [:zone] '(:onhost))
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
-          (unregister-events state side h)
-          (when (rezzed? h)
+          (unregister-events state side newh)
+          (when (faceup? newh)
             (register-events state side newh)))))
     (trigger-event state side :swap a-new b-new)
     (set-current-ice state)))
