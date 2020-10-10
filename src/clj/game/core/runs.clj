@@ -360,7 +360,8 @@
                     (print-stack-trace
                       (Exception. "Continue clicked at the wrong time")
                       2500)))
-  (.println *err* (str "Run: " (:run @state) "\n")))
+  (.println *err* (str "Run: " (:phase (:run @state)) "\n"))
+  )
 
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))
