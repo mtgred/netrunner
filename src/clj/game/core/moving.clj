@@ -158,6 +158,8 @@
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
              (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
+           (when (seq zone)
+             (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
@@ -394,8 +396,6 @@
           (when (rezzed? h)
             (register-events state side newh)))))
     (trigger-event state side :swap a-new b-new)
-    (update-ice-strength state side a-new)
-    (update-ice-strength state side b-new)
     (set-current-ice state)))
 
 (defn swap-installed

@@ -230,7 +230,7 @@
                               card nil)))}]})
 
 (defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
-  {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
+  {:abilities [{:label "Add 1 card from NVRAM to your grip"
                 :cost [:click 1]
                 :async true
                 :prompt "Choose a card from NVRAM"
