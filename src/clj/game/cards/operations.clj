@@ -606,24 +606,17 @@
   {:req (req (and tagged
                   (seq (:scored runner))
                   (seq (:scored corp))))
+   :prompt "Select a stolen agenda in the Runner's score area to swap"
+   :choices {:req (req (in-runner-scored? state side target))}
    :async true
-   :effect (req
+   :effect (effect
              (continue-ability
-               state side
-               {:prompt "Select a stolen agenda in the Runner's score area to swap"
-                :choices {:card #(in-runner-scored? state side %)}
-                :async true
-                :effect (req
-                          (let [stolen target]
-                            (continue-ability
-                              state side
-                              {:prompt (msg "Select a scored agenda to swap for " (:title stolen))
-                               :choices {:card #(in-corp-scored? state side %)}
-                               :effect (req (let [scored target]
-                                              (swap-agendas state side scored stolen)
-                                              (system-msg state side (str "uses Exchange of Information to swap "
-                                                                          (:title scored) " for " (:title stolen)))))}
-                              card nil)))}
+               (let [stolen target]
+                 {:prompt (msg "Select a scored agenda to swap for " (:title stolen))
+                  :choices {:req (req (in-corp-scored? state side target))}
+                  :msg (msg "swap " (:title target)
+                            " for " (:title stolen))
+                  :effect (effect (swap-agendas target stolen))})
                card nil))})
 
 (defcard "Fast Break"

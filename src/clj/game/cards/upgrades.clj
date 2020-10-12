@@ -347,38 +347,36 @@
                 :effect (effect (purge))}]})
 
 (defcard "Daruma"
-  (letfn [(choose-swap [to-swap]
-            {:prompt (str "Select a card to swap with " (:title to-swap))
-             :choices {:not-self true
-                       :card #(and (corp? %)
-                                   (or (asset? %) (agenda? %) (upgrade? %))
-                                   (or (in-hand? %) ; agenda, asset or upgrade from HQ
-                                       (and (installed? %) ; card installed in a server
-                                            ;; central upgrades are not in a server
-                                            (not (#{:hq :rd :archives} (first (get-zone %)))))))}
-             :async true
-             :effect (req (wait-for (trash state :corp card nil)
-                                    (move state :corp to-swap (get-zone target) {:keep-server-alive true})
-                                    (move state :corp target (get-zone to-swap) {:keep-server-alive true})
-                                    (system-msg state :corp
-                                                (str "uses Daruma to swap " (card-str state to-swap)
-                                                     " with " (card-str state target)))
-                                    (clear-wait-prompt state :runner)
-                                    (effect-completed state side eid)))
-             :cancel-effect (effect (clear-wait-prompt :runner))})
-          (ability [card]
-            {:optional {:prompt "Trash Daruma to swap a card in this server?"
-                        :yes-ability {:async true
-                                      :prompt "Select a card in this server to swap"
-                                      :choices {:card #(and (installed? %)
-                                                            (in-same-server? card %))
-                                                :not-self true}
-                                      :effect (effect (continue-ability (choose-swap target) card nil))}
-                        :no-ability {:effect (effect (clear-wait-prompt :runner))}}})]
+  (let [choose-swap
+        (fn [to-swap]
+          {:prompt (str "Select a card to swap with " (:title to-swap))
+           :choices {:not-self true
+                     :card #(and (corp? %)
+                                 (not (operation? %))
+                                 (or (in-hand? %) ; agenda, asset or upgrade from HQ
+                                     (and (installed? %) ; card installed in a server
+                                          (not (in-root? %)))))} ; central upgrades are not in a server
+           :cost [:trash]
+           :msg (msg "swap " (card-str state to-swap)
+                     " with " (card-str state target))
+           :effect (effect (clear-wait-prompt :runner)
+                           (swap-cards to-swap target))
+           :cancel-effect (effect (clear-wait-prompt :runner))})
+        ability
+        {:optional
+         {:prompt "Trash Daruma to swap a card in this server?"
+          :yes-ability
+          {:async true
+           :prompt "Select a card in this server to swap"
+           :choices {:req (req (and (installed? target)
+                                    (in-same-server? card target)))
+                     :not-self true}
+           :effect (effect (continue-ability (choose-swap target) card nil))}
+          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}]
     {:events [{:event :approach-server
                :async true
                :effect (effect (show-wait-prompt :runner "Corp to use Daruma")
-                         (continue-ability :corp (ability card) card nil))}]}))
+                               (continue-ability :corp ability card nil))}]}))
 
 (defcard "Dedicated Technician Team"
   {:recurring 2

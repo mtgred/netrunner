@@ -1460,15 +1460,15 @@
              :effect draft-points-target}]
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (has-most-faction? state :corp "Jinteki")
-                                    (> (count (filter ice? (all-installed state :corp))) 1)))}
+                                    (<= 2 (count (filter ice? (all-installed state :corp))))))}
    :abilities [{:prompt "Select two pieces of ICE to swap positions"
                 :label "swap two ice"
                 :choices {:card #(and (installed? %)
                                       (ice? %))
-                          :max 2}
+                          :max 2
+                          :all true}
                 :once :per-turn
-                :effect (req (when (= (count targets) 2)
-                               (swap-ice state side (first targets) (second targets))))
+                :effect (req (apply swap-ice state side targets))
                 :msg (msg "swap the positions of " (card-str state (first targets))
                           " and " (card-str state (second targets)))}]})
 

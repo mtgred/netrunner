@@ -971,6 +971,41 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest daruma
+  ;; Daruma
+  (testing "swapping with another installed card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (play-from-hand state :corp "Snare!" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (is (find-card "Daruma" (:discard (get-corp))))
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
+  (testing "swapping with a card in HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp)))))))
+
 (deftest dedicated-technician-team
   ;; Dedicated Technician Team
   (testing "Pay-credits prompt"
