@@ -4862,8 +4862,8 @@
                :runner {:deck [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]}})
     (play-from-hand state :corp "Toshiyuki Sakai" "New remote")
     (let [toshi (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh toshi)})
-      (core/advance state :corp {:card (refresh toshi)})
+      (click-advance state :corp (refresh toshi))
+      (click-advance state :corp (refresh toshi))
       (take-credits state :corp)
       (is (= 2 (get-counters (refresh toshi) :advancement)) "Toshiyuki has 2 advancements")
       (run-empty-server state "Server 1")

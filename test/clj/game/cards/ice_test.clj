@@ -1993,8 +1993,7 @@
   ;; Kakugo
   (testing "ability continues to work when ice is swapped"
     (do-game
-      (new-game {:corp {:deck ["Kakugo"
-                               "Ice Wall"]}})
+      (new-game {:corp {:deck ["Kakugo" "Ice Wall"]}})
       (play-from-hand state :corp "Kakugo" "R&D")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
@@ -2007,6 +2006,7 @@
         (run-jack-out state)
         (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
         (core/swap-ice state :corp (refresh kakugo) (refresh ice-wall))
+        (core/fake-checkpoint state)
         (run-on state "Archives")
         (run-continue state)
         (run-continue state)
@@ -3466,7 +3466,7 @@
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
-      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
 
 (deftest self-adapting-code-wall
@@ -3911,7 +3911,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "6")
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
-      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
 (deftest susanoo-no-mikoto

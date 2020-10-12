@@ -1348,8 +1348,7 @@
             (and
               (ice? card)
               (installed? card)
-              (zero? (+ (get-counters card :advancement)
-                        (:extra-advance-counter card 0)))))
+              (zero? (get-counters card :advancement))))
           (ice-with-no-advancement-tokens [state]
             (->> (all-installed state :corp)
                  (filter selectable-ice?)))]
@@ -1373,8 +1372,8 @@
                                {:prompt (str "Select ICE with no advancement tokens to place "
                                              (quantify agenda-points "advancement token") " on")
                                 :choices {:card #(selectable-ice? %)}
-                                :msg (msg "places " (quantify agenda-points "advancement token")
-                                          " on ICE with no advancement tokens")
+                                :msg (msg "place " (quantify agenda-points "advancement token")
+                                          " on " (card-str state target))
                                 :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
                                              (clear-wait-prompt state :runner))
                                 :cancel-effect (req (clear-wait-prompt state :runner))}

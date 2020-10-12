@@ -747,9 +747,8 @@
                               state side
                               {:choices {:card #(and (not (same-card? % card))
                                                      (can-be-advanced? %))}
-                               :msg (msg "place " n
-                                         " advancement tokens on "
-                                         (card-str state target))
+                               :msg (msg "place " (quantify n "advancement token")
+                                         " on " (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
                               card nil)))}]})
 
@@ -1200,12 +1199,7 @@
                                          (asset? %)
                                          (upgrade? %))))}
              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
-             :effect (req (move state :corp to-swap (get-zone target)
-                                {:keep-server-alive true
-                                 :index (:index target)})
-                          (move state :corp target (get-zone to-swap)
-                                {:keep-server-alive true
-                                 :index (:index to-swap)})
+             :effect (req (swap-cards state side to-swap target)
                           (clear-wait-prompt state :runner))
              :cancel-effect (effect (put-back-counter card)
                                     (clear-wait-prompt :runner))})

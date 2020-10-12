@@ -2297,14 +2297,7 @@
 
 (defcard "NEXT Bronze"
   {:subroutines [end-the-run]
-   :strength-bonus (req (next-ice-count corp))
-   :events (let [nb {:req (req (and (not (same-card? target card))
-                                    (has-subtype? target "NEXT")))
-                     :effect (effect (update-ice-strength card))}]
-             [(assoc nb :event :rez)
-              (assoc nb :event :derez)
-              (assoc nb :event :trash)
-              (assoc nb :event :card-moved)])})
+   :strength-bonus (req (next-ice-count corp))})
 
 (defcard "NEXT Diamond"
   {:rez-cost-bonus (req (- (next-ice-count corp)))
@@ -2704,13 +2697,8 @@
                    sub]}))
 
 (defcard "Seidr Adaptive Barrier"
-  (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
-        recalc-event {:effect recalculate-strength}]
-    {:effect recalculate-strength
-     :strength-bonus (req (count (:ices (card->server state card))))
-     :subroutines [end-the-run]
-     :events [(assoc recalc-event :event :card-moved)
-              (assoc recalc-event :event :corp-install)]}))
+  {:strength-bonus (req (count (:ices (card->server state card))))
+   :subroutines [end-the-run]})
 
 (defcard "Self-Adapting Code Wall"
   {:subroutines [end-the-run]
@@ -2877,11 +2865,8 @@
                  end-the-run]})
 
 (defcard "Surveyor"
-  (let [x (req (* 2 (count (:ices (card->server state card)))))
-        recalculate-strength (req (update-ice-strength state side (get-card state card)))
-        recalc-event {:effect recalculate-strength}]
-    {:effect recalculate-strength
-     :strength-bonus x
+  (let [x (req (* 2 (count (:ices (card->server state card)))))]
+    {:strength-bonus x
      :subroutines [{:label "Trace X - Give the Runner 2 tags"
                     :trace {:base x
                             :label "Give the Runner 2 tags"
@@ -2889,9 +2874,7 @@
                    {:label "Trace X - End the run"
                     :trace {:base x
                             :label "End the run"
-                            :successful end-the-run}}]
-     :events [(assoc recalc-event :event :card-moved)
-              (assoc recalc-event :event :corp-install)]}))
+                            :successful end-the-run}}]}))
 
 (defcard "Susanoo-no-Mikoto"
   {:subroutines [{:req (req (not= (:server run) [:discard]))
@@ -3270,16 +3253,17 @@
                                (trash state side eid card {:cause :subroutine}))}]})
 
 (defcard "Winchester"
-  (let [ab {:req (req (= (second (get-zone card)) :hq))
-            :effect (effect (continue-ability
-                              (reset-variable-subs state side card 1 (trace-ability 3 end-the-run) {:back true})
-                              card nil))}]
+  (let [ab {:req (req (protecting-hq? card))
+            :effect (req (reset-variable-subs state :corp card 1 (trace-ability 3 end-the-run) {:back true}))}]
     {:subroutines [(trace-ability 4 trash-program-sub)
                    (trace-ability 3 trash-hardware-sub)]
      :effect (effect (continue-ability ab card nil))
      :events [(assoc ab :event :rez)
               (assoc ab :event :card-moved)
-              (assoc ab :event :approach-ice)]}))
+              (assoc ab :event :approach-ice)
+              (assoc ab :event :swap
+                     :req (req (or (protecting-hq? target)
+                                   (protecting-hq? (second targets)))))]}))
 
 (defcard "Woodcutter"
   (zero-to-hero (do-net-damage 1)))
@@ -3305,14 +3289,7 @@
 (defcard "Wraparound"
   {:subroutines [end-the-run]
    :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-active-installed state :runner))
-                          0 7))
-   :events (let [wr {:silent (req true)
-                     :req (req (and (not (same-card? target card))
-                                    (has-subtype? target "Fracter")))
-                     :effect (effect (update-ice-strength card))}]
-             [(assoc wr :event :runner-install)
-              (assoc wr :event :trash)
-              (assoc wr :event :card-moved)])})
+                          0 7))})
 
 (defcard "Yagura"
   {:subroutines [{:msg "look at the top card of R&D"

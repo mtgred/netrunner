@@ -1191,9 +1191,9 @@
                     (gain-credits state :corp c)))}))
 
 (defcard "Mass Commercialization"
-  {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
+  {:msg (msg "gain " (* 2 (count (filter #(pos? (get-counters % :advancement))
                                          (get-all-installed state)))) " [Credits]")
-   :effect (effect (gain-credits (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
+   :effect (effect (gain-credits (* 2 (count (filter #(pos? (get-counters % :advancement))
                                                      (get-all-installed state))))))})
 
 (defcard "MCA Informant"

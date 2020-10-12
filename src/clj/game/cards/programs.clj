@@ -159,13 +159,6 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [card-name abilities]
   {:abilities abilities
-   :effect (req (add-watch state (keyword (str card-name (:cid card)))
-                           (fn [k ref old new]
-                             (when (not= (available-mu (atom old))
-                                         (available-mu (atom new)))
-                               (update-breaker-strength ref side card))))
-                (update-breaker-strength state side card))
-   :leave-play (req (remove-watch state (keyword (str card-name (:cid card)))))
    :strength-bonus (req (available-mu state))})
 
 (defn- break-multiple-types
@@ -215,7 +208,6 @@
                                             (assoc ice
                                                    :subtype-target (combine-subtypes false stargets ice-type)
                                                    :subtype (combine-subtypes false stypes ice-type)))
-                                   (update-all-ice state side)
                                    (register-events
                                      state side card
                                      [{:event :encounter-ice-ends
@@ -226,8 +218,7 @@
                                                                stypes (:subtype ice)]
                                                            (assoc ice
                                                                   :subtype-target (remove-subtypes-once stargets ice-type)
-                                                                  :subtype (remove-subtypes-once stypes ice-type))))
-                                                       (update-all-ice))}])))}}}
+                                                                  :subtype (remove-subtypes-once stypes ice-type)))))}])))}}}
                  card nil))}]})
 
 (defn- virus-breaker
@@ -319,12 +310,6 @@
   (Breaking and Entering suite: Crowbar, Shiv, Spike)"
   [ice-type]
   (cloud-icebreaker {:abilities [(break-sub [:trash] 3 ice-type)]
-                     :events (let [cloud {:silent (req true)
-                                          :req (req (has-subtype? target "Icebreaker"))
-                                          :effect (effect (update-breaker-strength card))}]
-                               [(assoc cloud :event :runner-install)
-                                (assoc cloud :event :trash)
-                                (assoc cloud :event :card-moved)])
                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
                                                          (all-active-installed state :runner))))}))
 
@@ -449,10 +434,7 @@
    :effect (effect (lose-credits target)
                    (add-counter card :power target))
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
-   :strength-bonus (req (get-counters card :power))
-   :events [{:event :counter-added
-             :req (req (same-card? target card))
-             :effect (effect (update-breaker-strength card))}]})
+   :strength-bonus (req (get-counters card :power))})
 
 (defcard "Au Revoir"
   {:events [{:event :jack-out
@@ -473,10 +455,7 @@
                             (:did-access target)))
              :effect (effect (add-counter card :virus 1))}
             {:event :expose
-             :effect (effect (add-counter card :virus 1))}
-            {:event :counter-added
-             :req (req (same-card? target card))
-             :effect (effect (update-breaker-strength card))}]})
+             :effect (effect (add-counter card :virus 1))}]})
 
 (defcard "Aurora"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -636,19 +615,13 @@
   (power-counter-break "Code Gate"))
 
 (defcard "Chakana"
-  {:leave-play (effect (update-all-advancement-costs))
-   :events [{:event :successful-run
+  {::events [{:event :successful-run
              :silent (req true)
              :req (req (= (target-server target) :rd))
              :effect (effect (add-counter card :virus 1))}
             {:event :pre-advancement-cost
              :req (req (>= (get-virus-counters state card) 3))
-             :effect (effect (advancement-cost-bonus 1))}
-            {:event :counter-added
-             :req (req (or (= (:title target) "Hivemind") (same-card? target card)))
-             :effect (effect (update-all-advancement-costs))}
-            {:event :purge
-             :effect (effect (update-all-advancement-costs))}]})
+             :effect (effect (advancement-cost-bonus 1))}]})
 
 (defcard "Chameleon"
   {:prompt "Choose one subtype"
@@ -677,11 +650,7 @@
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
-                                (trash state side eid current-ice nil))))}
-            {:event :counter-added
-             :req (req (or (same-card? target card)
-                           (= (:title target) "Hivemind")))
-             :effect (effect (update-all-ice))}]})
+                                (trash state side eid current-ice nil))))}]})
 
 (defcard "Cloak"
   {:recurring 1
@@ -794,18 +763,6 @@
 
 (defcard "Cradle"
   {:abilities [(break-sub 2 0 "Code Gate")]
-   :events [{:event :card-moved
-             :silent (req true)
-             :req (req (and (= "Runner" (:side target))
-                            (or (in-hand? target)
-                                (= [:hand] (:previous-zone target)))))
-             :effect (effect (update-breaker-strength card))}
-            {:event :runner-draw
-             :silent (req true)
-             :req (req (when-let [drawn (-> @state :runner :register :most-recent-drawn first)]
-                         (or (in-hand? drawn)
-                             (= [:hand] (:previous-zone drawn)))))
-             :effect (effect (update-breaker-strength card))}]
    :strength-bonus (req (- (count (:hand runner))))})
 
 (defcard "Creeper"
@@ -904,16 +861,13 @@
 
 (defcard "Darwin"
   {:flags {:runner-phase-12 (req true)}
-   :events [{:event :purge
-             :effect (effect (update-breaker-strength card))}]
    :abilities [(break-sub 2 1)
                {:label "Place 1 virus counter (start of turn)"
                 :once :per-turn
                 :cost [:credit 1]
                 :msg "place 1 virus counter"
                 :req (req (:runner-phase-12 @state))
-                :effect (effect (add-counter card :virus 1)
-                                (update-breaker-strength card))}]
+                :effect (effect (add-counter card :virus 1))}]
    :strength-bonus (req (get-virus-counters state card))})
 
 (defcard "Datasucker"
@@ -1281,9 +1235,6 @@
 
 (defcard "Gauss"
   (auto-icebreaker {:strength-bonus (req (if (= :this-turn (installed? card)) 3 0))
-                    :events (let [losestr {:effect (effect (update-breaker-strength card))}]
-                              [(assoc losestr :event :runner-turn-ends)
-                               (assoc losestr :event :corp-turn-ends)])
                     :abilities [(break-sub 1 1 "Barrier")
                                 (strength-pump 2 2)]}))
 
@@ -1427,11 +1378,6 @@
 
 (defcard "Hivemind"
   {:data {:counter {:virus 1}}
-   :effect (effect (update-all-icebreakers))
-   :trash-effect {:effect (effect (update-all-icebreakers))}
-   :events [{:event :counter-added
-             :req (req (same-card? target card))
-             :effect (effect (update-all-icebreakers))}]
    :abilities [{:req (req (pos? (get-counters card :virus)))
                 :label "move hosted virus counters"
                 :prompt "Move a virus counter to which card?"
@@ -1714,12 +1660,6 @@
 
 (defcard "Maven"
   {:abilities [(break-sub 2 1)]
-   :events (let [maven {:silent (req true)
-                        :req (req (program? target))
-                        :effect (effect (update-breaker-strength card))}]
-             [(assoc maven :event :runner-install)
-              (assoc maven :event :trash)
-              (assoc maven :event :card-moved)])
    :strength-bonus (req (count (filter program? (all-active-installed state :runner))))})
 
 (defcard "Medium"
@@ -1786,15 +1726,9 @@
   (virus-breaker "Sentry"))
 
 (defcard "Na'Not'K"
-  (let [strength-change
-        {:req (req (ice? target))
-         :effect (effect (update-breaker-strength card))}]
-    (auto-icebreaker {:events [(assoc strength-change :event :corp-install)
-                               (assoc strength-change :event :corp-trash)
-                               (assoc strength-change :event :runner-trash)]
-                      :strength-bonus (req (count run-ices))
-                      :abilities [(break-sub 1 1 "Sentry")
-                                  (strength-pump 3 2)]})))
+  (auto-icebreaker {:strength-bonus (req (count run-ices))
+                    :abilities [(break-sub 1 1 "Sentry")
+                                (strength-pump 3 2)]}))
 
 (defcard "Nerve Agent"
   {:events [{:event :successful-run
@@ -1824,8 +1758,7 @@
    :events [{:event :encounter-ice-ends
              :req (req (all-subs-broken-by-card? target card))
              :msg "place 1 power counter on it"
-             :effect (effect (add-counter card :power 1)
-                             (update-breaker-strength card))}]})
+             :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Ninja"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -1891,7 +1824,6 @@
                                             " gain " (string/lower-case target)
                                             " until the end of the next run this turn")
                                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
-                                                  (update-ice-strength (get-card state ice))
                                                   (register-events
                                                     card
                                                     (let [chosen-type target]
@@ -1923,7 +1855,6 @@
                                   stypes (combine-subtypes false (:subtype ice) chosen-type)]
                               (register-once state side {:once :per-turn} card)
                               (update! state side (assoc ice :subtype stypes))
-                              (update-all-ice state side)
                               (register-events
                                 state side card
                                 [{:event :run-ends
@@ -1932,8 +1863,7 @@
                                   (req (let [ice (get-card state ice)
                                              stypes (remove-subtypes-once (:subtype ice) chosen-type)]
                                          (update! state :runner (assoc ice :subtype stypes))
-                                         (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))
-                                         (update-all-ice state side)))}])))}}}]})
+                                         (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))))}])))}}}]})
 
 (defcard "Paperclip"
   (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
@@ -1957,7 +1887,6 @@
                          (rezzed? %))}
    :effect (req (when-let [h (:host card)]
                   (update! state side (assoc-in card [:special :installing] true))
-                  (update-ice-strength state side h)
                   (when-let [card (get-card state card)]
                     (update! state side (update-in card [:special] dissoc :installing)))))
    :constant-effects [{:type :ice-strength
@@ -1965,9 +1894,6 @@
                        :value (req (- (get-virus-counters state card)))}]
    :events [{:event :runner-turn-begins
              :effect (req (add-counter state side card :virus 1))}
-            {:event :counter-added
-             :req (req (or (= (:title target) "Hivemind") (same-card? target card)))
-             :effect (effect (update-ice-strength (:host card)))}
             {:event :ice-strength-changed
              :req (req (and (same-card? target (:host card))
                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
@@ -2083,7 +2009,6 @@
                                    chosen-type target
                                    stypes (combine-subtypes false (:subtype ice) chosen-type)]
                                (update! state side (assoc ice :subtype stypes))
-                               (update-all-ice state side)
                                (register-events
                                  state side card
                                  [{:event :run-ends
@@ -2092,8 +2017,7 @@
                                    (req (let [ice (get-card state ice)
                                               stypes (remove-subtypes-once (:subtype ice) chosen-type)]
                                           (update! state :runner (assoc ice :subtype stypes))
-                                          (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))
-                                          (update-all-ice state side)))}])))}]})
+                                          (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))))}])))}]})
 
 (defcard "Pheromones"
   {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
@@ -2169,13 +2093,11 @@
                                 {:cost [:click 1]
                                  :msg "place one power counter"
                                  :label "Place 1 power counter"
-                                 :effect (effect (add-counter card :power 1)
-                                                 (update-breaker-strength card))}
+                                 :effect (effect (add-counter card :power 1))}
                                 {:cost [:click 1]
                                  :msg "remove one power counter"
                                  :label "Remove 1 power counter"
-                                 :effect (effect (add-counter card :power -1)
-                                                 (update-breaker-strength card))}]
+                                 :effect (effect (add-counter card :power -1))}]
                     :strength-bonus (req (get-counters card :power))}))
 
 (defcard "Reaver"
@@ -2447,8 +2369,7 @@
   {:abilities [(break-sub 1 1 "Code Gate")
                {:cost [:credit 2]
                 :msg "place 1 power counter"
-                :effect (effect (add-counter card :power 1)
-                                (update-breaker-strength card))}]
+                :effect (effect (add-counter card :power 1))}]
    :strength-bonus (req (get-counters card :power))})
 
 (defcard "Sūnya"
@@ -2457,8 +2378,7 @@
    :events [{:event :encounter-ice-ends
              :req (req (all-subs-broken-by-card? target card))
              :msg "place 1 power counter on it"
-             :effect (effect (add-counter card :power 1)
-                             (update-breaker-strength card))}]})
+             :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Surfer"
   (letfn [(surf [state cice]
@@ -2467,18 +2387,11 @@
                                    (= (get-zone %) (get-zone cice))
                                    (= 1 (abs (- (card-index state %)
                                                 (card-index state cice)))))}
-             :effect (req (let [tgtndx (card-index state target)
-                                cidx (card-index state cice)]
-                            (system-msg state :runner (str "uses Surfer to swap "
-                                                           (card-str state cice)
-                                                           " and "
-                                                           (card-str state (nth run-ices tgtndx))))
-                            (swap! state update-in (cons :corp (get-zone cice))
-                                   #(assoc % tgtndx cice))
-                            (swap! state update-in (cons :corp (get-zone cice))
-                                   #(assoc % cidx target))
-                            (swap! state update-in [:run] #(assoc % :position (inc tgtndx)))
-                            (update-all-ice state side)))})]
+             :msg (msg "swap " (card-str state cice)
+                       " and " (card-str state target))
+             :effect (req (let [tgtndx (card-index state target)]
+                            (swap! state assoc-in [:run :position] (inc tgtndx))
+                            (swap-ice state side cice target)))})]
     {:abilities [{:cost [:credit 2]
                   :msg "swap a piece of Barrier ICE"
                   :req (req (and run

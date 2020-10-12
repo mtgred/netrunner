@@ -157,22 +157,30 @@
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
-  (-> []
-      (#(if (or (and (= type "Agenda")
-                     (#{"servers" "onhost"} (first zone)))
-                (= advanceable "always")
-                (and rezzed
-                     (= advanceable "while-rezzed"))
-                (and (not rezzed)
-                     (= advanceable "while-unrezzed")))
-          (cons "advance" %) %))
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
-      (#(if (#{"ICE" "Program"} type)
-          (cons "trash" %) %))
-      (#(if (#{"Asset" "ICE" "Upgrade"} type)
-          (if-not rezzed (cons "rez" %) (cons "derez" %))
-          %))))
+  (cond->> []
+    ;; advance
+    (or (and (= type "Agenda")
+             (#{"servers" "onhost"} (first zone)))
+        (= advanceable "always")
+        (and rezzed
+             (= advanceable "while-rezzed"))
+        (and (not rezzed)
+             (= advanceable "while-unrezzed")))
+    (cons "advance")
+    ;; score
+    (and (= type "Agenda") (>= advance-counter current-cost))
+    (cons "score")
+    ;; trash
+    (#{"ICE" "Program"} type)
+    (cons "trash")
+    ;; rez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         (not rezzd))
+    (cons "rez")
+    ;; derez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         rezzd)
+    (cons "derez")))
 
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]

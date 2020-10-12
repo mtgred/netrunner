@@ -458,7 +458,8 @@
 
 (defcard "Dinosaurus"
   {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
-                :req (req (empty? (:hosted card))) :cost [:click 1]
+                :req (req (empty? (:hosted card)))
+                :cost [:click 1]
                 :prompt "Select a non-AI icebreaker in your Grip to install on Dinosaurus"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
@@ -1266,7 +1267,7 @@
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                 :msg (msg "host " (:title target))
-                :effect (effect (update! (assoc (get-card state card) :Omnidrive-prog (:cid target)))
+                :effect (effect (update! (assoc-in (get-card state card) [:special :omni-drive] (:cid target)))
                                 (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                 :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
@@ -1276,10 +1277,10 @@
                 :msg (msg "host " (:title target))
                 :effect (effect (host card target)
                                 (free-mu (:memoryunits target))
-                                (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
+                                (update! (assoc-in (get-card state card) [:special :omni-drive] (:cid target))))}]
    :events [{:event :card-moved
-             :req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
-             :effect (effect (update! (dissoc card :Omnidrive-prog))
+             :req (req (= (:cid target) (get-in (get-card state card) [:special :omni-drive])))
+             :effect (effect (update! (dissoc-in card [:special :omni-drive]))
                              (use-mu (:memoryunits target)))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (program? target)

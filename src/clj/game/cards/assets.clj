@@ -1135,8 +1135,7 @@
                {:label "Gain 2 [Credits]"
                 :msg "gain 2 [Credits]"
                 :cost [:any-agenda-counter]
-                :effect (effect (gain-credits 2)
-                                (update-all-agenda-points))}]})
+                :effect (effect (gain-credits 2))}]})
 
 (defcard "Marked Accounts"
   (let [ability {:msg "take 1 [Credits]"
@@ -1606,36 +1605,34 @@
 
 (defcard "Raman Rai"
   {:abilities [{:once :per-turn
-                :label "Lose [Click] and swap a card in HQ you just drew for a card in Archives"
+                :label "Swap drawn card with card in Archives"
                 :req (req (and (pos? (:click corp))
                                (not-empty (turn-events state side :corp-draw))))
-                :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
-                               (lose state :corp :click 1)
-                               (resolve-ability
-                                 state side
-                                 {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                                  :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
-                                  :effect (req (let [hqcard target
-                                                     t (:type hqcard)]
-                                                 (resolve-ability
-                                                   state side
-                                                   {:show-discard true
-                                                    :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hqcard))
-                                                    :choices {:card #(and (corp? %)
-                                                                          (= (:type %) t)
-                                                                          (in-discard? %))}
-                                                    :msg (msg "lose [Click], reveal " (:title hqcard) " from HQ, and swap it for " (:title target) " from Archives")
-                                                    :effect (req (let [swappedcard (assoc hqcard :zone [:discard])
-                                                                       archndx (card-index state target)
-                                                                       arch (get-in @state [:corp :discard])
-                                                                       newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
-                                                                   (reveal state side hqcard)
-                                                                   (swap! state assoc-in [:corp :discard] newarch)
-                                                                   (swap! state update-in [:corp :hand]
-                                                                          (fn [coll] (remove-once #(same-card? % hqcard) coll)))
-                                                                   (move state side target :hand)))}
-                                                   card nil)))}
-                                 card nil)))}]})
+                :async true
+                :effect (effect
+                          (lose :corp :click 1)
+                          (continue-ability
+                            (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
+                              {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                               :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
+                               :async true
+                               :effect
+                               (effect
+                                 (continue-ability
+                                   (let [hq-card target
+                                         t (:type hq-card)]
+                                     {:show-discard true
+                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                                      :choices {:card #(and (corp? %)
+                                                            (= (:type %) t)
+                                                            (in-discard? %))}
+                                      :msg (msg "lose [Click], reveal " (:title hq-card)
+                                                " from HQ, and swap it for " (:title target)
+                                                " from Archives")
+                                      :effect (effect (reveal target)
+                                                      (swap-cards hq-card target))})
+                                   card nil))})
+                            card nil))}]})
 
 (defcard "Rashida Jaheem"
   (let [ability {:once :per-turn
@@ -2072,16 +2069,10 @@
              :effect (effect (gain-credits :corp 1))}]})
 
 (defcard "The Board"
-  {:effect (effect (update-all-agenda-points))
-   :leave-play (effect (update-all-agenda-points))
-   :trash-effect executive-trash-effect
+  {:trash-effect executive-trash-effect
    :constant-effects [{:type :agenda-value
                        :req (req (= :runner (:scored-side target)))
-                       :value -1}]
-   :events [{:event :card-moved
-             :req (req (or (in-scored? target)
-                           (in-scored? (second targets))))
-             :effect (effect (update-all-agenda-points))}]})
+                       :value -1}]})
 
 (defcard "The News Now Hour"
   {:events [{:event :runner-turn-begins
@@ -2112,20 +2103,16 @@
                                (asset? %))
                            (in-hand? %))}
      :msg "swap it for an asset or agenda from HQ"
-     :effect (req (let [c (get-counters card :advancement)
-                        target (assoc target :advance-counter c)
-                        server (zone->name (butlast (get-zone card)))
-                        index (:index card)]
-                    (move state :corp card :hand)
-                    (wait-for (corp-install state :corp target server {:index index})
-                              (let [new-card async-result]
-                                (continue-ability
-                                  state :runner
-                                  {:optional
-                                   {:prompt "Access the newly installed card?"
-                                    :yes-ability {:async true
-                                                  :effect (effect (access-card eid new-card))}}}
-                                  card nil)))))}
+     :effect (req (let [counters (get-counters card :advancement)
+                        [moved-card moved-target] (swap-cards state side card target)]
+                    (set-prop state side moved-target :advance-counter counters)
+                    (continue-ability
+                      state :runner
+                      {:optional
+                       {:prompt "Access the newly installed card?"
+                        :yes-ability {:async true
+                                      :effect (effect (access-card eid (get-card state moved-target)))}}}
+                      moved-card nil)))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
 
 (defcard "Turtlebacks"

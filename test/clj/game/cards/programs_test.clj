@@ -1148,10 +1148,12 @@
       (dotimes [n 5]
         (when (pos? n)
           (core/draw state :runner n))
+        (core/fake-checkpoint state)
         (is (= (- strength n) (get-strength (refresh cradle))) (str "Cradle should lose " n " strength"))
         (starting-hand state :runner [])
+        (core/fake-checkpoint state)
         (is (= strength (get-strength (refresh cradle))) (str "Cradle should be back to original strength")))
-      (core/draw state :runner 1)
+      (click-draw state :runner)
       (is (= (dec strength) (get-strength (refresh cradle))) "Cradle should lose 1 strength")
       (play-from-hand state :runner "Cache")
       (is (= strength (get-strength (refresh cradle))) (str "Cradle should be back to original strength")))))
@@ -4422,24 +4424,49 @@
 
 (deftest surfer
   ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall" "Quandary"]}
-               :runner {:deck ["Surfer"]}})
-    (play-from-hand state :corp "Quandary" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Surfer")
-    (is (= 3 (:credit (get-runner))) "Paid 2 credits to install Surfer")
-    (run-on state "HQ")
-    (rez state :corp (get-ice state :hq 1))
-    (run-continue state)
-    (is (= 2 (get-in @state [:run :position])) "Starting run at position 2")
-    (let [surf (get-program state 0)]
-      (card-ability state :runner surf 0)
-      (click-card state :runner (get-ice state :hq 0))
-      (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
-      (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
-      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Quandary"]}
+                 :runner {:deck ["Surfer"]}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surfer")
+      (is (= 3 (:credit (get-runner))) "Paid 2 credits to install Surfer")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (is (= 2 (get-in @state [:run :position])) "Starting run at position 2")
+      (let [surf (get-program state 0)]
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
+        (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
+        (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
+ (testing "Swapping twice across two turns"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Vanilla"]}
+                 :runner {:deck ["Surfer"]
+                          :credits 10}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surfer")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (let [surf (get-program state 0)]
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (run-jack-out state)
+        (run-on state "HQ")
+        (rez state :corp (get-ice state :hq 1))
+        (run-continue state)
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (= ["Vanilla" "Ice Wall"] (map :title (get-ice state :hq)))
+            "Vanilla is innermost, Ice Wall is outermost again")
+        (is (= [0 1] (map :index (get-ice state :hq))))))))
 
 (deftest takobi
   ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
