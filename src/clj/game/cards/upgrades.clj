@@ -905,35 +905,20 @@
                        :value [:credit 1]}]})
 
 (defcard "Mumbad City Grid"
-  {:abilities [{:req (req (let [num-ice (count run-ices)]
-                            (and this-server
-                                 (>= num-ice 2)
-                                 (< (:position run 0) num-ice))))
-                :label "Swap the ICE just passed with another piece of ICE protecting this server"
-                :async true
-                :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
-                                                   (:position run))
-                                   ice-zone (get-zone passed-ice)]
-                               (continue-ability
-                                 state :corp
-                                 {:prompt (msg "Select a piece of ICE to swap with " (:title passed-ice))
-                                  :choices {:card #(and (= ice-zone (get-zone %))
-                                                        (ice? %))}
-                                  :effect (req (let [fndx (card-index state passed-ice)
-                                                     sndx (card-index state target)
-                                                     fnew (assoc passed-ice :zone (get-zone target))
-                                                     snew (assoc target :zone (get-zone passed-ice))]
-                                                 (swap! state update-in (cons :corp ice-zone)
-                                                        #(assoc % fndx snew))
-                                                 (swap! state update-in (cons :corp ice-zone)
-                                                        #(assoc % sndx fnew))
-                                                 (set-current-ice state)
-                                                 (update-all-ice state side)
-                                                 (update-all-icebreakers state side)
-                                                 (system-msg state side (str "uses Mumbad City Grid to swap "
-                                                                             (card-str state passed-ice)
-                                                                             " with " (card-str state target)))))}
-                                 card nil)))}]})
+  {:events [{:event :pass-ice
+             :req (req this-server (<= 2 (count run-ices)))
+             :async true
+             :effect
+             (effect
+               (continue-ability
+                 (let [passed-ice target]
+                   {:prompt (msg "Select a piece of ICE to swap with " (:title target))
+                    :choices {:req (req (and (installed? target)
+                                             (ice? target)
+                                             (= (target-server run) (second (get-zone target)))
+                                             (not (same-card? target passed-ice))))}
+                    :effect (effect (swap-ice target passed-ice))})
+                 card nil))}]})
 
 (defcard "Mumbad Virtual Tour"
   {:flags {:must-trash (req (when installed true))}})
@@ -989,35 +974,34 @@
 (defcard "Nihongai Grid"
   {:events [{:event :successful-run
              :interactive (req true)
-             :async true
-             :effect
-             (effect
-               (continue-ability
-                 {:optional
-                  {:req (req (and this-server
-                                  (or (< (:credit runner) 6)
-                                      (< (count (:hand runner)) 2))
-                                  (not-empty (:hand corp))
-                                  (pos? (count (take 5 (:deck corp))))))
-                   :prompt (msg "Use Nihongai Grid to look at the top "
-                                (quantify (count (take 5 (:deck corp))) "card")
-                                " of R&D and swap one with a card from HQ?")
-                   :yes-ability
+             :optional
+             {:req (req (and this-server
+                             (or (< (:credit runner) 6)
+                                 (< (count (:hand runner)) 2))
+                             (not-empty (:hand corp))
+                             (pos? (count (take 5 (:deck corp))))))
+              :prompt (msg "Look at the top "
+                           (quantify (count (take 5 (:deck corp))) "card")
+                           " of R&D and swap one with a card from HQ?")
+              :yes-ability
+              {:async true
+               :msg (msg "look at the top " (quantify (count (take 5 (:deck corp))) "card") " of R&D")
+               :effect
+               (effect
+                 (continue-ability
                    {:async true
                     :prompt "Choose a card in R&D"
                     :choices (take 5 (:deck corp))
                     :effect (effect
                               (continue-ability
-                                (let [rdc target]
-                                  {:async true
-                                   :prompt "Choose a card in HQ"
+                                (when-let [rdc target]
+                                  {:prompt "Choose a card in HQ"
                                    :choices {:card in-hand?}
                                    :msg "swap a card from the top 5 of R&D with a card in HQ"
                                    :effect (req (move state side rdc :hand)
-                                                (move state side target :deck {:index (:index rdc)})
-                                                (effect-completed state side eid))})
-                                card nil))}}}
-                 card nil))}]})
+                                                (move state side target :deck {:index (:index rdc)}))})
+                                card nil))}
+                   card nil))}}}]})
 
 (defcard "Oaktown Grid"
   {:constant-effects [{:type :trash-cost
