@@ -423,6 +423,8 @@
                          :index (card-index state a)
                          :suppress-event true})]
     (trigger-event state side :swap moved-a moved-b)
+    (when (:run @state)
+      (set-current-ice state))
     [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas

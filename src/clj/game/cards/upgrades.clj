@@ -868,30 +868,18 @@
              :effect (effect (lose :runner :click 1))}]})
 
 (defcard "Midori"
-  {:events
-   [{:event :approach-ice
-     :optional
-     {:req (req this-server)
-      :once :per-run
-      :prompt "Swap the ICE being approached with a piece of ICE from HQ?"
-      :yes-ability
-      {:prompt "Select a piece of ICE"
-       :choices {:card #(and (ice? %)
-                             (in-hand? %))}
-       :once :per-run
-       :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
-       :effect (req (let [hqice target
-                          c current-ice
-                          newice (assoc hqice :zone (get-zone c))
-                          cndx (card-index state c)
-                          ices (get-in @state (cons :corp (get-zone c)))
-                          newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
-                      (swap! state assoc-in (cons :corp (get-zone c)) newices)
-                      (swap! state update-in [:corp :hand]
-                             (fn [coll] (remove-once #(same-card? % hqice) coll)))
-                      (trigger-event state side :corp-install newice)
-                      (move state side c :hand)
-                      (set-current-ice state)))}}}]})
+  {:events [{:event :approach-ice
+             :optional
+             {:req (req this-server)
+              :once :per-run
+              :prompt "Swap the ICE being approached with a piece of ICE from HQ?"
+              :yes-ability
+              {:prompt "Select a piece of ICE"
+               :choices {:card #(and (ice? %)
+                                     (in-hand? %))}
+               :once :per-run
+               :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
+               :effect (effect (swap-cards :corp current-ice target))}}}]})
 
 (defcard "Midway Station Grid"
   {:constant-effects [{:type :break-sub-additional-cost
