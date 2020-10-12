@@ -124,11 +124,45 @@
                 :effect (effect (gain-credits (* 2 (get-counters card :power))))}]})
 
 (defcard "Allele Repression"
-  {:implementation "Card swapping is manual"
-   :advanceable :always
-   :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
-                :cost [:trash]
-                :msg (msg "swap " (get-counters card :advancement) " cards in HQ and Archives")}]})
+  (letfn [(select-archives-cards [total]
+            {:async true
+             :show-discard true
+             :prompt (str "Select " (quantify total "card") " from Archives")
+             :choices {:card #(and (corp? %)
+                                   (in-discard? %))
+                       :max total
+                       :all true}
+             :effect (effect (complete-with-result eid targets))})
+          (select-hq-cards [total]
+            {:async true
+             :prompt (str "Select " (quantify total "card") " from HQ")
+             :choices {:card #(and (corp? %)
+                                   (in-hand? %))
+                       :max total
+                       :all true}
+             :effect (effect (complete-with-result eid targets))})]
+    {:advanceable :always
+     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
+                  :cost [:trash]
+                  :msg (msg "swap "
+                         (quantify (max (count (:discard corp))
+                                        (count (:hand corp))
+                                        (get-counters card :advancement))
+                                   "card")
+                         " in HQ and Archives")
+                  :async true
+                  :effect (req (let [total (min (count (:discard corp))
+                                                (count (:hand corp))
+                                                (get-counters card :advancement))]
+                                 (show-wait-prompt state :runner "Corp to use Allele Repression")
+                                 (wait-for (resolve-ability state side (select-hq-cards total) card nil)
+                                           (let [hq-cards async-result]
+                                             (wait-for (resolve-ability state side (select-archives-cards total) card nil)
+                                                       (let [archives-cards async-result]
+                                                         (doseq [[hq-card archives-card] (map vector hq-cards archives-cards)]
+                                                           (swap-cards state side hq-card archives-card)))
+                                                       (clear-wait-prompt state :runner)
+                                                       (effect-completed state side eid))))))}]}))
 
 (defcard "Amani Senai"
   (letfn [(senai-ability [agenda]
@@ -2028,18 +2062,18 @@
 
 (defcard "Tenma Line"
   {:abilities [{:label "Swap 2 pieces of installed ICE"
-                :cost [:click 1]
+                :cost [:click]
                 :prompt "Select two pieces of ICE to swap positions"
+                :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))
                           :max 2
                           :all true}
-                :effect (req (when (= (count targets) 2)
-                               (swap-ice state side (first targets) (second targets))))
                 :msg (msg "swap the positions of "
                           (card-str state (first targets))
                           " and "
-                          (card-str state (second targets)))}]})
+                          (card-str state (second targets)))
+                :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
   (letfn [(derez-card [advancements]

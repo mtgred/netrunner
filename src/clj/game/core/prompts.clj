@@ -14,7 +14,7 @@
     choices
     (into
       []
-      (for [choice choices]
+      (for [choice (keep identity choices)]
         {:value choice
          :uuid (uuid/v1)}))))
 

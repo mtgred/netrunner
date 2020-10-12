@@ -2458,6 +2458,66 @@
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
+(deftest metamorph
+  ;; Metamorph
+  (testing "with two installed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph" "Ice Wall" "Vanilla"]
+                        :credits 20}})
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two ICE"] (prompt-buttons :corp)) "Only ice option")
+      (click-prompt state :corp "Swap two ICE")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Vanilla")
+      (is (= "Vanilla" (:title (get-ice state :hq 0))))
+      (is (= "Ice Wall" (:title (get-ice state :rd 0))))))
+  (testing "with two installed non-ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph" "Allele Repression" "Hostile Takeover"]
+                        :credits 20}})
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Allele Repression" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option")
+      (click-prompt state :corp "Swap two non-ICE")
+      (click-card state :corp "Allele Repression")
+      (click-card state :corp "Hostile Takeover")
+      (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
+      (is (= "Allele Repression" (:title (get-content state :remote2 0))))))
+  (testing "with two installed non-ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph"
+                               "Ice Wall" "Vanilla"
+                               "Allele Repression" "Hostile Takeover"]
+                        :credits 20}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (play-from-hand state :corp "Allele Repression" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two ICE" "Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option"))))
+
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
   (testing "Server redirection"

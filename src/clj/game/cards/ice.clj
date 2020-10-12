@@ -2094,35 +2094,33 @@
                   :msg "swap two ICE or swap two installed non-ICE"
                   :async true
                   :prompt "Choose one"
-                  :choices ["Swap two ICE" "Swap two non-ICE"]
-                  :effect (req (if (= target "Swap two ICE")
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Select the two ICE to swap"
-                                    :async true
-                                    :choices {:card #(and (installed? %)
-                                                          (ice? %))
-                                              :max 2
-                                              :all true}
-                                    :msg (msg "swap the positions of " (card-str state (first targets))
-                                              " and " (card-str state (second targets)))
-                                    :effect (req (when (= (count targets) 2)
-                                                   (swap-ice state side (first targets) (second targets))
-                                                   (effect-completed state side eid)))}
-                                   card nil)
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Select the two cards to swap"
-                                    :async true
-                                    :choices {:card #(and (installed? %)
-                                                          (not (ice? %)))
-                                              :max 2
-                                              :all true}
-                                    :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
-                                    :effect (req (when (= (count targets) 2)
-                                                   (swap-installed state side (first targets) (second targets))
-                                                   (effect-completed state side eid)))}
-                                   card nil)))}]})
+                  :req (req (or (<= 2 (count (filter ice? (all-installed state :corp))))
+                                (<= 2 (count (remove ice? (all-installed state :corp))))))
+                  :choices (req [(when (<= 2 (count (filter ice? (all-installed state :corp))))
+                                   "Swap two ICE")
+                                 (when (<= 2 (count (remove ice? (all-installed state :corp))))
+                                   "Swap two non-ICE")])
+                  :effect (effect
+                            (continue-ability
+                              (if (= target "Swap two ICE")
+                                {:prompt "Select the two ICE to swap"
+                                 :choices {:card #(and (installed? %)
+                                                       (ice? %))
+                                           :not-self true
+                                           :max 2
+                                           :all true}
+                                 :msg (msg "swap the positions of " (card-str state (first targets))
+                                           " and " (card-str state (second targets)))
+                                 :effect (req (apply swap-ice state side targets))}
+                                {:prompt "Select the two cards to swap"
+                                 :choices {:card #(and (installed? %)
+                                                       (not (ice? %)))
+                                           :max 2
+                                           :all true}
+                                 :msg (msg "swap the positions of " (card-str state (first targets))
+                                           " and " (card-str state (second targets)))
+                                 :effect (req (apply swap-installed state side targets))})
+                              card nil))}]})
 
 (defcard "Mganga"
   {:subroutines [(do-psi {:async true
