@@ -364,9 +364,9 @@
    :events [{:event :runner-turn-begins
              :player :runner
              :prompt "Pay 1 [Credits] or take 1 tag"
-             :choices (req (concat (when (pos? (:credit runner))
-                                     ["Pay 1 [Credits]"])
-                                   ["Take 1 tag"]))
+             :choices (req [(when (pos? (:credit runner))
+                              "Pay 1 [Credits]")
+                            "Take 1 tag"])
              :msg "make the Runner pay 1 [Credits] or take 1 tag"
              :async true
              :effect (req (case target
@@ -405,10 +405,10 @@
                  :player :runner
                  :once :per-turn
                  :prompt "Pay 1 [Credits] or trash the top card of the Stack"
-                 :choices (req (concat (when (pos? (:credit runner))
-                                         ["Pay 1 [Credits]"])
-                                       (when (pos? (count (:deck runner)))
-                                         ["Trash top card"])))
+                 :choices (req [(when (pos? (:credit runner))
+                                  "Pay 1 [Credits]")
+                                (when (pos? (count (:deck runner)))
+                                  "Trash top card")])
                  :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
                  :effect (req (case target
                                 "Pay 1 [Credits]"

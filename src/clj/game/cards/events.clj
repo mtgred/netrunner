@@ -1841,9 +1841,9 @@
                      {:player :corp
                       :async true
                       :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
-                      :choices (concat (when (can-pay? state :corp eid card "Mining Accident" :credit 5)
-                                         ["Pay 5 [Credits]"])
-                                       ["Take 1 Bad Publicity"])
+                      :choices [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
+                                  "Pay 5 [Credits]")
+                                "Take 1 Bad Publicity"]
                       :effect (req (clear-wait-prompt state :runner)
                                    (if (= target "Pay 5 [Credits]")
                                      (do (lose-credits state :corp 5)
@@ -2622,9 +2622,9 @@
                    (continue-ability
                      {:player :corp
                       :prompt "Discard 2 cards or draw 4 cards?"
-                      :choices (concat (when (<= 2 (count (:hand corp)))
-                                         ["Discard 2"])
-                                       ["Draw 4"])
+                      :choices [(when (<= 2 (count (:hand corp)))
+                                  "Discard 2")
+                                "Draw 4"]
                       :async true
                       :effect (req (if (= target "Draw 4")
                                      (wait-for (draw state :corp 4 nil)

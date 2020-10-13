@@ -295,8 +295,8 @@
                                                tags (pos? (count-real-tags state))]
                                            {:req (req (or deck tags))
                                             :prompt "Draw 1 card or remove 1 tag"
-                                            :choices (concat (when deck ["Draw 1 card"])
-                                                             (when tags ["Remove 1 tag"]))
+                                            :choices [(when deck "Draw 1 card")
+                                                      (when tags "Remove 1 tag")]
                                             :async true
                                             :effect (req (if (= target "Draw 1 card")
                                                            (draw state :runner eid 1 nil)

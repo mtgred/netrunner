@@ -256,10 +256,9 @@
                      {:async true
                       :player :runner
                       :prompt (str "Pay " cost " [Credits] or end the run?")
-                      :choices (concat
-                                 (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
-                                   [(str "Pay " cost " [Credits]")])
-                                 ["End the run"])
+                      :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
+                                  (str "Pay " cost " [Credits]"))
+                                "End the run"]
                       :msg (msg (if (= target "End the run")
                                   "end the run"
                                   (str "force the runner to pay " cost " [Credits]")))
@@ -578,9 +577,9 @@
                               {:player :runner
                                :async true
                                :prompt (msg "You must " pay-str " or end the run")
-                               :choices (concat (when (>= credits cost)
-                                                  [c-pay-str])
-                                                ["End the run"])
+                               :choices [(when (>= credits cost)
+                                           c-pay-str)
+                                         "End the run"]
                                :effect (req (clear-wait-prompt state :corp)
                                             (if (= c-pay-str target)
                                               (do (system-msg state :runner (str "pays " cost " [Credits]"))

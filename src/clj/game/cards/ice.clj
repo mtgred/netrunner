@@ -2193,9 +2193,9 @@
                           (continue-ability
                             state :runner
                             {:prompt "Take net damage or trash cards from the stack?"
-                             :choices (concat [(str "Take " net-dmg " net damage")]
-                                              (when (<= mill-cnt (count (:deck runner)))
-                                                [(str "Trash the top " mill-cnt " cards of the stack")]))
+                             :choices [(str "Take " net-dmg " net damage")
+                                       (when (<= mill-cnt (count (:deck runner)))
+                                         (str "Trash the top " mill-cnt " cards of the stack"))]
                              :async true
                              :effect (req (clear-wait-prompt state :corp)
                                           (if (= target (str "Take " net-dmg " net damage"))
@@ -2427,9 +2427,9 @@
                                    {:player :runner
                                     :async true
                                     :prompt (str "Access " title " or pay 3 [Credits]?")
-                                    :choices (concat ["Access card"]
-                                                     (when (>= (:credit runner) 3)
-                                                       ["Pay 3 [Credits]"]))
+                                    :choices ["Access card"
+                                              (when (>= (:credit runner) 3)
+                                                "Pay 3 [Credits]")]
                                     :msg (msg "force the Runner to "
                                               (if (= target "Access card")
                                                 (str "access " title)
