@@ -29,17 +29,11 @@
                   :effect (req (if-let [hostcard (:host card)]
                                  (let [hosted (host state side (get-card state hostcard) target)]
                                    (card-init state side hosted {:resolve-effect false
-                                                                 :init-data true}))
-                                 (let [devavec (get-in @state [:runner :rig :program])
-                                       devaindex (first (keep-indexed #(when (same-card? %2 card) %1) devavec))
-                                       newdeva (assoc target :zone (get-zone card) :installed true)
-                                       newvec (apply conj (subvec devavec 0 devaindex) newdeva (subvec devavec devaindex))]
-                                   (lose state :runner :memory (:memoryunits card))
-                                   (swap! state assoc-in [:runner :rig :program] newvec)
-                                   (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(same-card? % target) coll)))
-                                   (card-init state side newdeva {:resolve-effect false
-                                                                  :init-data true})))
-                               (move state side card :hand))}]}))
+                                                                 :init-data true})
+                                   (move state side card :hand))
+                                 (let [[_ moved-target] (swap-cards state side card target)]
+                                   (card-init state side moved-target {:resolve-effect false
+                                                                       :init-data true}))))}]}))
 
 (defn- install-from-heap
   "Install-from-heap ability for conspiracy breakers

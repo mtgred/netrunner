@@ -1973,13 +1973,10 @@
                            {:optional
                             {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                              :yes-ability
-                             {:async true
-                              :prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
+                             {:prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
                               :choices {:card #(in-corp-scored? state side %)}
-                              :effect (effect (swap-agendas target stolen)
-                                              (system-msg (str "uses Turntable to swap "
-                                                               (:title stolen) " for " (:title target)))
-                                              (effect-completed eid))}}})
+                              :msg (msg "swap " (:title stolen) " for " (:title target))
+                              :effect (effect (swap-agendas target stolen))}}})
                          card targets))}]})
 
 (defcard "Ubax"

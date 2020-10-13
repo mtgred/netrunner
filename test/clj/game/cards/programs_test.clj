@@ -96,6 +96,57 @@
       (run-continue state)
       (is (empty? (:prompt (get-runner))) "No bypass prompt"))))
 
+(deftest aghora
+  ;; Aghora
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Aghora" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Aghora")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Aghora" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Aghora")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with rez cost 5 or higher"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Endless EULA"]
+                        :credits 10}
+                 :runner {:hand ["Aghora"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Endless EULA" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aghora")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "End the run unless the Runner pays 1 [Credits]")
+      (click-prompt state :runner "Done")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
+
 (deftest algernon
   ;; Algernon - pay 2 credits to gain a click, trash if no successful run
   (testing "Use, successful run"
@@ -3975,6 +4026,56 @@
       (click-prompt state :runner "5")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
+(deftest sadyojata
+  ;; Sadyojata
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Sadyojata" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sadyojata")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Sadyojata" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Sadyojata")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with 3 or more subtypes"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Executive Functioning"]
+                        :credits 10}
+                 :runner {:hand ["Sadyojata"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Executive Functioning" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sadyojata")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "Trace 4 - Do 1 brain damage")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
+
 (deftest sage
   ;; Sage
   (do-game
@@ -4716,6 +4817,56 @@
         (click-prompt state :runner "Done")
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
+
+(deftest vamadeva
+  ;; Vamadeva
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Vamadeva" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Vamadeva")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Vamadeva" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Vamadeva")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with 1 subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma" "Ice Wall"]
+                        :credits 10}
+                 :runner {:hand ["Vamadeva"]
+                          :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Vamadeva")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "End the run")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
 
 (deftest wari
   (do-game

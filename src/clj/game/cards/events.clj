@@ -2280,11 +2280,11 @@
    :choices {:card #(and (installed? %)
                          (not (rezzed? %))
                          (ice? %))
-             :max 2}
+             :max 2
+             :all true}
    :msg (msg "swap the positions of " (card-str state (first targets))
              " and " (card-str state (second targets)))
-   :effect (req (when (= (count targets) 2)
-                  (swap-ice state side (first targets) (second targets))))})
+   :effect (req (apply swap-ice state side targets))})
 
 (defcard "Retrieval Run"
   {:async true

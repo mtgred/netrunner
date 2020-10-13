@@ -3,7 +3,7 @@
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [card-index corp? facedown? faceup? fake-identity? get-card get-zone
-                            in-play-area? installed? resource? rezzed? runner?]]
+                            ice? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -20,7 +20,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-winner]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in make-cid remove-once same-card? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 
@@ -378,54 +378,57 @@
 (defn swap-installed
   "Swaps two installed corp cards"
   [state side a b]
-  (when (and (corp? a)
-             (corp? b))
-    (let [a-index (card-index state a)
-          b-index (card-index state b)
-          a-new (assoc a :zone (:zone b))
-          b-new (assoc b :zone (:zone a))]
-      (swap! state update-in (cons :corp (:zone a)) assoc a-index b-new)
-      (swap! state update-in (cons :corp (:zone b)) assoc b-index a-new)
-      (update-installed-card-indices state :corp (:zone a))
-      (update-installed-card-indices state :corp (:zone b))
-      (doseq [new-card [a-new b-new]]
-        (unregister-events state side new-card)
-        (when (rezzed? new-card)
-          (register-events state side new-card))
-        (doseq [h (:hosted new-card)]
-          (let [newh (-> h
-                         (assoc-in [:zone] '(:onhost))
-                         (assoc-in [:host :zone] (:zone new-card)))]
-            (update! state side newh)
-            (unregister-events state side h)
-            (register-events state side newh))))
-      (trigger-event state side :swap a-new b-new))))
+  (let [pred? (every-pred corp? installed?)]
+    (when (and (pred? a)
+               (pred? b))
+      (let [a-index (card-index state a)
+            b-index (card-index state b)
+            a-new (assoc a :zone (:zone b))
+            b-new (assoc b :zone (:zone a))]
+        (swap! state update-in (cons :corp (:zone a)) assoc a-index b-new)
+        (swap! state update-in (cons :corp (:zone b)) assoc b-index a-new)
+        (update-installed-card-indices state :corp (:zone a))
+        (update-installed-card-indices state :corp (:zone b))
+        (doseq [new-card [a-new b-new]]
+          (unregister-events state side new-card)
+          (when (rezzed? new-card)
+            (register-events state side new-card))
+          (doseq [h (:hosted new-card)]
+            (let [newh (-> h
+                           (assoc-in [:zone] '(:onhost))
+                           (assoc-in [:host :zone] (:zone new-card)))]
+              (update! state side newh)
+              (unregister-events state side h)
+              (register-events state side newh))))
+        (trigger-event state side :swap a-new b-new)))))
 
 (defn swap-ice
   "Swaps two pieces of ICE."
   [state side a b]
-  (when (and (corp? a)
-             (corp? b))
-    (swap-installed state side a b)
-    (set-current-ice state)))
+  (let [pred? (every-pred corp? installed? ice?)]
+    (when (and (pred? a)
+               (pred? b))
+      (swap-installed state side a b)
+      (set-current-ice state))))
 
 (defn swap-cards
-  "Swaps two corp cards when only one is installed"
+  "Swaps two cards when one or both aren't installed"
   [state side a b]
-  (when (and (corp? a)
-             (corp? b))
-    (let [moved-a (move state :corp a (get-zone b)
+  (when (same-side? (:side a) (:side b))
+    (let [moved-a (move state side a (get-zone b)
                         {:keep-server-alive true
                          :index (card-index state b)
                          :suppress-event true})
-          moved-b (move state :corp b (get-zone a)
+          moved-b (move state side b (get-zone a)
                         {:keep-server-alive true
                          :index (card-index state a)
                          :suppress-event true})]
-    (trigger-event state side :swap moved-a moved-b)
-    (when (:run @state)
-      (set-current-ice state))
-    [(get-card state moved-a) (get-card state moved-b)])))
+      (trigger-event state side :swap moved-a moved-b)
+      (when (and (:run @state)
+                 (or (ice? a)
+                     (ice? b)))
+        (set-current-ice state))
+      [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
