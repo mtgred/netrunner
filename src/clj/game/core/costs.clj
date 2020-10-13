@@ -735,10 +735,16 @@
            (value cost))))
 (defmethod handler :virus
   [cost state side eid card actions]
-  (update! state side (update-in card [:counter :virus] - (value cost)))
-  (wait-for (trigger-event-sync state side :counter-added (get-card state card))
-            (complete-with-result
-              state side eid
-              (str "spends "
-                   (quantify (value cost) (str "hosted virus counter"))
-                   " from on " (:title card)))))
+  (if (pos? (->> (all-active-installed state :runner)
+                 (filter #(= "Hivemind" (:title %)))
+                 (keep #(get-counters % :virus))
+                 (reduce +)))
+    (wait-for (resolve-ability state side (pick-virus-counters-to-spend card (value cost)) card nil)
+              (complete-with-result state side eid (str "spends " (:msg async-result))))
+    (do (update! state side (update-in card [:counter :virus] - (value cost)))
+        (wait-for (trigger-event-sync state side :counter-added (get-card state card))
+                  (complete-with-result
+                    state side eid
+                    (str "spends "
+                         (quantify (value cost) (str "hosted virus counter"))
+                         " from on " (:title card)))))))

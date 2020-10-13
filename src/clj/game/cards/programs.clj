@@ -693,9 +693,8 @@
                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
                 :effect (req (gain-credits state side (* 2 (get-virus-counters state card)))
                              (update! state side (assoc-in card [:counter :virus] 0))
-                             (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
-                               (doseq [h hiveminds]
-                                 (update! state side (assoc-in h [:counter :virus] 0)))))
+                             (doseq [h (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
+                               (update! state side (assoc-in h [:counter :virus] 0))))
                 :msg (msg (let [local-virus (get-counters card :virus)
                                 global-virus (get-virus-counters state card)
                                 hivemind-virus (- global-virus local-virus)]
@@ -744,9 +743,10 @@
                               :choices {:req (req (and (installed? target)
                                                        (ice? target)
                                                        (not= first-ice target)))}
-                              :msg (msg "swap the positions of " (card-str state first-ice) " and " (card-str state target))
+                              :msg (msg "swap the positions of " (card-str state first-ice)
+                                        " and " (card-str state target))
                               :async true
-                              :effect (req (wait-for (add-counter state side card :virus -1 nil)
+                              :effect (req (wait-for (pay state side card [:virus 1])
                                                      (swap-ice state side first-ice target)
                                                      (effect-completed state side eid)))})
                            card nil))}}}]})
@@ -1375,25 +1375,11 @@
    :abilities [{:req (req (pos? (get-counters card :virus)))
                 :label "move hosted virus counters"
                 :prompt "Move a virus counter to which card?"
-                :choices {:card #(has-subtype? % "Virus")}
-                :effect (req (let [abilities (:abilities (card-def target))
-                                   virus target]
-                               (add-counter state :runner virus :virus 1)
-                               (add-counter state :runner card :virus -1)
-                               (if (= (count abilities) 1)
-                                 (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
-                                     (resolve-ability state side (first abilities) (get-card state virus) nil))
-                                 (resolve-ability
-                                   state side
-                                   {:prompt "Choose an ability to trigger"
-                                    :choices (vec (map :msg abilities))
-                                    :effect (req (swap! state update-in [side :prompt] rest)
-                                                 (resolve-ability
-                                                   state side
-                                                   (first (filter #(= (:msg %) target) abilities))
-                                                   card nil))}
-                                   (get-card state virus) nil))))
-                :msg (msg "trigger an ability on " (:title target))}]})
+                :choices {:card #(has-subtype? % "Virus")
+                          :not-self true}
+                :msg (msg "manually move a virus counter from Hivemind to " (:title target))
+                :effect (effect (add-counter :runner target :virus 1)
+                                (add-counter :runner card :virus -1))}]})
 
 (defcard "Houdini"
   {:abilities [(break-sub 1 1 "Code Gate")
@@ -1460,7 +1446,8 @@
                                        :choices {:card #(and (installed? %)
                                                              (ice? %)
                                                              (not (same-card? % ice)))}
-                                       :msg (msg "swap the positions of " (card-str state ice) " and " (card-str state target))
+                                       :msg (msg "swap the positions of " (card-str state ice)
+                                                 " and " (card-str state target))
                                        :effect (effect (swap-ice (get-card state ice) (get-card state target)))}}})
                                   card nil))}]}))
 

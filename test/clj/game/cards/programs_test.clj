@@ -1152,15 +1152,48 @@
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
     (do-game
-      (new-game {:runner {:hand ["Cordyceps"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Cordyceps")
-      (take-credits state :runner)
-      (core/purge state :corp)
-      (take-credits state :corp)
-      (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
+      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (is (= 0 (get-counters (get-program state 0) :virus)) "Has no virus tokens")
       (run-on state "HQ")
       (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No prompt with no virus counters")))
+  (testing "Works with Hivemind installed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps" "Hivemind"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cordyceps")
+      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (play-from-hand state :runner "Hivemind")
+      (run-on state "HQ")
+      (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Select ice protecting this server" (:msg (prompt-map :runner))))
+      (is (= :select (prompt-type :runner)))
+      (click-card state :runner "Ice Wall")
+      (click-card state :runner "Enigma")
+      (is (= "Select a card with virus counters (0 of 1 virus counters)" (:msg (prompt-map :runner))))
+      (click-card state :runner "Hivemind")
+      (is (= "Enigma" (:title (get-ice state :hq 0))))
+      (is (= "Ice Wall" (:title (get-ice state :hq 1))))
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
 
@@ -2370,7 +2403,9 @@
       (is (= 0 (get-counters (get-program state 1) :virus)))
       (run-empty-server state "HQ")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
-      (is (= 1 (count (:discard (get-corp)))))))
+      (click-card state :runner "Hivemind")
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 0 (get-counters (get-program state 0) :virus)))))
   (testing "can't be used when empty #5190"
     (do-game
       (new-game {:corp {:hand ["Hostile Takeover"]}
