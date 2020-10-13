@@ -3829,19 +3829,19 @@
       (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
       (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
       (run-on state "HQ")
-      (is (not (:run @state)) "Not allowed to make a run"))))
+      (is (not (:run @state)) "Not allowed to make a run")))
   (testing "cannot play if agenda scored previously"
     (do-game
-        (new-game {:runner {:deck ["Peace in Our Time"]}
-                    :corp {:hand ["Hostile Takeover"]}})
-        (play-from-hand state :corp "Hostile Takeover" "New remote")
-        (let [hostile (get-content state :remote1 0)]
-          (advance state hostile 2)
-          (core/score state :corp {:card (refresh hostile)})
-          (take-credits state :corp)
-          (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
-          (play-from-hand state :runner "Peace in Our Time")
-          (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits"))))
+      (new-game {:runner {:deck ["Peace in Our Time"]}
+                 :corp {:hand ["Hostile Takeover"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (let [hostile (get-content state :remote1 0)]
+        (advance state hostile 2)
+        (core/score state :corp {:card (refresh hostile)})
+        (take-credits state :corp)
+        (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+        (play-from-hand state :runner "Peace in Our Time")
+        (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits")))))
 
 (deftest planned-assault
   ;; Planned Assault
