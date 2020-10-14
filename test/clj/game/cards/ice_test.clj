@@ -2174,6 +2174,30 @@
       (is (= 3 (count (:hand (get-runner))))
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
 
+(deftest loki
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Loki" "Archer"]
+                      :credits 100}})
+    (play-from-hand state :corp "Archer" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
+    (play-from-hand state :corp "Loki" "R&D")
+    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-continue state)
+    (click-card state :corp "Archer")
+    (is (= ["Gain 2 [Credits]" "Trash a program" "Trash a program" "End the run"
+            "End the run unless the Runner shuffles their Grip into the Stack"]
+           (map :label (:subroutines (get-ice state :rd 0))))
+        "Loki gains all of Archer's subroutines")
+    (is (= "Sentry - Destroyer - Bioroid" (:subtype (get-ice state :rd 0))))
+    (run-jack-out state)
+    (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
+           (map :label (:subroutines (get-ice state :rd 0))))
+        "Loki's subroutines revert to printed after the run ends")
+    (is (= "Bioroid" (:subtype (get-ice state :rd 0))))))
+
 (deftest loot-box
   ;; Loot Box
   (do-game

@@ -1893,7 +1893,27 @@
                   :effect (effect (prevent-draw))}]})
 
 (defcard "Loki"
-  {:implementation "Encounter effects not implemented"
+  {:events [{:event :encounter-ice
+             :req (req (and (same-card? card target)
+                            (<= 2 (count (filter ice? (all-active-installed state :corp))))))
+             :choices {:card #(and (ice? %)
+                                   (active? %))
+                       :not-self true}
+             :effect (req (let [target-subtypes (:subtype target)
+                                new-subtypes (combine-subtypes false (:subtype card) target-subtypes)
+                                card (update! state side (assoc card :subtype new-subtypes))]
+                            (doseq [sub (:subroutines target)]
+                              (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
+                            (register-events
+                              state side card
+                              (let [new-card (get-card state card)
+                                    cid (:cid target)]
+                                [{:event :run-ends
+                                  :unregister-once-resolved true
+                                  :req (req (get-card state new-card))
+                                  :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %)))
+                                                  (update! (assoc (get-card state new-card)
+                                                                  :subtype (remove-subtypes-once (:subtype new-card) (string/split target-subtypes #" - ")))))}]))))}]
    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
                   :async true
                   :effect (req (if (zero? (count (:hand runner)))
