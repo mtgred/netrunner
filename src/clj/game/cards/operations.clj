@@ -1860,7 +1860,7 @@
                                            :choices ["Archives" "R&D" "HQ"]
                                            :msg (msg "reveal " (:title chosen-ice) " and install it, paying 3 [Credit] less")
                                            :effect (effect (clear-wait-prompt :runner)
-                                                           (reveal state side chosen-ice)
+                                                           (reveal chosen-ice)
                                                            (shuffle! :deck)
                                                            (corp-install eid chosen-ice target {:cost-bonus -3}))}
                                           card nil)))}

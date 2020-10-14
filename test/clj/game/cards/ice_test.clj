@@ -1539,8 +1539,7 @@
           -1 (:credit (get-runner))
           "Get taxed 1c for breaking with Grappling Hook"
           (card-ability state :runner gh 0)
-          (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
-          (click-prompt state :runner "1: End the run unless the Runner pays 3 [Credits]"))))))
+          (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
 (deftest hagen
   ;; Hagen

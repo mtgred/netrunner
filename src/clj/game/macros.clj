@@ -16,7 +16,12 @@
       corp-reg-last (get-in @state [:corp :register-last-turn])
       runner-reg (get-in @state [:runner :register])
       runner-reg-last (get-in @state [:runner :register-last-turn])
-      target (first targets)
+      target (let [t (first targets)]
+               (if (and (map? t)
+                        (contains? t :uuid)
+                        (contains? t :value))
+                 (:value t)
+                 t))
       installed (#{:rig :servers} (first (get-zone card)))
       remotes (get-remote-names state)
       servers (zones->sorted-names (get-zones state))

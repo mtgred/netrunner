@@ -200,7 +200,7 @@
                   (cancel-effect choice)
                   (effect-completed state side (:eid prompt)))
                 (finish-prompt state side prompt card))
-            (do (effect (:value match))
+            (do (effect match)
                 (finish-prompt state side prompt card)))))
 
       :else

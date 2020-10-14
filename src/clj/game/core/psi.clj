@@ -50,7 +50,7 @@
                                    all-amounts)]
          (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                                 (map #(str % " [Credits]") valid-amounts)
-                                #(resolve-psi state s eid card psi (str->int (first (string/split % #" "))))
+                                #(resolve-psi state s eid card psi (str->int (first (string/split (:value %) #" "))))
                                 {:priority 2
                                  :prompt-type :psi}))))))
 

@@ -1829,20 +1829,16 @@
 
             ;; otherwise choice of all present choices
             :else
-            (map-indexed (fn [i {:keys [uuid value]}]
-                           (when (not= value "Hide")
-                             [:button {:key i
-                                       :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                       :on-mouse-over
-                                       #(card-highlight-mouse-over % value button-channel)
-                                       :on-mouse-out
-                                       #(card-highlight-mouse-out % value button-channel)
-                                       :id {:code value}}
-                              (render-message
-                                (if-let [title (:title value)]
-                                  title
-                                  value))]))
-                         (:choices prompt)))]
+            (doall (for [{:keys [idx uuid value]} (:choices prompt)]
+                     (when (not= value "Hide")
+                       [:button {:key idx
+                                 :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                 :on-mouse-over
+                                 #(card-highlight-mouse-over % value button-channel)
+                                 :on-mouse-out
+                                 #(card-highlight-mouse-out % value button-channel)
+                                 :id {:code value}}
+                        (render-message (or (not-empty (:title value)) value))]))))]
          (if @run
            [run-div side run]
            [:div.panel.blue-shade

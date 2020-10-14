@@ -14,9 +14,10 @@
     choices
     (into
       []
-      (for [choice (keep identity choices)]
+      (for [[idx choice] (map-indexed vector (keep identity choices))]
         {:value choice
-         :uuid (uuid/v1)}))))
+         :uuid (uuid/v4)
+         :idx idx}))))
 
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked

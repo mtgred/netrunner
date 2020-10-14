@@ -350,7 +350,7 @@
                                :not-distinct true
                                :msg (msg "choose " (:title target) " to trash")
                                :effect (req (clear-wait-prompt state :runner)
-                                            (chosen-damage state :corp targets))}
+                                            (chosen-damage state :corp target))}
                               :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                         (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}
                             card nil))}]})
