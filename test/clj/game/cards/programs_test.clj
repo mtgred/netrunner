@@ -2187,9 +2187,9 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (card-ability state :runner (get-program state 0) 0)
+      (card-ability state :runner (get-program state 0) "Break all but 1 subroutine")
       (click-prompt state :runner "End the run" {:idx 4})
-      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner (get-resource state 0) "Break the last subroutine")
       (is (core/all-subs-broken? (get-ice state :hq 0))
           "Grappling Hook and Gbahali worked together"))))
 

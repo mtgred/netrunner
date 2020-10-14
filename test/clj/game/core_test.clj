@@ -190,12 +190,18 @@
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
   [state side card ability & targets]
-  `(let [card# (get-card ~state ~card)]
+  `(let [card# (get-card ~state ~card)
+         ability# (cond
+                    (number? ~ability) ~ability
+                    (string? ~ability) (some #(when (= (:label (second %)) ~ability) (first %)) (map-indexed vector (:abilities card#)))
+                    :else -1)]
      (is (active? card#) (str (:title card#) " is active"))
-     (is (nth (:abilities card#) ~ability nil) (str (:title card#) " has ability #" ~ability))
-     (when (nth (:abilities card#) ~ability nil)
+     (is (and (number? ability#)
+              (nth (:abilities card#) ability# nil)) (str (:title card#) " has ability #" ability#))
+     (when (and (number? ability#)
+                (nth (:abilities card#) ability# nil))
        (core/process-action "ability" ~state ~side {:card card#
-                                                    :ability ~ability
+                                                    :ability ability#
                                                     :targets (first ~targets)}))))
 
 (defmacro card-subroutine
