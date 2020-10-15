@@ -1698,7 +1698,7 @@
     (new-game {:corp {:deck ["Hydra"]}})
     (play-from-hand state :corp "Hydra" "HQ")
     (take-credits state :corp)
-    (core/gain-credits state :corp 10)
+    (core/gain state :corp :credit 10)
     (run-on state :hq)
     (let [hydra (get-ice state :hq 0)
           corp-creds (:credit (get-corp))]
@@ -4061,6 +4061,55 @@
           "Costs 3"
           (click-prompt state :runner "Pay 3 [Credits]"))))))
 
+(deftest swordsman
+  ;; Swordsman
+  (testing "Can't be broken with AI"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swordsman"]}
+                 :runner {:hand ["Alpha" "Faerie"]
+                          :credits 15}})
+      (play-from-hand state :corp "Swordsman" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Faerie")
+      (run-on state "HQ")
+      (let [swordsman (get-ice state :hq 0)
+            alpha (get-program state 0)
+            faerie (get-program state 1)]
+        (rez state :corp swordsman)
+        (run-continue state)
+        (card-ability state :runner alpha "Add 1 strength")
+        (card-ability state :runner alpha "Break 1 subroutine")
+        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (card-ability state :runner faerie "Break 1 Sentry subroutine")
+        (is (= "Break a subroutine" (:msg (prompt-map :runner)))
+            "Runner has Faerie break prompt"))))
+ (testing "First subroutine trashes AI programs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swordsman"]}
+                 :runner {:hand ["Alpha" "Faerie"]
+                          :credits 15}})
+      (play-from-hand state :corp "Swordsman" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Faerie")
+      (run-on state "HQ")
+      (let [swordsman (get-ice state :hq 0)
+            alpha (get-program state 0)
+            faerie (get-program state 1)]
+        (rez state :corp swordsman)
+        (run-continue state)
+        (fire-subs state swordsman)
+        (is (= :select (prompt-type :corp)) "Swordsman subroutine to select an AI")
+        (click-card state :corp faerie)
+        (is (refresh faerie) "Faerie isn't an AI so isn't trashed")
+        (click-card state :corp alpha)
+        (is (not (refresh alpha)) "Alpha is trashed because it's an AI")
+        (is (= "Alpha" (:title (first (:discard (get-runner)))))
+            "Alpha is trashed because it's an AI")))))
+
 (deftest thimblerig
   ;; Thimblerig
   (testing "Thimblerig does not open a prompt if it's the only piece of ice"
@@ -4414,20 +4463,44 @@
       (is (empty? (:prompt (get-runner))) "Runner is not prompted to pay"))))
 
 (deftest turing
-  ;; Turing - Strength boosted when protecting a remote server
-  (do-game
-    (new-game {:corp {:deck [(qty "Turing" 2) "Hedge Fund"]}})
-    (play-from-hand state :corp "Hedge Fund")
-    (play-from-hand state :corp "Turing" "HQ")
-    (play-from-hand state :corp "Turing" "New remote")
-    (let [t1 (get-ice state :hq 0)
-          t2 (get-ice state :remote1 0)]
-      (rez state :corp t1)
-      (is (= 2 (get-strength (refresh t1)))
-          "Turing default 2 strength over a central server")
-      (rez state :corp t2)
-      (is (= 5 (get-strength (refresh t2)))
-          "Turing increased to 5 strength over a remote server"))))
+  ;; Turing
+  (testing "Strength boosted when protecting a remote server"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Turing" 2) "Hedge Fund"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Turing" "HQ")
+      (play-from-hand state :corp "Turing" "New remote")
+      (let [t1 (get-ice state :hq 0)
+            t2 (get-ice state :remote1 0)]
+        (rez state :corp t1)
+        (is (= 2 (get-strength (refresh t1)))
+            "Turing default 2 strength over a central server")
+        (rez state :corp t2)
+        (is (= 5 (get-strength (refresh t2)))
+            "Turing increased to 5 strength over a remote server"))))
+  (testing "Can't be broken with AI"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Turing"]}
+                 :runner {:hand ["Alpha" "Abagnale"]
+                          :credits 15}})
+      (play-from-hand state :corp "Turing" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Abagnale")
+      (run-on state "HQ")
+      (let [turing (get-ice state :hq 0)
+            alpha (get-program state 0)
+            abagnale (get-program state 1)]
+        (rez state :corp turing)
+        (run-continue state)
+        (card-ability state :runner alpha "Add 1 strength")
+        (card-ability state :runner alpha "Break 1 subroutine")
+        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (card-ability state :runner abagnale "Break 1 Code Gate subroutine")
+        (is (= "Break a subroutine" (:msg (prompt-map :runner)))
+            "Runner has Abagnale break prompt")))))
 
 (deftest turnpike
   ;; Turnpike

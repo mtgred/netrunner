@@ -9,10 +9,12 @@
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
                 :msg "gain 1 [Credits]"
-                :effect (req (gain-credits state side 1 :corp-click-credit)
-                             (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-                             (trigger-event state side :corp-click-credit)
-                             (play-sfx state side "click-credit"))}
+                :async true
+                :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
+                                       (swap! state update-in [:stats side :click :credit] (fnil inc 0))
+                                       (trigger-event state side :corp-click-credit)
+                                       (play-sfx state side "click-credit")
+                                       (effect-completed state side eid)))}
                {:label "Draw 1 card"
                 :cost [:click]
                 :msg "draw 1 card"
@@ -65,10 +67,12 @@
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
                 :msg "gain 1 [Credits]"
-                :effect (req (gain-credits state side 1 :runner-click-credit)
-                             (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-                             (trigger-event state side :runner-click-credit)
-                             (play-sfx state side "click-credit"))}
+                :async true
+                :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
+                                       (swap! state update-in [:stats side :click :credit] (fnil inc 0))
+                                       (trigger-event state side :runner-click-credit)
+                                       (play-sfx state side "click-credit")
+                                       (effect-completed state side eid)))}
                {:label "Draw 1 card"
                 :cost [:click]
                 :msg "draw 1 card"

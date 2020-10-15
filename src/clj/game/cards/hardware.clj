@@ -23,10 +23,9 @@
                                   :effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
                                                                  (number-of-virus-counters state))]
                                                  (wait-for (trash state side card nil)
-                                                           (gain-credits state side counters)
                                                            (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
                                                            (clear-wait-prompt state :corp)
-                                                           (effect-completed state side eid))))}
+                                                           (gain-credits state side eid counters))))}
                                  :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                card nil))}]})
 
@@ -360,7 +359,8 @@
              :req (req (and (every? :broken (:subroutines target))
                             (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %))))))
              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
-             :effect (effect (gain-credits 1))}]})
+             :async true
+             :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Cyberfeeder"
   {:recurring 1
@@ -431,13 +431,16 @@
              :once :per-turn
              :req (req (some corp? targets))
              :msg "gain 1 [Credits]"
-             :effect (effect (gain-credits 1))}]})
+             :async true
+             :effect (effect (gain-credits :runner eid 1))}]})
 
 (defcard "Desperado"
   {:in-play [:memory 1]
    :events [{:event :successful-run
              :silent (req true)
-             :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}]})
+             :async true
+             :msg "gain 1 [Credits]"
+             :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Devil Charm"
   {:events [{:event :encounter-ice
@@ -601,24 +604,26 @@
      :abilities [{:label "Take 1 [Credits] from Flame-out"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
+                  :async true
                   :effect (req (add-counter state side card :credit -1)
-                               (gain-credits state :runner 1)
                                (system-msg state :runner "takes 1 [Credits] from Flame-out")
                                (register-events
                                  state :runner (get-card state card)
                                  [(assoc turn-end :event :runner-turn-ends)
-                                  (assoc turn-end :event :corp-turn-ends)]))}
+                                  (assoc turn-end :event :corp-turn-ends)])
+                               (gain-credits state :runner eid 1))}
                  {:label "Take all [Credits] from Flame-out"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
+                  :async true
                   :effect (req (let [credits (get-counters card :credit)]
-                                 (gain-credits state :runner credits)
                                  (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))
                                  (register-events
                                    state :runner (get-card state card)
                                    [(assoc turn-end :event :runner-turn-ends)
-                                    (assoc turn-end :event :corp-turn-ends)])))}
+                                    (assoc turn-end :event :corp-turn-ends)])
+                                 (gain-credits state :runner eid credits)))}
                  {:label "Install a program on Flame-out"
                   :req (req (empty? (:hosted card)))
                   :cost [:click 1]
@@ -889,7 +894,8 @@
 (defcard "Hijacked Router"
   {:events [{:event :server-created
              :msg "force the Corp to lose 1 [Credits]"
-             :effect (effect (lose-credits :corp 1))}
+             :async true
+             :effect (effect (lose-credits :corp eid 1))}
             {:event :successful-run
              :req (req (= (target-server target) :archives))
              :optional
@@ -898,8 +904,7 @@
               {:async true
                :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
                             (wait-for (trash state :runner card {:unpreventable true})
-                                      (lose-credits state :corp 3)
-                                      (effect-completed state side eid)))}}}]})
+                                      (lose-credits state :corp eid 3)))}}}]})
 
 (defcard "Hippo"
   (letfn [(build-hippo-pred [outermost-ices]
@@ -932,7 +937,8 @@
                                         (= 1 (+ (event-count state :runner :spent-credits-from-card f)
                                                 (event-count state :runner :runner-install f))))))
                        :msg "gain 1 [Credit]"
-                       :effect (effect (gain-credits :runner 1))}]
+                       :async true
+                       :effect (effect (gain-credits :runner eid 1))}]
     {:in-play [:memory 2]
      :events [(assoc keiko-ability :event :spent-credits-from-card)
               (assoc keiko-ability :event :runner-install)]}))
@@ -1304,19 +1310,22 @@
                            :yes-ability
                            {:msg "gain 1 [Credit] and look at the top card of Stack"
                             :async true
-                            :effect (effect
-                                      (gain-credits :runner 1)
-                                      (continue-ability
-                                        {:player :runner
-                                         :optional
-                                         {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
-                                          :yes-ability
-                                          {:msg "add the top card of Stack to the bottom"
-                                           :effect (effect (move :runner (first (:deck runner)) :deck)
-                                                           (clear-wait-prompt :corp))}
-                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                       (system-msg "does not add the top card of the Stack to the bottom"))}}}
-                                        card nil))}
+                            :effect
+                            (req
+                              (wait-for (gain-credits state :runner 1)
+                                        (continue-ability
+                                          state :runner
+                                          {:player :runner
+                                           :optional
+                                           {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                                            :yes-ability
+                                            {:msg "add the top card of Stack to the bottom"
+                                             :effect (effect (move :runner (first (:deck runner)) :deck)
+                                                             (clear-wait-prompt :corp))}
+                                            :no-ability
+                                            {:effect (effect (clear-wait-prompt :corp)
+                                                             (system-msg "does not add the top card of the Stack to the bottom"))}}}
+                                          card nil)))}
                            :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                         (system-msg "does not gain 1 [Credit] and look at the top card of the Stack"))}}}
                          card nil))}]
@@ -1527,8 +1536,9 @@
                                                                  (:credit runner)))}
                                      :msg (msg "prevent " target " damage")
                                      :cost [:trash]
+                                     :async true
                                      :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
-                                                     (lose-credits target))}
+                                                     (lose-credits eid target))}
                                     card nil))}]}))
 
 (defcard "Record Reconstructor"
@@ -1847,8 +1857,9 @@
                               :player :runner
                               :autoresolve (get-autoresolve :auto-fire)
                               :yes-ability {:msg "gain 2 [Credits]"
-                                            :effect (req (gain-credits state :runner 2)
-                                                         (clear-wait-prompt state :corp))}
+                                            :async true
+                                            :effect (req (clear-wait-prompt state :corp)
+                                                         (gain-credits state :runner eid 2))}
                               :no-ability {:effect (req (system-msg
                                                           state :runner
                                                           "chooses not to gain 2 [Credits] from Supercorridor")
@@ -2037,7 +2048,8 @@
   {:implementation "Credit gain is automatic"
    :in-play [:memory 2]
    :events [{:event :expose
-             :effect (effect (gain-credits :runner 1))
+             :async true
+             :effect (effect (gain-credits :runner eid 1))
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Zer0"
@@ -2045,5 +2057,5 @@
                 :once :per-turn
                 :msg "gain 1 [Credits] and draw 2 cards"
                 :async true
-                :effect (effect (gain-credits 1)
-                                (draw eid 2 nil))}]})
+                :effect (req (wait-for (gain-credits state side 1)
+                                       (draw state side eid 2 nil)))}]})

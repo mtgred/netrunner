@@ -169,7 +169,7 @@
                             (wait-for
                               (jack-out state :runner (make-eid state))
                               (wait-for
-                                (gain-credits state :corp 5 nil)
+                                (gain-credits state :corp 5)
                                 (wait-for
                                   (draw state :corp 1 nil)
                                   (system-msg state :corp
@@ -480,7 +480,8 @@
                  :msg "gain 1 [Credits]"
                  :once :per-turn
                  :label "Gain 1 [Credits] (start of turn)"
-                 :effect (effect (gain-credits 1))}]
+                 :async true
+                 :effect (effect (gain-credits eid 1))}]
     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
@@ -593,8 +594,8 @@
                 :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
                 :once :per-run
-                :effect (effect (lose-credits :runner :all)
-                                (lose :runner :run-credit :all))}]})
+                :async true
+                :effect (effect (lose-credits :runner eid :all))}]})
 
 (defcard "Helheim Servers"
   {:abilities [{:label "All ice protecting this server has +2 strength until the end of the run"
@@ -612,10 +613,16 @@
                                 (update-all-ice))}]})
 
 (defcard "Henry Phillips"
-  {:implementation "Manually triggered by Corp"
-   :abilities [{:req (req (and this-server tagged))
-                :msg "gain 2 [Credits]"
-                :effect (effect (gain-credits 2))}]})
+  (letfn [(hp-gain-credits [state side eid n]
+            (if (pos? n)
+              (wait-for (gain-credits state :corp 2)
+                        (hp-gain-credits state side eid (dec n)))
+              (effect-completed state side eid)))]
+    {:events [{:event :subroutines-broken
+               :req (req (and this-server tagged))
+               :msg (msg "gain " (count (second targets)) " [Credits]")
+               :async true
+               :effect (effect (hp-gain-credits :corp eid (count (second targets))))}]}))
 
 (defcard "Hired Help"
   (let [prompt-to-trash-agenda-or-etr
@@ -914,12 +921,14 @@
   (let [gain-creds-and-clear {:req (req (= (:from-server target)
                                            (second (get-zone card))))
                               :silent (req true)
+                              :async true
                               :effect (req (let [cnt (total-cards-accessed run)
                                                  total (* 2 cnt)]
-                                             (when cnt
-                                               (gain-credits state :corp total)
-                                               (system-msg state :corp
-                                                           (str "gains " total " [Credits] from Mwanza City Grid")))))}
+                                             (if cnt
+                                               (do (system-msg state :corp
+                                                               (str "gains " total " [Credits] from Mwanza City Grid"))
+                                                   (gain-credits state :corp eid total))
+                                               (effect-completed state side eid))))}
         boost-access-by-3 {:req (req (= target (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
                            :effect (req (access-bonus state :runner (-> card :zone second) 3))}]
@@ -954,7 +963,8 @@
   (let [ng {:req (req (in-same-server? card target))
             :once :per-turn
             :msg "gain 1 [Credits]"
-            :effect (effect (gain-credits 1))}]
+            :async true
+            :effect (effect (gain-credits eid 1))}]
     {:events [(assoc ng :event :advance)
               (assoc ng :event :advancement-placed)]}))
 
@@ -1128,7 +1138,8 @@
   {:flags {:rd-reveal (req true)}
    :access {:req (req (not (in-discard? card)))
             :msg "gain 2 [Credits]"
-            :effect (effect (gain-credits :corp 2))}})
+            :async true
+            :effect (effect (gain-credits :corp eid 2))}})
 
 (defcard "Red Herrings"
   {:trash-effect
@@ -1160,12 +1171,12 @@
                    (continue-ability
                      {:choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
                       :prompt "How many credits to spend?"
+                      :async true
                       :effect (req (clear-wait-prompt state :runner)
                                    (let [spent (str->int target)]
-                                     (lose state :corp :credit spent)
                                      (add-counter state :corp card :power spent)
                                      (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
-                                     (effect-completed state side eid)))}
+                                     (lose-credits state :corp eid spent)))}
                      card nil))})
 
 (defcard "Research Station"
@@ -1245,8 +1256,9 @@
      :msg (msg "gain " (get-counters card :credit) " [Credits]")
      :once :per-turn
      :label "Take all credits"
-     :effect (effect (gain-credits (get-counters card :credit))
-                     (set-prop card :counter {:credit 0}))}]})
+     :async true
+     :effect (effect (set-prop card :counter {:credit 0})
+                     (gain-credits eid (get-counters card :credit)))}]})
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
@@ -1402,7 +1414,8 @@
              :interactive (req true)
              :trace {:base 2
                      :successful {:msg "gain 1 [Credits]"
-                                  :effect (effect (gain-credits 1))}}}]})
+                                  :async true
+                                  :effect (effect (gain-credits eid 1))}}}]})
 
 (defcard "Tranquility Home Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -1415,9 +1428,10 @@
              :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
              :choices ["Gain 2 [Credits]" "Draw 1 card"]
              :msg (msg (decapitalize target))
+             :async true
              :effect (req (if (= target "Gain 2 [Credits]")
-                            (gain-credits state side 2)
-                            (draw state side 1 nil)))}]})
+                            (gain-credits state side eid 2)
+                            (draw state side eid 1 nil)))}]})
 
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"

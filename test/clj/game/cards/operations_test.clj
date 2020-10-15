@@ -1397,7 +1397,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain-credits state :runner 6)
+      (core/gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))]
         (play-from-hand state :corp "Financial Collapse")
@@ -1411,7 +1411,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain-credits state :runner 6)
+      (core/gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))
             kati (get-resource state 0)]
