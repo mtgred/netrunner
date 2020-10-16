@@ -567,7 +567,8 @@
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
              :msg (msg "reveal " (-> target first :title))
-             :effect (effect (reveal target))}]})
+             :async true
+             :effect (effect (reveal eid target))}]})
 
 (defcard "Councilman"
   {:events [{:event :rez
@@ -996,9 +997,10 @@
 (defcard "Enhanced Vision"
   {:events [{:event :successful-run
              :silent (req true)
+             :async true
              :effect (req (let [target (first (shuffle (:hand corp)))]
-                            (reveal state :corp target)
-                            (system-msg state :runner (str "uses Enhanced Vision to force the Corp to reveal " (:title target)))))
+                            (system-msg state :runner (str "uses Enhanced Vision to force the Corp to reveal " (:title target)))
+                            (reveal state :corp eid target)))
              :req (req (genetics-trigger? state side :successful-run))}]})
 
 (defcard "Fall Guy"
@@ -1085,7 +1087,8 @@
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
                        (string/join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))
-             :effect (effect (reveal (get-in @state [:runner :register :most-recent-drawn])))}
+             :async true
+             :effect (effect (reveal eid (get-in @state [:runner :register :most-recent-drawn])))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1435,8 +1438,8 @@
                   :async true
                   :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
                             (let [from (take 4 (:deck runner))]
-                              (reveal state side from)
-                              (continue-ability state side (lab-keep from) card nil)))}]}))
+                              (wait-for (reveal state side from)
+                                        (continue-ability state side (lab-keep from) card nil))))}]}))
 
 (defcard "Lewi Guilherme"
   (let [ability {:once :per-turn
@@ -1701,8 +1704,9 @@
                               (number? (:trash target)))))
              :once :per-turn
              :msg (msg "reveal " (card-str state target {:visible true}))
-             :effect (req (reveal state side target)
-                          (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
+             :async true
+             :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] true)
+                          (reveal state side eid target))}
             {:event :post-access-card
              :req (req (get-in @state [:runner :register :must-trash-with-credits]))
              :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}]})
@@ -1787,13 +1791,14 @@
                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
                                (system-msg state side (str "spends [Click] to use Oracle May, names " target
                                                            " and reveals " (:title c)))
-                               (reveal state side c)
-                               (if (is-type? c target)
-                                 (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
-                                     (wait-for (gain-credits state side 2)
-                                               (draw state side eid 1 nil)))
-                                 (do (system-msg state side (str "trashes " (:title c)))
-                                     (mill state side eid :runner 1)))))}]})
+                               (wait-for
+                                 (reveal state side c)
+                                 (if (is-type? c target)
+                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
+                                       (wait-for (gain-credits state side 2)
+                                                 (draw state side eid 1 nil)))
+                                   (do (system-msg state side (str "trashes " (:title c)))
+                                       (mill state side eid :runner 1))))))}]})
 
 (defcard "Order of Sol"
   (let [ability {:event :runner-credit-loss
@@ -2927,19 +2932,21 @@
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))
                  :async true
-                 :effect (effect (reveal (:title (first (:deck corp))))
-                                 (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
-                                 (continue-ability
-                                   {:optional
-                                    {:player :corp
-                                     :prompt (msg "Draw " (:title (first (:deck corp))) "?")
-                                     :yes-ability {:async true
-                                                   :effect (effect (clear-wait-prompt :runner)
-                                                                   (system-msg (str "draws " (:title (first (:deck corp)))))
-                                                                   (draw eid 1 nil))}
-                                     :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                                  (system-msg "doesn't draw with Woman in the Red Dress"))}}}
-                                   card nil))}]
+                 :effect (req (wait-for
+                                (reveal state side (first (:deck corp)))
+                                (show-wait-prompt state :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
+                                (continue-ability
+                                  state side
+                                  {:optional
+                                   {:player :corp
+                                    :prompt (msg "Draw " (:title (first (:deck corp))) "?")
+                                    :yes-ability {:async true
+                                                  :effect (effect (clear-wait-prompt :runner)
+                                                                  (system-msg (str "draws " (:title (first (:deck corp)))))
+                                                                  (draw eid 1 nil))}
+                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                 (system-msg "doesn't draw with Woman in the Red Dress"))}}}
+                                  card nil)))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 

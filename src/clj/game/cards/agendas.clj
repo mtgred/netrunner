@@ -628,19 +628,22 @@
                 :once :per-turn
                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
                 :async true
-                :effect (req (reveal state side [(first (:deck corp))])
-                             (show-wait-prompt state :runner (str "Corp to resolve " (:title card)))
-                             (wait-for (draw state side 2 nil)
-                                       (continue-ability state side
-                                                         {:req (req (pos? (count (:hand corp))))
-                                                          :prompt "Choose a card in HQ to move to the top of R&D"
-                                                          :msg "add 1 card in HQ to the top of R&D"
-                                                          :choices {:card #(and (in-hand? %)
-                                                                                (corp? %))}
-                                                          :effect (effect (move target :deck {:front true})
-                                                                          (clear-wait-prompt :runner)
-                                                                          (effect-completed eid))}
-                                                         card nil)))}]})
+                :effect (req (wait-for
+                               (reveal state side (first (:deck corp)))
+                               (show-wait-prompt state :runner (str "Corp to resolve " (:title card)))
+                               (wait-for
+                                 (draw state side 2 nil)
+                                 (continue-ability
+                                   state side
+                                   {:req (req (pos? (count (:hand corp))))
+                                    :prompt "Choose a card in HQ to move to the top of R&D"
+                                    :msg "add 1 card in HQ to the top of R&D"
+                                    :choices {:card #(and (in-hand? %)
+                                                          (corp? %))}
+                                    :effect (effect (move target :deck {:front true})
+                                                    (clear-wait-prompt :runner)
+                                                    (effect-completed eid))}
+                                   card nil))))}]})
 
 (defcard "Fly on the Wall"
   {:msg "give the runner 1 tag"

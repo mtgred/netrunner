@@ -281,7 +281,8 @@
   {:label "Reveal up to 2 Grail ICE from HQ"
    :choices {:max 2
              :card grail-in-hand}
-   :effect (effect (reveal targets))
+   :async true
+   :effect (effect (reveal eid targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
           (msg "reveal " (string/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
@@ -1140,10 +1141,7 @@
              :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
                        " from grip: " (string/join ", " (map :title (:hand runner))))
-             ;; This has to be manual instead of calling `reveal` because `reveal` isn't
-             ;; async and I don't feel like trying to make it async just for this interaction.
-             ;; TODO: Make `reveal` async
-             :effect (req (apply trigger-event-sync state side eid :corp-reveal (:hand runner)))}]
+             :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :effect (req (let [cardtype target]
@@ -1372,11 +1370,13 @@
                                                       (in-discard? %))
                                                   (agenda? %))
                                       :max (req 3)}
-                            :effect (req (reveal state side targets)
-                                         (doseq [c targets]
-                                           (move state :corp c :deck))
-                                         (shuffle! state :corp :deck)
-                                         (effect-completed state :corp eid))
+                            :async true
+                            :effect (req (wait-for
+                                           (reveal state side targets)
+                                           (doseq [c targets]
+                                             (move state :corp c :deck))
+                                           (shuffle! state :corp :deck)
+                                           (effect-completed state :corp eid)))
                             :cancel-effect (effect (shuffle! :deck)
                                                    (effect-completed eid))
                             :msg (msg "add "
@@ -1960,22 +1960,24 @@
     {:subroutines [(end-the-run-unless-runner-pays 2)
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
-                    :effect (effect (system-msg (str "uses Loot Box to reveal the top 3 cards of the stack: "
-                                                     (string/join ", " (top-3-names state))))
-                              (reveal (top-3 state))
-                              (show-wait-prompt :runner "Corp to choose a card to add to the Grip")
-                              (continue-ability
-                                {:prompt "Choose a card to add to the Grip"
-                                 :choices (req (top-3 state))
-                                 :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
-                                           " [Credits] and shuffle the Stack. Loot Box is trashed")
-                                 :async true
-                                 :effect (req (move state :runner target :hand)
-                                              (wait-for (gain-credits state :corp (:cost target))
-                                                        (shuffle! state :runner :deck)
-                                                        (clear-wait-prompt state :runner)
-                                                        (trash state side eid card {:cause :subroutine})))}
-                                card nil))}]}))
+                    :effect (req (system-msg state side (str "uses Loot Box to reveal the top 3 cards of the stack: "
+                                                             (string/join ", " (top-3-names state))))
+                              (wait-for
+                                (reveal state side (top-3 state))
+                                (show-wait-prompt state :runner "Corp to choose a card to add to the Grip")
+                                (continue-ability
+                                  state side
+                                  {:prompt "Choose a card to add to the Grip"
+                                   :choices (req (top-3 state))
+                                   :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
+                                             " [Credits] and shuffle the Stack. Loot Box is trashed")
+                                   :async true
+                                   :effect (req (move state :runner target :hand)
+                                                (wait-for (gain-credits state :corp (:cost target))
+                                                          (shuffle! state :runner :deck)
+                                                          (clear-wait-prompt state :runner)
+                                                          (trash state side eid card {:cause :subroutine})))}
+                                  card nil)))}]}))
 
 (defcard "Lotus Field"
   {:subroutines [end-the-run]
@@ -2506,13 +2508,16 @@
               (give-tags 1))]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
+                    :async true
                     :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                    (system-msg state side
                                                (str "uses Peeping Tom to name " target ", then reveals "
                                                     (string/join ", " (map :title (:hand runner)))
                                                     " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
-                                   (reveal state side (:hand runner))
-                                   (gain-variable-subs state side card n sub)))}
+                                   (wait-for
+                                     (reveal state side (:hand runner))
+                                     (gain-variable-subs state side card n sub)
+                                     (effect-completed state side eid))))}
      :events [{:event :run-ends
                :effect (effect (reset-variable-subs card 0 nil))}]}))
 
@@ -2825,6 +2830,7 @@
                  count))
           (ability []
             {:label "Encounter ability (manual)"
+             :async true
              :effect (req (move state :runner (first (:deck runner)) :deck)
                           (let [t3 (top-3 state)
                                 effect-type (effect-type card)]
@@ -2833,11 +2839,11 @@
                               {:type effect-type
                                :duration :end-of-encounter
                                :value t3})
-                            (reveal state side t3)
                             (system-msg state side
                                         (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                              " then reveal the top 3 cards in the stack: "
-                                             (string/join ", " (top-3-names t3))))))})]
+                                             (string/join ", " (top-3-names t3))))
+                            (reveal state side eid t3)))})]
     {:on-encounter (ability)
      :abilities [(ability)]
      :subroutines [{:label "Runner loses 3 [Credits]"
@@ -2873,8 +2879,11 @@
                                 card nil))}]}))
 
 (defcard "Snoop"
-  {:on-encounter {:msg (msg "reveal the Runner's Grip (" (string/join ", " (map :title (:hand runner))) ")")
-                  :effect (effect (reveal (:hand runner)))}
+  {:on-encounter {:msg (msg "reveal the Runner's Grip ("
+                            (string/join ", " (map :title (:hand runner)))
+                            ")")
+                  :async true
+                  :effect (effect (reveal eid (:hand runner)))}
    :abilities [{:async true
                 :req (req (pos? (get-counters card :power)))
                 :cost [:power 1]
@@ -3245,12 +3254,13 @@
                    5 {:label "Reveal the grip and trash cards"
                       :msg (msg "reveal all cards in the grip: " (string/join ", " (map :title (:hand runner))))
                       :async true
-                      :effect (req (reveal state side (:hand runner))
-                                   (let [delta (- target (second targets))
-                                         cards (filter #(<= (:cost %) delta) (:hand runner))]
-                                     (system-msg state side (str "uses Waiver to trash "
-                                                                 (string/join ", " (map :title cards))))
-                                     (trash-cards state side eid cards {:cause :subroutine})))})]})
+                      :effect (req (wait-for
+                                     (reveal state side (:hand runner))
+                                     (let [delta (- target (second targets))
+                                           cards (filter #(<= (:cost %) delta) (:hand runner))]
+                                       (system-msg state side (str "uses Waiver to trash "
+                                                                   (string/join ", " (map :title cards))))
+                                       (trash-cards state side eid cards {:cause :subroutine}))))})]})
 
 (defcard "Wall of Static"
   {:subroutines [end-the-run]})

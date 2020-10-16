@@ -1431,19 +1431,22 @@
                 :cost [:credit 1]
                 :req (req (pos? (count (:deck runner))))
                 :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
+                :async true
                 :effect
-                (effect
-                  (reveal (first (:deck runner)))
-                  (continue-ability
-                    (let [top-card (first (:deck runner))]
-                      {:optional
-                       {:req (req (or (program? top-card)
-                                      (hardware? top-card)))
-                        :prompt (msg "Install " (:title top-card) "?")
-                        :yes-ability
-                        {:async true
-                         :effect (effect (runner-install (assoc eid :source-type :runner-install) top-card nil))}}})
-                    card nil))}]})
+                (req
+                  (wait-for
+                    (reveal state side (first (:deck runner)))
+                    (continue-ability
+                      state side
+                      (let [top-card (first (:deck runner))]
+                        {:optional
+                         {:req (req (or (program? top-card)
+                                        (hardware? top-card)))
+                          :prompt (msg "Install " (:title top-card) "?")
+                          :yes-ability
+                          {:async true
+                           :effect (effect (runner-install (assoc eid :source-type :runner-install) top-card nil))}}})
+                      card nil)))}]})
 
 (defcard "Public Terminal"
   {:recurring 1
@@ -1559,9 +1562,10 @@
    :constant-effects [{:type :link
                        :value 1}]
    :events [{:event :jack-out
+             :async true
              :effect (req (let [card (first (shuffle (:hand corp)))]
-                            (reveal state :corp card)
-                            (system-msg state :runner (str  "force the Corp to reveal " (:title card) " from HQ"))))}]})
+                            (system-msg state :runner (str  "force the Corp to reveal " (:title card) " from HQ"))
+                            (reveal state :corp eid card)))}]})
 
 (defcard "Replicator"
   (letfn [(hardware-and-in-deck? [target runner]

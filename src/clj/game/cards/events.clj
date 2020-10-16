@@ -832,17 +832,18 @@
                                             (str "uses Embezzle to reveal "
                                                  (string/join " and " (map :title cards-to-reveal))
                                                  " from HQ"))
-                                (reveal state side cards-to-reveal)
-                                (if (pos? credits)
-                                  (do (system-msg
-                                        state side
-                                        (str " uses Embezzle to trash "
-                                             (string/join " and " (map :title cards-to-trash))
-                                             " from HQ and gain "
-                                             credits " [Credits]"))
-                                      (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash))
-                                                (gain-credits state :runner eid credits)))
-                                  (effect-completed state side eid))))}}
+                                (wait-for
+                                  (reveal state side cards-to-reveal)
+                                  (if (pos? credits)
+                                    (do (system-msg
+                                          state side
+                                          (str " uses Embezzle to trash "
+                                               (string/join " and " (map :title cards-to-trash))
+                                               " from HQ and gain "
+                                               credits " [Credits]"))
+                                        (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash))
+                                                  (gain-credits state :runner eid credits)))
+                                    (effect-completed state side eid)))))}}
                card))})
 
 (defcard "Emergency Shutdown"
@@ -951,14 +952,15 @@
                         :yes-ability {:async true
                                       :effect (effect (runner-install eid topcard {:cost-bonus -10}))}
                         :no-ability {:async true
-                                     :effect (effect (reveal topcard)
-                                                     (system-msg (str "reveals and trashes "
-                                                                      (:title topcard)))
-                                                     (trash eid topcard {:unpreventable true}))}}}
+                                     :effect (req (wait-for
+                                                    (reveal state side topcard)
+                                                    (system-msg (str "reveals and trashes "
+                                                                     (:title topcard)))
+                                                    (trash eid topcard {:unpreventable true})))}}}
                       card nil)
-                    (do (reveal state side topcard)
-                        (system-msg state side (str "reveals and trashes " (:title topcard)))
-                        (trash state side eid topcard {:unpreventable true})))))})
+                    (wait-for (reveal state side topcard)
+                              (system-msg state side (str "reveals and trashes " (:title topcard)))
+                              (trash state side eid topcard {:unpreventable true})))))})
 
 (defcard "Exclusive Party"
   {:msg (msg "draw 1 card and gain "
@@ -970,7 +972,8 @@
 
 (defcard "Executive Wiretaps"
   {:msg (msg "reveal cards in HQ: " (string/join ", " (sort (map :title (:hand corp)))))
-   :effect (effect (reveal (:hand corp)))})
+   :async true
+   :effect (effect (reveal eid (:hand corp)))})
 
 (defcard "Exploit"
   {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -1064,8 +1067,9 @@
                                              :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
                                                        " forcing the Corp to trash " (count targets)
                                                        " additional cards from the top of R&D")
-                                             :effect (req (reveal state :runner targets)
-                                                          (mill state :corp eid :corp (count targets)))})
+                                             :effect (req (wait-for
+                                                            (reveal state :runner targets)
+                                                            (mill state :corp eid :corp (count targets))))})
                                           card nil)))}}
                card))})
 
@@ -1485,22 +1489,23 @@
    :effect (req (let [cards (take 4 (:deck runner))
                       programs (filter program? cards)
                       others (remove program? cards)]
-                  (reveal state side cards)
-                  (if (seq programs)
-                    (wait-for (trash-cards state side programs {:unpreventable true})
-                              (system-msg state side (str "trashes "
-                                                          (string/join ", " (map :title programs))
-                                                          " and gains "
-                                                          (count programs) " [Credits]"))
-                              (wait-for (gain-credits state side (count programs))
-                                        (doseq [c others]
-                                          (move state side c :hand)
-                                          (system-msg state side (str "adds " (:title c) " to the grip")))
-                                        (effect-completed state side eid)))
-                    (do (doseq [c others]
-                          (move state side c :hand)
-                          (system-msg state side (str "adds " (:title c) " to the grip")))
-                        (effect-completed state side eid)))))})
+                  (wait-for
+                    (reveal state side cards)
+                    (if (seq programs)
+                      (wait-for (trash-cards state side programs {:unpreventable true})
+                                (system-msg state side (str "trashes "
+                                                            (string/join ", " (map :title programs))
+                                                            " and gains "
+                                                            (count programs) " [Credits]"))
+                                (wait-for (gain-credits state side (count programs))
+                                          (doseq [c others]
+                                            (move state side c :hand)
+                                            (system-msg state side (str "adds " (:title c) " to the grip")))
+                                          (effect-completed state side eid)))
+                      (do (doseq [c others]
+                            (move state side c :hand)
+                            (system-msg state side (str "adds " (:title c) " to the grip")))
+                          (effect-completed state side eid))))))})
 
 (defcard "Injection Attack"
   {:async true
@@ -1533,14 +1538,18 @@
   {:async true
    :effect (req
              (let [from (take 4 (:deck corp))]
-               (when (pos? (count from))
-                 (show-wait-prompt state :runner (str "Corp to rearrange the top " (count from) " cards of R&D"))
-                 (wait-for (resolve-ability state :corp (reorder-choice :corp from) card targets)
-                           (clear-wait-prompt state :runner)
-                           (let [top-4 (take 4 (get-in @state [:corp :deck]))]
-                             (reveal state side top-4)
-                             (system-msg state :runner (str " reveals (top:) " (string/join ", " (map :title top-4)) " from the top of R&D")))
-                           (effect-completed state side eid)))))})
+               (if (pos? (count from))
+                 (do (show-wait-prompt state :runner (str "Corp to rearrange the top " (count from) " cards of R&D"))
+                     (wait-for (resolve-ability state :corp (reorder-choice :corp from) card targets)
+                               (clear-wait-prompt state :runner)
+                               (let [top-4 (take 4 (get-in @state [:corp :deck]))]
+                                 (wait-for
+                                   (reveal state side top-4)
+                                   (system-msg state :runner (str " reveals (top:) "
+                                                                  (string/join ", " (map :title top-4))
+                                                                  " from the top of R&D"))
+                                   (effect-completed state side eid)))))
+                 (effect-completed state side eid))))})
 
 (defcard "Interdiction"
   (let [ab (effect (register-turn-flag!
@@ -1584,9 +1593,9 @@
                                  :choices (mapv str (for [x (->> current-values keys last inc (range 1) (#(concat % [99])))]
                                                       (str x " [Credit]: "
                                                            (quantify (get current-values x 0) "card"))))
-                                 :effect (effect (effect-completed
-                                                   (make-result eid [(str->int (first (string/split target #" ")))
-                                                                     (min 6 (str->int (nth (string/split target #" ") 2)))])))}))]
+                                 :effect (effect (complete-with-result
+                                                   eid [(str->int (first (string/split target #" ")))
+                                                        (min 6 (str->int (nth (string/split target #" ") 2)))]))}))]
     {:async true
      :makes-run true
      :req (req rd-runnable)
@@ -1607,15 +1616,20 @@
                                                                      (str "(top:) " (string/join ", " (map :title revealed))
                                                                           " from the top of R&D")
                                                                      "no cards")))
-                                    (when revealed
-                                      (reveal state side revealed))
                                     (wait-for
-                                      (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
-                                                                    (access-revealed revealed))
-                                                       card nil)
-                                      (shuffle! state :corp :deck)
-                                      (system-msg state :runner "shuffles R&D")
-                                      (effect-completed state side eid)))))}}
+                                      (resolve-ability
+                                        state side
+                                        (when revealed
+                                          {:async true
+                                           :effect (effect (reveal eid revealed))})
+                                        card nil)
+                                      (wait-for
+                                        (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
+                                                                      (access-revealed revealed))
+                                                         card nil)
+                                        (shuffle! state :corp :deck)
+                                        (system-msg state :runner "shuffles R&D")
+                                        (effect-completed state side eid))))))}}
                  card))}))
 
 (defcard "Knifed"
@@ -2923,8 +2937,9 @@
              {:async true
               :msg (msg "reveal all cards in HQ" (when-let [hand (seq (:hand corp))]
                                                    (str ": " (string/join ", " (map :title hand)))))
-              :effect (effect (reveal (:hand corp))
-                        (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}}))
+              :effect (req (wait-for
+                             (reveal state side (:hand corp))
+                             (continue-ability state :runner (choose-cards (set (:hand corp)) #{}) card nil)))}}}))
 
 (defcard "Windfall"
   {:async true

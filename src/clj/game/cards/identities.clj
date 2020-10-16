@@ -661,17 +661,24 @@
              :once :per-turn
              :req (req (first-event? state side :corp-reveal))
              :msg "gain 1 [Credits]"
+             :async true
              :effect (effect (gain-credits eid 1))}]
    :abilities [{:cost [:click 1]
                 :label "Reveal the top card of the Stack"
-                :effect (req (when-let [revealed-card (-> runner :deck first)]
-                               (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " (:title revealed-card)))
-                               (reveal state side revealed-card)))}
+                :async true
+                :effect (req (if-let [revealed-card (-> runner :deck first)]
+                               (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
+                                                               (:title revealed-card)))
+                                   (reveal state side eid revealed-card))
+                               (effect-completed state side eid)))}
                {:cost [:click 1]
                 :label "Reveal a random card from the Grip"
-                :effect (req (when-let [revealed-card (-> runner :hand shuffle first)]
-                               (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " (:title revealed-card)))
-                               (reveal state side revealed-card)))}]})
+                :async true
+                :effect (req (if-let [revealed-card (-> runner :hand shuffle first)]
+                               (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
+                                                               (:title revealed-card)))
+                                   (reveal state side eid revealed-card))
+                               (effect-completed state side eid)))}]})
 
 (defcard "Iain Stirling: Retired Spook"
   (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))

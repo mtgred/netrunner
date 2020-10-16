@@ -643,11 +643,13 @@
                             (str ", gain " target-agenda-points " [Credits], "))
                           " and shuffle it into R&D")
                 :async true
-                :effect (req (reveal state side target)
-                             (wait-for (gain-credits state :corp (get-agenda-points state :corp target))
-                                       (move state :corp target :deck)
-                                       (shuffle! state :corp :deck)
-                                       (effect-completed state side eid)))}]})
+                :effect (req (wait-for
+                               (reveal state side target)
+                               (wait-for
+                                 (gain-credits state :corp (get-agenda-points state :corp target))
+                                 (move state :corp target :deck)
+                                 (shuffle! state :corp :deck)
+                                 (effect-completed state side eid))))}]})
 
 (defcard "Early Premiere"
   {:derezzed-events [corp-rez-toast]
@@ -743,9 +745,12 @@
                                            :sorted))
                 :cost [:credit 1 :trash]
                 :label "Search R&D for an asset"
-                :effect (effect (reveal target)
-                                (shuffle! :deck)
-                                (move target :hand))}]})
+                :async true
+                :effect (req (wait-for
+                               (reveal state side target)
+                               (shuffle! state side :deck)
+                               (move state side target :hand)
+                               (effect-completed state side eid)))}]})
 
 (defcard "Executive Search Firm"
   {:abilities [{:prompt "Choose an Executive, Sysop, or Character to add to HQ"
@@ -1062,26 +1067,29 @@
                                        (:hand corp))))
                 :label "X power counters: Reveal an agenda worth X points from HQ"
                 :async true
-                :effect (req (let [c (get-counters card :power)]
-                               (continue-ability
-                                 state side
-                                 {:prompt "Select an agenda in HQ to reveal"
-                                  :choices {:card #(and (agenda? %)
-                                                        (>= c (:agendapoints %)))}
-                                  :msg (msg "reveal " (:title target) " from HQ")
-                                  :effect (req (reveal state side target)
-                                               (let [title (:title target)
-                                                     pts (:agendapoints target)]
-                                                 (register-turn-flag!
-                                                   state side
-                                                   card :can-steal
-                                                   (fn [state side card]
-                                                     (if (= (:title card) title)
-                                                       ((constantly false)
-                                                        (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
-                                                       true)))
-                                                 (add-counter state side card :power (- pts))))}
-                                 card nil)))}]})
+                :effect (effect
+                          (continue-ability
+                            (let [c (get-counters card :power)]
+                              {:prompt "Select an agenda in HQ to reveal"
+                               :choices {:card #(and (agenda? %)
+                                                     (>= c (:agendapoints %)))}
+                               :msg (msg "reveal " (:title target) " from HQ")
+                               :async true
+                               :effect
+                               (req (wait-for
+                                      (reveal state side target)
+                                      (let [title (:title target)
+                                            pts (:agendapoints target)]
+                                        (register-turn-flag!
+                                          state side
+                                          card :can-steal
+                                          (fn [state side card]
+                                            (if (= (:title card) title)
+                                              ((constantly false)
+                                               (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
+                                              true)))
+                                        (add-counter state side card :power (- pts)))))})
+                            card nil))}]})
 
 (defcard "Launch Campaign"
   (campaign 6 2))
@@ -1106,12 +1114,15 @@
                             "search R&D, but does not find an operation"
                             (str "put " (:title target) " on top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                :async true
                 :effect (req (if (= target "No action")
-                               (shuffle! state :corp :deck)
-                               (let [c (move state :corp target :play-area)]
-                                 (reveal state side c)
+                               (do (shuffle! state :corp :deck)
+                                   (effect-completed state side eid))
+                               (wait-for
+                                 (reveal state side target)
                                  (shuffle! state :corp :deck)
-                                 (move state :corp c :deck {:front true}))))}]})
+                                 (move state :corp target :deck {:front true})
+                                 (effect-completed state side eid))))}]})
 
 (defcard "Long-Term Investment"
   {:derezzed-events [corp-rez-toast]
@@ -1263,11 +1274,12 @@
                           (if (= (:type target) "Operation") "play" "install")
                           " it")
                 :async true
-                :effect (req (reveal state side target)
-                             (shuffle! state side :deck)
-                             (if (operation? target)
-                               (play-instant state side eid target nil)
-                               (corp-install state side eid target nil nil)))}]})
+                :effect (req (wait-for
+                               (reveal state side target)
+                               (shuffle! state side :deck)
+                               (if (operation? target)
+                                 (play-instant state side eid target nil)
+                                 (corp-install state side eid target nil nil))))}]})
 
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
@@ -1433,20 +1445,25 @@
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
              :msg (msg (if (-> corp :deck count pos?)
-                         (str "reveal and draw " (-> corp :deck first :title) " from R&D")
+                         (str "reveal and draw "
+                              (-> corp :deck first :title)
+                              " from R&D")
                          "reveal and draw from R&D but it is empty"))
              :async true
-             :effect (effect (reveal (-> corp :deck first))
-                             (draw 1)
-                             (continue-ability
-                               {:prompt "Choose a card in HQ to put on top of R&D"
-                                :async true
-                                :choices {:card #(and (in-hand? %)
-                                                      (corp? %))}
-                                :msg "add 1 card from HQ to the top of R&D"
-                                :effect (effect (move target :deck {:front true})
-                                                (effect-completed eid))}
-                               card nil))}]})
+             :effect (req (wait-for
+                            (reveal state side (-> corp :deck first))
+                            (wait-for
+                              (draw state side 1 nil)
+                              (continue-ability
+                                state side
+                                {:prompt "Choose a card in HQ to put on top of R&D"
+                                 :async true
+                                 :choices {:card #(and (in-hand? %)
+                                                       (corp? %))}
+                                 :msg "add 1 card from HQ to the top of R&D"
+                                 :effect (effect (move target :deck {:front true})
+                                                 (effect-completed eid))}
+                                card nil))))}]})
 
 (defcard "PAD Campaign"
   (let [ability {:msg "gain 1 [Credits]"
@@ -1526,16 +1543,18 @@
              {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
               :yes-ability {:async true
                             :msg (msg "reveal " (:title (nth agendas n)))
-                            :effect (req (reveal state side (nth agendas n))
-                                         (wait-for (corp-install
-                                                     state side (nth agendas n) nil
-                                                     {:install-state
-                                                      (:install-state
-                                                        (card-def (nth agendas n))
-                                                        :unrezzed)})
-                                                   (if (< (inc n) (count agendas))
-                                                     (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                                     (effect-completed state side eid))))}
+                            :effect (req (wait-for
+                                           (reveal state side (nth agendas n))
+                                           (wait-for
+                                             (corp-install
+                                               state side (nth agendas n) nil
+                                               {:install-state
+                                                (:install-state
+                                                  (card-def (nth agendas n))
+                                                  :unrezzed)})
+                                             (if (< (inc n) (count agendas))
+                                               (continue-ability state side (pdhelper agendas (inc n)) card nil)
+                                               (effect-completed state side eid)))))}
               :no-ability {:async true
                            :effect (req (if (< (inc n) (count agendas))
                                           (continue-ability state side (pdhelper agendas (inc n)) card nil)
@@ -1637,8 +1656,9 @@
                            " from the top of R&D"
                            " and gain 2 [Credits]")
                  :async true
-                 :effect (effect (reveal (first (:deck corp)))
-                                 (gain-credits eid 2))}]
+                 :effect (req (wait-for
+                                (reveal state side (first (:deck corp)))
+                                (gain-credits state side eid 2)))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
@@ -1699,8 +1719,11 @@
                                       :msg (msg "lose [Click], reveal " (:title hq-card)
                                                 " from HQ, and swap it for " (:title target)
                                                 " from Archives")
-                                      :effect (effect (reveal target)
-                                                      (swap-cards hq-card target))})
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (reveal state side target)
+                                                     (swap-cards state side hq-card target)
+                                                     (effect-completed state side eid)))})
                                    card nil))})
                             card nil))}]})
 
@@ -1914,16 +1937,22 @@
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
                 :cost [:trash]
-                :effect (effect (reveal target)
-                                (shuffle! :deck)
-                                (move target :deck))}
+                :async true
+                :effect (req (wait-for
+                               (reveal state side target)
+                               (shuffle! state side :deck)
+                               (move state side target :deck)
+                               (effect-completed state side eid)))}
                {:label "Search Archives for an agenda"
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
                 :cost [:trash]
-                :effect (effect (reveal target)
-                                (move target :deck))}]})
+                :async true
+                :effect (req (wait-for
+                               (reveal state side target)
+                               (move state side target :deck)
+                               (effect-completed state side eid)))}]})
 
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
@@ -2096,10 +2125,12 @@
                 :req (req (seq (filter asset? (:deck corp))))
                 :choices (req (filter asset? (:deck corp)))
                 :async true
-                :effect (req (wait-for (trash state side card nil)
-                                       (reveal state side target)
-                                       (shuffle! state side :deck)
-                                       (corp-install state side eid target nil nil)))}]})
+                :effect (req (wait-for
+                               (trash state side card nil)
+                               (wait-for
+                                 (reveal state side target)
+                                 (shuffle! state side :deck)
+                                 (corp-install state side eid target nil nil))))}]})
 
 (defcard "TechnoCo"
   (letfn [(is-techno-target [card]

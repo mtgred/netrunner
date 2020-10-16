@@ -104,17 +104,20 @@
                   :async true
                   :msg (msg (str "reveal " (string/join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
                   :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
-                  :effect (req (reveal state side (take 3 (:deck corp)))
-                            (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                            (continue-ability state side
-                                              {:prompt "Select a card to add to HQ"
-                                               :async true
-                                               :choices (take 3 (:deck corp))
-                                               :not-distinct true
-                                               :msg "secretly add card to HQ"
-                                               :effect (req (move state side target :hand)
-                                                            (continue-ability state side (reorder-cards) card nil))}
-                                              card nil))}]}))
+                  :effect (req
+                            (wait-for
+                              (reveal state side (take 3 (:deck corp)))
+                              (show-wait-prompt state :runner "Corp to use Bamboo Dome")
+                              (continue-ability
+                                state side
+                                {:prompt "Select a card to add to HQ"
+                                 :async true
+                                 :choices (take 3 (:deck corp))
+                                 :not-distinct true
+                                 :msg "secretly add card to HQ"
+                                 :effect (req (move state side target :hand)
+                                              (continue-ability state side (reorder-cards) card nil))}
+                                card nil)))}]}))
 
 (defcard "Ben Musashi"
   {:trash-effect
@@ -707,13 +710,14 @@
               {:async true
                :effect (req (if (= "None" server)
                               (continue-ability state side (choose-ice remaining grids) card nil)
-                              (do (reveal state side ice)
-                                  (system-msg state side (str "reveals that they drew " (:title ice)))
-                                  (wait-for (corp-install state side ice server {:cost-bonus -4})
-                                            (if (= 1 (count ices))
-                                              (effect-completed state side eid)
-                                              (continue-ability state side (choose-ice remaining grids)
-                                                                card nil))))))}))
+                              (wait-for
+                                (reveal state side ice)
+                                (system-msg state side (str "reveals that they drew " (:title ice)))
+                                (wait-for (corp-install state side ice server {:cost-bonus -4})
+                                          (if (= 1 (count ices))
+                                            (effect-completed state side eid)
+                                            (continue-ability state side (choose-ice remaining grids)
+                                                              card nil))))))}))
           (choose-grid [ice ices grids]
             (if (= 1 (count grids))
               (install-ice ice ices grids (-> (first grids) :zone second zone->name))
@@ -1364,13 +1368,14 @@
                                         (ice? target)
                                         (same-card? :title current-ice target)))}
                :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
-               :effect (req (reveal state side target)
-                            (swap! state update-in [:run :position] inc)
-                            (set-next-phase state :encounter-ice)
-                            (update-all-ice state side)
-                            (update-all-icebreakers state side)
-                            (trash state side eid (assoc target :seen true) nil)
-                            (start-next-phase state side nil))}}}]})
+               :effect (req (wait-for
+                              (reveal state side target)
+                              (swap! state update-in [:run :position] inc)
+                              (set-next-phase state :encounter-ice)
+                              (update-all-ice state side)
+                              (update-all-icebreakers state side)
+                              (trash state side eid (assoc target :seen true) nil)
+                              (start-next-phase state side nil)))}}}]})
 
 (defcard "Tori Hanzō"
   {:events [{:event :pre-resolve-damage

@@ -820,8 +820,8 @@
      :msg (msg "reveal the top 5 cards of their Stack: " (string/join ", " (map :title (take 5 (:deck runner)))))
      :effect (req (let [from (take 5 (:deck runner))]
                     (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
-                    (reveal state side from)
-                    (continue-ability state side (custsec-host from) card nil)))
+                    (wait-for (reveal state side from)
+                              (continue-ability state side (custsec-host from) card nil))))
      :abilities [{:cost [:click 1]
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
@@ -1101,20 +1101,25 @@
 
 (defcard "Equivocation"
   (let [force-draw (fn [title]
-                     {:optional {:prompt (str "Force the Corp to draw " title "?")
-                                 :yes-ability {:async true
-                                               :effect (req (show-wait-prompt state :runner "Corp to draw")
-                                                            (wait-for (draw state :corp 1 nil)
-                                                                      (do (system-msg state :corp (str "is forced to draw " title))
-                                                                          (clear-wait-prompt state :runner)
-                                                                          (effect-completed state side eid))))}}})
-        reveal {:optional {:prompt "Reveal the top card of R&D?"
-                           :yes-ability {:async true
-                                         :effect (req (let [topcard (-> corp :deck first :title)]
-                                                        (reveal state side topcard)
-                                                        (system-msg state :runner (str "reveals " topcard
-                                                                                       " from the top of R&D"))
-                                                        (continue-ability state side (force-draw topcard) card nil)))}}}]
+                     {:optional
+                      {:prompt (str "Force the Corp to draw " title "?")
+                       :yes-ability
+                       {:async true
+                        :effect (req (show-wait-prompt state :runner "Corp to draw")
+                                     (wait-for (draw state :corp 1 nil)
+                                               (do (system-msg state :corp (str "is forced to draw " title))
+                                                   (clear-wait-prompt state :runner)
+                                                   (effect-completed state side eid))))}}})
+        reveal {:optional
+                {:prompt "Reveal the top card of R&D?"
+                 :yes-ability
+                 {:async true
+                  :effect (req (let [topcard (-> corp :deck first :title)]
+                                 (wait-for
+                                   (reveal state side topcard)
+                                   (system-msg state :runner (str "reveals " topcard
+                                                                  " from the top of R&D"))
+                                   (continue-ability state side (force-draw topcard) card nil))))}}}]
     {:events [{:event :successful-run
                :req (req (= (target-server target) :rd))
                :async true
@@ -1140,7 +1145,8 @@
                                                :replace-access
                                                {:msg (msg "reveal cards in HQ: "
                                                           (string/join ", " (map :title (:hand corp))))
-                                                :effect (effect (reveal (:hand corp)))}}
+                                                :async true
+                                                :effect (effect (reveal eid (:hand corp)))}}
                                           card))}]})
 
 (defcard "Faerie"
@@ -2106,22 +2112,23 @@
              :req (req (get-in card [:special :rng-guess]))
              :async true
              :msg (msg "reveal " (:title target))
-             :effect (req (reveal state side target)
-                          (continue-ability
-                            state side
-                            (let [guess (get-in card [:special :rng-guess])]
-                              (when (or (= guess (:cost target))
-                                        (= guess (:advancementcost target)))
-                                {:prompt "Choose RNG Key reward"
-                                 :choices ["Gain 3 [Credits]" "Draw 2 cards"]
-                                 :async true
-                                 :msg (msg (if (= target "Draw 2 cards")
-                                             "draw 2 cards"
-                                             "gain 3 [Credits]"))
-                                 :effect (req (if (= target "Draw 2 cards")
-                                                (draw state :runner eid 2 nil)
-                                                (gain-credits state :runner eid 3)))}))
-                            card nil))}
+             :effect (req (wait-for
+                            (reveal state side target)
+                            (continue-ability
+                              state side
+                              (let [guess (get-in card [:special :rng-guess])]
+                                (when (or (= guess (:cost target))
+                                          (= guess (:advancementcost target)))
+                                  {:prompt "Choose RNG Key reward"
+                                   :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                   :async true
+                                   :msg (msg (if (= target "Draw 2 cards")
+                                               "draw 2 cards"
+                                               "gain 3 [Credits]"))
+                                   :effect (req (if (= target "Draw 2 cards")
+                                                  (draw state :runner eid 2 nil)
+                                                  (gain-credits state :runner eid 3)))}))
+                              card nil)))}
             {:event :post-access-card
              :effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
             (let [highest-cost
@@ -2332,21 +2339,23 @@
                                                (map :title)
                                                (string/join ", ")))
                       :effect
-                      (effect
-                        (reveal (take 3 (:deck corp)))
-                        (continue-ability
-                          {:async true
-                           :prompt "Choose a card to trash"
-                           :not-distinct true
-                           :choices (req (take 3 (:deck corp)))
-                           :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
-                                           target-position (first (positions #{target} (take 3 (:deck corp))))
-                                           position (case target-position 0 "top " 1 "middle " 2 "bottom " "this-should-not-happen ")]
-                                       (if (= 1 (count (filter #{(:title target)} card-titles)))
-                                         (str "trash " (:title target))
-                                         (str "trash " position (:title target)))))
-                           :effect (effect (trash :runner eid (assoc target :seen true) nil))}
-                          card nil))}}
+                      (req
+                        (wait-for
+                          (reveal state side (take 3 (:deck corp)))
+                          (continue-ability
+                            state side
+                            {:async true
+                             :prompt "Choose a card to trash"
+                             :not-distinct true
+                             :choices (req (take 3 (:deck corp)))
+                             :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
+                                             target-position (first (positions #{target} (take 3 (:deck corp))))
+                                             position (case target-position 0 "top " 1 "middle " 2 "bottom " "this-should-not-happen ")]
+                                         (if (= 1 (count (filter #{(:title target)} card-titles)))
+                                           (str "trash " (:title target))
+                                           (str "trash " position (:title target)))))
+                             :effect (effect (trash :runner eid (assoc target :seen true) nil))}
+                            card nil)))}}
                     card))}]})
 
 (defcard "Study Guide"
