@@ -526,11 +526,13 @@
                             (wait-for (resolve-ability
                                         state side
                                         {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
-                                         :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                          :choices {:max dbs
                                                    :card #(some (fn [c] (same-card? c %)) drawn)
                                                    :all true}
                                          :effect (req (doseq [c (reverse targets)]
+                                                        (system-msg state side (str "uses Daily Business Show to add card "
+                                                                                    (+ (first (keep-indexed #(when (same-card? c %2) %1) drawn)) 1)
+                                                                                    " to the bottom of R&D"))
                                                         (move state side c :deck)))}
                                         card targets)
                                       (clear-wait-prompt state :runner)
