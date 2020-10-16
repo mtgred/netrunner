@@ -327,6 +327,7 @@
         (click-prompt state :runner "0")))))
 
 (deftest bass-ch1r180g4
+  ;; Bass CH1R180G4
   (do-game
     (new-game {:corp {:deck ["Bass CH1R180G4"]}})
     (play-from-hand state :corp "Bass CH1R180G4" "New remote")

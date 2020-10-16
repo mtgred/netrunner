@@ -564,6 +564,34 @@
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown"))))
 
+(deftest armand-geist-walker-tech-lord
+  ;; Armand "Geist" Walker: Tech Lord
+  (testing "async costs with sync abilities"
+    (do-game
+      (new-game {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck ["Sure Gamble" "Magnum Opus"]
+                          :hand ["The Class Act" "All-nighter"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Class Act")
+      (play-from-hand state :runner "All-nighter")
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "While resolving the cost, runner doesn't gain any clicks"
+        (println "gain ability")
+        (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
+      (is (second-last-log-contains? state "Runner uses Armand \"Geist\" Walker: Tech Lord")
+          "Geist prints first")
+      (is (last-log-contains? state "Runner uses The Class Act")
+          "The Class Act prints second, with no All-nighter yet")
+      (changes-val-macro
+        2 (:click (get-runner))
+        "After resolving the cost, runner gains 2 clicks"
+        (click-prompt state :runner "Magnum Opus"))
+      (is (second-last-log-contains? state "Runner uses The Class Act"))
+      (is (last-log-contains? state "trashes All-nighter to use All-nighter")
+          "All-nighter is now logged correctly, having paid all costs"))))
+
 (deftest asa-group-security-through-vigilance
   (testing "Asa Group should not allow installing operations"
     (do-game

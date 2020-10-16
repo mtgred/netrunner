@@ -271,18 +271,10 @@
     (effect-completed state side eid)))
 
 (defn- check-ability
-  [state side {:keys [eid async] :as ability} card targets]
-  (cond
-    ;; Can't trigger, so complete the eid and exit
-    (not (can-trigger? state side eid ability card targets))
-    (effect-completed state side eid)
-    ;; Ability is async, so let it complete itself
-    async
+  [state side {:keys [eid] :as ability} card targets]
+  (if (can-trigger? state side eid ability card targets)
     (do-ability state side ability card targets)
-    ;; Ability isn't async, so we have to complete it outselves
-    :else
-    (do (do-ability state side ability card targets)
-        (effect-completed state side eid))))
+    (effect-completed state side eid)))
 
 (defn- print-msg
   "Prints the ability message"
@@ -302,8 +294,9 @@
 (defn- do-effect
   "Trigger the effect"
   [state side {:keys [eid] :as ability} card targets]
-  (when-let [ability-effect (:effect ability)]
-    (ability-effect state side eid card targets)))
+  (if-let [ability-effect (:effect ability)]
+    (ability-effect state side eid card targets)
+    (effect-completed state side eid)))
 
 (defn- ugly-counter-hack
   "This is brought over from the old do-ability because using `get-card` or `find-latest`
@@ -325,15 +318,21 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [eid cost] :as ability} card targets]
+  [state side {:keys [async eid cost] :as ability} card targets]
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
-            (when-let [cost-str async-result]
-              ;; Print the message
-              (print-msg state side ability card targets cost-str)
-              ;; Trigger the effect
-              (register-once state side ability card)
-              (do-effect state side ability (ugly-counter-hack card cost) targets))))
+            ;; If the cost can be and is paid, perform the ablity
+            (if-let [cost-str async-result]
+              (do
+                ;; Print the message
+                (print-msg state side ability card targets cost-str)
+                ;; Trigger the effect
+                (register-once state side ability card)
+                (do-effect state side ability (ugly-counter-hack card cost) targets)
+                ;; If the ability isn't async, complete it
+                (when-not async
+                  (effect-completed state side eid)))
+              (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"
