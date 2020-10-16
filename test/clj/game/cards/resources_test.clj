@@ -2983,6 +2983,7 @@
 
 (deftest no-one-home
   ;; Prevent first tag or net damage of the turn if you beat trace0, then trash
+  (testing "Basic test"
   (do-game
     (new-game {:corp {:deck ["Data Mine" "SEA Source" "Scorched Earth"]}
                :runner {:deck [(qty "No One Home" 3) (qty "Sure Gamble" 2)]}})
@@ -3022,7 +3023,26 @@
       (click-prompt state :runner "Done")
       (core/gain state :corp :credit 4)
       (play-from-hand state :corp "Scorched Earth")
-      (is (zero? (count (:prompt (get-runner)))) "Runner not prompted to avoid meat damage"))))
+      (is (zero? (count (:prompt (get-runner)))) "Runner not prompted to avoid meat damage")))
+  ;; Ensure net damage prevention prompt still appears after receiving meat damage in a turn
+  (testing "Damage order test"
+  (do-game
+    (new-game {:corp {:deck ["Data Mine"]}
+               :runner {:deck [(qty "No One Home" 3) "Sure Gamble" "Respirocytes"]}})
+    (play-from-hand state :corp "Data Mine" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "No One Home")
+    (play-from-hand state :runner "Respirocytes")
+    (let [dm (get-ice state :archives 0)
+          noh (get-resource state 0)]
+      (run-on state "Archives")
+      (rez state :corp dm)
+      (run-continue state)
+      (card-subroutine state :corp dm 0)
+      (card-ability state :runner noh 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented"))))))
 
 (deftest off-campus-apartment
   ;; Off-Campus Apartment
