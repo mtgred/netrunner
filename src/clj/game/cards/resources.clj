@@ -2,6 +2,7 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
+            [clojure.pprint :as pprint]
             [clojure.string :as string]))
 
 (defn- genetics-trigger?
@@ -2601,9 +2602,9 @@
                                    :prompt "Select 1 card to add to the bottom of the stack"
                                    :choices to-draw
                                    :effect (effect (move target :deck)
-                                                   (system-msg (str "uses The Class Act to add card "
-                                                                    (+ 1 (first (keep-indexed #(when (same-card? target %2) %1) to-draw)))
-                                                                    " to the bottom of the Stack"))
+                                                   (system-msg (str "uses The Class Act to add the "
+                                                                    (pprint/cl-format nil "~:R" (+ 1 (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
+                                                                    " card drawn to the bottom of the Stack"))
                                                    (clear-wait-prompt :corp)
                                                    (effect-completed eid))}
                                   card nil))))}]}))

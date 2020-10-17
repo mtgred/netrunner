@@ -2,6 +2,7 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
+            [clojure.pprint :as pprint]
             [clojure.string :as string]))
 
 ;;; Asset-specific helpers
@@ -530,9 +531,9 @@
                                                    :card #(some (fn [c] (same-card? c %)) drawn)
                                                    :all true}
                                          :effect (req (doseq [c (reverse targets)]
-                                                        (system-msg state side (str "uses Daily Business Show to add card "
-                                                                                    (+ (first (keep-indexed #(when (same-card? c %2) %1) drawn)) 1)
-                                                                                    " to the bottom of R&D"))
+                                                        (system-msg state side (str "uses Daily Business Show to add the "
+                                                                                    (pprint/cl-format nil "~:R" (+ 1 (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
+                                                                                    " card drawn to the bottom of R&D"))
                                                         (move state side c :deck)))}
                                         card targets)
                                       (clear-wait-prompt state :runner)
