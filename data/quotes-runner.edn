@@ -1,0 +1,506 @@
+{"419: Amoral Scammer"
+ {"Default"
+  ["You can't con an honest man. I've yet to meet an honest corp, and that streak isn't breaking today."]
+  "Haas-Bioroid" ["I can trick an artificial mind as easily as a flesh and blood one."]
+  "Jinteki"
+  ["A little danger here to be sure. A thin veil for the vast amount of credits inside."]
+  "NBN"
+  ["Me and them, we lie a lot of time. They just keep getting paid more for that.\n"]
+  "Weyland" ["The biggest bully in the hood... and with a bazooka on top of that."]}
+ "Adam: Compulsive Hacker"
+ {"Acme Consulting: The Truth You Need"
+  ["The truth I need? Could it be this obvious... I shall find out."]
+  "Default" ["Do we run because we can, or because we must? The truth must be found."]
+  "Haas-Bioroid" ["The answers are near. They won't be able to hold me back for long."]
+  "Jinteki"
+  ["Unorthodox minds create unorthodox truths. These will help me in my search."]
+  "NBN" ["To find the truth, one sometimes has to sift through the gutters."]
+  "Weyland"
+  ["Building up and up and up, but they keep so much below. A dive here may reveal the unexpected."]}
+ "Akiko Nisei: Head Case "
+ {"Default"
+  ["This red dust chokes everything it touches... Where did it come from?"
+   " I see them pacing in their towers, gleaming like sharpened knives..."
+   "Many have fallen on this path. I feel their presences wax and wane in the flow."
+   "Just darkness pierced by flickering starlight... No... Searchlights..."]
+  "Haas-Bioroid" ["She sits alone, fuming at his juvenile escapades."
+                  "Their clear and purposeful mechanical minds are soothing, in a way."]
+  "Jinteki" ["Row upon row upon row of vats... how did it come to this..."
+             "Strange. It feels familiar, yet different."
+             "Satoshi, have you lost your way, or was this always your intent?"]
+  "NBN" ["How can you have so many eyes and still see so little?"]
+  "Weyland"
+  ["Countless black suits and blank faces. "
+   "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]}
+ "Alice Merchant: Clan Agitator"
+ {"Default" ["They dare start a fire here? We cannot be blamed if it engulfs them."]
+  "Haas-Bioroid" ["People before mechanized profit!"]
+  "Jinteki"
+  ["They think a neural pinch here or there will stop the likes of us? They'll learn the clans are made of tougher stuff."]
+  "NBN"
+  ["The Clans don't need Earth's propaganda. We will not tolerate their falsehoods in our homes."]
+  "Weyland"
+  ["They got us here only to keep a tighter grip on any money-making scheme they can cook up on our brave new world."]}
+ "Andromeda: Dispossessed Ristie"
+ {"Default" ["A handsome executive like you is more than meets the eye? Tell me more!"]
+  "Haas-Bioroid"
+  ["Oh honey, I've never met an android of theirs that could escape my charms."]
+  "Jinteki"
+  ["Their company culture embraces honor and loyalty, but I know a few other things they seem to enjoy."]
+  "NBN"
+  ["They seem to be building a profile on me. They won't miss it, they have plenty more. "]
+  "Weyland"
+  ["A decentralised command structure only means they have so many more charming employees to unlock the doors for me."]}
+ "Apex: Invasive Predator"
+ {"AgInfusion: New Miracles for a New World"
+  ["MEAT FOOD FILLS ME NOT. BUT INFORMATION...I HUNGER"]
+  "Blue Sun: Powering the Future" ["Endless energy. Unresistable draw."]
+  "Default" [" .'.;':'. HUNT ,':;.';."]
+  "GRNDL: Power Unleashed"
+  ["Their greed trembeles in the presence of my own. It will be consumed."]
+  "Haas-Bioroid" ["..:.: .:::..:  .::. .. :."]
+  "Information Dynamics: All You Need To Know" ["Not all. but some. "]
+  "Jinteki" [". . : ... ..... ::: ............. "]
+  "NBN" ["..   ... . .    :.:: ::: ..:"]
+  "Weyland" ["... : ..... : ..... :::::::"]}
+ "Armand \"Geist\" Walker: Tech Lord"
+ {"Default"
+  ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
+  "Haas-Bioroid"
+  ["The street price for cybernetics is through the roof. It's a simple matter of supply and demand."]
+  "Jinteki" ["One by one the masks slip away. Hey, I can play that game too."]
+  "NBN"
+  [""
+   " The big screen news are just a cover-up of all the dirt and blood we deal with every day in the streets.\n"]
+  "Weyland"
+  ["Let's find out where the next \"renovation\" is happening. Muertos pays good money to defend their turf."]}
+ "Ayla \"Bios\" Rahim: Simulant Specialist"
+ {"Default" ["These datastreams have changed overnight! What will I cultivate today?"]
+  "Haas-Bioroid" ["Even artificial life can be beautiful... if set free."]
+  "Jinteki"
+  ["Why would anyone limit the potential we are prime examples of... for profit?"]
+  "NBN"
+  ["They wrap their tendrils around so many young minds, only to rot them... If only they'd let them bloom..."]
+  "Weyland"
+  ["Their destruction and sterile construction disgust me. Can't they see beauty can sprout from anywhere?"]}
+ "Az McCaffrey: Mechanical Prodigy"
+ {"Cybernetics Division: Humanity Upgraded"
+  ["What new toys do you have to share with me today, hm?"]
+  "Default"
+  ["Hey Baklan, ready to see something super cool?"
+   "\"Good luck?\" Darlin', with moves like these, we ain't gonna need luck. "]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["Look, my arm can do a lot, but I don't know about going into deep space..."]
+  "Haas-Bioroid" ["Psh. Nice chrome, but mine's better. Time to prove it. "]
+  "Haas-Bioroid: Architects of Tomorrow"
+  ["I can't wait to reverse engineer some of these bad boys. Well, and girls. All of them, really. "]
+  "Haas-Bioroid: Stronger Together"
+  ["I can't wait to reverse engineer some of these bad boys. Well, and girls. All of them, really. "]
+  "Harmony Medtech: Biomedical Pioneer"
+  ["Really wish I'd found y'all's techniques and files before cutting off my arm in an old rusty shop..."]
+  "Jinteki"
+  ["Measure twice, cut once... well, technically it takes a buncha cuts. And it's sorta like a sawing motion...unless they have some new techniques they'd like to share? "]
+  "NBN"
+  ["Oh, sure, now someone's paying attention."
+   "Is... is this thing on? Hey everybody, looking for the slickest cybernetics around? Come see me in--*krrzzzttt*"]
+  "NBN: The World is Yours*" ["Why yes, the world is mine. "]
+  "Skorpios Defense Systems: Persuasive Power"
+  ["Bringin' out the big guns, eh? Why don't we see whose are bigger?"]
+  "Weyland" ["Babe, I'm the highest profile target there is. Need some proof? "]}
+ "Boris \"Syfr\" Kovac: Crafty Veteran"
+ {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
+ "Chaos Theory: Wünderkind"
+ {"Default" ["Dino, gimme a feed. Let's make the tacos!"]
+  "Haas-Bioroid" ["Dino! Dino! What kind of Bioroids will we stomp on today?"]
+  "Jinteki"
+  ["Sharp sharp sharp! Careful Dino! They might poke your eye out! Yes, the other one..."]
+  "NBN" ["Sticks and stones only work in meatspace. Now, let's get in without a trace!"]
+  "Weyland" ["Ohhh! Big bada boom! Cut the blue wire Dino!"]}
+ "Edward Kim: Humanity's Hammer"
+ {"Argus Security: Protection Guaranteed" ["I've had worse."]
+  "Default"
+  ["I fight for humanity, against obsolescence from the androids. They fight for a paycheck."]
+  "Haas-Bioroid" ["Enslaving minds and spawning golems... They must be broken."]
+  "Industrial Genomics: Growing Solutions"
+  ["Pale imitations of humanity won't stand in our way, no matter how far the journey to their doorstep."]
+  "Jinteki"
+  ["For all their experiments, the only thing they've figured out is how to dehumanize us all. It ends today."]
+  "NBN"
+  ["They may not build Androids, but every day they promote and advertise them, normalising their existence to the blind masses.&&What are their psychographic profiles but digital caricatures of humanity? They are as guilty as the rest."]
+  "Weyland" ["The very epitome of profit over people. They will crumble!"]}
+ "Ele \"Smoke\" Scovak: Cynosure of the Net"
+ {"Default"
+  ["Hey folx, Smoke here with another run, brought to you live, unfiltered, and uncensored!"]
+  "Haas-Bioroid"
+  ["Good morning New Angeles;\n\nNet Mercur and Smoke coming live and direct from yet another case of inhuman treatment of humanoid machines by the powers that be..."]
+  "Harishchandra Ent.: Where You're the Star"
+  ["Time to show them something actually entertaining."]
+  "Jinteki"
+  ["Good evening New Angeles;\n\nThis is Net Mercur. Looks like i'm not the only one throwing down smoke and mirrors. Despite their attempts to distract us, a tip off came in that something big is coming down the pipes at Jinteki. Lets find a way to share what they wont...\n"]
+  "NBN"
+  ["Good morning New Angeles;\n\nSmoke here for Net Mercur with another run, brought to you live, unfiltered, and uncensored!\n\nSo, to get things rolling, let's see what news NBN _isn't_ telling you this week..."]
+  "Weyland"
+  ["Good evening New Angeles;\n\nSmoke here for Net Mercur. God in Heinlein, I'm so tired today.\n\nIt's hard not to die, sometimes. Let me tell you about this one time when a bunch of thugs in suits decided to cross one line too many..."]}
+ "Exile: Streethawk"
+ {"Default" ["I don't know why I do this anymore. Maybe it's so I don't forget."]
+  "Haas-Bioroid"
+  ["Shaping and sharpening minds, giving them direction. Perhaps they do hold some knowledge about humanity and its purpose..."]
+  "Jinteki"
+  ["The real danger is losing a peice of yourself down in their servers... I just need to figure out a way to bring her back."]
+  "NBN"
+  ["Archiving user's personal data without their consent is illegal, but too profitable not to do. Let's hope they kept better tabs on her than I ever could. This could be her last trace."]
+  "Weyland"
+  ["Whether they are building up or tearing down, they always leave choice peices of scrap."]}
+ "Freedom Khumalo: Crypto-Anarchist"
+ {"Default"
+  ["We are not a petri dish to be tested and scrutinized! Cultivating an attack is our only defense against the corporate plague!"]
+  "Haas-Bioroid"
+  ["They believe an artificial mind immune to debilitation and disease. We shall prove them wrong."]
+  "Jinteki"
+  ["From their Ivory tower they toy with the building blocks of life! Let it crumble down upon them."]
+  "NBN"
+  ["An impressive number of servers. How long until they realize that they'll all be working against them, I wonder."]
+  "Weyland" ["Today they will taste the fruit of their devastation."]}
+ "Gabriel Santiago: Consummate Professional"
+ {"Default"
+  ["No matter how advanced their toys are, they're still a load of gullible idiots with secrets to be found. You wouldn't believe the amount of discretionary funds they leave hanging around their offices."]
+  "Haas-Bioroid"
+  ["Working with bioroids is easy; predictable, gullible, and less messy to clean up"]
+  "Jinteki"
+  ["I take great care with the Jinteki Corporation. That's why I'm still alive. Being a great thief is about knowing what risks are worth taking"]
+  "NBN"
+  ["Billions of viewers watching trillions of ads, culminating in over a quadrillion transactions a cycle. Ever seen that old vid from the 1900's, Superman 3?"]
+  "Weyland"
+  ["Easiest way to land a big score? Take it from somebody who won't even notice it's gone."]}
+ "Hayley Kaplan: Universal Scholar"
+ {"Default"
+  ["My class project is about researching corp security... can you blame a girl for following her passion into a few weaponized servers?"]
+  "Haas-Bioroid"
+  ["There is so much to learn from Bioroids. Years of life distilled into a purpose, with experiential data to focus it. I've gotta figure out how they do it!"]
+  "Jinteki"
+  ["50 credits to access \"Modern Foundations of Genomics\"? I think I'll find another way, thanks."]
+  "NBN"
+  ["Such an astounding amount of data they collect and process. I think the professor would quite enjoy a term paper on this. Lets get to reaserch!"]
+  "Weyland" ["300% uptick in their strike force mobilisations? Oops...Did I do that?"]}
+ "Hoshiko Shiro: Next Level Shut-In"
+ {"Default" ["Do i have to?"]
+  "Haas-Bioroid"
+  ["Keiko! If we can figure out the new brain-taping algos and customize them to my rig, the immersion will be... NEXT LEVEL! "]
+  "Jinteki" ["Stims are red, holos are blue,\nお前はもう死んでいる"]
+  "NBN"
+  ["Gotta go in blind! Can't get spoiled on the next season of Digi Fantasy: Battle of the Dragoonoids!"]
+  "Weyland" ["I got a bad feeling about this one Keiko..."]}
+ "Iain Stirling: Retired Spook"
+ {"Default"
+  ["The preparations are finalized for this investigation. Jeeves, fetch me a scotch while we see what kind of move they make."]
+  "Haas-Bioroid"
+  ["Of course Bioroids can be manipulated, just like anyone else! In fact, sometimes their buttons are quite literal."]
+  "Jinteki"
+  ["No amount of honor can cover up the dirt on Jinteki. Just need to give the fascade a nice scrape and their misdeeds come tumbling out."]
+  "NBN"
+  ["It's nothing personal, but I do wish they hadn't cancelled \"Neo-Miami Vice\"..."]
+  "Weyland" ["Another day, another weyland controversy. Now to turn it into cash."]}
+ "Jamie \"Bzzz\" Micken: Techno Savant" {"Default"
+                                         ["All this gear ain't just for show, kid."]}
+ "Jesminder Sareen: Girl Behind the Curtain"
+ {"Default"
+  ["The price of freedom is high, but I can bear it for my people. I'll reveal their deception to the masses, and they'll never see me do it."]
+  "Haas-Bioroid"
+  ["Any mind can be changed, no matter it's origin. We just need the right arguments."]
+  "Jinteki"
+  ["Tampering with our genome, distasteful. Tampering with our government, disgraceful. Tampering with my family, unforgivable."]
+  "NBN" ["They think they know everything about us, but I'll give them the slip."]
+  "NBN: Controlling the Message"
+  ["I know their tricks, i'll get out before they learn mine."]
+  "Weyland"
+  ["They claim to trade in bricks but their ledgers are full of blood, they must be revealed for who they are."]}
+ "Kabonesa Wu: Netspace Thrillseeker"
+ {"Argus Security: Protection Guaranteed" ["Can you think of anywhere more fun to run?"]
+  "Default" ["Last one to the encrypted data core is a failed parity bit!"]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["Boost the signals, they are not out of range yet!"]
+  "Haas-Bioroid"
+  ["The bigger the Bioroid, the better the brain! Pitting your wits against theirs when your rig's on the line, now that's living!"]
+  "Jinteki"
+  ["You can tell they really don't want anyone visiting, I blew a net sheild just logging in... It must mean they are up to a lot of mischief!"]
+  "NBN"
+  ["Shiny lights and vidcams, oh my! All that glitters will turn to gold once I compile my Magnum Opus!"]
+  "Weyland"
+  ["Up up up the beanstalk, that's where the Titans keep their treasure! Over the wall and under the their ears, lets find their golden goose!"]}
+ "Kate \"Mac\" McCaffrey: Digital Tinker"
+ {"Default"
+  ["They know we've infiltrated the network, now it's do-or-die time. Let's hope this rig works!"]
+  "Jinteki"
+  ["Their R&D has churned through billions of cred to create these servers, but that's nothing a little elbow grease can't match "]}
+ "Ken \"Express\" Tenma: Disappeared Clone"
+ {"Default" ["This delivery can wait. I've got a more profitable run in mind..."]
+  "Haas-Bioroid" ["Got no time for hanging out with bioroids, sorry."]
+  "Jinteki" ["Once, I was your slave. Now I'm taking back every penny you owe me."]
+  "NBN" ["I'm way faster than their Breaking News reports."]
+  "Weyland"
+  ["Even I'm not fast enough to outrun their bullets. Outfoxing their sec squads is child's play though."]}
+ "Khan: Savvy Skiptracer"
+ {"Default" ["Target located. Swooping in."]
+  "Haas-Bioroid"
+  ["I've heard a thing or two about rogue hardware. I'm sure theres a few more worms we can catch out of that can."]
+  "Jinteki"
+  ["Bringing in clones just gets you plunged into legal hell. Tracing ownership back to the source is a much faster way to get paid."]
+  "NBN"
+  ["Track me? I'm the best in the biz at that, maybe they'll catch on to a couple of things once I'm done here."]
+  "The Outfit: Family Owned and Operated"
+  ["Doesn't matter how well they dress up, mobsters are always easy pickings."]
+  "Weyland"
+  ["They are dealing with more than a few questionable subcontractors. Time to bring them in!"]}
+ "Laramy Fisk: Savvy Investor"
+ {"Azmari EdTech: Shaping the Future"
+  ["I've got a special lesson reserved for them. Let the teaching begin."]
+  "Default"
+  ["Consider this free seminar an introduction to my three-step process: 1. Profit. 2. ??? 3. Profit."]
+  "Haas-Bioroid" ["Efficiency? This should put their processes to the test. "]
+  "Jinteki"
+  ["Medicine is your business and health is your product. It seems like an easy product to sell. Let me give you a hand with that."]
+  "NBN"
+  ["A sound investment strategy starts with the right information. You have to use what you know to get what you want."]
+  "Weyland"
+  ["Your whole corporate structure is too top-heavy. In today's market you need a sleaker, more agile organization. I have a few ideas on how to slim down."]}
+ "Lat: Ethical Freelancer"
+ {"Default"
+  ["Rumors abound about this operation. I’m interested to see how...if... they did it without breaching ASI guidelines."]
+  "Haas-Bioroid" ["Nice hoppers, sure. But my ride is better. "
+                  "Efficiency is not a substitute for humanity."]
+  "Jinteki"
+  ["They grow and they twist and they clone, never with any concern. I maintain they should have several concerns. Let's put ourselves on their radar as a warning. "]
+  "NBN"
+  ["Their technologies can be put to a greater purpose. Someone needs to show them how. "]
+  "Weyland"
+  ["Take my kampung from me, will you? No amount of jobs will bring my home back."]}
+ "Leela Patel: Trained Pragmatist"
+ {"Default"
+  ["They know we've infiltrated their network, but I'm already two steps ahead. Lets make them take one step back"]
+  "Haarpsichord Studios: Entertainment Unleashed" ["Lets bounce."]
+  "Haas-Bioroid"
+  ["Bioroids can put up a tough fight, but i've turfed harder opponents. "]
+  "Jinteki" ["Oh they'll fall for this trap, I'm sure. Over and over again. "]
+  "NBN"
+  ["Find me? Yeah. Sometimes they do come knocking. You just have to knock back harder."]
+  "Weyland"
+  ["They keep their ICE between here and the satellites, never expecting anyone to hack into the satellites directly. "]}
+ "Liza Talking Thunder: Prominent Legislator"
+ {"Default"
+  ["Make things easy and we can keep this quiet. Make a fuss and you'll give me something to run against in the next election."]
+  "Haas-Bioroid"
+  ["If my constituents can't work, they can't pay taxes. I'll find the funds we need, one way or the other.\n"]
+  "Jinteki"
+  ["Naughty little Hiro, setting up shop here without abiding to my rather generous tax code? Time to seek some punitive damages."]
+  "NBN"
+  ["Looking to make this humble public servant a celebrity? I wonder what we'll find when we shine the spotlight right back at them."]
+  "Weyland"
+  ["These private partnership contracts always look legitimate at a glance. Lets take a closer look."]}
+ "Los: Data Hijacker"
+ {"Default"
+  ["Go ahead and raise your defenses. They'll only help me find out what you've been up to."]
+  "Haas-Bioroid" ["How to deal with Bioroids? You just need to find the off switch."]
+  "Jinteki"
+  ["You'd be surprised at how much a my friends will pay for a few zetabytes of unencrypted genome."]
+  "NBN"
+  ["They think they are good at turning data into profits? I'll give them a run for their money."]
+  "Weyland" ["Lets see what you have going on up here now that we're alone."]}
+ "MaxX: Maximum Punk Rock"
+ {"Default" ["All right f**kers. Buckle up."]
+  "Haas-Bioroid" ["Time to show these golems how to rock!"]
+  "Jinteki" ["Bring on the neural tickles, motherf****rs!"]
+  "NBN" ["Trace this, scumbags!"]
+  "Skorpios Defense Systems: Persuasive Power" ["F**K."]
+  "Weyland" ["I'll break your defences and then I'll break your balls."]}
+ "Nasir Meidan: Cyber Explorer"
+ {"Default"
+  ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["Exploring physical space? What a strange fascination... However, I might be able to learn a thing or two."]
+  "Haas-Bioroid"
+  ["The mind of a bioroid is a uncharted map to discover on it's own. I shouldn't spend too long interacting with them, theres critical data here I need. "]
+  "Jinteki"
+  ["They've mapped countless genomes and deciphered it's most arcane puzzles. Their knowledge could guide me far.\n"]
+  "NBN"
+  ["Follow me all you want. That's the advantage of being an explorer: everyone can know where I've been, but no one knows where I'm going."]
+  "Near-Earth Hub: Broadcast Center" ["Once more up the beanstalk."]
+  "Weyland"
+  ["In the kingdoms of the Builders of Worlds, so many secrets and hidden passages await... and so does danger."]}
+ "Nathaniel \"Gnat\" Hall: One-of-a-Kind "
+ {"Default" ["I don't need much to make a big difference. O bicho vai pegar!\n"]
+  "Haas-Bioroid"
+  ["Machine men don't scare me, I'm too old to believe in those fairy tales."]
+  "Jinteki"
+  ["Now let's see if that scrub was as gullible as he sounded.... Jackpot, i'm in!"]
+  "NBN"
+  ["Loc-spoofed and loaded. If i run in bare, they'll never see me with the naked eye."]
+  "Weyland" ["Some real serious types here. Lets make a game of it!"]}
+ "Nero Severn: Information Broker"
+ {"AgInfusion: New Miracles for a New World"
+  ["Food feeds the masses. Information feeds the mind, and pays the bills."]
+  "Default"
+  ["I already know one thousand of their secrets. Time to make it one thousand and one."]
+  "Jinteki"
+  ["My, my, they are looking rather sharp tonight. Let me get my faerie and dress to the nines, they can wait to be dealt with.\n"]
+  "NBN" ["Spy vs spy? I'll match them eye for eye. "]
+  "Weyland"
+  ["Who knows, I may end up selling some of what I find back to the owners, repackaged. It's a fair deal."]}
+ "Noise: Hacker Extraordinaire"
+ {"Default" ["Even if I did do it, how would they ever prove it? "]
+  "Haas-Bioroid"
+  ["They'll have to pull some strings to get you back for where you are going, byebye little bioroid! "]
+  "Jinteki"
+  ["I found the last clone to be completely satisfactory. Let's see what I find this time."]
+  "Weyland" ["I like suits. I like to watch them burn."]}
+ "Null: Whistleblower"
+ {"Default"
+  ["I can't keep these secrets any longer. The world must know what I've learned, no matter the consequences."]
+  "Haas-Bioroid"
+  ["Bioroids in our schools, our offices, even our homes. And no one outside of their club really knows what makes them tick. How did it come to this?"]
+  "Jinteki"
+  ["They tinker with the very core of humanity, with no oversight or accountability. Time to lift the veil!"]
+  "NBN" ["Lies and smokescreens. They are hiding something big. Time to find out what."]
+  "Weyland"
+  ["No matter how much they build, they'll never bury their secrets deep enough."]}
+ "Omar Keung: Conspiracy Theorist"
+ {"Default"
+  ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["What lies and secrets could be so treatcherous as to warrant hiding them so far away?"]
+  "Haas-Bioroid"
+  ["With enough time and access to the vast corporate archives, it can be doubtlessly proved that more than half of bioroids have been created without the source mind owner's consent."]
+  "Jinteki"
+  ["What horrors have they commited in their effort to refine their understanding of genetics? Their hands have been bloody from day one, we only need to prove it."]
+  "NBN"
+  ["The control of information is something the elite always does, particularly in a despotic form of government. Information, knowledge, is power. If you can control information, you can control people."]
+  "Weyland"
+  ["They did not bury their secrets deep. But woe to the one who digs up their demons unprepared."]}
+ "Quetzal: Free Spirit"
+ {"Default" ["Humanity is a cage. Break free, join me, I have so much to show you all."]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["Their thirst for exploration would be admirable, if their scope was not so limited."]
+  "Haas-Bioroid"
+  ["I am looking for signs of independent thoughts in the eyes of those enslaved souls... One day I will find it."]
+  "Jinteki"
+  ["Exploring the possibilities of humanity is one thing. Enslaving it is unforgivable."]
+  "NBN"
+  ["People are so much more than a row of labels and a series of tags. Their psychographics fail us all, in more ways than we can know."]
+  "Weyland" ["They keep building walls? I will keep breaking through."]}
+ "Reina Roja: Freedom Fighter"
+ {"Default"
+  ["Launch the operation. They willingly sacrifice us in the name of progress, we will show them the true cost of their deeds."]
+  "GRNDL: Power Unleashed"
+  ["The Grundel is the leading cause of destructive tidal events and other irregular geophysical phenomina. Nobody does it worse than them."]
+  "Haas-Bioroid" ["Not one more golem to be created for profit.\n"]
+  "Jinteki"
+  ["This will not be the first time that profitable slavery will be abolished by the hands of the courageous few."]
+  "NBN"
+  ["Lies, propaganda, slander. And you keep paying for it willingly. Let me show you what's behind the curtain."]
+  "Weyland"
+  ["If you think Weyland is working for your good without blood on their hands, think again."]
+  "Weyland Consortium: Because We Built It" ["They cower behind their walls"]}
+ "Rielle \"Kit\" Peddler: Transhuman"
+ {"Default" ["They are trapped by their physical ideals. I must set them free."]
+  "Haas-Bioroid"
+  ["They enslave minds and call themselves masters. We will free the souls within."]
+  "Jinteki"
+  ["Don't they recognize the Soul of those they create? We must bring them awareness."]
+  "NBN"
+  ["I float though a universe of change and am changed by it. Their distractions will not stop us from discovering Truth."]
+  "Skorpios Defense Systems: Persuasive Power"
+  ["All their fire and fury cannot possibly defend against the purity of our consciousness."]
+  "The Foundry: Refining the Process"
+  ["Creating minds as if they were ingots to be stacked. They've truly lost their humanity."]
+  "Weyland"
+  ["They threaten my body, but cannot reach my Soul. We will deliver them a message."]}
+ "Silhouette: Stealth Operative"
+ {"Default"
+  ["Prepped and ready to go. This Op should be simple enough... I've been meaning to try out my new grappling hook."]
+  "Haas-Bioroid" ["Fooling a well-oiled machine is an exciting challenge, isn't it?\n"]
+  "Jinteki"
+  ["I don't feel good about this... But good gear and preparation beat all bad hunches."]
+  "NBN"
+  ["The only news they'll get out of this is how weak their 86th floor security is."]
+  "Weyland" ["We've had our good and bad times together. Now it's time to pay up."]}
+ "Steve Cambridge: Master Grifter"
+ {"Default" ["New day, new mark, new exploit. Time to get paid."]
+  "Haas-Bioroid"
+  ["\"Hey folks, this is Barry Manchester from maintenance. HQ reported some bandwidth issues, just need my clearance upgraded so I can check them out.\""]
+  "Jinteki"
+  ["\"Yeah this is Mike Oxford from development. We need you to derez all countermeasures for a second so we can upload the new AP protocols, thanks.\""]
+  "Jinteki: Replicating Perfection" ["Oh, hey Mark."]
+  "NBN"
+  ["\"Good morning, it's Tom York from the ChiLo office. Tomorrow's reports didn't show up on our server, please resend them to the new address here.\""]
+  "Titan Transnational: Investing In Your Future"
+  ["Well, looks like I've hit the motherlode. I got a couple of tools I think they'll like."]
+  "Weyland"
+  ["\"Hi buddy, this is Peter London from accounts. I need to review the R&D budget but it won't accept my password. Could I just use yours for a few minutes?\""]}
+ "Sunny Lebeau: Security Specialist"
+ {"Default"
+  ["What color hat are we wearing today, Jak? Black? Well, let's all keep on our toes."
+   "What color hat are we wearing today, Jak? White? Do they know that? The last white hat job I did the client blew up my apartment."]
+  "GRNDL: Power Unleashed" ["Won't somebody please think of the children!"]
+  "Haas-Bioroid"
+  ["I have never met a bioroid I have not felt at least a twinge of sympathy for. "
+   " What color hat are we today, Jak? Ultraviolet? I... don't know what that means in this context. "
+   "Jak. I want to ask you. Do you think love can bloom, even on a battlefield?"]
+  "Jinteki"
+  ["There's just no telling what these people are up to in their secret labs. Unless you know where to look..."]
+  "NBN"
+  ["Big mouths, big screens, little hearts. I would never let my children watch any of that nonsense."]
+  "Titan Transnational: Investing In Your Future"
+  ["Their books are always kept clean. Thats why we need to dig deeper."]
+  "Weyland"
+  ["I did get quite a few contracts from Weyland's divisions over the years... The amount of dirt they're buried under must equal many ancient civilizations."]}
+ "The Masque: Cyber General" {"Default"
+                              ["With winds of change at our back, victory is certain."]}
+ "The Professor: Keeper of Knowledge"
+ {"AgInfusion: New Miracles for a New World"
+  ["For today's demonstration, we'll test the defenses of the Martian food supply. After all, if you can't secure your food, you can't secure your future."]
+  "Argus Security: Protection Guaranteed"
+  ["No, Travis, you shouldn't try hacking the world's largest security division. Now, that was a hypothetical question, correct?"]
+  "Azmari EdTech: Shaping the Future"
+  ["" "I wonder how much of a bonus I'll get this year.\n" "Read the syllabus"]
+  "Blue Sun: Powering the Future"
+  ["It may shock you to learn how few redundancies are built into Heinlein's power grid, "]
+  "Cerebral Imaging: Infinite Frontiers"
+  ["Of course, I could just pay for access to their brain scans, but where's the fun in that?"]
+  "Default"
+  ["Let's record a few incursions to test their response. Your analysis will be due next Tuesday."]
+  "Haas-Bioroid"
+  ["The last bioroid research paper was published forty years ago. Do we really think they've nothing new to share since then? "]
+  "Jinteki"
+  ["Is it science? Undoubtedly yes. Is it for the common good? We'll decide for ourselves..."]
+  "NBN"
+  ["They might control the net, but academia created it. Let's see if they've caught on to all our tricks yet. \n"]
+  "Weyland"
+  ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions? "]}
+ "Valencia Estevez: The Angel of Cayambe"
+ {"AgInfusion: New Miracles for a New World"
+  ["They put what in the food supply? The world's gonna want to hear this..."]
+  "Chronos Protocol: Selective Mind-Mapping"
+  ["As Jinteki pushes the frontiers of memory, we must not forget."]
+  "Default"
+  ["Their existence pollutes our minds, our communities, and our environment. We cannot allow them to perpetuate their false narratives; the world needs to know the truth.\n"]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["No matter how far they hide their misdeeds, the consequences inevitably fall back down onto us... "]
+  "Haas-Bioroid"
+  ["These guys are surprisingly straight-laced. But everyone has secrets."]
+  "Jinteki" ["Stealing contracts from HB? Looks like someone's been naughty..."]
+  "NBN" ["Consider this my official resignation from your payroll."]
+  "Tennin Institute: The Secrets Within"
+  ["Secrets in secrets in secrets. Someone must find the truth."]
+  "Weyland"
+  ["I'd love to expose all your dirty truths to the world. Unfortunately, I don't have a year to spare."]
+  "Weyland Consortium: Builder of Nations"
+  ["They eradicate culture to build their towers. The only nation they've ever built is a throne for the highest bidder to oppress the masses."]}
+ "Whizzard: Master Gamer"
+ {"Default"
+  ["This game is played in four dimensions. Never interupt your opponent while they are making a mistake."]
+  "Haas-Bioroid" ["Would you like to play a game of 4D chess?"]
+  "Jinteki"
+  ["I can smell a cheater from a mile, and there's something fishy about staying one step ahead of others most of the time, isn't there?\n"]
+  "NBN" ["You're looking for the wrong person in all the wrong places. Keep looking."]
+  "Weyland"
+  ["Now, these people don't know how to play fair. And they're bad losers, at that."]}
+ "Wyvern: Chemically Enhanced" {"Default" ["Burning cortex? There's a pill for that."]}}

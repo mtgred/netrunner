@@ -1,21 +1,35 @@
-(in-ns 'game.core)
-
-;;;; Various functions for checking small "flag" values of cards, runs, players, etc.
+(ns game.core.flags
+  (:require [clojure.string :as string]
+            [game.core.board :refer [all-active all-installed]]
+            [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.eid :refer [make-eid]]
+            [game.core.servers :refer [zone->name]]
+            [game.core.to-string :refer [card-str]]
+            [game.core.toasts :refer [toast]]
+            [game.utils :refer [same-side? same-card?]]))
 
 (defn card-flag?
-  "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
+  "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
   ;; TODO: add a register for mutable state card flags, separate from this
-  [card flag-key value]
-  (let [cdef (card-def card)]
-    (= value (get-in cdef [:flags flag-key]))))
+  ([card flag-key]
+   (let [cdef (card-def card)]
+     (some? (get-in cdef [:flags flag-key]))))
+  ([card flag-key value]
+   (let [cdef (card-def card)]
+     (= value (get-in cdef [:flags flag-key])))))
 
 (defn card-flag-fn?
   "Checks the card to see if it has a :flags entry of the given flag-key, whose value is a four-argument
   function that returns the given value"
-  [state side card flag-key value]
-  (let [cdef (card-def card)
-        func (get-in cdef [:flags flag-key])]
-    (and func (= (func state side (make-eid state) card nil) value))))
+  ([state side card flag-key]
+   (let [cdef (card-def card)
+         func (get-in cdef [:flags flag-key])]
+     (func state side (make-eid state) card nil)))
+  ([state side card flag-key value]
+   (let [cdef (card-def card)
+         func (get-in cdef [:flags flag-key])]
+     (and func (= (func state side (make-eid state) card nil) value)))))
 
 (defn any-flag-fn?
   "Checks `card-flag-fn? on all installed cards on specified side for the value with the flag-key
@@ -25,16 +39,10 @@
   ([state side flag-key value cards]
    (some #(card-flag-fn? state side % flag-key value) cards)))
 
-(defn is-tagged?
-  "Returns true if the runner is tagged."
-  [state]
-  (or (pos? (get-in state [:runner :tag]))
-      (pos? (get-in state [:runner :tagged]))))
-
 ;;; Generic flag functions
 (defn- register-flag!
   "Register a flag of the specific type."
-  [state side card flag-type flag condition]
+  [state _ card flag-type flag condition]
   (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
 
 (defn- check-flag?
@@ -60,8 +68,8 @@
 
 (defn has-flag?
   "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
-  [state side flag-type flag]
-  (not (empty? (get-in @state [:stack flag-type flag]))))
+  [state _ flag-type flag]
+  (not-empty (get-in @state [:stack flag-type flag])))
 
 (defn- clear-all-flags!
   "Clears all flags of specified type"
@@ -70,9 +78,9 @@
 
 (defn- clear-flag-for-card!
   "Remove all entries for specified card for flag-type and flag"
-  [state side card flag-type flag]
+  [state _ card flag-type flag]
   (swap! state update-in [:stack flag-type flag]
-         (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
+         (fn [flag-map] (remove #(= (get-cid %) (:cid card)) flag-map))))
 
 ;; Currently unused
 (defn clear-all-flags-for-card!
@@ -175,136 +183,30 @@
 
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.
-(defn prevent-draw [state side]
+(defn prevent-draw [state _]
   (swap! state assoc-in [:runner :register :cannot-draw] true))
 
-(defn prevent-jack-out [state side]
+(defn prevent-jack-out [state _]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
-;; This function appears unused as well
-(defn prevent-steal [state side]
-  (swap! state assoc-in [:runner :register :cannot-steal] true))
-
-(defn prevent-current [state side]
+(defn prevent-current [state _]
   (swap! state assoc-in [:runner :register :cannot-play-current] true))
 
-(defn lock-zone [state side cid tside tzone]
+(defn lock-zone [state _ cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(conj % cid)))
 
-(defn release-zone [state side cid tside tzone]
+(defn release-zone [state _ cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-(defn lock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(conj % cid)))
-
-(defn unlock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(remove #{cid} %)))
-
-;;; Small utilities for card properties.
-(defn in-server?
-  "Checks if the specified card is installed in -- and not PROTECTING -- a server"
-  [card]
-  (= (last (:zone card)) :content))
-
-(defn in-hand?
-  "Checks if the specified card is in the hand."
-  [card]
-  (= (:zone card) [:hand]))
-
-(defn in-discard?
-  "Checks if the specified card is in the discard pile."
-  [card]
-  (= (:zone card) [:discard]))
-
-(defn is-scored?
-  "Checks if the specified card is in the scored area of the specified player."
-  [state side card]
-  (some #(= (:cid %) (:cid card)) (get-in @state [side :scored])))
-
-(defn when-scored?
-  "Checks if the specified card is able to be used for a when-scored text ability"
-  [card]
-  (not (:not-when-scored (card-def card))))
-
-(defn in-deck?
-  "Checks if the specified card is in the draw deck."
-  [card]
-  (= (:zone card) [:deck]))
-
-(defn facedown?
-  "Checks if the specified card is facedown."
-  [card]
-  (or (= (:zone card) [:rig :facedown]) (:facedown card)))
-
-(defn in-corp-scored?
-  "Checks if the specified card is in the Corp score area."
-  [state side card]
-  (is-scored? state :corp card))
-
-(defn in-runner-scored?
-  "Checks if the specified card is in the Runner score area."
-  [state side card]
-  (is-scored? state :runner card))
-
-(defn is-type?
-  "Checks if the card is of the specified type, where the type is a string."
-  [card type]
-  (card-is? card :type type))
-
-(defn has-subtype?
-  "Checks if the specified subtype is present in the card.
-  Mostly sugar for the has? function."
-  [card subtype]
-  (has? card :subtype subtype))
-
-(defn can-host?
-  "Checks if the specified card is able to host other cards"
-  [card]
-  (or (not (rezzed? card)) (not (:cannot-host (card-def card)))))
-
-(defn ice? [card]
-  (is-type? card "ICE"))
-
-(defn program? [card]
-  (is-type? card "Program"))
-
-(defn hardware? [card]
-  (is-type? card "Hardware"))
-
-(defn resource? [card]
-  (is-type? card "Resource"))
-
-(defn rezzed? [card]
-  (:rezzed card))
-
-(defn faceup? [card]
-  (or (:seen card) (:rezzed card)))
-
-(defn installed? [card]
-  (or (:installed card) (= :servers (first (:zone card)))))
-
-(defn active?
-  "Checks if the card is active and should receive game events/triggers."
-  [{:keys [zone] :as card}]
-  (or (is-type? card "Identity")
-      (= zone [:current])
-      (and (card-is? card :side :corp)
-           (installed? card)
-           (rezzed? card))
-      (and (card-is? card :side :runner)
-           (installed? card)
-           (not (facedown? card)))))
+(defn zone-locked?
+  [state side zone]
+  (seq (get-in @state [side :locked zone])))
 
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
 (defn untrashable-while-resources? [card]
   (and (card-flag? card :untrashable-while-resources true) (installed? card)))
-
-(defn install-locked?
-  "Checks if installing is locked"
-  [state side]
-  (seq (get-in @state [side :lock-install])))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.
@@ -316,7 +218,7 @@
   :req does not meet rez requirement"
   [state side card]
   (let [uniqueness (:uniqueness card)
-        req (:rez-req (card-def card))]
+        rez-req (:rez-req (card-def card))]
     (cond
       ;; Card on same side?
       (not (same-side? side (:side card))) :side
@@ -324,16 +226,16 @@
       (not (run-flag? state side card :can-rez)) :run-flag
       (not (turn-flag? state side card :can-rez)) :turn-flag
       ;; Uniqueness check
-      (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
+      (and uniqueness (some #(and (rezzed? %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
-      (and req (not (req state side (make-eid state) card nil))) :req
+      (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true
-      :default true)))
+      :else true)))
 
 (defn can-rez?
   "Checks if the card can be rezzed. Toasts the reason if not."
   ([state side card] (can-rez? state side card nil))
-  ([state side card {:keys [ignore-unique] :as args}]
+  ([state side card {:keys [ignore-unique]}]
    (let [reason (can-rez-reason state side card)
          reason-toast #(do (toast state side %) false)
          title (:title card)]
@@ -358,13 +260,19 @@
   (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
+(defn can-trash?
+  "Checks if the runner can trash cards"
+  [state side card]
+  (and (check-flag-types? state side card :can-trash [:current-turn :current-run])
+       (check-flag-types? state side card :can-trash [:current-turn :persistent])))
+
 (defn can-run?
   "Checks if the runner is allowed to run"
   [state side]
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot run due to " (join ", " (map :title cards))))
+      (do (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
         false))))
 
 (defn can-access?
@@ -378,7 +286,7 @@
   (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot access " (card-str state card) " because of " (join ", " (map :title cards))) "info")
+      (do (toast state side (str "Cannot access " (card-str state card) " because of " (string/join ", " (map :title cards))) "info")
           false))))
 
 (defn can-advance?
@@ -389,37 +297,107 @@
 (defn can-score?
   "Checks if the corp can score cards"
   [state side card]
-  (check-flag-types? state side card :can-score [:current-turn :persistent]))
+  (and
+    (some? card)
+    ;; The agenda has enough agenda counters to legally score
+    (let [cost (or (:current-cost card)
+                   (:advancementcost card))]
+      (and cost
+           (<= cost (get-counters card :advancement))))
+    ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
+    (check-flag-types? state side card :can-score [:current-turn :persistent])
+    ;; An effect hasn't set a card as unable to be scored (Clot)
+    (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
+    ;; A terminal operation hasn't been played
+    (not (get-in @state [:corp :register :terminal]))))
 
-(defn can-be-advanced?
-  "Returns true if the card can be advanced"
-  [card]
-  (or (card-is? card :advanceable :always)
-      ;; e.g. Tyrant, Woodcutter
-      (and (card-is? card :advanceable :while-rezzed)
-           (rezzed? card))
-      ;; e.g. Haas Arcology AI
-      (and (card-is? card :advanceable :while-unrezzed)
-           (not (rezzed? card)))
-      (and (is-type? card "Agenda")
-           (installed? card))))
+(defn is-scored?
+  "Checks if the specified card is in the scored area of the specified player."
+  [state side card]
+  (some #(same-card? % card) (get-in @state [side :scored])))
 
-(defn card-is-public? [state side {:keys [zone] :as card}]
+(defn in-corp-scored?
+  "Checks if the specified card is in the Corp score area."
+  [state _ card]
+  (is-scored? state :corp card))
+
+(defn in-runner-scored?
+  "Checks if the specified card is in the Runner score area."
+  [state _ card]
+  (is-scored? state :runner card))
+
+(defn card-is-public?
+  [state side {:keys [zone] :as card}]
   (if (= side :runner)
     ;; public runner cards: in hand and :openhand is true;
     ;; or installed/hosted and not facedown;
     ;; or scored or current or in heap
-    (or (card-is? card :side :corp)
-        (and (:openhand (:runner @state)) (in-hand? card))
-        (and (or (installed? card) (:host card)) (not (facedown? card)))
+    (or (corp? card)
+        (and (:openhand (:runner @state))
+             (in-hand? card))
+        (and (or (installed? card)
+                 (:host card))
+             (not (facedown? card)))
         (#{:scored :discard :current} (last zone)))
     ;; public corp cards: in hand and :openhand;
     ;; or installed and rezzed;
     ;; or in :discard and :seen
     ;; or scored or current
-    (or (card-is? card :side :runner)
-        (and (:openhand (:corp @state)) (in-hand? card))
-        (and (or (installed? card) (:host card))
-             (or (is-type? card "Operation") (rezzed? card)))
+    (or (runner? card)
+        (and (:openhand (:corp @state))
+             (in-hand? card))
+        (and (or (installed? card)
+                 (:host card))
+             (or (operation? card)
+                 (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
+
+(defn can-host?
+  "Checks if the specified card is able to host other cards"
+  [card]
+  (or (not (rezzed? card))
+      (not (:cannot-host (card-def card)))))
+
+(defn when-scored?
+  "Checks if the specified card is able to be used for a when-scored text ability"
+  [card]
+  (not (:not-when-scored (card-def card))))
+
+(defn ab-can-prevent?
+  "Checks if the specified ability definition should prevent.
+  Checks for a :req in the :prevent map of the card-def.
+  Defaults to false if req check not met"
+  ([state side card req-fn target args]
+   (ab-can-prevent? state side (make-eid state) card req-fn target args))
+  ([state side eid card req-fn target args]
+   (cond
+     req-fn (req-fn state side eid card (list (assoc args :prevent-target target)))
+     :else false)))
+
+(defn get-card-prevention
+  "Returns card prevent abilities for a given type"
+  [card type]
+  (filter #(contains? (:type %) type)
+          (-> card card-def :interactions :prevent)))
+
+(defn card-can-prevent?
+  "Checks if a cards req (truthy test) can be met for this type"
+  [state side card type target args]
+  (->> (get-card-prevention card type)
+       (map #(ab-can-prevent? state side card (:req %) target args))
+       (some #(-> % false? not))))
+
+(defn cards-can-prevent?
+  "Checks if any cards in a list can prevent this type"
+  ([state side cards type] (cards-can-prevent? state side cards type nil nil))
+  ([state side cards type target args]
+   (->> cards
+        (map #(card-can-prevent? state side % type target args))
+        (some true?))))
+
+(defn get-prevent-list
+  "Get list of cards that have prevent for a given type"
+  [state side type]
+  (filter #(seq (get-card-prevention % type))
+          (all-active state side)))

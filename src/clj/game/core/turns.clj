@@ -1,255 +1,162 @@
-(in-ns 'game.core)
+(ns game.core.turns
+  (:require
+    [game.core.agendas :refer [update-all-advancement-costs]]
+    [game.core.board :refer [all-active all-active-installed all-installed]]
+    [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
+    [game.core.drawing :refer [draw]]
+    [game.core.effects :refer [unregister-floating-effects]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
+    [game.core.gaining :refer [gain lose]]
+    [game.core.hand-size :refer [hand-size]]
+    [game.core.ice :refer [update-all-ice update-breaker-strength]]
+    [game.core.moving :refer [move]]
+    [game.core.props :refer [set-prop]]
+    [game.core.say :refer [system-msg]]
+    [game.core.toasts :refer [toast]]
+    [game.core.update :refer [update!]]
+    [game.core.winning :refer [flatline]]
+    [game.macros :refer [continue-ability req wait-for]]
+    [game.utils :refer [abs dissoc-in quantify]]
+    [clojure.string :as string]))
 
-(declare all-active card-flag-fn? clear-turn-register! clear-wait-prompt create-deck hand-size keep-hand mulligan
-         show-wait-prompt turn-message)
-
-(def game-states (atom {}))
-
-(defn- card-implemented
-  "Checks if the card is implemented. Looks for a valid return from `card-def`.
-  If implemented also looks for `:implementation` key which may contain special notes.
-  Returns either:
-    nil - not implemented
-    :full - implemented fully
-    msg - string with implementation notes"
-  [card]
-  (when-let [cdef (card-def card)]
-    ;; Card is defined - hence implemented
-    (if-let [impl (:implementation cdef)]
-      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
-      (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
-
-;;; Functions for the creation of games and the progression of turns.
-(defn init-identity
-  "Initialise the identity"
-  [state side identity]
-  (card-init state side identity)
-  (when-let [baselink (:baselink identity)]
-    (gain state side :link baselink)))
-
-(defn- init-hands [state]
-  (draw state :corp 5 {:suppress-event true})
-  (draw state :runner 5 {:suppress-event true})
-  (when (and (-> @state :corp :identity :title)
-             (-> @state :runner :identity :title))
-    (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
-  (doseq [side [:corp :runner]]
-    (when (-> @state side :identity :title)
-      (show-prompt state side nil "Keep hand?"
-                   ["Keep" "Mulligan"]
-                   #(if (= % "Keep")
-                      (keep-hand state side nil)
-                      (mulligan state side nil))))))
-
-(defn init-game
-  "Initializes a new game with the given players vector."
-  [{:keys [players gameid spectatorhands room] :as game}]
-  (let [corp (some #(when (= (:side %) "Corp") %) players)
-        runner (some #(when (= (:side %) "Runner") %) players)
-        corp-deck (create-deck (:deck corp) (:user corp))
-        runner-deck (create-deck (:deck runner) (:user runner))
-        corp-deck-id (get-in corp [:deck :_id])
-        runner-deck-id (get-in runner [:deck :_id])
-        corp-options (get-in corp [:options])
-        runner-options (get-in runner [:options])
-        corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
-        corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
-        runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
-        state (atom
-                {:gameid gameid :log [] :active-player :runner :end-turn true
-                 :room room
-                 :rid 0 :turn 0 :eid 0
-                 :sfx [] :sfx-current-id 0
-                 :options {:spectatorhands spectatorhands}
-                 :corp {:user (:user corp) :identity corp-identity
-                        :options corp-options
-                        :deck (zone :deck corp-deck)
-                        :deck-id corp-deck-id
-                        :hand []
-                        :discard [] :scored [] :rfg [] :play-area []
-                        :servers {:hq {} :rd{} :archives {}}
-                        :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
-                        :toast []
-                        :hand-size-base 5 :hand-size-modification 0
-                        :agenda-point 0
-                        :click-per-turn 3 :agenda-point-req 7 :keep false}
-                 :runner {:user (:user runner) :identity runner-identity
-                          :options runner-options
-                          :deck (zone :deck runner-deck)
-                          :deck-id runner-deck-id
-                          :hand []
-                          :discard [] :scored [] :rfg [] :play-area []
-                          :rig {:program [] :resource [] :hardware []}
-                          :toast []
-                          :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
-                          :hand-size-base 5 :hand-size-modification 0
-                          :agenda-point 0
-                          :hq-access 1 :rd-access 1 :tagged 0
-                          :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
-    (init-identity state :corp corp-identity)
-    (init-identity state :runner runner-identity)
-    (swap! game-states assoc gameid state)
-    (let [side :corp]
-      (when-completed (trigger-event-sync state side :pre-start-game)
-                      (let [side :runner]
-                        (when-completed (trigger-event-sync state side :pre-start-game)
-                                        (init-hands state)))))
-    @game-states))
-
-(defn server-card
-  ([title] (@all-cards title))
-  ([title user]
-   (@all-cards title)))
-
-(defn make-card
-  "Makes or remakes (with current cid) a proper card from an @all-cards card"
-  ([card] (make-card card (make-cid)))
-  ([card cid]
-  (-> card
-      (assoc :cid cid :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
-
-(defn reset-card
-  "Resets a card back to its original state overlaid with any play-state data"
-  ([state side card]
-   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card))))))
-
-(defn create-deck
-  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
-  Loads card data from server-side @all-cards map if available."
-  ([deck] (create-deck deck nil))
-  ([deck user]
-   (shuffle (mapcat #(map (fn [card]
-                            (let [server-card (or (server-card (:title card) user) card)
-                                  c (assoc (make-card server-card) :art (:art card))]
-                              (if-let [init (:init (card-def c))] (merge c init) c)))
-                          (repeat (:qty %) (assoc (:card %) :art (:art %))))
-                    (shuffle (vec (:cards deck)))))))
-
-(defn make-rid
-  "Returns a progressively-increasing integer to identify a new remote server."
-  [state]
-  (get-in (swap! state update-in [:rid] inc) [:rid]))
-
-(defn make-eid
-  [state]
-  {:eid (:eid (swap! state update-in [:eid] inc))})
-
-(defn make-result
-  [eid result]
-  (assoc eid :result result))
-
-(defn mulligan
-  "Mulligan starting hand."
-  [state side args]
-  (shuffle-into-deck state side :hand)
-  (draw state side 5 {:suppress-event true})
-  (let [card (get-in @state [side :identity])]
-    (when-let [cdef (card-def card)]
-      (when-let [mul (:mulligan cdef)]
-        (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] true)
-  (system-msg state side "takes a mulligan")
-  (trigger-event state side :pre-first-turn)
-  (when (and (= side :corp) (-> @state :runner :identity :title))
-    (clear-wait-prompt state :runner)
-    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
-  (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
-
-(defn keep-hand
-  "Choose not to mulligan."
-  [state side args]
-  (swap! state assoc-in [side :keep] true)
-  (system-msg state side "keeps their hand")
-  (trigger-event state side :pre-first-turn)
-  (when (and (= side :corp) (-> @state :runner :identity :title))
-    (clear-wait-prompt state :runner)
-    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
-  (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
+(defn- turn-message
+  "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
+  [state side start-of-turn]
+  (let [pre (if start-of-turn "started" "is ending")
+        hand (if (= side :runner) "their Grip" "HQ")
+        cards (count (get-in @state [side :hand]))
+        credits (get-in @state [side :credit])
+        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
+    (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."
-  [state side args]
-  (turn-message state side true)
-  (let [extra-clicks (or (get-in @state [side :extra-click-temp]) 0)]
-    (gain state side :click (get-in @state [side :click-per-turn]))
-    (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-                    (do (when (= side :corp)
-                          (draw state side)
-                          (trigger-event state side :corp-mandatory-draw))
-
-                        (cond
-
-                          (< extra-clicks 0)
-                          (lose state side :click (abs extra-clicks))
-
-                          (> extra-clicks 0)
-                          (gain state side :click extra-clicks))
-
-                        (swap! state dissoc-in [side :extra-click-temp])
-                        (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-                        (when (= side :corp)
-                          (update-all-advancement-costs state side))))))
+  ([state side _] (end-phase-12 state side (make-eid state) nil))
+  ([state side eid _]
+   (turn-message state side true)
+   (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
+             (unregister-floating-effects state side :start-of-turn)
+             (unregister-floating-events state side :start-of-turn)
+             (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (when (= side :corp)
+               (wait-for (draw state side 1 nil)
+                         (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
+             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+             (when (= side :corp)
+               (update-all-advancement-costs state side)))))
 
 (defn start-turn
   "Start turn."
-  [state side args]
+  [state side _]
+  ; Don't clear :turn-events until the player clicks "Start Turn"
+  ; Fix for Hayley triggers
+  (swap! state assoc :turn-events nil)
+
+  ; Functions to set up state for undo-turn functionality
+  (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
+  (swap! state assoc :turn-state (dissoc @state :log))
+
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter #(:new %) (all-installed state side))]
+  (doseq [c (filter :new (all-installed state side))]
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
-  (swap! state assoc-in [side :register] nil)
+  (doseq [s [:runner :corp]]
+    (swap! state assoc-in [s :register] nil))
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
-                            (all-active state side))]
+                            (concat (all-active state side)
+                                    (remove facedown? (all-installed state side))))
+        extra-clicks (get-in @state [side :extra-click-temp] 0)]
+    (gain state side :click (get-in @state [side :click-per-turn]))
+    (cond
+      (neg? extra-clicks) (lose state side :click (abs extra-clicks))
+      (pos? extra-clicks) (gain state side :click extra-clicks))
+    (swap! state dissoc-in [side :extra-click-temp])
     (swap! state assoc phase true)
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
-                 (str "You may use " (clojure.string/join ", " (map :title start-cards))
-                      (if (= side :corp)
-                        " between the start of your turn and your mandatory draw."
-                        " before taking your first click."))
-                 "info")
-      (end-phase-12 state side args))))
+             (str "You may use " (string/join ", " (map :title start-cards))
+                  (if (= side :corp)
+                    " between the start of your turn and your mandatory draw."
+                    " before taking your first click."))
+             "info")
+      (end-phase-12 state side _))))
 
-(defn end-turn [state side args]
-  (let [max-hand-size (max (hand-size state side) 0)]
-    (when (<= (count (get-in @state [side :hand])) max-hand-size)
-      (turn-message state side false)
-      (if (= side :runner)
-        (do (when (neg? (hand-size state side))
-              (flatline state))
-            (trigger-event state side :runner-turn-ends))
-        (trigger-event state side :corp-turn-ends))
-      (doseq [a (get-in @state [side :register :end-turn])]
-        (resolve-ability state side (:ability a) (:card a) (:targets a)))
-      (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-      (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
-            hosted-cards (filter :installed (mapcat :hosted rig-cards))
-            hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-        (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-          ;; Clear the added-virus-counter flag for each virus in play.
-          ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-          (when (has-subtype? card "Virus")
-            (set-prop state :runner card :added-virus-counter false))))
-      (swap! state assoc :end-turn true)
-      (swap! state update-in [side :register] dissoc :cannot-draw)
-      (swap! state update-in [side :register] dissoc :drawn-this-turn)
-      (doseq [c (filter #(= :this-turn (:rezzed %)) (all-installed state :corp))]
-        (update! state side (assoc c :rezzed true)))
-      (clear-turn-register! state)
-      (swap! state dissoc :turn-events)
-      (when-let [extra-turns (get-in @state [side :extra-turns])]
-        (when (> extra-turns 0)
-          (start-turn state side nil)
-          (swap! state update-in [side :extra-turns] dec)
-          (let [turns (if (= 1 extra-turns) "turn" "turns")]
-            (system-msg state side (clojure.string/join ["will have " extra-turns " extra " turns " remaining."]))))))))
+(defn- handle-end-of-turn-discard
+  [state side eid _]
+  (let [cur-hand-size (count (get-in @state [side :hand]))
+        max-hand-size (max (hand-size state side) 0)]
+    (if (> cur-hand-size max-hand-size)
+      (continue-ability
+        state side
+        {:prompt (str "Discard down to " (quantify max-hand-size "card"))
+         :choices {:card in-hand?
+                   :max (- cur-hand-size max-hand-size)
+                   :all true}
+         :effect (req (system-msg state side
+                                  (str "discards "
+                                       (if (= :runner side)
+                                         (string/join ", " (map :title targets))
+                                         (quantify (count targets) "card"))
+                                       " from " (if (= :runner side) "their Grip" "HQ")
+                                       " at end of turn"))
+                      (doseq [t targets]
+                        (move state side t :discard))
+                      (effect-completed state side eid))}
+        nil nil)
+      (effect-completed state side eid))))
+
+(defn end-turn
+  ([state side _] (end-turn state side (make-eid state) nil))
+  ([state side eid _]
+   (wait-for
+     (handle-end-of-turn-discard state side nil)
+     (turn-message state side false)
+     (when (and (= side :runner)
+                (neg? (hand-size state side)))
+       (flatline state))
+     (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
+               (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
+               (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+               (unregister-floating-effects state side :end-of-turn)
+               (unregister-floating-events state side :end-of-turn)
+               (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (doseq [card (all-active-installed state :runner)]
+                 ;; Clear :installed :this-turn as turn has ended
+                 (when (= :this-turn (installed? card))
+                   (update! state side (assoc (get-card state card) :installed true)))
+                 ;; Clear the added-virus-counter flag for each virus in play.
+                 ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+                 (when (has-subtype? card "Virus")
+                   (set-prop state :runner (get-card state card) :added-virus-counter false))
+                 ;; Remove all :turn strength from icebreakers.
+                 ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
+                 (when (has-subtype? card "Icebreaker")
+                   (update-breaker-strength state :runner (get-card state card))))
+               (doseq [card (all-installed state :corp)]
+                 ;; Clear :this-turn flags as turn has ended
+                 (when (= :this-turn (installed? card))
+                   (update! state side (assoc (get-card state card) :installed true)))
+                 (when (= :this-turn (:rezzed card))
+                   (update! state side (assoc (get-card state card) :rezzed true))))
+               ;; Update strength of all ice every turn
+               (update-all-ice state side)
+               (swap! state assoc :end-turn true)
+               (swap! state update-in [side :register] dissoc :cannot-draw)
+               (swap! state update-in [side :register] dissoc :drawn-this-turn)
+               (clear-turn-register! state)
+               (when-let [extra-turns (get-in @state [side :extra-turns])]
+                 (when (pos? extra-turns)
+                   (start-turn state side nil)
+                   (swap! state update-in [side :extra-turns] dec)
+                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+               (effect-completed state side eid)))))

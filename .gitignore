@@ -1,6 +1,7 @@
+.DS_Store
 node_modules
 
-figwheel_server.log
+*.log
 pom.xml
 *jar
 /lib/
@@ -13,6 +14,7 @@ pom.xml
 .repl
 .nrepl-port
 .nrepl-history
+.rebel_readline_history
 .idea
 
 /resources/public/js/
@@ -21,5 +23,24 @@ pom.xml
 /resources/public/css/
 /resources/public/img/cards
 /data/andb-*.json
+/data/cards.edn
+/data/cycles.edn
+/data/formats.edn
+/data/mwls.edn
+/data/sets.edn
 /data/img
 /.lein-failures
+
+config.edn
+
+# MongoDB files
+*.wt
+*.lock
+*.turtle
+data/WiredTiger
+data/diagnostic.data
+data/journal
+data/storage.bson
+
+#Calva
+.calva/*

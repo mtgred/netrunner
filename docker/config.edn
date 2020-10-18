@@ -1,0 +1,5 @@
+{:db
+ {:address "mongodb"
+  :port    27017
+  :name    "netrunner"}
+ }

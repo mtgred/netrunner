@@ -136,6 +136,13 @@ button.small
     background-color: transparent-orange
     border-color: orange
 
+button.on
+    background-color: transparent-gold
+    border: 1px solid gold
+
+button.off
+    background-color: transparent-orange
+
 [draggable]
   -moz-user-select: none
   -webkit-user-select: none
@@ -149,6 +156,22 @@ button.small
 .dragover
   border-color: orange !important
 
+.namearea
+  flex(1)
+  display-flex()
+  flex-direction(row)
+  min-height: 35px
+  align-items: center
+
+  .avatar
+    height: 32px
+
+  .namebox
+    flex(1)
+    display-flex()
+    flex-direction(column)
+    min-height: 1px
+
 .avatar
   vertical-align: middle
   margin-right: 5px
@@ -157,23 +180,23 @@ button.small
 .username
   font-weight: bold
   font-size: 14px
-  margin-right: 10px
+  margin-right: 5px
 
 .active
   color: orange
   transition(all 0.2s ease-in-out)
 
-.invalid
-  color: orangered
-  border-color: orangered
+.standard, .eternal, .core-experience, .snapshot, .snapshot-plus, .socr, .classic, .legal
+  color: lawngreen
+  border-color: lawngreen
 
 .casual
   color: yellow
   border-color: yellow
 
-.legal
-  color: lawngreen
-  border-color: lawngreen
+.invalid
+  color: orangered
+  border-color: orangered
 
 .smallwarning
   position: relative
@@ -230,6 +253,11 @@ button .fake-link
 
 .float-left
   float: left
+
+.float-center
+  display: flex
+  justify-content: center
+  margin-bottom: 2px
 
 .float-right
   float: right
@@ -506,34 +534,44 @@ nav ul
 .win.centered
   position: fixed
   top: 30%
-  left: 45%
+  left: 35%
+  width: 40%
+  text-align: center
   margin-top: -50px
   margin-left: -100px
   padding: 15px
   border: 1px solid #ffa500
-  z-index: 2
-
+  z-index: 30
+  border-radius: 4px
 
 .win-right
   position: absolute
   top: 0px
   right: -8px
-  border-radius: 0px
   padding: 0
   font-size: 12px
   line-height: 14px
   height: 15px
   width: 15px
   background-color: transparent
+  border-radius: 1px
 
   &:hover
     background-color: transparent-orange
     border-color: orange
 
+.win.table
+  border: 1px solid #ffa500
+  width: 100%
+  text-align: left
+
+.win.th
+  border-bottom: 1px solid #ffa500
+
 #stats
   .content-page
     margin-top: 9px
-  
+
 
 // Influence dots
 
@@ -606,6 +644,9 @@ nav ul
     margin-right: 12px
 
   .mute-button
+    margin-left: 12px
+
+  .stack-servers-button
     margin-left: 12px
 
 // Auth
@@ -706,6 +747,9 @@ nav ul
 .freelancer-bg
   cover-img: url('/img/bg/Freelancer.jpg')
 
+.worlds2020
+  cover-img: url('/img/bg/Worlds2020.jpg')
+
 .monochrome-bg
   cover-color: obsidian
 
@@ -746,8 +790,35 @@ nav ul
   display-flex()
   margin-bottom: 5px
 
+  .name-menu
+    position: relative
+
+  .clickable
+    cursor: pointer
+
   .content
     flex(1)
+
+  .block-menu
+    display: none
+    position: absolute
+    z-index: 30
+    width: 200px
+    font-size: 12px
+    line-height: 16px
+
+    > div
+      border: 1px solid white
+      padding: 3px 6px
+      border-radius: 4px
+      margin-bottom: 4px
+      cursor: pointer
+
+      &:last-child
+        margin-bottom: 0
+
+      &:hover
+        border-color: orange
 
 .message-list
   height: 400px
@@ -783,12 +854,15 @@ nav ul
 // Card Browser
 .cardbrowser
   display-flex()
+  justify-content(space-between)
+  height: 100vh
 
   .heading, .type
     font-weight: bold
 
   .pack
     font-style: italic
+    margin-top: 8px
 
   .selected-alt
     font-style: italic
@@ -797,10 +871,16 @@ nav ul
   .alt-art-selector
     margin-top: 10px
 
+  ul
+    padding-left: revert
+    padding-top: 8px
+
 .filters
-  flex(0 0 180px)
+  flex(0 0 250px)
   margin: 10px
   padding: 10px
+  align-self: flex-start
+  min-height: 348px
 
   input, select
     width: 100%
@@ -855,16 +935,15 @@ nav ul
     border: 1px solid orange
 
 .card-list
-  position: absolute
-  top: 0
-  bottom: 0
-  left: 201px
   overflow: auto
+  padding: 10px
   -webkit-overflow-scrolling: touch
-  padding-top: 40px
   transform: translateZ(0)
   flex(1)
-
+  display-flex()
+  flex-direction(row)
+  flex-wrap(wrap)
+  justify-content(space-around)
 
 .card-preview
   float: left
@@ -932,7 +1011,6 @@ nav ul
       text-overflow: ellipsis
       white-space: nowrap
       overflow: hidden
-      width: 260px
 
     > img
       float: left
@@ -1022,9 +1100,10 @@ nav ul
         position: relative
         overflow: visible
         line-height: 20px
+        white-space:pre
 
         button.small
-          margin: 3px 5px 3px 0
+          margin: 3px 6px 3px 0
 
       .group
         display: inline-block
@@ -1085,9 +1164,6 @@ nav ul
         line-height: 18px
         flex(1)
 
-.deck-status.shift-tooltip
-    padding-right: 12px
-
 .deck-status, .user-status
   position: relative
 
@@ -1129,6 +1205,30 @@ nav ul
   bottom: 5px
   width: 995px
   display-flex()
+
+  .clickable
+    cursor: pointer
+
+  .mod-menu
+    display: block
+    position: absolute
+    z-index: 30
+    width: 200px
+    font-size: 12px
+    line-height: 16px
+
+    > div
+      border: 1px solid white
+      padding: 3px 6px
+      border-radius: 4px
+      margin-bottom: 4px
+      cursor: pointer
+
+      &:last-child
+        margin-bottom: 0
+
+      &:hover
+        border-color: orange
 
   .games
     position: relative
@@ -1187,6 +1287,12 @@ nav ul
     margin-bottom: 5px
     clear: both
 
+    .game-format
+      margin-bottom: 10px
+
+    .format-label
+      font-weight: bold
+
     .player
       &:first-child:after
         content: "vs"
@@ -1198,7 +1304,7 @@ nav ul
 
     > button
       float: right
-      margin-top: 7px
+      margin-top: 9px
 
     .password-prompt
       position: absolute
@@ -1308,6 +1414,15 @@ nav ul
     text-shadow 1px 1px 2px black
     border-radius: 4px
 
+  .server-label
+    color: white
+    text-align: center
+    position: absolute
+    font-size: 105%
+    width: 100%
+    top: 100%
+    transform: translate(0, -100%)
+
   .card
     position: relative
     height: 84px
@@ -1325,6 +1440,10 @@ nav ul
 
   .card.selected
     box-shadow(0 0 1px 2px limegreen)
+
+  .card.hovered
+    box-shadow(0 0 1px 2px blue)
+    border-color: blue
 
   .counters
     position: absolute
@@ -1378,6 +1497,19 @@ nav ul
     height: 24px
     width: 24px
 
+  .extra-subs
+    position: absolute
+    z-index: 10
+    padding: 0
+    text-align: center
+    background-color: transparent-dark-green
+    line-height: 24px
+    font-size: 12px
+    top: 3px
+    left: 3px
+    height: 24px
+    width: 24px
+
   .icon
     position: absolute
     z-index: 10
@@ -1396,6 +1528,9 @@ nav ul
     &.red
       background-color: red
 
+    &.green
+      background-color: green
+
   .server-target, .subtype-target
     position: absolute
     z-index: 10
@@ -1407,7 +1542,7 @@ nav ul
     right: 3px
     padding-left: 3px
     padding-right: 3px
-    white-space: nowrap
+    // white-space: nowrap
 
   .server-target
     background-color: sienna
@@ -1424,18 +1559,23 @@ nav ul
     &.sentry
       background-color: criminal-blue
 
-  .abilities, .servers-menu, .menu, .runner-abilities, .popup
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
     left: 0
     bottom: 100%
     margin: 6px -1px
 
-  .abilities, .servers-menu, .menu, .runner-abilities
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities
     display: none
     position: absolute
     z-index: 30
     width: 200px
     font-size: 12px
     line-height: 16px
+
+    > span
+      margin: 2px
+      &:last-child
+        margin-bottom: 0
 
     > div
       border: 1px solid white
@@ -1550,13 +1690,156 @@ nav ul
     &:hover .controls
       display: block
 
+  .start-game
+    width: 750px
+    animation: fadein 1.2s
+
+    .ident img
+      margin-top: 2px
+      width: 214px
+      height: 298px
+
+    .ident img.selected
+      box-shadow(0 0 3px 3px limegreen)
+      border-radius: 9px
+
+    .mulligan-me:after, .mulligan-op:after, .keep-me:after, .keep-op:after
+      transition(all 0.2s ease-in-out)
+      position: absolute
+      z-index:1
+      font-family:Arial,sans-serif
+      font-size:40px
+      color:#c00
+      background: rgb(255, 255, 255, 0.5)
+      border:solid 4px #c00
+      padding: 12px
+      border-radius:5px
+      zoom:1
+      opacity:0.9
+      text-shadow: 0 0 2px #c00
+      box-shadow: 0 0 2px #c00
+
+    .keep-me:after, .keep-op:after
+      content: "KEEP"
+      transform: rotate(-54deg)
+
+    .mulligan-me:after, .mulligan-op:after
+      content: "MULLIGAN"
+      transform: rotate(-54deg)
+
+    .mulligan-me:after
+      top:156px
+      left:10px
+
+    .mulligan-op:after
+      top:156px
+      right:20px
+
+
+    .keep-me:after
+      top:156px
+      left:66px
+
+    .keep-op:after
+      top:156px
+      right:66px
+
+    .vs
+      font-weight: bold
+      font-size: large
+      font-style: italic
+      margin: 1em
+
+    .contestants
+      font-size: xx-large
+      margin: 0
+      flex: 1
+
+    .intro-blurb
+      font-size: medium
+      font-style: italic
+      margin-top: 3ex
+
+    .start-hand
+      margin: 2ex 0 0 0
+      height: 150px
+      overflow: hidden
+      position: relative
+      width: auto
+
+
+      .card-back, .card-front
+        backface-visibility: hidden
+        position: absolute
+        top: 0
+        left: 0
+
+      .card-back
+        z-index: 2
+        transform: rotateY(0deg)
+      .card-front
+        transform: rotateY(180deg)
+
+      img.start-card
+        height: 140px
+        width: 100px
+
+      .start-card-frame
+        margin: 0 2px
+        display: inline-block
+        perspective: 1000px
+        width: 100px
+        height: 140px
+      .start-card-frame.flip .flipper
+        transform: rotateY(180deg)
+
+      .flipper
+        transition: 0.6s
+        transform-style : preserve-3d
+        position: relative
+
+
+  .box
+    display: flex
+    overflow: hidden
+
+    .column
+      flex-direction: column
+      align-content: stretch
+      align-self: center
+      flex: 1
+
+  .stacked
+    margin: 0px
+    display-flex()
+
+    .card-wrapper:not(:first-child)
+     margin-left: -40px
+
   .hosted
     margin-left: 24px
     margin-top: -65px
     display-flex()
 
-    .card-frame:not(:first-child)
-      margin-left: -15px
+    .card-wrapper
+      margin-top: 0px
+      margin-bottom: 3px
+
+    .card-wrapper:not(:first-child)
+      margin-left: -20px
+
+    .card-wrapper:last-child
+     margin-right: 0px
+
+    .stacked
+      margin-top: 0px
+      margin-bottom: 3px
+
+      .card-wrapper:not(:first-child)
+       margin-left: -40px
+
+    .stacked:not(:first-child)
+      margin-left: -20px
 
   .leftpane
     display-flex()
@@ -1610,6 +1893,12 @@ nav ul
           h4
             text-align: center
             margin-bottom: 10px
+
+          .info
+            text-align: center
+            margin: 0 0 5px 0
+            font-size: 10pt
+            font-style: italic
 
           button
             width: 100%
@@ -1688,8 +1977,14 @@ nav ul
           align-items(center)
 
           .run-card
-            margin-top: 100px
             transform(rotate(180deg))
+
+            &:first-child
+              margin-top: 100px
+
+            &:not(:first-child)
+              margin-top: -42px
+              margin-left: 12px
 
           .run-arrow
             position: relative
@@ -1702,9 +1997,11 @@ nav ul
               top: 0
               bottom: -70px
               width: 16px
-              background-color: transparent-orange
+              background-color: run-arrow
               transform(translateX(-50%))
               border-radius: 0 0 4px 4px
+              -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+              filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
 
               &:before
                 content: ""
@@ -1718,7 +2015,21 @@ nav ul
                 bottom: 100%
                 left: 50%
                 transform(translateX(-50%))
-                border-bottom: 22px solid transparent-orange
+                border-bottom: 22px solid run-arrow
+                -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+
+            > div.approach
+              background-color: approach
+
+              &:before
+                border-bottom: 22px solid approach
+
+            > div.encounter
+              background-color: encounter
+
+              &:before
+                border-bottom: 22px solid encounter
 
           .ice
             margin: -7px 0
@@ -1748,7 +2059,7 @@ nav ul
               .counters
                 transform(rotate(-90deg))
 
-              .abilities, .runner-abilities
+              .abilities, .runner-abilities, .corp-abilities
                 top: auto
                 bottom: 100%
                 left: 0
@@ -1768,7 +2079,7 @@ nav ul
           .counter
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             left: 100%
             margin: -1px 6px
 
@@ -1778,7 +2089,7 @@ nav ul
             transform(rotate(90deg) translateY(-100%))
             transform-origin(0 0)
 
-          .runner-abilities
+          .runner-abilities, .corp-abilities
             bottom: 0
             transform(rotate(-90deg) translateY(100%))
             transform-origin(0 100%)
@@ -1814,7 +2125,7 @@ nav ul
           .counters
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             top: 100%
             bottom: auto
 
@@ -1835,15 +2146,18 @@ nav ul
       margin-top: 5px
       margin-right: 5px
       position: relative
-      transition(all 0.2s ease-in-out)
+      transition(opacity 0.2s ease-in-out)
+      opacity: 0
 
       .card-preview
         width: 100%
         height: 100%
-        transition(all 0.2s ease-in-out)
 
         .text
           height: 195px
+
+    .card-zoom.fade
+      opacity: 1
 
     // Card implementation div
     .implementation
@@ -1854,7 +2168,6 @@ nav ul
       text-align: right
       font-size: 12px
       line-height: 12px
-      transition(all 0.2s ease-in-out)
 
       .unimplemented
         color: red
@@ -1888,7 +2201,7 @@ nav ul
         -webkit-overflow-scrolling: touch
         position: absolute
         top: 0
-        bottom: 43px
+        bottom: 70px
         left: 0
         right: 4px
         margin: 0
@@ -1896,14 +2209,14 @@ nav ul
         div
           animation: fadein 0.5s
 
-      > form
+      > div
         position: absolute
         bottom: 12px
         left: 0
         right: 4px
 
-        input
-          width: 100%
+        > form input
+            width: 100%
 
 #help
   position: absolute
@@ -2053,3 +2366,8 @@ nav ul
     .date
       margin-right: 10px
       font-weight: bold
+
+// Admin
+
+.admin
+  color: orange

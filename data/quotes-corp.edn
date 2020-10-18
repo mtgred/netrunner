@@ -1,0 +1,473 @@
+{"Acme Consulting: The Truth You Need"
+ {"Anarch"
+  ["Some grandstanding vigilante thinks they can threaten us? Our report will conclude all damage was self-inflicted. Case closed."]
+  "Criminal"
+  ["Just another two-bit con artist looking for a score. As soon as they hit us, our trackers will be on them. Lets just not forget the back door like last time..."]
+  "Default"
+  ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
+  "Shaper"
+  ["We've got some research on this intruder. They seem slick, but put them under a bit of pressure and they'll crack. "]}
+ "AgInfusion: New Miracles for a New World"
+ {"Anarch"
+  ["How can one selfish and inferior mind possibly understand what we're trying to achieve here."]
+  "Criminal"
+  ["A whole new world... and yet the rats have come on the very same ships we brought hope with here."]
+  "Default"
+  ["Do these ideologues know what this planet would look like without us? Protect our investment or Mars will return to dust."]
+  "Shaper"
+  ["Putting technology in the service of crime does not pay off in the long run."]}
+ "Argus Security: Protection Guaranteed"
+ {"Anarch" ["These hackers are a tough breed, but we will break them nonetheless."]
+  "Criminal" ["We have so much more than a few measily credits in store for this one."]
+  "Default"
+  ["Our clients trust us because we're the best. We're even better on our turf, and they're about to find out how."]
+  "Shaper" ["What's a fragile runner like you doing in a network like this?"]}
+ "Asa Group: Security Through Vigilance"
+ {"Anarch"
+  ["We are prepared to stop all and any kinds of intrusions, this chaotic rabble are barely a threat."]
+  "Criminal"
+  ["We are running additional background checks to confirm the identity of the suspect."]
+  "Default"
+  ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code. "]
+  "Shaper"
+  ["They seem quite prepared. Have the field units deal with their contacts, they won't be able to face us alone."]}
+ "Azmari EdTech: Shaping the Future"
+ {"Anarch"
+  ["Your obsolete ideas and worn-out slogans do not apply to the glorious future we are creating in every young mind we can reach."]
+  "Criminal"
+  ["Those who lie and cheat should not profit from the wisdom we want to share with the world."]
+  "Default"
+  ["It appears someone objects to our vision... What greater purpose could there be than shaping young minds to guide our future?"]
+  "Iain Stirling: Retired Spook"
+  ["Try not to fall behind, we have a very rigorous program."]
+  "Shaper"
+  ["You think you know what true knowledge is? Let us teach you a real lesson, then."]}
+ "Blue Sun: Powering the Future"
+ {"Anarch" ["You can't fight fusion with petrol bombs."]
+  "Criminal" ["Steal all you want, we can generate way more than that."]
+  "Default"
+  ["Power. There is never enough. They don't understand power like we do. No one understands power like we do."]
+  "Shaper" ["It takes real skill to wield true power. Do you have it?"]}
+ "Cerebral Imaging: Infinite Frontiers"
+ {"Anarch"
+  ["Not much of a mind left to this one, I'm afraid. Get rid of them so we can move on to something more interesting."]
+  "Criminal"
+  ["Here's a sharp one... full of tricks. Yet no match for our vault of secrets."]
+  "Default"
+  ["There are infinite ways we can win this game. Our minds are the only limit."]
+  "Shaper"
+  ["Now here is a mind that may just be worth taping, after all is said and done."]}
+ "Chronos Protocol: Selective Mind-mapping"
+ {"Anarch" ["Subject AO31980Z - please prepare samples for initial scanning procedure."]
+  "Criminal" ["Subject HN83197O - please proceed with second-stage core analysis."]
+  "Default"
+  ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just volunteered."]
+  "Shaper" ["Subject JY99301S - please confirm extended trial protocol usage."]}
+ "Custom Biotics: Engineered for Success"
+ {"Adam: Compulsive Hacker"
+  ["We have word from Director herself. Our top priority is to safeguard the privacy of our clients and their projects."]
+  "Anarch"
+  ["With chaos boiling over in the streets, we need our designs to save the world, one rioter at a time."]
+  "Criminal" ["Good luck outsmarting perfection, lawbreakers."]
+  "Default"
+  ["Unlike our seedier competitors, we present clean security. Let's give them a demonstration."]
+  "Shaper"
+  ["This is the most optimised server in all the worlds. They won't be getting in, no matter how clever they think they are."]}
+ "Cybernetics Division: Humanity Upgraded"
+ {"Anarch"
+  ["The techs at R&D promised that we will be able to reuse any salvaged biological material for additional hardness tests."]
+  "Criminal"
+  ["Perimeter breach detected. Deploying non-lethal countermeasures. Booting up lethal countermeasures for rapid deployment if necessary."]
+  "Default"
+  ["That's not considered very polite, here in Oaktown. Let's see what our cybernetics have to say about it."]
+  "Edward Kim: Humanity's Hammer"
+  ["No 'ware on this hostile... Those around him however, they can be of use."]
+  "Shaper"
+  ["Yes, we do have examples of our best scientists getting inspiration from solutions serendipitously found on the streets, cobbled together by some poor garage techie. We perfected them."]}
+ "Earth Station: SEA Headquarters"
+ {"Anarch" ["A Brute Force Hack? Maybe these aren't run of the mill criminals."]
+  "Criminal"
+  ["We are getting contraband pings on pods all the way up and down the damn stalk. Something isn't adding up... Sweep for a backdoor and prepare to engage the emergency lockouts. "]
+  "Default" ["Thinking of going up without paying fare? Take em' down. "]
+  "Shaper"
+  ["A crafty one getting this far, but they won't go so far once the gravity flips. "]}
+ "Fringe Applications: Tomorrow, Today"
+ {"Anarch"
+  ["We all take risks to get where nobody else dares. Some of us take the wrong kinds of risks, though."]
+  "Criminal"
+  ["We keep changing the world. We can't seem to change the darker side of human nature."]
+  "Default"
+  ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
+  "Shaper"
+  ["It's quite inspiring what you have there. It's a shame we can't come to an agreement and work together."]}
+ "GRNDL: Power Unleashed"
+ {"Anarch" ["Those Molotov cocktails burn only half as bright on biofuels."]
+  "Criminal"
+  ["Our operations are too important for the economy to allow any interference. We will crush all intrusion attempts with extreme prejudice."]
+  "Default"
+  ["Network intrusion detected. Countermeasures armed and all squads on alert. No option is off the table, no matter the cost. Nothing about this must leak."]
+  "Shaper"
+  ["We take science and use it for everyone's long-term good. Misfits like you use science to derail progress. This can't be tolerated."]}
+ "Gagarin Deep Space: Expanding the Horizon"
+ {"Anarch"
+  ["Taming space is humanity's one chance of survival. It seems some would rather die in chaos than touch the stars."]
+  "Criminal"
+  ["These petty scavengers are beneath our interest. Unfortunately, they still merit our attention."]
+  "Default"
+  ["Humanity has no future without expansion: beyond our planets, to the stars. And yet they interfere."]
+  "Shaper"
+  ["How petty they are, those who would interfere with us to try and comprehend our vision. As if they could. "]}
+ "GameNET: Where Dreams Are Real"
+ {"Anarch"
+  ["Hunting these \"Runners\" is the ultimate game, and we get to make all the rules... "
+   "They are analyzing our board... It won't help. The mistake is thinking we're playing the same game."]
+  "Criminal"
+  ["And who would this be? Seems they are looking for easy cred... Turn the tables, lets siphon them dry. "
+   "Lets teach them a thing or two about monetization. "]
+  "Default"
+  ["User detected outside of boundries. Tag their ID and shepard them back to Dreamland. "]
+  "Shaper"
+  ["Double the allocated resources to the new M-0pus processes. Once we cripple their setup, we'll be left with another happy, complacent customer. "]}
+ "Haarpsichord Studios: Entertainment Unleashed"
+ {"Anarch"
+  ["It's quite ironic that most of the underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
+  "Criminal"
+  ["Sometimes people think a life of crime is exciting, just as we lovingly depict it in so many noir action sensies. They keep forgetting about the police newsfeeds and overflowing jails."]
+  "Default"
+  ["We'll do what we do best. Let's keep them entertained while we wrap up this project."]
+  "Shaper"
+  ["Some minds just can't be satisfied with quality pop-entertainment and require a higher kind of touch for their overdeveloped sensibilities. We can provide that in spades."]}
+ "Haas-Bioroid: Architects of Tomorrow"
+ {"Anarch"
+  ["You can tear down our walls, and we will build them again. Our bioroids will not falter."]
+  "Criminal"
+  ["We are protecting something far greater than profits. You would not understand how important this fight is."]
+  "Default" ["Initiate bioroid acceleration, we're not going down without a fight! "]
+  "Shaper"
+  ["Real progress means everyone moving in the same direction for the greater good. Swimming against the current brings you nowhere."]}
+ "Haas-Bioroid: Engineering the Future"
+ {"Anarch"
+  ["Order shall prevail over havoc, just one step towards a brighter future for the rest of us."]
+  "Criminal"
+  ["There is no future for you, unless you repent and right your ways right now. Ah, perhaps you are beyond redemption."]
+  "Default" ["Intrusion Detected. Eyes Forward. Maintain peak efficiency."]
+  "Shaper"
+  ["Why would you choose to get in our way when we are shaping the world of tomorrow in ways beyond your limited understanding?"]}
+ "Haas-Bioroid: Stronger Together"
+ {"Anarch" ["Humanity does not end here. It merely begins its Golden Age."]
+  "Criminal"
+  ["Yet another example proving that bioroid programming is superior to some undesired human behaviour patterns."]
+  "Default"
+  ["Many hands make light work, many minds make bright thought. They are but one, they can do the math."]
+  "Shaper" ["Embrace change and go with its flow or be shoved aside in its wake."]}
+ "Harishchandra Ent.: Where You're the Star"
+ {"Anarch" ["Violence and hate? We can sell that to the masses."]
+  "Criminal" ["Underground crime syndicates? We can market that to our viewers."]
+  "Default" ["Another day, another undiscovered star knocking at our door."]
+  "Shaper"
+  ["It's hard to get enough audience attention for nerdy science types, but maybe if we put an adventurous spin on this...\n"]}
+ "Harmony Medtech: Biomedical Pioneer"
+ {"Anarch"
+  ["An unruly mind creates an unruly body. These malcontents cannot be allowed to disturb our peaceful world."]
+  "Criminal" ["You are the cancer of this society. We are the cure."]
+  "Default"
+  ["The balanced life is the healthiest life. Those who disrupt this harmony are fated to suffer."]
+  "Shaper"
+  ["Now, if you just sit back and relax, we can make sure you will feel much better in less than a minute."]}
+ "Hyoubu Institute: Absolute Clarity"
+ {"Anarch"
+  ["Our forecasts are experiencing a decline in precision. The unpredictable variables must be controlled."]
+  "Criminal"
+  ["We have delved your innermost thoughts, and yes, your mother would be disappointed. "]
+  "Default" ["We see you. "]
+  "Shaper" ["The mind is the greatest weapon and the most dangerous battlefield. "]}
+ "Industrial Genomics: Growing Solutions"
+ {"Anarch"
+  ["Burn and rage all you want - the seeds of our incessant toil will not be wasted by the likes of you."]
+  "Criminal" ["Foolish grasshopper, meet the ant army."]
+  "Default" ["For every problem, there exists a vat waiting to be distilled."]
+  "Shaper"
+  ["Your rampant individuality is causing distress. Time to amend that before you hurt yourself or someone else."]}
+ "Information Dynamics: All You Need To Know"
+ {"Anarch" ["We knew they were coming before they realised they even wanted to."]
+  "Criminal"
+  ["In the myriad of transfers there are bound to be a few lost packets. We can't let too many slip, though."]
+  "Default"
+  ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
+  "Shaper" ["They will know only what we want them to know and no more."]}
+ "Jemison Astronautics: Sacrifice. Audacity. Success."
+ {"Anarch"
+  ["The audacity of this attack... These saboteurs can thrash all they want. We will move Mars forward without them."]
+  "Criminal"
+  ["Another criminal who doesn't know the meaning of sacrifice. Green-light the Protocol; we're putting in overtime for this launch."]
+  "Default"
+  ["They have no idea what we've been through to get this far. It does not end here."]
+  "Shaper"
+  ["Our success will not be hindered by an amateur with a bucket of junk. The next meteor should be coming by soon..."]}
+ "Jinteki Biotech: Life Imagined"
+ {"Anarch" ["Unrest and dissent are society's cancer. We are the cure."]
+  "Criminal"
+  ["Criminal instincts can be eradicated once and for all with enough research and experimentation."]
+  "Default"
+  ["An untraceable connection? Well... They'll never guess what we have in store for them."]
+  "Shaper"
+  ["You can keep tinkering with bio-pots at home... or join a global giant and change the course of human evolution. What's your pick?"]}
+ "Jinteki: Personal Evolution"
+ {"Anarch"
+  ["Unruly dogs, they bark up the wrong tree. Lets hide a few treats and see how eager they really are."]
+  "Criminal"
+  ["They can hide in the shadows. We will still be hiding right behind their backs."]
+  "Default"
+  ["As the bonsai blooms// Watch your step, for the petals// Conceal sharp intent"]
+  "Shaper" ["Beware the path of the curious one. It may bring you pain beyond belief."]}
+ "Jinteki: Potential Unleashed"
+ {"Anarch"
+  ["Put care and deliberation into your strike. To do so without thought, is your enemy's wish."]
+  "Criminal"
+  ["Their intent interferes with our own. They may be well connected, but they shall run out of determination far before they run us out of credits."]
+  "Default"
+  ["In the midst of battle, as soon as an adversary tries to get out of the way of your steel, you have already won. However this is war, we will not let them flinch from our blade."]
+  "Shaper"
+  ["A curious visitor? No need to present a cold shoulder, simply lead them through our sharpened ice. They will either learn or perish. "]}
+ "Jinteki: Replicating Perfection"
+ {"Anarch"
+  ["Ichor and fire have no mandate here. Let them waste away pleading for submission."]
+  "Criminal" ["They aim for our riches... Redirect them towards their grave."]
+  "Default"
+  ["From a house of knives// To a lotus field serene// Feel the thousand cuts"]
+  "Shaper"
+  ["An expert navigator of the network it seems. They will not so easily master ours."]}
+ "MirrorMorph: Endless Iteration"
+ {"Anarch"
+  ["Our subroutines estimate an 92.2% chance of such a reckless runner flatlining themself before even catching a glimpse of our servers. Simulations upon simulations wind up the same."]
+  "Criminal"
+  ["We have brain maps of your type dating as far back as Al Capone. We know every move you will make."]
+  "Default"
+  ["AP subroutines initialized. We have seen hundreds of them before - let them come."]
+  "Shaper"
+  ["Surely someone like them could appreciate the steps our engineers took to get here. No? Very well then."]}
+ "Mti Mwekundu: Life Improved"
+ {"Anarch"
+  ["Kampala has had its share of conflict throughout millenia. They will not make us stray from the path towards peace and prosperity."]
+  "Criminal" ["No trickster can ever lick their back. Keep trying."]
+  "Default"
+  ["Libraries need not be lifeless, though you may find yourself to be if you tamper with ours."]
+  "Freedom Khumalo: Crypto-Anarchist"
+  ["A fellow Virologist? Likely competition looking for trade secrets. Do away with this infection."]
+  "Shaper" ["If they are filled with pride, then they will have no room for wisdom."]}
+ "NBN: Controlling the Message"
+ {"Anarch"
+  ["Be honest with yourself. You have always known the truth. Now sit down and join all the other others like a good little citizen."]
+  "Criminal" ["They are hoping to go from rags to riches? Ruin them."]
+  "Default"
+  ["In times of crisis, the public needs to know the truth. Stay out of our way so we can tell it."]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  ["When you mess with the holdings of the worlds' largest media corporation, some attention is unavoidable."]
+  "Shaper"
+  ["They look into the noise of the net and they think they see something we have not found already."]}
+ "NBN: Making News"
+ {"Anarch"
+  ["A little blood on the front page makes for good sales. If we need to spill it, so be it."]
+  "Criminal"
+  ["They are targeting our ad revenue algorithms. Boost the signals, we'll zero in on their next pass."]
+  "Default" ["Stay out of our business unless you want to become tomorrow's headline."]
+  "Shaper" ["Seems they have not read our Terms & Conditions - which still apply."]}
+ "NBN: The World is Yours*"
+ {"Anarch" ["Full of sound and fury, signifying nothing."]
+  "Criminal" ["The robbed that smiles steals something from the thief."]
+  "Default" ["An unregistered user? Terms and Conditions will apply."]
+  "Shaper"
+  ["The most dangerous creation of any society is someone who has nothing to lose."]}
+ "NEXT Design: Guarding the Net"
+ {"Anarch"
+  ["Potential intrusion probability at 96.3% Realigning defense matrix. Deploying countermeasures. Code Yellow in effect."]
+  "Criminal"
+  ["Engage preliminary defenses on central data servers. If you value your paycheck, make sure they stay out."]
+  "Default"
+  ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
+  "Shaper"
+  ["A textbook example of a cyberattack, so far. Lets not get complacent and fall for any tricks."]}
+ "Near-Earth Hub: Broadcast Center"
+ {"Anarch"
+  ["Seems like we've tracked in something from last week's protest. Sweep them out."]
+  "Criminal"
+  ["An intruder has bypassed our preliminary defenses? Get some eyes on them and track the ingress while we set some bait."]
+  "Default" ["They're trying to hide from us? We can see their house from here."]
+  "Shaper"
+  ["We've found an unusual anomaly in the packets going through the main relays of Node #2918. Please investigate and make sure we don't have any signal interruptions."]}
+ "New Angeles Sol: Your News"
+ {"Anarch"
+  ["BREAKING! RIOTS IN THE SUBURBS OF NEW ANGELES, PLEASE REMAIN CALM AND FOLLOW THE INSTRUCTIONS OF UNIFORMED LAW ENFORCEMENT OFFICERS."]
+  "Criminal"
+  ["BREAKING! NETWORK THIEVERY AT AN ALL TIME HIGH, HAVE WE TRACKED IT TO ITS SOURCE?"]
+  "Default"
+  ["Network servers under TERRORIST CYBER ATTACK! Can NBN repel this INVASION? Tune in to find out LIVE!"]
+  "Shaper"
+  ["BREAKING! CYBER-TERRORIST DEN INVESTIGATION REVEALS SHOCKING TRUTH ABOUT AVERAGE CITIZEN!"]}
+ "Nisei Division: The Next Generation"
+ {"Akiko Nisei: Head Case "
+  ["This signature is more than ordinary. There is a resonance here. Alert the chairman, our search may be over."]
+  "Anarch"
+  ["This one is quite brash to barge in so unannounced, well, as far as they know."]
+  "Criminal"
+  ["A clear motivation guides this attacker. Their eagerness betrays their intent."]
+  "Default"
+  ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
+  "Shaper"
+  ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further. "]}
+ "Pālanā Foods: Sustainable Growth"
+ {"Anarch"
+  ["An appetite for justice? Let us teach them better than to bite the hand that feeds.\n"]
+  "Criminal"
+  ["Rupees to rasgulla, this intruder is looking for some easy money. Lets give them something a bit different to chew on."]
+  "Default"
+  ["They eat Palana for breakfast, then attack our servers for brunch. Mr. Batty, how about we set the table for the main course?"]
+  "Liza Talking Thunder: Prominent Legislator" ["Legislator, always good to see you."]
+  "Shaper"
+  ["They hunger for our knowledge? Lets show them that their eyes are bigger than their stomachs."]}
+ "SSO Industries: Fueling Innovation"
+ {"Anarch"
+  ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
+  "Criminal"
+  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time. "]
+  "Default"
+  ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
+  "Shaper"
+  ["We've got uninvited guests in our R&D data? Show them what we have in store for such occasions. Time to perform an unscheduled defense test."]}
+ "SYNC: Everything, Everywhere"
+ {"Anarch"
+  ["\"Information wants to be free\"? So does snow in an avalanche - watch out where you tread."]
+  "Criminal" ["No shadows you try to hide in are too deep for us."]
+  "Default" ["We control the network. They control a computer."]
+  "Shaper"
+  ["Every self-professed do-gooder has a darker side - and we're happy to drag it out into the open."]}
+ "Saraswati Mnemonics: Endless Exploration"
+ {"Anarch" ["Mnemonics Now Erase Man’s Oldest Nemesis, Insufficient Cerebral Storage"]
+  "Criminal" ["Every Bad Runner Deserves Cyber Knives"]
+  "Default"
+  ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then. "]
+  "Shaper" ["Warning: Reaching Out Into The Unknown May Cause Severe Harm Or Death"]}
+ "Seidr Laboratories: Destiny Defined"
+ {"Anarch"
+  ["The tapestries we craft are made of threads like this. Chaos woven into order. Uncertainty woven into certainty."]
+  "Criminal"
+  ["We will go back and forth as long as need be to find them and punish them."]
+  "Default"
+  ["We've faced this sort of challenge before, and we are certain of its outcome."]
+  "Shaper"
+  ["Curiosity is a quaint notion. A relic of ages past when the worlds lacked our certainty."]}
+ "Skorpios Defense Systems: Persuasive Power"
+ {"Anarch"
+  ["These threats of violence are so quaint, when you have hunters waiting to strike."]
+  "Criminal"
+  ["Seems they may be one of those well-connected types. Might as well bring down their whole network."]
+  "Default"
+  ["A pathetic attempt. Dispatch the seekers; this will be over before they know it."]
+  "MaxX: Maximum Punk Rock"
+  ["I'd say it's nothing personal, but corporations are people too."]
+  "Shaper"
+  ["To secure peace is to prepare for war. Pacifism can't be an answer to aggression. Extreme prejudice it is, then."]}
+ "Spark Agency: Worldswide Reach"
+ {"Anarch"
+  ["Aggression, anger, discontent... How can we package, brand, and promote it?\n"]
+  "Criminal"
+  ["An infiltrator to our system? Autoreports indicate they have cred to spare! Activate the tracers, it's pay day!"]
+  "Default" ["Everything is profitable. Let's sell the world on this intruder."]
+  "Shaper"
+  ["Targeted ads trackers have revealed an intruder? I prefer to call them a future customer. Triple the throughput on sponsored content."]}
+ "Sportsmetal: Go Big or Go Home"
+ {"Anarch"
+  ["They are coming in hot and looks like they play dirty. Feed our 'roids lightning, lets make em crap thunder."]
+  "Criminal"
+  ["FEEL THE RYTHM//👏//FEEL THE RHYME//👏//GET ON UP//👏//IT'S SPORTSMETAL TIME!"]
+  "Default" ["Let's hustle, team! They are coming at us with 110% intensity! "]
+  "Shaper" ["Trust the Process."]
+  "Wyvern: Chemically Enhanced" ["Shake it up! Get down there!"]}
+ "Strategic Innovations: Future Forward"
+ {"Default"
+  ["Our dynamic structures have suffered worse than this. By the time they realized what they are dealing with we'll be far beyond them"]}
+ "Synthetic Systems: The World Re-imagined"
+ {"Default"
+  ["They'll find more than they'd hoped for. Everything we make is still bound by natural law, the limits merely exceed most notions."]}
+ "Tennin Institute: The Secrets Within"
+ {"Anarch"
+  ["Anger. Such a strong emotion with so much potential. Perhaps we could channel it for our next suite of tests?"]
+  "Criminal"
+  ["Greed. Good until it gets out of hand and eats away the vestiges of one's decency and honour."]
+  "Default"
+  ["They must not know... They will not know... Until there is nothing they can do to stop us."]
+  "Shaper"
+  ["Curiosity. The spark that drives civilization forward, yet sometimes causes grief and pain to those who look where they should not."]}
+ "The Foundry: Refining the Process"
+ {"Adam: Compulsive Hacker"
+  ["Melt away the obsolete, the malfunctioning, the scarred and remake perfection."]
+  "Anarch" ["We will fight your fire with ours. Let's see who turns to ash first."]
+  "Criminal" ["For every piece you steal, we produce a hundred more."]
+  "Default"
+  ["Let them deal their blows. The strongest metals are forged under pressure."]
+  "Shaper" ["Misinformed talent is such a waste."]}
+ "The Outfit: Family Owned and Operated"
+ {"Anarch"
+  ["Bunch of hooligans don't much scare the likes of us. They only speak one language, and lucky for us, we got a PHD in making em squeel."]
+  "Criminal"
+  ["Ey, if they wanted their kneecaps so badly, they woulda joined the family, dontchathink?"]
+  "Default"
+  ["When you're here, you're family. They mess with us, we make them pay. Don't worry about it."]
+  "Shaper"
+  ["If these kids were as smart as they thought they were, they'd know to keep their nose outta our business."]}
+ "The Shadow: Pulling the Strings"
+ {"Anarch" ["We are in control. You are not."]
+  "Criminal" ["We keep everyone safe. You do not."]
+  "Default" ["They cannot possibly comprehend the stability we bring to the worlds."]
+  "Shaper" ["We know what is good for everyone. You do not."]}
+ "Titan Transnational: Investing In Your Future"
+ {"Anarch"
+  ["There is no future for those who fight it.//Biting the hand that feeds the market? They'll earn much more than a slap to the face."]
+  "Criminal"
+  ["Scammers and fraudsters beware - we know who you are.\n//Sometimes you just have to liquidate a few stray assets..."]
+  "Default"
+  ["They can try to keep up, we make billions in the blink of an eye. We were bitten once, but now is no time to be shy."]
+  "Omar Keung: Conspiracy Theorist" ["The Flashpoint was merely a setback!"]
+  "Shaper"
+  ["Curiosity about our practices and trade protocols? Flattering, but absolutely unnaceptable."]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]}
+ "Weyland Consortium: Because We Built It"
+ {"Anarch" ["Our ancestors built walls to keep the barbarians out. So do we."]
+  "Criminal" ["One day you will run out of places to hide."]
+  "Default"
+  ["These monuments to our power will outlast us all. No hopped up stim junky can hope to stand against them. We'll make sure of that."]
+  "Shaper"
+  ["We built the Net without you meddling. We can keep it that way if need be."]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]}
+ "Weyland Consortium: Builder of Nations"
+ {"Anarch"
+  ["No matter their resolve, they will yield to reason and superior firepower."]
+  "Apex: Invasive Predator"
+  ["It's moving towards the server//What do we have that's bigger than 240's?//..."]
+  "Criminal"
+  ["Those who trespass shall be maimed. Those who trespass repeatedly, shall be eliminated."]
+  "Default"
+  ["Let them break themselves on our defenses. When they run to hide we'll stamp them out. "]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  ["Trying to make a show of our defenses? Let's give them a finale to remember."]
+  "Exile: Streethawk"
+  ["Fortify defenses and shoot on sight. I hope they enjoy picking up the pieces."]
+  "Nasir Meidan: Cyber Explorer"
+  ["Something seems to be charting it's course this way. Let make it choppy for them."]
+  "Quetzal: Free Spirit" ["Nothing is free. Ever. Lets drive that point home."]
+  "Shaper" ["There is nothing to see here for the likes of you. Move along."]
+  "Valencia Estevez: The Angel of Cayambe"
+  ["Looks like we have another bleeding heart poking around. That's perfect, the boss like them bloody."]}
+ "Weyland Consortium: Building a Better World"
+ {"Anarch"
+  ["Throughout history, disruptive forces have smashed against concerted progress time and again. You can't stop progress, regardless of how hard you try."]
+  "Criminal"
+  ["Every highly organized and profitable system attracts leeches and profiteers. It's a necessary evil we are willing to fight with at all cost."]
+  "Default"
+  ["With our two hands, we made everthing. With our two hands, you will be crushed."]
+  "Shaper"
+  ["It's a shame we can't cooperate and stand on opposing sides.. Together, we could have achieved so much more..."]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end.\n"]}}
