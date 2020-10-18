@@ -455,13 +455,12 @@
                   (not (:mutespectators game)))
           [:div
            [:form {:on-submit #(do (.preventDefault %)
-                                   (send-msg s))
-                   :on-input #(do (.preventDefault %)
-                                  (send-typing s))}
+                                   (send-msg s))}
             [:input {:placeholder "Say something"
                      :type "text"
                      :value (:msg @s)
-                     :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+                     :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
+                                     (send-typing s))}]]
            [indicate-action]])))))
 
 (defn handle-dragstart [e card]
