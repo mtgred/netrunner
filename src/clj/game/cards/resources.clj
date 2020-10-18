@@ -2603,7 +2603,7 @@
                                    :choices to-draw
                                    :effect (effect (move target :deck)
                                                    (system-msg (str "uses The Class Act to add the "
-                                                                    (pprint/cl-format nil "~:R" (+ 1 (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
+                                                                    (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
                                                                     " card drawn to the bottom of the Stack"))
                                                    (clear-wait-prompt :corp)
                                                    (effect-completed eid))}

@@ -532,7 +532,7 @@
                                                    :all true}
                                          :effect (req (doseq [c (reverse targets)]
                                                         (system-msg state side (str "uses Daily Business Show to add the "
-                                                                                    (pprint/cl-format nil "~:R" (+ 1 (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
+                                                                                    (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
                                                                                     " card drawn to the bottom of R&D"))
                                                         (move state side c :deck)))}
                                         card targets)
