@@ -135,14 +135,24 @@
 (deftest allele-repression
   ;; Allele Repression
   (do-game
-    (new-game {:corp {:deck ["Allele Repression"]}})
+    (new-game {:corp {:hand ["Allele Repression" "Hedge Fund" "Vanilla"]
+                      :discard ["Ice Wall" "Enigma"]
+                      :credits 10}})
     (play-from-hand state :corp "Allele Repression" "New remote")
     (let [ar (get-content state :remote1 0)]
-      (core/advance state :corp (refresh ar))
-      (core/advance state :corp (refresh ar))
+      (click-advance state :corp (refresh ar))
+      (click-advance state :corp (refresh ar))
       (rez state :corp ar)
       (card-ability state :corp ar 0)
-      (is (= 1 (count (:discard (get-corp)))) "Allele Repression is trashed"))))
+      (is (find-card "Allele Repression" (:discard (get-corp))) "Allele Repression is trashed")
+      (click-card state :corp "Hedge Fund")
+      (click-card state :corp "Vanilla")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Enigma")
+      (is (find-card "Ice Wall" (:hand (get-corp))))
+      (is (find-card "Enigma" (:hand (get-corp))))
+      (is (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (find-card "Vanilla" (:discard (get-corp)))))))
 
 (deftest amani-senai
   ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
@@ -317,6 +327,7 @@
         (click-prompt state :runner "0")))))
 
 (deftest bass-ch1r180g4
+  ;; Bass CH1R180G4
   (do-game
     (new-game {:corp {:deck ["Bass CH1R180G4"]}})
     (play-from-hand state :corp "Bass CH1R180G4" "New remote")
@@ -4862,8 +4873,8 @@
                :runner {:deck [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]}})
     (play-from-hand state :corp "Toshiyuki Sakai" "New remote")
     (let [toshi (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh toshi)})
-      (core/advance state :corp {:card (refresh toshi)})
+      (click-advance state :corp (refresh toshi))
+      (click-advance state :corp (refresh toshi))
       (take-credits state :corp)
       (is (= 2 (get-counters (refresh toshi) :advancement)) "Toshiyuki has 2 advancements")
       (run-empty-server state "Server 1")

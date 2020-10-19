@@ -103,6 +103,7 @@
                        (effect-completed state side eid)))))
        (effect-completed state side eid)))))
 
+;; TODO: make async
 (defn derez
   "Derez a corp card."
   [state side card]

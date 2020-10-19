@@ -196,6 +196,10 @@
    operation?
    private-card
    program?
+   protecting-archives?
+   protecting-hq?
+   protecting-rd?
+   protecting-a-central?
    resource?
    rezzed?
    runner?
@@ -498,6 +502,7 @@
    move-zone
    remove-old-current
    swap-agendas
+   swap-cards
    swap-ice
    swap-installed
    trash

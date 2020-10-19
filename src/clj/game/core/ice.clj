@@ -21,23 +21,27 @@
 ;; moving.clj needs set-current-ice
 (defn get-run-ices
   [state]
-  (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
+  (when-let [run (:run @state)]
+    (get-in @state (concat [:corp :servers] (:server run) [:ices]))))
 
 (defn get-current-ice
   [state]
-  (let [ice (get-in @state [:run :current-ice])]
-    (or (get-card state ice) ice)))
+  (when-let [run (:run @state)]
+    (let [ice (:current-ice run)]
+      (or (get-card state ice) ice))))
 
 (defn set-current-ice
   ([state]
-   (let [run-ice (get-run-ices state)
-         pos (get-in @state [:run :position])]
-     (when (and pos
-                (pos? pos)
-                (<= pos (count run-ice)))
-       (set-current-ice state (nth run-ice (dec pos))))))
+   (when (:run @state)
+     (let [run-ice (get-run-ices state)
+           pos (get-in @state [:run :position])]
+       (when (and pos
+                  (pos? pos)
+                  (<= pos (count run-ice)))
+         (set-current-ice state (nth run-ice (dec pos)))))))
   ([state card]
-   (swap! state assoc-in [:run :current-ice] (get-card state card))))
+   (when (:run @state)
+     (swap! state assoc-in [:run :current-ice] (get-card state card)))))
 
 ;;; Ice subroutine functions
 (defn add-sub
@@ -226,7 +230,8 @@
   (for [sub (remove #(or (:broken %)
                          (not (if (fn? (:breakable %))
                                 ((:breakable %) state side eid ice [card])
-                                (:breakable % true)))) (:subroutines ice))]
+                                (:breakable % true))))
+                    (:subroutines ice))]
     (make-label (:sub-effect sub))))
 
 (defn resolve-subroutine
@@ -409,7 +414,15 @@
     :effect (req (if (= "Done" target)
                    (complete-with-result state side eid {:broken-subs broken-subs
                                                          :early-exit true})
-                   (let [sub (first (filter #(and (not (:broken %)) (= target (make-label (:sub-effect %)))) (:subroutines ice)))
+                   (let [subroutines (filter #(and (not (:broken %))
+                                                   (if (fn? (:breakable %))
+                                                     ((:breakable %) state side eid ice [card])
+                                                     (:breakable % true)))
+                                             (:subroutines ice))
+                         idx (:idx (first targets))
+                         sub (if (number? idx)
+                               (nth subroutines idx)
+                               (first (filter #(= target (make-label (:sub-effect %))) subroutines)))
                          ice (break-subroutine ice sub)
                          broken-subs (cons sub broken-subs)
                          breakable-subs (breakable-subroutines-choice state side eid card ice)]

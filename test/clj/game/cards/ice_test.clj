@@ -1539,8 +1539,7 @@
           -1 (:credit (get-runner))
           "Get taxed 1c for breaking with Grappling Hook"
           (card-ability state :runner gh 0)
-          (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
-          (click-prompt state :runner "1: End the run unless the Runner pays 3 [Credits]"))))))
+          (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
 (deftest hagen
   ;; Hagen
@@ -1699,7 +1698,7 @@
     (new-game {:corp {:deck ["Hydra"]}})
     (play-from-hand state :corp "Hydra" "HQ")
     (take-credits state :corp)
-    (core/gain-credits state :corp 10)
+    (core/gain state :corp :credit 10)
     (run-on state :hq)
     (let [hydra (get-ice state :hq 0)
           corp-creds (:credit (get-corp))]
@@ -1993,8 +1992,7 @@
   ;; Kakugo
   (testing "ability continues to work when ice is swapped"
     (do-game
-      (new-game {:corp {:deck ["Kakugo"
-                               "Ice Wall"]}})
+      (new-game {:corp {:deck ["Kakugo" "Ice Wall"]}})
       (play-from-hand state :corp "Kakugo" "R&D")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
@@ -2007,6 +2005,7 @@
         (run-jack-out state)
         (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
         (core/swap-ice state :corp (refresh kakugo) (refresh ice-wall))
+        (core/fake-checkpoint state)
         (run-on state "Archives")
         (run-continue state)
         (run-continue state)
@@ -2174,6 +2173,30 @@
       (play-from-hand state :runner "Diesel")
       (is (= 3 (count (:hand (get-runner))))
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
+
+(deftest loki
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Loki" "Archer"]
+                      :credits 100}})
+    (play-from-hand state :corp "Archer" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
+    (play-from-hand state :corp "Loki" "R&D")
+    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-continue state)
+    (click-card state :corp "Archer")
+    (is (= ["Gain 2 [Credits]" "Trash a program" "Trash a program" "End the run"
+            "End the run unless the Runner shuffles their Grip into the Stack"]
+           (map :label (:subroutines (get-ice state :rd 0))))
+        "Loki gains all of Archer's subroutines")
+    (is (= "Sentry - Destroyer - Bioroid" (:subtype (get-ice state :rd 0))))
+    (run-jack-out state)
+    (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
+           (map :label (:subroutines (get-ice state :rd 0))))
+        "Loki's subroutines revert to printed after the run ends")
+    (is (= "Bioroid" (:subtype (get-ice state :rd 0))))))
 
 (deftest loot-box
   ;; Loot Box
@@ -2457,6 +2480,66 @@
     (rez state :corp (get-ice state :rd 0))
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+
+(deftest metamorph
+  ;; Metamorph
+  (testing "with two installed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph" "Ice Wall" "Vanilla"]
+                        :credits 20}})
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two ICE"] (prompt-buttons :corp)) "Only ice option")
+      (click-prompt state :corp "Swap two ICE")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Vanilla")
+      (is (= "Vanilla" (:title (get-ice state :hq 0))))
+      (is (= "Ice Wall" (:title (get-ice state :rd 0))))))
+  (testing "with two installed non-ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph" "Allele Repression" "Hostile Takeover"]
+                        :credits 20}})
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Allele Repression" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option")
+      (click-prompt state :corp "Swap two non-ICE")
+      (click-card state :corp "Allele Repression")
+      (click-card state :corp "Hostile Takeover")
+      (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
+      (is (= "Allele Repression" (:title (get-content state :remote2 0))))))
+  (testing "with two installed non-ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Metamorph"
+                               "Ice Wall" "Vanilla"
+                               "Allele Repression" "Hostile Takeover"]
+                        :credits 20}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Metamorph" "Archives")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (play-from-hand state :corp "Allele Repression" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :archives 0))
+      (is (= ["Swap two ICE" "Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option"))))
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
@@ -3466,7 +3549,7 @@
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
-      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
 
 (deftest self-adapting-code-wall
@@ -3911,7 +3994,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "6")
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
-      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
 (deftest susanoo-no-mikoto
@@ -3977,6 +4060,55 @@
           -3 (:credit (get-runner))
           "Costs 3"
           (click-prompt state :runner "Pay 3 [Credits]"))))))
+
+(deftest swordsman
+  ;; Swordsman
+  (testing "Can't be broken with AI"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swordsman"]}
+                 :runner {:hand ["Alpha" "Faerie"]
+                          :credits 15}})
+      (play-from-hand state :corp "Swordsman" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Faerie")
+      (run-on state "HQ")
+      (let [swordsman (get-ice state :hq 0)
+            alpha (get-program state 0)
+            faerie (get-program state 1)]
+        (rez state :corp swordsman)
+        (run-continue state)
+        (card-ability state :runner alpha "Add 1 strength")
+        (card-ability state :runner alpha "Break 1 subroutine")
+        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (card-ability state :runner faerie "Break 1 Sentry subroutine")
+        (is (= "Break a subroutine" (:msg (prompt-map :runner)))
+            "Runner has Faerie break prompt"))))
+ (testing "First subroutine trashes AI programs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Swordsman"]}
+                 :runner {:hand ["Alpha" "Faerie"]
+                          :credits 15}})
+      (play-from-hand state :corp "Swordsman" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Faerie")
+      (run-on state "HQ")
+      (let [swordsman (get-ice state :hq 0)
+            alpha (get-program state 0)
+            faerie (get-program state 1)]
+        (rez state :corp swordsman)
+        (run-continue state)
+        (fire-subs state swordsman)
+        (is (= :select (prompt-type :corp)) "Swordsman subroutine to select an AI")
+        (click-card state :corp faerie)
+        (is (refresh faerie) "Faerie isn't an AI so isn't trashed")
+        (click-card state :corp alpha)
+        (is (not (refresh alpha)) "Alpha is trashed because it's an AI")
+        (is (= "Alpha" (:title (first (:discard (get-runner)))))
+            "Alpha is trashed because it's an AI")))))
 
 (deftest thimblerig
   ;; Thimblerig
@@ -4331,20 +4463,44 @@
       (is (empty? (:prompt (get-runner))) "Runner is not prompted to pay"))))
 
 (deftest turing
-  ;; Turing - Strength boosted when protecting a remote server
-  (do-game
-    (new-game {:corp {:deck [(qty "Turing" 2) "Hedge Fund"]}})
-    (play-from-hand state :corp "Hedge Fund")
-    (play-from-hand state :corp "Turing" "HQ")
-    (play-from-hand state :corp "Turing" "New remote")
-    (let [t1 (get-ice state :hq 0)
-          t2 (get-ice state :remote1 0)]
-      (rez state :corp t1)
-      (is (= 2 (get-strength (refresh t1)))
-          "Turing default 2 strength over a central server")
-      (rez state :corp t2)
-      (is (= 5 (get-strength (refresh t2)))
-          "Turing increased to 5 strength over a remote server"))))
+  ;; Turing
+  (testing "Strength boosted when protecting a remote server"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Turing" 2) "Hedge Fund"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Turing" "HQ")
+      (play-from-hand state :corp "Turing" "New remote")
+      (let [t1 (get-ice state :hq 0)
+            t2 (get-ice state :remote1 0)]
+        (rez state :corp t1)
+        (is (= 2 (get-strength (refresh t1)))
+            "Turing default 2 strength over a central server")
+        (rez state :corp t2)
+        (is (= 5 (get-strength (refresh t2)))
+            "Turing increased to 5 strength over a remote server"))))
+  (testing "Can't be broken with AI"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Turing"]}
+                 :runner {:hand ["Alpha" "Abagnale"]
+                          :credits 15}})
+      (play-from-hand state :corp "Turing" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Alpha")
+      (play-from-hand state :runner "Abagnale")
+      (run-on state "HQ")
+      (let [turing (get-ice state :hq 0)
+            alpha (get-program state 0)
+            abagnale (get-program state 1)]
+        (rez state :corp turing)
+        (run-continue state)
+        (card-ability state :runner alpha "Add 1 strength")
+        (card-ability state :runner alpha "Break 1 subroutine")
+        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (card-ability state :runner abagnale "Break 1 Code Gate subroutine")
+        (is (= "Break a subroutine" (:msg (prompt-map :runner)))
+            "Runner has Abagnale break prompt")))))
 
 (deftest turnpike
   ;; Turnpike

@@ -157,22 +157,30 @@
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
-  (-> []
-      (#(if (or (and (= type "Agenda")
-                     (#{"servers" "onhost"} (first zone)))
-                (= advanceable "always")
-                (and rezzed
-                     (= advanceable "while-rezzed"))
-                (and (not rezzed)
-                     (= advanceable "while-unrezzed")))
-          (cons "advance" %) %))
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
-      (#(if (#{"ICE" "Program"} type)
-          (cons "trash" %) %))
-      (#(if (#{"Asset" "ICE" "Upgrade"} type)
-          (if-not rezzed (cons "rez" %) (cons "derez" %))
-          %))))
+  (cond->> []
+    ;; advance
+    (or (and (= type "Agenda")
+             (#{"servers" "onhost"} (first zone)))
+        (= advanceable "always")
+        (and rezzed
+             (= advanceable "while-rezzed"))
+        (and (not rezzed)
+             (= advanceable "while-unrezzed")))
+    (cons "advance")
+    ;; score
+    (and (= type "Agenda") (>= advance-counter current-cost))
+    (cons "score")
+    ;; trash
+    (#{"ICE" "Program"} type)
+    (cons "trash")
+    ;; rez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         (not rezzd))
+    (cons "rez")
+    ;; derez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         rezzd)
+    (cons "derez")))
 
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
@@ -1821,20 +1829,16 @@
 
             ;; otherwise choice of all present choices
             :else
-            (map-indexed (fn [i {:keys [uuid value]}]
-                           (when (not= value "Hide")
-                             [:button {:key i
-                                       :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                       :on-mouse-over
-                                       #(card-highlight-mouse-over % value button-channel)
-                                       :on-mouse-out
-                                       #(card-highlight-mouse-out % value button-channel)
-                                       :id {:code value}}
-                              (render-message
-                                (if-let [title (:title value)]
-                                  title
-                                  value))]))
-                         (:choices prompt)))]
+            (doall (for [{:keys [idx uuid value]} (:choices prompt)]
+                     (when (not= value "Hide")
+                       [:button {:key idx
+                                 :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                 :on-mouse-over
+                                 #(card-highlight-mouse-over % value button-channel)
+                                 :on-mouse-out
+                                 #(card-highlight-mouse-out % value button-channel)
+                                 :id {:code value}}
+                        (render-message (or (not-empty (:title value)) value))]))))]
          (if @run
            [run-div side run]
            [:div.panel.blue-shade

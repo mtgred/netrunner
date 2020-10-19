@@ -112,18 +112,18 @@
                          (when (or run-effect card)
                            (add-run-effect state side (assoc run-effect :card (get-card state card))))
                          (trigger-event state side :begin-run :server s)
-                         (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
-                         (swap! state assoc-in [:runner :next-run-credit] 0)
-                         (gain-run-credits state side (count-bad-pub state))
-                         (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-                         (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                         (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
-                                   (if (pos? (get-in @state [:run :position] 0))
-                                     (do (set-next-phase state :approach-ice)
-                                         (start-next-phase state side nil))
-                                     (do (set-next-phase state :approach-server)
-                                         (swap! state assoc-in [:run :jack-out] true)
-                                         (start-next-phase state side nil)))))
+                         (wait-for (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
+                                   (swap! state assoc-in [:runner :next-run-credit] 0)
+                                   (wait-for (gain-run-credits state side (count-bad-pub state))
+                                             (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+                                             (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                                             (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
+                                                       (if (pos? (get-in @state [:run :position] 0))
+                                                         (do (set-next-phase state :approach-ice)
+                                                             (start-next-phase state side nil))
+                                                         (do (set-next-phase state :approach-server)
+                                                             (swap! state assoc-in [:run :jack-out] true)
+                                                             (start-next-phase state side nil)))))))
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
 
@@ -384,9 +384,9 @@
 ;; Non timing stuff
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
-  [state _ n]
+  [state _ eid n]
   (swap! state update-in [:runner :run-credit] (fnil + 0 0) n)
-  (gain-credits state :runner n))
+  (gain-credits state :runner eid n))
 
 (defn gain-next-run-credits
   "Add temporary credits for the next run to be initiated."

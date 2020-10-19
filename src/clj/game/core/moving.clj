@@ -2,7 +2,8 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [card-index facedown? faceup? fake-identity? get-card in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [card-index corp? facedown? faceup? fake-identity? get-card get-zone
+                            ice? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -19,7 +20,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-winner]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in make-cid remove-once same-card? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 
@@ -136,7 +137,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -150,7 +151,8 @@
                       (some #(same-card? card %) (get-in @state (cons :corp (vec zone)))))
                   (or force
                       (empty? (get-in @state [(to-keyword (:side card)) :locked (-> card :zone first)]))))
-         (trigger-event state side :pre-card-moved card src-zone target-zone)
+         (when-not suppress-event
+           (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
            (remove-old-card state side card)
@@ -169,7 +171,8 @@
                (swap! state dissoc-in z)))
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
-           (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
+           (when-not suppress-event
+             (trigger-event state side :card-moved card (assoc moved-card :move-to-side side)))
            ; This is for removing `:location :X` events that are non-default locations,
            ; such as Subliminal Messaging only registering in :discard. We first unregister
            ; any non-default events from the previous zone and the register the non-default
@@ -372,52 +375,60 @@
                 (trash state (to-keyword (:side current)) eid current nil)))))
     (effect-completed state side eid)))
 
+(defn swap-installed
+  "Swaps two installed corp cards"
+  [state side a b]
+  (let [pred? (every-pred corp? installed?)]
+    (when (and (pred? a)
+               (pred? b))
+      (let [a-index (card-index state a)
+            b-index (card-index state b)
+            a-new (assoc a :zone (:zone b))
+            b-new (assoc b :zone (:zone a))]
+        (swap! state update-in (cons :corp (:zone a)) assoc a-index b-new)
+        (swap! state update-in (cons :corp (:zone b)) assoc b-index a-new)
+        (update-installed-card-indices state :corp (:zone a))
+        (update-installed-card-indices state :corp (:zone b))
+        (doseq [new-card [a-new b-new]]
+          (unregister-events state side new-card)
+          (when (rezzed? new-card)
+            (register-events state side new-card))
+          (doseq [h (:hosted new-card)]
+            (let [newh (-> h
+                           (assoc-in [:zone] '(:onhost))
+                           (assoc-in [:host :zone] (:zone new-card)))]
+              (update! state side newh)
+              (unregister-events state side h)
+              (register-events state side newh))))
+        (trigger-event state side :swap a-new b-new)))))
+
 (defn swap-ice
   "Swaps two pieces of ICE."
   [state side a b]
-  (let [a-index (card-index state a)
-        b-index (card-index state b)
-        a-new (assoc a :zone (:zone b))
-        b-new (assoc b :zone (:zone a))]
-    (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
-    (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
-    (update-installed-card-indices state :corp (:zone a))
-    (update-installed-card-indices state :corp (:zone b))
-    (doseq [newcard [a-new b-new]]
-      (unregister-events state side newcard)
-      (when (rezzed? newcard)
-        (register-events state side newcard))
-      (doseq [h (:hosted newcard)]
-        (let [newh (-> h
-                       (assoc-in [:zone] '(:onhost))
-                       (assoc-in [:host :zone] (:zone newcard)))]
-          (update! state side newh)
-          (unregister-events state side newh)
-          (when (faceup? newh)
-            (register-events state side newh)))))
-    (trigger-event state side :swap a-new b-new)
-    (set-current-ice state)))
+  (let [pred? (every-pred corp? installed? ice?)]
+    (when (and (pred? a)
+               (pred? b))
+      (swap-installed state side a b)
+      (set-current-ice state))))
 
-(defn swap-installed
-  "Swaps two installed corp cards - like swap ICE except no strength update"
+(defn swap-cards
+  "Swaps two cards when one or both aren't installed"
   [state side a b]
-  (let [a-index (card-index state a)
-        b-index (card-index state b)
-        a-new (assoc a :zone (:zone b))
-        b-new (assoc b :zone (:zone a))]
-    (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
-    (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
-    (update-installed-card-indices state :corp (:zone a))
-    (update-installed-card-indices state :corp (:zone b))
-    (doseq [newcard [a-new b-new]]
-      (doseq [h (:hosted newcard)]
-        (let [newh (-> h
-                       (assoc-in [:zone] '(:onhost))
-                       (assoc-in [:host :zone] (:zone newcard)))]
-          (update! state side newh)
-          (unregister-events state side h)
-          (register-events state side newh))))
-    (trigger-event state side :swap a-new b-new)))
+  (when (same-side? (:side a) (:side b))
+    (let [moved-a (move state side a (get-zone b)
+                        {:keep-server-alive true
+                         :index (card-index state b)
+                         :suppress-event true})
+          moved-b (move state side b (get-zone a)
+                        {:keep-server-alive true
+                         :index (card-index state a)
+                         :suppress-event true})]
+      (trigger-event state side :swap moved-a moved-b)
+      (when (and (:run @state)
+                 (or (ice? a)
+                     (ice? b)))
+        (set-current-ice state))
+      [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
