@@ -56,8 +56,10 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
-      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
+      ("Event" "Operation")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
 
 (defn click-draw
   "Click to draw."
