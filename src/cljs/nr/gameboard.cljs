@@ -435,15 +435,16 @@
       (swap! s assoc :msg ""))))
 
 (defn send-typing [s]
-  "Send a typing event to server for this user if it is not already set in game state"
+  "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
-    (if (empty? text)
-      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                       :typing false}])
-      (when (not-any? #{username} (:typing @game-state))
+    (when (not-spectator?)
+      (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing true}])))))
+                                        :typing false}])
+        (when (not-any? #{username} (:typing @game-state))
+          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                          :typing true}]))))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -463,13 +464,12 @@
                   (not (:mutespectators game)))
           [:div
            [:form {:on-submit #(do (.preventDefault %)
-                                   (send-msg s))
-                   :on-input #(do (.preventDefault %)
-                                  (send-typing s))}
+                                   (send-msg s))}
             [:input {:placeholder "Say something"
                      :type "text"
                      :value (:msg @s)
-                     :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+                     :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
+                                     (send-typing s))}]]
            [indicate-action]])))))
 
 (defn handle-dragstart [e card]
