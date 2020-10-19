@@ -363,7 +363,7 @@
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
-                                       (do (system-msg state :corp "flip their identity to Earth Station: SEA Headquarters")
+                                       (do (system-msg state :corp "flipped their identity to Earth Station: SEA Headquarters")
                                            (assoc card
                                                   :flipped false
                                                   :code (subs (:code card) 0 5)))
@@ -400,10 +400,13 @@
                                  ; even :unpreventable does not trash Architect
                                  (trash-cards state side eid to-be-trashed {:unpreventable true})))}
                  card nil))
-     :abilities [{:label "Flip identity"
+     :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))
                   :cost [:click 1]
                   :msg "flip their identity to Earth Station: Ascending to Orbit"
+                  :effect flip-effect}
+                 {:label "Manually flip identity to Earth Station: SEA Headquarters"
+                  :req (req (:flipped card))
                   :effect flip-effect}]}))
 
 (defcard "Edward Kim: Humanity's Hammer"
