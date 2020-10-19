@@ -1726,7 +1726,7 @@
 (defcard "No One Home"
   (letfn [(first-chance? [state side]
             (< (+ (event-count state side :pre-tag)
-                  (event-count state side :pre-damage))
+                  (event-count state side :pre-damage #(= (first %) :net)))
                2))
           (start-trace [type]
             (let [message (str "avoid any " (if (= type :net)
