@@ -427,15 +427,16 @@
       (swap! s assoc :msg ""))))
 
 (defn send-typing [s]
-  "Send a typing event to server for this user if it is not already set in game state"
+  "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
-    (if (empty? text)
-      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                       :typing false}])
-      (when (not-any? #{username} (:typing @game-state))
+    (when (not-spectator?)
+      (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing true}])))))
+                                        :typing false}])
+        (when (not-any? #{username} (:typing @game-state))
+          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                          :typing true}]))))))
 
 (defn indicate-action []
   (when (not-spectator?)
