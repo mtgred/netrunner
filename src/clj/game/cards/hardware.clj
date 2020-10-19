@@ -189,7 +189,7 @@
                                       :once :per-run
                                       :duration :end-of-run
                                       :optional
-                                      {:req (req (and (:successful target)))
+                                      {:req (req (and (:successful target) (not (seq (get-in @state [:runner :locked :discard])))))
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
