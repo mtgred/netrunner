@@ -3,8 +3,8 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp?
-                                    faceup? installed? same-card?]]
+            [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
+                                    faceup? installed? same-card? in-scored?]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -157,22 +157,30 @@
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
-  (-> []
-      (#(if (or (and (= type "Agenda")
-                     (#{"servers" "onhost"} (first zone)))
-                (= advanceable "always")
-                (and rezzed
-                     (= advanceable "while-rezzed"))
-                (and (not rezzed)
-                     (= advanceable "while-unrezzed")))
-          (cons "advance" %) %))
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
-      (#(if (#{"ICE" "Program"} type)
-          (cons "trash" %) %))
-      (#(if (#{"Asset" "ICE" "Upgrade"} type)
-          (if-not rezzed (cons "rez" %) (cons "derez" %))
-          %))))
+  (cond->> []
+    ;; advance
+    (or (and (= type "Agenda")
+             (#{"servers" "onhost"} (first zone)))
+        (= advanceable "always")
+        (and rezzed
+             (= advanceable "while-rezzed"))
+        (and (not rezzed)
+             (= advanceable "while-unrezzed")))
+    (cons "advance")
+    ;; score
+    (and (= type "Agenda") (>= advance-counter current-cost))
+    (cons "score")
+    ;; trash
+    (#{"ICE" "Program"} type)
+    (cons "trash")
+    ;; rez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         (not rezzd))
+    (cons "rez")
+    ;; derez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         rezzd)
+    (cons "derez")))
 
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
@@ -427,15 +435,16 @@
       (swap! s assoc :msg ""))))
 
 (defn send-typing [s]
-  "Send a typing event to server for this user if it is not already set in game state"
+  "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
-    (if (empty? text)
-      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                       :typing false}])
-      (when (not-any? #{username} (:typing @game-state))
+    (when (not-spectator?)
+      (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing true}])))))
+                                        :typing false}])
+        (when (not-any? #{username} (:typing @game-state))
+          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                          :typing true}]))))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -455,13 +464,12 @@
                   (not (:mutespectators game)))
           [:div
            [:form {:on-submit #(do (.preventDefault %)
-                                   (send-msg s))
-                   :on-input #(do (.preventDefault %)
-                                  (send-typing s))}
+                                   (send-msg s))}
             [:input {:placeholder "Say something"
                      :type "text"
                      :value (:msg @s)
-                     :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+                     :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
+                                     (send-typing s))}]]
            [indicate-action]])))))
 
 (defn handle-dragstart [e card]
@@ -698,6 +706,46 @@
                                                          :ability i})}
           (render-icons (add-cost-to-label ab))])
        corp-abilities)]))
+
+;; TODO (2020-10-08): We're using json as the transport layer for server-client
+;; communication, so every non-key keyword is converted to a string, which blows.
+;; Until this is changed, it's better to redefine this stuff in here and just not
+;; worry about it.
+(letfn
+  [(is-type?  [card value] (= value (:type card)))
+   (identity? [card] (or (is-type? card "Fake-Identity")
+                         (is-type? card "Identity")))
+   (get-nested-host [card] (if (:host card)
+                             (recur (:host card))
+                             card))
+   (get-zone [card] (:zone (get-nested-host card)))
+   (in-play-area? [card] (= (get-zone card) ["play-area"]))
+   (in-current? [card] (= (get-zone card) ["current"]))
+   (in-scored? [card] (= (get-zone card) ["scored"]))
+   (corp? [card] (= (:side card) "Corp"))
+   (installed? [card] (or (:installed card)
+                          (= "servers" (first (get-zone card)))))
+   (rezzed? [card] (:rezzed card))
+   (runner? [card] (= (:side card) "Runner"))
+   (condition-counter? [card] (and (:condition card)
+                                   (or (is-type? card "Event")
+                                       (is-type? card "Operation"))))
+   (facedown? [card] (or (when (not (condition-counter? card))
+                           (= (get-zone card) ["rig" "facedown"]))
+                         (:facedown card)))]
+  (defn active?
+    "Checks if the card is active and should receive game events/triggers."
+    [card]
+    (or (identity? card)
+        (in-play-area? card)
+        (in-current? card)
+        (in-scored? card)
+        (and (corp? card)
+             (installed? card)
+             (rezzed? card))
+        (and (runner? card)
+             (installed? card)
+             (not (facedown? card))))))
 
 (defn card-abilities [card c-state abilities subroutines]
   (let [actions (action-list card)
@@ -1137,16 +1185,16 @@
          [:div (str agenda-point " Agenda Point"
                     (when (not= agenda-point 1) "s"))
           (when me? (controls :agenda-point))]
-         (let [{:keys [base additional is-tagged]} tag
-               tag-count (+ base additional)
-               show-tagged (or (pos? tag-count) (pos? is-tagged))]
-           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= tag-count 1) "s" ""))
+         (let [{:keys [base total is-tagged]} tag
+               additional (- total base)
+               show-tagged (or is-tagged (pos? total))]
+           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" ""))
             (when show-tagged [:div.warning "!"])
             (when me? (controls :tag))])
          [:div (str brain-damage " Brain Damage")
           (when me? (controls :brain-damage))]
-         (let [{:keys [base mod]} hand-size]
-           [:div (str (+ base mod) " Max hand size")
+         (let [{:keys [total]} hand-size]
+           [:div (str total " Max hand size")
             (when me? (controls :hand-size))])]))))
 
 (defmethod stats-view "Corp" [corp]
@@ -1781,20 +1829,16 @@
 
             ;; otherwise choice of all present choices
             :else
-            (map-indexed (fn [i {:keys [uuid value]}]
-                           (when (not= value "Hide")
-                             [:button {:key i
-                                       :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                       :on-mouse-over
-                                       #(card-highlight-mouse-over % value button-channel)
-                                       :on-mouse-out
-                                       #(card-highlight-mouse-out % value button-channel)
-                                       :id {:code value}}
-                              (render-message
-                                (if-let [title (:title value)]
-                                  title
-                                  value))]))
-                         (:choices prompt)))]
+            (doall (for [{:keys [idx uuid value]} (:choices prompt)]
+                     (when (not= value "Hide")
+                       [:button {:key idx
+                                 :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                 :on-mouse-over
+                                 #(card-highlight-mouse-over % value button-channel)
+                                 :on-mouse-out
+                                 #(card-highlight-mouse-out % value button-channel)
+                                 :id {:code value}}
+                        (render-message (or (not-empty (:title value)) value))]))))]
          (if @run
            [run-div side run]
            [:div.panel.blue-shade

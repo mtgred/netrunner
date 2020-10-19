@@ -4,7 +4,7 @@
             [game.utils :refer [dissoc-in]]
             [differ.core :as differ]))
 
-(defn strip [state]
+(defn- strip [state]
   (-> state
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
     (update-in [:corp :register] select-keys [:spent-click])

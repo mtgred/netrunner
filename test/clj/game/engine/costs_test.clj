@@ -94,11 +94,11 @@
             cor (get-program state 0)
             clo (get-program state 1)
             nm (get-resource state 0)]
-        (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
+        (is (= 2 (get-strength (refresh cor))) "Corroder starts at 2 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
         (click-card state :runner clo)
         (click-prompt state :runner "Place 1 [Credits]")
-        (is (= 5 (:current-strength (refresh cor))) "Corroder is at 5 strength")
+        (is (= 5 (get-strength (refresh cor))) "Corroder is at 5 strength")
         (is (= (- cre 2) (:credit (get-runner))) "Spent 2 (+1 from Cloak) to pump")))))
 
 (deftest pump-and-break
@@ -115,9 +115,9 @@
             hive (get-ice state :hq 0)]
         (rez state :corp hive)
         (run-continue state)
-        (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
+        (is (= 2 (get-strength (refresh cor))) "Corroder starts at 2 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
+        (is (= 3 (get-strength (refresh cor))) "Corroder now at 3 strength")
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
         (is (second-last-log-contains? state "Runner pays 6 \\[Credits\\] to increase the strength of Corroder to 3 and break all 5 subroutines on Hive.") "Should write correct pump & break price to log"))))
   (testing "Auto-pump first"
@@ -134,7 +134,7 @@
         (rez state :corp hive)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
-        (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
+        (is (= 3 (get-strength (refresh cor))) "Corroder now at 3 strength")
         (is (last-log-contains? state "Runner pays 1 \\[Credits\\] to increase the strength of Corroder to 3.") "Should write correct pump price to log")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
@@ -153,7 +153,7 @@
         (rez state :corp hive)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
-        (is (= 3 (:current-strength (refresh cor))) "Corroder is now at 3 strength")
+        (is (= 3 (get-strength (refresh cor))) "Corroder is now at 3 strength")
         (card-ability state :runner (refresh cor) 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done")

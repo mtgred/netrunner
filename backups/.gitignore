@@ -1,0 +1,3 @@
+# Ignore everything in data/ except .gitkeep
+data/*
+!data/.gitkeep

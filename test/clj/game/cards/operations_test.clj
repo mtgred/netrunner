@@ -258,7 +258,7 @@
                               (qty "Ice Wall" 10)]}})
       (starting-hand state :corp ["Attitude Adjustment" "Hostile Takeover" "Hostile Takeover"])
       (trash-from-hand state :corp "Hostile Takeover")
-      (play-from-hand state :corp "Attitude Adjustment") 
+      (play-from-hand state :corp "Attitude Adjustment")
       (let [credits (:credit (get-corp))]
         (click-card state :corp (find-card "Hostile Takeover" (:hand (get-corp))))
         (click-card state :corp (find-card "Hostile Takeover" (:discard (get-corp))))
@@ -470,13 +470,13 @@
     (play-from-hand state :corp "Hunter" "HQ")
     (let [hunter (get-ice state :hq 0)]
       (rez state :corp hunter)
-      (is (= 4 (:current-strength (refresh hunter))))
+      (is (= 4 (get-strength (refresh hunter))))
       (play-from-hand state :corp "Casting Call")
       (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
       (let [imptrac (get-content state :remote1 0)]
         (is (rezzed? (refresh imptrac)) "Improved Tracers is faceup")
-        (is (= 4 (:current-strength (refresh hunter))) "Hunter hasn't gained strength")
+        (is (= 4 (get-strength (refresh hunter))) "Hunter hasn't gained strength")
         (play-from-hand state :corp "Casting Call")
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
         (click-prompt state :corp "New remote")
@@ -1397,7 +1397,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain-credits state :runner 6)
+      (core/gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))]
         (play-from-hand state :corp "Financial Collapse")
@@ -1411,7 +1411,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain-credits state :runner 6)
+      (core/gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))
             kati (get-resource state 0)]
@@ -2068,8 +2068,8 @@
     (play-from-hand state :corp "Lag Time")
     (rez state :corp (get-ice state :hq 0))
     (rez state :corp (get-ice state :rd 0))
-    (is (= 1 (:current-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
-    (is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
+    (is (= 1 (get-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
+    (is (= 5 (get-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
 
 (deftest lateral-growth
   (do-game
@@ -2514,7 +2514,7 @@
     (rez state :corp (get-ice state :hq 0))
     (play-from-hand state :corp "Patch")
     (click-card state :corp (get-ice state :hq 0))
-    (is (= 2 (:current-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
+    (is (= 2 (get-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
 
 (deftest paywall-implementation
   ;; Paywall Implementation - Gain 1 credit for every successful run
@@ -3010,37 +3010,62 @@
     (is (= 12 (:credit (get-runner))) "Easy Mark netted 3c after Brownout trashed")))
 
 (deftest rover-algorithm
-  ;; Enigma
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Rover Algorithm" "Ice Wall"]
-                      :credits 10}
-               :runner {:hand ["Corroder"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (rez state :corp (get-ice state :hq 0))
-    (run-continue state)
-    (fire-subs state (get-ice state :hq 0))
-    (is (not (:run @state)) "Run has been ended")
-    (play-from-hand state :runner "Corroder")
-    (take-credits state :runner)
-    (play-from-hand state :corp "Rover Algorithm")
-    (click-card state :corp "Ice Wall")
-    (take-credits state :corp)
-    (let [icew (get-ice state :hq 0)
-          corr (get-program state 0)]
-      (is (= 1 (core/get-strength (refresh icew))) "Ice Wall starts at 1 str")
+  ;; Rover Algorithm
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rover Algorithm" "Ice Wall"]
+                        :credits 10}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
       (run-on state :hq)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corr)})
-      (core/continue state :corp nil)
-      (run-jack-out state)
-      (is (= 2 (core/get-strength (refresh icew))) "Ice Wall gained 1 str from Rover Algorithm")
-      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (fire-subs state (get-ice state :hq 0))
-      (is (= 2 (core/get-strength (refresh icew))) "Rover Algorithm only triggers on passing ice"))))
+      (is (not (:run @state)) "Run has been ended")
+      (play-from-hand state :runner "Corroder")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Rover Algorithm")
+      (click-card state :corp "Ice Wall")
+      (take-credits state :corp)
+      (let [icew (get-ice state :hq 0)
+            corr (get-program state 0)]
+        (is (= 1 (core/get-strength (refresh icew))) "Ice Wall starts at 1 str")
+        (run-on state :hq)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corr)})
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (is (= 2 (core/get-strength (refresh icew))) "Ice Wall gained 1 str from Rover Algorithm")
+        (run-on state :hq)
+        (run-continue state)
+        (fire-subs state (get-ice state :hq 0))
+        (is (= 2 (core/get-strength (refresh icew))) "Rover Algorithm only triggers on passing ice"))))
+  (testing "Works after host ice is moved #3808"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Vanilla" "Rover Algorithm" "Sunset"]
+                        :credits 10}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Rover Algorithm")
+      (click-card state :corp "Ice Wall")
+      (play-from-hand state :corp "Sunset")
+      (click-prompt state :corp "HQ")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Vanilla")
+      (click-prompt state :corp "Done")
+      (is (= ["Vanilla" "Ice Wall"] (map :title (get-ice state :hq))))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (changes-val-macro
+        1 (get-strength (get-ice state :hq 1))
+        "gains 1 str"
+        (run-continue state)
+        (run-continue state)))))
 
 (deftest sacrifice
   ;; Sacrifice - Remove BP for each agenda point sacrificed and gain a credit

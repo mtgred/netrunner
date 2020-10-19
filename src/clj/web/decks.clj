@@ -15,24 +15,23 @@
     (response 200 (mc/find-maps db "decks" {:username (:username user)}))
     (response 200 (mc/find-maps db "decks" {:username "__demo__"}))))
 
-(defn decks-create-handler [{{username :username} :user
-                             deck                 :body}]
-  (if (and username deck)
-    (let [update-card (fn [c] (update-in c [:card] @all-cards))
-          check-deck (-> deck
-                         (update-in [:cards] #(map update-card %))
-                         (update-in [:identity] #(@all-cards (:title %))))
-          status (calculate-deck-status check-deck)
-          deck (-> deck
-                   (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
-                   (assoc :username username
-                          :status status))]
-      (response 200 (mc/insert-and-return db "decks" deck)))
-    (response 401 {:message "Unauthorized"})))
-
 (defn update-card
   [card]
-  (update card :card #(get @all-cards %)))
+  (update card :card @all-cards))
+
+(defn update-deck
+  [deck]
+  (-> deck
+      (update :cards #(map update-card %))
+      (update :identity #(@all-cards (:title %)))))
+
+(defn prepare-deck-for-db
+  [deck username status deck-hash]
+  (-> deck
+      (update :cards (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
+      (assoc :username username
+             :status status
+             :hash deck-hash)))
 
 (defn hash-deck
   [deck]
@@ -47,19 +46,23 @@
         salt (byte-array (map byte (:name deck)))]
     (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
+(defn decks-create-handler [{{username :username} :user
+                             deck                 :body}]
+  (if (and username deck)
+    (let [updated-deck (update-deck deck)
+          status (calculate-deck-status updated-deck)
+          deck-hash (hash-deck updated-deck)
+          deck (prepare-deck-for-db deck username status deck-hash)]
+      (response 200 (mc/insert-and-return db "decks" deck)))
+    (response 401 {:message "Unauthorized"})))
+
 (defn decks-save-handler [{{username :username} :user
                            deck                 :body}]
   (if (and username deck)
-    (let [check-deck (-> deck
-                         (update :cards #(map update-card %))
-                         (update :identity #(get @all-cards (:title %))))
-          deck-hash (hash-deck deck)
-          deck (-> deck
-                   (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
-                   (assoc :username username)
-                   (assoc :hash deck-hash))
-          status (calculate-deck-status check-deck)
-          deck (assoc deck :status status)]
+    (let [updated-deck (update-deck deck)
+          status (calculate-deck-status updated-deck)
+          deck-hash (hash-deck updated-deck)
+          deck (prepare-deck-for-db deck username status deck-hash)]
       (if-let [deck-id (:_id deck)]
         (if (:identity deck)
           (do (mc/update db "decks"

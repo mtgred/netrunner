@@ -37,10 +37,10 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [cdef (card-def card)
-        c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
-                  :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
-        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
+        c (dissoc card :current-strength :runner-abilities :corp-abilities :rezzed :new
+                  :added-virus-counter :subtype-target :server-target :extra-advance-counter)
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
+        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
     c))
 
 (defn- trigger-leave-effect

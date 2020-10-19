@@ -8,7 +8,7 @@
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
 
-(def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-cards-edn/master/edn/raw_data.edn")
+(def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
 (def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
 (def ^:const nrdb-image-url "https://netrunnerdb.com/card_image/")
 

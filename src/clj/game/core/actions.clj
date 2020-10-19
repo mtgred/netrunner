@@ -56,8 +56,10 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
-      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
+      ("Event" "Operation")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
 
 (defn click-draw
   "Click to draw."
@@ -200,7 +202,7 @@
                   (cancel-effect choice)
                   (effect-completed state side (:eid prompt)))
                 (finish-prompt state side prompt card))
-            (do (effect (:value match))
+            (do (effect match)
                 (finish-prompt state side prompt card)))))
 
       :else
@@ -261,7 +263,7 @@
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (system-msg state side (str (build-spend-msg async-result "increase")
                                             "the strength of " (:title card) " to "
-                                            (:current-strength (get-card state card))))
+                                            (get-strength (get-card state card))))
                 (effect-completed state side eid)))))
 
 (defn- play-heap-breaker-auto-pump-and-break-impl
@@ -558,16 +560,16 @@
   ([state side eid card no-cost]
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
-     (when (can-advance? state side card)
+     (if (can-advance? state side card)
        (wait-for (pay state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
-                 (when-let [cost-str async-result]
-                   (let [spent   (build-spend-msg cost-str "advance")
-                         card    (card-str state card)
-                         message (str spent card)]
-                     (system-msg state side message))
-                   (update-advancement-cost state side card)
-                   (add-prop state side (get-card state card) :advance-counter 1)
-                   (play-sfx state side "click-advance")))))))
+                 (if-let [cost-str async-result]
+                   (do (system-msg state side (str (build-spend-msg cost-str "advance") (card-str state card)))
+                       (update-advancement-cost state side card)
+                       (add-prop state side (get-card state card) :advance-counter 1)
+                       (play-sfx state side "click-advance")
+                       (effect-completed state side eid))
+                   (effect-completed state side eid)))
+       (effect-completed state side eid)))))
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."

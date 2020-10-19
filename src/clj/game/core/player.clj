@@ -1,7 +1,7 @@
 (ns game.core.player)
 
 (defrecord HandSize
-  [base mod])
+  [base total])
 
 (defrecord Corp
   [user
@@ -49,7 +49,7 @@
      :credit 5
      :bad-publicity (map->BadPublicity {:base 0 :additional 0})
      :toast []
-     :hand-size (map->HandSize {:base 5 :mod 0})
+     :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
      :keep false
      :quote c-quote}))
@@ -89,7 +89,7 @@
   [program resource hardware])
 
 (defrecord Tags
-  [base additional is-tagged])
+  [base total is-tagged])
 
 (defrecord Memory
   [base mod used])
@@ -110,9 +110,9 @@
      :click 0 :click-per-turn 4
      :credit 5 :run-credit 0
      :link 0
-     :tag (map->Tags {:base 0 :additional 0 :is-tagged 0})
+     :tag (map->Tags {:base 0 :total 0 :is-tagged false})
      :memory (map->Memory {:base 4 :mod 0 :used 0})
-     :hand-size (map->HandSize {:base 5 :mod 0})
+     :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
      :rd-access 0
      :hq-access 0

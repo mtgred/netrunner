@@ -4,7 +4,7 @@
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.events :refer [trigger-event-sync]]
-    [game.core.gaining :refer [gain]]
+    [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [trash]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-prop]]
@@ -12,11 +12,9 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [remove-once same-card?]]
+    [game.utils :refer [remove-once same-card? server-card]]
     [jinteki.utils :refer [other-side]]
-    [clojure.string :as string]
-    )
-  )
+    [clojure.string :as string]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
@@ -140,11 +138,18 @@
            :req (req (pos? (get-counters card :recurring)))
            :async true
            :effect (req (add-prop state side card :rec-counter -1)
-                        (gain state side :credit 1)
-                        (trigger-event-sync state side eid :spent-credits-from-card card))}]
+                        (wait-for (gain-credits state side 1)
+                                  (trigger-event-sync state side eid :spent-credits-from-card card)))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
+(def card-defs-cache (atom {}))
+
 (defmacro defcard
   [title ability]
-  `(defmethod ~'defcard-impl ~title [~'_] (make-recurring-ability ~ability)))
+  `(defmethod ~'defcard-impl ~title [~'_]
+     (if-let [cached-ability# (get card-defs-cache ~title)]
+       cached-ability#
+       (let [ability# (make-recurring-ability ~ability)]
+         (swap! card-defs-cache assoc ~title ability#)
+         ability#))))

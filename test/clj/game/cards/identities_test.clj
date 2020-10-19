@@ -190,7 +190,7 @@
       (run-on state :archives)
       (run-continue state)
       (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
-      (core/derez state :corp (get-ice state :archives 0))
+      (derez state :corp (get-ice state :archives 0))
       (is (not (is-tagged? state)) "Runner no longer encountering the derezzed ice")))
   (testing "No tag on empty server"
     (do-game
@@ -237,10 +237,10 @@
       (is (not (is-tagged? state)) "Runner is not yet tagged when encountering outermost ice")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (= 1 (get-in @state [:runner :tag :additional])) "Runner gains 1 additional tag when ice rezzed")
+      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner gains 1 additional tag when ice rezzed")
       (rez state :corp (get-content state :remote1 0))
       (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
-      (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
+      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
       (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
   (testing "Trashing the ice removes the tag #4984"
@@ -258,7 +258,55 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
-      (is (zero? (count-tags state)) "Acme additional tag falls off"))))
+      (is (zero? (count-tags state)) "Acme additional tag falls off")))
+  (testing "Interactions with Fly on the Wall #5227"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Fly on the Wall" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-and-score state "Fly on the Wall")
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Fly on the Wall gives 1 tag")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 2 (count-tags state)) "Acme gives real tags")
+      (fire-subs state (get-ice state :remote1 0))
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Acme's tag falls off")))
+  (testing "Interactions with Data Ward #5178"
+    (do-game
+      (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Data Ward"]
+                        :credits 10}
+                 :runner {:hand ["Corroder" "Xanadu"]
+                          :credits 15}})
+      (play-from-hand state :corp "Data Ward" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Xanadu")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (is (is-tagged? state) "Runner should be tagged")
+      (is (= 1 (count-tags state)) "Acme gives real tags")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 2 (count-tags state)))
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (core/continue state :corp nil)
+      (run-continue state)
+      (click-prompt state :runner "No action")
+      (is (nil? (get-run)))
+      (is (is-tagged? state) "Runner should still be tagged")
+      (is (= 1 (count-tags state)) "Acme's tag falls off")
+      (take-credits state :runner)
+      (trash-resource state)
+      (click-card state :corp (get-resource state 0))
+      (is (= "Xanadu" (:title (get-discarded state :runner 0)))))))
 
 (deftest adam-compulsive-hacker
   ;; Adam
@@ -463,7 +511,7 @@
       (new-game {:runner {:id "Andromeda: Dispossessed Ristie"
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
                                  (qty "Security Testing" 3) (qty "Bank Job" 3)]}})
-      (is (= 1 (:link (get-runner))) "1 link")
+      (is (= 1 (get-link state)) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "9 card starting hand after mulligan"
     (do-game
@@ -471,7 +519,7 @@
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
                                  (qty "Security Testing" 3) (qty "Bank Job" 3)]}
                  :options {:mulligan :runner}})
-      (is (= 1 (:link (get-runner))) "1 link")
+      (is (= 1 (get-link state)) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "should not grant Palana credits"
     (do-game
@@ -489,13 +537,13 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck [(qty "Heartbeat" 2)]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-prompt state :runner "Done")
       (play-from-hand state :runner "Heartbeat")
       (is (= 1 (count (get-hardware state))))
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
       (is (= 1 (count (get-runner-facedown state))) "2nd console installed facedown")))
   (testing "Don't fire events when installed facedown. Issue #4085"
@@ -503,7 +551,7 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck ["Sure Gamble"]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Sure Gamble")
         (is (= credits (:credit (get-runner)))))))
@@ -512,9 +560,37 @@
       (new-game {:runner {:id "Apex: Invasive Predator"
                           :deck ["Spec Work" "Sure Gamble" "Cache"]}})
       (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown"))))
+
+(deftest armand-geist-walker-tech-lord
+  ;; Armand "Geist" Walker: Tech Lord
+  (testing "async costs with sync abilities"
+    (do-game
+      (new-game {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck ["Sure Gamble" "Magnum Opus"]
+                          :hand ["The Class Act" "All-nighter"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Class Act")
+      (play-from-hand state :runner "All-nighter")
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "While resolving the cost, runner doesn't gain any clicks"
+        (println "gain ability")
+        (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
+      (is (second-last-log-contains? state "Runner uses Armand \"Geist\" Walker: Tech Lord")
+          "Geist prints first")
+      (is (last-log-contains? state "Runner uses The Class Act")
+          "The Class Act prints second, with no All-nighter yet")
+      (changes-val-macro
+        2 (:click (get-runner))
+        "After resolving the cost, runner gains 2 clicks"
+        (click-prompt state :runner "Magnum Opus"))
+      (is (second-last-log-contains? state "Runner uses The Class Act"))
+      (is (last-log-contains? state "trashes All-nighter to use All-nighter")
+          "All-nighter is now logged correctly, having paid all costs"))))
 
 (deftest asa-group-security-through-vigilance
   (testing "Asa Group should not allow installing operations"
@@ -627,7 +703,7 @@
                           :hand ["Sure Gamble"]}})
       (take-credits state :corp)
       (click-prompt state :corp "Event")
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (let [credits (:credit (get-corp))]
         (click-card state :runner "Sure Gamble")
         (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) ))
@@ -1363,7 +1439,7 @@
     (play-from-hand state :corp "Eli 1.0" "Archives")
     (let [eli (get-ice state :archives 0)]
       (rez state :corp eli)
-      (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+      (is (= 5 (get-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
 (deftest hayley-kaplan-universal-scholar
   (testing "Basic test"
@@ -1480,14 +1556,26 @@
       (take-credits state :corp)
       (let [ho (get-in @state [:runner :identity])]
         (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
-        (is (= 0 (:link (get-runner))) "Hoshiko starts with 0 link")
+        (is (= 0 (get-link state)) "Hoshiko starts with 0 link")
         (is (has-subtype? (refresh ho) "Natural") "Hoshiko starts with subtype Natural")
         (run-empty-server state :hq)
         (click-prompt state :runner "No action")
         (take-credits state :runner)
         (is (:flipped (refresh ho)) "Hoshiko is flipped")
-        (is (= 1 (:link (get-runner))) "Hoshiko now has 1 link")
+        (is (= 1 (get-link state)) "Hoshiko now has 1 link")
         (is (has-subtype? (refresh ho) "Digital") "Hoshiko now has the subtype Digital"))))
+  (testing "Rebirth while flipped resets link #5289"
+    (do-game
+      (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
+                          :hand ["Rebirth"]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rebirth")
+      (click-prompt state :runner "Alice Merchant: Clan Agitator")
+      (is (zero? (get-link state)) "Runner has 0 link")))
   (testing "Interaction with DreamNet"
     (do-game
       (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
@@ -1497,7 +1585,7 @@
       (play-from-hand state :runner "DreamNet")
       (let [ho (get-in @state [:runner :identity])]
         (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
-        (is (= 0 (:link (get-runner))) "Hoshiko starts with 0 link")
+        (is (= 0 (get-link state)) "Hoshiko starts with 0 link")
         (is (has-subtype? (refresh ho) "Natural") "Hoshiko starts with subtype Natural")
         (let [cards (count (:hand (get-runner)))
               credits (:credit (get-runner))]
@@ -1508,7 +1596,7 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (is (:flipped (refresh ho)) "Hoshiko is flipped")
-        (is (= 1 (:link (get-runner))) "Hoshiko now has 1 link")
+        (is (= 1 (get-link state)) "Hoshiko now has 1 link")
         (is (has-subtype? (refresh ho) "Digital") "Hoshiko now has the subtype Digital")
         (let [cards (count (:hand (get-runner)))
               credits (:credit (get-runner))]
@@ -2158,7 +2246,7 @@
             wyld (find-card "Wyldside" (get-resource state))]
         (card-ability state :runner wyld 0)
         (card-ability state :runner maxx 0)
-        (core/end-phase-12 state :runner nil)
+        (end-phase-12 state :runner)
         (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total")))))
@@ -2170,17 +2258,18 @@
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
-        (changes-val-macro 1 (:credit (get-corp))
-                           "Gained 1 credit from MM ability"
-                           (click-prompt state :corp "Gain 1 [Credits]"))))
+        (changes-val-macro
+          5 (:credit (get-corp))
+          "Gained 1 credit from MM ability"
+          (click-prompt state :corp "Gain 1 [Credits]"))))
     (testing "Gain click from using Asset ability"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Capital Investors" 10)]}})
-        (core/click-draw state :corp nil)
+        (click-draw state :corp)
         (play-from-hand state :corp "Capital Investors" "New remote")
         (let [ci (get-content state :remote1 0)
               mm (get-in @state [:corp :identity])]
@@ -2190,13 +2279,13 @@
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
           (card-ability state :corp (refresh ci) 0)
           (is (= 1 (:click (get-corp))) "Could not use Capital Investors again with MM click")
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
     (testing "Gain click from using Upgrade ability"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Cold Site Server" 10)]}})
-        (core/click-draw state :corp nil)
+        (click-draw state :corp)
         (play-from-hand state :corp "Cold Site Server" "New remote")
         (let [css (get-content state :remote1 0)
               mm (get-in @state [:corp :identity])]
@@ -2206,14 +2295,14 @@
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
           (card-ability state :corp (refresh css) 0)
           (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
     (testing "Gain click from playing an Operation"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
         (click-prompt state :corp "Gain [Click]")
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
@@ -2223,8 +2312,8 @@
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "PAD Campaign" 10)]}})
-        (core/click-draw state :corp nil)
-        (core/click-credit state :corp nil)
+        (click-draw state :corp)
+        (click-credit state :corp)
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (click-prompt state :corp "Gain [Click]")
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
@@ -2255,12 +2344,13 @@
         (play-and-score state "Mandatory Upgrades")
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/click-credit state :corp nil)
-        (core/click-draw state :corp nil)
+        (click-credit state :corp)
+        (click-draw state :corp)
         (play-from-hand state :corp "Blue Level Clearance")
-        (changes-val-macro 1 (:credit (get-corp))
-                           "Gained 1 credit from MM ability"
-                           (click-prompt state :corp "Gain 1 [Credits]"))))
+        (changes-val-macro
+          4 (:credit (get-corp))
+          "Gained 1 credit from MM ability"
+          (click-prompt state :corp "Gain 1 [Credits]"))))
     (testing "Trigger Mirrormorph with MCAAP"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
@@ -2275,7 +2365,7 @@
             (take-credits state :corp)
             (take-credits state :runner)
             (card-ability state :corp mcaap 0))
-          (core/click-credit state :corp nil)
+          (click-credit state :corp)
           (card-ability state :corp mcaap 1)
           (changes-val-macro 1 (:credit (get-corp))
                              "Gained 1 credit from MM ability"
@@ -2437,7 +2527,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 0 meat damage from DRT cuz it's trashed")))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
   (testing "Trace shouldn't fire on second trash after trash during Direct Access run. #4168"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
@@ -2474,7 +2564,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (is (zero? (count (:hand (get-runner)))))
-      (core/end-phase-12 state :runner nil)
+      (end-phase-12 state :runner)
       (is (zero? (count (get-resource state))))
       (is (= 1 (count (:hand (get-runner)))))
       (run-empty-server state "Server 1")
@@ -2626,7 +2716,7 @@
     (is (= 4 (count (:deck (get-corp)))) "Card trashed to Archives by Noise should come from R&D")
     (play-from-hand state :runner "Sure Gamble")
     (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")
-    (core/click-draw state :runner nil)
+    (click-draw state :runner)
     (play-from-hand state :runner "Clone Chip")
     (play-from-hand state :runner "Clone Chip")
     (trash-from-hand state :runner "Cache")
@@ -2668,13 +2758,13 @@
         (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-        (is (= 5 (:current-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
+        (is (= 5 (get-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
         (run-continue state)
         (rez state :corp wrap1)
         (run-continue state)
         (is (empty? (:prompt (get-runner))) "Ability already used this turn")
         (run-jack-out state)
-        (is (= 7 (:current-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
+        (is (= 7 (get-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
   (testing "does not affect next ice when current is trashed. Issue #1788."
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Spiderweb"]}
@@ -2695,7 +2785,7 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (first (:hand (get-runner))))
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
-        (is (= 1 (:current-strength (refresh iw))) "Ice Wall not reduced by Null"))))
+        (is (= 1 (get-strength (refresh iw))) "Ice Wall not reduced by Null"))))
   (testing "Receives prompt on second run, if ability not used"
     (do-game
       (new-game {:runner {:id "Null: Whistleblower"
@@ -2836,7 +2926,7 @@
       (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (refresh q) 0)
@@ -2844,7 +2934,7 @@
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/click-credit state :runner nil)
+      (click-credit state :runner)
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (refresh q) 0)
@@ -3169,7 +3259,7 @@
     (is (= 1 (count-tags state)) "Runner has 1 tag")
     (changes-val-macro -3 (:credit (get-runner))
                        "Paid 3c to remove tag"
-                       (core/remove-tag state :runner nil))
+                       (remove-tag state :runner))
     (is (= 0 (count-tags state)) "Runner removed tag")
     (take-credits state :runner)
     (gain-tags state :runner 1)
@@ -3177,7 +3267,7 @@
     (swap! state assoc-in [:corp :credit] 0)
     (changes-val-macro 0 (:credit (get-runner))
                        "Paid 0c to trash resource"
-                       (core/trash-resource state :corp nil)
+                       (trash-resource state)
                        (click-card state :corp (get-resource state 0)))
     (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
 

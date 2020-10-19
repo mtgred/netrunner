@@ -28,7 +28,7 @@
                                                    (sub->0 value))))
 
     ;; values that expect map, if passed a number use default subattr of :mod
-    (#{:hand-size :memory} attr)
+    (#{:memory} attr)
     (deduct state side [attr {:mod value}])
 
     ;; default case for tags and bad-publicity is `:base`
@@ -80,25 +80,26 @@
 
 (defn gain-credits
   "Utility function for triggering events"
-  ([state side amount] (gain-credits state side (make-eid state) amount nil))
-  ([state side amount args] (gain-credits state side (make-eid state) amount args))
+  ([state side eid amount] (gain-credits state side eid amount nil))
   ([state side eid amount args]
    (if (and amount
             (pos? amount))
      (do (gain state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) args))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) amount args))
      (effect-completed state side eid))))
 
 (defn lose-credits
   "Utility function for triggering events"
-  ([state side amount] (lose-credits state side (make-eid state) amount nil))
-  ([state side amount args] (lose-credits state side (make-eid state) amount args))
+  ([state side eid amount] (lose-credits state side eid amount nil))
   ([state side eid amount args]
    (if (and amount
             (or (= :all amount)
                 (pos? amount)))
      (do (lose state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) args))
+         (when (and (= side :runner)
+                    (= :all amount))
+           (lose state :runner :run-credit :all))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) amount args))
      (effect-completed state side eid))))
 
 ;;; Stuff for handling {:base x :mod y} data structures
@@ -108,16 +109,6 @@
   (let [base (get-in @state [side prop :base] 0)
         mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
-
-(defn hand-size
-  "Returns the current maximum hand-size of the specified side."
-  [state side]
-  (base-mod-size state side :hand-size))
-
-(defn change-hand-size
-  "Changes a side's hand-size modification by specified amount (positive or negative)"
-  [state side n]
-  (gain state side :hand-size {:mod n}))
 
 (defn available-mu
   "Returns the available MU the runner has"

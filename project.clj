@@ -55,6 +55,7 @@
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
+            "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
 
   ;; Compilation.

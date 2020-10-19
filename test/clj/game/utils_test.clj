@@ -33,7 +33,7 @@
            (or (map? card)
                (string? card)))
       (if (map? card)
-        (core/select state side {:card card})
+        (core/process-action "select" state side {:card card})
         (let [all-cards (concat (core/get-all-installed state)
                                 (mapcat (fn [side]
                                           (mapcat #(-> @state side %)
@@ -41,7 +41,7 @@
                                         [:corp :runner]))
               matching-cards (filter #(= card (:title %)) all-cards)]
           (if (= (count matching-cards) 1)
-            (core/select state side {:card (first matching-cards)})
+            (core/process-action "select" state side {:card (first matching-cards)})
             (is (= (count matching-cards) 1)
                 (str "Expected to click card [ " card
                      " ] but found " (count matching-cards)
@@ -60,7 +60,7 @@
 
 (defn click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
-  [state side choice]
+  [state side choice & args]
   (let [prompt (get-prompt state side)
         choices (:choices prompt)]
     (cond
@@ -92,7 +92,8 @@
       (let [choice-fn #(or (= choice (:value %))
                            (= choice (get-in % [:value :title]))
                            (same-card? choice (:value %)))
-            chosen (first (filter choice-fn choices))]
+            idx (or (:idx (first args)) 0)
+            chosen (nth (filter choice-fn choices) idx)]
         (when-not (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}})
           (is (= choice (first choices))
               (str (side-str side) " expected to click [ "

@@ -88,6 +88,24 @@
       (in-hq-root? card)
       (in-rd-root? card)))
 
+(defn protecting-archives?
+  [card]
+  (= (get-zone card) [:servers :archives :ices]))
+
+(defn protecting-hq?
+  [card]
+  (= (get-zone card) [:servers :hq :ices]))
+
+(defn protecting-rd?
+  [card]
+  (= (get-zone card) [:servers :rd :ices]))
+
+(defn protecting-a-central?
+  [card]
+  (or (protecting-archives? card)
+      (protecting-hq? card)
+      (protecting-rd? card)))
+
 (defn in-play-area?
   "Checks if the specified card is in the play area."
   [card]

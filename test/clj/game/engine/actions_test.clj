@@ -7,42 +7,6 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest change-test
-  (testing "base vs additional"
-    (do-game
-      (new-game)
-      (testing "Bad Publicity"
-        (is (zero? (count-bad-pub state)) "Corp starts with 0 bad pub")
-        (core/change state :corp {:key :bad-publicity :delta 1})
-        (is (= 1 (count-bad-pub state)) "Corp has gained 1 bad pub")
-        (is (= 1 (get-in @state [:corp :bad-publicity :base])) "Only gained in the base")
-        (is (zero? (get-in @state [:corp :bad-publicity :additional])) "Only gained in the base")
-        (core/change state :corp {:key :bad-publicity :delta -1})
-        (is (zero? (count-bad-pub state)) "Corp has lost 1 bad pub")
-        (is (zero? (get-in @state [:corp :bad-publicity :base])) "Only lost in the base")
-        (is (zero? (get-in @state [:corp :bad-publicity :additional])) "No change on loss either"))
-      (testing "Tags"
-        (is (zero? (count-tags state)) "Runner starts with 0 tags")
-        (core/change state :runner {:key :tag :delta 1})
-        (is (= 1 (count-tags state)) "Runner has gained 1 tag")
-        (is (= 1 (get-in @state [:runner :tag :base])) "Only gained in the base")
-        (is (zero? (get-in @state [:runner :tag :additional])) "Only gained in the base")
-        (core/change state :runner {:key :tag :delta -1})
-        (is (zero? (count-tags state)) "Runner has lost 1 tag")
-        (is (zero? (get-in @state [:runner :tag :base])) "Only gained in the base")
-        (is (zero? (get-in @state [:runner :tag :additional])) "No change on loss either"))))
-  (testing "Generic changes"
-    (do-game
-      (new-game)
-      (testing "Agenda points"
-        (is (zero? (get-in @state [:corp :agenda-point])) "Corp starts with 0 agenda points")
-        (core/change state :corp {:key :agenda-point :delta 1})
-        (is (= 1 (get-in @state [:corp :agenda-point])) "Corp has gained 1 agenda point")
-        (core/change state :corp {:key :agenda-point :delta -1})
-        (is (zero? (get-in @state [:corp :agenda-point])) "Corp has lost 1 agenda point")
-        (core/change state :corp {:key :agenda-point :delta -1})
-        (is (= -1 (get-in @state [:corp :agenda-point])) "Corp can go below zero agenda points")))))
-
 (deftest undo-turn
   (do-game
     (new-game)
@@ -106,7 +70,7 @@
       (testing "Turn 1 Runner"
         (core/start-turn state :runner nil)
         (take-credits state :runner 3)
-        (core/click-credit state :runner nil)
+        (click-credit state :runner)
         (core/end-turn state :runner nil)
         (rez state :corp (refresh adonis))
         (rez state :corp (refresh publics1)))

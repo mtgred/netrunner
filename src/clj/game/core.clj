@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
     [game.core.costs]
@@ -21,6 +22,7 @@
     [game.core.finding]
     [game.core.flags]
     [game.core.gaining]
+    [game.core.hand-size]
     [game.core.hosting]
     [game.core.ice]
     [game.core.identities]
@@ -194,6 +196,10 @@
    operation?
    private-card
    program?
+   protecting-archives?
+   protecting-hq?
+   protecting-rd?
+   protecting-a-central?
    resource?
    rezzed?
    runner?
@@ -206,6 +212,9 @@
 
   [game.core.change-vals
    change]
+
+  [game.core.checkpoint
+   fake-checkpoint]
 
   [game.core.commands
    command-adv-counter
@@ -381,18 +390,21 @@
   [game.core.gaining
    available-mu
    base-mod-size
-   change-hand-size
    deduct
    free-mu
    gain
    gain-credits
-   hand-size
    lose
    lose-credits
    safe-inc-n
    sub->0
    toast-check-mu
    use-mu]
+
+  [game.core.hand-size
+   hand-size
+   sum-hand-size-effects
+   update-hand-size]
 
   [game.core.hosting
    host
@@ -477,6 +489,10 @@
    runner-can-install?
    runner-install]
 
+  [game.core.link
+   get-link
+   update-link]
+
   [game.core.moving
    as-agenda
    discard-from-hand
@@ -486,6 +502,7 @@
    move-zone
    remove-old-current
    swap-agendas
+   swap-cards
    swap-ice
    swap-installed
    trash
@@ -649,7 +666,6 @@
    build-card
    create-deck
    init-game
-   init-identity
    keep-hand
    mulligan]
 

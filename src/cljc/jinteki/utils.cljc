@@ -37,13 +37,17 @@
 (defn count-tags
   "Counts number of tags runner has (real + additional)"
   [state]
-  (+ (get-in @state [:runner :tag :base] 0)
-     (get-in @state [:runner :tag :additional] 0)))
+  (or (get-in @state [:runner :tag :total]) 0))
+
+(defn count-real-tags
+  "Count number of non-additional tags"
+  [state]
+  (or (get-in @state [:runner :tag :base]) 0))
 
 (defn is-tagged?
   "Returns truthy if runner is tagged"
   [state]
-  (or (pos? (get-in @state [:runner :tag :is-tagged] 0))
+  (or (get-in @state [:runner :tag :is-tagged])
       (pos? (count-tags state))))
 
 (defn slugify

@@ -837,13 +837,13 @@
       (card-ability state :corp ct 0)
       (click-prompt state :corp "5")
       (click-card state :corp q2)
-      (is (nil? (:current-strength (refresh q2))) "Outer Quandary unrezzed; can't be targeted")
+      (is (zero? (get-strength (refresh q2))) "Outer Quandary unrezzed; can't be targeted")
       (click-card state :corp q1)
-      (is (= 5 (:current-strength (refresh q1))) "Inner Quandary boosted to 5 strength")
+      (is (= 5 (get-strength (refresh q1))) "Inner Quandary boosted to 5 strength")
       (is (empty? (get-content state :hq))
           "Corporate Troubleshooter trashed from root of HQ")
       (take-credits state :corp)
-      (is (zero? (:current-strength (refresh q1)))
+      (is (zero? (get-strength (refresh q1)))
           "Inner Quandary back to default 0 strength after turn ends"))))
 
 (deftest crisium-grid
@@ -971,6 +971,41 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest daruma
+  ;; Daruma
+  (testing "swapping with another installed card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (play-from-hand state :corp "Snare!" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (is (find-card "Daruma" (:discard (get-corp))))
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
+  (testing "swapping with a card in HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp)))))))
+
 (deftest dedicated-technician-team
   ;; Dedicated Technician Team
   (testing "Pay-credits prompt"
@@ -1090,6 +1125,70 @@
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     (is (= 2 (count-tags state)) "Runner doesn't take tags when trace won")))
 
+(deftest ganked
+  ;; Ganked!
+  (testing "Access ability and firing subs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (last-log-contains? state "Runner accesses Ganked!")
+        (is (= "Trash Ganked! to force the Runner to encounter a piece of ice?"
+               (:msg (prompt-map :corp))) "Corp has Ganked! prompt")
+        (click-prompt state :corp "Yes")
+        (is (= :select (prompt-type :corp)))
+        (is (= :waiting (prompt-type :runner)))
+        (click-card state :corp iw)
+        (is (= "You are encountering Ice Wall. Allow its subroutine to fire?"
+               (:msg (prompt-map :runner))) "Runner has Ice Wall fake encounter prompt")
+        (is (= :waiting (prompt-type :corp)))
+        (click-prompt state :runner "Yes")
+        (is (not (get-run)) "Run has been ended")
+        (last-log-contains? state "Corp resolves 1 unbroken subroutine on Ice Wall")
+        (is (empty? (:prompt (get-corp))) "No more prompts")
+        (is (empty? (:prompt (get-runner))) "No more prompts"))))
+  (testing "Access ability and not firing subs"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (last-log-contains? state "Runner accesses Ganked!")
+        (is (= "Trash Ganked! to force the Runner to encounter a piece of ice?"
+               (:msg (prompt-map :corp))) "Corp has Ganked! prompt")
+        (click-prompt state :corp "Yes")
+        (is (= :select (prompt-type :corp)))
+        (is (= :waiting (prompt-type :runner)))
+        (click-card state :corp iw)
+        (is (= "You are encountering Ice Wall. Allow its subroutine to fire?"
+               (:msg (prompt-map :runner))) "Runner has Ice Wall fake encounter prompt")
+        (is (= :waiting (prompt-type :corp)))
+        (click-prompt state :runner "No")
+        (is (not (get-run)) "Run has been ended")
+        (last-log-contains? state "Corp resolves 1 unbroken subroutine on Ice Wall")
+        (is (empty? (:prompt (get-corp))) "No more prompts")
+        (is (empty? (:prompt (get-runner))) "No more prompts"))))
+  (testing "No access ability when there are no rezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (last-log-contains? state "Runner accesses Ganked!")
+      (is (= "You accessed Ganked!." (:msg (prompt-map :runner))) "Runner has normal access prompt")
+      (click-prompt state :runner "No action")
+      (is (not (get-run)) "Run has been ended")
+      (is (empty? (:prompt (get-corp))) "No more prompts")
+      (is (empty? (:prompt (get-runner))) "No more prompts"))))
+
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
@@ -1173,23 +1272,23 @@
       (rez state :corp helheim)
       (rez state :corp gutenberg)
       (rez state :corp vanilla)
-      (is (= 6 (:current-strength (refresh gutenberg))))
-      (is (zero? (:current-strength (refresh vanilla))))
+      (is (= 6 (get-strength (refresh gutenberg))))
+      (is (zero? (get-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
       (click-card state :corp "Jackson Howard")
       (is (= 1 (count (:discard (get-corp)))))
-      (is (= 8 (:current-strength (refresh gutenberg))))
-      (is (= 2 (:current-strength (refresh vanilla))))
+      (is (= 8 (get-strength (refresh gutenberg))))
+      (is (= 2 (get-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
       (click-card state :corp "Hedge Fund")
       (is (= 2 (count (:discard (get-corp)))))
-      (is (= 10 (:current-strength (refresh gutenberg))))
-      (is (= 4 (:current-strength (refresh vanilla))))
+      (is (= 10 (get-strength (refresh gutenberg))))
+      (is (= 4 (get-strength (refresh vanilla))))
       (run-continue state)
       (run-jack-out state)
       (is (not (:run @state)))
-      (is (= 6 (:current-strength (refresh gutenberg))))
-      (is (zero? (:current-strength (refresh vanilla)))))))
+      (is (= 6 (get-strength (refresh gutenberg))))
+      (is (zero? (get-strength (refresh vanilla)))))))
 
 (deftest hired-help
   ;; Hired Help - trash an agenda if you wanna run my server
@@ -1331,11 +1430,11 @@
       (rez state :corp (get-content state :remote1 0))
       (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
-        (core/click-draw state :corp 1)
+        (click-draw state :corp)
         (click-prompt state :corp (first (prompt-buttons :corp)))
         (is (= 4 (:credit (get-corp))) "Not charged to install ice")
         (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
-      (core/click-draw state :corp 1)
+      (click-draw state :corp)
       (click-prompt state :corp (first (prompt-buttons :corp)))
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
@@ -1530,8 +1629,8 @@
     (play-from-hand state :corp "Manta Grid" "HQ")
     (rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
-    (core/click-draw state :runner nil)
-    (core/click-draw state :runner nil)
+    (click-draw state :runner)
+    (click-draw state :runner)
     (run-empty-server state "HQ")
     (click-prompt state :runner "No action") ; don't trash Manta Grid
     (is (= 1 (:click (get-runner))) "Running last click")
@@ -1637,40 +1736,33 @@
       (new-game {:corp {:deck ["Mumbad City Grid" "Quandary"]}})
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
-      (let [mcg (get-content state :remote1 0)]
-        (rez state :corp mcg)
-        (take-credits state :corp)
-        (run-on state "Server 1")
-        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-continue state)
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-jack-out state)
-        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server"))))
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
+      (run-continue state)
+      (is (empty? (:prompt (get-corp))))
+      (run-jack-out state)
+      (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server")))
   (testing "fire before pass"
     (do-game
       (new-game {:corp {:deck ["Mumbad City Grid" "Quandary" "Ice Wall"]}})
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
       (play-from-hand state :corp "Ice Wall" "Server 1")
-      (let [mcg (get-content state :remote1 0)]
-        (rez state :corp mcg)
-        (take-credits state :corp)
-        (run-on state "Server 1")
-        (is (= 2 (:position (:run @state))) "Runner at position 2")
-        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "2 ice on server")
-        (is (= "Quandary" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Quandary inner ice")
-        (is (= "Ice Wall" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall outer ice")
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-continue state)
-        (is (= 1 (:position (:run @state))) "Runner at position 1")
-        (card-ability state :corp (refresh mcg) 0)
-        (click-card state :corp (get-ice state :remote1 0))
-        (is (= 1 (:position (:run @state))) "Runner at position 1")
-        (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
-        (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
-        (run-jack-out state)
-        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")))))
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (= 2 (:position (:run @state))) "Runner at position 2")
+      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "2 ice on server")
+      (is (= "Quandary" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Quandary inner ice")
+      (is (= "Ice Wall" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall outer ice")
+      (run-continue state)
+      (click-card state :corp "Quandary")
+      (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
+      (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
+      (run-jack-out state)
+      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server"))))
 
 (deftest mumbad-virtual-tour
   ;; Tests that Mumbad Virtual Tour forces trash
@@ -1998,7 +2090,7 @@
       (click-prompt state :runner "Yes")
       (is (= "Guess a number" (:msg (prompt-map :runner))))
       (click-prompt state :runner "3")
-      (is (= "Use Nihongai Grid to look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
+      (is (= "Look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes")
       (is (= "Choose a card in R&D" (:msg (prompt-map :corp))))
       (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]
@@ -2556,11 +2648,11 @@
       (rez state :corp (refresh iw1))
       (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
       (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
-      (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
+      (is (= 3 (get-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
       (rez state :corp (refresh iw2))
-      (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
-      (core/derez state :corp sg)
-      (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
+      (is (= 1 (get-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
+      (derez state :corp sg)
+      (is (= 2 (get-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
 (deftest self-destruct
   ;; Self-destruct
@@ -2699,7 +2791,7 @@
         (rez state :corp scg2)
         (rez state :corp cvs2)
         (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
-        (core/derez state :corp (refresh wrap))
+        (derez state :corp (refresh wrap))
         (rez state :corp enig)
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
@@ -2954,18 +3046,29 @@
   ;; Valley Grid
   (testing "Reduce Runner max hand size and restore it even if trashed"
     (do-game
-      (new-game {:corp {:deck [(qty "Valley Grid" 3) (qty "Ice Wall" 3)]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Valley Grid" 3) (qty "Ice Wall" 3)]
+                        :credits 10}
+                 :runner {:hand ["Corroder"]
+                          :credits 10}})
       (play-from-hand state :corp "Valley Grid" "New remote")
-      (take-credits state :corp 2)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
       (run-on state "Server 1")
-      (let [vg (get-content state :remote1 0)]
+      (let [vg (get-content state :remote1 0)
+            iw (get-ice state :remote1 0)
+            cor (get-program state 0)]
         (rez state :corp vg)
-        (card-ability state :corp vg 0)
-        (card-ability state :corp vg 0)
-        (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
+        (rez state :corp iw)
+        (run-continue state)
+        (card-ability state :runner (refresh cor) 0)
+        (click-prompt state :runner "End the run")
+        (is (= 4 (hand-size :runner)) "Runner max hand size reduced by 1")
+        (run-continue state)
         (run-continue state)
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
 
 (deftest warroid-tracker

@@ -92,7 +92,7 @@
         (do-game
           (new-game)
           (changes-val-macro
-            1 (:link (get-runner))
+            1 (get-link state)
             "Link increases by 1"
             (core/command-parser state :runner {:user user :text "/link 1"}))))))
 

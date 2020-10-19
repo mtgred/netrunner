@@ -9,6 +9,7 @@
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt]]
+            [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -67,18 +68,16 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
-(defn take-credits
+(defmacro take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
   If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-   (let  [remaining-clicks (get-in @state [side :click])
-          n (or n remaining-clicks)
-          other (if (= side :corp) :runner :corp)]
-     (dotimes [i n] (core/process-action "credit" state side nil))
-     (when (zero? (get-in @state [side :click]))
-       (core/process-action "end-turn" state side nil)
-       (core/process-action "start-turn" state other nil)))))
+  [state side & n]
+  `(let [other# (if (= ~side :corp) :runner :corp)]
+     (dotimes [_# (or ~(first n) (get-in @~state [~side :click]))]
+       (core/process-action "credit" ~state ~side nil))
+     (when (zero? (get-in @~state [~side :click]))
+       (core/process-action "end-turn" ~state ~side nil)
+       (core/process-action "start-turn" ~state other# nil))))
 
 
 ;; Deck construction helpers
@@ -191,12 +190,18 @@
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
   [state side card ability & targets]
-  `(let [card# (get-card ~state ~card)]
+  `(let [card# (get-card ~state ~card)
+         ability# (cond
+                    (number? ~ability) ~ability
+                    (string? ~ability) (some #(when (= (:label (second %)) ~ability) (first %)) (map-indexed vector (:abilities card#)))
+                    :else -1)]
      (is (active? card#) (str (:title card#) " is active"))
-     (is (nth (:abilities card#) ~ability nil) (str (:title card#) " has ability #" ~ability))
-     (when (nth (:abilities card#) ~ability nil)
+     (is (and (number? ability#)
+              (nth (:abilities card#) ability# nil)) (str (:title card#) " has ability #" ability#))
+     (when (and (number? ability#)
+                (nth (:abilities card#) ability# nil))
        (core/process-action "ability" ~state ~side {:card card#
-                                                    :ability ~ability
+                                                    :ability ability#
                                                     :targets (first ~targets)}))))
 
 (defmacro card-subroutine
@@ -214,23 +219,38 @@
                                                        :subroutine ~ability})
        true)))
 
-(defn card-side-ability
-  ([state side card ability] (card-side-ability state side card ability nil))
-  ([state side card ability targets]
-   (let [ab {:card (get-card state card)
-             :ability ability
-             :targets targets}]
-     (if (= :corp side)
-       (core/process-action "corp-ability" state side ab)
-       (core/process-action "runner-ability" state side ab)))))
+(defmacro card-side-ability
+  [state side card ability & targets]
+  `(let [ab# {:card (get-card ~state ~card)
+              :ability ~ability
+              :targets ~(first targets)}]
+     (if (= :corp ~side)
+       (core/process-action "corp-ability" ~state ~side ab#)
+       (core/process-action "runner-ability" ~state ~side ab#))))
+
+(defmacro change
+  [state side value-key delta]
+  `(let [target# {:key ~value-key
+                  :delta ~delta}]
+     (is (and (keyword? ~value-key) (number? ~delta)) "Passed in value-key and delta")
+     (when (and ~value-key ~delta)
+       (core/process-action "change" ~state ~side target#))))
 
 (def count-tags jutils/count-tags)
+(def count-real-tags jutils/count-real-tags)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
+(def get-link core/get-link)
+(def get-strength core/get-strength)
 
 (defn gain-tags
   [state side n]
-  (core/gain-tags state side (eid/make-eid state) n))
+  (wait-for (core/gain-tags state side n)
+            (core/fake-checkpoint state)))
+
+(defmacro remove-tag
+  [state side]
+  `(core/process-action "remove-tag" ~state ~side nil))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -340,12 +360,14 @@
           "The run has not reached the server yet")
       (when (and (some? run#)
                  (not (:no-action run#))
+                 (empty? (get-in @~state [:runner :prompt]))
+                 (empty? (get-in @~state [:corp :prompt]))
+                 (not (:no-action run#))
                  (not= :access-server (:phase run#)))
         (core/process-action "continue" ~state :corp nil)
         (core/process-action "continue" ~state :runner nil))
-      (if (not= :any ~phase)
-        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase"))
-      true)))
+      (when-not (= :any ~phase)
+        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase")))))
 
 (defmacro run-phase-43
   "Ask for triggered abilities phase 4.3"
@@ -357,6 +379,7 @@
      (is (= :approach-server (:phase run#)) "Runner is approaching the server")
      (when (and (some? run#)
                 (zero? (:position run#))
+                (not (:no-action run#))
                 (= :approach-server (:phase run#)))
        (core/process-action "corp-phase-43" ~state :corp nil)
        (core/process-action "continue" ~state :runner nil)
@@ -387,8 +410,7 @@
      (when (and (rezzed? ice#)
                 (some? run#)
                 (= :encounter-ice (:phase run#)))
-       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#})
-       true)))
+       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#}))))
 
 (defmacro play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
@@ -414,52 +436,95 @@
      (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
      (when (and (installed? card#)
                 (not (rezzed? card#)))
-       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args)))
-       true)))
+       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args))))))
 
-;;; Misc functions
-(defn score-agenda
-  "Take clicks and credits needed to advance and score the given agenda."
-  ([state _ card]
-   (let [title (:title card)
-         advancementcost (:advancementcost card)]
-     (core/gain state :corp :click advancementcost :credit advancementcost)
-     (dotimes [n advancementcost]
-       (core/advance state :corp {:card (get-card state card)}))
-     (is (= advancementcost (get-counters (get-card state card) :advancement)))
-     (core/score state :corp {:card (get-card state card)})
-     (is (find-card title (get-scored state :corp))))))
-
-(defn advance
-  "Advance the given card."
-  ([state card] (advance state card 1))
-  ([state card n]
-   (dotimes [_ n]
-     (core/advance state :corp {:card (get-card state card)}))))
-
-(defn trash
+(defmacro derez
   [state side card]
-  (is (:cid card) "It's a card object")
-  (when (:cid card)
-    (core/trash state side (eid/make-eid state) card nil)))
+  `(let [card# (get-card ~state ~card)]
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (is (rezzed? card#) (str (:title card#) " is rezzed"))
+     (when (and (installed? card#)
+                (rezzed? card#))
+       (core/process-action "derez" ~state ~side {:card card#}))))
 
-(defn trash-from-hand
+(defmacro end-phase-12
+  [state side]
+  `(let [phase# (keyword (str (name ~side) "-phase-12"))]
+     (is (phase# @~state) (str (jutils/capitalize (name ~side)) " in Step 1.2"))
+     (when (phase# @~state)
+       (core/process-action "end-phase-12" ~state ~side nil))))
+
+(defmacro click-draw
+  [state side]
+  `(core/process-action "draw" ~state ~side nil))
+
+(defmacro click-credit
+  [state side]
+  `(core/process-action "credit" ~state ~side nil))
+
+(defmacro click-advance
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (is (installed? card#) (str (:title card#) " is installed"))
+     (when (and (some? card#)
+                (installed? card#))
+       (core/process-action "advance" ~state ~side {:card card#}))))
+
+(defmacro trash
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (core/process-action "trash" ~state ~side {:card card#}))))
+
+(defmacro score-agenda
+  "Take clicks and credits needed to advance and score the given agenda."
+  [state _ card]
+  `(let [card# (get-card ~state ~card)
+         advancementcost# (:advancementcost ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (core/gain ~state :corp :click advancementcost# :credit advancementcost#)
+       (core/fake-checkpoint ~state)
+       (dotimes [_# advancementcost#]
+         (core/process-action "advance" ~state :corp {:card ~card}))
+       (is (= advancementcost# (get-counters (get-card ~state ~card) :advancement)))
+       (when (= advancementcost# (get-counters (get-card ~state ~card) :advancement))
+         (core/process-action "score" ~state :corp {:card ~card})
+         (is (find-card (:title card#) (get-scored ~state :corp)))))))
+
+(defmacro advance
+  "Advance the given card."
+  [state card & n]
+  `(dotimes [_# (or ~(first n) 1)]
+     (click-advance ~state :corp ~card)))
+
+(defmacro trash-from-hand
   "Trash specified card from hand of specified side"
   [state side title]
-  (core/trash state side (eid/make-eid state) (find-card title (get-in @state [side :hand])) nil))
+  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
+     (trash ~state ~side card#)))
 
-(defn trash-resource
-  "Trash specified card from rig of the runner"
-  [state title]
-  (core/trash state :runner (eid/make-eid state) (find-card title (get-in @state [:runner :rig :resource])) nil))
+(defmacro trash-card
+  [state side card]
+  `(let [card# (get-card ~state ~card)]
+     (is (some? card#) (str (:title card#) " exists"))
+     (when (some? card#)
+       (trash ~state ~side card#))))
+
+(defmacro trash-resource
+  "Click-trash a resource as the corp"
+  [state]
+  `(core/process-action "trash-resource" ~state :corp nil))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
 
-(defn play-and-score
+(defmacro play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
-  (play-from-hand state :corp title "New remote")
-  (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0)))
+  `(when (play-from-hand ~state :corp ~title "New remote")
+     (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))

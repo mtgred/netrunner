@@ -5,6 +5,7 @@
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.effects :refer [register-floating-effect]]
     [game.core.events :refer [trigger-event]]
     [game.core.flags :refer [is-scored?]]
     [game.core.hosting :refer [host]]
@@ -282,7 +283,11 @@
                           (end-run state side (make-eid state) nil)))
         "/error"      show-error-toast
         "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
-        "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
+        "/handsize"   #(register-floating-effect
+                         %1 %2 nil
+                         {:type :user-hand-size
+                          :req (req (= %2 side))
+                          :value (req (- value (get-in @%1 [%2 :hand-size :base])))})
         "/host"       command-host
         "/install-ice" command-install-ice
         "/jack-out"   (fn [state side]
