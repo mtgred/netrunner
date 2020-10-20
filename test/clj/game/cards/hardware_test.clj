@@ -630,6 +630,20 @@
         (is (= 2 (count (:discard (get-runner)))))
         (is (find-card (:title target) (:deck (get-runner))))
         (is (not (find-card (:title target) (:discard (get-runner))))))))
+  (testing "The player may not trigger when Blacklist is rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Blacklist" 1)  (qty "Wraparound" 5) ]}
+                 :runner {:hand ["Buffer Drive"]
+                          :deck ["Stimhack" "Corroder" "Yog.0" "Mimic"]
+                          :discard ["Stimhack"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (let [bufferdrive (get-hardware state 0)]
+        (card-ability state :runner bufferdrive 0)
+        (is (empty? (:prompt (get-runner))) "Buffer Drive Prompt did not came up"))
+      ))
   (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive" "Corroder" "Yog.0" "Mimic"]
@@ -841,6 +855,7 @@
       (play-from-hand state :runner "Clone Chip")
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
+        (is (not (empty? (:prompt (get-runner)))) "Clone Chip Prompt came up")
         (click-card state :runner "Datasucker")
         (let [ds (get-program state 0)]
           (is (not (nil? ds)))
@@ -860,7 +875,23 @@
         (let [inti (get-program state 0)]
           (is (not (nil? inti)) "Program was installed")
           (is (= (:title inti) "Inti") "Program is Inti")
-          (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left"))))))
+          (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")))))
+  (testing "Clone Chip Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Blacklist" 1)  (qty "Wraparound" 5) ]}
+                 :runner {:deck ["Datasucker" (qty "Clone Chip" 2)]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Datasucker")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (is (= 1 (count (:discard (get-runner)))) "Datasucker in heap")
+      (play-from-hand state :runner "Clone Chip")
+      (let [chip (get-hardware state 0)]
+        (card-ability state :runner chip 0)
+        (is (empty? (:prompt (get-runner))) "Clone Chip Prompt did not came up")
+        (is (= 1 (count (:discard (get-runner)))) "Datasucker in still in heap"))))
+  )
+
 
 (deftest comet
   ;; Comet - Play event without spending a click after first event played
@@ -3359,7 +3390,31 @@
         (click-card state :runner "Mass-Driver")
         (is (= 4 (:credit (get-runner))) "Need 5 credits to install Mass-Driver, only have 4")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt"))))
+        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))
+    (testing "Heap Locked Test"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["SDS Drone Deployment" "Blacklist"]}
+                   :runner {:hand ["Simulchip" "Simulchip" "Corroder"]
+                            :discard ["Mantle"]
+                            :credits 5}})
+        (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+        (play-from-hand state :corp "Blacklist" "New remote")
+        (take-credits state :corp)
+        (core/gain state :runner :click 4)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Simulchip")
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay to steal")
+        (click-card state :runner "Corroder")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (not (empty? (:prompt (get-runner)))) "Simulchip prompt came up")
+        (click-prompt state :runner "Done")
+        (rez state :corp (refresh (get-content state :remote2 0)))
+        (play-from-hand state :runner "Simulchip")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (empty? (:prompt (get-runner))) "Simulchip prompt did not come up")
+        )))
   (testing "with no programs in the heap"
     (testing "and a program trashed this turn"
       (do-game
