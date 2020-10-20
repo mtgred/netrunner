@@ -189,7 +189,8 @@
                                       :once :per-run
                                       :duration :end-of-run
                                       :optional
-                                      {:req (req (and (:successful target) (not (zone-locked? state :runner :discard))))
+                                      {:req (req (and (:successful target)
+                                                      (not (zone-locked? state :runner :discard))))
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")

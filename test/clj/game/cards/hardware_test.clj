@@ -642,8 +642,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (let [bufferdrive (get-hardware state 0)]
         (card-ability state :runner bufferdrive 0)
-        (is (empty? (:prompt (get-runner))) "Buffer Drive Prompt did not came up"))
-      ))
+        (is (empty? (:prompt (get-runner))) "Buffer Drive Prompt did not come up"))))
   (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive" "Corroder" "Yog.0" "Mimic"]
@@ -889,8 +888,7 @@
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
         (is (empty? (:prompt (get-runner))) "Clone Chip Prompt did not came up")
-        (is (= 1 (count (:discard (get-runner)))) "Datasucker in still in heap"))))
-  )
+        (is (= 1 (count (:discard (get-runner)))) "Datasucker in still in heap")))))
 
 
 (deftest comet
@@ -3413,8 +3411,7 @@
         (rez state :corp (refresh (get-content state :remote2 0)))
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Simulchip prompt did not come up")
-        )))
+        (is (empty? (:prompt (get-runner))) "Simulchip prompt did not come up"))))
   (testing "with no programs in the heap"
     (testing "and a program trashed this turn"
       (do-game
@@ -4116,5 +4113,6 @@
         (run-continue state :approach-server)
         (run-continue state :access-server)
         (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "Boomerang prompt did not come up")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (is (last-log-contains? state "Runner accesses Wraparound from HQ."))))))
