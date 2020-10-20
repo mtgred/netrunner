@@ -1385,7 +1385,8 @@
   {:events [{:event :successful-run
              :req (req (and (= (target-server target) :hq)
                             (first-successful-run-on-server? state :hq)
-                            (<= 2 (count (:discard runner)))))
+                            (<= 2 (count (:discard runner)))
+                            (not (zone-locked? state :runner :discard))))
              :interactive (req true)
              :async true
              :prompt "Select 2 cards in your Heap"
@@ -1561,7 +1562,8 @@
              :interactive (req true)
              :req (req (and (has-most-faction? state :runner "Anarch")
                             (some corp? targets)
-                            (pos? (count (:discard runner)))))
+                            (pos? (count (:discard runner)))
+                            (not (zone-locked? state :runner :discard))))
              :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
              :effect (effect (move :runner (last (:discard runner)) :deck)
                              (shuffle! :runner :deck)
