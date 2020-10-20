@@ -4091,7 +4091,7 @@
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
         (is (= 0 (count (:discard (get-runner)))) "Boomerang in stack")
-        (last-log-contains? state "Runner uses Boomerang to shuffle a copy of Boomerang back into the Stack."))))
+        (is (last-log-contains? state "Runner uses Boomerang to shuffle a copy of Boomerang back into the Stack.")))))
   (testing "Boomerang Heap Locked Test"
     (do-game
       (new-game {:corp {:deck [(qty "Blacklist" 1)  (qty "Wraparound" 5) ]}
