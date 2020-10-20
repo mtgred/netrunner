@@ -553,7 +553,31 @@
         (click-prompt state :runner "HQ")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
-        (is (= "Boomerang" (:title (first (:deck (get-runner))))))))))
+        (is (= "Boomerang" (:title (first (:deck (get-runner)))))))))
+  (testing "Boomerang Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Blacklist" 1)  (qty "Wraparound" 5) ]}
+                 :runner {:deck ["Boomerang"]}})
+      (play-from-hand state :corp "Wraparound" "HQ")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [wrap (get-ice state :hq 0)
+            brang (get-hardware state 0)
+            blist (get-content state :remote1 0)]
+        (click-card state :runner wrap)
+        (run-on state :hq)
+        (rez state :corp (refresh wrap))
+        (rez state :corp (refresh blist))
+        (run-continue state)
+        (card-ability state :runner brang 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state :approach-server)
+        (run-continue state :access-server)
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "Boomerang prompt did not come up")
+        (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+        (is (last-log-contains? state "Runner accesses Wraparound from HQ."))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
@@ -4069,50 +4093,3 @@
         (click-card state :runner "Corroder")
         (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
         (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards")))))
-
-(deftest boomerang
-  (testing "Boomerang Happy Path Test"
-    (do-game
-      (new-game {:corp {:deck [(qty "Wraparound" 6) ]}
-                 :runner {:deck ["Boomerang"]}})
-      (play-from-hand state :corp "Wraparound" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [wrap (get-ice state :hq 0)
-            brang (get-hardware state 0)]
-        (click-card state :runner wrap)
-        (run-on state :hq)
-        (rez state :corp (refresh wrap))
-        (run-continue state)
-        (card-ability state :runner brang 0)
-        (click-prompt state :runner "End the run")
-        (run-continue state :approach-server)
-        (run-continue state :access-server)
-        (click-prompt state :runner "No action")
-        (click-prompt state :runner "Yes")
-        (is (= 0 (count (:discard (get-runner)))) "Boomerang in stack")
-        (is (last-log-contains? state "Runner uses Boomerang to shuffle a copy of Boomerang back into the Stack.")))))
-  (testing "Boomerang Heap Locked Test"
-    (do-game
-      (new-game {:corp {:deck [(qty "Blacklist" 1)  (qty "Wraparound" 5) ]}
-                 :runner {:deck ["Boomerang"]}})
-      (play-from-hand state :corp "Wraparound" "HQ")
-      (play-from-hand state :corp "Blacklist" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [wrap (get-ice state :hq 0)
-            brang (get-hardware state 0)
-            blist (get-content state :remote1 0)]
-        (click-card state :runner wrap)
-        (run-on state :hq)
-        (rez state :corp (refresh wrap))
-        (rez state :corp (refresh blist))
-        (run-continue state)
-        (card-ability state :runner brang 0)
-        (click-prompt state :runner "End the run")
-        (run-continue state :approach-server)
-        (run-continue state :access-server)
-        (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "Boomerang prompt did not come up")
-        (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
-        (is (last-log-contains? state "Runner accesses Wraparound from HQ."))))))
