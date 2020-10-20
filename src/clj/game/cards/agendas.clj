@@ -387,7 +387,8 @@
    :effect (effect (trash eid target {:unpreventable true}))})
 
 (defcard "Chronos Project"
-  {:msg "remove all cards in the Runner's Heap from the game"
+  {:req (req (not (zone-locked? state :runner :discard)))
+   :msg "remove all cards in the Runner's Heap from the game"
    :interactive (req true)
    :effect (effect (move-zone :runner :discard :rfg))})
 
