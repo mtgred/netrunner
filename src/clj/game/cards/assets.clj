@@ -379,8 +379,10 @@
              :async true
              :effect (req (case target
                             "Pay 1 [Credits]"
-                            (do (system-msg state :runner "pays 1 [Credits]")
-                                (pay state :runner eid card :credit 1))
+                            (wait-for (pay state :runner card :credit 1)
+                                      (when-let [payment-str (:msg async-result)]
+                                        (system-msg state :runner payment-str))
+                                      (effect-completed state side eid))
                             (do (system-msg state :runner "takes 1 tag")
                                 (gain-tags state :corp eid 1))))}]})
 
@@ -420,8 +422,10 @@
                  :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
                  :effect (req (case target
                                 "Pay 1 [Credits]"
-                                (do (system-msg state side "pays 1 [Credits]")
-                                    (pay state side eid card :credit 1))
+                                (wait-for (pay state side card :credit 1)
+                                          (when-let [payment-str (:msg async-result)]
+                                            (system-msg state side payment-str))
+                                          (effect-completed state side eid))
                                 "Trash top card"
                                 (do (system-msg state side "trashes the top card of the Stack")
                                     (mill state :runner eid :runner 1))))}]
@@ -1068,31 +1072,29 @@
                                              (>= (get-counters card :power)
                                                  (:agendapoints %)))
                                        (:hand corp))))
-                :label "X power counters: Reveal an agenda worth X points from HQ"
+                :label "Reveal an agenda worth X points from HQ"
                 :async true
-                :effect (effect
-                          (continue-ability
-                            (let [c (get-counters card :power)]
-                              {:prompt "Select an agenda in HQ to reveal"
-                               :choices {:card #(and (agenda? %)
-                                                     (>= c (:agendapoints %)))}
-                               :msg (msg "reveal " (:title target) " from HQ")
-                               :async true
-                               :effect
-                               (req (wait-for
-                                      (reveal state side target)
-                                      (let [title (:title target)
-                                            pts (:agendapoints target)]
-                                        (register-turn-flag!
-                                          state side
-                                          card :can-steal
-                                          (fn [state side card]
-                                            (if (= (:title card) title)
-                                              ((constantly false)
-                                               (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
-                                              true)))
-                                        (add-counter state side card :power (- pts)))))})
-                            card nil))}]})
+                :cost [:x-power]
+                :effect
+                (effect
+                  (continue-ability
+                    {:prompt "Select an agenda in HQ to reveal"
+                     :choices {:req (req (and (agenda? target)
+                                              (<= (:agendapoints target) (cost-value eid :x-power))))}
+                     :msg (msg "reveal " (:title target) " from HQ")
+                     :effect (req (wait-for (reveal state side target)
+                                            (let [title (:title target)
+                                                  pts (:agendapoints target)]
+                                              (register-turn-flag!
+                                                state side
+                                                card :can-steal
+                                                (fn [state side card]
+                                                  (if (= (:title card) title)
+                                                    ((constantly false)
+                                                     (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
+                                                    true)))
+                                              (effect-completed state side eid))))}
+                    card nil))}]})
 
 (defcard "Launch Campaign"
   (campaign 6 2))

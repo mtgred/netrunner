@@ -22,10 +22,10 @@
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (wait-for
         (pay state opponent (make-eid state eid) card [:credit opponent-bet])
-        (system-msg state opponent async-result)
+        (system-msg state opponent (:msg async-result))
         (wait-for
           (pay state side (make-eid state eid) card [:credit bet])
-          (system-msg state side async-result)
+          (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]

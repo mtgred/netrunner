@@ -528,6 +528,9 @@
    cost->string
    cost-name
    cost-ranks
+   cost-target
+   cost-targets
+   cost-value
    handler
    label
    merge-costs

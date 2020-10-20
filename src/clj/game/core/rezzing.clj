@@ -71,7 +71,7 @@
          (let [cdef (card-def card)
                costs (get-rez-cost state side card args)]
            (wait-for (pay state side (make-eid state eid) card costs)
-                     (if-let [cost-str (and (string? async-result) async-result)]
+                     (if-let [payment-str (:msg async-result)]
                        (do (when (:derezzed-events cdef)
                              (unregister-events state side card))
                            (if-not disabled
@@ -83,7 +83,7 @@
                                                      (update-in [:host :zone] #(map to-keyword %)))))
                            (when-not no-msg
                              (system-msg state side
-                                         (str (build-spend-msg cost-str "rez" "rezzes")
+                                         (str (build-spend-msg payment-str "rez" "rezzes")
                                               (:title card)
                                               (cond
                                                 (:alternative-cost args) " by paying its alternative cost"

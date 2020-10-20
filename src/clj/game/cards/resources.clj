@@ -443,9 +443,9 @@
                                      :yes-ability
                                      {:async true
                                       :effect (req (wait-for (pay :runner card [:credit (get-strength target)])
-                                                             (if-let [cost-str async-result]
+                                                             (if-let [payment-str (:msg async-result)]
                                                                (do (system-msg state :runner
-                                                                               (str (build-spend-msg cost-str "use")
+                                                                               (str (build-spend-msg payment-str "use")
                                                                                     "Charlatan to bypass " (:title target)))
                                                                    (register-events
                                                                      state :runner card
@@ -1040,8 +1040,9 @@
                             (if (= target "Trash")
                               (do (system-msg state :runner "trashes Fencer Fueno")
                                   (trash state :runner eid card nil))
-                              (do (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")
-                                  (pay state :runner eid card :credit 1))))}
+                              (wait-for (pay state :runner card :credit 1)
+                                        (system-msg state :runner (str (:msg async-result) " to avoid trashing Fencer Fueno"))
+                                        (effect-completed state side eid))))}
               card nil))
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
@@ -1642,7 +1643,7 @@
                               (wait-for (pay state :runner
                                                   (make-eid state {:source card :source-type :ability})
                                                   card [:randomly-trash-from-hand 1])
-                                        (system-msg state :runner (build-spend-msg async-result "avoid" "trashing Mystic Maemi"))
+                                        (system-msg state :runner (build-spend-msg (:msg async-result) "avoid" "trashing Mystic Maemi"))
                                         (effect-completed state side eid))))}
               card nil))
     ;; companion-builder: ability
@@ -2004,9 +2005,9 @@
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for
                                                 (pay state :runner card [:credit target])
-                                                (if-let [cost-str async-result]
+                                                (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
-                                                                  (str (build-spend-msg cost-str "use") (:title card)
+                                                                  (str (build-spend-msg payment-str "use") (:title card)
                                                                        " to remove " target
                                                                        " counters from " (:title paydowntarget)))
                                                       (if (= num-counters target)
@@ -2236,10 +2237,11 @@
      :trash? false
      :effect (req (let [trash-cost (trash-cost state side target)]
                     (wait-for (pay state side (make-eid state eid) card [:credit trash-cost])
-                              (let [card (move state :corp target :rfg)]
+                              (let [payment-str (:msg async-result)
+                                    card (move state :corp target :rfg)]
                                 (system-msg state side
-                                            (str "pay " trash-cost
-                                                 " [Credits] and remove " (:title target)
+                                            (str payment-str
+                                                 " and remove " (:title target)
                                                  " from the game"))
                                 (complete-with-result state side eid card)))))}}})
 

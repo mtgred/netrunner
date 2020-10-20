@@ -754,6 +754,8 @@
                                         (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
                                           (let [new-eid (make-eid state {:source card :source-type :ability})]
                                             (wait-for (pay state :corp new-eid card :credit c)
+                                                      (when-let [payment-str (:msg async-result)]
+                                                        (system-msg state :corp payment-str))
                                                       (continue-ability
                                                         state :corp
                                                         {:msg (msg "place " (quantify c " advancement token") " on "
@@ -855,7 +857,7 @@
                                :effect (req (wait-for (pay state :runner card :credit (* 3 (count targets)))
                                                       (system-msg
                                                         state :runner
-                                                        (str async-result " to prevent the trashing of "
+                                                        (str (:msg async-result) " to prevent the trashing of "
                                                              (string/join ", " (map :title (sort-by :title targets)))))
                                                       (effect-completed state side (make-result eid targets))))}
                               card nil)
@@ -1529,6 +1531,8 @@
                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
                     (let [new-eid (make-eid state {:source card :source-type :ability})]
                       (wait-for (pay state :corp new-eid card :credit c)
+                                (when-let [payment-str (:msg async-result)]
+                                  (system-msg state :corp payment-str))
                                 (continue-ability
                                   state side
                                   {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
@@ -2172,7 +2176,9 @@
              :prompt "Pay 4 [Credits] or take 1 tag?"
              :choices ["Pay 4 [Credits]" "Take 1 tag"]
              :effect (req (if (= target "Pay 4 [Credits]")
-                            (pay state :runner eid card :credit 4)
+                            (wait-for (pay state :runner card :credit 4)
+                                      (system-msg state :runner (:msg async-result))
+                                      (effect-completed state side eid))
                             (gain-tags state :corp eid 1 nil)))}
             {:event :corp-turn-begins
              :async true

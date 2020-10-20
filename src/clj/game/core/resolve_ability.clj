@@ -278,10 +278,10 @@
 
 (defn- print-msg
   "Prints the ability message"
-  [state side {:keys [eid] :as ability} card targets cost-str]
+  [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
     (let [desc (if (string? message) message (message state side eid card targets))
-          cost-spend-msg (build-spend-msg cost-str "use")]
+          cost-spend-msg (build-spend-msg payment-str "use")]
       (system-msg state (to-keyword (:side card))
                   (str cost-spend-msg (:title card) (str " to " desc))))))
 
@@ -322,10 +322,10 @@
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
-            (if-let [cost-str async-result]
-              (do
+            (if-let [payment-str (:msg async-result)]
+              (let [ability (assoc-in ability [:eid :cost-paid] (:cost-paid async-result))]
                 ;; Print the message
-                (print-msg state side ability card targets cost-str)
+                (print-msg state side ability card targets payment-str)
                 ;; Trigger the effect
                 (register-once state side ability card)
                 (do-effect state side ability (ugly-counter-hack card cost) targets)

@@ -268,7 +268,9 @@
                       :effect (req (clear-wait-prompt state :corp)
                                    (if (= target "End the run")
                                      (end-run state side eid card)
-                                     (pay state :runner eid card :credit cost)))})
+                                     (wait-for (pay state :runner card :credit cost)
+                                               (system-msg state :runner (:msg async-result))
+                                               (effect-completed state side eid))))})
                    card nil))}]
      :abilities [ability]}))
 
@@ -311,21 +313,15 @@
 
 (defcard "Corporate Troubleshooter"
   {:abilities [{:async true
-                :trash-icon true
                 :label "Add strength to a rezzed ICE protecting this server"
-                :prompt "How many credits?"
-                :choices {:number (req (total-available-credits state :corp eid card))}
-                :effect (effect
-                          (continue-ability
-                            (let [boost target]
-                              {:cost [:credit boost :trash]
-                               :choices {:all true
-                                         :card #(and (ice? %)
-                                                     (rezzed? %)
-                                                     (protecting-same-server? card %))}
-                               :msg (msg "add " boost " strength to " (:title target))
-                               :effect (effect (pump-ice target boost :end-of-turn))})
-                            card nil))}]})
+                :cost [:trash :x-credits]
+                :choices {:all true
+                          :req (req (and (ice? target)
+                                         (rezzed? target)
+                                         (protecting-same-server? card target)))}
+                :msg (msg "add " (cost-value eid :x-credits)
+                          " strength to " (:title target))
+                :effect (effect (pump-ice target (cost-value eid :x-credits) :end-of-turn))}]})
 
 (defcard "Crisium Grid"
   {:constant-effects [{:type :block-successful-run
@@ -586,8 +582,9 @@
                                          "End the run"]
                                :effect (req (clear-wait-prompt state :corp)
                                             (if (= c-pay-str target)
-                                              (do (system-msg state :runner (str "pays " cost " [Credits]"))
-                                                  (pay state :runner eid card :credit cost))
+                                              (wait-for (pay state :runner card :credit cost)
+                                                        (system-msg state :runner (:msg async-result))
+                                                        (effect-completed state side eid))
                                               (do (system-msg state :corp "ends the run")
                                                   (end-run state :corp eid card))))}
                               card nil)))}]})
@@ -1399,6 +1396,7 @@
                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                             (clear-wait-prompt state :runner)
                                             (wait-for (pay state :corp card :credit 2)
+                                                      (system-msg state side (:msg async-result))
                                                       (wait-for (damage state side :brain 1 {:card card})
                                                                 (swap! state assoc-in [:damage :damage-replace] true)
                                                                 (effect-completed state side eid))))}

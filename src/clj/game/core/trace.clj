@@ -39,11 +39,12 @@
                           strength)
         trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
     (wait-for (pay state other (make-eid state eid) card [:credit boost])
-              (system-msg state other (str async-result
-                                           " to increase " (if (corp-start? trace) "link" "trace")
-                                           " strength to " (if (corp-start? trace)
-                                                             runner-strength
-                                                             corp-strength)))
+              (let [payment-str (:msg async-result)]
+                (system-msg state other (str payment-str
+                                             " to increase " (if (corp-start? trace) "link" "trace")
+                                             " strength to " (if (corp-start? trace)
+                                                               runner-strength
+                                                               corp-strength))))
               (clear-wait-prompt state player)
               (let [successful (> corp-strength runner-strength)
                     which-ability (assoc (if successful
@@ -80,9 +81,10 @@
                    ((fnil + 0 0) link boost))
         trace (assoc trace :strength strength)]
     (wait-for (pay state player (make-eid state eid) card [:credit boost])
-              (system-msg state player (str async-result
-                                            " to increase " (if (corp-start? trace) "trace" "link")
-                                            " strength to " strength))
+              (let [payment-str (:msg async-result)]
+                (system-msg state player (str payment-str
+                                              " to increase " (if (corp-start? trace) "trace" "link")
+                                              " strength to " strength)))
               (clear-wait-prompt state other)
               (show-wait-prompt state player
                                 (str (if (corp-start? trace) "Runner" "Corp")
