@@ -1638,10 +1638,7 @@
         (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
         (card-subroutine state :corp hs 1)
         (is (nil? (:run @state)))
-        (is (= ["Sure Gamble"] (->> (get-runner) :discard (map :title))) "Sure Gamble should be in heap")
-        (println (prompt-fmt :runner))
-        (println (clojure.string/join "\n" (map :text (:log @state))))))))
-
+        (is (= ["Sure Gamble"] (->> (get-runner) :discard (map :title))) "Sure Gamble should be in heap")))))
 
 (deftest harvester
   ;; Harvester - draw 3, then discard

@@ -396,8 +396,7 @@
       (click-prompt state :runner "End the run")
       (run-continue state)
       (run-continue state)
-      (is (= "Shuffle a copy of Boomerang back into the Stack?" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Yes")
+      (is (empty? (:prompt (get-runner))) "Boomerang shuffle prompt did not come up")
       (is (find-card "Boomerang" (:discard (get-runner))))
       (is (not (find-card "Boomerang" (:deck (get-runner)))))))
   (testing "Blocks installing cards from heap"

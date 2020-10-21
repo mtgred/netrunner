@@ -3203,7 +3203,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
       (run-empty-server state :hq)
-      (is (empty? (:prompt (get-runner))) "Steve Cambridge prompt did not come up"))))
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No Steve Cambridge prompt, go direct to access."))))
 
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward
