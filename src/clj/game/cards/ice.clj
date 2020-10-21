@@ -1953,23 +1953,28 @@
   (morph-ice "Sentry" "Code Gate" trash-program-sub))
 
 (defcard "Macrophage"
-  {:subroutines [(trace-ability 4 {:label "Purge virus counters"
-                                   :msg "purge virus counters"
-                                   :effect (effect (purge))})
-                 (trace-ability 3 {:label "Trash a virus"
-                                   :prompt "Choose a virus to trash"
-                                   :choices {:card #(and (installed? %)
-                                                         (has-subtype? % "Virus"))}
-                                   :msg (msg "trash " (:title target))
-                                   :async true
-                                   :effect (effect (clear-wait-prompt :runner)
-                                                   (trash eid target {:cause :subroutine}))})
-                 (trace-ability 2 {:label "Remove a virus in the Heap from the game"
-                                   :prompt "Choose a virus in the Heap to remove from the game"
-                                   :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
-                                   :msg (msg "remove " (:title target) " from the game")
-                                   :effect (effect (move :runner target :rfg))})
-                 (trace-ability 1 end-the-run)]})
+         {:subroutines [(trace-ability 4 {:label  "Purge virus counters"
+                                          :msg    "purge virus counters"
+                                          :effect (effect (purge))})
+                        (trace-ability 3 {:label   "Trash a virus"
+                                          :prompt  "Choose a virus to trash"
+                                          :choices {:card #(and (installed? %)
+                                                                (has-subtype? % "Virus"))}
+                                          :msg     (msg "trash " (:title target))
+                                          :async   true
+                                          :effect  (effect (clear-wait-prompt :runner)
+                                                           (trash eid target {:cause :subroutine}))})
+                        (trace-ability 2 {:label  "Remove a virus in the Heap from the game"
+                                          :async  true
+                                          :effect (effect (continue-ability
+                                                            {:async   true
+                                                             :req     (req (not (zone-locked? state :runner :discard)))
+                                                             :prompt "Choose a virus in the Heap to remove from the game"
+                                                             :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
+                                                             :msg     (msg "remove " (:title target) " from the game")
+                                                             :effect  (effect (move :runner target :rfg))}
+                                                          card nil))})
+                        (trace-ability 1 end-the-run)]})
 
 (defcard "Magnet"
   (letfn [(disable-hosted [state side c]
