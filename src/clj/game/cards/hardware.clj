@@ -1672,6 +1672,7 @@
                        :value 1}]
    :in-play [:memory 1]
    :events [{:event :encounter-ice
+             :interactive (req true)
              :optional
              {:req (req (not-used-once? state {:once :per-turn} card))
               :prompt "Trace 5 to bypass current ice?"

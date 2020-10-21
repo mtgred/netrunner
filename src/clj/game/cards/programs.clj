@@ -329,6 +329,7 @@
 (defcard "Afterimage"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :events [{:event :encounter-ice
+                              :interactive (req true)
                               :optional
                               {:req (req (and (has-subtype? target "Sentry")
                                               (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
@@ -1214,6 +1215,7 @@
                     (register-events
                       state side card
                       [{:event :encounter-ice
+                        :interactive (req true)
                         :optional
                         {:req (req (and (same-card? ice target)
                                         (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
