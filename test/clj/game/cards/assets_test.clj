@@ -2496,6 +2496,7 @@
       (is (= 3 (get-counters (refresh lak) :power)) "Smartfabrics gained 1 power counter")
       (take-credits state :corp)
       (card-ability state :corp (refresh lak) 0)
+      (click-prompt state :corp "3")
       (click-card state :corp (find-card "Elective Upgrade" (:hand (get-corp))))
       (is (last-log-contains? state "Elective Upgrade") "Revealed agenda")
       (is (zero? (get-counters (refresh lak) :power)) "Spent 3 power counters")

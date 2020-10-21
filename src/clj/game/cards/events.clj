@@ -2890,6 +2890,7 @@
                        :async true
                        :effect (req (let [n (str->int target)]
                                       (wait-for (pay state :runner card :click n)
+                                                (system-msg state :runner (:msg async-result))
                                                 (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}}
                      card))})
 

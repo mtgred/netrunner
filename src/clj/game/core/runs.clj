@@ -84,12 +84,12 @@
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
            (wait-for (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
-                     (if-let [cost-str async-result]
+                     (if-let [payment-str (:msg async-result)]
                        (let [s [(if (keyword? server) server (last (server->zone state server)))]
                              ices (get-in @state (concat [:corp :servers] s [:ices]))
                              n (count ices)]
                          (when click-run
-                           (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
+                           (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
                                                           (zone->name (unknown->kw server))
                                                           (when ignore-costs ", ignoring all costs"))))
                          ;; s is a keyword for the server, like :hq or :remote1
@@ -561,10 +561,10 @@
    (let [cost (jack-out-cost state side)]
      (if (can-pay? state side eid nil "jack out" cost)
        (wait-for (pay state :runner nil cost)
-                 (if-let [cost-str async-result]
+                 (if-let [payment-str (:msg async-result)]
                    (let [prevent (get-prevent-list state :corp :jack-out)]
                      (if (cards-can-prevent? state :corp prevent :jack-out)
-                       (do (system-msg state :runner (str (build-spend-msg cost-str "attempt to" "attempts to") "jack out"))
+                       (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
                            (system-msg state :corp "has the option to prevent the Runner from jacking out")
                            (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
                            (show-prompt state :corp nil
@@ -576,7 +576,8 @@
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
                                                 (resolve-jack-out state side eid))))
                                         {:priority 10}))
-                       (do (when (not (string/blank? cost-str)) (system-msg state :runner (str cost-str " to jack out")))
+                       (do (when-not (string/blank? payment-str)
+                             (system-msg state :runner (str payment-str " to jack out")))
                            (resolve-jack-out state side eid)
                            (effect-completed state side (make-result eid false)))))
                    (effect-completed state side (make-result eid false))))

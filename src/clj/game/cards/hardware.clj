@@ -1528,21 +1528,12 @@
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
                                :req (req (:access @state))}]}
-     :abilities [{:trash-icon true
+     :abilities [{:cost [:x-credits :trash]
                   :label "prevent damage"
-                  :async true
                   :req (req (= (:cid (second (:pre-damage (eventmap @state))))
                                (:cid (first (:pre-access-card (eventmap @state))))))
-                  :effect (effect (continue-ability
-                                    {:prompt "Choose how much damage to prevent"
-                                     :choices {:number (req (min (last (:pre-damage (eventmap @state)))
-                                                                 (:credit runner)))}
-                                     :msg (msg "prevent " target " damage")
-                                     :cost [:trash]
-                                     :async true
-                                     :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
-                                                     (lose-credits eid target))}
-                                    card nil))}]}))
+                  :msg (msg "prevent " (cost-value eid :x-credits) " damage")
+                  :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"
   {:events

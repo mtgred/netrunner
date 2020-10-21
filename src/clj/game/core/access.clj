@@ -129,7 +129,7 @@
                                       (when must-trash?
                                         (swap! state assoc-in [:run :did-access] true)))
                                     (swap! state assoc-in [:runner :register :trashed-card] true)
-                                    (system-msg state side (str async-result " to trash "
+                                    (system-msg state side (str (:msg async-result) " to trash "
                                                                 (:title card) " from "
                                                                 (name-zone :corp (get-zone card))))
                                     (wait-for (trash state side card nil)
@@ -247,7 +247,7 @@
                       ;; Pay additiional costs to steal
                       (= target "Pay to steal")
                       (wait-for (pay state side nil cost {:action :steal-cost})
-                                (system-msg state side (str async-result " to steal "
+                                (system-msg state side (str (:msg async-result) " to steal "
                                                             (:title card) " from "
                                                             (name-zone :corp (get-zone card))))
                                 (steal-agenda state side eid card))
@@ -377,8 +377,8 @@
                                 (= "No action" target))
                           (access-end state side eid accessed-card)
                           (wait-for (pay state side accessed-card cost)
-                                    (if async-result
-                                      (access-trigger-events state side eid accessed-card title (assoc args :cost-msg async-result))
+                                    (if-let [payment-str (:msg async-result)]
+                                      (access-trigger-events state side eid accessed-card title (assoc args :cost-msg payment-str))
                                       (access-end state side eid accessed-card)))))})
         nil nil)
       ;; There are no access costs

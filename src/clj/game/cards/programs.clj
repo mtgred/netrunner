@@ -755,6 +755,7 @@
                                         " and " (card-str state target))
                               :async true
                               :effect (req (wait-for (pay state side card [:virus 1])
+                                                     (system-msg state side (:msg async-result))
                                                      (swap-ice state side first-ice target)
                                                      (effect-completed state side eid)))})
                            card nil))}}}]})
@@ -797,8 +798,9 @@
                                           "trash Crypsis"))
                               :async true
                               :effect (req (wait-for (pay state :runner card [:virus 1])
-                                                     (if async-result
-                                                       (effect-completed state side eid)
+                                                     (if-let [payment-str (:msg async-result)]
+                                                       (do (system-msg state :runner payment-str)
+                                                           (effect-completed state side eid))
                                                        (trash state side eid card nil))))}]}))
 
 (defcard "Customized Secretary"
@@ -1193,14 +1195,15 @@
 (defcard "Fawkes"
   {:implementation "Stealth credit restriction not enforced"
    :abilities [(break-sub 1 1 "Sentry")
-               {:label "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])"
-                :choices {:number (req (total-available-credits state :runner eid card))}
+               {:label "+X strength for the remainder of the run (using at least 1 stealth [Credits])"
+                :cost [:x-credits]
                 :prompt "How many credits?"
                 :effect (effect
                           (continue-ability
-                            (strength-pump target target :end-of-run)
+                            (strength-pump (cost-value eid :x-credits) (cost-value eid :x-credits) :end-of-run)
                             card nil))
-                :msg (msg "increase strength by " target " for the remainder of the run")}]})
+                :msg (msg "increase strength by " (cost-value eid :x-credits)
+                          " for the remainder of the run")}]})
 
 (defcard "Femme Fatale"
   (auto-icebreaker
@@ -1609,15 +1612,15 @@
 
 (defcard "Mammon"
   (auto-icebreaker {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
-                    :abilities [{:label "X [Credits]: Place X power counters"
+                    :abilities [{:label "Place X power counters"
                                  :prompt "How many power counters to place on Mammon?"
                                  :once :per-turn
-                                 :choices {:number (req (total-available-credits state :runner eid card))}
+                                 :cost [:x-credits]
                                  :req (req (:runner-phase-12 @state))
                                  :async true
-                                 :effect (effect (add-counter card :power target)
-                                                 (lose-credits eid target))
-                                 :msg (msg "place " target " power counters on it")}
+                                 :effect (effect (add-counter card :power (cost-value eid :x-credits))
+                                                 (lose-credits eid (cost-value eid :x-credits)))
+                                 :msg (msg "place " (cost-value eid :x-credits) " power counters on it")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
@@ -1671,22 +1674,11 @@
   {:abilities [(break-sub 1 1 "Sentry")]})
 
 (defcard "Misdirection"
-  {:abilities [{:cost [:click 2]
-                :label "remove tags"
-                :prompt "How many [Credits] to spend to remove that number of tags?"
-                :choices {:number (req (min (total-available-credits state :runner eid card)
-                                            (get-in runner [:tag :base])))}
+  {:abilities [{:cost [:click 2 :x-credits]
+                :label "remove X tags"
                 :async true
-                ;; TODO use :x-credits when it's built
-                :effect (req (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
-                               (wait-for (pay state :runner new-eid card [:credit target])
-                                         (if-let [cost-str async-result]
-                                           (do (system-msg state :runner
-                                                           (str (build-spend-msg cost-str "use")
-                                                                (:title card)
-                                                                " to remove " target " tags"))
-                                               (lose-tags state :runner eid target))
-                                           (effect-completed state side eid)))))}]})
+                :msg (msg "remove " (quantify (cost-value eid :x-credits) "tag"))
+                :effect (effect (lose-tags :runner eid (cost-value eid :x-credits)))}]})
 
 (defcard "MKUltra"
   (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
@@ -1860,13 +1852,14 @@
                             :subroutines-changed]]
                  (assoc heap-breaker-auto-pump-and-break :event event))
         cdef (install-from-heap "Paperclip" "Barrier"
-                                [{:label "X [Credits]: +X strength, break X subroutines"
-                                  :choices {:number (req (total-available-credits state :runner eid card))}
-                                  :prompt "How many credits?"
+                                [{:label "+X strength, break X subroutines"
+                                  :cost [:x-credits]
                                   :heap-breaker-pump :x ; strength gained
                                   :heap-breaker-break :x ; number of subs broken
                                   :effect (effect (continue-ability
-                                                    (pump-and-break [:credit target] target "Barrier")
+                                                    (pump-and-break [:credit (cost-value eid :x-credits)]
+                                                                    (cost-value eid :x-credits)
+                                                                    "Barrier")
                                                     card nil))}])]
     (assoc cdef :events (apply conj events (:events cdef)))))
 
@@ -2527,17 +2520,16 @@
 
 (defcard "Utae"
   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]
-    (auto-icebreaker {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
+    (auto-icebreaker {:abilities [{:label "Break X Code Gate subroutines"
+                                   :cost [:x-credits]
                                    :once :per-run
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
                                    ; no break-req to not enable auto-pumping
-                                   :prompt "How many credits?"
-                                   :choices {:number (req (total-available-credits state :runner eid card))}
                                    :effect (effect
                                              (continue-ability
-                                               (when (pos? target)
-                                                 (break-sub target target "Code Gate"))
+                                               (when (pos? (cost-value eid :x-credits))
+                                                 (break-sub (cost-value eid :x-credits) (cost-value eid :x-credits) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")

@@ -3020,7 +3020,7 @@
       (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")
-      (core/lose state :runner :credit 100)
+      (core/lose state :runner :credit :all)
       ; can only stop 1 damage due to credits
       (core/gain state :runner :credit 1)
       (run-empty-server state "Server 2")
@@ -3037,7 +3037,7 @@
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Prisec")
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd3 0)
-      (is (= 1 (:number (:choices (prompt-map :runner)))) "Recon Drone choice limited to 1 meat")
+      (is (= 101 (:number (:choices (prompt-map :runner)))) "Recon Drone choice is not limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")

@@ -121,10 +121,30 @@
         actions (filter map? args)]
     (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
-                (complete-with-result state side eid (->> async-result
-                                                          (filter some?)
-                                                          sentence-join)))
+                (complete-with-result
+                  state side eid
+                  {:msg (->> async-result
+                             (keep :msg)
+                             sentence-join)
+                   :cost-paid (->> async-result
+                                   (keep #(not-empty (select-keys % [:type :targets :value])))
+                                   (reduce
+                                     (fn [acc cost]
+                                       (assoc acc (:type cost) cost))
+                                     {}))}))
       (complete-with-result state side eid nil))))
+
+(defn cost-targets
+  [eid cost-type]
+  (get-in eid [:cost-paid cost-type :targets]))
+
+(defn cost-target
+  [eid cost-type]
+  (first (cost-targets eid cost-type)))
+
+(defn cost-value
+  [eid cost-type]
+  (get-in eid [:cost-paid cost-type :value]))
 
 ;; cost labels and messages
 (defn build-cost-label
@@ -151,7 +171,7 @@
      (build-cost-label [[:click 1] [:click 3] [:net 1] [:credit 1]])))
 
 (defn cost->string
-  "Converts a cost (amount attribute pair) to a string for printing"
+  "Converts a cost to a string for printing"
   [cost]
   (when (not (neg? (value cost)))
     (let [cost-type (cost-name cost)
