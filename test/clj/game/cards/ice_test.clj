@@ -1601,6 +1601,48 @@
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength.")))))
 
+(deftest hailstorm
+  ;; Hailstorm
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck ["Hailstorm" "Hedge Fund"]}
+                 :runner {:deck ["Sure Gamble"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hailstorm" "HQ")
+      (take-credits state :corp)
+      (let [hs (get-ice state :hq 0)]
+        (rez state :corp hs)
+        (play-from-hand state :runner "Sure Gamble")
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp hs 0)
+        (click-prompt state :corp "Sure Gamble")
+        (card-subroutine state :corp hs 1)
+        (is (nil? (:run @state)))
+        (is (= ["Sure Gamble"] (->> (get-runner) :rfg (map :title))) "Sure Gamble should be rfg'd"))))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck ["Hailstorm" "Hedge Fund" "Blacklist"]}
+                 :runner {:deck ["Sure Gamble"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hailstorm" "HQ")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (let [hs (get-ice state :hq 0)]
+        (rez state :corp hs)
+        (rez state :corp (refresh (get-content state :remote1 0)))
+        (play-from-hand state :runner "Sure Gamble")
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp hs 0)
+        (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+        (card-subroutine state :corp hs 1)
+        (is (nil? (:run @state)))
+        (is (= ["Sure Gamble"] (->> (get-runner) :discard (map :title))) "Sure Gamble should be in heap")
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))))))
+
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game

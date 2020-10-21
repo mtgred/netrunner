@@ -1441,12 +1441,18 @@
                                           (all-active-installed state :runner)))))})
 
 (defcard "Hailstorm"
-  {:subroutines [{:label "Remove a card in the Heap from the game"
-                  :prompt "Choose a card in the Runner's Heap"
-                  :choices (req (:discard runner))
-                  :msg (msg "remove " (:title target) " from the game")
-                  :effect (effect (move :runner target :rfg))}
-                 end-the-run]})
+         {:subroutines [{:label  "Remove a card in the Heap from the game"
+                         :async  true
+                         :effect (effect (continue-ability
+                                           {:async   true
+                                            :req     (req (not (zone-locked? state :runner :discard)))
+                                            :prompt  "Choose a card in the Runner's Heap"
+                                            :choices (req (:discard runner))
+                                            :msg     (msg "remove " (:title target) " from the game")
+                                            :effect  (effect (move :runner target :rfg))
+                                            }
+                                           card nil))}
+                        end-the-run]})
 
 (defcard "Harvester"
   (let [sub {:label "Runner draws 3 cards and discards down to maximum hand size"
