@@ -2,6 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as string]
             [clojure.java.io :as io]
+            [clj-async-profiler.core :as prof]
             [clj-time.format :as f]
             [hawk.core :as hawk]
             [monger.collection :as mc]
@@ -77,6 +78,10 @@
     ;; Clear inactive lobbies after 30 minutes
     (web.utils/tick #(lobby/clear-inactive-lobbies 1800) 1000)
     (web.utils/tick lobby/send-lobby 1000)
+
+    ;; Serve flame graph, used for performance profiling locally
+    ; (prof/serve-files 8080)
+    ; (prof/start)
 
     (reset! server (org.httpkit.server/run-server app {:port port}))
     (println "Jinteki server running in" @server-mode "mode on port" port)
