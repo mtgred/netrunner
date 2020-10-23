@@ -45,7 +45,8 @@
     (keep :ws-id (concat (:players game) (:spectators game)))))
 
 (let [public-lobby-updates (atom {})
-      game-lobby-updates (atom {})]
+      game-lobby-updates (atom {})
+      send-queue (atom 0)]
 
   (defn refresh-lobby-update-in
       [gameid targets func]
@@ -54,7 +55,8 @@
       (def key-diff (select-keys (game-for-id gameid) [(first targets)]))
       (if (seq (game-lobby-view key-diff))
         (swap! game-lobby-updates assoc-in (concat [gameid :update] [(first targets)]) (game-lobby-view key-diff))
-        (swap! public-lobby-updates assoc-in (concat [gameid :update] [(first targets)]) (game-public-view key-diff))))
+        (swap! public-lobby-updates assoc-in (concat [gameid :update] [(first targets)]) (game-public-view key-diff)))
+      (send-lobby))
 
   (defn refresh-lobby-assoc-in
       [gameid targets val]
@@ -63,25 +65,35 @@
   (defn refresh-lobby-dissoc
         [gameid]
         (swap! all-games dissoc gameid)
-        (swap! public-lobby-updates assoc-in [:delete gameid] "0"))
+        (swap! public-lobby-updates assoc-in [:delete gameid] "0")
+        (send-lobby))
 
   (defn refresh-lobby
         [gameid game]
         (swap! all-games assoc gameid game)
-        (swap! public-lobby-updates assoc-in [:update gameid] (game-public-view game)))
+        (swap! public-lobby-updates assoc-in [:update gameid] (game-public-view game))
+        (send-lobby))
+
+  (defn reset-send-lobby
+  []
+  (let [[old] (reset-vals! send-queue 0)]
+    (if (> old 1)
+        (send-lobby))))
 
   (defn send-lobby
     "Called by a background thread to periodically send game lobby updates to all clients."
     []
     ;; If public view keys exist, send to all connected
-    (when (seq @public-lobby-updates)
-      (let [[old] (reset-vals! public-lobby-updates {})]
-        (ws/broadcast! :games/diff {:diff old})))
-    ;; If private view exists, send only to those games clients
-    (when (seq @game-lobby-updates)
-      (let [[old] (reset-vals! game-lobby-updates {})]
-        (doseq [[gameid update] (:update old)]
-            (ws/broadcast-to! (lobby-clients gameid) :games/diff {:diff {:update {gameid update}}}))))))
+    (when (= @send-queue 0)
+      (when (seq @public-lobby-updates)
+        (let [[old] (reset-vals! public-lobby-updates {})]
+          (ws/broadcast! :games/diff {:diff old})))
+      ;; If private view exists, send only to those games clients
+      (when (seq @game-lobby-updates)
+        (let [[old] (reset-vals! game-lobby-updates {})]
+          (doseq [[gameid update] (:update old)]
+              (ws/broadcast-to! (lobby-clients gameid) :games/diff {:diff {:update {gameid update}}})))))
+    (swap! send-queue inc)))
 
 (defn player?
   "True if the given client-id is a player in the given gameid"

@@ -77,7 +77,7 @@
 
     ;; Clear inactive lobbies after 30 minutes
     (web.utils/tick #(lobby/clear-inactive-lobbies 1800) 1000)
-    (web.utils/tick lobby/send-lobby 1000)
+    (web.utils/tick lobby/reset-send-lobby 1000)
 
     ;; Serve flame graph, used for performance profiling locally
     ; (prof/serve-files 8080)
