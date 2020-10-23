@@ -1589,7 +1589,18 @@
       (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing R&D")
       (click-prompt state :runner "Steal")
       (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing HQ")
-      (click-prompt state :runner "Steal"))))
+      (click-prompt state :runner "Steal")))
+  (testing "interaction with Crisium Grid on archives. Issue #5315"
+    (do-game
+     (new-game {:corp {:deck ["Hostile Takeover"]
+                       :hand ["Hostile Takeover" "Crisium Grid"]}
+                :runner {:hand ["Divide and Conquer"]}})
+     (play-from-hand state :corp "Crisium Grid" "Archives")
+     (rez state :corp (get-content state :archives 0))
+     (take-credits state :corp)
+     (play-run-event state "Divide and Conquer" :archives)
+     (click-prompt state :runner "No action")
+     (is (empty? (:prompt (get-runner))) "There's no prompt for accessing R&D"))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
