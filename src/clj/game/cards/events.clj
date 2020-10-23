@@ -778,7 +778,7 @@
    :events [{:event :end-access-phase
              :async true
              :req (req (and (= :archives (:from-server target))
-                            (get-in @state [:run :successful])))
+                            (:successful run)))
              :effect (req (wait-for (do-access state side [:hq] {:no-root true})
                                     (do-access state side eid [:rd] {:no-root true})))}]})
 
