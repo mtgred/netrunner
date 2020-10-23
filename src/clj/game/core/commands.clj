@@ -128,6 +128,9 @@
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
       (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil))
+      ;;move all cards from play area back to hand
+      (doseq [c (get-in @state [side :play-area])]
+        (move state side c :hand))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 
