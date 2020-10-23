@@ -44,7 +44,11 @@
            (fn [games]
              (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
                    create-diff (merge gamemap (:create diff))
-                   update-diff (merge create-diff (:update diff))
+                   update-diff (reduce-kv
+                                  (fn [m k v]
+                                    (assoc m k (merge (get m k {}) v)))
+                                  create-diff
+                                  (:update diff))
                    delete-diff (apply dissoc update-diff (keys (:delete diff)))]
                (sort-games-list (vals delete-diff)))))
     (when (and notification (not (:gameid @app-state)))
@@ -396,7 +400,7 @@
              players))]
         (when (:allow-spectator game)
           [:div.spectators
-           (let [c (count (:spectators game))]
+           (let [c (:spectator-count game)]
              [:h3 (str c " Spectator" (when (not= c 1) "s"))])
            (for [spectator (:spectators game)
                  :let [_id (get-in spectator [:user :_id])]]

@@ -18,12 +18,32 @@
             (assoc p :deck deck))
           p)))
 
-(defn game-public-view
+(defn contains-key?
+  [m ks]
+  (not= ::absent (get m ks ::absent)))
+
+(defn update-if-contains
+  [m ks f & args]
+  (if (contains-key? m ks)
+    (apply (partial update m ks f) args)
+    m))
+
+(defn game-internal-view
   "Strips private server information from a game map, preparing to send the game to clients."
   [game]
   (-> game
       (dissoc :state :last-update :on-close)
-      (update :players #(map (partial user-public-view game) %))
-      (update :original-players #(map (partial user-public-view game) %))
-      (update :ending-players #(map (partial user-public-view game) %))
-      (update :spectators #(map (partial user-public-view game) %))))
+      (update-if-contains :players #(map (partial user-public-view game) %))
+      (update-if-contains :original-players #(map (partial user-public-view game) %))
+      (update-if-contains :spectators #(map (partial user-public-view game) %))
+      (update-if-contains :ending-players #(map (partial user-public-view game) %))))
+
+(defn game-public-view
+  "Strips private server information from a game map, preparing to send the game to clients."
+  [game]
+  (game-internal-view (dissoc game :messages :spectators)))
+
+(defn game-lobby-view
+  "Strips private server information from a game map, preparing to send the game to clients. Strips messages in addition to private info to keep payload size down"
+  [game]
+  (game-internal-view (select-keys game [:messages :spectators])))

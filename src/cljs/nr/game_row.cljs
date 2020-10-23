@@ -76,7 +76,7 @@
        [:button {:on-click #(do (join "rejoin")
                                 (resume-sound))}
         "Rejoin"])
-     (let [c (count (:spectators game))]
+     (let [c (:spectator-count game)]
        [:h4
         {:on-click #(swap! s update :show-mod-menu not)
          :class (when (or (:isadmin user)

@@ -1,7 +1,6 @@
 (ns web.game
   (:require [web.ws :as ws]
             [web.lobby :refer [all-games old-states already-in-game? spectator?] :as lobby]
-            [web.diffs :refer [game-public-view]]
             [web.utils :refer [response]]
             [web.stats :as stats]
             [game.main :as main]
@@ -105,10 +104,9 @@
                           :last-update start-date
                           :state (core/init-game g))
                    (update-in g [:players] #(mapv strip-deck %)))]
-        (swap! all-games assoc gameid game)
-        (swap! old-states assoc gameid @(:state game))
         (stats/game-started game)
-        (lobby/refresh-lobby :update gameid)
+        (lobby/refresh-lobby gameid game)
+        (swap! old-states assoc gameid @(:state game))
         (send-state! :netrunner/start game (public-states (:state game)))))))
 
 (defn handle-game-leave
@@ -135,7 +133,6 @@
       (let [player (lobby/join-game user client-id gameid)
             side (keyword (str (.toLowerCase (:side player)) "-state"))]
         (main/handle-rejoin state (:user player))
-        (lobby/refresh-lobby :update gameid)
         (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid
                                             :started started
                                             :state (json/generate-string
@@ -164,12 +161,9 @@
           {:keys [started state] :as game} (lobby/game-for-id gameid)
           message (if mute-state "muted" "unmuted")]
       (when (lobby/player? client-id gameid)
-        (swap! all-games assoc-in [gameid :mute-spectators] mute-state)
+        (lobby/refresh-lobby-assoc-in gameid [:mute-spectators] mute-state)
         (main/handle-notification state (str username " " message " specatators."))
-        (swap-and-send-diffs! game)
-        (ws/broadcast-to! (lobby/lobby-clients gameid)
-                          :games/diff
-                          {:diff {:update {gameid (game-public-view (lobby/game-for-id gameid))}}})))))
+        (swap-and-send-diffs! game)))))
 
 (defn handle-game-action
   [{{{:keys [username] :as user} :user}       :ring-req
@@ -183,7 +177,7 @@
       (if (and state side)
         (do
           (main/handle-action user command state (side-from-str side) args)
-          (swap! all-games assoc-in [gameid :last-update] (t/now))
+          (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
           (swap-and-send-diffs! game))
         (when-not spectator
           (println "handle-game-action unknown state or side")
@@ -243,7 +237,7 @@
         (let [{:keys [user]} (lobby/spectator? client-id gameid)]
           (when (and user (not mute-spectators))
             (main/handle-say state :spectator user msg)
-            (swap! all-games assoc-in [gameid :last-update] (t/now))
+            (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
             (try
               (swap-and-send-diffs! game)
               (catch Exception ex

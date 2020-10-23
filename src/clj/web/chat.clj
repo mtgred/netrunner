@@ -53,8 +53,7 @@
           (update inserted :_id str))
         (do
           (when client-id
-            (ws/send! client-id [:chat/blocked
-                                 {:reason (if len-valid :rate-exceeded :length-exceeded)}]))
+            (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))
           nil)))))
 
 (defn broadcast-msg

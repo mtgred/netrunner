@@ -16,9 +16,9 @@
   (defonce connected-uids connected-uids))
 
 ;; Maximum throughput is 25,000 client updates a second or 1024 pending broadcast-to!'s (asyncs limit for pending takes)
-;; A maximum of 2 buffer sizes can be processed in one sente tick (sentes buffer window is 30ms)
-(def buffer-clear-timer-ms 20)
-;; If two buffers can be exhausted in one sente tick, we should have a max buffer size of half the 1024 core.async limit
+;; At a duration of 31ms, a maximum of 2 buffer sizes can be processed in one sente tick (sentes buffer window is 30ms)
+(def buffer-clear-timer-ms 31)
+;; If two buffers can be exhausted in one sente tick, we should use a max buffer size of roughly half the 1024 core.async limit
 (def buffer-size 500)
 (let [websocket-buffer (chan buffer-size)]
   (defonce ratelimiter (go
