@@ -4810,11 +4810,23 @@
       (take-credits state :corp)
       (click-credit state :runner)
       (card-ability state :runner (get-resource state 0) 0)
-      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, no agenda")
-      (println (prompt-fmt :runner))
-      (println (clojure.string/join "\n" (map :text (:log @state))))
-
-      )))
+      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, no agenda")))
+  (testing "Heap locked"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" "Blacklist"]}
+                 :runner {:deck ["The Shadow Net" "Sure Gamble" "Easy Mark" "Titanium Ribs"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Shadow Net")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (play-from-hand state :runner "Titanium Ribs")
+      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is (= 4 (:credit (get-runner))) "Paid 1c to install ribs")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, heap is locked"))))
 
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal

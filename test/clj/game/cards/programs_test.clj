@@ -4600,10 +4600,7 @@
       (click-prompt state :runner "Shuffle cards from heap into stack")
       (click-card state :runner (find-card "Easy Mark" (:discard (get-runner))))
       (click-card state :runner (find-card "Dirty Laundry" (:discard (get-runner))))
-      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
-      (println (prompt-fmt :runner))
-      (println (clojure.string/join "\n" (map :text (:log @state))))
-      ))
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]

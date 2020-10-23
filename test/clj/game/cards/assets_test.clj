@@ -410,12 +410,7 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (is (= "Install Paperclip?" (:msg (prompt-map :runner))))
-      (changes-val-macro
-        0 (:credit (get-runner))
-        "Spend 0 when Blacklist blocks install"
-        (click-prompt state :runner "Yes"))
-      (is (nil? (get-program state 0)))))
+      (is (empty? (:prompt (get-runner))) "Paperclip prompt did not come up")))
   (testing "Need to allow steal. #2426"
     (do-game
       (new-game {:corp {:deck [(qty "Fetal AI" 3) "Blacklist"]}})
