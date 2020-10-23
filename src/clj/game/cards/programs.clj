@@ -681,9 +681,10 @@
 
 (defcard "Consume"
   {:events [{:event :runner-trash
+             :once-per-instance true
              :async true
-             :req (req (some corp? targets))
-             :effect (req (let [amt-trashed (count (filter corp? targets))
+             :req (req (some #(corp? (first %)) targets))
+             :effect (req (let [amt-trashed (count (filter #(corp? (first %)) targets))
                                 sing-ab {:optional {:prompt "Place a virus counter on Consume?"
                                                     :autoresolve (get-autoresolve :auto-accept)
                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
@@ -1327,9 +1328,8 @@
                                                (effect-completed state side eid))))))}]}))
 
 (defcard "Gravedigger"
-  (let [e {:req (req (some #(and (installed? %)
-                                 (corp? %))
-                           targets))
+  (let [e {:req (req (and (installed? target)
+                          (corp? target)))
            :msg (msg "place 1 virus counter on " (:title card))
            :effect (effect (add-counter :runner card :virus 1))}]
     {:events [(assoc e :event :runner-trash)
@@ -1350,7 +1350,7 @@
 
 (defcard "Harbinger"
   {:trash-effect
-   {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
+   {:req (req (not-any? #{:facedown :hand} (get-zone card)))
     :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                    (swap! state assoc-in [:runner :locked] nil)
                    (flip-facedown state side card)
@@ -1416,7 +1416,7 @@
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn
                                    :async true
-                                   :effect (effect (trash eid (assoc target :seen true) nil))}}})
+                                   :effect (effect (trash eid (assoc target :seen true) {:accessed true}))}}})
 
 (defcard "Incubator"
   {:events [{:event :runner-turn-begins
@@ -2088,8 +2088,9 @@
   {:events [{:event :runner-trash
              :async true
              :interactive (req true)
-             :req (req (and (first-installed-trash? state side)
-                            (installed? target)))
+             :once-per-instance true
+             :req (req (and (some #(installed? (first %)) targets)
+                            (first-installed-trash? state side)))
              :msg "draw 1 card"
              :effect (effect (draw :runner eid 1 nil))}]})
 

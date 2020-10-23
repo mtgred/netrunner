@@ -2,12 +2,12 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.effects :refer [register-floating-effect]]
-    [game.core.events :refer [trigger-event]]
+    [game.core.engine :refer [trigger-event]]
     [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]
-    [game.core.tags :refer [update-tag-status]]
     [game.core.say :refer [system-msg]]
+    [game.core.tags :refer [update-tag-status]]
     [game.macros :refer [req]]))
 
 (defn- change-msg

@@ -1,4 +1,4 @@
-(ns game.engine.abilities-test
+(ns game.core.abilities-test
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.card :refer :all]

@@ -21,6 +21,7 @@
    per-run
    per-turn
    psi
+   queued-events
    reason
    rid
    room

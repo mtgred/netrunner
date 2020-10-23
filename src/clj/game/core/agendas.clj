@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.events :refer [trigger-event]]
+    [game.core.engine :refer [trigger-event]]
     [game.core.update :refer [update!]]))
 
 ;;; Agendas

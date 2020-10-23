@@ -821,8 +821,9 @@
                 :effect (effect (tag-prevent :runner eid 1))}]})
 
 (defcard "District 99"
-  (letfn [(eligible-cards [runner] (filter #(same-card? :faction (:identity runner) %)
-                                           (:discard runner)))]
+  (letfn [(eligible-cards [runner]
+            (filter #(same-card? :faction (:identity runner) %)
+                    (:discard runner)))]
     {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
                   :req (req (and (seq (eligible-cards runner))
@@ -836,12 +837,18 @@
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
                   :msg "manually add a power counter"}]
-     :events (let [prog-or-hw (fn [targets] (some #(or (program? %) (hardware? %)) targets))
-                   trash-event (fn [side-trash] {:event side-trash
-                                                 :once :per-turn
-                                                 :req (req (first-event? state side side-trash prog-or-hw))
-                                                 :effect (effect (system-msg :runner "adds 1 power counter on District 99")
-                                                                 (add-counter card :power 1))})]
+     :events (let [prog-or-hw (fn [targets]
+                                (some #(or (program? (first %))
+                                           (hardware? (first %)))
+                                      targets))
+                   trash-event (fn [side-trash]
+                                 {:event side-trash
+                                  :once :per-turn
+                                  :once-per-instance true
+                                  :req (req (and (prog-or-hw targets)
+                                                 (first-event? state side side-trash prog-or-hw)))
+                                  :effect (effect (system-msg :runner "adds 1 power counter on District 99")
+                                                  (add-counter card :power 1))})]
                [(trash-event :corp-trash)
                 (trash-event :runner-trash)])}))
 
@@ -2895,9 +2902,11 @@
 
 (defcard "Wasteland"
   {:events [{:event :runner-trash
+             :once-per-instance true
              :req (req (and (first-installed-trash-own? state :runner)
-                            (installed? target)
-                            (runner? target)))
+                            (some #(and (installed? (first %))
+                                        (runner? (first %)))
+                                  targets)))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})

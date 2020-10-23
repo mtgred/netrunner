@@ -1,6 +1,6 @@
 (ns game.core.revealing
   (:require
-    [game.core.events :refer [trigger-event-sync]]))
+    [game.core.engine :refer [trigger-event-sync]]))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."

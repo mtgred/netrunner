@@ -1,7 +1,7 @@
 (ns game.core.link
   (:require
     [game.core.effects :refer [sum-effects]]
-    [game.core.events :refer [trigger-event]]))
+    [game.core.engine :refer [trigger-event]]))
 
 (defn get-link
   ([state] (get-link state nil))

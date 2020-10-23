@@ -306,8 +306,8 @@
                 :async true
                 :effect (effect (draw eid 2 nil))}]
    :trash-effect {:async true
+                  :req (req (= :runner side))
                   :interactive (req true)
-                  :req (req (= :servers (first (:previous-zone card))))
                   :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
                                   (continue-ability :corp
                                                     {:optional
@@ -886,22 +886,14 @@
 
 (defcard "Hostile Infrastructure"
   (let [ability
-        {:async true
-         :req (req (and (= side :runner)
-                        (some corp? targets)))
-         :msg (msg (str "do " (count (filter corp? targets))
-                        " net damage"))
-         :effect (req (letfn [(do-damage [t]
-                                (if (seq t)
-                                  (wait-for (damage state :corp :net 1 {:card card})
-                                            (do-damage (rest t)))
-                                  (effect-completed state side eid)))]
-                        (do-damage (filter corp? targets))))}]
+        {:event :runner-trash
+         :async true
+         :once-per-instance false
+         :req (req (corp? target))
+         :msg "do 1 net damage"
+         :effect (effect (damage :corp eid :net 1 {:card card}))}]
     {:trash-effect ability
-     :events [(assoc ability :event :runner-trash)]
-     :abilities [{:msg "do 1 net damage"
-                  :async true
-                  :effect (effect (damage eid :net 1 {:card card}))}]}))
+     :events [ability]}))
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
@@ -943,8 +935,7 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]
-     :trash-effect {:req (req (and (= :servers (first (:previous-zone card)))
-                                   (= side :runner)))
+     :trash-effect {:req (req (= side :runner))
                     :msg "take 1 bad publicity"
                     :effect (effect (gain-bad-publicity :corp 1))}}))
 
@@ -1178,8 +1169,7 @@
      :events [(assoc ability :event :corp-turn-begins)]
      :effect (req (add-counter state side card :credit 8))
      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
-     :trash-effect {:req (req (= :servers (first (:previous-zone card))))
-                    :async true
+     :trash-effect {:async true
                     :interactive (req true)
                     :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
                                     (continue-ability
@@ -1825,11 +1815,13 @@
 
 
 (defcard "Ronald Five"
-  (let [ability {:req (req (and (some corp? targets)
+  (let [ability {:event :runner-trash
+                 :once-per-instance false
+                 :req (req (and (corp? target)
                                 (pos? (:click runner))))
                  :msg "force the runner to lose 1 [Click]"
                  :effect (effect (lose :runner :click 1))}]
-    {:events [(assoc ability :event :runner-trash)]
+    {:events [ability]
      :trash-effect ability}))
 
 (defcard "Ronin"
@@ -2065,10 +2057,12 @@
                 :async true
                 :effect (effect (damage eid :net 1 {:card card}))}]
    :events [{:event :corp-trash
-             :once :per-turn
-             :req (req (first-event?
-                         state side :corp-trash
-                         #(= (:faction (:identity runner)) (:faction (first %)))))
+             :once-per-instance true
+             :req (req (and (some #(= (:faction (:identity runner)) (:faction (first %))) targets)
+                            (first-event?
+                              state side :corp-trash
+                              (fn [targets]
+                                (some #(= (:faction (:identity runner)) (:faction (first %))) targets)))))
              :effect (effect (system-msg :corp "adds 1 power counter on Storgotic Resonator")
                              (add-counter card :power 1))}]})
 
@@ -2266,7 +2260,8 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Vaporframe Fabricator"
-  {:trash-effect {:async true
+  {:trash-effect {:req (req (= :runner side))
+                  :async true
                   :choices {:card #(and (corp? %)
                                         (in-hand? %)
                                         (not (operation? %)))}

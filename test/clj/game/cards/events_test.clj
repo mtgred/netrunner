@@ -2622,11 +2622,11 @@
                         :credits 10}
                  :runner {:deck ["I've Had Worse" (qty "Sure Gamble" 3) (qty "Imp" 2)]
                           :hand ["I've Had Worse"]}})
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
       (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
-      (core/damage state :corp :meat 4)
+      (damage state :corp :meat 4)
       (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline")
@@ -5313,13 +5313,13 @@
       ;; Put a card into hand so I can confirm it's not discarded by damage
       ;; Don't want to dealing with checking damage on a zero card hand
       (starting-hand state :runner ["Sure Gamble"])
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (= 1 (hand-count)) "Damage was prevented")
       ;; Finish the run and check that damage works again
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "No action")
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (zero? (hand-count)) "Damage works again after run"))))
 
 (deftest the-price-of-freedom

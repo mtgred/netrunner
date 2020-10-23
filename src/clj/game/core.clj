@@ -17,6 +17,7 @@
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]
+    [game.core.engine]
     [game.core.events]
     [game.core.expose]
     [game.core.finding]
@@ -39,7 +40,6 @@
     [game.core.props]
     [game.core.psi]
     [game.core.purging]
-    [game.core.resolve-ability]
     [game.core.revealing]
     [game.core.rezzing]
     [game.core.runs]
@@ -288,44 +288,55 @@
    make-result
    register-effect-completed]
 
-  [game.core.events
+  [game.core.engine
    ability-as-handler
+   can-trigger?
    card-as-handler
-   card-for-ability
-   default-locations
    effect-as-handler
-   event-count
-   event-title
-   first-event?
-   first-installed-trash-own?
-   first-installed-trash?
-   first-run-event?
-   first-successful-run-on-server?
-   first-trash?
    gather-events
-   get-installed-trashed
-   get-turn-damage
-   last-turn?
-   log-event
-   no-event?
-   no-run-event?
-   not-last-turn?
+   is-ability?
+   make-pending-event
+   not-used-once?
+   pay
+   prompt!
+   queue-event
+   register-ability-type
    register-events
+   register-once
    register-suppress
-   run-event-count
-   run-events
-   second-event?
+   resolve-ability
+   select-ability-kw
+   should-trigger?
    trigger-event
    trigger-event-simult
    trigger-event-sync
+   trigger-queued-events
    trigger-suppress
-   turn-events
    unregister-event-by-uuid
    unregister-events
    unregister-floating-events
    unregister-floating-events-for-card
    unregister-suppress
    unregister-suppress-by-uuid]
+
+  [game.core.events
+   event-count
+   first-event?
+   first-installed-trash-own?
+   first-installed-trash?
+   first-run-event?
+   first-successful-run-on-server?
+   first-trash?
+   get-installed-trashed
+   get-turn-damage
+   last-turn?
+   no-event?
+   no-run-event?
+   not-last-turn?
+   run-event-count
+   run-events
+   second-event?
+   turn-events]
 
   [game.core.expose
    expose
@@ -534,9 +545,7 @@
    handler
    label
    merge-costs
-   pay
    payable?
-   sentence-join
    value]
 
   [game.core.play-instants
@@ -579,16 +588,6 @@
 
   [game.core.purging
    purge]
-
-  [game.core.resolve-ability
-   can-trigger?
-   is-ability?
-   not-used-once?
-   prompt!
-   register-ability-type
-   register-once
-   resolve-ability
-   should-trigger?]
 
   [game.core.revealing
    conceal-hand

@@ -470,7 +470,7 @@
                                         {:async true
                                          :msg (msg "trash " (:title accessed-card) " at no cost")
                                          :effect (effect (clear-wait-prompt :corp)
-                                                         (trash eid (assoc accessed-card :seen true) nil))}
+                                                         (trash eid (assoc accessed-card :seen true) {:accessed true}))}
                                         card nil)
                       (wait-for (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
                                 (do (clear-wait-prompt state :corp)
@@ -479,7 +479,7 @@
                                                       (str "uses Freedom Khumalo: Crypto-Anarchist to"
                                                            " trash " (:title accessed-card)
                                                            " at no cost, spending " msg))
-                                          (trash state side eid (assoc accessed-card :seen true) nil))
+                                          (trash state side eid (assoc accessed-card :seen true) {:accessed true}))
                                       ;; Player cancelled ability
                                       (do (swap! state dissoc-in [:per-turn (:cid card)])
                                           (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}})
@@ -1084,10 +1084,15 @@
   {:events [{:event :runner-trash
              :async true
              :interactive (req true)
-             :req (req (and (= 1 (count (filter #(and (installed? (first %)) (corp? (first %)))
-                                                (turn-events state side :runner-trash))))
-                            (corp? target)
-                            (installed? target)))
+             :once-per-instance true
+             :req (req (and (some #(and (corp? (first %))
+                                        (installed? (first %)))
+                                  targets)
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(and (installed? (first %))
+                                                        (corp? (first %)))
+                                                  targets)))))
              :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                           (continue-ability
                             state :corp
@@ -1603,7 +1608,7 @@
             {:event :runner-trash
              :interactive (req true)
              :req (req (and (has-most-faction? state :runner "Anarch")
-                            (some corp? targets)
+                            (corp? target)
                             (pos? (count (:discard runner)))
                             (not (zone-locked? state :runner :discard))))
              :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")

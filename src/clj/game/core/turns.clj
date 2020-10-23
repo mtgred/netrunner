@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-floating-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]

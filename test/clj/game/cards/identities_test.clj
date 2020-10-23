@@ -752,12 +752,12 @@
                         :hand [(qty "Neural EMP" 2)]}
                  :runner {:deck [(qty "Imp" 3)]}})
       (take-credits state :corp)
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (click-prompt state :corp "Yes")
       (let [imp (find-card "Imp" (:hand (get-runner)))]
         (click-prompt state :corp imp)
         (is (= 1 (count (:discard (get-runner)))))
-        (core/damage state :corp :net 1)
+        (damage state :corp :net 1)
         (is (empty? (:prompt (get-corp))) "No choice on second net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-empty-server state "Archives")
@@ -792,12 +792,12 @@
       (play-from-hand state :corp "Pup" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Employee Strike")
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Scrubbed")
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly")))
   (testing "Doesn't prompt when Runner's hand is empty"
     (do-game

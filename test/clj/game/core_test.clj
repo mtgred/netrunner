@@ -528,3 +528,7 @@
   [state title]
   `(when (play-from-hand ~state :corp ~title "New remote")
      (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
+
+(defmacro damage
+  [state side dmg-type qty]
+  `(core/damage ~state ~side (core/make-eid ~state) ~dmg-type ~qty nil))

@@ -1359,8 +1359,6 @@
                                    (and (not (has-subtype? target-card "Icebreaker"))
                                         (:break ability))))
                        :value true}]
-   :effect (effect (update-all-ice))
-   :trash-effect {:effect (effect (update-all-ice))}
    :events [{:event :corp-turn-begins
              :async true
              :effect (effect (trash eid card nil))}]})

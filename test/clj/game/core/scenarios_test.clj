@@ -1,4 +1,4 @@
-(ns game.engine.scenarios-test
+(ns game.core.scenarios-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.core-test :refer :all]

@@ -1,4 +1,4 @@
-(ns game.engine.ice-test
+(ns game.core.ice-test
   (:require [game.core :as core]
             [game.utils :as utils]
             [jinteki.utils :as jutils]

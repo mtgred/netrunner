@@ -1,4 +1,4 @@
-(ns game.engine.actions-test
+(ns game.core.actions-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]

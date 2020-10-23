@@ -3760,10 +3760,10 @@
     (play-from-hand state :corp "Reconstruction Contract" "New remote")
     (let [rc (get-content state :remote1 0)]
       (rez state :corp (refresh rc))
-      (core/damage state :corp :meat 1)
+      (damage state :corp :meat 1)
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract has 1 advancement token")
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (= 2 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 

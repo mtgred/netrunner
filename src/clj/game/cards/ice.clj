@@ -1682,13 +1682,13 @@
                             (gain-tags state :runner eid 1)))})]
     {:subroutines [(otherwise-tag
                      "do 3 net damage"
-                     (req (damage state :runner :net 3 {:card card})))
+                     (effect (damage :runner eid :net 3 {:card card})))
                    (otherwise-tag
                      "gain 5 [Credits]"
-                     (req (gain-credits state :corp eid 5)))
+                     (effect (gain-credits :corp eid 5)))
                    (otherwise-tag
                      "end the run"
-                     (req (end-run state side eid card)))]}))
+                     (effect (end-run eid card)))]}))
 
 (defcard "Ice Wall"
   {:advanceable :always

@@ -2938,7 +2938,7 @@
       (let [nm (get-resource state 0)
             ff (get-hardware state 0)]
         (core/add-counter state :runner (refresh nm) :credit 4)
-        (core/damage state :corp :net 2)
+        (damage state :corp :net 2)
         (card-ability state :runner ff 0)
         (click-card state :runner nm)
         (click-card state :runner nm)
