@@ -764,7 +764,26 @@
           (run-empty-server state :archives)
           (run-empty-server state :archives)
           (take-credits state :runner)
-          (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
+          (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install"))))
+  (testing "Heap locked test"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist"]}
+                 :runner {:discard ["Crowdfunding"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "No install prompt if no runs")
+      (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
+      (is (empty? (get-resource state)) "Crowdfunding not installed")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "No install prompt if no runs")
+      (is (not (empty? (:discard (get-runner)))) "Crowdfunding is in discard")
+      (is (zero? (count (get-resource state))) "Crowdfunding not installed"))))
 
 (deftest crypt
   ;; Crypt
@@ -1120,7 +1139,47 @@
       (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards"))))
+      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards")))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist"]}
+                 :runner {:id "MaxX: Maximum Punk Rock"
+                          :hand ["Sure Gamble" "District 99"]
+                          :discard ["Sure Gamble" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder is not in hand")
+      (is (find-card "Corroder" (:discard (get-runner))) "Corroder is in heap")
+      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 1 (count (prompt-buttons :runner))) "Only 1 card shown")
+      (click-prompt state :runner "Corroder")
+      (is (find-card "Corroder" (:hand (get-runner))))
+      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up")))
+  (testing "No faction cards in heap"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist"]}
+                 :runner {:id "MaxX: Maximum Punk Rock"
+                          :hand ["Sure Gamble" "District 99"]
+                          :discard ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Add to hand prompt did not come up")))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist"]}
+                 :runner {:id "MaxX: Maximum Punk Rock"
+                          :hand ["Sure Gamble" "District 99"]
+                          :discard ["Sure Gamble" "Corroder"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Add to hand prompt did not come up"))))
 
 (let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
@@ -3628,7 +3687,20 @@
       (card-ability state :runner (get-resource state 0) 0)
       (click-card state :runner (find-card "Alpha" (:hand (get-runner))))
       (is (empty? (get-program state)) "Did not install program")
-      (is (= 5 (:credit (get-runner))) "Runner did not spend credits"))))
+      (is (= 5 (:credit (get-runner))) "Runner did not spend credits")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck ["Blacklist"]}
+                 :runner {:deck ["Reclaim" "Mimic" "Clone Chip"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Mimic" (:hand (get-runner))) :discard)
+      (play-from-hand state :runner "Reclaim")
+      (is (empty? (get-program state)) "No programs installed")
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Reclaim prompt did not come up"))))
 
 (deftest rolodex
   ;; Rolodex - Full test
@@ -4430,8 +4502,9 @@
 
 (deftest the-back
   ;; The Back
-  (do-game
-      (new-game {:runner {:hand ["The Back"]
+  (testing "Happy Path"
+    (do-game
+      (new-game {:runner {:hand    ["The Back"]
                           :discard ["Spy Camera" "Recon Drone" "All-nighter" "Deus X"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Back")
@@ -4439,14 +4512,27 @@
         (core/add-counter state :runner (refresh the-back) :power 2)
         (card-ability state :runner (refresh the-back) 1)
         (is (= "Select up to 4 targets for The Back" (:msg (prompt-map :runner))) "Runner gets up to 4 cards")
-        (click-card state :runner "Spy Camera") ; Hardware
-        (click-card state :runner "Recon Drone") ; Hardware with :trash-icon
-        (click-card state :runner "Deus X") ; Program
-        (click-card state :runner "All-nighter") ; Resource
+        (click-card state :runner "Spy Camera")             ; Hardware
+        (click-card state :runner "Recon Drone")            ; Hardware with :trash-icon
+        (click-card state :runner "Deus X")                 ; Program
+        (click-card state :runner "All-nighter")            ; Resource
         (is (find-card "Spy Camera" (:deck (get-runner))) "Spy Camera is shuffled back into the stack")
         (is (find-card "Recon Drone" (:deck (get-runner))) "Program is shuffled back into the stack")
         (is (find-card "Deus X" (:deck (get-runner))) "Deus X is shuffled back into the stack")
         (is (find-card "All-nighter" (:deck (get-runner))) "All-nighter is shuffled back into the stack"))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:hand ["Blacklist"]}
+                 :runner {:hand    ["The Back"]
+                          :discard ["Spy Camera" "Recon Drone" "All-nighter" "Deus X"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Back")
+      (let [the-back (get-resource state 0)]
+        (core/add-counter state :runner (refresh the-back) :power 2)
+        (card-ability state :runner (refresh the-back) 1)
+        (is (empty? (:prompt (get-runner))) "The Back prompt did not come up")))))
 (deftest-pending the-back-automated
   ;; TODO: Enable this once card is fully implemented
   (testing "Basic test"
@@ -4698,6 +4784,37 @@
        (core/purge state :corp)
        (take-credits state :corp)
        (is (seq (:prompt (get-runner))) "Runner gets a prompt cuz we don't know what they have")))))
+
+(deftest the-shadow-net
+  ;; The Shadow Net
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover"]}
+                 :runner {:deck ["The Shadow Net" "Sure Gamble" "Easy Mark" "Titanium Ribs"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Shadow Net")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, no agenda and no target")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, no target")
+      (play-from-hand state :runner "Titanium Ribs")
+      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is (= 4 (:credit (get-runner))) "Paid 1c to install ribs")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "Sure Gamble")
+      (click-card state :runner (get-scored state :runner 0))
+      (is (= 13 (:credit (get-runner))) "Did't have to pay for Sure Gamble")
+      (take-credits state :corp)
+      (click-credit state :runner)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Shadow Net prompt did not come up, no agenda")
+      (println (prompt-fmt :runner))
+      (println (clojure.string/join "\n" (map :text (:log @state))))
+
+      )))
 
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal
