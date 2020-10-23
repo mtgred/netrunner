@@ -14,6 +14,7 @@
             [monger.collection :as mc]
             [monger.operators :refer :all]
             [cheshire.core :as json]
+            [differ.core :as differ]
             [clj-time.core :as t])
   (:import org.bson.types.ObjectId))
 
@@ -48,38 +49,6 @@
       game-lobby-updates (atom {})
       send-queue (atom 0)]
 
-  (defn refresh-lobby-update-in
-      [gameid targets func]
-      (swap! all-games update-in (concat [gameid] targets) func)
-
-      (def key-diff (select-keys (game-for-id gameid) [(first targets)]))
-      (if (seq (game-lobby-view key-diff))
-        (swap! game-lobby-updates assoc-in (concat [gameid :update] [(first targets)]) (game-lobby-view key-diff))
-        (swap! public-lobby-updates assoc-in (concat [gameid :update] [(first targets)]) (game-public-view key-diff)))
-      (send-lobby))
-
-  (defn refresh-lobby-assoc-in
-      [gameid targets val]
-      (refresh-lobby-update-in gameid targets (fn [n] val)))
-
-  (defn refresh-lobby-dissoc
-        [gameid]
-        (swap! all-games dissoc gameid)
-        (swap! public-lobby-updates assoc-in [:delete gameid] "0")
-        (send-lobby))
-
-  (defn refresh-lobby
-        [gameid game]
-        (swap! all-games assoc gameid game)
-        (swap! public-lobby-updates assoc-in [:update gameid] (game-public-view game))
-        (send-lobby))
-
-  (defn reset-send-lobby
-  []
-  (let [[old] (reset-vals! send-queue 0)]
-    (if (> old 1)
-        (send-lobby))))
-
   (defn send-lobby
     "Called by a background thread to periodically send game lobby updates to all clients."
     []
@@ -92,8 +61,43 @@
       (when (seq @game-lobby-updates)
         (let [[old] (reset-vals! game-lobby-updates {})]
           (doseq [[gameid update] (:update old)]
-              (ws/broadcast-to! (lobby-clients gameid) :games/diff {:diff {:update {gameid update}}})))))
-    (swap! send-queue inc)))
+              (ws/broadcast-to! (lobby-clients gameid) :games/differ {:diff {:update {gameid update}}})))))
+    (swap! send-queue inc))
+
+  (defn refresh-lobby-update-in
+    [gameid targets func]
+    (let [[old] (swap-vals! all-games update-in (concat [gameid] targets) func)]
+      (def old-key-diff (select-keys (get old gameid) [(first targets)]))
+      (def key-diff (select-keys (game-for-id gameid) [(first targets)]))
+
+      (if (seq (game-lobby-view key-diff))
+        (swap! game-lobby-updates update-in [:update gameid]
+          (fn [v]
+            (conj v (differ/diff (game-lobby-view old-key-diff) (game-lobby-view key-diff)))))
+        (swap! public-lobby-updates assoc-in (concat [:update gameid] [(first targets)]) ((first targets) (game-public-view key-diff))))
+      (send-lobby)))
+
+  (defn refresh-lobby-assoc-in
+    [gameid targets val]
+    (refresh-lobby-update-in gameid targets (fn [n] val)))
+
+  (defn refresh-lobby-dissoc
+    [gameid]
+    (swap! all-games dissoc gameid)
+    (swap! public-lobby-updates update :delete #(conj % gameid))
+    (send-lobby))
+
+  (defn refresh-lobby
+    [gameid game]
+    (swap! all-games assoc gameid game)
+    (swap! public-lobby-updates assoc-in [:update gameid] (game-public-view game))
+    (send-lobby))
+
+  (defn reset-send-lobby
+    []
+    (let [[old] (reset-vals! send-queue 0)]
+      (if (> old 1)
+          (send-lobby)))))
 
 (defn player?
   "True if the given client-id is a player in the given gameid"
@@ -176,8 +180,7 @@
       (if (empty? (filter identity players))
         (do
           (stats/game-finished game)
-          (close-lobby game))
-          ))))
+          (close-lobby game))))))
 
 (defn already-in-game?
   "Checks if a user with the given database id (:_id) is already in the game"
@@ -310,6 +313,7 @@
                                :text (str username " joined the game.")})
             (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
             (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
+            (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view game)}}})
             (when reply-fn (reply-fn 200)))
         (when reply-fn (reply-fn 403))))
     (when reply-fn (reply-fn 404))))
@@ -329,10 +333,10 @@
                  (or (empty? game-password)
                      (bcrypt/check password game-password)))
           (do 
+              (spectate-game user client-id gameid)
               (lobby-say gameid {:user "__system__"
                                  :text (str username " joined the game as a spectator.")})
-              (spectate-game user client-id gameid)
-
+              (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view game)}}})
               (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
               (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid :started started})
               (when reply-fn (reply-fn 200))

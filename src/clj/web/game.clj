@@ -19,11 +19,12 @@
   [{:keys [gameid players spectators] :as game}
    {:keys [type runner-diff corp-diff spect-diff] :as diffs}]
   (doseq [{:keys [ws-id side] :as pl} players]
-    (ws/broadcast-to! [ws-id] :netrunner/diff (json/generate-string
-                                       {:gameid gameid
-                                        :diff (if (= side "Corp")
-                                                corp-diff
-                                                runner-diff)})))
+    (ws/broadcast-to! [ws-id]
+                      :netrunner/diff (json/generate-string
+                      {:gameid gameid
+                        :diff (if (= side "Corp")
+                                corp-diff
+                                runner-diff)})))
   (ws/broadcast-to!
                     (map #(:ws-id %) spectators)
                     :netrunner/diff

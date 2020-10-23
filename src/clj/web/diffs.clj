@@ -41,9 +41,9 @@
 (defn game-public-view
   "Strips private server information from a game map, preparing to send the game to clients."
   [game]
-  (game-internal-view (dissoc game :messages :spectators)))
+  (game-internal-view (dissoc game :messages :spectators :mute-spectators :password :spectatorhands)))
 
 (defn game-lobby-view
   "Strips private server information from a game map, preparing to send the game to clients. Strips messages in addition to private info to keep payload size down"
   [game]
-  (game-internal-view (select-keys game [:messages :spectators])))
+  (game-internal-view (select-keys game [:messages :spectators :mute-spectators :password :spectatorhands])))

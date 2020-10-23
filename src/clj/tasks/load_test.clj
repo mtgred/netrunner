@@ -26,9 +26,6 @@
     (mc/insert db "users"
                     {:username         "TestCorp"
                       :email            "TestCorp@mailinator.com"
-                      :emailhash        "email-hash"
-                      :registrationDate "registration-date"
-                      :lastConnection   "last-connection"
                       :password         (password/encrypt "password")
                       :isadmin          false
                       :options          {}}))
@@ -37,9 +34,6 @@
     (mc/insert db "users"
                     {:username         "TestRunner"
                       :email            "TestRunner@mailinator.com"
-                      :emailhash        "email-hash"
-                      :registrationDate "registration-date"
-                      :lastConnection   "last-connection"
                       :password         (password/encrypt "password")
                       :isadmin          false
                       :options          {}}))
@@ -51,9 +45,6 @@
                     "users"
                     {:username         (str "TestUser" n)
                       :email            (str "TestUser" n "@mailinator.com")
-                      :emailhash        "email-hash"
-                      :registrationDate "registration-date"
-                      :lastConnection   "last-connection"
                       :password         (password/encrypt "password")
                       :isadmin          false
                       :options          {}})))
@@ -74,15 +65,17 @@
   (def corpSocket (ws/connect
         (str "ws://localhost:1042/ws?client-id=" corpClientID)
         ; :on-receive #(safe-println 'received %)
-        :on-error #(safe-println 'error %)
+        :on-error #(safe-println "corp error" %)
         :on-connect (fn [n] (safe-println "Corp Connected"))
+        :on-close (fn [x y] (safe-println "Corp Disconnected"))
         :headers {"Cookie" (login "TestCorp" "password")}
         ))
   (def runnerSocket (ws/connect
         (str "ws://localhost:1042/ws?client-id=" runnerClientID)
         ; :on-receive #(safe-println 'received %)
-        :on-error #(safe-println 'error %)
+        :on-error #(safe-println "runner error" %)
         :on-connect (fn [n] (safe-println "Runner Connected"))
+        :on-close (fn [x y] (safe-println "Runner Disconnected"))
         :headers {"Cookie" (login "TestRunner" "password")}))
   (safe-println "Create lobby")
   (handle-lobby-create {:ring-req {:user {:username "TestCorp"}}
@@ -101,7 +94,7 @@
       (def socket (ws/connect
         (str "ws://localhost:1042/ws?client-id=" userClientID)
         ; :on-receive #(if (> (count %) 20000) (safe-println 'received %))
-        :on-error #(safe-println 'error %)
+        :on-error #(safe-println "spectator error" %)
         :on-close #(safe-println 'closed %1 %2)
         ; :on-connect (fn [n] (safe-println "Connected"))
         :headers {"Cookie" (login (str "TestUser" n) "password")}))
@@ -113,14 +106,14 @@
 
   (safe-println "Spectators connected")
   (handle-game-start {:ring-req {:user {:username "TestCorp"}}
-                        :client-id corpClientID}))
-  (safe-println "Started game")
+                        :client-id corpClientID})
+  (safe-println "Started game"))
 
 (defn command
   []
     (-main "dev")
 
-    (def maxUsers 1000)
+    (def maxUsers 100)
     (addTestUsers maxUsers)
     (safe-println "Users created")
 
