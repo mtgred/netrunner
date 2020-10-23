@@ -148,7 +148,7 @@
                    (update! state side (assoc (get-card state card) :installed true)))
                  (when (= :this-turn (:rezzed card))
                    (update! state side (assoc (get-card state card) :rezzed true))))
-                ;; Update strength of all ice every turn
+               ;; Update strength of all ice every turn
                (update-all-ice state side)
                (swap! state assoc :end-turn true)
                (swap! state update-in [side :register] dissoc :cannot-draw)
