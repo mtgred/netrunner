@@ -1,7 +1,7 @@
 (ns game.core.hand-size
   (:require
-    [game.core.effects :refer [get-effects sum-effects]]
-    [game.core.events :refer [trigger-event]]))
+   [game.core.effects :refer [get-effects sum-effects]]
+   [game.core.events :refer [trigger-event]]))
 
 (defn hand-size
   [state side]
@@ -9,10 +9,10 @@
 
 (defn sum-hand-size-effects
   [state side]
-  (max 0 (+ (or (get-in @state [side :hand-size :base]) 5)
-            (- (or (get-in @state [side :brain-damage]) 0))
-            (sum-effects state side nil :hand-size)
-            (sum-effects state side nil :user-hand-size))))
+  (+ (or (get-in @state [side :hand-size :base]) 5)
+     (- (or (get-in @state [side :brain-damage]) 0))
+     (sum-effects state side nil :hand-size)
+     (sum-effects state side nil :user-hand-size)))
 
 (defn update-hand-size
   "Update the player's hand-size"

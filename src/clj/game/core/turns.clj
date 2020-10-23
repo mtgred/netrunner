@@ -1,25 +1,25 @@
 (ns game.core.turns
   (:require
-    [game.core.agendas :refer [update-all-advancement-costs]]
-    [game.core.board :refer [all-active all-active-installed all-installed]]
-    [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
-    [game.core.drawing :refer [draw]]
-    [game.core.effects :refer [unregister-floating-effects]]
-    [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
-    [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
-    [game.core.gaining :refer [gain lose]]
-    [game.core.hand-size :refer [hand-size]]
-    [game.core.ice :refer [update-all-ice update-breaker-strength]]
-    [game.core.moving :refer [move]]
-    [game.core.props :refer [set-prop]]
-    [game.core.say :refer [system-msg]]
-    [game.core.toasts :refer [toast]]
-    [game.core.update :refer [update!]]
-    [game.core.winning :refer [flatline]]
-    [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [abs dissoc-in quantify]]
-    [clojure.string :as string]))
+   [game.core.agendas :refer [update-all-advancement-costs]]
+   [game.core.board :refer [all-active all-active-installed all-installed]]
+   [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
+   [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [unregister-floating-effects]]
+   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
+   [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
+   [game.core.gaining :refer [gain lose]]
+   [game.core.hand-size :refer [hand-size]]
+   [game.core.ice :refer [update-all-ice update-breaker-strength]]
+   [game.core.moving :refer [move]]
+   [game.core.props :refer [set-prop]]
+   [game.core.say :refer [system-msg]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.winning :refer [flatline]]
+   [game.macros :refer [continue-ability req wait-for]]
+   [game.utils :refer [abs dissoc-in quantify]]
+   [clojure.string :as string]))
 
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
@@ -93,70 +93,70 @@
 (defn- handle-end-of-turn-discard
   [state side eid _]
   (let [cur-hand-size (count (get-in @state [side :hand]))
-        max-hand-size (max (hand-size state side) 0)]
+        max-hand-size (hand-size state side)]
     (if (> cur-hand-size max-hand-size)
       (continue-ability
-        state side
-        {:prompt (str "Discard down to " (quantify max-hand-size "card"))
-         :choices {:card in-hand?
-                   :max (- cur-hand-size max-hand-size)
-                   :all true}
-         :effect (req (system-msg state side
-                                  (str "discards "
-                                       (if (= :runner side)
-                                         (string/join ", " (map :title targets))
-                                         (quantify (count targets) "card"))
-                                       " from " (if (= :runner side) "their Grip" "HQ")
-                                       " at end of turn"))
-                      (doseq [t targets]
-                        (move state side t :discard))
-                      (effect-completed state side eid))}
-        nil nil)
+       state side
+       {:prompt (str "Discard down to " (quantify max-hand-size "card"))
+        :choices {:card in-hand?
+                  :max (- cur-hand-size (max (hand-size state side) 0))
+                  :all true}
+        :effect (req (system-msg state side
+                                 (str "discards "
+                                      (if (= :runner side)
+                                        (string/join ", " (map :title targets))
+                                        (quantify (count targets) "card"))
+                                      " from " (if (= :runner side) "their Grip" "HQ")
+                                      " at end of turn"))
+                     (doseq [t targets]
+                       (move state side t :discard))
+                     (effect-completed state side eid))}
+       nil nil)
       (effect-completed state side eid))))
 
 (defn end-turn
   ([state side _] (end-turn state side (make-eid state) nil))
   ([state side eid _]
    (wait-for
-     (handle-end-of-turn-discard state side nil)
-     (turn-message state side false)
-     (when (and (= side :runner)
-                (neg? (hand-size state side)))
-       (flatline state))
-     (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
-               (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
-               (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-               (unregister-floating-effects state side :end-of-turn)
-               (unregister-floating-events state side :end-of-turn)
-               (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
-               (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
-               (doseq [card (all-active-installed state :runner)]
+    (handle-end-of-turn-discard state side nil)
+    (turn-message state side false)
+    (when (and (= side :runner)
+               (neg? (hand-size state side)))
+      (flatline state))
+    (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
+              (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
+              (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+              (unregister-floating-effects state side :end-of-turn)
+              (unregister-floating-events state side :end-of-turn)
+              (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+              (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+              (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
-                 (when (= :this-turn (installed? card))
-                   (update! state side (assoc (get-card state card) :installed true)))
+                (when (= :this-turn (installed? card))
+                  (update! state side (assoc (get-card state card) :installed true)))
                  ;; Clear the added-virus-counter flag for each virus in play.
                  ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-                 (when (has-subtype? card "Virus")
-                   (set-prop state :runner (get-card state card) :added-virus-counter false))
+                (when (has-subtype? card "Virus")
+                  (set-prop state :runner (get-card state card) :added-virus-counter false))
                  ;; Remove all :turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
-                 (when (has-subtype? card "Icebreaker")
-                   (update-breaker-strength state :runner (get-card state card))))
-               (doseq [card (all-installed state :corp)]
+                (when (has-subtype? card "Icebreaker")
+                  (update-breaker-strength state :runner (get-card state card))))
+              (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended
-                 (when (= :this-turn (installed? card))
-                   (update! state side (assoc (get-card state card) :installed true)))
-                 (when (= :this-turn (:rezzed card))
-                   (update! state side (assoc (get-card state card) :rezzed true))))
+                (when (= :this-turn (installed? card))
+                  (update! state side (assoc (get-card state card) :installed true)))
+                (when (= :this-turn (:rezzed card))
+                  (update! state side (assoc (get-card state card) :rezzed true))))
                ;; Update strength of all ice every turn
-               (update-all-ice state side)
-               (swap! state assoc :end-turn true)
-               (swap! state update-in [side :register] dissoc :cannot-draw)
-               (swap! state update-in [side :register] dissoc :drawn-this-turn)
-               (clear-turn-register! state)
-               (when-let [extra-turns (get-in @state [side :extra-turns])]
-                 (when (pos? extra-turns)
-                   (start-turn state side nil)
-                   (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
-               (effect-completed state side eid)))))
+              (update-all-ice state side)
+              (swap! state assoc :end-turn true)
+              (swap! state update-in [side :register] dissoc :cannot-draw)
+              (swap! state update-in [side :register] dissoc :drawn-this-turn)
+              (clear-turn-register! state)
+              (when-let [extra-turns (get-in @state [side :extra-turns])]
+                (when (pos? extra-turns)
+                  (start-turn state side nil)
+                  (swap! state update-in [side :extra-turns] dec)
+                  (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+              (effect-completed state side eid)))))
