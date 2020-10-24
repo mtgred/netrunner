@@ -4806,19 +4806,38 @@
 
 (deftest scavenge
   ;; Scavenge
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
-               :runner {:hand ["Scavenge" "Corroder"]
-                        :discard ["Mass-Driver"]
-                        :credits 10}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (play-from-hand state :runner "Scavenge")
-    (let [credits (:credit (get-runner))]
-      (click-card state :runner "Corroder")
-      (click-card state :runner "Mass-Driver")
-      (is (= "Mass-Driver" (:title (get-program state 0))) "Mass-Driver is now installed")
-      (is (= (+ credits 2 -8) (:credit (get-runner))) "Scavenge should give discount"))))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Scavenge" "Corroder"]
+                          :discard ["Mass-Driver"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Scavenge")
+      (let [credits (:credit (get-runner))]
+        (click-card state :runner "Corroder")
+        (click-card state :runner "Mass-Driver")
+        (is (= "Mass-Driver" (:title (get-program state 0))) "Mass-Driver is now installed")
+        (is (= (+ credits 2 -8) (:credit (get-runner))) "Scavenge should give discount"))))
+  (testing "Blacklist Rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Launch Campaign" 3) "Blacklist"]}
+                 :runner {:hand ["Scavenge" "Corroder" "Engolo"]
+                          :discard ["Mass-Driver"]
+                          :credits 10}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote2 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Scavenge")
+      (let [credits (:credit (get-runner))]
+        (click-card state :runner "Corroder")
+        ;verify Mass Driver is not an option
+        (click-card state :runner "Engolo")
+        (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
+        (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount")))))
 
 (deftest scrubbed
   ;; First piece of ice encountered each turn has -2 Strength for remainder of the run
