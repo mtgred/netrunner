@@ -37,7 +37,7 @@
 
 (defn process-games-update 
   [{:keys [diff notification] :as msg}]
-  (swap! app-state update-in [:games]
+  (swap! app-state update :games
           (fn [games]
             (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
                   update-diff (reduce-kv
@@ -53,9 +53,12 @@
 (ws/register-ws-handler!
   :games/list
   (fn [msg]
-    (let [gamemap (into {} (map #(assoc {} (:gameid %) %) msg))]
+    (let [gamemap (into {} (map #(assoc {} (:gameid %) %) msg))
+          missing-gameids (->> (:games @app-state)
+                           (remove #(get gamemap (:gameid %)))
+                           (map :gameid))]
       (process-games-update {:diff {:update gamemap
-                                    :delete (map #(:gameid %) (filter #(not (get gamemap (:gameid %) false)) (:games @app-state)))}}))))
+                                    :delete missing-gameids}}))))
 
 (ws/register-ws-handler!
   :games/diff

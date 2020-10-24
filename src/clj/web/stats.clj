@@ -134,8 +134,8 @@
               userstats (:stats (stats-for-user user-id))
               deckstats (:stats (stats-for-deck deck-id))]
         (ws/broadcast-to! [(:ws-id p)] :stats/update {:userstats userstats
-                                             :deck-id   (str deck-id)
-                                             :deckstats deckstats})))))
+                                                      :deck-id   (str deck-id)
+                                                      :deckstats deckstats})))))
 
 (defn game-started [{:keys [gameid date start-date title room players format]}]
   (let [corp (some #(when (= "Corp" (:side %)) %) players)

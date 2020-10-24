@@ -36,28 +36,26 @@
     {:keys [gameid players spectators] :as game}
     {:keys [type runner-state corp-state spect-state] :as states}
     ws-id]
-      (def player (some #(= (:ws-id %) ws-id) players))
-      (ws/broadcast-to! [ws-id] event (json/generate-string
-                              {:gameid gameid
-                               :state (if player
-                                 (if (= (:side player) "Corp")
-                                        corp-state
-                                        runner-state)
-                                  spect-state)})))
+   (let [player (some #(= (:ws-id %) ws-id) players)]
+     (ws/broadcast-to! [ws-id]
+                        event
+                        (json/generate-string {:gameid gameid
+                                              :state (if player
+                                                (if (= (:side player) "Corp")
+                                                      corp-state
+                                                      runner-state)
+                                                spect-state)}))))
 
   ([event
     {:keys [gameid players spectators] :as game}
     {:keys [type runner-state corp-state spect-state] :as states}]
    (doseq [{:keys [ws-id side] :as pl} players]
-     (ws/broadcast-to! [ws-id] event (json/generate-string
-                              {:gameid gameid
-                               :state (if (= side "Corp")
-                                        corp-state
-                                        runner-state)})))
-   (ws/broadcast-to! (map #(:ws-id %) spectators)
-    event (json/generate-string
-                      {:gameid gameid
-                      :state spect-state}))))
+     (ws/broadcast-to! [ws-id] event (json/generate-string {:gameid gameid
+                                                            :state (if (= side "Corp")
+                                                                      corp-state
+                                                                      runner-state)})))
+   (ws/broadcast-to! (map #(:ws-id %) spectators) event (json/generate-string {:gameid gameid
+                                                                              :state spect-state}))))
 
 (defn swap-and-send-state!
   "Updates the old-states atom with the new game state, then sends a :netrunner/state
@@ -135,9 +133,8 @@
             side (keyword (str (.toLowerCase (:side player)) "-state"))]
         (main/handle-rejoin state (:user player))
         (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid
-                                            :started started
-                                            :state (json/generate-string
-                                                     (side (public-states (:state game))))})
+                                                    :started started
+                                                    :state (json/generate-string (side (public-states (:state game))))})
         (send-state! :netrunner/state (lobby/game-for-id gameid) (public-states (:state game)) client-id)
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 
@@ -211,8 +208,7 @@
             ;; add a chat message, then send diff state to all players.
             (lobby/spectate-game user client-id gameid)
             (main/handle-notification state (str username " joined the game as a spectator."))
-            (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid
-                                                :started started})
+            (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid :started started})
             (send-state! :netrunner/state (lobby/game-for-id gameid) (public-states (:state game)) client-id)
             (swap-and-send-diffs! (lobby/game-for-id gameid))
             (when reply-fn (reply-fn 200))

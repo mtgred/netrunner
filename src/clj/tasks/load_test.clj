@@ -20,7 +20,7 @@
 (defn safe-println [& more]
   (.write *out* (str (clojure.string/join " " more) "\n")))
 
-(defn addTestUsers [maxUsers]
+(defn add-test-users [maxUsers]
   (webdb/connect)
   (when (not (mc/find-one-as-map db "users" {:username "TestCorp"}))
     (mc/insert db "users"
@@ -58,20 +58,20 @@
     (println "Failed, exception is " (or error status))
     (:set-cookie headers))))
 
-(defn createGame [maxUsers]
-  (def corpClientID (uuid/to-string (uuid/v1)))
-  (def runnerClientID (uuid/to-string (uuid/v1)))
+(defn create-game [maxUsers]
+  (def corp-client-id (uuid/to-string (uuid/v1)))
+  (def runner-client-id (uuid/to-string (uuid/v1)))
   (safe-println "Login with test users")
-  (def corpSocket (ws/connect
-        (str "ws://localhost:1042/ws?client-id=" corpClientID)
+  (def corp-socket (ws/connect
+        (str "ws://localhost:1042/ws?client-id=" corp-client-id)
         ; :on-receive #(safe-println 'received %)
         :on-error #(safe-println "corp error" %)
         :on-connect (fn [n] (safe-println "Corp Connected"))
         :on-close (fn [x y] (safe-println "Corp Disconnected"))
         :headers {"Cookie" (login "TestCorp" "password")}
         ))
-  (def runnerSocket (ws/connect
-        (str "ws://localhost:1042/ws?client-id=" runnerClientID)
+  (def runner-socket (ws/connect
+        (str "ws://localhost:1042/ws?client-id=" runner-client-id)
         ; :on-receive #(safe-println 'received %)
         :on-error #(safe-println "runner error" %)
         :on-connect (fn [n] (safe-println "Runner Connected"))
@@ -79,14 +79,14 @@
         :headers {"Cookie" (login "TestRunner" "password")}))
   (safe-println "Create lobby")
   (handle-lobby-create {:ring-req {:user {:username "TestCorp"}}
-                        :client-id corpClientID
+                        :client-id corp-client-id
                         :?data {:title "Performance Game" :format "standard" :allow-spectator true :spectatorhands false :password "" :room "casual" :side "Corp" :options {}}})
   
-  (def gameID (first (first @all-games)))
+  (def game-id (first (first @all-games)))
 
   (handle-lobby-join {:ring-req {:user {:username "TestRunner"}}
-                        :client-id runnerClientID
-                        :?data {:gameid gameID :password ""}})
+                        :client-id runner-client-id
+                        :?data {:gameid game-id :password ""}})
 
   (def sockets (doall (pmap
     (fn [n]
@@ -100,13 +100,13 @@
         :headers {"Cookie" (login (str "TestUser" n) "password")}))
       (handle-lobby-watch {:ring-req {:user {:username (str "TestUser" n)}}
                         :client-id userClientID
-                        :?data {:gameid gameID :password ""}})
+                        :?data {:gameid game-id :password ""}})
       socket)
     (range maxUsers))))
 
   (safe-println "Spectators connected")
   (handle-game-start {:ring-req {:user {:username "TestCorp"}}
-                        :client-id corpClientID})
+                        :client-id corp-client-id})
   (safe-println "Started game"))
 
 (defn command
@@ -114,8 +114,8 @@
     (-main "dev")
 
     (def maxUsers 100)
-    (addTestUsers maxUsers)
+    (add-test-users maxUsers)
     (safe-println "Users created")
 
-    (createGame maxUsers)
+    (create-game maxUsers)
 )
