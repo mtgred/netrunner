@@ -4579,7 +4579,7 @@
         (is (= 2 (get-strength (refresh corr))) "Corroder returned to normal strength")))))
 
 (deftest trope
-  ;; Trope
+  ;; Trope TODO FIX ME
   (testing "Happy Path"
     (do-game
       (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]}
