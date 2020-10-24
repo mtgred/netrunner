@@ -777,9 +777,9 @@
 ;; EVENT QUEUEING
 
 (defn queue-event
-  [state event target-map]
+  [state event context-map]
   (when (keyword? event)
-    (swap! state update-in [:queued-events event] conj target-map)))
+    (swap! state update-in [:queued-events event] conj context-map)))
 
 (defn make-pending-event
   [state event card ability]
@@ -794,30 +794,30 @@
 
 (defn- gather-queued-event-handlers
   [state event-maps]
-  (for [[event list-of-maps] event-maps]
+  (for [[event context-maps] event-maps]
     {:handlers (filterv #(= event (:event %)) (:events @state))
-     :list-of-maps (into [] list-of-maps)}))
+     :context-maps (into [] context-maps)}))
 
 (defn- create-instances
-  [{:keys [handlers list-of-maps]}]
+  [{:keys [handlers context-maps]}]
   (apply concat
          (for [handler handlers]
            (if (:once-per-instance handler)
              [{:handler handler
-               :targets list-of-maps}]
-             (for [target list-of-maps]
+               :context context-maps}]
+             (for [context context-maps]
                {:handler handler
-                :targets [target]})))))
+                :context [context]})))))
 
 (defn- create-handlers
   [state eid queued-events]
   (->> queued-events
        (mapcat create-instances)
-       (filter (fn [{:keys [handler targets]}]
+       (filter (fn [{:keys [handler context]}]
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
-                   (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card targets))
-                        (can-trigger? state (to-keyword (:side card)) eid ability card targets)))))
+                   (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
+                        (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
        (sort-by (complement #(is-active-player state (:handler %))))))
 
 (defn- trigger-queued-event-player
@@ -832,7 +832,7 @@
                                           (silent-fn state side
                                                      (make-eid state eid)
                                                      (card-for-ability state (:handler %))
-                                                     (:targets %)))))
+                                                     (:context %)))))
                              handlers)
           titles (keep #(card-for-ability state (:handler %)) non-silent)
           interactive (filter #(let [interactive-fn (:interactive (:ability (:handler %)))]
@@ -840,7 +840,7 @@
                                       (interactive-fn state side
                                                       (make-eid state eid)
                                                       (card-for-ability state (:handler %))
-                                                      (:targets %))))
+                                                      (:context %))))
                               handlers)]
       (if (or (= 1 (count handlers))
               (empty? interactive)
@@ -848,7 +848,7 @@
         (let [handler (first handlers)
               to-resolve (:handler handler)
               ability (:ability to-resolve)
-              ability-targets (:targets handler)
+              ability-targets (:context handler)
               ability-card (card-for-ability state to-resolve)]
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
@@ -868,7 +868,7 @@
              :effect (req (let [handler (some #(when (same-card? target (card-for-ability state (:handler %))) %) handlers)
                                 to-resolve (:handler handler)
                                 ability (:ability to-resolve)
-                                ability-targets (:targets handler)
+                                ability-targets (:context handler)
                                 ability-card (card-for-ability state to-resolve)]
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
@@ -894,8 +894,8 @@
   "_side and _args are merely for wait-for"
   [state _side eid _args]
   (let [event-maps (:queued-events @state)]
-    (doseq [[event target-map] event-maps]
-      (log-event state event target-map))
+    (doseq [[event context-map] event-maps]
+      (log-event state event context-map))
     (if (empty? event-maps)
       (effect-completed state nil eid)
       (let [queued-events (gather-queued-event-handlers state event-maps)
