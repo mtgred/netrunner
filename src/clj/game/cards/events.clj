@@ -429,8 +429,8 @@
                {:prompt "Install a program?"
                 :yes-ability
                 {:async true
-                 :prompt "From your Stack or Heap?"
-                 :choices ["Stack" "Heap"]
+                 :prompt "Install from where?"
+                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
                  :msg (msg "install a program from their " target)
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
@@ -610,7 +610,8 @@
 
 (defcard "Déjà Vu"
   {:req (req (not (zone-locked? state :runner :discard)))
-   :prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
+   :prompt "Choose a card to add to Grip"
+   :choices (req (cancellable (:discard runner) :sorted))
    :msg (msg "add " (:title target) " to their Grip")
    :effect (req (move state side target :hand)
                 (when (has-subtype? target "Virus")
@@ -1734,13 +1735,13 @@
                                :effect (effect (unregister-floating-events :until-runner-turn-begins))}]))}}})
 
 (defcard "Levy AR Lab Access"
-         {:msg                     (msg (if (not (zone-locked? state :runner :discard))
-                                          "shuffle their Grip and Heap into their Stack and draw 5 cards"
-                                          "shuffle their Grip into their Stack and draw 5 cards"))
+         {:msg (msg (if (not (zone-locked? state :runner :discard))
+                      "shuffle their Grip and Heap into their Stack and draw 5 cards"
+                      "shuffle their Grip into their Stack and draw 5 cards"))
           :rfg-instead-of-trashing true
-          :async                   true
-          :effect                  (effect (shuffle-into-deck :hand :discard)
-                                           (draw eid 5 nil))})
+          :async true
+          :effect (effect (shuffle-into-deck :hand :discard)
+                          (draw eid 5 nil))})
 
 (defcard "Lucky Find"
   {:msg "gain 9 [Credits]"
@@ -2681,8 +2682,8 @@
               (assoc ability :event :runner-turn-ends)]}))
 
 (defcard "Test Run"
-  {:prompt "Install a program from your Stack or Heap?"
-   :choices ["Stack" "Heap"]
+  {:prompt (req (if (not (zone-locked? state :runner :discard)) "Install a program from your Stack or Heap?" "Install a program from your Stack?" ))
+   :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
    :msg (msg "install a program from their " target)
    :async true
    :effect (effect

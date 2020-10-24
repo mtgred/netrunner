@@ -1039,8 +1039,9 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      ; I'd like this prompt not to say 'Heap' but default to stack (is (empty? (:prompt (get-runner))) "Compile prompt did not come up")
-      )))
+      (is (= "Install from where?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
+      (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack"))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
@@ -2460,12 +2461,12 @@
       (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
       (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
-  (testing "Cannot play with empty heap"
-    (do-game
-      (new-game {:runner {:hand ["Harmony AR Therapy"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Harmony AR Therapy")
-      (is (empty? (:prompt (get-runner))) "HART was not played")))
+  ;(testing "Can play with empty heap"
+  ;  (do-game
+  ;    (new-game {:runner {:hand ["Harmony AR Therapy"]}})
+  ;    (take-credits state :corp)
+  ;    (play-from-hand state :runner "Harmony AR Therapy")
+  ;    (is (= 2 (count (prompt-buttons :runner))) "No Cards to Shuffle")))
   (testing "Shuffle back less than 5 cards"
     (do-game
       (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
@@ -4638,7 +4639,7 @@
       (is (nil? (get-run)) "Run is ended")))
   (testing "Heap Locked"
     (do-game
-      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Blacklist"]}
                  :runner {:deck ["Rip Deal" "Easy Mark"]}})
       (trash-from-hand state :runner "Easy Mark")
@@ -5211,7 +5212,21 @@
       (click-card state :runner "Morning Star")
       (take-credits state :runner)
       (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
-      (is (= "Morning Star" (:title (get-program state 0))) "Morning Star still installed"))))
+      (is (= "Morning Star" (:title (get-program state 0))) "Morning Star still installed")))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
+                 :runner {:hand [(qty "Test Run" 3) "Scavenge" "Inti"]
+                          :deck ["Pelangi"]
+                          :discard ["Morning Star"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Test Run")
+      (is (= "Install a program from your Stack?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
+      (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack"))))
+
 
 (deftest the-maker-s-eye
   (testing "Basic test"
