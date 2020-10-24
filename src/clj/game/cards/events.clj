@@ -609,7 +609,8 @@
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
 
 (defcard "Déjà Vu"
-  {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
+  {:req (req (not (zone-locked? state :runner :discard)))
+   :prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
    :msg (msg "add " (:title target) " to their Grip")
    :effect (req (move state side target :hand)
                 (when (has-subtype? target "Virus")
@@ -1733,11 +1734,13 @@
                                :effect (effect (unregister-floating-events :until-runner-turn-begins))}]))}}})
 
 (defcard "Levy AR Lab Access"
-  {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
-   :rfg-instead-of-trashing true
-   :async true
-   :effect (effect (shuffle-into-deck :hand :discard)
-                   (draw eid 5 nil))})
+         {:msg                     (msg (if (not (zone-locked? state :runner :discard))
+                                          "shuffle their Grip and Heap into their Stack and draw 5 cards"
+                                          "shuffle their Grip into their Stack and draw 5 cards"))
+          :rfg-instead-of-trashing true
+          :async                   true
+          :effect                  (effect (shuffle-into-deck :hand :discard)
+                                           (draw eid 5 nil))})
 
 (defcard "Lucky Find"
   {:msg "gain 9 [Credits]"
@@ -1962,7 +1965,8 @@
                    :async true
                    :effect (effect (make-run eid target nil card))}
         ashes-recur (fn ashes-recur [n]
-                      {:optional
+                      {:req (req (not (zone-locked? state :runner :discard)))
+                       :optional
                        {:prompt "Remove Out of the Ashes from the game to make a run?"
                         :yes-ability
                         {:msg "removes Out of the Ashes from the game to make a run"
@@ -2225,7 +2229,8 @@
                  eid :archives
                  {:req (req (= target :archives))
                   :replace-access
-                  {:mandatory true
+                  {:req (req (not (zone-locked? state :runner :discard)))
+                   :mandatory true
                    :async true
                    :prompt "Choose up to five cards to install"
                    :show-discard true
@@ -2289,7 +2294,8 @@
 (defcard "Retrieval Run"
   {:async true
    :makes-run true
-   :req (req archives-runnable)
+   :req (req (and archives-runnable
+                  (not (zone-locked? state :runner :discard))))
    :effect (effect (make-run
                      eid :archives
                      {:req (req (= target :archives))
@@ -2352,7 +2358,8 @@
    :effect
    (effect (make-run
              eid :hq
-             {:req (req (= target :hq))
+             {:req (req (and (= target :hq)
+                             (not (zone-locked? state :runner :discard))))
               :replace-access
               {:async true
                :effect
