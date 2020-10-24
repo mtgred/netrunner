@@ -3134,10 +3134,9 @@
                  :silent (req true)
                  :req (req (asset? target))
                  :effect ef}
-        trash-req (req (some #(and (asset? %)
-                                   (installed? %)
-                                   (rezzed? %))
-                             targets))]
+        trash-req (req (and (asset? (:card target))
+                            (installed? (:card target))
+                            (rezzed? (:card target))))]
     {:effect ef
      :events [(assoc ability :event :rez)
               (assoc ability :event :derez)

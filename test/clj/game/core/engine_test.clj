@@ -54,15 +54,15 @@
         (e/make-pending-event state :test-event-2 (first (:hand (get-corp))) event-3)
         (e/make-pending-event state :test-event (first (:hand (get-runner))) event-2)
         (e/make-pending-event state :test-event-2 (first (:hand (get-runner))) event-4)
-        (e/queue-event state :test-event 1 2 3)
-        (e/queue-event state :test-event-2 4 5 6)
-        (e/queue-event state :test-event 'a 'b 'c)
-        (e/queue-event state :test-event-2 'x 'y 'z)
+        (e/queue-event state :test-event {:a 1 :b 2 :c 3})
+        (e/queue-event state :test-event-2 {:a 4 :b 5 :c 6})
+        (e/queue-event state :test-event {:a 'a :b 'b :c 'c})
+        (e/queue-event state :test-event-2 {:a 'x :b 'y :c 'z})
         (e/trigger-queued-events state nil (core/make-eid state) nil)
-        (is (= '([:test-event-2 (4 5 6)]
-                 [:test-event-2 (x y z)]
-                 [:test-event [(a b c) (1 2 3)]]
-                 [:test-event-2 [(x y z) (4 5 6)]]
-                 [:test-event (1 2 3)]
-                 [:test-event (a b c)])
+        (is (= '([:test-event-2 [{:a 4, :b 5, :c 6}]]
+                 [:test-event-2 [{:a x, :b y, :c z}]]
+                 [:test-event [{:a a, :b b, :c c} {:a 1, :b 2, :c 3}]]
+                 [:test-event-2 [{:a x, :b y, :c z} {:a 4, :b 5, :c 6}]]
+                 [:test-event [{:a 1, :b 2, :c 3}]]
+                 [:test-event [{:a a, :b b, :c c}]])
                (:order @state)))))))

@@ -203,7 +203,7 @@
              :async true
              :interactive (req true)
              :req (req (and (= side :runner)
-                            (= :ability-cost (:cause (last targets)))))
+                            (= :ability-cost (:cause target))))
              :msg "draw a card"
              :effect (effect (draw eid 1 nil))}]})
 
@@ -1085,13 +1085,13 @@
              :async true
              :interactive (req true)
              :once-per-instance true
-             :req (req (and (some #(and (corp? (first %))
-                                        (installed? (first %)))
+             :req (req (and (some #(and (corp? (:card %))
+                                        (installed? (:card %)))
                                   targets)
                             (first-event? state side :runner-trash
                                           (fn [targets]
-                                            (some #(and (installed? (first %))
-                                                        (corp? (first %)))
+                                            (some #(and (installed? (:card %))
+                                                        (corp? (:card %)))
                                                   targets)))))
              :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                           (continue-ability
@@ -1608,7 +1608,7 @@
             {:event :runner-trash
              :interactive (req true)
              :req (req (and (has-most-faction? state :runner "Anarch")
-                            (corp? target)
+                            (corp? (:card target))
                             (pos? (count (:discard runner)))
                             (not (zone-locked? state :runner :discard))))
              :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")

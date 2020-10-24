@@ -78,7 +78,7 @@
   "Returns list of cards trashed this turn owned by side that were installed"
   [state side]
   (->> (turn-events state side (keyword (str (name side) "-trash")))
-       (mapcat (fn [targets] (filter #(installed? (first %)) targets)))))
+       (mapcat (fn [targets] (filter #(installed? (:card %)) targets)))))
 
 (defn first-installed-trash?
   "Returns true if this is the first trash of an installed card this turn by this side"
@@ -88,7 +88,7 @@
 (defn first-installed-trash-own?
   "Returns true if this is the first trash of an owned installed card this turn by this side"
   [state side]
-  (= 1 (count (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side)))))
+  (= 1 (count (filter #(= (:side (:card %)) (side-str side)) (get-installed-trashed state side)))))
 
 
 ;; Functions for run event parsing

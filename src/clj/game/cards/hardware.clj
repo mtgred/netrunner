@@ -50,9 +50,9 @@
 (defcard "Aniccam"
   (let [ability {:async true
                  :once-per-instance true
-                 :req (req (and (some #(event? (first %)) targets)
+                 :req (req (and (some #(event? (:card %)) targets)
                                 (letfn [(event-targets? [targets]
-                                          (some #(event? (first %)) targets))]
+                                          (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?))))
                  :msg "draw 1 card"
                  :effect (effect (draw :runner eid 1 nil))}]
@@ -226,19 +226,19 @@
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
         (fn [targets]
-          (some #(and (runner? (first %))
-                      (or (in-hand? (first %))
-                          (in-deck? (first %))))
+          (some #(and (runner? (:card %))
+                      (or (in-hand? (:card %))
+                          (in-deck? (:card %))))
                 targets))
         triggered-ability
         {:once-per-instance true
-         :req (req (and (some #(and (runner? (first %))
-                                    (or (in-hand? (first %))
-                                        (in-deck? (first %))))
+         :req (req (and (some #(and (runner? (:card %))
+                                    (or (in-hand? (:card %))
+                                        (in-deck? (:card %))))
                               targets)
                         (first-trash? state grip-or-stack-trash?)))
          :prompt "Add a trashed card to the bottom of the stack"
-         :choices (req (conj (sort (map :title (map first targets))) "No action"))
+         :choices (req (conj (sort (map :title (map :card targets))) "No action"))
          :async true
          :effect (req (if (= "No action" target)
                         (effect-completed state side eid)
@@ -431,8 +431,10 @@
    :constant-effects [{:type :trash-cost
                        :value -1}]
    :events [{:event :runner-trash
-             :req (req (first-event? state side :runner-trash
-                                     (fn [targets] (some #(corp? (first %)) targets))))
+             :req (req (and (corp? (:card target))
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(corp? (:card %)) targets)))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]})
@@ -723,8 +725,8 @@
               {:event :runner-trash
                :once-per-instance true
                :async true
-               :req (req (some #(corp? (first %)) targets))
-               :effect (req (let [amt-trashed (count (filter #(corp? (first %)) targets))
+               :req (req (some #(corp? (:card %)) targets))
+               :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                   sing-ab {:optional
                                            {:prompt "Place a virus counter on Friday Chip?"
                                             :autoresolve (get-autoresolve :auto-accept)
@@ -1014,9 +1016,8 @@
                 :effect (effect (end-run-prevent))}]})
 
 (defcard "Mâché"
-  (letfn [(pred [[target args]]
-            (and (corp? target)
-                 (:accessed args)))]
+  (letfn [(pred [{:keys [card accessed]}]
+            (and accessed (corp? card)))]
     {:abilities [{:label "Draw 1 card"
                   :msg "draw 1 card"
                   :cost [:power 3]
@@ -1026,7 +1027,7 @@
                :once-per-instance true
                :req (req (and (some pred targets)
                               (first-event? state side :runner-trash (fn [targets] (some pred targets)))))
-               :effect (req (let [target (some #(when (pred %) (first %)) targets)
+               :effect (req (let [target (some #(when (pred %) (:card %)) targets)
                                   cost (trash-cost state side target)]
                               (when cost
                                 (system-msg state side (str "places " cost
@@ -1468,9 +1469,8 @@
   {:in-play [:memory 1]
    :events (let [e {:async true
                     :interactive (req true)
-                    :req (req (some #(and (installed? %)
-                                          (program? %))
-                                    targets))
+                    :req (req (and (installed? (:card target))
+                                   (program? (:card target))))
                     :effect (effect (system-msg "trashes Q-Coherence Chip")
                                     (trash eid card nil))}]
              [(assoc e :event :runner-trash)
@@ -1604,14 +1604,16 @@
               (assoc event
                      :event :runner-trash
                      :once-per-instance true
-                     :req (req (and (some #(and (runner? (first %))
-                                                (in-hand? (first %))) targets)
+                     :req (req (and (some #(and (runner? (:card %))
+                                                (in-hand? (:card %)))
+                                          targets)
                                     (zero? (count (:hand runner))))))
               (assoc event
                      :event :corp-trash
                      :once-per-instance true
-                     :req (req (and (some #(and (runner? (first %))
-                                                (in-hand? (first %))) targets)
+                     :req (req (and (some #(and (runner? (:card %))
+                                                (in-hand? (:card %)))
+                                          targets)
                                     (zero? (count (:hand runner))))))
               (assoc event
                      :event :runner-install
@@ -1775,9 +1777,9 @@
   {:constant-effects [{:type :card-ability-additional-cost
                        :req (req (and (same-card? card target)
                                       (let [pred (fn [targets]
-                                                   (some #(and (runner? (first %))
-                                                               (installed? (first %))
-                                                               (program? (first %)))
+                                                   (some #(and (runner? (:card %))
+                                                               (installed? (:card %))
+                                                               (program? (:card %)))
                                                          targets))]
                                         (zero? (+ (event-count state nil :runner-trash pred)
                                                   (event-count state nil :corp-trash pred)

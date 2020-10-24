@@ -3112,6 +3112,8 @@
         (rez state :corp war)
         (core/add-counter state :runner clv :power 2)
         (card-ability state :runner (refresh clv) 0)
+        (println (prompt-fmt :corp))
+        (println (prompt-fmt :runner))
         ;; Prompt choice checks there is a trace prompt from Warroid
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")

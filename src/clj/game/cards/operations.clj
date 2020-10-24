@@ -440,7 +440,7 @@
              :async true
              :effect (effect (gain-credits :corp eid 1))}
             {:event :runner-trash
-             :req (req (some installed? targets))
+             :req (req (installed? (:card target)))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

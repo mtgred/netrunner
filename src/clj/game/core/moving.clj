@@ -287,7 +287,7 @@
                    _ (update-current-ice-to-trash state trashlist)
                    ;; Criteria for abilities that trigger when the card is trashed
                    get-trash-effect (fn [card]
-                                      (let [trash-effect (:trash-effect (card-def card))]
+                                      (let [trash-effect (:on-trash (card-def card))]
                                         (when (and card
                                                    (not (:disabled card))
                                                    (or (and (runner? card)
@@ -298,8 +298,11 @@
                                                        (and (:when-inactive trash-effect)
                                                             (not host-trashed))
                                                        (in-play-area? card))
-                                                   (should-trigger? state side eid card [card {:cause cause
-                                                                                               :accessed accessed}] trash-effect))
+                                                   (should-trigger? state side eid card
+                                                                    [{:card card
+                                                                      :cause cause
+                                                                      :accessed accessed}]
+                                                                    trash-effect))
                                           (let [once-per (:once-per-instance trash-effect)]
                                             (-> trash-effect
                                                 (assoc :once-per-instance (if (some? once-per) once-per true))
@@ -350,7 +353,9 @@
                          :when trash-effect]
                    (make-pending-event state trash-event card trash-effect))
                  (doseq [trashed-card trashlist]
-                   (queue-event state trash-event trashed-card {:cause cause :accessed accessed}))
+                   (queue-event state trash-event {:card trashed-card
+                                                   :cause cause
+                                                   :accessed accessed}))
                  (trigger-queued-events state nil eid nil))))))
 
 (defn trash

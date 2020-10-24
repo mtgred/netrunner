@@ -838,8 +838,8 @@
                   :effect (effect (add-counter card :power 1))
                   :msg "manually add a power counter"}]
      :events (let [prog-or-hw (fn [targets]
-                                (some #(or (program? (first %))
-                                           (hardware? (first %)))
+                                (some #(or (program? (:card %))
+                                           (hardware? (:card %)))
                                       targets))
                    trash-event (fn [side-trash]
                                  {:event side-trash
@@ -2142,12 +2142,12 @@
                       card nil)
                     (do (clear-wait-prompt state :corp)
                         (effect-completed state side eid)))))
-   :trash-effect {:async true
-                  :effect (req (system-msg state :runner
-                                           (str "trashes "
-                                                (string/join ", " (map :title (take 3 (:deck runner))))
-                                                " from their Stack due to Rolodex being trashed"))
-                               (mill state :runner eid :runner 3))}})
+   :on-trash {:async true
+              :effect (req (system-msg state :runner
+                                       (str "trashes "
+                                            (string/join ", " (map :title (take 3 (:deck runner))))
+                                            " from their Stack due to Rolodex being trashed"))
+                           (mill state :runner eid :runner 3))}})
 
 (defcard "Rosetta 2.0"
   (let [find-rfg (fn [state card]
@@ -2475,7 +2475,7 @@
 (defcard "Tech Trader"
   {:events [{:event :runner-trash
              :req (req (and (= side :runner)
-                            (= :ability-cost (:cause (last targets)))))
+                            (= :ability-cost (:cause target))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
@@ -2608,7 +2608,7 @@
                                 (system-msg state side "removes The Black File from the game")
                                 (check-winner state side))
                             (add-counter state side card :power 1)))}]
-   :trash-effect {:effect (effect (check-winner))}
+   :on-trash {:effect (effect (check-winner))}
    :leave-play (effect (check-winner))})
 
 (defcard "The Class Act"
@@ -2855,8 +2855,8 @@
                 :once :per-turn
                 :async true
                 :effect (effect (gain-credits eid 2))}]
-   :trash-effect {:async true
-                  :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
+   :on-trash {:async true
+              :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
@@ -2904,8 +2904,8 @@
   {:events [{:event :runner-trash
              :once-per-instance true
              :req (req (and (first-installed-trash-own? state :runner)
-                            (some #(and (installed? (first %))
-                                        (runner? (first %)))
+                            (some #(and (installed? (:card %))
+                                        (runner? (:card %)))
                                   targets)))
              :msg "gain 1 [Credits]"
              :async true

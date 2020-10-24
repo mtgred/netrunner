@@ -1344,11 +1344,11 @@
 (defcard "I've Had Worse"
   {:async true
    :effect (effect (draw eid 3 nil))
-   :trash-effect {:when-inactive true
-                  :async true
-                  :req (req (#{:meat :net} (:cause (last targets))))
-                  :msg "draw 3 cards"
-                  :effect (effect (draw :runner eid 3 nil))}})
+   :on-trash {:when-inactive true
+              :async true
+              :req (req (#{:meat :net} (:cause target)))
+              :msg "draw 3 cards"
+              :effect (effect (draw :runner eid 3 nil))}})
 
 (defcard "Immolation Script"
   {:async true

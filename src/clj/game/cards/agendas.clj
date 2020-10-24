@@ -119,9 +119,9 @@
              :async true
              :interactive (req true)
              :once-per-instance true
-             :req (req (and (some #(corp? (first %)) targets)
+             :req (req (and (some #(corp? (:card %)) targets)
                             (first-event? state side :runner-trash
-                                          (fn [targets] (some #(corp? (first %)) targets)))))
+                                          (fn [targets] (some #(corp? (:card %)) targets)))))
              :msg "give the Runner a tag"
              :effect (effect (gain-tags eid 1))}]})
 

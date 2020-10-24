@@ -120,7 +120,7 @@
                                 card nil)))}]}))
 
 (defcard "Ben Musashi"
-  {:trash-effect
+  {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
     :effect (effect (register-events
@@ -935,7 +935,7 @@
               (assoc gain-creds-and-clear :event :end-access-phase)]
      ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
      ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
-              :trash-effect ; if there is a run, mark mwanza effects to remain active until the end of the run
+              :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
               {:req (req (and (= :runner side)
                               (:run @state)))
                :effect (effect (register-events
@@ -1035,7 +1035,7 @@
                              ((constantly false)
                               (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                              true))))}]
-    {:trash-effect
+    {:on-trash
      {:req (req (and (= :runner side)
                      (:run @state)))
       :effect (effect (register-events
@@ -1062,17 +1062,17 @@
                  :once-per-instance true
                  :async true
                  :interactive (req true)
-                 :req (req (some #(and (corp? (first %))
-                                       (or (in-same-server? card (first %))
-                                           (from-same-server? card (first %))))
+                 :req (req (some #(and (corp? (:card %))
+                                       (or (in-same-server? card (:card %))
+                                           (from-same-server? card (:card %))))
                                  targets))
                  :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                                  (continue-ability
                                    (let [num-trashed-cards
                                          (->> targets
-                                              (filter #(or (in-same-server? card (first %))
-                                                           (from-same-server? card (first %))
-                                                           (in-same-server? (assoc card :zone (:previous-zone card)) (first %))))
+                                              (filter #(or (in-same-server? card (:card %))
+                                                           (from-same-server? card (:card %))
+                                                           (in-same-server? (assoc card :zone (:previous-zone card)) (:card %))))
                                               count)]
                                      {:async true
                                       :prompt "Pay how much to use Overseer Matrix's ability?"
@@ -1090,7 +1090,7 @@
                                              :effect (effect (gain-tags :corp eid n))})
                                           card nil))})
                                    card nil))}]
-    {:trash-effect
+    {:on-trash
      {:async true
       :interactive (req true)
       :req (req (= :runner side))
@@ -1141,7 +1141,7 @@
             :effect (effect (gain-credits :corp eid 2))}})
 
 (defcard "Red Herrings"
-  {:trash-effect
+  {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
     :effect (effect (register-events
@@ -1276,7 +1276,7 @@
                                 :type :recurring}}})
 
 (defcard "Strongbox"
-  {:trash-effect
+  {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
     :effect (effect (register-events
@@ -1493,17 +1493,18 @@
                                        (do (show-wait-prompt state :corp "Runner to choose cards to trash")
                                            (continue-ability state side (wt n) card nil))
                                        (effect-completed state side eid))))}}})]
-    {:trash-effect {:async true
-                    :once-per-instance true
-                    :req (req (and (= side :runner)
-                                   (not (in-root? card))))
-                    :effect (effect (continue-ability (ability) card nil))}
+    {:on-trash {:async true
+                :once-per-instance true
+                :req (req (and (= side :runner)
+                               (not (in-root? card))))
+                :effect (effect (continue-ability (ability) card nil))}
      :events [{:event :runner-trash
                :async true
                :once-per-instance true
-               :req (req (some (fn [[target]]
-                                 (and (corp? target)
-                                      (let [target-zone (get-zone target)
+               :req (req (println targets)
+                      (some (fn [target]
+                                 (and (corp? (:card target))
+                                      (let [target-zone (get-zone (:card target))
                                             target-zone (or (central->zone target-zone) target-zone)
                                             warroid-zone (get-zone card)]
                                         (and (not (is-root? target-zone))

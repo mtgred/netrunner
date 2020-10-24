@@ -777,9 +777,9 @@
 ;; EVENT QUEUEING
 
 (defn queue-event
-  [state event & targets]
+  [state event target-map]
   (when (keyword? event)
-    (swap! state update-in [:queued-events event] conj targets)))
+    (swap! state update-in [:queued-events event] conj target-map)))
 
 (defn make-pending-event
   [state event card ability]
@@ -794,20 +794,20 @@
 
 (defn- gather-queued-event-handlers
   [state event-maps]
-  (for [[event list-of-targets] event-maps]
+  (for [[event list-of-maps] event-maps]
     {:handlers (filterv #(= event (:event %)) (:events @state))
-     :list-of-targets (into [] list-of-targets)}))
+     :list-of-maps (into [] list-of-maps)}))
 
 (defn- create-instances
-  [{:keys [handlers list-of-targets]}]
+  [{:keys [handlers list-of-maps]}]
   (apply concat
          (for [handler handlers]
            (if (:once-per-instance handler)
              [{:handler handler
-               :targets list-of-targets}]
-             (for [targets list-of-targets]
+               :targets list-of-maps}]
+             (for [target list-of-maps]
                {:handler handler
-                :targets targets})))))
+                :targets [target]})))))
 
 (defn- create-handlers
   [state eid queued-events]
@@ -894,8 +894,8 @@
   "_side and _args are merely for wait-for"
   [state _side eid _args]
   (let [event-maps (:queued-events @state)]
-    (doseq [[event list-of-targets] event-maps]
-      (log-event state event list-of-targets))
+    (doseq [[event target-map] event-maps]
+      (log-event state event target-map))
     (if (empty? event-maps)
       (effect-completed state nil eid)
       (let [queued-events (gather-queued-event-handlers state event-maps)

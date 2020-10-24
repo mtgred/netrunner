@@ -53,7 +53,7 @@
 (def executive-trash-effect
   {:when-inactive true
    :req (req (and (= side :runner)
-                  (same-card? target (:access @state))))
+                  (:accessed target)))
    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
    :async true
    :effect (req (as-agenda state :runner eid card 2))})
@@ -305,18 +305,19 @@
                 :once :per-turn
                 :async true
                 :effect (effect (draw eid 2 nil))}]
-   :trash-effect {:async true
-                  :req (req (= :runner side))
-                  :interactive (req true)
-                  :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
-                                  (continue-ability :corp
-                                                    {:optional
-                                                     {:prompt "Draw 2 cards?"
-                                                      :player :corp
-                                                      :yes-ability {:msg "draw 2 cards"
-                                                                    :effect (effect (draw eid 2 nil))}
-                                                      :end-effect (effect (clear-wait-prompt :runner))}}
-                                                    card nil))}})
+   :on-trash {:async true
+              :req (req (= :runner side))
+              :interactive (req true)
+              :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
+                              (continue-ability
+                                :corp
+                                {:optional
+                                 {:prompt "Draw 2 cards?"
+                                  :player :corp
+                                  :yes-ability {:msg "draw 2 cards"
+                                                :effect (effect (draw eid 2 nil))}
+                                  :end-effect (effect (clear-wait-prompt :runner))}}
+                                card nil))}})
 
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
@@ -355,7 +356,7 @@
   {:constant-effects [{:type :hand-size
                        :req (req (= :runner side))
                        :value -2}]
-   :trash-effect executive-trash-effect})
+   :on-trash executive-trash-effect})
 
 (defcard "Chief Slee"
   {:events [{:event :encounter-ice-ends
@@ -620,7 +621,7 @@
 
 (defcard "Director Haas"
   {:in-play [:click-per-turn 1]
-   :trash-effect executive-trash-effect})
+   :on-trash executive-trash-effect})
 
 (defcard "Docklands Crackdown"
   {:abilities [{:cost [:click 2]
@@ -889,10 +890,10 @@
         {:event :runner-trash
          :async true
          :once-per-instance false
-         :req (req (corp? target))
+         :req (req (corp? (:card target)))
          :msg "do 1 net damage"
          :effect (effect (damage :corp eid :net 1 {:card card}))}]
-    {:trash-effect ability
+    {:on-trash ability
      :events [ability]}))
 
 (defcard "Hyoubu Research Facility"
@@ -935,9 +936,9 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]
-     :trash-effect {:req (req (= side :runner))
-                    :msg "take 1 bad publicity"
-                    :effect (effect (gain-bad-publicity :corp 1))}}))
+     :on-trash {:req (req (= side :runner))
+                :msg "take 1 bad publicity"
+                :effect (effect (gain-bad-publicity :corp 1))}}))
 
 (defcard "Indian Union Stock Exchange"
   (let [iuse {:req (req (not= (:faction target) (:faction (:identity corp))))
@@ -1169,20 +1170,20 @@
      :events [(assoc ability :event :corp-turn-begins)]
      :effect (req (add-counter state side card :credit 8))
      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
-     :trash-effect {:async true
-                    :interactive (req true)
-                    :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
-                                    (continue-ability
-                                      :corp
-                                      {:optional
-                                       {:prompt "Shuffle Marilyn Campaign into R&D?"
-                                        :autoresolve (get-autoresolve :auto-reshuffle)
-                                        :player :corp
-                                        :yes-ability {:msg "shuffle it back into R&D"
-                                                      :effect (effect (move :corp card :deck)
-                                                                      (shuffle! :corp :deck))}
-                                        :end-effect (effect (clear-wait-prompt :runner))}}
-                                      card nil))}}))
+     :on-trash {:async true
+                :interactive (req true)
+                :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
+                                (continue-ability
+                                  :corp
+                                  {:optional
+                                   {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                    :autoresolve (get-autoresolve :auto-reshuffle)
+                                    :player :corp
+                                    :yes-ability {:msg "shuffle it back into R&D"
+                                                  :effect (effect (move :corp card :deck)
+                                                                  (shuffle! :corp :deck))}
+                                    :end-effect (effect (clear-wait-prompt :runner))}}
+                                  card nil))}}))
 
 (defcard "Mark Yale"
   {:events [{:event :agenda-counter-spent
@@ -1327,18 +1328,18 @@
                 :msg "gain 2 [Credits]"
                 :async true
                 :effect (effect (gain-credits eid 2))}]
-   :trash-effect {:req (req (= :runner side))
-                  :async true
-                  :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
-                                  (continue-ability
-                                    :corp
-                                    {:optional
-                                     {:prompt "Gain 2 [credits]?"
-                                      :yes-ability {:msg (msg "gain 2 [Credits]")
-                                                    :async true
-                                                    :effect (effect (gain-credits :corp eid 2))}
-                                      :end-effect (effect (clear-wait-prompt :runner))}}
-                                    card nil))}})
+   :on-trash {:req (req (= :runner side))
+              :async true
+              :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
+                              (continue-ability
+                                :corp
+                                {:optional
+                                 {:prompt "Gain 2 [credits]?"
+                                  :yes-ability {:msg (msg "gain 2 [Credits]")
+                                                :async true
+                                                :effect (effect (gain-credits :corp eid 2))}
+                                  :end-effect (effect (clear-wait-prompt :runner))}}
+                                card nil))}})
 
 (defcard "NASX"
   (let [ability {:msg "gain 1 [Credits]"
@@ -1817,12 +1818,12 @@
 (defcard "Ronald Five"
   (let [ability {:event :runner-trash
                  :once-per-instance false
-                 :req (req (and (corp? target)
+                 :req (req (and (corp? (:card target))
                                 (pos? (:click runner))))
                  :msg "force the runner to lose 1 [Click]"
                  :effect (effect (lose :runner :click 1))}]
     {:events [ability]
-     :trash-effect ability}))
+     :on-trash ability}))
 
 (defcard "Ronin"
   {:advanceable :always
@@ -2058,11 +2059,11 @@
                 :effect (effect (damage eid :net 1 {:card card}))}]
    :events [{:event :corp-trash
              :once-per-instance true
-             :req (req (and (some #(= (:faction (:identity runner)) (:faction (first %))) targets)
+             :req (req (and (some #(= (:faction (:identity runner)) (:faction (:card %))) targets)
                             (first-event?
                               state side :corp-trash
                               (fn [targets]
-                                (some #(= (:faction (:identity runner)) (:faction (first %))) targets)))))
+                                (some #(= (:faction (:identity runner)) (:faction (:card %))) targets)))))
              :effect (effect (system-msg :corp "adds 1 power counter on Storgotic Resonator")
                              (add-counter card :power 1))}]})
 
@@ -2194,7 +2195,7 @@
              :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "The Board"
-  {:trash-effect executive-trash-effect
+  {:on-trash executive-trash-effect
    :constant-effects [{:type :agenda-value
                        :req (req (= :runner (:scored-side target)))
                        :value -1}]})
@@ -2260,22 +2261,22 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Vaporframe Fabricator"
-  {:trash-effect {:req (req (= :runner side))
-                  :async true
-                  :choices {:card #(and (corp? %)
-                                        (in-hand? %)
-                                        (not (operation? %)))}
-                  :msg (msg (corp-install-msg target))
-                  :effect
-                  (effect
-                    (continue-ability
-                      (let [card-to-install target]
-                        {:async true
-                         :prompt (str "Where to install " (:title card-to-install))
-                         :choices (req (remove (set (zone->name (get-zone card)))
-                                               (installable-servers state card-to-install)))
-                         :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
-                      card nil))}
+  {:on-trash {:req (req (= :runner side))
+              :async true
+              :choices {:card #(and (corp? %)
+                                    (in-hand? %)
+                                    (not (operation? %)))}
+              :msg (msg (corp-install-msg target))
+              :effect
+              (effect
+                (continue-ability
+                  (let [card-to-install target]
+                    {:async true
+                     :prompt (str "Where to install " (:title card-to-install))
+                     :choices (req (remove (set (zone->name (get-zone card)))
+                                           (installable-servers state card-to-install)))
+                     :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
+                  card nil))}
    :abilities [{:label "Install 1 card"
                 :async true
                 :cost [:click 1]
@@ -2289,7 +2290,7 @@
 (defcard "Victoria Jenkins"
   {:effect (req (lose state :runner :click-per-turn 1))
    :leave-play (req (gain state :runner :click-per-turn 1))
-   :trash-effect executive-trash-effect})
+   :on-trash executive-trash-effect})
 
 (defcard "Wall To Wall"
   (let [all [{:msg "gain 1 [Credits]"

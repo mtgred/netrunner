@@ -683,8 +683,8 @@
   {:events [{:event :runner-trash
              :once-per-instance true
              :async true
-             :req (req (some #(corp? (first %)) targets))
-             :effect (req (let [amt-trashed (count (filter #(corp? (first %)) targets))
+             :req (req (some #(corp? (:card %)) targets))
+             :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                 sing-ab {:optional {:prompt "Place a virus counter on Consume?"
                                                     :autoresolve (get-autoresolve :auto-accept)
                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
@@ -1328,8 +1328,8 @@
                                                (effect-completed state side eid))))))}]}))
 
 (defcard "Gravedigger"
-  (let [e {:req (req (and (installed? target)
-                          (corp? target)))
+  (let [e {:req (req (and (installed? (:card target))
+                          (corp? (:card target))))
            :msg (msg "place 1 virus counter on " (:title card))
            :effect (effect (add-counter :runner card :virus 1))}]
     {:events [(assoc e :event :runner-trash)
@@ -1349,7 +1349,7 @@
   (global-sec-breaker "Code Gate"))
 
 (defcard "Harbinger"
-  {:trash-effect
+  {:on-trash
    {:req (req (not-any? #{:facedown :hand} (get-zone card)))
     :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                    (swap! state assoc-in [:runner :locked] nil)
@@ -2089,7 +2089,7 @@
              :async true
              :interactive (req true)
              :once-per-instance true
-             :req (req (and (some #(installed? (first %)) targets)
+             :req (req (and (some #(installed? (:card %)) targets)
                             (first-installed-trash? state side)))
              :msg "draw 1 card"
              :effect (effect (draw :runner eid 1 nil))}]})
