@@ -7,7 +7,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync trigger-queued-events unregister-events]]
+    [game.core.engine :refer [checkpoint make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [find-cid get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
@@ -356,7 +356,7 @@
                    (queue-event state trash-event {:card trashed-card
                                                    :cause cause
                                                    :accessed accessed}))
-                 (trigger-queued-events state nil eid nil))))))
+                 (checkpoint state nil eid nil))))))
 
 (defn trash
   [state side eid card args] (trash-cards state side eid [card] args))

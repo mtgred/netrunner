@@ -292,6 +292,7 @@
    ability-as-handler
    can-trigger?
    card-as-handler
+   checkpoint
    effect-as-handler
    gather-events
    is-ability?
@@ -310,7 +311,6 @@
    trigger-event
    trigger-event-simult
    trigger-event-sync
-   trigger-queued-events
    trigger-suppress
    unregister-event-by-uuid
    unregister-events

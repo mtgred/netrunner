@@ -322,7 +322,7 @@
         (update-in card counter - counter-amount))
       card)))
 
-(declare trigger-queued-events)
+(declare checkpoint)
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
@@ -333,7 +333,7 @@
             (let [payment-str (:msg async-result)
                   cost-paid (:cost-paid async-result)]
               (if payment-str
-                (wait-for (trigger-queued-events state side (make-eid state eid) nil)
+                (wait-for (checkpoint state side (make-eid state eid) nil)
                           (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]
                             ;; Print the message
                             (print-msg state side ability card targets payment-str)
@@ -848,13 +848,14 @@
         (let [handler (first handlers)
               to-resolve (:handler handler)
               ability (:ability to-resolve)
-              ability-targets (:context handler)
+              context (:context handler)
               ability-card (card-for-ability state to-resolve)]
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
+                                       (make-eid state eid)
                                        (dissoc ability :req)
                                        ability-card
-                                       ability-targets)
+                                       context)
                       (when (:unregister-once-resolved ability)
                         (unregister-event-by-uuid state side (:uuid ability)))
                       (trigger-queued-event-player state side eid (rest handlers)))
@@ -868,13 +869,14 @@
              :effect (req (let [handler (some #(when (same-card? target (card-for-ability state (:handler %))) %) handlers)
                                 to-resolve (:handler handler)
                                 ability (:ability to-resolve)
-                                ability-targets (:context handler)
+                                context (:context handler)
                                 ability-card (card-for-ability state to-resolve)]
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
+                                               (make-eid state eid)
                                                (dissoc ability :req)
                                                ability-card
-                                               ability-targets)
+                                               context)
                               (when (:unregister-once-resolved ability)
                                 (unregister-event-by-uuid state side (:uuid ability)))
                               (let [handlers (remove-once #(same-card? target (card-for-ability state (:handler %))) handlers)]
@@ -941,7 +943,7 @@
     (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
                 (let [payment-result async-result]
-                  (wait-for (trigger-queued-events state nil (make-eid state eid) nil)
+                  (wait-for (checkpoint state nil (make-eid state eid) nil)
                             (complete-with-result
                               state side eid
                               {:msg (->> payment-result
@@ -954,3 +956,12 @@
                                                    (assoc acc (:type cost) cost))
                                                  {}))}))))
       (complete-with-result state side eid nil))))
+
+;; CHECKPOINT
+
+(defn checkpoint
+  "This only does one thing right now, but soon it will hold everything else too"
+  ([state eid] (checkpoint state nil eid nil))
+  ([state _side eid] (checkpoint state nil eid nil))
+  ([state _side eid _args]
+   (trigger-queued-events state nil eid nil)))

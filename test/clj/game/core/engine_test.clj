@@ -58,7 +58,7 @@
         (e/queue-event state :test-event-2 {:a 4 :b 5 :c 6})
         (e/queue-event state :test-event {:a 'a :b 'b :c 'c})
         (e/queue-event state :test-event-2 {:a 'x :b 'y :c 'z})
-        (e/trigger-queued-events state nil (core/make-eid state) nil)
+        (e/checkpoint state nil (core/make-eid state) nil)
         (is (= '([:test-event-2 [{:a 4, :b 5, :c 6}]]
                  [:test-event-2 [{:a x, :b y, :c z}]]
                  [:test-event [{:a a, :b b, :c c} {:a 1, :b 2, :c 3}]]
