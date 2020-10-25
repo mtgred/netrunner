@@ -108,63 +108,118 @@
   ;; Anansi
   (testing "3 net damage when bypassing"
     (do-game
-      (new-game {:corp {:deck ["Anansi"]}
-                 :runner {:deck [(qty "Sure Gamble" 4) "Inside Job"]}})
-      (play-from-hand state :corp "Anansi" "HQ")
-      (core/gain state :corp :credit 8)
-      (take-credits state :corp)
-      (let [anansi (get-ice state :hq 0)]
-        (play-from-hand state :runner "Inside Job")
-        (click-prompt state :runner "HQ")
-        (rez state :corp anansi)
-        (changes-val-macro -3 (count (:hand (get-runner)))
-                           "3 net damage from passing Anansi"
-                           (run-continue state)))))
+     (new-game {:corp {:deck ["Anansi"]}
+                :runner {:deck [(qty "Sure Gamble" 4) "Inside Job"]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (core/gain state :corp :credit 8)
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (play-from-hand state :runner "Inside Job")
+       (click-prompt state :runner "HQ")
+       (rez state :corp anansi)
+       (changes-val-macro -3 (count (:hand (get-runner)))
+                          "3 net damage from passing Anansi"
+                          (run-continue state)))))
   (testing "no net damage when breaking all subs"
     (do-game
-      (new-game {:corp {:deck ["Anansi"]}
-                 :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
-      (play-from-hand state :corp "Anansi" "HQ")
-      (core/gain state :corp :credit 8)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Mongoose")
-      (core/gain state :runner :credit 7)
-      (let [anansi (get-ice state :hq 0)
-            mongoose (get-program state 0)]
-        (run-on state :hq)
-        (rez state :corp anansi)
-        (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
-        (changes-val-macro 0 (count (:hand (get-runner)))
-                           "3 net damage from passing Anansi"
-                           (core/continue state :corp nil)))))
+     (new-game {:corp {:deck ["Anansi"]}
+                :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (core/gain state :corp :credit 8)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Mongoose")
+     (core/gain state :runner :credit 7)
+     (let [anansi (get-ice state :hq 0)
+           mongoose (get-program state 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "3 net damage from passing Anansi"
+                          (core/continue state :corp nil)))))
   (testing "Anansi and Border Control. Issue #4769"
     (do-game
-      (new-game {:corp {:hand ["Anansi" "Border Control"]
-                        :credits 20}
-                 :runner {:hand [(qty "Sure Gamble" 6) "Corroder"]
-                          :credits 90}})
-      (play-from-hand state :corp "Border Control" "HQ")
-      (play-from-hand state :corp "Anansi" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Corroder")
-      (let [anansi (get-ice state :hq 1)
-            border (get-ice state :hq 0)
-            corroder (get-program state 0)]
-        (run-on state :hq)
-        (rez state :corp anansi)
-        (run-continue state)
-        (changes-val-macro -3 (count (:hand (get-runner)))
-                           "3 net damage from passing Anansi"
-                           (run-continue state))
-        (rez state :corp border)
-        (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (core/continue state :corp nil)
-        (changes-val-macro 0 (count (:hand (get-runner)))
-                           "No further net damage"
-                           (card-ability state :corp (refresh border) 0))
-        (is (nil? (get-run)) "Run ended")))))
+     (new-game {:corp {:hand ["Anansi" "Border Control"]
+                       :credits 20}
+                :runner {:hand [(qty "Sure Gamble" 6) "Corroder"]
+                         :credits 90}})
+     (play-from-hand state :corp "Border Control" "HQ")
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (let [anansi (get-ice state :hq 1)
+           border (get-ice state :hq 0)
+           corroder (get-program state 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (changes-val-macro -3 (count (:hand (get-runner)))
+                          "3 net damage from passing Anansi"
+                          (run-continue state))
+       (rez state :corp border)
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+       (core/continue state :corp nil)
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "No further net damage"
+                          (card-ability state :corp (refresh border) 0))
+       (is (nil? (get-run)) "Run ended"))))
+  (testing "Runner has to pay 2c to draw card. Issue #5335"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:credits 0
+                         :deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "No new card from Anansi"
+                          (click-prompt state :runner "Yes"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+  (testing "2nd sub test - runner clicks YES"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 1 (count (:hand (get-runner)))
+                          "New card from Anansi"
+                          (click-prompt state :runner "Yes"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+  (testing "2nd sub test - runner clicks NO"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "No new card from Anansi"
+                          (click-prompt state :runner "No"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi")))))
 
 (deftest akhet
   ;; Akhet
