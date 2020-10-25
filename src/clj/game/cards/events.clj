@@ -1268,10 +1268,14 @@
                                 (continue-ability state side (choose-next '() nil (distinct (map :title (:discard runner)))) card nil))
                               (continue-ability state side (choose-next to-shuffle target remaining) card nil)))}))]
     {:async true
-     :req (req (pos? (count (:discard runner))))
      :rfg-instead-of-trashing true
-     :effect (req (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
-               (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))}))
+     :effect (req (if (and (not (zone-locked? state :runner :discard))
+                           (pos? (count (:discard runner))))
+                    (do (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
+                        (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))
+                    (do (system-msg state :runner (str "used " (:title card) " to shuffle their Stack"))
+                        (shuffle! state :runner :deck)
+                        (effect-completed state side eid))))}))
 
 (defcard "High-Stakes Job"
   {:async true

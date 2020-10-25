@@ -2461,12 +2461,14 @@
       (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
       (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
-  ;(testing "Can play with empty heap"
-  ;  (do-game
-  ;    (new-game {:runner {:hand ["Harmony AR Therapy"]}})
-  ;    (take-credits state :corp)
-  ;    (play-from-hand state :runner "Harmony AR Therapy")
-  ;    (is (= 2 (count (prompt-buttons :runner))) "No Cards to Shuffle")))
+  (testing "Can play with empty heap"
+    (do-game
+      (new-game {:runner {:hand ["Harmony AR Therapy"]
+                          :deck ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (is (zero? (count (:discard (get-runner)))) "Heap is empty")
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
   (testing "Shuffle back less than 5 cards"
     (do-game
       (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
@@ -2514,20 +2516,19 @@
       (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
       (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
-  ;(testing "Heap Locked"
-  ;  (do-game
-  ;    (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
-  ;                        :hand ["Blacklist"]}
-  ;               :runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
-  ;                        :deck ["Harmony AR Therapy"]}})
-  ;    (play-from-hand state :corp "Blacklist" "New remote")
-  ;    (rez state :corp (refresh (get-content state :remote1 0)))
-  ;    (take-credits state :corp)
-  ;    (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
-  ;    (core/draw state :runner 1)
-  ;    (play-from-hand state :runner "Harmony AR Therapy")
-
-      )
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blacklist"]}
+                 :runner {:discard [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :hand ["Harmony AR Therapy"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (is (= 12 (count (:discard (get-runner)))) "Well stocked Heap")
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 12 (count (:discard (get-runner)))) "Well stocked Heap")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
 
 (deftest high-stakes-job
   ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
