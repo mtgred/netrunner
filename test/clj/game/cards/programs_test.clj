@@ -4582,32 +4582,31 @@
   ;; Trope TODO FIX ME
   (testing "Happy Path"
     (do-game
-      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]}
-                 :runner {:deck    ["Magnum Opus"]
-                          :hand    ["Trope" "Easy Mark"]
-                          :discard [(qty "Sure Gamble" 2) "Easy Mark" "Dirty Laundry"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Trope" "Easy Mark"]
+                          :discard ["Sure Gamble" "Easy Mark" "Dirty Laundry"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Trope")
       ;; wait 3 turns to make Trope have 3 counters
       (dotimes [n 3]
         (take-credits state :runner)
-        (take-credits state :corp)
-        (click-prompt state :runner "Yes")
-        (click-prompt state :runner "Yes"))
+        (take-credits state :corp))
       (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
+      (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (card-ability state :runner (get-program state 0) 0)
       (is (not (empty? (:prompt (get-runner)))) "Shuffle prompt came up")
-      (click-prompt state :runner "Shuffle cards from heap into stack")
       (click-card state :runner (find-card "Easy Mark" (:discard (get-runner))))
       (click-card state :runner (find-card "Dirty Laundry" (:discard (get-runner))))
-      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))))
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+      (is (zero? (count (:discard (get-runner)))) "0 cards in discard")))
   (testing "Heap Locked"
     (do-game
-      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
-                          :hand ["Blacklist"]}
-                 :runner {:deck    ["Magnum Opus"]
-                          :hand    ["Trope" "Easy Mark"]
-                          :discard [(qty "Sure Gamble" 2) "Easy Mark" "Dirty Laundry"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blacklist"]}
+                 :runner {:hand ["Trope" "Easy Mark"]
+                          :discard ["Sure Gamble" "Easy Mark" "Dirty Laundry"]}})
       (play-from-hand state :corp "Blacklist" "New remote")
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
@@ -4615,10 +4614,10 @@
       ;; wait 3 turns to make Trope have 3 counters
       (dotimes [n 3]
         (take-credits state :runner)
-        (take-credits state :corp)
-        (click-prompt state :runner "Yes")
-        (click-prompt state :runner "Yes"))
+        (take-credits state :corp))
       (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
+      (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (card-ability state :runner (get-program state 0) 0)
       (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up"))))
 

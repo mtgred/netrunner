@@ -3205,18 +3205,22 @@
       (is (empty? (:deck (get-runner))) "No cards in deck")
       (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
       (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
-  ;(testing "Heap Locked"
-  ;  (do-game
-  ;    (new-game {:corp   {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
-  ;               :runner {:hand ["Labor Rights"] :deck ["Sure Gamble" "Lawyer Up" "Knifed"]}})
-  ;    (play-from-hand state :corp "Blacklist" "New remote")
-  ;    (rez state :corp (refresh (get-content state :remote1 0)))
-  ;    (take-credits state :corp)
-  ;    (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
-  ;    (is (= 3 (count (:deck (get-runner)))) "Starts with 3 cards in deck")
-  ;    (play-from-hand state :runner "Labor Rights")
-  ;    (is (empty? (:prompt (get-runner))) "Labor Rights prompt did not come up")))
-  )
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
+                 :runner {:hand ["Labor Rights"] :deck [(qty "Sure Gamble" 3) (qty "Lawyer Up" 3) "Knifed"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
+      (is (= 7 (count (:deck (get-runner)))) "Starts with 7 cards in deck")
+      (play-from-hand state :runner "Labor Rights")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up")
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
+      (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
+      (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg"))))
 
 (deftest lawyer-up
   ;; Lawyer Up - Lose 2 tags and draw 3 cards
@@ -4834,7 +4838,8 @@
       (play-from-hand state :runner "Scavenge")
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Corroder")
-        ;verify Mass Driver is not an option
+        (click-card state :runner "Mass-Driver")
+        (is (= "Select a program to install from your Grip" (:msg (prompt-map :runner))) "Grip is only option")
         (click-card state :runner "Engolo")
         (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
         (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount")))))

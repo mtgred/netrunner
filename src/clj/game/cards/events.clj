@@ -1635,30 +1635,36 @@
                card nil))})
 
 (defcard "Labor Rights"
-  {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
-   :rfg-instead-of-trashing true
-   :async true
-   :effect (req (let [mill-count (min 3 (count (:deck runner)))]
-                  (wait-for (mill state :runner :runner mill-count)
-                            (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
-                            (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
-                              (continue-ability
-                                state side
-                                {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
-                                 :show-discard true
-                                 :async true
-                                 :choices {:max heap-count
-                                           :all true
-                                           :not-self true
-                                           :card #(and (runner? %)
-                                                       (in-discard? %))}
-                                 :effect (req (doseq [c targets]
-                                                (move state side c :deck))
-                                              (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
-                                                                             " from their Heap into their Stack, and draws 1 card"))
-                                              (shuffle! state :runner :deck)
-                                              (draw state :runner eid 1 nil))}
-                                card nil)))))})
+         {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
+          :rfg-instead-of-trashing true
+          :async true
+          :effect (req (let [mill-count (min 3 (count (:deck runner)))]
+                         (wait-for (mill state :runner :runner mill-count)
+                                   (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
+                                   (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
+                                     (continue-ability
+                                       state side
+                                       (if (not (zone-locked? state :runner :discard))
+                                         {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
+                                          :show-discard true
+                                          :async true
+                                          :choices {:max heap-count
+                                                    :all true
+                                                    :not-self true
+                                                    :card #(and (runner? %)
+                                                                (in-discard? %))}
+                                          :effect (req (doseq [c targets]
+                                                         (move state side c :deck))
+                                                       (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
+                                                                                      " from their Heap into their Stack, and draws 1 card"))
+                                                       (shuffle! state :runner :deck)
+                                                       (draw state :runner eid 1 nil))}
+
+                                         {:effect (effect
+                                                    (do (system-msg state :runner "shuffles their Stack and draws 1 card")
+                                                        (shuffle! state :runner :deck)
+                                                        (draw state :runner eid 1 nil)))})
+                                       card nil)))))})
 
 (defcard "Lawyer Up"
   {:msg "remove 2 tags and draw 3 cards"
@@ -2476,12 +2482,15 @@
                     (continue-ability
                       state side
                       {:async true
-                       :prompt "Select a program to install from your Grip or Heap"
-                       :show-discard true
+                       :prompt (if (not (zone-locked? state :runner :discard))
+                                 "Select a program to install from your Grip or Heap"
+                                 "Select a program to install from your Grip")
+                       :show-discard  (not (zone-locked? state :runner :discard))
                        :choices
                        {:req (req (and (program? target)
                                        (or (in-hand? target)
-                                           (in-discard? target))
+                                           (and (in-discard? target)
+                                                (not (zone-locked? state :runner :discard))))
                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                  [:credit (install-cost state side target
                                                                         {:cost-bonus (- tcost)})])))}
