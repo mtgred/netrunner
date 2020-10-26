@@ -467,7 +467,7 @@
                                                     (wait-for (pay state :runner card [:credit 2])
                                                               (if (:cost-paid async-result)
                                                                 (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
-                                                                    (draw state :runner 1 nil))
+                                                                    (draw state :runner eid 1 nil))
                                                                 (system-msg state :runner "does not draw 1 card"))
                                                               (clear-wait-prompt state :corp)
                                                               (effect-completed state side eid)))}}}
