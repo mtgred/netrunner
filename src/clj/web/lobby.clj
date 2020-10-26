@@ -283,7 +283,8 @@
 
 (defn lobby-say
   [gameid {:keys [user text]}]
-  (refresh-lobby-update-in gameid [:messages] #(conj % {:user user :text (trim text)})))
+  (refresh-lobby-update-in gameid [:messages] #(conj % {:user user
+                                                        :text (trim text)})))
 
 (defn handle-lobby-leave
   [{{{:keys [username]} :user} :ring-req

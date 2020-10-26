@@ -10,7 +10,6 @@
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
                  [stylefruits/gniazdo "1.1.4"]
-                 [com.clojure-goes-fast/clj-async-profiler "0.4.1"]
                  [danhut/monger "3.1.0"]
                  [differ "0.3.3"]
                  [com.taoensso/sente "1.11.0"]
