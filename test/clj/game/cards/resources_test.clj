@@ -360,6 +360,56 @@
       (is (= 0 (count-tags state)) "Runner has no tag")
       (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card"))))
 
+(deftest charlatan
+  ;; Charlatan
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Charlatan"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Charlatan")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "HQ")
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (is (last-n-log-contains? state 2 "Runner bypasses Ice Wall."))))
+  (testing "Only works on first rezzed ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Ice Wall" 2)]}
+                   :runner {:hand ["Charlatan"]
+                            :credits 10}})
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (rez state :corp (get-ice state :hq 0))
+        (rez state :corp (get-ice state :hq 1))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Charlatan")
+        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "HQ")
+        (click-prompt state :runner "Yes")
+        (run-continue state)
+        (is (empty? (:prompt (get-runner))))))
+  (testing "Only works if ice is already rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Charlatan"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Charlatan")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (is (empty? (:prompt (get-runner))))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Ice Wall protecting HQ at position 0.")))))
+
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game

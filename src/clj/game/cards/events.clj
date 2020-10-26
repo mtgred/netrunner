@@ -228,11 +228,15 @@
                               [{:event :approach-ice
                                 :duration :end-of-run
                                 :unregister-once-resolved true
-                                :once :per-run
+                                :req (req (and (not (rezzed? (:ice context)))
+                                               (first-run-event? state side :approach-ice
+                                                                 (fn [targets]
+                                                                   (let [context (first targets)]
+                                                                     (not (rezzed? (:ice context))))))))
                                 :effect (effect
                                           (register-floating-effect
                                             card
-                                            (let [approached-ice target]
+                                            (let [approached-ice (:ice context)]
                                               {:type :rez-additional-cost
                                                :duration :end-of-run
                                                :unregister-once-resolved true

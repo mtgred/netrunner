@@ -22,6 +22,12 @@
                         (contains? t :value))
                  (:value t)
                  t))
+      context (let [t (first targets)]
+                (if (and (map? t)
+                         (contains? t :uuid)
+                         (contains? t :value))
+                  (:value t)
+                  t))
       installed (#{:rig :servers} (first (get-zone card)))
       remotes (get-remote-names state)
       servers (zones->sorted-names (get-zones state))

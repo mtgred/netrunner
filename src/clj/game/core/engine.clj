@@ -822,12 +822,13 @@
        (sort-by (complement #(is-active-player state (:handler %))))))
 
 (defn- trigger-queued-event-player
-  [state side eid handlers]
+  [state side eid handlers {:keys [cancel-fn] :as args}]
   (if (empty? handlers)
     (effect-completed state nil eid)
-    (let [handlers (filter #(let [card (card-for-ability state (:handler %))]
-                              (and card (not (:disabled card))))
-                           handlers)
+    (let [handlers (when-not (and cancel-fn (cancel-fn state))
+                     (filter #(let [card (card-for-ability state (:handler %))]
+                                (and card (not (:disabled card))))
+                             handlers))
           non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
                                 (not (and silent-fn
                                           (silent-fn state side
@@ -857,10 +858,10 @@
                                        (dissoc ability :req)
                                        ability-card
                                        context)
-                      (when (:unregister-once-resolved ability)
-                        (unregister-event-by-uuid state side (:uuid ability)))
-                      (trigger-queued-event-player state side eid (rest handlers)))
-            (trigger-queued-event-player state side eid (rest handlers))))
+                      (when (:unregister-once-resolved to-resolve)
+                        (unregister-event-by-uuid state side (:uuid to-resolve)))
+                      (trigger-queued-event-player state side eid (rest handlers) args))
+            (trigger-queued-event-player state side eid (rest handlers) args)))
         (continue-ability
           state side
           (when (pos? (count handlers))
@@ -878,10 +879,10 @@
                                                (dissoc ability :req)
                                                ability-card
                                                context)
-                              (when (:unregister-once-resolved ability)
-                                (unregister-event-by-uuid state side (:uuid ability)))
+                              (when (:unregister-once-resolved to-resolve)
+                                (unregister-event-by-uuid state side (:uuid to-resolve)))
                               (let [handlers (remove-once #(same-card? target (card-for-ability state (:handler %))) handlers)]
-                                (trigger-queued-event-player state side eid handlers)))))})
+                                (trigger-queued-event-player state side eid handlers args)))))})
           nil nil)))))
 
 (defn- is-player
@@ -894,8 +895,7 @@
   (filterv #(is-player player-side %) handlers))
 
 (defn trigger-queued-events
-  "_side and _args are merely for wait-for"
-  [state _side eid _args]
+  [state _ eid args]
   (let [event-maps (:queued-events @state)]
     (doseq [[event context-map] event-maps]
       (log-event state event context-map))
@@ -913,10 +913,10 @@
                             (remove #(= :pending (:duration %)))
                             (into [])))
         (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
-        (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers)
+        (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
                   (clear-wait-prompt state opponent)
                   (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
-                  (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers)
+                  (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
                             (clear-wait-prompt state active-player)
                             (effect-completed state nil eid)))))))
 
@@ -975,6 +975,7 @@
              (effect-completed state nil eid))))
 
 (defn end-of-phase-checkpoint
-  [state _ eid event context]
-  (queue-event state event context)
-  (checkpoint state nil eid event))
+  ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
+  ([state _ eid event context]
+   (queue-event state event context)
+   (checkpoint state nil eid event)))

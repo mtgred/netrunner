@@ -429,35 +429,41 @@
                 :choices (req runnable-servers)
                 :msg (msg "make a run on " target)
                 :async true
-                :effect (effect (register-events
-                                  card
-                                  [{:event :approach-ice
-                                    :unregister-once-resolved true
-                                    :duration :end-of-run
-                                    :once :per-run
-                                    :optional
-                                    {:prompt "Pay to bypass?"
-                                     :req (req (and (rezzed? target)
-                                                    (can-pay? state :runner eid card nil
-                                                              [:credit (get-strength target)])))
-                                     :yes-ability
-                                     {:async true
-                                      :effect (req (wait-for (pay :runner card [:credit (get-strength target)])
-                                                             (if-let [payment-str (:msg async-result)]
-                                                               (do (system-msg state :runner
-                                                                               (str (build-spend-msg payment-str "use")
-                                                                                    "Charlatan to bypass " (:title target)))
-                                                                   (register-events
-                                                                     state :runner card
-                                                                     (let [target-ice target]
-                                                                       [{:event :encounter-ice
-                                                                         :req (req (and (same-card? target-ice target)
-                                                                                        (rezzed? target)))
-                                                                         :effect (req (bypass-ice state))}])))
-                                                               (do (system-msg state :runner
-                                                                               (str "can't afford to pay to bypass " (:title target)))
-                                                                   (effect-completed state side eid)))))}}}])
-                                (make-run eid target nil card))}]})
+                :effect
+                (effect
+                  (register-events
+                    card
+                    [{:event :approach-ice
+                      :unregister-once-resolved true
+                      :duration :end-of-run
+                      :optional
+                      {:prompt (msg "Pay " (get-strength (:ice context)) " [Credits] to bypass?")
+                       :req (req (and (rezzed? (:ice context))
+                                      (first-run-event? state side :approach-ice
+                                                        (fn [targets]
+                                                          (let [context (first targets)]
+                                                            (rezzed? (:ice context)))))
+                                      (can-pay? state :runner eid card nil
+                                                [:credit (get-strength (:ice context))])))
+                       :yes-ability
+                       {:async true
+                        :effect (req (let [ice (:ice context)]
+                                       (wait-for (pay state :runner card [:credit (get-strength ice)])
+                                                 (if-let [payment-str (:msg async-result)]
+                                                   (do (system-msg state :runner
+                                                                   (str (build-spend-msg payment-str "use")
+                                                                        (:title card) " to bypass " (:title ice)))
+                                                       (register-events
+                                                         state :runner card
+                                                         [{:event :encounter-ice
+                                                           :req (req (and (same-card? ice target)
+                                                                          (rezzed? target)))
+                                                           :effect (req (bypass-ice state))}])
+                                                       (effect-completed state side eid))
+                                                   (do (system-msg state :runner
+                                                                   (str "can't afford to pay to bypass " (:title ice)))
+                                                       (effect-completed state side eid))))))}}}])
+                  (make-run eid target nil card))}]})
 
 (defcard "Chatterjee University"
   {:abilities [{:cost [:click 1]

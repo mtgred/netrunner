@@ -2293,12 +2293,12 @@
 (defcard "Snitch"
   {:events [{:event :approach-ice
              :optional
-             {:req (req (not (rezzed? target)))
+             {:req (req (not (rezzed? (:ice context))))
               :prompt "Use Snitch to expose approached ice?"
               :yes-ability
               {:async true
                :effect (req (wait-for
-                              (expose state side target)
+                              (expose state side (:ice context))
                               (continue-ability
                                 state side
                                 {:optional

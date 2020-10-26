@@ -882,7 +882,8 @@
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :once :per-run
-               :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
+               :msg (msg "swap " (card-str state current-ice)
+                         " with a piece of ICE from HQ")
                :effect (effect (swap-cards :corp current-ice target))}}}]})
 
 (defcard "Midway Station Grid"

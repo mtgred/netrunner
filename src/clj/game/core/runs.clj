@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [ability-as-handler checkpoint end-of-phase-checkpoint gather-events pay queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync trigger-suppress unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler checkpoint end-of-phase-checkpoint gather-events make-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync trigger-suppress unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice]]
@@ -128,7 +128,7 @@
                        (wait-for
                          (checkpoint state nil (make-eid state eid))
                          (wait-for
-                           (end-of-phase-checkpoint state nil (make-eid state eid) nil :end-of-initiation)
+                           (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)
                            (if (pos? (get-in @state [:run :position] 0))
                              (do (set-next-phase state :approach-ice)
                                  (start-next-phase state side nil))
@@ -166,17 +166,23 @@
   (set-current-ice state)
   (reset-all-ice state side)
   (check-auto-no-action state)
-  (let [ice (get-current-ice state)]
+  (let [eid (:eid (:run @state))
+        ice (get-current-ice state)
+        on-approach (:on-approach (card-def ice))]
     (system-msg state :runner (str "approaches " (card-str state ice)))
-    (wait-for (trigger-event-simult state :runner :approach-ice
-                                    ;; Immediately end approach step if:
-                                    ;; * run ends
-                                    ;; * server becomes empty
-                                    {:cancel-fn (fn [state] (or (:ended (:run @state))
-                                                                (check-for-empty-server state)))}
-                                    ice)
+    (when on-approach
+      (make-pending-event state :approach-ice ice on-approach))
+    (queue-event state :approach-ice {:ice ice})
+    (wait-for (checkpoint state nil
+                          (make-eid state eid)
+                          ;; Immediately end approach step if:
+                          ;; * run ends
+                          ;; * server becomes empty
+                          {:cancel-fn (fn [state]
+                                        (or (:ended (:run @state))
+                                            (check-for-empty-server state)))})
               (if (get-in @state [:run :jack-out-after-pass])
-                (wait-for (jack-out state :runner (make-eid state))
+                (wait-for (jack-out state :runner (make-eid state eid))
                           (when (or (check-for-empty-server state)
                                     (:ended (:run @state)))
                             (handle-end-run state side)))
@@ -188,17 +194,21 @@
   [state side _]
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :corp side) (system-msg state side "has no further action")))
-    (do (swap! state assoc-in [:run :jack-out] true)
-        (cond
-          (or (check-for-empty-server state)
-              (:ended (:run @state)))
-          (handle-end-run state side)
-          (rezzed? (get-current-ice state))
-          (do (set-next-phase state :encounter-ice)
-              (start-next-phase state :runner nil))
-          :else
-          (pass-ice state side)))))
+        (when (= :corp side)
+          (system-msg state side "has no further action")))
+    (let [eid (:eid (:run @state))
+          ice (get-current-ice state)]
+      (swap! state assoc-in [:run :jack-out] true)
+      (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
+                (cond
+                  (or (check-for-empty-server state)
+                      (:ended (:run @state)))
+                  (handle-end-run state side)
+                  (rezzed? (get-current-ice state))
+                  (do (set-next-phase state :encounter-ice)
+                      (start-next-phase state :runner nil))
+                  :else
+                  (pass-ice state side))))))
 
 (defn bypass-ice
   [state]
@@ -213,7 +223,9 @@
   [state side]
   (swap! state assoc-in [:run :no-action] false)
   (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
-            (swap! state dissoc-in [:run :bypass])
+            (when (get-in @state [:run :bypass])
+              (system-msg state :runner (str "bypasses " (:title (get-current-ice state))))
+              (swap! state dissoc-in [:run :bypass]))
             (unregister-floating-effects state side :end-of-encounter)
             (unregister-floating-events state side :end-of-encounter)
             (cond

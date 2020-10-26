@@ -4408,32 +4408,45 @@
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
 
 (deftest snitch
-  ;; Snitch - Only works on unrezzed ice
-  (do-game
-    (new-game {:corp {:deck [(qty "Quandary" 2)]}
-               :runner {:deck ["Snitch"]}})
-    (play-from-hand state :corp "Quandary" "R&D")
-    (play-from-hand state :corp "Quandary" "HQ")
-    (let [hqice (get-ice state :hq 0)]
-      (rez state :corp hqice))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Snitch")
-    (let [snitch (get-program state 0)]
-      ;; unrezzed ice scenario
-      (run-on state "R&D")
-      (is (prompt-is-card? state :runner snitch) "Option to expose")
-      (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Yes")
-      (is (= "Jack out?" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Yes")
-      ;; rezzed ice scenario
+  ;; Snitch
+  (testing "Only works on rezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Quandary"]}
+                 :runner {:deck ["Snitch"]}})
+      (play-from-hand state :corp "Quandary" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
+      (let [snitch (get-program state 0)]
+        (run-on state "R&D")
+        (is (prompt-is-card? state :runner snitch) "Option to expose")
+        (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes")
+        (is (= "Jack out?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes"))))
+  (testing "Doesn't work if ice is rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Quandary"]}
+                 :runner {:deck ["Snitch"]}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
       (run-on state "HQ")
       (is (empty? (:prompt (get-runner))) "No option to jack out")
       (run-continue state)
-      (run-jack-out state)
-      ;; no ice scenario
+      (run-jack-out state)))
+  (testing "Doesn't work if there is no ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Snitch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
       (run-on state "Archives")
-      (is (empty? (:prompt (get-runner))) "No option to jack out"))))
+      (is (empty? (:prompt (get-runner))) "No option to jack out")
+      (run-continue state))))
 
 (deftest snowball
   (testing "Strength boost until end of run when used to break a subroutine"

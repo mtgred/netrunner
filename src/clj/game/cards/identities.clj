@@ -1048,12 +1048,12 @@
 
 (defcard "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice
-             :req (req (not (rezzed? target)))
+             :req (req (not (rezzed? (:ice context))))
              :effect (effect
                        (register-events
                          card
-                         (let [ice target
-                               cost (rez-cost state side target)]
+                         (let [ice (:ice context)
+                               cost (rez-cost state side ice)]
                            [{:event :encounter-ice
                              :duration :end-of-encounter
                              :unregister-once-resolved true
