@@ -977,5 +977,6 @@
 (defn end-of-phase-checkpoint
   ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
   ([state _ eid event context]
-   (queue-event state event context)
+   (when event
+     (queue-event state event context))
    (checkpoint state nil eid {:duration event})))

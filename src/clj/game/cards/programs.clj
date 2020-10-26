@@ -206,7 +206,7 @@
                                                    :subtype (combine-subtypes false stypes ice-type)))
                                    (register-events
                                      state side card
-                                     [{:event :encounter-ice-ends
+                                     [{:event :end-of-encounter
                                        :duration :end-of-encounter
                                        :effect (effect (update!
                                                          (let [ice (get-card state ice)
@@ -390,9 +390,12 @@
 (defcard "Amina"
   (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
                                 (strength-pump 2 3)]
-                    :events [{:event :encounter-ice-ends
-                              :req (req (and (all-subs-broken-by-card? target card)
-                                             (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
+                    :events [{:event :end-of-encounter
+                              :req (req (and (all-subs-broken-by-card? (:ice context) card)
+                                             (first-event? state side :end-of-encounter
+                                                           (fn [targets]
+                                                             (let [context (first targets)]
+                                                               (all-subs-broken-by-card? (:ice context) card))))))
                               :msg "make the Corp lose 1 [Credits]"
                               :async true
                               :effect (effect (lose-credits :corp eid 1))}]}))
@@ -559,14 +562,13 @@
 
 (defcard "Blackstone"
   {:abilities [(break-sub 1 1 "Barrier")
-               (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}
-  )
+               (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]})
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
                                 (strength-pump 2 1)]
-                    :events [{:event :encounter-ice-ends
-                              :req (req (any-subs-broken-by-card? target card))
+                    :events [{:event :end-of-encounter
+                              :req (req (any-subs-broken-by-card? (:ice context) card))
                               :player :runner ; Needed for when the run is ended by the Corp
                               :prompt "Choose a non-virus program to put on top of your stack."
                               :choices {:card #(and (installed? %)
@@ -794,8 +796,8 @@
                                 {:cost [:click 1]
                                  :msg "place 1 virus counter"
                                  :effect (effect (add-counter card :virus 1))}]
-                    :events [{:event :encounter-ice-ends
-                              :req (req (any-subs-broken-by-card? target card))
+                    :events [{:event :end-of-encounter
+                              :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg (if (can-pay? state side eid card nil [:virus 1])
                                           "remove a virus token from Crypsis"
                                           "trash Crypsis"))
@@ -1158,9 +1160,9 @@
 (defcard "Faerie"
   (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry")
                                 (strength-pump 1 1)]
-                    :events [{:event :encounter-ice-ends
+                    :events [{:event :end-of-encounter
                               :async true
-                              :req (req (any-subs-broken-by-card? target card))
+                              :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg "trash " (:title card))
                               :effect (effect (trash eid card nil))}]}))
 
@@ -1438,7 +1440,10 @@
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
                               :req (req (and (all-subs-broken-by-card? target card)
-                                             (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
+                                             (first-event? state side :end-of-encounter
+                                                           (fn [targets]
+                                                             (let [context (first targets)]
+                                                               (all-subs-broken-by-card? (:ice context) card))))))
                               :async true
                               :effect
                               (effect
@@ -1738,8 +1743,8 @@
 (defcard "Nfr"
   {:abilities [(break-sub 1 1 "Barrier")]
    :strength-bonus (req (get-counters card :power))
-   :events [{:event :encounter-ice-ends
-             :req (req (all-subs-broken-by-card? target card))
+   :events [{:event :end-of-encounter
+             :req (req (all-subs-broken-by-card? (:ice context) card))
              :msg "place 1 power counter on it"
              :effect (effect (add-counter card :power 1))}]})
 
@@ -2367,8 +2372,8 @@
 (defcard "Sūnya"
   {:abilities [(break-sub 2 1 "Sentry")]
    :strength-bonus (req (get-counters card :power))
-   :events [{:event :encounter-ice-ends
-             :req (req (all-subs-broken-by-card? target card))
+   :events [{:event :end-of-encounter
+             :req (req (all-subs-broken-by-card? (:ice context) card))
              :msg "place 1 power counter on it"
              :effect (effect (add-counter card :power 1))}]})
 
@@ -2506,8 +2511,8 @@
 (defcard "Tycoon"
   (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier")
                                 (strength-pump 2 3)]
-                    :events [{:event :encounter-ice-ends
-                              :req (req (any-subs-broken-by-card? target card))
+                    :events [{:event :end-of-encounter
+                              :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg "give the Corp 2 [Credits]"
                               :async true
                               :effect (effect (gain-credits :corp eid 2))}]}))

@@ -865,9 +865,9 @@
                                    card nil))}}}]})
 
 (defcard "Mason Bellamy"
-  {:events [{:event :encounter-ice-ends
+  {:events [{:event :end-of-encounter
              :req (req (and this-server
-                            (seq (filter :broken (:subroutines target)))))
+                            (seq (filter :broken (:subroutines (:ice context))))))
              :msg "force the Runner to lose [Click]"
              :effect (effect (lose :runner :click 1))}]})
 

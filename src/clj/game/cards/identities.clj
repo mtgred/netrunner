@@ -1582,11 +1582,11 @@
 
 (defcard "Weyland Consortium: Builder of Nations"
   {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
-   :events [{:event :encounter-ice-ends
+   :events [{:event :end-of-encounter
              :async true
              :once :per-turn
-             :req (req (and (rezzed? target)
-                            (pos? (get-counters target :advancement))))
+             :req (req (and (rezzed? (:ice context))
+                            (pos? (get-counters (:ice context) :advancement))))
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 

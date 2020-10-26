@@ -283,15 +283,15 @@
    :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                           (host state side (get-card state target) (assoc card :seen true :condition true))
                           (effect-completed state side eid)))
-   :events [{:event :encounter-ice-ends
+   :events [{:event :end-of-encounter
              :condition :hosted
              :async true
-             :req (req (and (same-card? target (:host card))
-                            (empty? (remove :broken (:subroutines target)))))
+             :req (req (and (same-card? (:ice context) (:host card))
+                            (empty? (remove :broken (:subroutines (:ice context))))))
              :effect (effect (system-msg :corp
-                                         (str "derezzes " (:title target)
+                                         (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp target)
+                             (derez :corp (:ice context))
                              (trash :corp eid card {:unpreventable true}))}]})
 
 (defcard "Biotic Labor"

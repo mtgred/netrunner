@@ -359,9 +359,9 @@
    :on-trash executive-trash-effect})
 
 (defcard "Chief Slee"
-  {:events [{:event :encounter-ice-ends
+  {:events [{:event :end-of-encounter
              :msg "add 1 power counter to Chief Slee"
-             :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines target)))))}]
+             :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
                 :async true
                 :msg "do 5 meat damage"

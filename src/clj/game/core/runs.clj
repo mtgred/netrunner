@@ -222,18 +222,20 @@
 (defn encounter-ends
   [state side]
   (swap! state assoc-in [:run :no-action] false)
-  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
-            (when (get-in @state [:run :bypass])
-              (system-msg state :runner (str "bypasses " (:title (get-current-ice state))))
-              (swap! state dissoc-in [:run :bypass]))
-            (unregister-floating-effects state side :end-of-encounter)
-            (unregister-floating-events state side :end-of-encounter)
-            (cond
-              (or (check-for-empty-server state)
-                  (:ended (:run @state)))
-              (handle-end-run state side)
-              (not (get-in @state [:run :next-phase]))
-              (pass-ice state side))))
+  (let [eid (:eid (:run @state))
+        ice (get-current-ice state)]
+    (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
+                                       :end-of-encounter
+                                       {:ice ice})
+              (when (get-in @state [:run :bypass])
+                (system-msg state :runner (str "bypasses " (:title ice)))
+                (swap! state dissoc-in [:run :bypass]))
+              (cond
+                (or (check-for-empty-server state)
+                    (:ended (:run @state)))
+                (handle-end-run state side)
+                (not (get-in @state [:run :next-phase]))
+                (pass-ice state side)))))
 
 (defmethod start-next-phase :encounter-ice
   [state side _]
@@ -278,7 +280,8 @@
           (get-in @state [:run :bypass]))
     (encounter-ends state side)
     (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :runner side) (system-msg state side "has no further action")))))
+        (when (= :runner side)
+          (system-msg state side "has no further action")))))
 
 (defn pass-ice
   [state side]
@@ -555,7 +558,7 @@
    (let [prevent (get-prevent-list state :runner :end-run)]
      (if (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card})
        (do (system-msg state :runner "has the option to prevent the run from ending")
-           (show-wait-prompt state :corp "Runner to prevent the run from ending" {:priority 10})
+           (show-wait-prompt state :corp "Runner to prevent the run from ending")
            (show-prompt state :runner nil
                         (str "Prevent the run from ending?") ["Done"]
                         (fn [_]
@@ -563,8 +566,7 @@
                           (if-let [_ (get-in @state [:end-run :end-run-prevent])]
                             (effect-completed state side eid)
                             (do (system-msg state :runner "will not prevent the run from ending")
-                                (resolve-end-run state side eid))))
-                        {:priority 10}))
+                                (resolve-end-run state side eid))))))
        (resolve-end-run state side eid)))))
 
 (defn jack-out-prevent
@@ -591,7 +593,7 @@
                      (if (cards-can-prevent? state :corp prevent :jack-out)
                        (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
                            (system-msg state :corp "has the option to prevent the Runner from jacking out")
-                           (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
+                           (show-wait-prompt state :runner "Corp to prevent the jack out")
                            (show-prompt state :corp nil
                                         (str "Prevent the Runner from jacking out?") ["Done"]
                                         (fn [_]
@@ -599,8 +601,7 @@
                                           (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
                                             (effect-completed state side (make-result eid false))
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                                (resolve-jack-out state side eid))))
-                                        {:priority 10}))
+                                                (resolve-jack-out state side eid))))))
                        (do (when-not (string/blank? payment-str)
                              (system-msg state :runner (str payment-str " to jack out")))
                            (resolve-jack-out state side eid)
@@ -643,12 +644,18 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [event (when (= :encounter-ice (get-in @state [:run :phase])) :encounter-ice-ends)
-        current-ice (when (= :encounter-ice (get-in @state [:run :phase]))
-                      (or (get-current-ice state)
-                          (get-in @state [:run :current-ice])))]
+  (let [eid (:eid (:run @state))
+        event (when (= :encounter-ice (get-in @state [:run :phase]))
+                :end-of-encounter)
+        ice (when (= :encounter-ice (get-in @state [:run :phase]))
+              (or (get-current-ice state)
+                  (get-in @state [:run :current-ice])))]
     (swap! state assoc-in [:run :ended] true)
-    (wait-for (trigger-event-simult state side event nil current-ice)
+    (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
+                                       event
+                                       {:ice ice})
+              ;; This is redundant when we're in an encounter
+              ;; but necessary all other times until we handle :expired durations
               (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
               (run-cleanup-2 state side))))

@@ -487,9 +487,9 @@
                                            (continue-ability state :runner runner-draw card nil)))}
                    (do-net-damage 1)]
      :events [(assoc (do-net-damage 3)
-                     :event :encounter-ice-ends
-                     :req (req (and (= target card)
-                                    (seq (remove :broken (:subroutines target))))))]}))
+                     :event :end-of-encounter
+                     :req (req (and (= (:ice context) card)
+                                    (seq (remove :broken (:subroutines (:ice context)))))))]}))
 
 (defcard "Archangel"
   {:flags {:rd-reveal (req true)}
@@ -842,11 +842,11 @@
                         (register-events
                           state side card
                           [(assoc (do-net-damage 3)
-                                  :event :encounter-ice-ends
+                                  :event :end-of-encounter
                                   :duration :end-of-run
                                   :unregister-once-resolved true
-                                  :req (req (and (same-card? target target-ice)
-                                                 (seq (remove :broken (:subroutines (get-card state target-ice)))))))])))}]))}]})
+                                  :req (req (and (same-card? (:ice context) target-ice)
+                                                 (seq (remove :broken (:subroutines (:ice context)))))))])))}]))}]})
 
 (defcard "Clairvoyant Monitor"
   {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
@@ -1730,7 +1730,7 @@
                                 :effect (req (prevent-jack-out state side)
                                              (register-events
                                                state side card
-                                               [{:event :encounter-ice-ends
+                                               [{:event :end-of-encounter
                                                  :duration :end-of-encounter
                                                  :unregister-once-resolved true
                                                  :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
@@ -2076,9 +2076,9 @@
                                 :req (req (rezzed? (:ice context)))
                                 :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
                                 :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
-                               {:event :encounter-ice-ends
+                               {:event :end-of-encounter
                                 :duration :end-of-run
-                                :effect (effect (remove-sub! target #(= (:cid card) (:from-cid %))))}]))}]})
+                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
 
 (defcard "Markus 1.0"
   {:subroutines [runner-trash-installed-sub
@@ -2222,9 +2222,9 @@
                   :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true}))}]})
 
 (defcard "Mirāju"
-  {:events [{:event :encounter-ice-ends
-             :req (req (and (same-card? card target)
-                            (:broken (first (filter :printed (:subroutines target))))))
+  {:events [{:event :end-of-encounter
+             :req (req (and (same-card? card (:ice context))
+                            (:broken (first (filter :printed (:subroutines (:ice context)))))))
              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
              :effect (req (redirect-run state side "Archives" :approach-ice)
                           (derez state side card))}]
@@ -2705,7 +2705,7 @@
                          :effect (effect (update! (assoc-in card [:special :saisentan] target))
                                          (clear-wait-prompt :runner))}
                         card nil))}
-     :events [{:event :encounter-ice-ends
+     :events [{:event :end-of-encounter
                :req (req (get-in card [:special :saisentan]))
                :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
      :subroutines [sub
@@ -2784,9 +2784,9 @@
                                 :req (req (not (same-card? card (:ice context))))
                                 :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
                                 :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
-                               {:event :encounter-ice-ends
+                               {:event :end-of-encounter
                                 :duration :end-of-run
-                                :effect (effect (remove-sub! target #(= (:cid card) (:from-cid %))))}]))}]})
+                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
 
 (defcard "Shadow"
   {:advanceable :always
@@ -2965,7 +2965,7 @@
                                    :effect (req (prevent-jack-out state side)
                                                 (register-events
                                                   state side card
-                                                  [{:event :encounter-ice-ends
+                                                  [{:event :end-of-encounter
                                                     :duration :end-of-encounter
                                                     :unregister-once-resolved true
                                                     :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
@@ -3101,7 +3101,7 @@
                           (register-events
                             state side card
                             (let [cid (:cid card)]
-                              [{:event :encounter-ice-ends
+                              [{:event :end-of-encounter
                                 :duration :end-of-encounter
                                 :unregister-once-resolved true
                                 :req (req (get-card state new-card))

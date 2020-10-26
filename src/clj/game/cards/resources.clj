@@ -1256,7 +1256,7 @@
                                          :req (req (same-card? ice target))}]))]
                                (register-events
                                  state side card
-                                 [{:event :encounter-ice-ends
+                                 [{:event :end-of-encounter
                                    :duration :end-of-encounter
                                    :unregister-once-resolved true
                                    :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}
