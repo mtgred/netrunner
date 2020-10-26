@@ -387,8 +387,8 @@
   {:in-play [:memory 2]
    :events [{:event :run
              :once :per-turn
-             :req (req (and (<= 2 run-position)
-                            (first-event? state side :run #(<= 2 (second %)))))
+             :req (req (and (<= 2 (:position target))
+                            (first-event? state side :run #(<= 2 (:position (first %))))))
              :msg "draw two cards"
              :async true
              :effect (effect (draw eid 2 nil))}]})
@@ -1409,8 +1409,8 @@
                :once :per-turn
                :effect (req (continue-ability state :runner abi card nil))}
               {:event :run
-               :req (req (and (= (:server run) [:hq])
-                              (zero? (:position run)) ; trigger on unprotected HQ
+               :req (req (and (= (:server target) [:hq])
+                              (zero? (:position target)) ; trigger on unprotected HQ
                               (pos? (count (:deck runner)))))
                :async true
                :once :per-turn

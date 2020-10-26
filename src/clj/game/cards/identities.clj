@@ -822,7 +822,7 @@
                                  state card (map first (get-remotes state))))}
             {:event :run
              :once :per-turn
-             :req (req (is-central? (:server run)))
+             :req (req (is-central? (:server target)))
              :effect (req (apply enable-run-on-server
                                  state card (map first (get-remotes state))))}]
    :req (req (empty? (let [successes (turn-events state side :successful-run)]

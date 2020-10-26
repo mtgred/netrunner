@@ -2084,7 +2084,7 @@
              :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
                             (gain-credits state :corp eid 2)
                             (effect-completed state side eid)))}
-            {:event :begin-run
+            {:event :run
              :once :per-turn
              :req (req (first-event? state side :runner-spent-click))
              :msg (req (if (and (= :run (get-in @state [:runner :register :click-type]))

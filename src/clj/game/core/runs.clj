@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [ability-as-handler gather-events pay resolve-ability trigger-event trigger-event-simult trigger-event-sync trigger-suppress unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler checkpoint end-of-phase-checkpoint gather-events pay queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync trigger-suppress unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice]]
@@ -73,56 +73,68 @@
   ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
    (let [cost-args (assoc args :server (unknown->kw server))
          costs (total-run-cost state side card cost-args)]
-     (if (and (can-run? state :runner)
-              (can-run-server? state server)
-              (can-pay? state :runner eid card "a run" costs))
+     (if-not (and (can-run? state :runner)
+                  (can-run-server? state server)
+                  (can-pay? state :runner eid card "a run" costs))
+       (effect-completed state side eid)
        (do (when click-run
              (swap! state assoc-in [:runner :register :click-type] :run)
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
-           (wait-for (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
-                     (if-let [payment-str (:msg async-result)]
-                       (let [s [(if (keyword? server) server (last (server->zone state server)))]
-                             ices (get-in @state (concat [:corp :servers] s [:ices]))
-                             n (count ices)]
-                         (when click-run
-                           (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
-                                                          (zone->name (unknown->kw server))
-                                                          (when ignore-costs ", ignoring all costs"))))
-                         ;; s is a keyword for the server, like :hq or :remote1
-                         (let [run-id (make-eid state)]
-                           (swap! state assoc
-                                  :per-run nil
-                                  :run {:run-id run-id
-                                        :server s
-                                        :position n
-                                        :corp-auto-no-action false
-                                        :jack-out false
-                                        :jack-out-after-pass false
-                                        :phase :initiation
-                                        :next-phase :initiation
-                                        :eid eid
-                                        :current-ice nil
-                                        :events nil})
-                           (when card
-                             (update! state side (assoc-in card [:special :run-id] run-id))))
-                         (when (or run-effect card)
-                           (add-run-effect state side (assoc run-effect :card (get-card state card))))
-                         (trigger-event state side :begin-run :server s)
-                         (wait-for (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
-                                   (swap! state assoc-in [:runner :next-run-credit] 0)
-                                   (wait-for (gain-run-credits state side (count-bad-pub state))
-                                             (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-                                             (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                                             (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
-                                                       (if (pos? (get-in @state [:run :position] 0))
-                                                         (do (set-next-phase state :approach-ice)
-                                                             (start-next-phase state side nil))
-                                                         (do (set-next-phase state :approach-server)
-                                                             (swap! state assoc-in [:run :jack-out] true)
-                                                             (start-next-phase state side nil)))))))
-                       (effect-completed state side eid))))
-       (effect-completed state side eid)))))
+           (wait-for
+             (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
+             (let [payment-str (:msg async-result)]
+               (wait-for
+                 (checkpoint state nil (make-eid state eid) nil)
+                 (if-not payment-str
+                   (effect-completed state side eid)
+                   (let [s [(if (keyword? server) server (last (server->zone state server)))]
+                         ices (get-in @state (concat [:corp :servers] s [:ices]))
+                         n (count ices)]
+                     (when click-run
+                       (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
+                                                      (zone->name (unknown->kw server))
+                                                      (when ignore-costs ", ignoring all costs"))))
+                     ;; s is a keyword for the server, like :hq or :remote1
+                     (let [run-id (make-eid state)]
+                       (swap! state assoc
+                              :per-run nil
+                              :run {:run-id run-id
+                                    :server s
+                                    :position n
+                                    :corp-auto-no-action false
+                                    :jack-out false
+                                    :jack-out-after-pass false
+                                    :phase :initiation
+                                    :next-phase :initiation
+                                    :eid eid
+                                    :current-ice nil
+                                    :events nil})
+                       (when card
+                         (update! state side (assoc-in card [:special :run-id] run-id))))
+                     (when (or run-effect card)
+                       (add-run-effect state side (assoc run-effect :card (get-card state card))))
+                     (wait-for
+                       (gain-run-credits state side
+                                         (make-eid state eid)
+                                         (+ (or (get-in @state [:runner :next-run-credit]) 0)
+                                            (count-bad-pub state)))
+                       (swap! state assoc-in [:runner :next-run-credit] 0)
+                       (swap! state update-in [:runner :register :made-run] conj (first s))
+                       (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                       (queue-event state :run {:server s
+                                                :position n
+                                                :cost-args cost-args})
+                       (wait-for
+                         (checkpoint state nil (make-eid state eid))
+                         (wait-for
+                           (end-of-phase-checkpoint state nil (make-eid state eid) nil :end-of-initiation)
+                           (if (pos? (get-in @state [:run :position] 0))
+                             (do (set-next-phase state :approach-ice)
+                                 (start-next-phase state side nil))
+                             (do (set-next-phase state :approach-server)
+                                 (swap! state assoc-in [:run :jack-out] true)
+                                 (start-next-phase state side nil))))))))))))))))
 
 (defn toggle-auto-no-action
   [state _ _]

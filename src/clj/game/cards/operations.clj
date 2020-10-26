@@ -625,7 +625,7 @@
 (defcard "Enhanced Login Protocol"
   {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
    :constant-effects [{:type :run-additional-cost
-                       :req (req (and (no-event? state side :run #(:click-run (nth % 2)))
+                       :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
                                       (:click-run (second targets))))
                        :value [:click 1]}]})
 

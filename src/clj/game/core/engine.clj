@@ -6,6 +6,7 @@
     [clj-uuid :as uuid]
     [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
@@ -958,10 +959,22 @@
       (complete-with-result state side eid nil))))
 
 ;; CHECKPOINT
+(defn unregister-expired-durations
+  [state duration]
+  (when duration
+    (unregister-floating-effects state nil duration)
+    (unregister-floating-events state nil duration)))
 
 (defn checkpoint
   "This only does one thing right now, but soon it will hold everything else too"
   ([state eid] (checkpoint state nil eid nil))
-  ([state _side eid] (checkpoint state nil eid nil))
-  ([state _side eid _args]
-   (trigger-queued-events state nil eid nil)))
+  ([state _ eid] (checkpoint state nil eid nil))
+  ([state _ eid duration]
+   (wait-for (trigger-queued-events state nil (make-eid state eid) nil)
+             (unregister-expired-durations state duration)
+             (effect-completed state nil eid))))
+
+(defn end-of-phase-checkpoint
+  [state _ eid event context]
+  (queue-event state event context)
+  (checkpoint state nil eid event))
