@@ -969,8 +969,8 @@
   "This only does one thing right now, but soon it will hold everything else too"
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
-  ([state _ eid duration]
-   (wait-for (trigger-queued-events state nil (make-eid state eid) nil)
+  ([state _ eid {:keys [duration] :as args}]
+   (wait-for (trigger-queued-events state nil (make-eid state eid) args)
              (unregister-expired-durations state duration)
              (effect-completed state nil eid))))
 
@@ -978,4 +978,4 @@
   ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
   ([state _ eid event context]
    (queue-event state event context)
-   (checkpoint state nil eid event)))
+   (checkpoint state nil eid {:duration event})))

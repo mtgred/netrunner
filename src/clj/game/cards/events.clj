@@ -71,8 +71,8 @@
             {:event :encounter-ice
              :once :per-run
              :req (req (and (get-in card [:special :run-again])
-                            (same-card? target (get-in card [:special :run-again-ice]))))
-             :msg (msg "bypass " (:title target))
+                            (same-card? (:ice context) (get-in card [:special :run-again-ice]))))
+             :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
 (defcard "Amped Up"
@@ -1086,7 +1086,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [{:event :encounter-ice
              :req (req (< (get-in card [:special :bypass-count] 0) 2))
-             :msg (msg "bypass " (:title target))
+             :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state)
                           (update! state side (update-in card [:special :bypass-count] (fnil inc 0))))}
             {:event :successful-run
@@ -1541,7 +1541,7 @@
    :events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
-             :msg (msg "bypass " (:title target))
+             :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
 (defcard "Insight"
@@ -2291,9 +2291,9 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
-             :once :per-run
              :optional
              {:prompt "Jack out?"
+              :req (req (first-run-event? state side :encounter-ice))
               :yes-ability {:async true
                             :msg "jack out"
                             :effect (effect (jack-out eid))}}}]})
@@ -2381,8 +2381,8 @@
                                card
                                (let [target-ice target]
                                  [{:event :encounter-ice
-                                   :req (req (same-card? target-ice target))
-                                   :msg (msg "bypass " (:title target))
+                                   :req (req (same-card? target-ice (:ice context)))
+                                   :msg (msg "bypass " (:title (:ice context)))
                                    :effect (req (bypass-ice state))}]))
                              (make-run eid (second (get-zone target)) nil card))})]
     {:async true
@@ -2544,7 +2544,7 @@
              :effect (effect
                        (register-floating-effect
                          card
-                         (let [target-ice target]
+                         (let [target-ice (:ice context)]
                            {:type :ice-strength
                             :duration :end-of-run
                             :req (req (same-card? target target-ice))
@@ -2609,7 +2609,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :encounter-ice
              :req (req (= 1 run-position))
-             :msg (msg "bypass " (:title target))
+             :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
 (defcard "Spec Work"

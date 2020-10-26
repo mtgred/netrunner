@@ -453,14 +453,14 @@
              :optional
              {:prompt "Remove this card from the game: give encountered ice -6 strength?"
               :yes-ability
-              {:msg (msg "give -6 strength to " (card-str state target) " for the remainder of the run")
+              {:msg (msg "give -6 strength to " (card-str state (:ice context)) " for the remainder of the run")
                :cost [:remove-from-game]
                :effect (effect (register-floating-effect
                                  card
-                                 (let [target-ice target]
+                                 (let [ice (:ice context)]
                                    {:type :ice-strength
                                     :duration :end-of-run
-                                    :req (req (same-card? target target-ice))
+                                    :req (req (same-card? target ice))
                                     :value -6}))
                                (update-all-ice))}}}]})
 
@@ -1689,7 +1689,7 @@
                                     :async true
                                     :effect (req (wait-for (gain-tags state :runner 1)
                                                            (end-run state side eid card)))}
-                       :unsuccessful {:msg (msg "bypass " (:title current-ice))
+                       :unsuccessful {:msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (swap! state assoc-in [:run :bypass] true))}}}}}]})
 
 (defcard "Severnius Stim Implant"

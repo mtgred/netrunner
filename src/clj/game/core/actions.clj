@@ -414,7 +414,8 @@
                                       times-break)
                              (repeat times-break (:break-cost break-ability)))
           total-cost (merge-costs (conj total-pump-cost total-break-cost))]
-      (when (can-pay? state side eid card (:title card) total-cost)
+      (when (and break-ability
+                 (can-pay? state side eid card (:title card) total-cost))
         (wait-for (pay state side (make-eid state eid) card total-cost)
                   (dotimes [_ times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))

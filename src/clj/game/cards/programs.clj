@@ -44,7 +44,7 @@
              :async true
              :location :discard
              :req (req (and (in-discard? card)
-                            (has-subtype? target ice-type)
+                            (has-subtype? (:ice context) ice-type)
                             (not (install-locked? state :runner))
                             (not (zone-locked? state :runner :discard))
                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) card nil [:credit (install-cost state side card)])))
@@ -183,7 +183,7 @@
   {:abilities abilities
    :events [{:event :encounter-ice
              :req (req (and (not-used-once? state {:once :per-turn} card)
-                            (not (has-subtype? target ice-type))
+                            (not (has-subtype? (:ice context) ice-type))
                             (can-pay? state :runner eid card nil [:credit 2])))
              :async true
              :effect
@@ -191,7 +191,8 @@
                (continue-ability
                  {:eid (assoc eid :source-type :ability)
                   :optional
-                  {:prompt (str "Pay 2 [Credits] to make " (:title target) " gain " ice-type "?")
+                  {:prompt (str "Pay 2 [Credits] to make " (:title (:ice context))
+                                " gain " ice-type "?")
                    :yes-ability
                    {:cost [:credit cost]
                     :msg (msg "make " (:title current-ice) " gain " ice-type)
@@ -332,10 +333,10 @@
                     :events [{:event :encounter-ice
                               :interactive (req true)
                               :optional
-                              {:req (req (and (has-subtype? target "Sentry")
+                              {:req (req (and (has-subtype? (:ice context) "Sentry")
                                               (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
                                :once :per-turn
-                               :prompt (msg "Pay 2 [Credits] to bypass" (:title target))
+                               :prompt (msg "Pay 2 [Credits] to bypass" (:title (:ice context)))
                                :yes-ability
                                {:async true
                                 :effect
@@ -344,9 +345,9 @@
                                     {:eid (assoc eid :source-type :ability)
                                      :once :per-turn
                                      :cost [:credit 2]
-                                     :msg (msg "bypass " (:title target))
+                                     :msg (msg "bypass " (:title (:ice context)))
                                      :effect (req (bypass-ice state))}
-                                    card nil))}}}]
+                                    card targets))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 1 2)]}))
 
@@ -502,9 +503,9 @@
 
 (defcard "Berserker"
   {:events [{:event :encounter-ice
-             :req (req (has-subtype? target "Barrier"))
-             :msg (msg "gain " (count (:subroutines target)) " strength")
-             :effect (effect (pump card (count (:subroutines target))))}]
+             :req (req (has-subtype? (:ice context) "Barrier"))
+             :msg (msg "gain " (count (:subroutines (:ice context))) " strength")
+             :effect (effect (pump card (count (:subroutines (:ice context)))))}]
    :abilities [(break-sub 2 2 "Barrier")]})
 
 (defcard "Bishop"
@@ -644,14 +645,14 @@
                        :req (req (same-card? target (:host card)))
                        :value (req (- (get-virus-counters state card)))}]
    :events [{:event :encounter-ice
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :async true
-             :effect (req (if (pos? (get-strength current-ice))
+             :effect (req (if (pos? (get-strength (:ice context)))
                             (do (system-msg state side "places 1 virus counter on Chisel")
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
-                            (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
-                                (trash state side eid current-ice nil))))}]})
+                            (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
+                                (trash state side eid (:ice context) nil))))}]})
 
 (defcard "Cloak"
   {:recurring 1
@@ -1222,12 +1223,12 @@
                       [{:event :encounter-ice
                         :interactive (req true)
                         :optional
-                        {:req (req (and (same-card? ice target)
-                                        (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
+                        {:req (req (and (same-card? ice (:ice context))
+                                        (can-pay? state :runner eid (:ice context) nil [:credit (count (:subroutines (get-card state ice)))])))
                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
                                       " [Credits] to bypass " (:title ice) "?")
                          :yes-ability {:cost [:credit (count (:subroutines (get-card state ice)))]
-                                       :msg (msg "bypass " (:title target))
+                                       :msg (msg "bypass " (:title (:ice context)))
                                        :effect (req (bypass-ice state))}}}])))
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
@@ -1648,8 +1649,8 @@
                                     [{:event :encounter-ice
                                       :duration :end-of-run
                                       :unregister-once-resolved true
-                                      :effect (req (doseq [sub (take 3 (:subroutines current-ice))]
-                                                     (dont-resolve-subroutine! state (get-card state current-ice) sub)))}])))}]}))
+                                      :effect (req (doseq [sub (take 3 (:subroutines (:ice context)))]
+                                                     (dont-resolve-subroutine! state (get-card state (:ice context)) sub)))}])))}]}))
 
 (defcard "Maven"
   {:abilities [(break-sub 2 1)]

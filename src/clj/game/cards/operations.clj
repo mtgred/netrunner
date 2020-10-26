@@ -581,7 +581,7 @@
    :effect (effect (host target (assoc card :seen true :condition true)))
    :events [{:event :encounter-ice
              :condition :hosted
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :trace {:base 3
                      :successful {:msg "give the Runner 1 tag"
                                   :async true

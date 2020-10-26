@@ -239,7 +239,7 @@
 
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
-             :once :per-run
+             :req (req (first-run-event? state side :encounter-ice))
              :msg (msg "places 1 power counter on " (:title card))
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Derez a piece of ice currently being encountered"
@@ -456,8 +456,8 @@
                                                        (register-events
                                                          state :runner card
                                                          [{:event :encounter-ice
-                                                           :req (req (and (same-card? ice target)
-                                                                          (rezzed? target)))
+                                                           :req (req (and (same-card? ice (:ice context))
+                                                                          (rezzed? (:ice context))))
                                                            :effect (req (bypass-ice state))}])
                                                        (effect-completed state side eid))
                                                    (do (system-msg state :runner
@@ -1247,11 +1247,12 @@
                                         seq)
                                    (contains? (card-def current-ice) :on-encounter))))
                 :msg (msg "prevent the encounter effect on " (card-str state current-ice))
-                :effect (req (let [[suppress & rst]
+                :effect (req (let [[suppress]
                                    (register-suppress
                                      state side card
                                      (let [ice current-ice]
                                        [{:event :encounter-ice
+                                         ;; TODO: when suppression is fixed, this should be (:ice context)
                                          :req (req (same-card? ice target))}]))]
                                (register-events
                                  state side card

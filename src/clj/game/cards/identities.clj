@@ -1057,7 +1057,7 @@
                            [{:event :encounter-ice
                              :duration :end-of-encounter
                              :unregister-once-resolved true
-                             :req (req (same-card? target ice))
+                             :req (req (same-card? (:ice context) ice))
                              :msg (msg "lose all credits and gain " cost
                                        " [Credits] from the rez of " (:title ice))
                              :async true
@@ -1129,7 +1129,7 @@
   {:events [{:event :encounter-ice
              :optional
              {:req (req (and (not-used-once? state {:once :per-turn} card)
-                             (has-subtype? target "Sentry")))
+                             (has-subtype? (:ice context) "Sentry")))
               :prompt "Do you want to jack out?"
               :yes-ability {:once :per-turn
                             :async true
@@ -1262,8 +1262,9 @@
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
              :once :per-turn
-             :msg (msg "make " (:title target) " gain Code Gate until the end of the run")
-             :effect (req (let [ice target
+             :msg (msg "make " (:title (:ice context))
+                       " gain Code Gate until the end of the run")
+             :effect (req (let [ice (:ice context)
                                 stypes (:subtype ice)]
                             (update! state side (assoc ice :subtype (combine-subtypes false stypes "Code Gate")))
                             (register-events

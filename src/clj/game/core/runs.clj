@@ -239,24 +239,28 @@
   [state side _]
   (set-phase state :encounter-ice)
   (check-auto-no-action state)
-  (let [ice (get-current-ice state)
-        on-encounter (when ice (:on-encounter (card-def ice)))
+  (let [eid (:eid (:run @state))
+        ice (get-current-ice state)
+        on-encounter (:on-encounter (card-def ice))
         current-server (:server (:run @state))]
     (system-msg state :runner (str "encounters " (card-str state ice)))
-    (wait-for (trigger-event-simult state side :encounter-ice
-                                    {:card-abilities (ability-as-handler ice on-encounter)
-                                     ;; Immediately end encounter step if:
-                                     ;; * run ends
-                                     ;; * ice is not rezzed
-                                     ;; * ice is bypassed
-                                     ;; * run is moved to another server
-                                     ;; * server becomes empty
-                                     :cancel-fn (fn [state] (or (:ended (:run @state))
-                                                                (can-bypass-ice state side (get-card state ice))
-                                                                (not (rezzed? (get-card state ice)))
-                                                                (not= current-server (:server (:run @state)))
-                                                                (check-for-empty-server state)))}
-                                    ice)
+    (when on-encounter
+      (make-pending-event state :encounter-ice ice on-encounter))
+    (queue-event state :encounter-ice {:ice ice})
+    (wait-for (checkpoint state side
+                          (make-eid state eid)
+                          ;; Immediately end encounter step if:
+                          ;; * run ends
+                          ;; * ice is not rezzed
+                          ;; * ice is bypassed
+                          ;; * run is moved to another server
+                          ;; * server becomes empty
+                          {:cancel-fn (fn [state]
+                                        (or (:ended (:run @state))
+                                            (can-bypass-ice state side (get-card state ice))
+                                            (not (rezzed? (get-card state ice)))
+                                            (not= current-server (:server (:run @state)))
+                                            (check-for-empty-server state)))})
               (cond
                 (or (check-for-empty-server state)
                     (:ended (:run @state)))
