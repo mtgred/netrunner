@@ -1,6 +1,6 @@
 (ns tasks.load-test
   "Load test for large numbers of websockets"
-  (:require [clojure.string :as string]
+  (:require [clojure.string :refer [join]]
             [web.db :refer [db] :as webdb]
             [gniazdo.core :as ws]
             [clj-uuid :as uuid]
@@ -13,7 +13,7 @@
 
 ;; This print guarantees a coherent print (i.e. parallel prints will not be interleaved)
 (defn safe-println [& more]
-  (.write *out* (str (clojure.string/join " " more) "\n")))
+  (.write *out* (str (join " " more) "\n")))
 
 (defn add-test-users [maxUsers]
   (webdb/connect)
