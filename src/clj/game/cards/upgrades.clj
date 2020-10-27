@@ -973,7 +973,7 @@
              :interactive (req true)
              :optional
              {:req (req (and this-server
-                             (or (< (:credit runner) 6)
+                             (or (< (total-available-credits state :runner eid card) 6)
                                  (< (count (:hand runner)) 2))
                              (not-empty (:hand corp))
                              (pos? (count (take 5 (:deck corp))))))
@@ -1020,7 +1020,7 @@
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
-             :req (req (= (target-server target) :hq))
+             :req (req (= :hq (target-server context)))
              :async true
              :effect (req (enable-run-on-server state card (second (get-zone card)))
                           (system-msg state :corp (str "trashes Off the Grid"))
@@ -1164,7 +1164,7 @@
                        :value (req (repeat (get-counters card :power) [:credit 2]))}]
    :events [{:event :successful-run
              :req (req (and (pos? (get-counters card :power))
-                            (is-central? (:server run))))
+                            (is-central? (:server context))))
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
    :effect (effect (show-wait-prompt :runner "Corp to place credits on Reduced Service")

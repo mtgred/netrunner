@@ -610,7 +610,7 @@
    :req (req rd-runnable)
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
-             :req (req (and (= (first (:server target)) :rd)
+             :req (req (and (= :rd (target-server context))
                             this-card-run))
              :silent (req true)
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
@@ -1744,7 +1744,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= (first (:server target)) :hq)
+             :req (req (and (= :hq (target-server context))
                             this-card-run))
              :effect (effect (access-bonus :hq 2))}]})
 
@@ -1903,7 +1903,7 @@
                               (effect-completed state side eid)))))
    :events [{:event :successful-run
              :req (req (and (get-in card [:special :run-again])
-                            (= (first (:server target)) :rd)))
+                            (= :rd (target-server context))))
              :msg "gain 4 [Credits]"
              :async true
              :effect (effect (gain-credits eid 4))}
@@ -2765,7 +2765,7 @@
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= (first (:server target)) :rd)
+             :req (req (and (= :rd (target-server context))
                             this-card-run))
              :effect (effect (access-bonus :rd 2))}]})
 

@@ -258,7 +258,7 @@
    :events [(trash-on-empty :credit)
             {:event :successful-run
              :silent (req true)
-             :req (req (is-remote? (:server run)))
+             :req (req (is-remote? (:server context)))
              :effect (effect
                        (add-run-effect
                          {:card card
@@ -338,7 +338,7 @@
 (defcard "Bhagat"
   {:events [{:event :successful-run
              :async true
-             :req (req (and (= (target-server target) :hq)
+             :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)))
              :msg "force the Corp to trash the top card of R&D"
              :effect (req (mill state :corp eid :corp 1))}]})
@@ -636,7 +636,7 @@
                                                     {:cost [:credit tags]
                                                      :msg (str "access up to " tags " cards")
                                                      :effect
-                                                     (effect (access-bonus (target-server target) (dec tags)))}
+                                                     (effect (access-bonus (target-server context) (dec tags)))}
                                                     card targets)
                                                   ;; Can't pay, don't access cards
                                                   (do (system-msg state side "could not afford to use Counter Surveillance")
@@ -685,7 +685,7 @@
                :effect (effect
                          (continue-ability
                            {:optional
-                            {:req (req (and (<= 3 (count (get-in @state [:runner :register :successful-run])))
+                            {:req (req (and (<= 3 (count (:successful-run runner-reg)))
                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                              :player :runner
                              :prompt "Install Crowdfunding?"
@@ -699,7 +699,7 @@
 (defcard "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (= :archives (target-server target)))
+             :req (req (= :archives (target-server context)))
              :optional {:prompt "Place a virus counter on Crypt?"
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:effect (effect (add-counter card :virus 1)
@@ -1103,9 +1103,9 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (string/join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))
+                       (string/join ", " (map :title (:most-recent-drawn runner-reg))))
              :async true
-             :effect (effect (reveal eid (get-in @state [:runner :register :most-recent-drawn])))}
+             :effect (effect (reveal eid (:most-recent-drawn runner-reg)))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1167,7 +1167,7 @@
 (defcard "Grifter"
   {:events [{:event :runner-turn-ends
              :async true
-             :effect (req (let [ab (if (get-in @state [:runner :register :successful-run])
+             :effect (req (let [ab (if (:successful-run runner-reg)
                                      {:msg "gain 1 [Credits]"
                                       :async true
                                       :effect (effect (gain-credits eid 1))}
@@ -1363,13 +1363,13 @@
 
 (defcard "John Masanori"
   {:events [{:event :successful-run
-             :req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
+             :req (req (first-event? state side :successful-run))
              :interactive (req true)
              :msg "draw 1 card"
              :async true
              :effect (effect (draw eid 1 nil))}
             {:event :unsuccessful-run
-             :req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
+             :req (req (first-event? state side :unsuccessful-run))
              :async true
              :msg "take 1 tag"
              :effect (effect (gain-tags :runner eid 1))}]})
@@ -1904,17 +1904,24 @@
 
 (defcard "Patron"
   (let [ability {:prompt "Choose a server for Patron"
-                 :label "draw cards"
+                 :label "Choose a server"
                  :choices (req (conj servers "No server"))
+                 :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
                  :msg (msg "target " target)
                  :effect (req (when (not= target "No server")
                                 (update! state side (assoc card :server-target target))))}]
-    {:events [(assoc ability :event :runner-turn-begins)
+    {:abilities [ability]
+     :events [(assoc ability :event :runner-turn-begins)
               {:event :successful-run
-               :req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
-               :once :per-turn
+               :req (req (when-let [card (get-card state card)]
+                           (and (= (zone->name (:server context)) (:server-target card))
+                                (first-event? state side :successful-run
+                                              (fn [targets]
+                                                (let [context (first targets)]
+                                                  (= (zone->name (:server context))
+                                                     (:server-target card))))))))
                :effect (effect (add-run-effect
                                  {:card card
                                   :replace-access
@@ -1924,8 +1931,7 @@
                                    :effect (effect (update! (dissoc (get-card state card) :server-target))
                                                    (draw eid 2 nil))}}))}
               {:event :runner-turn-ends
-               :effect (effect (update! (dissoc (get-card state card) :server-target)))}]
-     :abilities [ability]}))
+               :effect (effect (update! (dissoc (get-card state card) :server-target)))}]}))
 
 (defcard "Paule's Café"
   {:abilities [{:label "Host a program or piece of hardware"
@@ -2311,7 +2317,7 @@
                                 (update! state side (assoc card :server-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               {:event :successful-run
-               :req (req (= (zone->name (get-in @state [:run :server]))
+               :req (req (= (zone->name (:server context))
                             (:server-target (get-card state card))))
                :once :per-turn
                :silent (req true)
@@ -2521,7 +2527,7 @@
    :effect (effect (update! (assoc card :server-target target)))
    :events [(trash-on-empty :credit)
             {:event :successful-run
-             :req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+             :req (req (= (zone->name (:server context)) (:server-target (get-card state card))))
              :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
              :async true
              :effect (req (let [credits (min 4 (get-counters card :credit))]

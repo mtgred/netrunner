@@ -620,7 +620,6 @@
    pass-ice
    prevent-access
    redirect-run
-   register-successful-run
    replace-access
    run-cleanup
    run-cleanup-2
@@ -628,7 +627,6 @@
    set-phase
    start-next-phase
    successful-run
-   successful-run-effect-impl
    toggle-auto-no-action
    total-cards-accessed
    total-run-cost]

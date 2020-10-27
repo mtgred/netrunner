@@ -2197,13 +2197,28 @@
 
 (deftest liza-talking-thunder-prominent-legislator
   ;; Liza Talking Thunder: Prominent Legislator
-  (do-game
-    (new-game {:runner {:id "Liza Talking Thunder: Prominent Legislator"
-                        :deck [(qty "Sure Gamble" 7)]}})
-    (take-credits state :corp)
-    (run-empty-server state "R&D")
-    (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
-    (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
+  (testing "basic test"
+    (do-game
+      (new-game {:runner {:id "Liza Talking Thunder: Prominent Legislator"
+                          :deck [(qty "Sure Gamble" 7)]}})
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
+      (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
+  (testing "Works with Crisium Grid"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Crisium Grid"]}
+                 :runner {:id "Liza Talking Thunder: Prominent Legislator"
+                          :deck [(qty "Sure Gamble" 7)]}})
+      (play-from-hand state :corp "Crisium Grid" "R&D")
+      (rez state :corp (get-content state :rd 0))
+      (take-credits state :corp)
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Crisium blocks ability"
+        (run-empty-server state "R&D"))
+      (is (zero? (count-tags state)) "Took no tags for ability being blocked"))))
 
 (deftest maxx-maximum-punk-rock
   ;; MaxX

@@ -588,11 +588,10 @@
                                       (effect-completed state side eid))))}]})
 
 (defcard "Daily Quest"
-  (let [ability {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
-                             (not (some (into #{}
-                                              (list (second (get-zone card))
-                                                    (second (get-zone (:host card)))))
-                                        servers))))
+  (let [ability {:req (req (not (some (into #{}
+                                            [(second (get-zone card))
+                                             (second (get-zone (:host card)))])
+                                      (:successful-run runner-reg-last))))
                  :msg "gain 3 [Credits]"
                  :async true
                  :effect (effect (gain-credits :corp eid 3))}]

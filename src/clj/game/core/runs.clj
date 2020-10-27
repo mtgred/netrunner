@@ -429,30 +429,11 @@
   (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
 ;;; Ending runs
-(defn register-successful-run
-  ([state side server] (register-successful-run state side (make-eid state) server))
-  ([state side eid server]
-   (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
-   (swap! state assoc-in [:run :successful] true)
-   (wait-for (trigger-event-simult state side :pre-successful-run nil (:run @state))
-             (wait-for (trigger-event-simult state side :successful-run nil (:run @state))
-                       (wait-for (trigger-event-simult state side :post-successful-run nil (:run @state))
-                                 (effect-completed state side eid))))))
-
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
   [state side ability card]
   (wait-for (resolve-ability state side ability card nil)
             (run-cleanup state side)))
-
-(defn successful-run-effect-impl
-  [state side eid run-effects]
-  (if-let [run-effect (first run-effects)]
-    (wait-for (resolve-ability state side (when-not (trigger-suppress state side :successful-run (:card run-effect))
-                                            (:successful-run run-effect))
-                               (:card run-effect) nil)
-              (successful-run-effect-impl state side eid (next run-effects)))
-    (effect-completed state side eid)))
 
 (defn prevent-access
   "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
@@ -523,16 +504,29 @@
         (wait-for (do-access state side server)
                   (handle-end-run state side))))))
 
+(defn- register-successful-run
+  [state side eid server]
+  (swap! state update-in [:runner :register :successful-run] conj (first server))
+  (swap! state assoc-in [:run :successful] true)
+  ;; TODO: :pre-successful-run exists merely for Omar Keung and Sneakdoor Beta
+  ;; Needs prevention system to remove
+  (wait-for (trigger-event-simult state side (make-eid state eid) :pre-successful-run nil)
+            (queue-event state :successful-run (select-keys (:run @state) [:server :run-id]))
+            (doseq [run-effect (->> (get-in @state [:run :run-effects])
+                                    (filter :successful-run))
+                    :let [ability (:successful-run run-effect)
+                          card (:card run-effect)]]
+              (make-pending-event state :successful-run card ability))
+            (checkpoint state nil eid)))
+
 (defn successful-run
   "The real 'successful run' trigger."
   [state side _]
   (if (any-effects state side :block-successful-run)
     (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
         (complete-run state side))
-    (wait-for
-      (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
-      (wait-for (register-successful-run state side (get-in @state [:run :server]))
-                (complete-run state side)))))
+    (wait-for (register-successful-run state side (make-eid state (:eid (:run @state))) (get-in @state [:run :server]))
+              (complete-run state side))))
 
 (defn corp-phase-43
   "The corp indicates they want to take action after runner hits Successful Run, before access."

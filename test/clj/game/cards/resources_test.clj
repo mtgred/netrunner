@@ -1913,10 +1913,10 @@
       (play-from-hand state :runner "Neutralize All Threats")
       (run-empty-server state :remote1)
       (is (= "Use Find the Truth to look at the top card of R&D?" (:msg (prompt-map :runner))) "FTT prompt")
-      (is (= "Waiting for Runner to resolve successful-run triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
+      (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
       (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Vanilla" (:msg (prompt-map :runner))) "FTT shows card")
-      (is (= "Waiting for Runner to resolve successful-run triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
+      (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
       (click-prompt state :runner "OK")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= "Waiting for Corp to use Marilyn Campaign" (:msg (prompt-map :runner))) "Now Corp gets shuffle choice")
@@ -3438,10 +3438,10 @@
         (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
   (testing "Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744."
     (do-game
-      (new-game {:runner {:deck [(qty "Patron" 3) (qty "Jak Sinclair" 3)]}})
+      (new-game {:runner {:deck [(qty "Patron" 3) (qty "Jak Sinclair" 3)]
+                          :hand ["Patron" "Jak Sinclair"]
+                          :credits 15}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (starting-hand state :runner ["Patron" "Jak Sinclair"])
       (play-from-hand state :runner "Patron")
       (play-from-hand state :runner "Jak Sinclair")
       (take-credits state :runner)

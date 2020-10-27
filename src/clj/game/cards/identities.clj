@@ -148,7 +148,7 @@
   {:events [{:event :successful-run
              :async true
              :interactive (req true)
-             :req (req (and (= (target-server target) :archives)
+             :req (req (and (= :archives (target-server context))
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
              :effect (effect (show-wait-prompt :runner "Corp to trash 1 card from HQ")
@@ -383,7 +383,7 @@
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false)))}
               {:event :successful-run
-               :req (req (and (= (target-server target) :hq)
+               :req (req (and (= :hq (target-server context))
                               (:flipped card)))
                :effect flip-effect}]
      :constant-effects [{:type :run-additional-cost
@@ -501,7 +501,7 @@
 (defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (and (= (target-server target) :hq)
+             :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)))
              :msg "gain 2 [Credits]"
              :async true
@@ -828,7 +828,7 @@
              :effect (req (apply enable-run-on-server
                                  state card (map first (get-remotes state))))}]
    :req (req (empty? (let [successes (turn-events state side :successful-run)]
-                       (filter #(is-central? %) (:map :server successes)))))
+                       (filter is-central? (map :server successes)))))
    :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
    :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))})
 
@@ -909,17 +909,18 @@
              :async true
              :interactive (get-autoresolve :auto-fisk (complement never?))
              :silent (get-autoresolve :auto-fisk never?)
-             :req (req (and (is-central? (:server run))
-                            (first-event? state side :successful-run is-central?)))
-             :effect (effect (continue-ability
-                               {:optional
-                                {:autoresolve (get-autoresolve :auto-fisk)
-                                 :prompt "Force the Corp to draw a card?"
-                                 :yes-ability {:msg "force the Corp to draw 1 card"
-                                               :async true
-                                               :effect (effect (draw :corp eid 1 nil))}
-                                 :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
-                               card nil))}]
+             :optional
+             {:req (req (and (is-central? (:server context))
+                             (first-event? state side :successful-run
+                                           (fn [targets]
+                                             (let [context (first targets)]
+                                               (is-central? (:server context)))))))
+              :autoresolve (get-autoresolve :auto-fisk)
+              :prompt "Force the Corp to draw a card?"
+              :yes-ability {:msg "force the Corp to draw 1 card"
+                            :async true
+                            :effect (effect (draw :corp eid 1 nil))}
+              :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}]
    :abilities [(set-autoresolve :auto-fisk "force Corp draw")]})
 
 (defcard "Lat: Ethical Freelancer"
@@ -945,13 +946,15 @@
               (assoc leela :event :agenda-stolen)]}))
 
 (defcard "Liza Talking Thunder: Prominent Legislator"
-  {:implementation "Needs to be resolved manually with Crisium Grid"
-   :events [{:event :successful-run
+  {:events [{:event :successful-run
              :async true
              :interactive (req true)
              :msg "draw 2 cards and take 1 tag"
-             :req (req (and (is-central? (:server run))
-                            (first-event? state side :successful-run is-central?)))
+             :req (req (and (is-central? (:server context))
+                            (first-event? state side :successful-run
+                                          (fn [targets]
+                                            (let [context (first targets)]
+                                              (is-central? (:server context)))))))
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (draw state :runner eid 2 nil)))}]})
 
@@ -1221,22 +1224,22 @@
                 :msg "make a run on Archives"
                 :once :per-turn
                 :makes-run true
-                :effect (effect (update! (assoc card :omar-run-activated true))
+                :effect (effect (update! (assoc-in card [:special :omar-run] true))
                                 (make-run :archives nil (get-card state card)))}]
    :events [{:event :pre-successful-run
              :interactive (req true)
-             :req (req (and (:omar-run-activated card)
+             :req (req (and (get-in card [:special :omar-run])
                             (= :archives (-> run :server first))))
              :prompt "Treat as a successful run on which server?"
              :choices ["HQ" "R&D"]
              :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
-                            (swap! state update-in [:runner :register :successful-run] #(rest %))
+                            (swap! state update-in [:runner :register :successful-run] next)
                             (swap! state assoc-in [:run :server] [target-server])
                             (trigger-event state :corp :no-action)
-                            (swap! state update-in [:runner :register :successful-run] #(conj % target-server))
+                            (swap! state update-in [:runner :register :successful-run] conj target-server)
                             (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
             {:event :run-ends
-             :effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}]})
+             :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
 (defcard "Pālanā Foods: Sustainable Growth"
   {:events [{:event :runner-draw
@@ -1333,14 +1336,12 @@
   {:events [{:event :successful-run
              :interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
              :async true
-             :req (req (and (= (target-server target) :hq)
+             :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)))
-             :effect (effect (continue-ability {:choices {:card #(and (installed? %)
-                                                                      (not (rezzed? %)))}
-                                                :effect (effect (expose eid target))
-                                                :msg "expose 1 card"
-                                                :async true}
-                                               card nil))}]})
+             :choices {:card #(and (installed? %)
+                                   (not (rezzed? %)))}
+             :msg "expose 1 card"
+             :effect (effect (expose eid target))}]})
 
 (defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
@@ -1431,7 +1432,7 @@
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
-             :req (req (and (= (target-server target) :hq)
+             :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)
                             (<= 2 (count (:discard runner)))
                             (not (zone-locked? state :runner :discard))))
@@ -1528,7 +1529,8 @@
    :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
                 :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
                 :choices {:card installed?}
-                :req (req (and (:corp-phase-12 @state) (not-last-turn? state :runner :successful-run)))
+                :req (req (and (:corp-phase-12 @state)
+                               (not-last-turn? state :runner :successful-run)))
                 :once :per-turn
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 

@@ -111,8 +111,7 @@
 (defcard "Argus Crackdown"
   {:trash-after-resolving false
    :events [{:event :successful-run
-             :req (req (let [server (first (get-in @state [:run :server]))]
-                         (not-empty (get-in @state [:corp :servers server :ices]))))
+             :req (req (not-empty run-ices))
              :msg (msg "deal 2 meat damage")
              :async true
              :effect (effect (damage eid :meat 2 {:card card}))}
@@ -472,7 +471,7 @@
 
 (defcard "Digital Rights Management"
   {:req (req (and (< 1 (:turn @state))
-                  (not (in-coll? (get-in @state [:runner :register-last-turn :successful-run]) :hq))))
+                  (not (some #{:hq} (:successful-run runner-reg-last)))))
    :prompt "Choose an Agenda"
    :implementation "Does not prevent scoring agendas installed later in the turn"
    ; ToDo: When floating triggers are implemented, this should be an effect that listens to :corp-install as Clot does
