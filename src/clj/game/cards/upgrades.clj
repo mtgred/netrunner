@@ -904,7 +904,7 @@
              :effect
              (effect
                (continue-ability
-                 (let [passed-ice target]
+                 (let [passed-ice (:ice context)]
                    {:prompt (msg "Select a piece of ICE to swap with " (:title target))
                     :choices {:req (req (and (installed? target)
                                              (ice? target)
@@ -1355,9 +1355,10 @@
   {:events [{:event :pass-ice
              :optional
              {:req (req (and this-server
-                             (rezzed? target)
-                             (seq (filter #(same-card? :title % target) (:hand corp)))))
-              :prompt (msg "Force the runner to encounter " (:title current-ice) " again?")
+                             (rezzed? (:ice context))
+                             (seq (filter #(same-card? :title % (:ice context)) (:hand corp)))))
+              :prompt (msg "Force the runner to encounter "
+                           (:title current-ice) " again?")
               :yes-ability
               {:async true
                :prompt "Select a copy of the ICE just passed"

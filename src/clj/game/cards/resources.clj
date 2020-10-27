@@ -2330,9 +2330,9 @@
 
 (defcard "Slipstream"
   {:events [{:event :pass-ice
-             :req (req (and (rezzed? (get-card state target))
+             :req (req (and (rezzed? (get-card state (:ice context)))
                             (some #(and (ice? %)
-                                        (not (protecting-same-server? target %))
+                                        (not (protecting-same-server? (:ice context) %))
                                         (= run-position (card-index state %))
                                         (is-central? (second (get-zone %))))
                                   (all-installed state :corp))))
@@ -2343,7 +2343,7 @@
                :effect
                (effect
                  (continue-ability
-                   (let [passed-ice target]
+                   (let [passed-ice (:ice context)]
                      {:async true
                       :prompt "Choose a piece of ICE protecting a central server at the same position"
                       :choices {:req (req (and (ice? target)

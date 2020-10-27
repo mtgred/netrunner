@@ -1835,7 +1835,7 @@
                        :value (req (get-counters card :power))}]
    :events [{:event :pass-ice
              :condition :hosted
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :msg (msg "add 1 power counter to itself")
              :effect (effect (add-counter card :power 1))}]})
 

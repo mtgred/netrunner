@@ -543,11 +543,13 @@
 (defcard "Haas-Bioroid: Architects of Tomorrow"
   {:events [{:event :pass-ice
              :async true
-             :once :per-turn
-             :req (req (and (rezzed? target)
-                            (has-subtype? target "Bioroid")
-                            (empty? (filter #(and (rezzed? %) (has-subtype? % "Bioroid"))
-                                            (turn-events state side :pass-ice)))))
+             :req (req (and (rezzed? (:ice context))
+                            (has-subtype? (:ice context) "Bioroid")
+                            (first-event? state :runner :pass-ice
+                                          (fn [targets]
+                                            (let [context (first targets)]
+                                              (and (rezzed? (:ice context))
+                                                   (has-subtype? (:ice context) "Bioroid")))))))
              :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                              (continue-ability
                                {:prompt "Select a Bioroid to rez"

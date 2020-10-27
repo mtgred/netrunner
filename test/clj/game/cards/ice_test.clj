@@ -1853,6 +1853,7 @@
       (gain-tags state :runner 1)
       (is (= 2 (count (:subroutines (refresh io)))))
       (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
+      (core/fake-checkpoint state)
       (is (zero? (count (:subroutines (refresh io))))))))
 
 (deftest inazuma

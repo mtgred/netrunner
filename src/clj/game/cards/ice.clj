@@ -887,7 +887,7 @@
 
 (defcard "Congratulations!"
   {:events [{:event :pass-ice
-             :req (req (same-card? target card))
+             :req (req (same-card? (:ice context) card))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]
@@ -1737,8 +1737,8 @@
 
 (defcard "Information Overload"
   {:on-encounter (tag-trace 1)
+   :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))
    :events [{:event :tags-changed
-             :req (req (not= target (second targets)))
              :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}]})
 
 (defcard "Interrupt 0"
@@ -1832,7 +1832,7 @@
 (defcard "Kakugo"
   {:events [{:event :pass-ice
              :async true
-             :req (req (same-card? target card))
+             :req (req (same-card? (:ice context) card))
              :msg "do 1 net damage"
              :effect (effect (damage eid :net 1 {:card card}))}]
    :subroutines [end-the-run]})
@@ -3028,13 +3028,14 @@
 (defcard "Thimblerig"
   (let [ability {:optional
                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
-                                 (if run (same-card? target card) true)))
+                                 (if run (same-card? (:ice context) card) true)))
                   :prompt "Swap Thimblerig with another ice?"
                   :yes-ability {:prompt "Choose a piece of ice to swap Thimblerig with"
                                 :choices {:card ice?
                                           :not-self true}
                                 :effect (effect (swap-ice card target))
-                                :msg (msg "swap " (card-str state card) " with " (card-str state target))}}}]
+                                :msg (msg "swap " (card-str state card)
+                                          " with " (card-str state target))}}}]
     {:events [(assoc ability :event :pass-ice)
               (assoc ability :event :corp-turn-begins)]
      :subroutines [end-the-run]}))

@@ -275,7 +275,8 @@
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out]}]
   (when (some? jack-out)
-    (swap! state assoc-in [:run :jack-out-after-pass] jack-out)) ;ToDo: Do not transmit this to the Corp (same with :no-action)
+    ; TODO: Do not transmit this to the Corp (same with :no-action)
+    (swap! state assoc-in [:run :jack-out-after-pass] jack-out))
   (if (or (get-in @state [:run :no-action])
           (get-in @state [:run :bypass]))
     (encounter-ends state side)
@@ -289,23 +290,26 @@
         ice (get-current-ice state)
         passed-all-ice (zero? (dec pos))
         current-server (:server (:run @state))
-        args (assoc
-               (when passed-all-ice
-                 {:card-abilities (gather-events state side :pass-all-ice nil)})
-               ;; Immediately end pass ice step if:
-               ;; * run ends
-               ;; * run is moved to another server
-               ;; * ice moves
-               ;; * server becomes empty
-               :cancel-fn (fn [state] (or (:ended (:run @state))
-                                          (not= current-server (:server (:run @state)))
-                                          (not (same-card? ice (nth (get-run-ices state) (dec pos) nil)))
-                                          (check-for-empty-server state))))]
+        eid (:eid (:run @state))]
     (set-phase state :pass-ice)
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
-    (wait-for (trigger-event-simult state side :pass-ice args ice)
+    (queue-event state :pass-ice {:ice ice})
+    (when passed-all-ice
+      (queue-event state :pass-all-ice {:ice ice}))
+    (wait-for (checkpoint state side
+                          (make-eid state eid)
+                          ;; Immediately end pass ice step if:
+                          ;; * run ends
+                          ;; * run is moved to another server
+                          ;; * ice moves
+                          ;; * server becomes empty
+                          {:cancel-fn (fn [state]
+                                        (or (:ended (:run @state))
+                                            (not= current-server (:server (:run @state)))
+                                            (not (same-card? ice (nth (get-run-ices state) (dec pos) nil)))
+                                            (check-for-empty-server state)))})
               (reset-all-ice state side)
               (cond
                 (or (check-for-empty-server state)
@@ -324,32 +328,35 @@
 
 (defmethod start-next-phase :approach-server
   [state side _]
-  (let [no-ice (zero? (count (get-run-ices state)))
-        args (assoc
-               (when (and no-ice
-                          (= :initiation (get-in @state [:run :phase])))
-                 {:card-abilities (gather-events state side :pass-all-ice nil)})
-               ;; Immediately end pass ice step if:
-               ;; * run ends
-               ;; * position is no longer 0
-               ;; * server becomes empty
-               :cancel-fn (fn [state] (or (:ended (:run @state))
-                                          (pos? (:position (:run @state)))
-                                          (check-for-empty-server state))))]
-        (set-current-ice state nil)
-        (set-phase state :approach-server)
-        (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
-        (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
-                  (cond
-                    (or (check-for-empty-server state)
-                        (:ended (:run @state)))
-                    (handle-end-run state side)
-                    (and (not (get-in @state [:run :next-phase]))
-                         (get-in @state [:run :jack-out-after-pass]))
-                    (wait-for (jack-out state :runner (make-eid state))
-                              (when (or (check-for-empty-server state)
-                                        (:ended (:run @state)))
-                                (handle-end-run state side)))))))
+  (let [eid (:eid (:run @state))
+        no-ice? (zero? (count (get-run-ices state)))
+        initiation-phase? (= :initiation (get-in @state [:run :phase]))]
+    (set-current-ice state nil)
+    (set-phase state :approach-server)
+    (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+    (queue-event state :approach-server)
+    (when (and no-ice? initiation-phase?)
+      (queue-event state :pass-all-ice))
+    (wait-for (checkpoint state side
+                          (make-eid state eid)
+                          ;; Immediately end pass ice step if:
+                          ;; * run ends
+                          ;; * position is no longer 0
+                          ;; * server becomes empty
+                          {:cancel-fn (fn [state]
+                                        (or (:ended (:run @state))
+                                            (pos? (:position (:run @state)))
+                                            (check-for-empty-server state)))})
+              (cond
+                (or (check-for-empty-server state)
+                    (:ended (:run @state)))
+                (handle-end-run state side)
+                (and (not (get-in @state [:run :next-phase]))
+                     (get-in @state [:run :jack-out-after-pass]))
+                (wait-for (jack-out state :runner (make-eid state))
+                          (when (or (check-for-empty-server state)
+                                    (:ended (:run @state)))
+                            (handle-end-run state side)))))))
 
 (defmethod continue :approach-server
   [state side _]

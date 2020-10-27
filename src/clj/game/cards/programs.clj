@@ -1169,7 +1169,7 @@
 (defcard "False Echo"
   {:events [{:event :pass-ice
              :optional
-             {:req (req (not (rezzed? target)))
+             {:req (req (not (rezzed? (:ice context))))
               :prompt "Trash False Echo?"
               :yes-ability
               {:async true
@@ -1179,7 +1179,7 @@
                       (trash state side card nil)
                       (continue-ability
                         state side
-                        (let [ice target]
+                        (let [ice (:ice context)]
                           {:async true
                            :prompt (msg "Rez " (:title ice) " or add it to HQ?")
                            :player :corp
@@ -1439,7 +1439,7 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
-                              :req (req (and (all-subs-broken-by-card? target card)
+                              :req (req (and (all-subs-broken-by-card? (:ice context) card)
                                              (first-event? state side :end-of-encounter
                                                            (fn [targets]
                                                              (let [context (first targets)]
@@ -1448,7 +1448,7 @@
                               :effect
                               (effect
                                 (continue-ability
-                                  (let [ice target]
+                                  (let [ice (:ice context)]
                                     {:optional
                                      {:prompt (str "Swap " (:title ice) " with another ice?")
                                       :yes-ability
@@ -1521,7 +1521,7 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :pass-ice
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :msg "gain 2 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 2))}]})
@@ -1609,10 +1609,11 @@
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
                                 (strength-pump 2 2)]
                     :events [{:event :pass-ice
-                              :once :per-turn
-                              :req (req (and (rezzed? target)
-                                             (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines target))))
-                                             (empty? (remove :broken (:subroutines target)))))
+                              :req (req (and (all-subs-broken-by-card? (:ice context) card)
+                                             (first-event? state side :pass-ice
+                                                           (fn [targets]
+                                                             (let [context (first targets)]
+                                                               (all-subs-broken-by-card? (:ice context) card))))))
                               :msg (msg "gain 1 [Credits]")
                               :async true
                               :effect (effect (gain-credits :runner eid 1))}]}))
@@ -1960,13 +1961,13 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Sentry")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
-                              :req (req (and (has-subtype? target "Sentry")
-                                             (rezzed? target)
+                              :req (req (and (has-subtype? (:ice context) "Sentry")
+                                             (rezzed? (:ice context))
                                              (pos? (count (:deck runner)))))
                               :effect
                               (effect
                                 (continue-ability
-                                  (let [fired-subs (count (filter :fired (:subroutines target)))]
+                                  (let [fired-subs (count (filter :fired (:subroutines (:ice context))))]
                                     {:optional
                                      {:prompt (str "Use Persephone to trash " (quantify fired-subs "card") " from R&D?")
                                       :yes-ability

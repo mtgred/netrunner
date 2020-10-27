@@ -778,9 +778,10 @@
 ;; EVENT QUEUEING
 
 (defn queue-event
-  [state event context-map]
-  (when (keyword? event)
-    (swap! state update-in [:queued-events event] conj context-map)))
+  ([state event] (queue-event state event nil))
+  ([state event context-map]
+   (when (keyword? event)
+     (swap! state update-in [:queued-events event] conj context-map))))
 
 (defn make-pending-event
   [state event card ability]

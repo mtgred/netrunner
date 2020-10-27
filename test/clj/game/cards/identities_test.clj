@@ -379,7 +379,7 @@
                  (filter #(= :pass-ice (first %)))
                  (keep second))]
         (is (= 1 (count ice-passed-last-run)))
-        (is (utils/same-card? (get-ice state :hq 0) (ffirst ice-passed-last-run))))
+        (is (utils/same-card? (get-ice state :hq 0) (:ice (ffirst ice-passed-last-run)))))
       (run-continue state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))

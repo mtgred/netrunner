@@ -192,7 +192,7 @@
                        card
                        [{:event :pass-ice
                          :duration :end-of-run
-                         :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid target))))}])
+                         :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid (:ice context)))))}])
                (make-run eid target nil (get-card state card)))
      :events [{:event :run-ends
                :silent (req true)
@@ -899,7 +899,7 @@
                   (->> (:events (:last-run runner-reg))
                        (filter #(= :pass-ice (first %)))
                        (map second)
-                       (keep #(get-card state (first %)))
+                       (keep #(get-card state (:ice (first %))))
                        (filter (complement rezzed?))
                        seq)))
    :prompt "Choose an unrezzed piece of ICE that you passed on your last run"
@@ -907,7 +907,7 @@
                              (->> (:events (:last-run runner-reg))
                                   (filter #(= :pass-ice (first %)))
                                   (map second)
-                                  (keep #(get-card state (first %)))
+                                  (keep #(get-card state (:ice (first %))))
                                   (filter (complement rezzed?)))))}
    :msg (msg "trash " (card-str state target))
    :effect (effect (trash eid target nil))})
@@ -2112,17 +2112,17 @@
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
    :events [{:event :pass-ice
-             :req (req (and (rezzed? target)
+             :req (req (and (rezzed? (:ice context))
                             (not-used-once? state {:once :per-run} card)
-                            (<= (get-strength target) (count (all-installed state :runner)))))
+                            (<= (get-strength (:ice context)) (count (all-installed state :runner)))))
              :async true
              :effect
              (effect
                (continue-ability
-                 (let [ice target]
-                   (if (pos? (get-strength target))
+                 (let [ice (:ice context)]
+                   (if (pos? (get-strength ice))
                      {:optional
-                      {:prompt (str "Use Prey to trash " (quantify (get-strength target) "card")
+                      {:prompt (str "Use Prey to trash " (quantify (get-strength ice) "card")
                                     " to trash " (:title ice) "?")
                        :yes-ability
                        {:async true

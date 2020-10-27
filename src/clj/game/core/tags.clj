@@ -26,7 +26,8 @@
                         (pos? new-total))]
      (swap! state assoc-in [:runner :tag :total] new-total)
      (swap! state assoc-in [:runner :tag :is-tagged] is-tagged?)
-     (trigger-event state :runner :tags-changed new-total old-total is-tagged?))))
+     (when (not= old-total new-total)
+       (trigger-event state :runner :tags-changed new-total old-total is-tagged?)))))
 
 (defn tag-prevent
   [state side eid n]
