@@ -4553,8 +4553,9 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
       (trash-from-hand state :runner "Morning Star")
-      (play-from-hand state :runner "Retrieval Run")
-      (is (not (:run @state)) "Retrieval run didn't get played")))
+      (play-run-event state "Retrieval Run" :archives)
+      (click-prompt state :runner "Retrieval Run")
+      (is (not (:run @state)) "Retrieval run didn't attempt to install from heap.")))
   )
 
 (deftest rigged-results

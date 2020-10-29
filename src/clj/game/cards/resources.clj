@@ -373,9 +373,9 @@
                                                         card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req true)}
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
    :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (seq (get-in @state [:runner :locked :discard])))))
+                               (not (zone-locked? state :runner :discard))))
                 :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"

@@ -2305,13 +2305,13 @@
 (defcard "Retrieval Run"
   {:async true
    :makes-run true
-   :req (req (and archives-runnable
-                  (not (zone-locked? state :runner :discard))))
+   :req (req archives-runnable)
    :effect (effect (make-run
                      eid :archives
                      {:req (req (= target :archives))
                       :replace-access
                       {:async true
+                       :req (req (not (zone-locked? state :runner :discard)))
                        :prompt "Choose a program to install"
                        :msg (msg "install " (:title target))
                        :choices (req (filter program? (:discard runner)))
