@@ -4556,8 +4556,7 @@
       (play-run-event state "Retrieval Run" :archives)
       (click-prompt state :runner "Retrieval Run")
       (is (empty? (:prompt (get-runner))) "Retrieval run didn't attempt to install from heap.")
-      (is (not (:run @state)) "Run is complete")))
-  )
+      (is (not (:run @state)) "Run is complete"))))
 
 (deftest rigged-results
   ;; Rigged Results - success and failure
