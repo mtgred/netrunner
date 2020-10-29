@@ -1273,7 +1273,7 @@
                            (pos? (count (:discard runner))))
                     (do (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
                         (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))
-                    (do (system-msg state :runner (str "used " (:title card) " to shuffle their Stack"))
+                    (do (system-msg state :runner (str "uses " (:title card) " to shuffle their Stack"))
                         (shuffle! state :runner :deck)
                         (effect-completed state side eid))))}))
 
@@ -1639,36 +1639,36 @@
                card nil))})
 
 (defcard "Labor Rights"
-         {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
-          :rfg-instead-of-trashing true
-          :async true
-          :effect (req (let [mill-count (min 3 (count (:deck runner)))]
-                         (wait-for (mill state :runner :runner mill-count)
-                                   (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
-                                   (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
-                                     (continue-ability
-                                       state side
-                                       (if (not (zone-locked? state :runner :discard))
-                                         {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
-                                          :show-discard true
-                                          :async true
-                                          :choices {:max heap-count
-                                                    :all true
-                                                    :not-self true
-                                                    :card #(and (runner? %)
-                                                                (in-discard? %))}
-                                          :effect (req (doseq [c targets]
-                                                         (move state side c :deck))
-                                                       (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
-                                                                                      " from their Heap into their Stack, and draws 1 card"))
-                                                       (shuffle! state :runner :deck)
-                                                       (draw state :runner eid 1 nil))}
+  {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
+   :rfg-instead-of-trashing true
+   :async true
+   :effect (req (let [mill-count (min 3 (count (:deck runner)))]
+                  (wait-for (mill state :runner :runner mill-count)
+                    (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
+                    (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
+                      (continue-ability
+                        state side
+                        (if (not (zone-locked? state :runner :discard))
+                          {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
+                           :show-discard true
+                           :async true
+                           :choices {:max heap-count
+                                     :all true
+                                     :not-self true
+                                     :card #(and (runner? %)
+                                              (in-discard? %))}
+                           :effect (req (doseq [c targets]
+                                          (move state side c :deck))
+                                     (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
+                                                                 " from their Heap into their Stack, and draws 1 card"))
+                                     (shuffle! state :runner :deck)
+                                     (draw state :runner eid 1 nil))}
 
-                                         {:effect (effect
-                                                    (do (system-msg state :runner "shuffles their Stack and draws 1 card")
-                                                        (shuffle! state :runner :deck)
-                                                        (draw state :runner eid 1 nil)))})
-                                       card nil)))))})
+                          {:effect (effect
+                                     (do (system-msg state :runner "shuffles their Stack and draws 1 card")
+                                         (shuffle! state :runner :deck)
+                                         (draw state :runner eid 1 nil)))})
+                        card nil)))))})
 
 (defcard "Lawyer Up"
   {:msg "remove 2 tags and draw 3 cards"
