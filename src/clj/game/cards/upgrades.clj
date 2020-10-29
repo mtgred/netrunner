@@ -751,13 +751,14 @@
                                   (effect-completed state side eid)))
                               ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
                               (= :runner (:active-player @state))
-                              (continue-ability
-                                state :corp
-                                {:prompt "You did not draw any ice to use with Jinja City Grid"
-                                 :choices ["Carry on!"]
-                                 :prompt-type :bogus
-                                 :effect nil}
-                                card nil)
+                              (do (show-wait-prompt state :runner "Corp to resolve Jinja City Grid")
+                                  (continue-ability
+                                    state :corp
+                                    {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                     :choices ["Carry on!"]
+                                     :prompt-type :bogus
+                                     :effect (effect (clear-wait-prompt :runner))}
+                                    card nil))
                               ;; otherwise, we done
                               :else
                               (effect-completed state side eid)))}
@@ -1503,8 +1504,7 @@
      :events [{:event :runner-trash
                :async true
                :once-per-instance true
-               :req (req (println targets)
-                      (some (fn [target]
+               :req (req (some (fn [target]
                                  (and (corp? (:card target))
                                       (let [target-zone (get-zone (:card target))
                                             target-zone (or (central->zone target-zone) target-zone)

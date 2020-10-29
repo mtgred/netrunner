@@ -1900,6 +1900,20 @@
       (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
       (core/continue state :corp nil))))
 
+(deftest expert-schedule-analyzer
+  ;; Expert Schedule Analyzer
+  (do-game
+    (new-game {:runner {:deck ["Expert Schedule Analyzer"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Expert Schedule Analyzer")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue state)
+    (is (= "Choose an access replacement ability" (:msg (prompt-map :runner)))
+        "Replacement effect is optional")
+    (click-prompt state :runner "Expert Schedule Analyzer")
+    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
+        "All of HQ is revealed correctly")))
+
 (deftest faerie
   (testing "Trash after encounter is over, not before"
     (do-game
@@ -2675,6 +2689,34 @@
       (run-continue state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
+
+(deftest keyhole
+  ;; Keyhole
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Herald" "Troll"]}
+                 :runner {:hand ["Keyhole"]}})
+      (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+      (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+      (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+      (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keyhole")
+      (card-ability state :runner (get-program state 0) 0)
+      (is (:run @state) "Run initiated")
+      (run-continue state)
+      (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+        (click-prompt state :runner "Troll")
+        (is (empty? (:prompt (get-runner))) "Prompt closed")
+        (is (not (:run @state)) "Run ended")
+        (is (-> (get-corp) :discard first :seen) "Troll is faceup")
+        (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+        (is (find-card "Herald" (:deck (get-corp))) "Herald now in R&D")
+        (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck)))
+            "Corp has shuffled R&D"))
+      (card-ability state :runner (get-program state 0) 0)
+      (is (:run @state) "Keyhole can be used multiple times per turn"))))
 
 (deftest kyuban
   ;; Kyuban

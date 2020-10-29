@@ -578,7 +578,6 @@
       (changes-val-macro
         -1 (:click (get-runner))
         "While resolving the cost, runner doesn't gain any clicks"
-        (println "gain ability")
         (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
       (is (second-last-log-contains? state "Runner uses Armand \"Geist\" Walker: Tech Lord")
           "Geist prints first")
@@ -2054,10 +2053,10 @@
                           :deck ["Eden Shard"]}})
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (click-prompt state :runner "Eden Shard")
-      (click-prompt state :runner "Yes") ; Eden Shard optional, is a replacement effect
-      (is (= "Identity" (-> (prompt-map :runner) :card :type)) "Fisk prompt showing")
-      (click-prompt state :runner "Yes") ; Fisk optional
+      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Choose an access replacement ability" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Eden Shard") ; Eden Shard's replacement ability
       (is (= "Eden Shard" (:title (get-resource state 0))) "Eden Shard installed")
       (is (= 5 (:credit (get-runner))) "Eden Shard install was free")
       (is (not (:run @state)) "Run ended")

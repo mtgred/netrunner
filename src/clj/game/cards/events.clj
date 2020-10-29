@@ -22,23 +22,21 @@
              :effect (effect (trash eid target nil))}]})
 
 ;; Card definitions
-
 (defcard "Account Siphon"
   {:req (req hq-runnable)
    :makes-run true
    :async true
-   :effect (effect (make-run
-                     eid :hq
-                     {:req (req (= target :hq))
-                      :replace-access
-                      {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
-                                 " [Credits], gain " (* 2 (min 5 (:credit corp)))
-                                 " [Credits] and take 2 tags")
-                       :async true
-                       :effect (req (wait-for (gain-tags state :runner 2)
-                                              (wait-for (gain-credits state :runner (* 2 (min 5 (:credit corp))))
-                                                        (lose-credits state :corp eid (min 5 (:credit corp))))))}}
-                     card))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :ability
+               {:async true
+                :msg (msg "force the Corp to lose " (min 5 (:credit corp))
+                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
+                          " [Credits] and take 2 tags")
+                :effect (req (wait-for (gain-tags state :runner 2)
+                                       (wait-for (gain-credits state :runner (* 2 (min 5 (:credit corp))))
+                                                 (lose-credits state :corp eid (min 5 (:credit corp))))))}})]})
 
 (defcard "Always Have a Backup Plan"
   {:prompt "Choose a server"
@@ -126,15 +124,14 @@
    :makes-run true
    :prompt "Choose a server"
    :choices (req (filter #(can-run-server? state %) remotes))
-   :effect (effect (make-run
-                     eid target
-                     {:req (req (is-remote? target))
-                      :replace-access
-                      {:msg "shuffle all cards in the server into R&D"
-                       :effect (req (doseq [c (:content run-server)]
-                                      (move state :corp c :deck))
-                                    (shuffle! state :corp :deck))}}
-                     card))})
+   :effect (effect (make-run eid target nil card))
+   :events [(successful-run-replace-access
+              {:target-server :remote
+               :ability
+               {:msg "shuffle all cards in the server into R&D"
+                :effect (req (doseq [c (:content run-server)]
+                               (move state :corp c :deck))
+                             (shuffle! state :corp :deck))}})]})
 
 (defcard "Black Hat"
   {:trace {:base 4
@@ -357,42 +354,42 @@
     {:req (req hq-runnable)
      :async true
      :makes-run true
-     :effect (effect (make-run
-                       eid :hq
-                       {:replace-access
-                        {:msg "force the Corp to add all cards in HQ to the top of R&D"
-                         :async true
-                         :mandatory true
-                         :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
-                                      (let [from (:hand corp)]
-                                        (if (pos? (count from))
-                                          (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
-                                          (do (clear-wait-prompt state :runner)
-                                              (effect-completed state side eid)))))}}
-                       card))}))
+     :effect (effect (make-run eid :hq nil card))
+     :events [(successful-run-replace-access
+                {:target-server :hq
+                 :mandatory true
+                 :ability
+                 {:msg "force the Corp to add all cards in HQ to the top of R&D"
+                  :async true
+                  :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
+                               (let [from (:hand corp)]
+                                 (if (pos? (count from))
+                                   (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
+                                   (do (clear-wait-prompt state :runner)
+                                       (effect-completed state side eid)))))}})]}))
 
 (defcard "Code Siphon"
-  {:req (req rd-runnable)
-   :async true
-   :makes-run true
-   :effect (effect
-             (make-run
-               eid :rd
-               {:replace-access
-                (let [rd-ice (fn [state] (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]
-                  {:async true
-                   :prompt "Choose a program to install"
-                   :msg (msg "install " (:title target) " and take 1 tag")
-                   :choices (req (filter #(and (program? %)
-                                               (runner-can-install? state side % false)
-                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                         [:credit (install-cost state side % {:cost-bonus (rd-ice state)})]))
-                                         (:deck runner)))
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state side :deck)
-                                (wait-for (runner-install state side target {:cost-bonus (rd-ice state)})
-                                          (gain-tags state side eid 1)))})}
-               card))})
+  (letfn [(rd-ice [state]
+            (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]
+    {:req (req rd-runnable)
+     :async true
+     :makes-run true
+     :effect (effect (make-run eid :rd nil card))
+     :events [(successful-run-replace-access
+                {:target-server :rd
+                 :ability
+                 {:async true
+                  :prompt "Choose a program to install"
+                  :msg (msg "install " (:title target) " and take 1 tag")
+                  :choices (req (filter #(and (program? %)
+                                              (runner-can-install? state side % false)
+                                              (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
+                                                        [:credit (install-cost state side % {:cost-bonus (rd-ice state)})]))
+                                        (:deck runner)))
+                  :effect (req (trigger-event state side :searched-stack nil)
+                               (shuffle! state side :deck)
+                               (wait-for (runner-install state side target {:cost-bonus (rd-ice state)})
+                                         (gain-tags state side eid 1)))}})]}))
 
 (defcard "Cold Read"
   {:implementation "Used programs restriction not enforced"
@@ -760,20 +757,20 @@
              :effect (effect (gain-credits :runner eid 5))}]})
 
 (defcard "Diversion of Funds"
-  {:req (req hq-runnable)
-   :async true
-   :makes-run true
-   :effect (effect (make-run
-                     eid :hq
-                     {:req (req (= target :hq))
-                      :replace-access
-                      (let [five-or-all (fn [corp] (min 5 (:credit corp)))]
-                        {:msg (msg "force the Corp to lose " (five-or-all corp)
-                                   "[Credits], and gain " (five-or-all corp) "[Credits]")
-                         :async true
-                         :effect (req (wait-for (gain-credits state :runner (five-or-all corp))
-                                                (lose-credits state :corp eid (five-or-all corp))))})}
-                     card))})
+  (letfn [(five-or-all [corp] (min 5 (:credit corp)))]
+    {:req (req hq-runnable)
+     :async true
+     :makes-run true
+     :effect (effect (make-run eid :hq nil card))
+     :events [(successful-run-replace-access
+                {:target-server :hq
+                 :ability
+                 {:msg (msg "force the Corp to lose " (five-or-all corp)
+                            " [Credits], and gain " (five-or-all corp)
+                            " [Credits]")
+                  :async true
+                  :effect (req (wait-for (gain-credits state :runner (five-or-all corp))
+                                         (lose-credits state :corp eid (five-or-all corp))))}})]}))
 
 (defcard "Divide and Conquer"
   {:req (req archives-runnable)
@@ -820,37 +817,35 @@
   {:async true
    :makes-run true
    :req (req hq-runnable)
-   :effect
-   (effect
-     (make-run eid :hq
-               {:req (req (= target :hq))
-                :replace-access
-                {:mandatory true
-                 :prompt "Choose a card type"
-                 :choices ["Asset" "Upgrade" "Operation" "ICE"]
-                 :msg (msg "reveal 2 cards from HQ and trash all "
-                           target (when (not (= "ICE" target)) "s"))
-                 :async true
-                 :effect (req (let [cards-to-reveal (take 2 (shuffle (:hand corp)))
-                                    cards-to-trash (filter #(is-type? % target) cards-to-reveal)
-                                    credits (* 4 (count cards-to-trash))]
-                                (system-msg state side
-                                            (str "uses Embezzle to reveal "
-                                                 (string/join " and " (map :title cards-to-reveal))
-                                                 " from HQ"))
-                                (wait-for
-                                  (reveal state side cards-to-reveal)
-                                  (if (pos? credits)
-                                    (do (system-msg
-                                          state side
-                                          (str " uses Embezzle to trash "
-                                               (string/join " and " (map :title cards-to-trash))
-                                               " from HQ and gain "
-                                               credits " [Credits]"))
-                                        (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash))
-                                                  (gain-credits state :runner eid credits)))
-                                    (effect-completed state side eid)))))}}
-               card))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :mandatory true
+               :ability
+               {:prompt "Choose a card type"
+                :choices ["Asset" "Upgrade" "Operation" "ICE"]
+                :msg (msg "reveal 2 cards from HQ and trash all "
+                          target (when (not (= "ICE" target)) "s"))
+                :async true
+                :effect (req (let [cards-to-reveal (take 2 (shuffle (:hand corp)))
+                                   cards-to-trash (filter #(is-type? % target) cards-to-reveal)
+                                   credits (* 4 (count cards-to-trash))]
+                               (system-msg state side
+                                           (str "uses Embezzle to reveal "
+                                                (string/join " and " (map :title cards-to-reveal))
+                                                " from HQ"))
+                               (wait-for
+                                 (reveal state side cards-to-reveal)
+                                 (if (pos? credits)
+                                   (do (system-msg
+                                         state side
+                                         (str " uses Embezzle to trash "
+                                              (string/join " and " (map :title cards-to-trash))
+                                              " from HQ and gain "
+                                              credits " [Credits]"))
+                                       (wait-for (trash-cards state :runner (map #(assoc % :seen true) cards-to-trash))
+                                                 (gain-credits state :runner eid credits)))
+                                   (effect-completed state side eid)))))}})]})
 
 (defcard "Emergency Shutdown"
   {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -934,13 +929,14 @@
     {:async true
      :makes-run true
      :req (req hq-runnable)
-     :effect (effect (make-run eid :hq
-                               {:replace-access
-                                {:mandatory true
-                                 :async true
-                                 :msg "rearrange installed ICE"
-                                 :effect (effect (continue-ability (es) card nil))}}
-                               card))}))
+     :effect (effect (make-run eid :hq nil card))
+     :events [(successful-run-replace-access
+                {:target-server :hq
+                 :mandatory true
+                 :ability
+                 {:async true
+                  :msg "rearrange installed ICE"
+                  :effect (effect (continue-ability (es) card nil))}})]}))
 
 (defcard "Eureka!"
   {:async true
@@ -998,27 +994,29 @@
    :makes-run true
    :prompt "Choose a server"
    :choices (req runnable-servers)
-   :effect (effect (make-run
-                     eid target
-                     {:replace-access
-                      {:prompt "Advancements to remove from a card in or protecting this server?"
-                       :choices ["0" "1" "2" "3"]
-                       :async true
-                       :mandatory true
-                       :effect (req (let [c (str->int target)]
-                                      (show-wait-prompt state :corp "Runner to remove advancements")
-                                      (continue-ability
-                                        state side
-                                        {:choices {:card #(and (contains? % :advance-counter)
-                                                               (= (first (:server run)) (second (get-zone %))))}
-                                         :msg (msg "remove " (quantify c "advancement token")
-                                                   " from " (card-str state target))
-                                         :effect (req (let [to-remove (min c (get-counters target :advancement))]
-                                                        (add-prop state :corp target :advance-counter (- to-remove))
-                                                        (clear-wait-prompt state :corp)
-                                                        (effect-completed state side eid)))}
-                                        card nil)))}}
-                     card))})
+   :effect (effect (make-run eid target nil card))
+   :events [(successful-run-replace-access
+              {:mandatory true
+               :ability
+               {:req (req (some #(and (pos? (get-counters % :advancement))
+                                      (= (first (:server run)) (second (get-zone %))))
+                                (all-installed state :corp)))
+                :prompt "Advancements to remove from a card in or protecting this server?"
+                :choices ["0" "1" "2" "3"]
+                :async true
+                :effect (req (let [c (str->int target)]
+                               (show-wait-prompt state :corp "Runner to remove advancements")
+                               (continue-ability
+                                 state side
+                                 {:choices {:card #(and (pos? (get-counters % :advancement))
+                                                        (= (first (:server run)) (second (get-zone %))))}
+                                  :msg (msg "remove " (quantify c "advancement token")
+                                            " from " (card-str state target))
+                                  :effect (req (let [to-remove (min c (get-counters target :advancement))]
+                                                 (add-prop state :corp target :advance-counter (- to-remove))
+                                                 (clear-wait-prompt state :corp)
+                                                 (effect-completed state side eid)))}
+                                 card nil)))}})]})
 
 (defcard "Express Delivery"
   {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
@@ -1053,31 +1051,30 @@
   {:async true
    :makes-run true
    :req (req hq-runnable)
-   :effect (effect
-             (make-run
-               eid :hq
-               {:req (req (= target :hq))
-                :replace-access
-                {:async true
-                 :mandatory true
-                 :msg "force the Corp to trash the top card of R&D"
-                 :effect (req (wait-for (mill state :corp :corp 1)
-                                        (continue-ability
-                                          state side
-                                          (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
-                                            {:async true
-                                             :prompt "Reveal how many copies of Fear the Masses?"
-                                             :choices {:card #(and (in-hand? %)
-                                                                   (same-card? :title card %))
-                                                       :max n}
-                                             :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
-                                                       " forcing the Corp to trash " (count targets)
-                                                       " additional cards from the top of R&D")
-                                             :effect (req (wait-for
-                                                            (reveal state :runner targets)
-                                                            (mill state :corp eid :corp (count targets))))})
-                                          card nil)))}}
-               card))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :mandatory true
+               :ability
+               {:async true
+                :msg "force the Corp to trash the top card of R&D"
+                :effect (req (wait-for
+                               (mill state :corp :corp 1)
+                               (continue-ability
+                                 state side
+                                 (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
+                                   {:async true
+                                    :prompt "Reveal how many copies of Fear the Masses?"
+                                    :choices {:card #(and (in-hand? %)
+                                                          (same-card? :title card %))
+                                              :max n}
+                                    :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
+                                              " forcing the Corp to trash " (count targets)
+                                              " additional cards from the top of R&D")
+                                    :effect (req (wait-for
+                                                   (reveal state :runner targets)
+                                                   (mill state :corp eid :corp (count targets))))})
+                                 card nil)))}})]})
 
 (defcard "Feint"
   {:async true
@@ -1212,22 +1209,22 @@
                      :effect (req (doseq [c targets]
                                     (move state side c :hand))
                                   (trash-cards state :corp eid (take 5 (shuffle (:hand (:corp @state))))))}
-        access-effect {:mandatory true
+        access-effect {:req (req (<= 5 (count (:discard corp))))
                        :async true
-                       :req (req (<= 5 (count (:discard corp))))
                        :effect (req (show-wait-prompt
                                       state :runner
                                       "Corp to choose which cards to pick up from Archives")
-                                    (wait-for (resolve-ability state side corp-choose card nil)
+                                    (wait-for (resolve-ability state :corp corp-choose card nil)
                                               (clear-wait-prompt state :runner)
-                                              (effect-completed state side eid)))}]
+                                              (effect-completed state nil eid)))}]
     {:req (req archives-runnable)
      :async true
      :makes-run true
-     :effect (effect (make-run eid :archives
-                               {:req (req (= target :archives))
-                                :replace-access access-effect}
-                               card))}))
+     :effect (effect (make-run eid :archives nil card))
+     :events [(successful-run-replace-access
+                {:target-server :archives
+                 :mandatory true
+                 :ability access-effect})]}))
 
 (defcard "Government Investigations"
   {:flags {:prevent-secretly-spend (req 2)}})
@@ -1410,20 +1407,19 @@
   {:req (req rd-runnable)
    :async true
    :makes-run true
-   :effect (effect (make-run
-                     eid :rd
-                     {:req (req (= target :rd))
-                      :replace-access
-                      {:msg "rearrange the top 5 cards of R&D"
-                       :async true
-                       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
-                                    (let [from (take 5 (:deck corp))]
-                                      (if (pos? (count from))
-                                        (continue-ability state side (reorder-choice :corp :corp from '()
-                                                                                     (count from) from) card nil)
-                                        (do (clear-wait-prompt state :corp)
-                                            (effect-completed state side eid)))))}}
-                     card))})
+   :effect (effect (make-run eid :rd nil card))
+   :events [(successful-run-replace-access
+              {:target-server :rd
+               :ability
+               {:msg "rearrange the top 5 cards of R&D"
+                :async true
+                :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
+                             (let [from (take 5 (:deck corp))]
+                               (if (pos? (count from))
+                                 (continue-ability state side (reorder-choice :corp :corp from '()
+                                                                              (count from) from) card nil)
+                                 (do (clear-wait-prompt state :corp)
+                                     (effect-completed state side eid)))))}})]})
 
 (defcard "Infiltration"
   {:prompt "Gain 2 [Credits] or expose a card?"
@@ -1466,7 +1462,6 @@
                               card nil)))})]
     (let [access-effect
           {:async true
-           :mandatory true
            :effect (req (if (<= 1 (count (:hand corp)))
                           (do (show-wait-prompt state :runner "Corp to create two piles")
                               (continue-ability
@@ -1489,10 +1484,11 @@
       {:async true
        :makes-run true
        :req (req hq-runnable)
-       :effect (effect (make-run eid :hq
-                                 {:req (req (= target :hq))
-                                  :replace-access access-effect}
-                                 card))})))
+       :effect (effect (make-run eid :hq nil card))
+       :events [(successful-run-replace-access
+                  {:target-server :hq
+                   :mandatory true
+                   :ability access-effect})]})))
 
 (defcard "Inject"
   {:async true
@@ -1605,42 +1601,41 @@
                                                            (quantify (get current-values x 0) "card"))))
                                  :effect (effect (complete-with-result
                                                    eid [(str->int (first (string/split target #" ")))
-                                                        (min 6 (str->int (nth (string/split target #" ") 2)))]))}))]
+                                                        (min 6 (str->int (nth (string/split target #" ") 2)))]))}))
+        access-effect
+        {:async true
+         :effect (req (wait-for
+                        (resolve-ability state side (select-install-cost state) card nil)
+                        (let [revealed (seq (take (second async-result) (:deck corp)))]
+                          (system-msg state :runner (str "uses Khusyuk to choose an install cost of "
+                                                         (first async-result)
+                                                         " [Credit] and reveals "
+                                                         (if revealed
+                                                           (str "(top:) " (string/join ", " (map :title revealed))
+                                                                " from the top of R&D")
+                                                           "no cards")))
+                          (wait-for
+                            (resolve-ability
+                              state side
+                              (when revealed
+                                {:async true
+                                 :effect (effect (reveal eid revealed))})
+                              card nil)
+                            (wait-for
+                              (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
+                                                            (access-revealed revealed))
+                                               card nil)
+                              (shuffle! state :corp :deck)
+                              (system-msg state :runner "shuffles R&D")
+                              (effect-completed state side eid))))))}]
     {:async true
      :makes-run true
      :req (req rd-runnable)
-     :effect (effect
-               (make-run
-                 eid :rd
-                 {:req (req (= target :rd))
-                  :replace-access
-                  {:async true
-                   :mandatory true
-                   :effect (req (wait-for
-                                  (resolve-ability state side (select-install-cost state) card nil)
-                                  (let [revealed (seq (take (second async-result) (:deck corp)))]
-                                    (system-msg state :runner (str "uses Khusyuk to choose an install cost of "
-                                                                   (first async-result)
-                                                                   " [Credit] and reveals "
-                                                                   (if revealed
-                                                                     (str "(top:) " (string/join ", " (map :title revealed))
-                                                                          " from the top of R&D")
-                                                                     "no cards")))
-                                    (wait-for
-                                      (resolve-ability
-                                        state side
-                                        (when revealed
-                                          {:async true
-                                           :effect (effect (reveal eid revealed))})
-                                        card nil)
-                                      (wait-for
-                                        (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
-                                                                      (access-revealed revealed))
-                                                         card nil)
-                                        (shuffle! state :corp :deck)
-                                        (system-msg state :runner "shuffles R&D")
-                                        (effect-completed state side eid))))))}}
-                 card))}))
+     :effect (effect (make-run eid :rd nil card))
+     :events [(successful-run-replace-access
+                {:target-server :rd
+                 :mandatory true
+                 :ability access-effect})]}))
 
 (defcard "Knifed"
   (cutlery "Barrier"))
@@ -2063,17 +2058,7 @@
   {:async true
    :makes-run true
    :req (req archives-runnable)
-   :effect (effect (make-run
-                     eid :archives
-                     {:req (req (= target :archives))
-                      :replace-access
-                      {:mandatory true
-                       :prompt "Select an agenda to host Political Graffiti"
-                       :choices {:card #(in-corp-scored? state side %)}
-                       :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                       :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
-                                       (update-all-agenda-points))}}
-                     card))
+   :effect (effect (make-run eid :archives nil card))
    :constant-effects [{:type :agenda-value
                        :req (req (same-card? (:host card) target))
                        :value -1}]
@@ -2081,7 +2066,16 @@
              :async true
              :effect (req (wait-for (trash state side card {:cause :purge})
                                     (update-all-agenda-points state side)
-                                    (effect-completed state side eid)))}]})
+                                    (effect-completed state side eid)))}
+            (successful-run-replace-access
+              {:target-server :archives
+               :mandatory true
+               :ability
+               {:prompt "Select an agenda to host Political Graffiti"
+                :choices {:req (req (in-corp-scored? state side target))}
+                :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
+                :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
+                                (update-all-agenda-points))}})]})
 
 (defcard "Populist Rally"
   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
@@ -2268,21 +2262,19 @@
      :makes-run true
      :rfg-instead-of-trashing true
      :req (req archives-runnable)
-     :effect (effect
-               (make-run
-                 eid :archives
-                 {:req (req (= target :archives))
-                  :replace-access
-                  {:req (req (not (zone-locked? state :runner :discard)))
-                   :mandatory true
-                   :async true
-                   :prompt "Choose up to five cards to install"
-                   :show-discard true
-                   :choices {:max 5
-                             :card #(and (in-discard? %)
-                                         (runner? %))}
-                   :effect (effect (install-cards eid card targets (map :title targets)))}}
-                 card))}))
+     :effect (effect (make-run eid :archives nil card))
+     :events [(successful-run-replace-access
+                {:target-server :archives
+                 :mandatory true
+                 :ability
+                 {:req (req (not (zone-locked? state :runner :discard)))
+                  :async true
+                  :prompt "Choose up to five cards to install"
+                  :show-discard true
+                  :choices {:max 5
+                            :card #(and (in-discard? %)
+                                        (runner? %))}
+                  :effect (effect (install-cards eid card targets (map :title targets)))}})]}))
 
 (defcard "Recon"
   {:async true
@@ -2339,18 +2331,17 @@
   {:async true
    :makes-run true
    :req (req archives-runnable)
-   :effect (effect (make-run
-                     eid :archives
-                     {:req (req (= target :archives))
-                      :replace-access
-                      {:async true
-                       :req (req (not (zone-locked? state :runner :discard)))
-                       :prompt "Choose a program to install"
-                       :msg (msg "install " (:title target))
-                       :choices (req (filter program? (:discard runner)))
-                       :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
-                                                       target {:ignore-all-cost true}))}}
-                     card))})
+   :effect (effect (make-run eid :archives nil card))
+   :events [(successful-run-replace-access
+              {:target-server :archives
+               :ability
+               {:async true
+               :req (req (not (zone-locked? state :runner :discard)))
+                :prompt "Choose a program to install"
+                :msg (msg "install " (:title target))
+                :choices (req (filter program? (:discard runner)))
+                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                target {:ignore-all-cost true}))}})]})
 
 (defcard "Rigged Results"
   (letfn [(runner-choice [choices]
@@ -2399,38 +2390,39 @@
    :makes-run true
    :rfg-instead-of-trashing true
    :req (req hq-runnable)
-   :effect
-   (effect (make-run
-             eid :hq
-             {:req (req (and (= target :hq)
-                             (not (zone-locked? state :runner :discard))))
-              :replace-access
-              {:async true
-               :effect
-               (req (wait-for
-                      ;; todo: remove this when replacement effects are fixed
-                      (trigger-event-sync state side :pre-access (first (:server run)))
-                      (continue-ability
-                        state side
-                        (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
-                              heap (count (:discard runner))]
-                          (if (pos? heap)
-                            {:show-discard true
-                             :prompt (str "Choose " (quantify (min n heap) "card") " to move from the Heap to your Grip")
-                             :async true
-                             :msg (msg "take " (string/join ", " (map :title targets)) " from their Heap to their Grip")
-                             :choices {:max (min n heap)
-                                       :all true
-                                       :card #(and (runner? %)
-                                                   (in-discard? %))}
-                             :effect (req (doseq [c targets]
-                                            (move state side c :hand))
-                                          (effect-completed state side eid))}
-                            {:async true
-                             :msg (msg "take no cards from their Heap to their Grip")
-                             :effect (req (effect-completed state side eid))}))
-                        card nil)))}}
-             card nil))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :mandatory true
+               :ability
+               {:async true
+                :req (req (not (zone-locked? state :runner :discard)))
+                :effect
+                (req (wait-for
+                       ;; todo: remove this when replacement effects are fixed
+                       (trigger-event-sync state side :pre-access :hq)
+                       (continue-ability
+                         state side
+                         (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
+                               heap (count (:discard runner))]
+                           (if (pos? heap)
+                             {:show-discard true
+                              :prompt (str "Choose " (quantify (min n heap) "card")
+                                           " to move from the Heap to your Grip")
+                              :async true
+                              :msg (msg "take " (string/join ", " (map :title targets))
+                                        " from their Heap to their Grip")
+                              :choices {:max (min n heap)
+                                        :all true
+                                        :card #(and (runner? %)
+                                                    (in-discard? %))}
+                              :effect (req (doseq [c targets]
+                                             (move state side c :hand))
+                                           (effect-completed state side eid))}
+                             {:async true
+                              :msg (msg "take no cards from their Heap to their Grip")
+                              :effect (req (effect-completed state side eid))}))
+                         card nil)))}})]})
 
 (defcard "Rumor Mill"
   (letfn [(eligible? [card] (and (:uniqueness card)
@@ -2555,15 +2547,15 @@
   {:async true
    :makes-run true
    :req (req rd-runnable)
-   :effect (effect (make-run
-                     eid :rd
-                     {:replace-access
-                      {:msg "access cards from the bottom of R&D"
-                       :mandatory true
-                       :async true
-                       :effect (effect (do-access eid (:server run)))}}
-                     card))
-   :events [{:event :pre-access
+   :effect (effect (make-run eid :rd nil card))
+   :events [(successful-run-replace-access
+              {:target-server :rd
+               :can-access true
+               :mandatory true
+               :ability {:msg "access cards from the bottom of R&D"
+                         :async true
+                         :effect (effect (do-access eid (:server run)))}})
+            {:event :pre-access
              :silent (req true)
              :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
             {:event :run-ends
@@ -2574,15 +2566,14 @@
    :makes-run true
    :prompt "Choose a server"
    :choices (req (filter #(can-run-server? state %) remotes))
-   :effect (effect (make-run
-                     eid target
-                     {:req (req (is-remote? target))
-                      :replace-access
-                      {:mandatory true
-                       :async true
-                       :msg "trash all cards in the server at no cost"
-                       :effect (effect (trash-cards eid (:content run-server)))}}
-                     card))})
+   :effect (effect (make-run eid target nil card))
+   :events [(successful-run-replace-access
+              {:target-server :remote
+               :mandatory true
+               :ability
+               {:async true
+                :msg "trash all cards in the server at no cost"
+                :effect (effect (trash-cards eid (:content run-server)))}})]})
 
 (defcard "Social Engineering"
   {:prompt "Select an unrezzed piece of ICE"
@@ -2889,35 +2880,33 @@
   {:async true
    :makes-run true
    :req (req hq-runnable)
-   :effect (effect (make-run
-                     eid :hq
-                     {:req (req (= target :hq))
-                      :replace-access
-                      {:async true
-                       :prompt "How many [Credits]?"
-                       :choices :credit
-                       :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                       :effect (req (wait-for (lose-credits state :corp target)
-                                              (gain-tags state side eid 1)))}}
-                     card))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :ability
+               {:async true
+                :prompt "How many [Credits]?"
+                :choices :credit
+                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
+                :effect (req (wait-for (lose-credits state :corp target)
+                                       (gain-tags state side eid 1)))}} )]})
 
 (defcard "Wanton Destruction"
   {:async true
    :makes-run true
    :req (req hq-runnable)
-   :effect (effect (make-run
-                     eid :hq
-                     {:req (req (= target :hq))
-                      :replace-access
-                      {:msg (msg "force the Corp to discard " target " cards from HQ at random")
-                       :prompt "How many [Click] do you want to spend?"
-                       :choices (req (map str (range 0 (inc (:click runner)))))
-                       :async true
-                       :effect (req (let [n (str->int target)]
-                                      (wait-for (pay state :runner card :click n)
-                                                (system-msg state :runner (:msg async-result))
-                                                (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}}
-                     card))})
+   :effect (effect (make-run eid :hq nil card))
+   :events [(successful-run-replace-access
+              {:target-server :hq
+               :ability
+               {:msg (msg "force the Corp to discard " target " cards from HQ at random")
+                :prompt "How many [Click] do you want to spend?"
+                :choices (req (map str (range 0 (inc (:click runner)))))
+                :async true
+                :effect (req (let [n (str->int target)]
+                               (wait-for (pay state :runner card :click n)
+                                         (system-msg state :runner (:msg async-result))
+                                         (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}})]})
 
 (defcard "Watch the World Burn"
   (letfn [(rfg-card-event [burned-card]

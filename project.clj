@@ -77,7 +77,8 @@
   ;; Misc
   :test-paths ["test/clj"]
   :eftest {:report eftest.report.pretty/report
-           :fast-fail? true}
+           ; :capture-output? false
+           :fail-fast? true}
 
   :ring {:handler web.api/app}
 

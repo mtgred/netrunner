@@ -1448,9 +1448,9 @@
       (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (click-prompt state :runner "Eden Shard")
+      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (click-prompt state :runner "Yes")
+      (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
       (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
       (click-prompt state :corp "Carry on!"))))
 
@@ -3112,8 +3112,6 @@
         (rez state :corp war)
         (core/add-counter state :runner clv :power 2)
         (card-ability state :runner (refresh clv) 0)
-        (println (prompt-fmt :corp))
-        (println (prompt-fmt :runner))
         ;; Prompt choice checks there is a trace prompt from Warroid
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")

@@ -419,7 +419,6 @@
   `(when (play-from-hand ~state :runner ~card)
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
-     (is (get-in @~state [:run :run-effects]) "There is a run-effect")
      (when (run-continue ~state)
        (is (get-in @~state [:runner :prompt]) "A prompt is shown")
        (is (get-in @~state [:run :successful]) "Run is marked successful"))))

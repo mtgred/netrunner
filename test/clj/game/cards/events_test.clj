@@ -33,7 +33,6 @@
       (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
   (testing "New Angeles City Hall interaction"
-    ;; Account Siphon - Access
     (do-game
       (new-game {:runner {:deck ["Account Siphon"
                                  "New Angeles City Hall"]}})
@@ -296,6 +295,7 @@
         (is (empty? (:prompt (get-corp))) "No Jinja City Grid")))))
 
 (deftest because-i-can
+  ;; Because I Can
   ;; make a successful run on a remote to shuffle its contents into R&D
   (testing "Basic test"
     (do-game
@@ -2356,6 +2356,7 @@
     (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
 (deftest glut-cipher
+  ;; Glut Cipher
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Ice Wall" "Fire Wall" "Wraparound"]
@@ -2363,10 +2364,8 @@
                :runner {:hand [(qty "Glut Cipher" 3)]}})
     (take-credits state :corp)
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")
-    ;; Gotta play it manually because the run effect won't happen
     (play-from-hand state :runner "Glut Cipher")
     (is (:run @state) "There is a run happening")
-    (is (get-in @state [:run :run-effects]) "There is a run-effect")
     (run-continue state)
     (is (= 3 (count (:discard (get-corp)))) "Glut Cipher did not fire when < 5 cards")
     (is (zero? (count (filter :seen (:discard (get-corp))))) "There are no faceup cards in Archives")
@@ -2800,6 +2799,7 @@
           "Infiltration properly exposes the ice"))))
 
 (deftest information-sifting
+  ;; Information Sifting
   (testing "Hudson interaction :max-access"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
@@ -2962,6 +2962,7 @@
     (is (= 1 (hand-size :corp)))))
 
 (deftest khusyuk
+  ;; Khusyuk
   (testing "Basic functionality"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
@@ -4611,7 +4612,6 @@
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
-      (click-prompt state :runner "Rip Deal")
       (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
@@ -4645,7 +4645,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (click-prompt state :runner "Rip Deal")
         (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")

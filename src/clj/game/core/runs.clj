@@ -14,20 +14,16 @@
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
-    [game.core.servers :refer [is-remote? unknown->kw zone->name]]
+    [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
-    [game.utils :refer [dissoc-in same-card?]]
+    [game.utils :refer [dissoc-in remove-once same-card?]]
     [jinteki.utils :refer [count-bad-pub]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
 
 (declare handle-end-run jack-out run-cleanup gain-run-credits pass-ice successful-run)
-
-(defn add-run-effect
-  [state _ run-effect]
-  (swap! state update-in [:run :run-effects] conj run-effect))
 
 (defn total-run-cost
   ([state side card] (total-run-cost state side card nil))
@@ -109,11 +105,11 @@
                                     :next-phase :initiation
                                     :eid eid
                                     :current-ice nil
-                                    :events nil})
+                                    :events nil
+                                    :can-access true
+                                    :source-card (select-keys card [:code :cid :zone :title :type])})
                        (when card
                          (update! state side (assoc-in card [:special :run-id] run-id))))
-                     (when (or run-effect card)
-                       (add-run-effect state side (assoc run-effect :card (get-card state card))))
                      (wait-for
                        (gain-run-credits state side
                                          (make-eid state eid)
@@ -387,16 +383,14 @@
   (set-phase state :access-server)
   (if (check-for-empty-server state)
     (handle-end-run state side)
-    (successful-run state :runner nil)))
+    (successful-run state :runner)))
 
 (defmethod continue :default
   [state _ _]
   (.println *err* (with-out-str
                     (print-stack-trace
                       (Exception. "Continue clicked at the wrong time")
-                      2500)))
-  (.println *err* (str "Run: " (:phase (:run @state)) "\n"))
-  )
+                      2500))))
 
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))
@@ -429,11 +423,79 @@
   (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
 ;;; Ending runs
-(defn replace-access
-  "Replaces the standard access routine with the :replace-access effect of the card"
-  [state side ability card]
-  (wait-for (resolve-ability state side ability card nil)
-            (run-cleanup state side)))
+(defn add-run-effect
+  [state card ability props]
+  (let [ability {:card card
+                 :mandatory (:mandatory props)
+                 :can-access (:can-access props)
+                 :ability ability}]
+    (swap! state update-in [:run :run-effects] conj ability)))
+
+(defn successful-run-replace-access
+  [props]
+  (let [ability (:ability props)
+        attacked-server (:target-server props)]
+    {:event :successful-run
+     :req (case attacked-server
+            (:archives :rd :hq)
+            (req (= attacked-server (target-server context)))
+            :remote
+            (req (is-remote? (target-server context)))
+            ; else
+            (req true))
+     :silent (req true)
+     :effect (req (add-run-effect state card ability props))}))
+
+(defn choose-replacement-ability
+  [state handlers]
+  (let [can-access (:can-access (:run @state))
+        mandatory (some :mandatory handlers)
+        titles (into [] (keep #(get-in % [:card :title]) handlers))]
+    (cond
+      ;; If you can't access, there's nothing to replace
+      (not can-access)
+      (run-cleanup state :runner)
+      ;; Otherwise, if there's no handlers, access the cards
+      (zero? (count titles))
+      (wait-for (do-access state :runner (get-in @state [:run :server]))
+                (handle-end-run state :runner))
+      ;; If there's only 1 handler but it's not mandatory
+      ;; give the runner the option below
+      (and mandatory (= 1 (count titles)))
+      (let [chosen (first handlers)
+            ability (:ability chosen)
+            card (:card chosen)]
+        (system-msg state :runner (str "uses the replacement effect from " (:title card)))
+        (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
+                  (when-not (:can-access chosen)
+                    (swap! state assoc-in [:run :can-access] false))
+                  (choose-replacement-ability state nil)))
+      ;; there are available handlers
+      ;; checking for :can-access happens in :choices
+      (pos? (count titles))
+      (resolve-ability
+        state :runner
+        {:prompt "Choose an access replacement ability"
+         :choices (if mandatory titles (conj titles "Access cards"))
+         :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
+                            ability (:ability chosen)
+                            card (:card chosen)
+                            ]
+                        (if chosen
+                          (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
+                              (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
+                                        (when-not (:can-access chosen)
+                                          (swap! state assoc-in [:run :can-access] false))
+                                        (let [remaining (when (:can-access (:run @state))
+                                                          (remove-once #(= target (get-in % [:card :title])) handlers))]
+                                          (choose-replacement-ability state remaining))))
+                          (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
+                              (wait-for (do-access state :runner (get-in @state [:run :server]))
+                                        (handle-end-run state :runner))))))}
+        nil nil)
+      ;; Just in case
+      :else
+      (run-cleanup state :runner))))
 
 (defn prevent-access
   "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
@@ -446,15 +508,8 @@
   (if (:ended (:run @state))
     (run-cleanup state :runner)
     (let [the-run (:run @state)
-          server (:server the-run) ; bind here as the server might have changed
-          run-effects (->> (:run-effects the-run)
-                           (filter #(and (:replace-access %)
-                                         (or (not (:req %))
-                                             ((:req %) state :runner (:eid the-run) (:card %) [(first server)]))))
-                           doall)
-          mandatory-run-effects (->> run-effects
-                                     (filter #(get-in % [:replace-access :mandatory]))
-                                     doall)]
+          server (:server the-run)
+          replacement-effects (:run-effects the-run)]
       (cond
         ;; Prevented from accessing anything
         (:prevent-access the-run)
@@ -466,38 +521,9 @@
                            (handle-end-run))}
           nil nil)
 
-        ;; One mandatory replace-access effect
-        (= 1 (count mandatory-run-effects))
-        (let [chosen (first mandatory-run-effects)]
-          (system-msg state :runner (str "must use the replacement effect from " (:title (:card chosen))))
-          (replace-access state :runner (:replace-access chosen) (:card chosen)))
-
-        ;; Multiple mandatory replace-access effects
-        (pos? (count mandatory-run-effects))
-        (resolve-ability
-          state :runner
-          {:prompt "Choose a mandatory replacement effect"
-           :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
-           :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
-                          (system-msg state :runner
-                                      (str "chooses to use the replacement effect from " (:title (:card chosen))))
-                          (replace-access state :runner (:replace-access chosen) (:card chosen))))}
-          nil nil)
-
-        ;; Any number of optional replace-access effects
-        (pos? (count run-effects))
-        (resolve-ability
-          state :runner
-          {:prompt "Use a replacement effect instead of accessing cards?"
-           :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
-           :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
-                          (do (system-msg state :runner
-                                          (str "chooses to use the replacement effect from " (:title (:card chosen))))
-                              (replace-access state :runner (:replace-access chosen) (:card chosen)))
-                          (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
-                              (wait-for (do-access state :runner server)
-                                        (handle-end-run state :runner)))))}
-          nil nil)
+        ;; Any number of replace-access effects
+        (pos? (count replacement-effects))
+        (choose-replacement-ability state replacement-effects)
 
         ;; No replace-access effects
         :else
@@ -510,21 +536,16 @@
   (swap! state assoc-in [:run :successful] true)
   ;; TODO: :pre-successful-run exists merely for Omar Keung and Sneakdoor Beta
   ;; Needs prevention system to remove
-  (wait-for (trigger-event-simult state side (make-eid state eid) :pre-successful-run nil)
+  (queue-event state :pre-successful-run (select-keys (:run @state) [:server :run-id]))
+  (wait-for (checkpoint state nil (make-eid state eid))
             (queue-event state :successful-run (select-keys (:run @state) [:server :run-id]))
-            (doseq [run-effect (->> (get-in @state [:run :run-effects])
-                                    (filter :successful-run))
-                    :let [ability (:successful-run run-effect)
-                          card (:card run-effect)]]
-              (make-pending-event state :successful-run card ability))
             (checkpoint state nil eid)))
 
 (defn successful-run
   "The real 'successful run' trigger."
-  [state side _]
+  [state side]
   (if (any-effects state side :block-successful-run)
-    (do (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
-        (complete-run state side))
+    (complete-run state side)
     (wait-for (register-successful-run state side (make-eid state (:eid (:run @state))) (get-in @state [:run :server]))
               (complete-run state side))))
 

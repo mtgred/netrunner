@@ -187,6 +187,69 @@
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
       (is (last-log-contains? state "Runner approaches Ice Wall")))))
 
+(deftest replace-access
+  (testing "'You may' only"
+    (testing "and choosing replacement effect"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Hedge Fund"]}
+                   :runner {:hand ["Account Siphon"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Account Siphon")
+        (run-continue state)
+        (is (= ["Account Siphon" "Access cards"] (prompt-buttons :runner)) "Runner can choose")
+        (click-prompt state :runner "Account Siphon")
+        (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
+            "Replacement effect is noted")
+        (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+    (testing "and choosing to access cards"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Hedge Fund"]}
+                   :runner {:hand ["Account Siphon"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Account Siphon")
+        (run-continue state)
+        (is (= ["Account Siphon" "Access cards"] (prompt-buttons :runner)) "Runner can choose")
+        (click-prompt state :runner "Access cards")
+        (is (second-last-log-contains? state "Runner chooses to access cards instead of use a replacement effect")
+            "Not choosing replacement effect is noted")
+        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "Normal access prompt")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
+  (testing "must replacement effects only"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Security Testing"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (run-empty-server state :hq)
+      (is (empty? (:prompt (get-runner))))
+      (is (second-last-log-contains? state "Runner uses the replacement effect from Security Testing")
+          "Replacement effect is noted")
+      (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+  (testing "'You may' and must replacement effects"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Account Siphon" "Security Testing"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (play-from-hand state :runner "Account Siphon")
+      (run-continue state)
+      (is (= ["Account Siphon" "Security Testing"] (prompt-buttons :runner)) "Runner can choose")
+      (click-prompt state :runner "Account Siphon")
+      (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
+          "Replacement effect is noted")
+      (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
+
 (deftest buffered-continue
   (testing "Buffered continue on approaching ice"
     (do-game

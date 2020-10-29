@@ -15,20 +15,14 @@
 (defn- shard-constructor
   "Function for constructing a Shard card"
   [title target-server message effect-fn]
-  {:events [{:event :successful-run
-             :location :hand
-             :req (req (and run (= (:server run) [target-server])))
-             :optional
-             {:prompt (str "Install " title "?")
-              :yes-ability
-              {:effect (effect
-                         (add-run-effect
-                           {:card card
-                            :replace-access
-                            {:mandatory true
-                             :async true
-                             :msg (str "install " title ", ignoring all costs")
-                             :effect (effect (runner-install eid card {:ignore-all-cost true}))}}))}}}]
+  {:events [(assoc
+              (successful-run-replace-access
+                {:target-server target-server
+                 :ability
+                 {:async true
+                  :msg (str "install " title ", ignoring all costs")
+                  :effect (effect (runner-install eid card {:ignore-all-cost true}))}})
+              :location :hand)]
    :abilities [{:async true
                 :cost [:trash]
                 :msg message
@@ -256,28 +250,27 @@
 (defcard "Bank Job"
   {:data {:counter {:credit 8}}
    :events [(trash-on-empty :credit)
-            {:event :successful-run
-             :silent (req true)
-             :req (req (is-remote? (:server context)))
-             :effect (effect
-                       (add-run-effect
-                         {:card card
-                          :replace-access
-                          {:effect (req (letfn [(select-credits-ability [bj]
-                                                  {:prompt "How many Bank Job credits?"
-                                                   :choices {:number (req (get-counters (get-card state bj) :credit))}
-                                                   :msg (msg "gain " target " [Credits]")
-                                                   :effect (effect (add-counter :runner bj :credit (- target))
-                                                                   (gain-credits :runner eid target))})]
-                                          (if (< 1 (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))))
-                                            (continue-ability
-                                              state side
-                                              {:prompt "Select a copy of Bank Job to use"
-                                               :choices {:card #(and (installed? %)
-                                                                     (= (:title %) "Bank Job"))}
-                                               :effect (effect (continue-ability (select-credits-ability target) target nil))}
-                                              card nil)
-                                            (continue-ability state side (select-credits-ability card) card nil))))}}))}]})
+            (successful-run-replace-access
+              {:target-server :remote
+               :ability
+               {:async true
+                :effect (req (letfn [(select-credits-ability [bj]
+                                       {:prompt "How many Bank Job credits?"
+                                        :choices {:number (req (get-counters (get-card state bj) :credit))}
+                                        :msg (msg "gain " target " [Credits]")
+                                        :async true
+                                        :effect (effect (add-counter :runner bj :credit (- target))
+                                                        (gain-credits :runner eid target))})]
+                               (if (< 1 (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))))
+                                 (continue-ability
+                                   state side
+                                   {:async true
+                                    :prompt "Select a copy of Bank Job to use"
+                                    :choices {:card #(and (installed? %)
+                                                          (= (:title %) "Bank Job"))}
+                                    :effect (effect (continue-ability (select-credits-ability target) target nil))}
+                                   card nil)
+                                 (continue-ability state side (select-credits-ability card) card nil))))}})]})
 
 (defcard "Bazaar"
   (letfn [(hardware-and-in-hand? [target runner]
@@ -614,34 +607,33 @@
                          card nil))}]})
 
 (defcard "Counter Surveillance"
-  ;; TODO: Fix to use replace-access
-  {:implementation "Does not prevent access of cards installed in the root of a server"
-   :abilities [{:cost [:click 1 :trash]
-                :label "run a server"
-                :makes-run true
-                :prompt "Choose a server to run with Counter Surveillance"
-                :msg (msg "run " target)
-                :choices (req (cancellable runnable-servers))
-                :effect (req (make-run state side target nil card)
-                             (register-events
-                               state side card
-                               [{:event :successful-run
-                                 :duration :end-of-run
-                                 :silent (req true)
-                                 :effect (req (let [tags (count-tags state)]
-                                                (if (<= tags (total-available-credits state :runner eid card))
-                                                  ;; Can pay, do access
-                                                  (continue-ability
-                                                    state side
-                                                    {:cost [:credit tags]
-                                                     :msg (str "access up to " tags " cards")
-                                                     :effect
-                                                     (effect (access-bonus (target-server context) (dec tags)))}
-                                                    card targets)
-                                                  ;; Can't pay, don't access cards
-                                                  (do (system-msg state side "could not afford to use Counter Surveillance")
-                                                      ;; Cannot access any cards
-                                                      (max-access state side 0)))))}]))}]})
+  (let [ability (successful-run-replace-access
+                  {:can-access true
+                   :mandatory true
+                   :ability
+                   {:async true
+                    :effect (req (let [tags (count-tags state)]
+                                   (if (<= tags (total-available-credits state :runner eid card))
+                                     ;; Can pay, do access
+                                     (continue-ability
+                                       state :runner
+                                       {:cost [:credit tags]
+                                        :msg (str "access up to " tags " cards")
+                                        :effect (effect (access-bonus (target-server run) (dec tags)))}
+                                       card targets)
+                                     ;; Can't pay, don't access cards
+                                     (do (system-msg state :runner "could not afford to use Counter Surveillance")
+                                         ;; Cannot access any cards
+                                         (max-access state :runner 0)
+                                         (effect-completed state nil eid)))))}})]
+    {:abilities [{:cost [:click 1 :trash]
+                  :label "run a server"
+                  :makes-run true
+                  :prompt "Choose a server"
+                  :msg (msg "make a run on " target)
+                  :choices (req runnable-servers)
+                  :effect (effect (make-run target nil card)
+                                  (register-events card [(assoc ability :duration :end-of-run)]))}]}))
 
 (defcard "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
@@ -1914,22 +1906,20 @@
                                 (update! state side (assoc card :server-target target))))}]
     {:abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
-              {:event :successful-run
-               :req (req (when-let [card (get-card state card)]
-                           (and (= (zone->name (:server context)) (:server-target card))
-                                (first-event? state side :successful-run
-                                              (fn [targets]
-                                                (let [context (first targets)]
-                                                  (= (zone->name (:server context))
-                                                     (:server-target card))))))))
-               :effect (effect (add-run-effect
-                                 {:card card
-                                  :replace-access
-                                  {:mandatory true
-                                   :msg "draw 2 cards instead of accessing"
-                                   :async true
-                                   :effect (effect (update! (dissoc (get-card state card) :server-target))
-                                                   (draw eid 2 nil))}}))}
+              (assoc
+                (successful-run-replace-access
+                  {:mandatory true
+                   :ability
+                   {:msg "draw 2 cards"
+                    :async true
+                    :effect (effect (draw eid 2 nil))}})
+                :req (req (when-let [card (get-card state card)]
+                            (and (= (zone->name (:server context)) (:server-target card))
+                                 (first-event? state side :successful-run
+                                               (fn [targets]
+                                                 (let [context (first targets)]
+                                                   (= (zone->name (:server context))
+                                                      (:server-target card)))))))))
               {:event :runner-turn-ends
                :effect (effect (update! (dissoc (get-card state card) :server-target)))}]}))
 
@@ -2316,19 +2306,20 @@
                  :effect (req (when (not= target "No server")
                                 (update! state side (assoc card :server-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
-              {:event :successful-run
-               :req (req (= (zone->name (:server context))
-                            (:server-target (get-card state card))))
-               :once :per-turn
-               :silent (req true)
-               :effect (effect (add-run-effect
-                                 {:card card
-                                  :replace-access
-                                  {:mandatory true
-                                   :msg "gain 2 [Credits] instead of accessing"
-                                   :async true
-                                   :effect (effect (update! (dissoc (get-card state card) :server-target))
-                                                   (gain-credits eid 2))}}))}
+              (assoc
+                (successful-run-replace-access
+                  {:mandatory true
+                   :ability
+                   {:msg "gain 2 [Credits]"
+                    :async true
+                    :effect (effect (gain-credits eid 2))}})
+                :req (req (when-let [card (get-card state card)]
+                            (and (= (zone->name (:server context)) (:server-target card))
+                                 (first-event? state side :successful-run
+                                               (fn [targets]
+                                                 (let [context (first targets)]
+                                                   (= (zone->name (:server context))
+                                                      (:server-target card)))))))))
               {:event :runner-turn-ends
                :silent (req true)
                :effect (effect (update! (dissoc card :server-target)))}]

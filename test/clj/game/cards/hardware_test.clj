@@ -3890,6 +3890,7 @@
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
 (deftest top-hat
+  ;; Top Hat
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
@@ -3906,7 +3907,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Top Hat")
       (run-empty-server state "R&D")
-      (click-prompt state :runner "Yes") ;Top Hat Prompt
+      (click-prompt state :runner "Top Hat") ;Top Hat Prompt
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
@@ -3931,10 +3932,10 @@
         (core/gain state :runner :credit 100)
         (play-from-hand state :runner "Top Hat")
         (run-empty-server state "R&D")
-        (click-prompt state :runner "Yes") ; Top Hat activation
-        (click-prompt state :runner "1") ; Top Hat
         (click-prompt state :corp "0") ; init Ash trace
         (click-prompt state :runner "0") ; lose Ash trace
+        (click-prompt state :runner "Top Hat") ; Top Hat activation
+        (click-prompt state :runner "1") ; Top Hat
         (is (empty? (:prompt (get-runner))) "Can't trash Ash"))))
   (testing "Mad Dash interaction issue #4542"
     (do-game
@@ -3957,7 +3958,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "Top Hat") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
       (click-prompt state :runner "No action")
@@ -3966,7 +3967,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "Top Hat") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
       (click-prompt state :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")

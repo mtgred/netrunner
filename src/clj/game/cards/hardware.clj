@@ -1546,17 +1546,14 @@
                   :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"
-  {:events
-   [{:event :successful-run
-     :req (req (= :archives (target-server context)))
-     :effect (effect (add-run-effect
-                       {:card card
-                        :replace-access
-                        {:prompt "Choose one faceup card to add to the top of R&D"
-                         :req (req (seq (filter :seen (:discard corp))))
-                         :choices (req (filter :seen (:discard corp)))
-                         :msg (msg "add " (:title target) " to the top of R&D")
-                         :effect (effect (move :corp target :deck {:front true}))}}))}]})
+  {:events [(successful-run-replace-access
+              {:target-server :archives
+               :ability
+               {:prompt "Choose one faceup card to add to the top of R&D"
+                :req (req (seq (filter :seen (:discard corp))))
+                :choices (req (filter :seen (:discard corp)))
+                :msg (msg "add " (:title target) " to the top of R&D")
+                :effect (effect (move :corp target :deck {:front true}))}})]})
 
 (defcard "Reflection"
   {:in-play [:memory 1]
@@ -1958,32 +1955,17 @@
                               card nil)))}]})
 
 (defcard "Top Hat"
-  {:events [{:event :successful-run
-             :interactive (req true)
-             :req (req (and (= :rd (target-server context))
-                            (not= (:max-access run) 0)))
-             :async true
-             :effect
-             (effect
-               (continue-ability
-                 {:optional
-                  {:prompt "Use Top Hat to access a single card?"
-                   :yes-ability
-                   {:req (req (pos? (count (:deck corp))))
-                    :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
-                    :choices (map str (take (count (:deck corp)) (range 1 6)))
-                    :msg (msg "only access the card at position " target " of R&D")
-                    :effect (effect
-                              (add-run-effect
-                                (let [t target]
-                                  {:card card
-                                   :replace-access
-                                   {:mandatory true
-                                    :async true
-                                    :effect (req (if (not (get-only-card-to-access state))
-                                                   (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")
-                                                   (effect-completed state side eid)))}})))}}}
-                 card nil))}]})
+  {:events [(successful-run-replace-access
+              {:target-server :rd
+               :ability {:req (req (and (not= (:max-access run) 0)
+                                        (pos? (count (:deck corp)))))
+                         :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                         :choices (req (map str (take (count (:deck corp)) (range 1 6))))
+                         :msg (msg "only access the card at position " target " of R&D")
+                         :async true
+                         :effect (req (if (get-only-card-to-access state)
+                                        (effect-completed state nil eid)
+                                        (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
 
 (defcard "Turntable"
   {:in-play [:memory 1]

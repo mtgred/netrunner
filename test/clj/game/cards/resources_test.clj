@@ -242,7 +242,7 @@
         (is (some? bj2) "Bank Job 2 still installed")
         (is (= 1 (count (:discard (get-runner)))) "One Bank Job moved to heap")
         (is (= 8 (get-counters (refresh bj2) :credit)) "8 credits remaining on 2nd copy"))))
-  (testing "Security Testing takes priority"
+  (testing "You can choose between Security Testing and Bank Job"
     (do-game
       (new-game {:corp {:deck ["PAD Campaign"]}
                  :runner {:deck ["Bank Job" "Security Testing"]}})
@@ -255,6 +255,7 @@
       (click-prompt state :runner "Server 1")
       (is (= 6 (:credit (get-runner))))
       (run-empty-server state "Server 1")
+      (click-prompt state :runner "Security Testing")
       (is (empty? (:prompt (get-runner))) "No Bank Job replacement choice")
       (is (= 8 (:credit (get-runner))) "Security Testing paid 2c"))))
 
@@ -262,8 +263,7 @@
   ;; Bazaar - Only triggers when installing from Grip
   (testing "basic test"
     (do-game
-      (new-game {:runner {:deck ["Street Peddler"
-                                "Bazaar"
+      (new-game {:runner {:deck ["Street Peddler" "Bazaar"
                                 (qty "Spy Camera" 6)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
@@ -654,7 +654,7 @@
           (is (refresh councilman) "Councilman's trash is prevented"))))))
 
 (deftest counter-surveillance
-  ;; Counter-Surveillance
+  ;; Counter Surveillance
   (testing "Trash to run, on successful run access cards equal to Tags and pay that amount in credits"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
@@ -1567,7 +1567,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Eden Shard")
       (is (= 5 (:credit (get-runner))) "Eden Shard installed for 0c")
       (is (not (:run @state)) "Run is over")
       (card-ability state :runner (get-resource state 0) 0)
@@ -1581,7 +1581,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Access cards")
       (click-prompt state :runner "No action")
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
