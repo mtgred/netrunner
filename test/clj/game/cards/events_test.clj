@@ -4555,7 +4555,8 @@
       (trash-from-hand state :runner "Morning Star")
       (play-run-event state "Retrieval Run" :archives)
       (click-prompt state :runner "Retrieval Run")
-      (is (not (:run @state)) "Retrieval run didn't attempt to install from heap.")))
+      (is (empty? (:prompt (get-runner))) "Retrieval run didn't attempt to install from heap.")
+      (is (not (:run @state)) "Run is complete")))
   )
 
 (deftest rigged-results
