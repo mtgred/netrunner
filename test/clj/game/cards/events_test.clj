@@ -1437,7 +1437,7 @@
      (play-from-hand state :runner "Direct Access")
      (click-prompt state :runner "Archives")
      (run-continue state)
-     (is (= "Waiting for Runner to resolve run-ends triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
+     (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
      (click-prompt state :runner "Yes")
      (click-draw state :runner)
      (take-credits state :runner)

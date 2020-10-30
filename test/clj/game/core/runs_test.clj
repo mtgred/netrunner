@@ -1,6 +1,7 @@
 (ns game.core.runs-test
   (:require [game.core :as core]
             [game.core-test :refer :all]
+            [game.core.card :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
@@ -185,7 +186,29 @@
       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
       (is (= "Ice Wall" (:title (:ice (ffirst (core/turn-events state :corp :approach-ice))))))
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
-      (is (last-log-contains? state "Runner approaches Ice Wall")))))
+      (is (last-log-contains? state "Runner approaches Ice Wall"))))
+  (testing "cr 1.4 6.8.2c: any other priority window is closed normally"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Embolus" "Giordano Memorial Field" "Hostile Takeover"]
+                        :credits 20}})
+      (play-from-hand state :corp "Embolus" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (core/add-counter state :corp (get-content state :remote1 0) :power 4)
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (rez state :corp (get-content state :remote2 0))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote3)
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        -1 (get-counters (get-content state :remote1 0) :power)
+        "Embolus loses a power counter even tho GMF is resolved first and ends the run"
+        (run-empty-server state :remote2)
+        (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+        (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
+        (click-prompt state :corp "Giordano Memorial Field")
+        (click-prompt state :runner "End the run")))))
 
 (deftest replace-access
   (testing "'You may' only"

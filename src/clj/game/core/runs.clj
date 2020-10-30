@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [ability-as-handler checkpoint end-of-phase-checkpoint gather-events make-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync trigger-suppress unregister-floating-events]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint make-pending-event pay queue-event resolve-ability unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice]]
@@ -560,25 +560,31 @@
   [state _]
   (swap! state update-in [:end-run :end-run-prevent] (fnil inc 0)))
 
+(defn- register-unsuccessful-run
+  [state side eid]
+  (let [run (:run @state)]
+    (swap! state update-in [:runner :register :unsuccessful-run] conj (first (:server run)))
+    (swap! state assoc-in [:run :unsuccessful] true)
+    (handle-end-run state side)
+    (queue-event state :unsuccessful-run run)
+    (checkpoint state nil eid)))
+
 (defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
   ([state side eid]
    (if (get-in @state [:run :successful])
      (do (handle-end-run state side)
-         (effect-completed state side eid))
-     (let [run (:run @state)
-           server (first (get-in @state [:run :server]))]
-       (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-       (swap! state assoc-in [:run :unsuccessful] true)
-       (handle-end-run state side)
-       (trigger-event-sync state side eid :unsuccessful-run run)))))
+         (effect-completed state nil eid))
+     (register-unsuccessful-run state side eid))))
 
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
-  ([state side eid card]
+  ([state side eid card] (end-run state side eid card nil))
+  ([state side eid card {:keys [unpreventable] :as args}]
    (swap! state update-in [:end-run] dissoc :end-run-prevent)
    (let [prevent (get-prevent-list state :runner :end-run)]
-     (if (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card})
+     (if (and (not unpreventable)
+              (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
        (do (system-msg state :runner "has the option to prevent the run from ending")
            (show-wait-prompt state :corp "Runner to prevent the run from ending")
            (show-prompt state :runner nil
@@ -598,10 +604,9 @@
 
 (defn- resolve-jack-out
   [state side eid]
-  (wait-for (end-run state side nil)
-            (system-msg state side "jacks out")
-            (wait-for (trigger-event-sync state side :jack-out)
-                      (complete-with-result state side eid true))))
+  (queue-event state :jack-out nil)
+  (system-msg state side "jacks out")
+  (end-run state side eid {:unpreventable true}))
 
 (defn jack-out
   "The runner decides to jack out."
@@ -626,11 +631,10 @@
                                                 (resolve-jack-out state side eid))))))
                        (do (when-not (string/blank? payment-str)
                              (system-msg state :runner (str payment-str " to jack out")))
-                           (resolve-jack-out state side eid)
-                           (effect-completed state side (make-result eid false)))))
-                   (effect-completed state side (make-result eid false))))
+                           (resolve-jack-out state side eid))))
+                   (complete-with-result state side eid false)))
        (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
-           (effect-completed state side (make-result eid false)))))))
+           (complete-with-result state side eid false))))))
 
 (defn- run-end-fx
   [state side {:keys [eid successful unsuccessful]}]
@@ -639,48 +643,38 @@
     successful
     (do
       (play-sfx state side "run-successful")
-      (effect-completed state side (make-result eid {:successful true})))
+      (complete-with-result state side eid {:successful true}))
     ;; Unsuccessful
     unsuccessful
     (do
       (play-sfx state side "run-unsuccessful")
-      (effect-completed state side (make-result eid {:unsuccessful true})))
+      (complete-with-result state side eid {:unsuccessful true}))
     ;; Neither
     :else
-    (effect-completed state side (make-result eid nil))))
-
-(defn run-cleanup-2
-  [state side]
-  (let [run (:run @state)]
-    (swap! state assoc-in [:runner :register :last-run] run)
-    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-    (swap! state assoc-in [:runner :run-credit] 0)
-    (swap! state assoc :run nil)
-    (wait-for (trigger-event-simult state side :run-ends nil run)
-              (unregister-floating-effects state side :end-of-run)
-              (unregister-floating-events state side :end-of-run)
-              (reset-all-ice state side)
-              (clear-run-register! state)
-              (run-end-fx state side run))))
+    (complete-with-result state side eid nil)))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [eid (:eid (:run @state))
-        event (when (= :encounter-ice (get-in @state [:run :phase]))
-                :end-of-encounter)
-        ice (when (= :encounter-ice (get-in @state [:run :phase]))
-              (or (get-current-ice state)
-                  (get-in @state [:run :current-ice])))]
+  (let [event (when (= :encounter-ice (get-in @state [:run :phase]))
+                :end-of-encounter)]
+    (queue-event state event {:ice (get-current-ice state)})
     (swap! state assoc-in [:run :ended] true)
-    (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
-                                       event
-                                       {:ice ice})
-              ;; This is redundant when we're in an encounter
-              ;; but necessary all other times until we handle :expired durations
-              (unregister-floating-effects state side :end-of-encounter)
-              (unregister-floating-events state side :end-of-encounter)
-              (run-cleanup-2 state side))))
+    (let [run (:run @state)
+          eid (:eid run)]
+      (swap! state assoc-in [:runner :register :last-run] run)
+      (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+      (swap! state assoc-in [:runner :run-credit] 0)
+      (swap! state assoc :run nil)
+      (queue-event state :run-ends run)
+      (wait-for (checkpoint state nil (make-eid state eid) nil)
+                (unregister-floating-effects state side :end-of-encounter)
+                (unregister-floating-events state side :end-of-encounter)
+                (unregister-floating-effects state side :end-of-run)
+                (unregister-floating-events state side :end-of-run)
+                (reset-all-ice state side)
+                (clear-run-register! state)
+                (run-end-fx state side run)))))
 
 (defn handle-end-run
   "Initiate run resolution."
