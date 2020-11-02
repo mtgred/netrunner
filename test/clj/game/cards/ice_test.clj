@@ -838,11 +838,11 @@
         (run-on state "HQ")
         (rez state :corp (get-ice state :hq 0))
         (run-continue state)
-        (is (= "Choose 2 cards in your Grip to add to the top of the Stack (first card targeted will be topmost)"
+        (is (= "Choose 2 cards in your Grip to add to the top of the Stack (second card targeted will be topmost)"
                (:msg (prompt-map :runner)))
             "Runner is prompted")
-        (click-card state :runner "Sure Gamble")
         (click-card state :runner "Easy Mark")
+        (click-card state :runner "Sure Gamble")
         (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
         (is (= "Easy Mark" (:title (second (:deck (get-runner))))))))
     (testing "1 card in hand"
@@ -858,7 +858,7 @@
         (run-on state "HQ")
         (rez state :corp (get-ice state :hq 0))
         (run-continue state)
-        (is (= "Choose 1 card in your Grip to add to the top of the Stack (first card targeted will be topmost)"
+        (is (= "Choose 1 card in your Grip to add to the top of the Stack (second card targeted will be topmost)"
                (:msg (prompt-map :runner)))
             "Runner is prompted")
         (click-card state :runner "Sure Gamble")

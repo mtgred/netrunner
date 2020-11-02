@@ -982,13 +982,13 @@
                             (continue-ability
                               :runner
                               (let [n (min 2 (count (:hand runner)))]
-                                {:prompt (str "Choose " (quantify n "card") " in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                                {:prompt (str "Choose " (quantify n "card") " in your Grip to add to the top of the Stack (second card targeted will be topmost)")
                                  :choices {:max n
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
                                  :msg (msg "add " n " cards from their Grip to the top of the Stack")
-                                 :effect (req (doseq [c (reverse targets)]
+                                 :effect (req (doseq [c targets]
                                                 (move state :runner c :deck {:front true})))})
                               card nil))}
    :subroutines [end-the-run-if-tagged

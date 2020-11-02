@@ -1513,6 +1513,7 @@
 
 (defcard "Personalized Portal"
   {:events [{:event :corp-turn-begins
+             :interactive (req true)
              :async true
              :effect (req (wait-for (draw state :runner 1 nil)
                                     (let [cnt (count (get-in @state [:runner :hand]))
