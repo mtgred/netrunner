@@ -17,6 +17,7 @@
             [nr.utils :refer [slug->format cond-button]]
             [nr.ws :as ws]
             [reagent.core :as r]
+            [differ.core :as differ]
             [reagent-modals.modals :as reagent-modals]
             [taoensso.sente :as sente]))
 
@@ -33,22 +34,48 @@
               (:date game)])
            games))
 
+
+(defn process-games-update 
+  [{:keys [diff notification] :as msg}]
+  (swap! app-state update :games
+          (fn [games]
+            (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
+                  update-diff (reduce-kv
+                                (fn [m k v]
+                                  (assoc m k (merge (get m k {}) v)))
+                                gamemap
+                                (:update diff))
+                  delete-diff (apply dissoc update-diff (:delete diff))]
+              (sort-games-list (vals delete-diff)))))
+  (when (and notification (not (:gameid @app-state)))
+    (play-sound notification)))
+
 (ws/register-ws-handler!
   :games/list
-  #(swap! app-state assoc :games (sort-games-list %)))
+  (fn [msg]
+    (let [gamemap (into {} (map #(assoc {} (:gameid %) %) msg))
+          missing-gameids (->> (:games @app-state)
+                           (remove #(get gamemap (:gameid %)))
+                           (map :gameid))]
+      (process-games-update {:diff {:update gamemap
+                                    :delete missing-gameids}}))))
 
 (ws/register-ws-handler!
   :games/diff
-  (fn [{:keys [diff notification] :as msg}]
+  process-games-update)
+
+(ws/register-ws-handler!
+  :games/differ
+  (fn [{:keys [diff] :as msg}]
     (swap! app-state update-in [:games]
            (fn [games]
              (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
-                   create-diff (merge gamemap (:create diff))
-                   update-diff (merge create-diff (:update diff))
-                   delete-diff (apply dissoc update-diff (keys (:delete diff)))]
-               (sort-games-list (vals delete-diff)))))
-    (when (and notification (not (:gameid @app-state)))
-      (play-sound notification))))
+                   update-diff (reduce-kv
+                                  (fn [m k v]
+                                    (assoc m k (reduce #(differ/patch %1 %2) (get m k {}) v)))
+                                  gamemap
+                                  (:update diff))]
+                (sort-games-list (vals update-diff)))))))
 
 (ws/register-ws-handler!
   :lobby/select
@@ -396,7 +423,7 @@
              players))]
         (when (:allow-spectator game)
           [:div.spectators
-           (let [c (count (:spectators game))]
+           (let [c (:spectator-count game)]
              [:h3 (str c " Spectator" (when (not= c 1) "s"))])
            (for [spectator (:spectators game)
                  :let [_id (get-in spectator [:user :_id])]]

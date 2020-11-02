@@ -46,7 +46,7 @@
          [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
-         (let [c (count (:spectators game))]
+         (let [c (:spectator-count game)]
            (when (pos? c)
              [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
               [:div.blue-shade.spectators
