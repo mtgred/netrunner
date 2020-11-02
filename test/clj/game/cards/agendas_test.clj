@@ -605,13 +605,26 @@
 
 (deftest chronos-project
   ;; Chronos Project
-  (do-game
-    (new-game {:corp {:deck ["Chronos Project"]}})
-    (dotimes [_ 3]
-      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard))
-    (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap")
-    (play-and-score state "Chronos Project")
-    (is (zero? (count (:discard (get-runner)))) "Runner should have 0 cards in heap")))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck ["Chronos Project"]}})
+      (dotimes [_ 3]
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard))
+      (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap")
+      (play-and-score state "Chronos Project")
+      (is (zero? (count (:discard (get-runner)))) "Runner should have 0 cards in heap")))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck ["Chronos Project" "Blacklist" "Biotic Labor"]
+                        :credits 20}})
+      (dotimes [_ 3]
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard))
+      (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap")
+      (play-from-hand state :corp "Biotic Labor")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (play-and-score state "Chronos Project")
+      (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap"))))
 
 (deftest city-works-project
   ;; City Works Project

@@ -188,7 +188,8 @@
                                       :once :per-run
                                       :duration :end-of-run
                                       :optional
-                                      {:req (req (and (:successful target)))
+                                      {:req (req (and (:successful target)
+                                                      (not (zone-locked? state :runner :discard))))
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
@@ -247,7 +248,8 @@
                             (effect-completed state side eid))))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
-     :abilities [{:label "Add a card from the heap to the top of the stack"
+     :abilities [{:req (req (not (zone-locked? state :runner :discard)))
+                  :label "Add a card from the heap to the top of the stack"
                   :cost [:remove-from-game]
                   :show-discard true
                   :choices {:card #(and (runner? %)
@@ -306,7 +308,7 @@
   {:abilities [{:prompt "Select a program to install from your Heap"
                 :label "install card from heap"
                 :show-discard true
-                :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                :req (req (and (not (zone-locked? state :runner :discard))
                                (not (install-locked? state side))
                                (some #(and (program? %)
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
@@ -1772,6 +1774,7 @@
    :abilities [{:async true
                 :label "Install a program from the heap"
                 :req (req (and (not (install-locked? state side))
+                               (not (zone-locked? state :runner :discard))
                                (some #(and (program? %)
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -3})]))

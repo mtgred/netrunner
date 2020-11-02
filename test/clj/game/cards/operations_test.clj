@@ -217,16 +217,28 @@
 
 (deftest ark-lockdown
   ;; Ark Lockdown
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ark Lockdown"]}
-               :runner {:hand ["Sure Gamble"]
-                        :discard [(qty "Sure Gamble" 2) "Corroder"]}})
-    (play-from-hand state :corp "Ark Lockdown")
-    (click-prompt state :corp "Sure Gamble")
-    (is (= ["Corroder"] (->> (get-runner) :discard (map :title))) "Both copies of Sure Gamble should be rfg")
-    (is (= ["Sure Gamble"] (->> (get-runner) :hand (map :title))) "Sure Gambles in hand should be around")
-    (is (= ["Sure Gamble" "Sure Gamble"] (->> (get-runner) :rfg (map :title))) "Two copies of Sure Gamble should be rfg'd")))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Ark Lockdown"]}
+                 :runner {:hand    ["Sure Gamble"]
+                          :discard [(qty "Sure Gamble" 2) "Corroder"]}})
+      (play-from-hand state :corp "Ark Lockdown")
+      (click-prompt state :corp "Sure Gamble")
+      (is (= ["Corroder"] (->> (get-runner) :discard (map :title))) "Both copies of Sure Gamble should be rfg")
+      (is (= ["Sure Gamble"] (->> (get-runner) :hand (map :title))) "Sure Gambles in hand should be around")
+      (is (= ["Sure Gamble" "Sure Gamble"] (->> (get-runner) :rfg (map :title))) "Two copies of Sure Gamble should be rfg'd")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Ark Lockdown" "Blacklist"]}
+                 :runner {:hand    ["Sure Gamble"]
+                          :discard [(qty "Sure Gamble" 2) "Corroder"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (play-from-hand state :corp "Ark Lockdown")
+      (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+      (is (empty? (->> (get-runner) :rfg (map :title))) "No cards should be rfg'd"))))
 
 (deftest attitude-adjustment
   ;; Attitude Adjustment

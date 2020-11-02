@@ -46,6 +46,7 @@
              :req (req (and (in-discard? card)
                             (has-subtype? target ice-type)
                             (not (install-locked? state :runner))
+                            (not (zone-locked? state :runner :discard))
                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) card nil [:credit (install-cost state side card)])))
              :effect (effect
                        (continue-ability
@@ -1917,7 +1918,8 @@
                                       (is-central? (second (get-zone %))))}
                 :msg (msg "host it on " (card-str state target))
                 :effect (effect (host target card))}
-               {:label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
+               {:req (req (not (zone-locked? state :runner :discard)))
+                :label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
                 :async true
                 :effect (req (let [this-pawn (:cid card)]
                                (wait-for (trash state side card nil)
@@ -2451,7 +2453,8 @@
 (defcard "Trope"
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:label "shuffle cards from heap into stack"
+   :abilities [{:req (req (not (zone-locked? state :runner :discard)))
+                :label "shuffle cards from heap into stack"
                 :async true
                 :effect
                 (effect

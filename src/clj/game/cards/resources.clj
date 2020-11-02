@@ -379,9 +379,9 @@
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req true)}
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
    :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (seq (get-in @state [:runner :locked :discard])))))
+                               (not (zone-locked? state :runner :discard))))
                 :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
@@ -674,7 +674,8 @@
               {:event :runner-turn-ends
                :async true
                :location :discard
-               :req (req (not (install-locked? state :runner)))
+               :req (req (and (not (install-locked? state :runner))
+                              (not (zone-locked? state :runner :discard))))
                :effect (effect
                          (continue-ability
                            {:optional
@@ -824,7 +825,8 @@
                                            (:discard runner)))]
     {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
-                  :req (req (seq (eligible-cards runner)))
+                  :req (req (and (seq (eligible-cards runner))
+                                 (not (zone-locked? state :runner :discard))))
                   :cost [:click 1 :power 3]
                   :prompt "Select a card to add to grip?"
                   :choices (req (eligible-cards runner))
@@ -2084,7 +2086,8 @@
 
 (defcard "Reclaim"
   {:abilities
-   [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
+   [{:req (req (not (zone-locked? state :runner :discard)))
+     :label "Install a program, piece of hardware, or virtual resource from your Heap"
      :cost [:click 1 :trash :trash-from-hand]
      :effect
      (effect
@@ -2572,7 +2575,8 @@
                                 (add-counter card :power 1))}
                {:label "Shuffle back cards with [Trash] abilities"
                 :req (req (and (pos? (get-counters card :power))
-                               (some has-trash-ability? (:discard runner))))
+                               (some has-trash-ability? (:discard runner))
+                               (not (zone-locked? state :runner :discard))))
                 :cost [:click 1 :remove-from-game]
                 :show-discard true
                 :choices {:max (req (* 2 (get-counters card :power)))
@@ -2677,7 +2681,8 @@
   (letfn [(events [runner] (filter #(and (event? %) (not (has-subtype? % "Priority"))) (:discard runner)))]
     {:abilities [{:async true
                   :cost [:click 1 :forfeit]
-                  :req (req (pos? (count (events runner))))
+                  :req (req (and (pos? (count (events runner)))
+                                 (not (zone-locked? state :runner :discard))))
                   :label "Play an event from your Heap, ignoring all costs"
                   :prompt "Choose an event to play"
                   :msg (msg "play " (:title target) " from the Heap, ignoring all costs")

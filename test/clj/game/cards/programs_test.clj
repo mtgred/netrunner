@@ -640,7 +640,20 @@
         (let [bo (get-program state 0)]
           (run-on state :hq)
           (run-continue state)
-          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar"))))))
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar")))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Blacklist"]}
+                 :runner {:deck [(qty "Black Orchestra" 1)]}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Black Orchestra")
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "Black Orchestra prompt did not come up"))))
 
 (deftest brahman
   ;; Brahman
@@ -3118,7 +3131,20 @@
                              "Paid 3 to fully break Rototurret with MKUltra"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
           (is (= 3 (core/get-strength (refresh pc))) "Pumped MKUltra up to str 3")
-          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))))
+          (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck ["Rototurret" "Blacklist"]}
+                 :runner {:deck [(qty "MKUltra" 1)]}})
+      (play-from-hand state :corp "Rototurret" "Archives")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "MKUltra")
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "MKUltra prompt did not come up"))))
 
 (deftest multithreader
   ;; Multithreader
@@ -3510,7 +3536,22 @@
         (click-prompt state :runner "No")
         (click-prompt state :runner "No")
         (click-prompt state :runner "No")
-        (is (empty? (:prompt (get-runner))) "No further prompts to install heap breakers")))))
+        (is (empty? (:prompt (get-runner))) "No further prompts to install heap breakers"))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck ["Vanilla" "Blacklist"]}
+                 :runner {:deck [(qty "Paperclip" 2)]}})
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Paperclip")
+      (run-on state "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "Paperclip prompt did not come up")
+      (fire-subs state (get-ice state :archives 0))
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"
@@ -3678,6 +3719,35 @@
       (dotimes [_ 2]
         (click-card state :runner "Paricia"))
       (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
+
+(deftest pawn
+  ;; Pawn
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
+                 :runner {:deck ["Pawn" "Knight"]}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Knight")
+      (play-from-hand state :runner "Pawn")
+      ;;currently Pawn successful run check is not implemented, nor is hosted location check
+      (card-ability state :runner (get-program state 0) 2)
+      (click-card state :runner (find-card "Knight" (:discard (get-runner))))
+      (is (not (nil? (find-card "Pawn" (:discard (get-runner))))))))
+  (testing "Heap locked"
+    (do-game
+      (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
+                 :runner {:deck ["Pawn" "Knight"]}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Knight")
+      (play-from-hand state :runner "Pawn")
+      (card-ability state :runner (get-program state 0) 2)
+      (is (empty? (:prompt (get-runner))) "Install prompt did not come up")
+      (is (nil? (find-card "Pawn" (:discard (get-runner)))))
+      (is (not (nil? (find-card "Knight" (:discard (get-runner)))))))))
 
 (deftest pelangi
   ;; Pelangi
@@ -4665,6 +4735,49 @@
         (run-continue state)
         (run-continue state)
         (is (= 2 (get-strength (refresh corr))) "Corroder returned to normal strength")))))
+
+(deftest trope
+  ;; Trope
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Trope" "Easy Mark"]
+                          :discard ["Sure Gamble" "Easy Mark" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trope")
+      ;; wait 3 turns to make Trope have 3 counters
+      (dotimes [n 3]
+        (take-credits state :runner)
+        (take-credits state :corp))
+      (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
+      (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
+      (card-ability state :runner (get-program state 0) 0)
+      (is (not (empty? (:prompt (get-runner)))) "Shuffle prompt came up")
+      (click-card state :runner (find-card "Easy Mark" (:discard (get-runner))))
+      (click-card state :runner (find-card "Dirty Laundry" (:discard (get-runner))))
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+      (is (zero? (count (:discard (get-runner)))) "0 cards in discard")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blacklist"]}
+                 :runner {:hand ["Trope" "Easy Mark"]
+                          :discard ["Sure Gamble" "Easy Mark" "Dirty Laundry"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trope")
+      ;; wait 3 turns to make Trope have 3 counters
+      (dotimes [n 3]
+        (take-credits state :runner)
+        (take-credits state :corp))
+      (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
+      (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up"))))
 
 (deftest trypano
   (testing "Hivemind and Architect interactions"

@@ -3210,19 +3210,30 @@
 
 (deftest steve-cambridge-master-grifter
   ;; Steve
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Hedge Fund"]}
-               :runner {:id "Steve Cambridge: Master Grifter"
-                        :discard ["Sure Gamble" "Easy Mark"]}})
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (click-card state :runner "Sure Gamble")
-    (click-card state :runner "Easy Mark")
-    (click-prompt state :corp "Sure Gamble")
-    (click-prompt state :runner "No action")
-    (is (= "Easy Mark" (-> (get-runner) :hand first :title)) "Easy Mark should be in the hand")
-    (is (= "Sure Gamble" (-> (get-runner) :rfg first :title)) "Sure Gamble should be removed from game")))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Hedge Fund"]}
+                 :runner {:id      "Steve Cambridge: Master Grifter"
+                          :discard ["Sure Gamble" "Easy Mark"]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-card state :runner "Sure Gamble")
+      (click-card state :runner "Easy Mark")
+      (click-prompt state :corp "Sure Gamble")
+      (click-prompt state :runner "No action")
+      (is (= "Easy Mark" (-> (get-runner) :hand first :title)) "Easy Mark should be in the hand")
+      (is (= "Sure Gamble" (-> (get-runner) :rfg first :title)) "Sure Gamble should be removed from game")))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
+                 :runner {:id      "Steve Cambridge: Master Grifter"
+                          :discard ["Sure Gamble" "Easy Mark"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No Steve Cambridge prompt, go direct to access."))))
 
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward
@@ -3458,26 +3469,44 @@
 
 (deftest wyvern-chemically-enhanced
   ;; Wyvern: Chemically Enhanced
-  (do-game
-    (new-game {:corp {:deck [(qty "Launch Campaign" 3)]}
-               :runner {:id "Wyvern: Chemically Enhanced"
-                        :deck [(qty "Sure Gamble" 2) "Corroder"
-                               "Clone Chip" "Easy Mark"]}})
-    (play-from-hand state :corp "Launch Campaign" "New remote")
-    (play-from-hand state :corp "Launch Campaign" "New remote")
-    (take-credits state :corp)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (play-from-hand state :runner "Sure Gamble")
-    (play-from-hand state :runner "Easy Mark")
-    (play-from-hand state :runner "Corroder")
-    (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay 2 [Credits] to trash")  ;; trash Launch Campaign, should trigger wyvern
-    (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
-        "Sure Gamble still in Wyvern's discard")
-    (is (some #(= "Easy Mark" (:title %)) (:deck (get-runner))) "Easy Mark moved to deck")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Clone Chip")
-    (run-empty-server state "Server 2")
-    (click-prompt state :runner "Pay 2 [Credits] to trash")
-    (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Launch Campaign" 3)]}
+                 :runner {:id   "Wyvern: Chemically Enhanced"
+                          :deck [(qty "Sure Gamble" 2) "Corroder"
+                                 "Clone Chip" "Easy Mark"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Easy Mark")
+      (play-from-hand state :runner "Corroder")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 2 [Credits] to trash") ;; trash Launch Campaign, should trigger wyvern
+      (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
+          "Sure Gamble still in Wyvern's discard")
+      (is (some #(= "Easy Mark" (:title %)) (:deck (get-runner))) "Easy Mark moved to deck")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Clone Chip")
+      (run-empty-server state "Server 2")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")))
+  (testing "Blacklist Rezzed"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Launch Campaign" 3) "Blacklist"]}
+                 :runner {:id   "Wyvern: Chemically Enhanced"
+                          :deck [(qty "Sure Gamble" 2) "Corroder"
+                                 "Clone Chip" "Easy Mark"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote2 0)))
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Corroder")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Pay 2 [Credits] to trash") ;; trash Launch Campaign, should trigger wyvern
+      (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
+          "Sure Gamble still in Wyvern's discard"))))
