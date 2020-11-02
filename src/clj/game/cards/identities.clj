@@ -352,16 +352,18 @@
                                :msg (msg "look at the Runner's Grip ( "
                                          (string/join ", " (map :title (sort-by :title (:hand runner))))
                                          " ) and select the card that is trashed")
-                               :effect (req (continue-ability state :corp
-                                        {:prompt "Select a card to trash"
-                                         :choices (req (:hand runner))
-                                         :not-distinct true
-                                         :msg (msg "choose " (:title target) " to trash")
-                                         :effect (req (clear-wait-prompt state :runner)
-                                                      (chosen-damage state :corp target))} 
-                                        nil nil))}
-                              :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                        (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}
+                               :effect (req (continue-ability
+                                              state :corp
+                                              {:prompt "Select a card to trash"
+                                               :choices (req (:hand runner))
+                                               :not-distinct true
+                                               :msg (msg "choose " (:title target) " to trash")
+                                               :effect (req (clear-wait-prompt state :runner)
+                                                            (chosen-damage state :corp target))}
+                                              card nil))}
+                              :no-ability
+                              {:effect (req (clear-wait-prompt state :runner)
+                                            (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}
                             card nil))}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
