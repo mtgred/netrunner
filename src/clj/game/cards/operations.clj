@@ -122,7 +122,8 @@
 
 (defcard "Ark Lockdown"
   {:async true
-   :req (req (not-empty (:discard runner)))
+   :req (req (and (not-empty (:discard runner))
+                  (not (zone-locked? state :runner :discard))))
    :prompt "Name a card to remove all copies in the Heap from the game"
    :choices (req (cancellable (:discard runner) :sorted))
    :msg (msg "remove all copies of " (:title target) " in the Heap from the game")

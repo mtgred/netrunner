@@ -1022,7 +1022,26 @@
       (run-continue state)
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (empty? (:hand (get-runner))) "No Compile prompt"))))
+      (is (empty? (:hand (get-runner))) "No Compile prompt")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist" "Enigma"]}
+                 :runner {:discard ["Gordian Blade"]
+                          :hand    ["Compile"]
+                          :credits 15}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "Archives")
+      (rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= "Install from where?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
+      (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack"))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
@@ -1291,7 +1310,24 @@
     (click-prompt state :runner (find-card "Cache" (:discard (get-runner))))
     (is (seq (:prompt (get-runner))) "Recurring a virus card causes Déjà Vu to prompt for second virus to recur")
     (click-prompt state :runner (find-card "Datasucker" (:discard (get-runner))))
-    (is (= 3 (count (:hand (get-runner)))) "Three cards in after playing second Déjà Vu")))
+    (is (= 3 (count (:hand (get-runner)))) "Three cards in after playing second Déjà Vu"))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist"]}
+                 :runner {:deck [(qty "Déjà Vu" 2)
+                                 "Cache"
+                                 "Datasucker"
+                                 "Dirty Laundry"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Cache")
+      (trash-from-hand state :runner "Datasucker")
+      (trash-from-hand state :runner "Dirty Laundry")
+      (is (= 2 (count (:hand (get-runner)))) "Two cards in hand prior to playing Déjà Vu")
+      (play-from-hand state :runner "Déjà Vu")
+      (is (empty? (:prompt (get-runner))) "Prompt did not come up"))))
 
 (deftest demolition-run
   ;; Demolition Run - Trash at no cost
@@ -2425,12 +2461,14 @@
       (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
       (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
-  (testing "Cannot play with empty heap"
+  (testing "Can play with empty heap"
     (do-game
-      (new-game {:runner {:hand ["Harmony AR Therapy"]}})
+      (new-game {:runner {:hand ["Harmony AR Therapy"]
+                          :deck ["Sure Gamble"]}})
       (take-credits state :corp)
+      (is (zero? (count (:discard (get-runner)))) "Heap is empty")
       (play-from-hand state :runner "Harmony AR Therapy")
-      (is (empty? (:prompt (get-runner))) "HART was not played")))
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
   (testing "Shuffle back less than 5 cards"
     (do-game
       (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
@@ -2477,6 +2515,19 @@
       (click-prompt state :runner "OK")
       (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
       (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blacklist"]}
+                 :runner {:discard [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :hand ["Harmony AR Therapy"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (is (= 12 (count (:discard (get-runner)))) "Well stocked Heap")
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 12 (count (:discard (get-runner)))) "Well stocked Heap")
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
 
 (deftest high-stakes-job
@@ -3154,6 +3205,22 @@
       (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
       (is (empty? (:deck (get-runner))) "No cards in deck")
       (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
+      (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
+                 :runner {:hand ["Labor Rights"] :deck [(qty "Sure Gamble" 3) (qty "Lawyer Up" 3) "Knifed"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
+      (is (= 7 (count (:deck (get-runner)))) "Starts with 7 cards in deck")
+      (play-from-hand state :runner "Labor Rights")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up")
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+      (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
+      (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
       (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg"))))
 
 (deftest lawyer-up
@@ -3349,7 +3416,22 @@
     (is (= 5 (count (:hand (get-runner)))) "Runner should draw 5 cards")
     (is (zero? (count (:deck (get-runner)))) "Stack should be empty")
     (is (zero? (count (:discard (get-runner)))) "Heap should be empty")
-    (is (= "Levy AR Lab Access" (:title (get-rfg state :runner 0))) "Levy should be rfg'd")))
+    (is (= "Levy AR Lab Access" (:title (get-rfg state :runner 0))) "Levy should be rfg'd"))
+  (testing "Heap Locked"
+      (do-game
+        (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                            :hand ["Blacklist"]}
+                   :runner {:deck ["Magnum Opus"]
+                            :hand ["Levy AR Lab Access" "Easy Mark"]
+                            :discard [(qty "Sure Gamble" 3)]}})
+        (play-from-hand state :corp "Blacklist" "New remote")
+        (rez state :corp (refresh (get-content state :remote1 0)))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Levy AR Lab Access")
+        (is (= 2 (count (:hand (get-runner)))) "Runner should draw 2 cards")
+        (is (zero? (count (:deck (get-runner)))) "Stack should be empty")
+        (is (= 3 (count (:discard (get-runner)))) "Heap should have 3 cards")
+        (is (= "Levy AR Lab Access" (:title (get-rfg state :runner 0))) "Levy should be rfg'd"))))
 
 (deftest lucky-find
   ;; Lucky Find
@@ -3767,7 +3849,8 @@
 
 (deftest out-of-the-ashes
   ;; Out of the Ashes - ensure card works when played/trashed/milled
-  (do-game
+  (testing "Happy Path"
+    (do-game
     (new-game {:corp {:deck ["Kala Ghoda Real TV" "Underway Renovation"]}
                :runner {:deck [(qty "Out of the Ashes" 6)]}})
     (play-from-hand state :corp "Underway Renovation" "New remote")
@@ -3804,6 +3887,17 @@
     (run-continue state)
     (is (zero? (count (:discard (get-runner)))))
     (is (= 6 (count (:rfg (get-runner)))))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist"]}
+                 :runner {:discard [(qty "Out of the Ashes" 6)]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (empty? (:prompt (get-runner))) "OOTA prompt did not come up"))))
 
 (deftest paper-tripping
   ;; Paper Tripping
@@ -4297,8 +4391,9 @@
             "Additional cost from Reina applied for 1st ice rez"))))))
 
 (deftest reboot
-  ;; Reboot - run on Archives, install 5 cards from head facedown
-  (do-game
+  ;; Reboot - run on Archives, install 5 cards from heap facedown
+  (testing "Happy Path"
+    (do-game
     (new-game {:runner {:deck ["Reboot"]
                         :discard ["Sure Gamble" "Paperclip" "Clot"]}})
     (take-credits state :corp)
@@ -4314,6 +4409,23 @@
     (is (= 3 (count (core/all-installed state :runner))) "Runner has no other cards installed")
     (is (empty? (:discard (get-runner))) "Runner has empty trash")
     (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist"]
+                          :discard "Blacklist"}
+                 :runner {:deck ["Reboot"]
+                          :discard ["Sure Gamble" "Paperclip" "Clot"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (is (empty? (core/all-installed state :runner)) "Runner starts with no installed cards")
+      (is (= 3 (count (:discard (get-runner)))) "Runner starts with 3 cards in trash")
+      (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
+      (play-from-hand state :runner "Reboot")
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "Reboot prompt did not come up"))))
+
 
 (deftest recon
   ;; Recon
@@ -4419,18 +4531,32 @@
 
 (deftest retrieval-run
   ;; Retrieval Run - Run Archives successfully and install a program from Heap for free
-  (do-game
-    (new-game {:runner {:deck ["Retrieval Run" "Morning Star"]}})
-    (take-credits state :corp)
-    (trash-from-hand state :runner "Morning Star")
-    (play-run-event state "Retrieval Run" :archives)
-    (click-prompt state :runner "Retrieval Run")
-    (let [ms (first (:discard (get-runner)))]
-      (click-prompt state :runner ms)
-      (is (= "Morning Star" (:title (first (get-program state))))
-          "Morning Star installed")
-      (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
-      (is (= 2 (core/available-mu state)) "Morning Star uses 2 memory"))))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:runner {:deck ["Retrieval Run" "Morning Star"]}})
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Morning Star")
+      (play-run-event state "Retrieval Run" :archives)
+      (click-prompt state :runner "Retrieval Run")
+      (let [ms (first (:discard (get-runner)))]
+        (click-prompt state :runner ms)
+        (is (= "Morning Star" (:title (first (get-program state))))
+            "Morning Star installed")
+        (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
+        (is (= 2 (core/available-mu state)) "Morning Star uses 2 memory"))))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist"]}
+                 :runner {:deck ["Retrieval Run" "Morning Star"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (trash-from-hand state :runner "Morning Star")
+      (play-run-event state "Retrieval Run" :archives)
+      (click-prompt state :runner "Retrieval Run")
+      (is (empty? (:prompt (get-runner))) "Retrieval run didn't attempt to install from heap.")
+      (is (not (:run @state)) "Run is complete"))))
 
 (deftest rigged-results
   ;; Rigged Results - success and failure
@@ -4469,7 +4595,7 @@
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Vanilla"]}
+      (new-game {:corp   {:deck ["Vanilla"]}
                  :runner {:deck ["Rip Deal" "Easy Mark"]}})
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
@@ -4484,10 +4610,10 @@
       (is (nil? (get-run)) "Run is ended")))
   (testing "with Gauntlet #2942"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Vanilla" 5)]
-                        :credits 10}
-                 :runner {:hand ["The Gauntlet" "Corroder" "Rip Deal"]
+      (new-game {:corp   {:deck    [(qty "Hedge Fund" 5)]
+                          :hand    [(qty "Vanilla" 5)]
+                          :credits 10}
+                 :runner {:hand    ["The Gauntlet" "Corroder" "Rip Deal"]
                           :discard ["Easy Mark" "Sure Gamble"]
                           :credits 15}})
       (play-from-hand state :corp "Vanilla" "HQ")
@@ -4516,7 +4642,19 @@
       (is (= ["Easy Mark" "Sure Gamble"] (->> (get-runner) :hand (map :title) (into []))))
       (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
       (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
-      (is (nil? (get-run)) "Run is ended"))))
+      (is (nil? (get-run)) "Run is ended")))
+  (testing "Heap Locked"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Blacklist"]}
+                 :runner {:deck ["Rip Deal" "Easy Mark"]}})
+      (trash-from-hand state :runner "Easy Mark")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rip Deal")
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "Rip Deal prompt did not come up"))))
 
 (deftest rumor-mill
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
@@ -4674,19 +4812,39 @@
 
 (deftest scavenge
   ;; Scavenge
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
-               :runner {:hand ["Scavenge" "Corroder"]
-                        :discard ["Mass-Driver"]
-                        :credits 10}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (play-from-hand state :runner "Scavenge")
-    (let [credits (:credit (get-runner))]
-      (click-card state :runner "Corroder")
-      (click-card state :runner "Mass-Driver")
-      (is (= "Mass-Driver" (:title (get-program state 0))) "Mass-Driver is now installed")
-      (is (= (+ credits 2 -8) (:credit (get-runner))) "Scavenge should give discount"))))
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Scavenge" "Corroder"]
+                          :discard ["Mass-Driver"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Scavenge")
+      (let [credits (:credit (get-runner))]
+        (click-card state :runner "Corroder")
+        (click-card state :runner "Mass-Driver")
+        (is (= "Mass-Driver" (:title (get-program state 0))) "Mass-Driver is now installed")
+        (is (= (+ credits 2 -8) (:credit (get-runner))) "Scavenge should give discount"))))
+  (testing "Blacklist Rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Launch Campaign" 3) "Blacklist"]}
+                 :runner {:hand ["Scavenge" "Corroder" "Engolo"]
+                          :discard ["Mass-Driver"]
+                          :credits 10}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote2 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Scavenge")
+      (let [credits (:credit (get-runner))]
+        (click-card state :runner "Corroder")
+        (click-card state :runner "Mass-Driver")
+        (is (= "Select a program to install from your Grip" (:msg (prompt-map :runner))) "Grip is only option")
+        (click-card state :runner "Engolo")
+        (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
+        (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount")))))
 
 (deftest scrubbed
   ;; First piece of ice encountered each turn has -2 Strength for remainder of the run
@@ -5080,7 +5238,21 @@
       (click-card state :runner "Morning Star")
       (take-credits state :runner)
       (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
-      (is (= "Morning Star" (:title (get-program state 0))) "Morning Star still installed"))))
+      (is (= "Morning Star" (:title (get-program state 0))) "Morning Star still installed")))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5) "Blacklist"]}
+                 :runner {:hand [(qty "Test Run" 3) "Scavenge" "Inti"]
+                          :deck ["Pelangi"]
+                          :discard ["Morning Star"]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Test Run")
+      (is (= "Install a program from your Stack?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
+      (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack"))))
+
 
 (deftest the-maker-s-eye
   (testing "Basic test"

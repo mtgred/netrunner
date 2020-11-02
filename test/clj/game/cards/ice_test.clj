@@ -1600,6 +1600,45 @@
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength.")))))
 
+(deftest hailstorm
+  ;; Hailstorm
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck ["Hailstorm" "Hedge Fund"]}
+                 :runner {:deck ["Sure Gamble"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hailstorm" "HQ")
+      (take-credits state :corp)
+      (let [hs (get-ice state :hq 0)]
+        (rez state :corp hs)
+        (play-from-hand state :runner "Sure Gamble")
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp hs 0)
+        (click-prompt state :corp "Sure Gamble")
+        (card-subroutine state :corp hs 1)
+        (is (nil? (:run @state)))
+        (is (= ["Sure Gamble"] (->> (get-runner) :rfg (map :title))) "Sure Gamble should be rfg'd"))))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck ["Hailstorm" "Hedge Fund" "Blacklist"]}
+                 :runner {:deck ["Sure Gamble"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hailstorm" "HQ")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (let [hs (get-ice state :hq 0)]
+        (rez state :corp hs)
+        (rez state :corp (refresh (get-content state :remote1 0)))
+        (play-from-hand state :runner "Sure Gamble")
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp hs 0)
+        (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+        (card-subroutine state :corp hs 1)
+        (is (nil? (:run @state)))
+        (is (= ["Sure Gamble"] (->> (get-runner) :discard (map :title))) "Sure Gamble should be in heap")))))
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game
@@ -2255,6 +2294,94 @@
       (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased")
       (take-credits state :corp 2)
       (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased"))))
+
+(deftest macrophage
+  ;; Macrophage
+  (testing "Happy Path"
+    (do-game
+      (new-game {:corp {:deck ["Macrophage"]}
+                 :runner {:deck ["Cache"]}})
+      (play-from-hand state :corp "Macrophage" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (let [mp (get-ice state :hq 0)
+            cache (get-program state 0)]
+        (rez state :corp mp)
+        (run-on state "HQ")
+        (run-continue state)
+        (is (= 3 (core/get-virus-counters state (refresh cache))))
+        (card-subroutine state :corp mp 0)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 4 (:base (prompt-map :corp))) "Trace is base 4")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (zero? (core/get-virus-counters state (refresh cache))))
+        (is (= 0 (count (:discard (get-runner)))) "0 cards in heap")
+        (card-subroutine state :corp mp 1)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 3 (:base (prompt-map :corp))) "Trace is base 3")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp cache)
+        (is (= ["Cache"] (->> (get-runner) :discard (map :title))) "Cache in heap")
+        (card-subroutine state :corp mp 2)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 2 (:base (prompt-map :corp))) "Trace is base 2")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Cache")
+        (is (not (= ["Cache"] (->> (get-runner) :discard (map :title)))) "Cache not in heap after RFG sub")
+        (is (= ["Cache"] (->> (get-runner) :rfg (map :title))) "Cache should be rfg'd")
+        (card-subroutine state :corp mp 3)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 1 (:base (prompt-map :corp))) "Trace is base 1")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (nil? (:run @state))))))
+  (testing "Heap Locked Test"
+    (do-game
+      (new-game {:corp {:deck ["Macrophage" "Blacklist"]}
+                 :runner {:deck ["Cache"]}})
+      (play-from-hand state :corp "Macrophage" "HQ")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (rez state :corp (refresh (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (let [mp (get-ice state :hq 0)
+            cache (get-program state 0)]
+        (rez state :corp mp)
+        (run-on state "HQ")
+        (run-continue state)
+        (is (= 3 (core/get-virus-counters state (refresh cache))))
+        (card-subroutine state :corp mp 0)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 4 (:base (prompt-map :corp))) "Trace is base 4")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (zero? (core/get-virus-counters state (refresh cache))))
+        (is (= 0 (count (:discard (get-runner)))) "0 cards in heap")
+        (card-subroutine state :corp mp 1)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 3 (:base (prompt-map :corp))) "Trace is base 3")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp cache)
+        (is (= 1 (count (:discard (get-runner)))) "1 card in heap")
+        (card-subroutine state :corp mp 2)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 2 (:base (prompt-map :corp))) "Trace is base 2")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+        (is (= ["Cache"] (->> (get-runner) :discard (map :title))) "Cache in heap after RFG sub")
+        (is (not (= ["Cache"] (->> (get-runner) :rfg (map :title)))) "Cache should not be rfg'd")
+        (card-subroutine state :corp mp 3)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 1 (:base (prompt-map :corp))) "Trace is base 1")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (nil? (:run @state))))))
+  )
 
 (deftest magnet
   ;; Magnet - host program when rezzed

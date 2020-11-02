@@ -431,8 +431,8 @@
                {:prompt "Install a program?"
                 :yes-ability
                 {:async true
-                 :prompt "From your Stack or Heap?"
-                 :choices ["Stack" "Heap"]
+                 :prompt "Install from where?"
+                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
                  :msg (msg "install a program from their " target)
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
@@ -612,7 +612,8 @@
              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
 
 (defcard "Déjà Vu"
-  {:prompt "Choose a card to add to Grip"
+  {:req (req (not (zone-locked? state :runner :discard)))
+   :prompt "Choose a card to add to Grip"
    :choices (req (cancellable (:discard runner) :sorted))
    :msg (msg "add " (:title target) " to their Grip")
    :async true
@@ -1277,10 +1278,14 @@
                                 (continue-ability state side (choose-next '() nil (distinct (map :title (:discard runner)))) card nil))
                               (continue-ability state side (choose-next to-shuffle target remaining) card nil)))}))]
     {:async true
-     :req (req (pos? (count (:discard runner))))
      :rfg-instead-of-trashing true
-     :effect (req (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
-               (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))}))
+     :effect (req (if (and (not (zone-locked? state :runner :discard))
+                           (pos? (count (:discard runner))))
+                    (do (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
+                        (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))
+                    (do (system-msg state :runner (str "uses " (:title card) " to shuffle their Stack"))
+                        (shuffle! state :runner :deck)
+                        (effect-completed state side eid))))}))
 
 (defcard "High-Stakes Job"
   {:async true
@@ -1660,25 +1665,31 @@
    :async true
    :effect (req (let [mill-count (min 3 (count (:deck runner)))]
                   (wait-for (mill state :runner :runner mill-count)
-                            (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
-                            (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
-                              (continue-ability
-                                state side
-                                {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
-                                 :show-discard true
-                                 :async true
-                                 :choices {:max heap-count
-                                           :all true
-                                           :not-self true
-                                           :card #(and (runner? %)
-                                                       (in-discard? %))}
-                                 :effect (req (doseq [c targets]
-                                                (move state side c :deck))
-                                              (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
-                                                                             " from their Heap into their Stack, and draws 1 card"))
-                                              (shuffle! state :runner :deck)
-                                              (draw state :runner eid 1 nil))}
-                                card nil)))))})
+                    (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
+                    (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
+                      (continue-ability
+                        state side
+                        (if (not (zone-locked? state :runner :discard))
+                          {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
+                           :show-discard true
+                           :async true
+                           :choices {:max heap-count
+                                     :all true
+                                     :not-self true
+                                     :card #(and (runner? %)
+                                              (in-discard? %))}
+                           :effect (req (doseq [c targets]
+                                          (move state side c :deck))
+                                     (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
+                                                                 " from their Heap into their Stack, and draws 1 card"))
+                                     (shuffle! state :runner :deck)
+                                     (draw state :runner eid 1 nil))}
+
+                          {:effect (effect
+                                     (do (system-msg state :runner "shuffles their Stack and draws 1 card")
+                                         (shuffle! state :runner :deck)
+                                         (draw state :runner eid 1 nil)))})
+                        card nil)))))})
 
 (defcard "Lawyer Up"
   {:msg "remove 2 tags and draw 3 cards"
@@ -1755,11 +1766,13 @@
                                :effect (effect (unregister-floating-events :until-runner-turn-begins))}]))}}})
 
 (defcard "Levy AR Lab Access"
-  {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
-   :rfg-instead-of-trashing true
-   :async true
-   :effect (effect (shuffle-into-deck :hand :discard)
-                   (draw eid 5 nil))})
+         {:msg (msg (if (not (zone-locked? state :runner :discard))
+                      "shuffle their Grip and Heap into their Stack and draw 5 cards"
+                      "shuffle their Grip into their Stack and draw 5 cards"))
+          :rfg-instead-of-trashing true
+          :async true
+          :effect (effect (shuffle-into-deck :hand :discard)
+                          (draw eid 5 nil))})
 
 (defcard "Lucky Find"
   {:msg "gain 9 [Credits]"
@@ -1983,7 +1996,8 @@
                    :async true
                    :effect (effect (make-run eid target nil card))}
         ashes-recur (fn ashes-recur [n]
-                      {:optional
+                      {:req (req (not (zone-locked? state :runner :discard)))
+                       :optional
                        {:prompt "Remove Out of the Ashes from the game to make a run?"
                         :yes-ability
                         {:msg "removes Out of the Ashes from the game to make a run"
@@ -2254,7 +2268,8 @@
                  eid :archives
                  {:req (req (= target :archives))
                   :replace-access
-                  {:mandatory true
+                  {:req (req (not (zone-locked? state :runner :discard)))
+                   :mandatory true
                    :async true
                    :prompt "Choose up to five cards to install"
                    :show-discard true
@@ -2324,6 +2339,7 @@
                      {:req (req (= target :archives))
                       :replace-access
                       {:async true
+                       :req (req (not (zone-locked? state :runner :discard)))
                        :prompt "Choose a program to install"
                        :msg (msg "install " (:title target))
                        :choices (req (filter program? (:discard runner)))
@@ -2381,7 +2397,8 @@
    :effect
    (effect (make-run
              eid :hq
-             {:req (req (= target :hq))
+             {:req (req (and (= target :hq)
+                             (not (zone-locked? state :runner :discard))))
               :replace-access
               {:async true
                :effect
@@ -2497,12 +2514,15 @@
                     (continue-ability
                       state side
                       {:async true
-                       :prompt "Select a program to install from your Grip or Heap"
-                       :show-discard true
+                       :prompt (if (not (zone-locked? state :runner :discard))
+                                 "Select a program to install from your Grip or Heap"
+                                 "Select a program to install from your Grip")
+                       :show-discard  (not (zone-locked? state :runner :discard))
                        :choices
                        {:req (req (and (program? target)
                                        (or (in-hand? target)
-                                           (in-discard? target))
+                                           (and (in-discard? target)
+                                                (not (zone-locked? state :runner :discard))))
                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                  [:credit (install-cost state side target
                                                                         {:cost-bonus (- tcost)})])))}
@@ -2705,8 +2725,8 @@
               (assoc ability :event :runner-turn-ends)]}))
 
 (defcard "Test Run"
-  {:prompt "Install a program from your Stack or Heap?"
-   :choices ["Stack" "Heap"]
+  {:prompt (req (if (not (zone-locked? state :runner :discard)) "Install a program from your Stack or Heap?" "Install a program from your Stack?" ))
+   :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
    :msg (msg "install a program from their " target)
    :async true
    :effect (effect
