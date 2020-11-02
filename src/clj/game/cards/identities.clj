@@ -1175,7 +1175,7 @@
              :event :runner-install
              :req (req (has-subtype? target "Virus"))
              :msg "force the Corp to trash the top card of R&D"
-             :effect (effect (mill :runner eid :corp 1))}]})
+             :effect (effect (mill :corp eid :corp 1))}]})
 
 (defcard "Null: Whistleblower"
   {:events [{:event :encounter-ice
