@@ -379,7 +379,7 @@
                  (filter #(= :pass-ice (first %)))
                  (keep second))]
         (is (= 1 (count ice-passed-last-run)))
-        (is (utils/same-card? (get-ice state :hq 0) (ffirst ice-passed-last-run))))
+        (is (utils/same-card? (get-ice state :hq 0) (:ice (ffirst ice-passed-last-run)))))
       (run-continue state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
@@ -578,7 +578,6 @@
       (changes-val-macro
         -1 (:click (get-runner))
         "While resolving the cost, runner doesn't gain any clicks"
-        (println "gain ability")
         (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
       (is (second-last-log-contains? state "Runner uses Armand \"Geist\" Walker: Tech Lord")
           "Geist prints first")
@@ -752,12 +751,12 @@
                         :hand [(qty "Neural EMP" 2)]}
                  :runner {:deck [(qty "Imp" 3)]}})
       (take-credits state :corp)
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (click-prompt state :corp "Yes")
       (let [imp (find-card "Imp" (:hand (get-runner)))]
         (click-prompt state :corp imp)
         (is (= 1 (count (:discard (get-runner)))))
-        (core/damage state :corp :net 1)
+        (damage state :corp :net 1)
         (is (empty? (:prompt (get-corp))) "No choice on second net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-empty-server state "Archives")
@@ -792,12 +791,12 @@
       (play-from-hand state :corp "Pup" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Employee Strike")
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Scrubbed")
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (utils/same-card? (:card (prompt-map :corp)) (:identity (get-corp))) "Employee Strike out of play - Ability turned on correctly")))
   (testing "Doesn't prompt when Runner's hand is empty"
     (do-game
@@ -2054,10 +2053,10 @@
                           :deck ["Eden Shard"]}})
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (click-prompt state :runner "Eden Shard")
-      (click-prompt state :runner "Yes") ; Eden Shard optional, is a replacement effect
-      (is (= "Identity" (-> (prompt-map :runner) :card :type)) "Fisk prompt showing")
-      (click-prompt state :runner "Yes") ; Fisk optional
+      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Choose an access replacement ability" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Eden Shard") ; Eden Shard's replacement ability
       (is (= "Eden Shard" (:title (get-resource state 0))) "Eden Shard installed")
       (is (= 5 (:credit (get-runner))) "Eden Shard install was free")
       (is (not (:run @state)) "Run ended")
@@ -2197,13 +2196,28 @@
 
 (deftest liza-talking-thunder-prominent-legislator
   ;; Liza Talking Thunder: Prominent Legislator
-  (do-game
-    (new-game {:runner {:id "Liza Talking Thunder: Prominent Legislator"
-                        :deck [(qty "Sure Gamble" 7)]}})
-    (take-credits state :corp)
-    (run-empty-server state "R&D")
-    (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
-    (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
+  (testing "basic test"
+    (do-game
+      (new-game {:runner {:id "Liza Talking Thunder: Prominent Legislator"
+                          :deck [(qty "Sure Gamble" 7)]}})
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
+      (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
+  (testing "Works with Crisium Grid"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Crisium Grid"]}
+                 :runner {:id "Liza Talking Thunder: Prominent Legislator"
+                          :deck [(qty "Sure Gamble" 7)]}})
+      (play-from-hand state :corp "Crisium Grid" "R&D")
+      (rez state :corp (get-content state :rd 0))
+      (take-credits state :corp)
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Crisium blocks ability"
+        (run-empty-server state "R&D"))
+      (is (zero? (count-tags state)) "Took no tags for ability being blocked"))))
 
 (deftest maxx-maximum-punk-rock
   ;; MaxX

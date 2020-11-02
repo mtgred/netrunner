@@ -95,7 +95,8 @@
                         :once :per-turn
                         :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
                         :async true
-                        :effect (req (case target
+                        :effect (req (clear-wait-prompt state :runner)
+                                     (case target
                                        "Gain 1 [Credits]"
                                        (do (system-msg state :corp (str "uses Advanced Concept Hopper to gain 1 [Credits]"))
                                            (gain-credits state :corp eid 1))
@@ -103,22 +104,24 @@
                                        (do (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card"))
                                            (draw state :corp eid 1 nil))
                                        "No action"
-                                       (system-msg state :corp (str "doesn't use Advanced Concept Hopper")))
-                                     (clear-wait-prompt state :runner)
-                                     (effect-completed state side eid))}
+                                       (do (system-msg state :corp (str "doesn't use Advanced Concept Hopper"))
+                                           (effect-completed state side eid))))}
                        card nil))}]})
 
 (defcard "Ancestral Imager"
   {:events [{:event :jack-out
              :msg "do 1 net damage"
-             :effect (effect (damage :net 1))}]})
+             :async true
+             :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "AR-Enhanced Security"
   {:events [{:event :runner-trash
-             :once :per-turn
              :async true
              :interactive (req true)
-             :req (req (some corp? targets))
+             :once-per-instance true
+             :req (req (and (some #(corp? (:card %)) targets)
+                            (first-event? state side :runner-trash
+                                          (fn [targets] (some #(corp? (:card %)) targets)))))
              :msg "give the Runner a tag"
              :effect (effect (gain-tags eid 1))}]})
 
@@ -150,11 +153,11 @@
                       :effect (req (clear-wait-prompt state :corp)
                                    (case target
                                      "Suffer 5 meat damage"
-                                     (do (damage state :runner eid :meat 5 {:card card :unboostable true})
-                                         (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation"))
+                                     (do (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation")
+                                         (damage state :runner eid :meat 5 {:card card :unboostable true}))
                                      "Take 2 tags"
-                                     (do (gain-tags state :runner eid 2 {:card card})
-                                         (system-msg state :runner "chooses to take 2 tags from Armed Intimidation"))))}
+                                     (do (system-msg state :runner "chooses to take 2 tags from Armed Intimidation")
+                                         (gain-tags state :runner eid 2 {:card card}))))}
                      card nil))})
 
 (defcard "Armored Servers"
@@ -455,7 +458,7 @@
 (defcard "Dedicated Neural Net"
   {:events [{:event :successful-run
              :interactive (req true)
-             :psi {:req (req (= (target-server target) :hq))
+             :psi {:req (req (= :hq (target-server context)))
                    :once :per-turn
                    :not-equal {:effect (effect (register-floating-effect
                                                  card

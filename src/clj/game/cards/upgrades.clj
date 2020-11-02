@@ -120,8 +120,8 @@
                                 card nil)))}]}))
 
 (defcard "Ben Musashi"
-  {:trash-effect
-   {:req (req (and (= :servers (first (:previous-zone card)))
+  {:on-trash
+   {:req (req (and (= :runner side)
                    (:run @state)))
     :effect (effect (register-events
                       card
@@ -465,12 +465,9 @@
                  etr]}))
 
 (defcard "Experiential Data"
-  {:effect (effect (update-all-ice))
-   :constant-effects [{:type :ice-strength
+  {:constant-effects [{:type :ice-strength
                        :req (req (protecting-same-server? card target))
-                       :value 1}]
-   :derez-effect {:effect (effect (update-all-ice))}
-   :trash-effect {:effect (effect (update-all-ice))}})
+                       :value 1}]})
 
 (defcard "Expo Grid"
   (let [ability {:req (req (some #(and (asset? %)
@@ -754,13 +751,14 @@
                                   (effect-completed state side eid)))
                               ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
                               (= :runner (:active-player @state))
-                              (continue-ability
-                                state :corp
-                                {:prompt "You did not draw any ice to use with Jinja City Grid"
-                                 :choices ["Carry on!"]
-                                 :prompt-type :bogus
-                                 :effect nil}
-                                card nil)
+                              (do (show-wait-prompt state :runner "Corp to resolve Jinja City Grid")
+                                  (continue-ability
+                                    state :corp
+                                    {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                     :choices ["Carry on!"]
+                                     :prompt-type :bogus
+                                     :effect (effect (clear-wait-prompt :runner))}
+                                    card nil))
                               ;; otherwise, we done
                               :else
                               (effect-completed state side eid)))}
@@ -868,9 +866,9 @@
                                    card nil))}}}]})
 
 (defcard "Mason Bellamy"
-  {:events [{:event :encounter-ice-ends
+  {:events [{:event :end-of-encounter
              :req (req (and this-server
-                            (seq (filter :broken (:subroutines target)))))
+                            (seq (filter :broken (:subroutines (:ice context))))))
              :msg "force the Runner to lose [Click]"
              :effect (effect (lose :runner :click 1))}]})
 
@@ -885,7 +883,8 @@
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :once :per-run
-               :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
+               :msg (msg "swap " (card-str state current-ice)
+                         " with a piece of ICE from HQ")
                :effect (effect (swap-cards :corp current-ice target))}}}]})
 
 (defcard "Midway Station Grid"
@@ -906,7 +905,7 @@
              :effect
              (effect
                (continue-ability
-                 (let [passed-ice target]
+                 (let [passed-ice (:ice context)]
                    {:prompt (msg "Select a piece of ICE to swap with " (:title target))
                     :choices {:req (req (and (installed? target)
                                              (ice? target)
@@ -938,8 +937,9 @@
               (assoc gain-creds-and-clear :event :end-access-phase)]
      ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
      ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
-              :trash-effect                     ; if there is a run, mark mwanza effects to remain active until the end of the run
-              {:req (req (:run @state))
+              :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
+              {:req (req (and (= :runner side)
+                              (:run @state)))
                :effect (effect (register-events
                                  card
                                  [(assoc boost-access-by-3
@@ -974,7 +974,7 @@
              :interactive (req true)
              :optional
              {:req (req (and this-server
-                             (or (< (:credit runner) 6)
+                             (or (< (total-available-credits state :runner eid card) 6)
                                  (< (count (:hand runner)) 2))
                              (not-empty (:hand corp))
                              (pos? (count (take 5 (:deck corp))))))
@@ -1021,7 +1021,7 @@
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
-             :req (req (= (target-server target) :hq))
+             :req (req (= :hq (target-server context)))
              :async true
              :effect (req (enable-run-on-server state card (second (get-zone card)))
                           (system-msg state :corp (str "trashes Off the Grid"))
@@ -1037,8 +1037,8 @@
                              ((constantly false)
                               (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                              true))))}]
-    {:trash-effect
-     {:req (req (and (= :servers (first (:previous-zone card)))
+    {:on-trash
+     {:req (req (and (= :runner side)
                      (:run @state)))
       :effect (effect (register-events
                         card
@@ -1060,20 +1060,21 @@
                :effect (req (clear-persistent-flag! state side card :can-steal))}]}))
 
 (defcard "Overseer Matrix"
-  (let [ability {:async true
+  (let [ability {:event :runner-trash
+                 :once-per-instance true
+                 :async true
                  :interactive (req true)
-                 :req (req (some #(and (corp? %)
-                                       (or (in-same-server? card %)
-                                           (from-same-server? card %)
-                                           (in-same-server? (assoc card :zone (:previous-zone card)) %)))
+                 :req (req (some #(and (corp? (:card %))
+                                       (or (in-same-server? card (:card %))
+                                           (from-same-server? card (:card %))))
                                  targets))
                  :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                                  (continue-ability
                                    (let [num-trashed-cards
                                          (->> targets
-                                              (filter #(or (in-same-server? card %)
-                                                           (from-same-server? card %)
-                                                           (in-same-server? (assoc card :zone (:previous-zone card)) %)))
+                                              (filter #(or (in-same-server? card (:card %))
+                                                           (from-same-server? card (:card %))
+                                                           (in-same-server? (assoc card :zone (:previous-zone card)) (:card %))))
                                               count)]
                                      {:async true
                                       :prompt "Pay how much to use Overseer Matrix's ability?"
@@ -1091,17 +1092,16 @@
                                              :effect (effect (gain-tags :corp eid n))})
                                           card nil))})
                                    card nil))}]
-    {:trash-effect
+    {:on-trash
      {:async true
       :interactive (req true)
+      :req (req (= :runner side))
       :effect (req (when (:run @state)
                      (register-events
                        state side card
-                       [(assoc ability
-                               :event :runner-trash
-                               :duration :end-of-run)]))
+                       [(assoc ability :duration :end-of-run)]))
                    (continue-ability state side ability card targets))}
-     :events [(assoc ability :event :runner-trash)]}))
+     :events [ability]}))
 
 (defcard "Panic Button"
   {:install-req (req (filter #{"HQ"} targets))
@@ -1143,8 +1143,8 @@
             :effect (effect (gain-credits :corp eid 2))}})
 
 (defcard "Red Herrings"
-  {:trash-effect
-   {:req (req (and (= :servers (first (:previous-zone card)))
+  {:on-trash
+   {:req (req (and (= :runner side)
                    (:run @state)))
     :effect (effect (register-events
                       card
@@ -1165,7 +1165,7 @@
                        :value (req (repeat (get-counters card :power) [:credit 2]))}]
    :events [{:event :successful-run
              :req (req (and (pos? (get-counters card :power))
-                            (is-central? (:server run))))
+                            (is-central? (:server context))))
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
    :effect (effect (show-wait-prompt :runner "Corp to place credits on Reduced Service")
@@ -1278,8 +1278,9 @@
                                 :type :recurring}}})
 
 (defcard "Strongbox"
-  {:trash-effect
-   {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+  {:on-trash
+   {:req (req (and (= :runner side)
+                   (:run @state)))
     :effect (effect (register-events
                       card
                       [{:event :pre-steal-cost
@@ -1355,9 +1356,10 @@
   {:events [{:event :pass-ice
              :optional
              {:req (req (and this-server
-                             (rezzed? target)
-                             (seq (filter #(same-card? :title % target) (:hand corp)))))
-              :prompt (msg "Force the runner to encounter " (:title current-ice) " again?")
+                             (rezzed? (:ice context))
+                             (seq (filter #(same-card? :title % (:ice context)) (:hand corp)))))
+              :prompt (msg "Force the runner to encounter "
+                           (:title current-ice) " again?")
               :yes-ability
               {:async true
                :prompt "Select a copy of the ICE just passed"
@@ -1480,41 +1482,38 @@
                                     ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
                                     (when (not (get-only-card-to-access state))
                                       (handle-end-run state side))))})
-          (ability [x]
+          (ability []
             {:trace {:base 4
                      :successful
                      {:async true
-                      :msg (msg (let [n (min (* x 2) (count (all-installed state :runner)))]
+                      :msg (msg (let [n (min 2 (count (all-installed state :runner)))]
                                   (str "to force the runner to trash "
                                        (quantify n "installed card")
                                        (when (not (pos? n))
                                          "but there are no installed cards to trash"))))
-                      :effect (req (let [n (min (* x 2) (count (all-installed state :runner)))]
+                      :effect (req (let [n (min 2 (count (all-installed state :runner)))]
                                      (if (pos? n)
                                        (do (show-wait-prompt state :corp "Runner to choose cards to trash")
                                            (continue-ability state side (wt n) card nil))
                                        (effect-completed state side eid))))}}})]
-    {:trash-effect
-     {:async true
-      :req (req (and (corp? target)
-                     (= side :runner)
-                     (let [target-zone (get-zone target)
-                           target-zone (or (central->zone target-zone) target-zone)
-                           warroid-zone (:previous-zone card)]
-                       (and (not (is-root? target-zone))
-                            (= (second warroid-zone)
-                               (second target-zone))))))
-      :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}
+    {:on-trash {:async true
+                :once-per-instance true
+                :req (req (and (= side :runner)
+                               (not (in-root? card))))
+                :effect (effect (continue-ability (ability) card nil))}
      :events [{:event :runner-trash
                :async true
-               :req (req (and (corp? target)
-                              (let [target-zone (get-zone target)
-                                    target-zone (or (central->zone target-zone) target-zone)
-                                    warroid-zone (get-zone card)]
-                                (and (not (is-root? target-zone))
-                                     (= (second warroid-zone)
-                                        (second target-zone))))))
-               :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}]}))
+               :once-per-instance true
+               :req (req (some (fn [target]
+                                 (and (corp? (:card target))
+                                      (let [target-zone (get-zone (:card target))
+                                            target-zone (or (central->zone target-zone) target-zone)
+                                            warroid-zone (get-zone card)]
+                                        (and (not (is-root? target-zone))
+                                             (= (second warroid-zone)
+                                                (second target-zone))))))
+                               targets))
+               :effect (effect (continue-ability (ability) card nil))}]}))
 
 (defcard "Will-o'-the-Wisp"
   {:implementation "Doesn't restrict icebreaker selection"

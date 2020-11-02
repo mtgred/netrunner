@@ -1,7 +1,7 @@
 (ns game.core.gaining
   (:require
     [game.core.eid :refer [make-eid effect-completed]]
-    [game.core.events :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-sync]]
     [game.core.toasts :refer [toast]]))
 
 (defn safe-inc-n

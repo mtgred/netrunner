@@ -5,14 +5,13 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [complete-with-result make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [resolve-ability trigger-event trigger-event-sync]]
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
     [game.core.payment :refer [cost-name handler label payable? value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
     [game.core.props :refer [add-counter]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.tags :refer [lose-tags]]
     [game.core.to-string :refer [card-str]]
@@ -813,7 +812,7 @@
 (defmethod handler :advancement
   [cost state side eid card actions]
   (let [card (update! state side (update card :advance-counter - (value cost)))]
-    (wait-for (trigger-event-sync state side :counter-added (get-card state card))
+    (wait-for (trigger-event-sync state side :counter-added card)
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
@@ -857,7 +856,7 @@
 (defmethod handler :power
   [cost state side eid card actions]
   (let [card (update! state side (update-in card [:counter :power] - (value cost)))]
-    (wait-for (trigger-event-sync state side :counter-added (get-card state card))
+    (wait-for (trigger-event-sync state side :counter-added card)
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
@@ -922,7 +921,7 @@
                  :value (:number async-result)
                  :targets (:targets async-result)}))
     (let [card (update! state side (update-in card [:counter :virus] - (value cost)))]
-        (wait-for (trigger-event-sync state side :counter-added (get-card state card))
+        (wait-for (trigger-event-sync state side :counter-added card)
                   (complete-with-result
                     state side eid
                     {:msg (str "spends "

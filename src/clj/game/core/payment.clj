@@ -100,40 +100,6 @@
          (toast state side (str "Unable to pay for " title "."))
          false)))))
 
-(defn- pay-next
-  [state side eid costs card actions msgs]
-  (if (empty? costs)
-    (complete-with-result state side eid msgs)
-    (wait-for (handler (first costs) state side (make-eid state eid) card actions)
-              (pay-next state side eid (rest costs) card actions (conj msgs async-result)))))
-
-(defn sentence-join
-  [strings]
-  (if (<= (count strings) 2)
-    (string/join " and " strings)
-    (str (apply str (interpose ", " (butlast strings))) ", and " (last strings))))
-
-(defn pay
-  "Same as pay, but awaitable."
-  [state side eid card & args]
-  (let [args (flatten args)
-        raw-costs (remove map? args)
-        actions (filter map? args)]
-    (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
-      (wait-for (pay-next state side (make-eid state eid) costs card actions [])
-                (complete-with-result
-                  state side eid
-                  {:msg (->> async-result
-                             (keep :msg)
-                             sentence-join)
-                   :cost-paid (->> async-result
-                                   (keep #(not-empty (select-keys % [:type :targets :value])))
-                                   (reduce
-                                     (fn [acc cost]
-                                       (assoc acc (:type cost) cost))
-                                     {}))}))
-      (complete-with-result state side eid nil))))
-
 (defn cost-targets
   [eid cost-type]
   (get-in eid [:cost-paid cost-type :targets]))
@@ -145,6 +111,9 @@
 (defn cost-value
   [eid cost-type]
   (get-in eid [:cost-paid cost-type :value]))
+
+;; the function `pay` is defined in resolve-ability because they're all intermingled
+;; fuck the restriction against circular dependencies, for real
 
 ;; cost labels and messages
 (defn build-cost-label

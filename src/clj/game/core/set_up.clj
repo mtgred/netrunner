@@ -5,7 +5,7 @@
     [game.core.checkpoint :refer [fake-checkpoint]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-sync]]
     [game.core.gaining :refer [gain]]
     [game.core.initializing :refer [card-init make-card]]
     [game.core.player :refer [new-corp new-runner]]

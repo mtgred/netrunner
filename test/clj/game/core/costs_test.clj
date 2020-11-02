@@ -1,4 +1,4 @@
-(ns game.engine.costs-test
+(ns game.core.costs-test
   (:require [game.core :as core]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]

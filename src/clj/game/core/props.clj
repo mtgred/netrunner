@@ -2,8 +2,8 @@
   (:require
     [game.core.card :refer [get-card has-subtype? ice? rezzed?]]
     [game.core.eid :refer [make-eid]]
+    [game.core.engine :refer [trigger-event-sync]]
     [game.core.finding :refer [find-latest]]
-    [game.core.events :refer [trigger-event-sync]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.update :refer [update!]]))
 

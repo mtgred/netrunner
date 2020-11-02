@@ -1853,6 +1853,7 @@
       (gain-tags state :runner 1)
       (is (= 2 (count (:subroutines (refresh io)))))
       (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
+      (core/fake-checkpoint state)
       (is (zero? (count (:subroutines (refresh io))))))))
 
 (deftest inazuma
@@ -4196,15 +4197,15 @@
         (rez state :corp susanoo)
         (run-continue state)
         (fire-subs state susanoo)
-        (is (= :archives (get-in @state [:run :server 0])) "Deflected to archives")
+        (is (= [:archives] (get-in @state [:run :server])) "Deflected to archives")
         (run-next-phase state)
-        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
+        (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
         (rez state :corp cl)
         (run-continue state)
         (fire-subs state cl)
         (run-continue state)
         (run-continue state)
-        (is (not (get-in @state [:run :cannot-jack-out]))"Runner can jack out again")))))
+        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again")))))
 
 (deftest swarm
   ;; Swarm

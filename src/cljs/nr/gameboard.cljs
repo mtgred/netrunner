@@ -1235,11 +1235,8 @@
     [:div.server
      [:div.ices {:style {:width (when (pos? max-hosted)
                                   (+ 84 3 (* 42 (dec max-hosted))))}}
-      (when-let [run-cards (seq (filter :card (:run-effects run)))]
-        [:div
-         (doall (for [card (map :card (reverse run-cards))]
-                  [:div.run-card {:key (:cid card)}
-                   [card-img card]]))])
+      (when-let [run-card (:source-card run)]
+        [:div.run-card [card-img run-card]])
       (doall
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)
@@ -1289,7 +1286,7 @@
                       (nth ices (dec run-pos)))]
     [:div.server
      [:div.ices
-      (when-let [run-card (:card (:run-effect run))]
+      (when-let [run-card (:source-card run)]
         [:div.run-card [card-img run-card]])
       (when (and run (not current-ice))
         [run-arrow run])]

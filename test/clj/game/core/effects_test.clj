@@ -1,4 +1,4 @@
-(ns game.engine.effects-test
+(ns game.core.effects-test
   (:require [game.core :as core]
             [game.core.effects :as e]
             [game.utils :refer [same-card?]]

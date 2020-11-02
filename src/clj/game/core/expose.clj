@@ -3,10 +3,9 @@
     [game.core.card :refer [rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.events :refer [trigger-event-sync]]
+    [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [system-msg]]
     [game.core.to-string :refer [card-str]]
     [game.macros :refer [wait-for]]))

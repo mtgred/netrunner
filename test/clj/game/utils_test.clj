@@ -93,8 +93,8 @@
                            (= choice (get-in % [:value :title]))
                            (same-card? choice (:value %)))
             idx (or (:idx (first args)) 0)
-            chosen (nth (filter choice-fn choices) idx)]
-        (when-not (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}})
+            chosen (nth (filter choice-fn choices) idx nil)]
+        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
           (is (= choice (first choices))
               (str (side-str side) " expected to click [ "
                    (if (string? choice) choice (:title choice ""))

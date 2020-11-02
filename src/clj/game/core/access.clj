@@ -7,13 +7,12 @@
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.events :refer [ability-as-handler register-events trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler can-trigger? pay register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move remove-old-current trash]]
-    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs pay]]
+    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs]]
     [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? resolve-ability should-trigger?]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone]]
@@ -132,7 +131,7 @@
                                     (system-msg state side (str (:msg async-result) " to trash "
                                                                 (:title card) " from "
                                                                 (name-zone :corp (get-zone card))))
-                                    (wait-for (trash state side card nil)
+                                    (wait-for (trash state side card {:accessed true})
                                               (access-end state side eid (first async-result) {:trashed true})))
 
                           ; Use access ability

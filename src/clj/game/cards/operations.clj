@@ -111,8 +111,7 @@
 (defcard "Argus Crackdown"
   {:trash-after-resolving false
    :events [{:event :successful-run
-             :req (req (let [server (first (get-in @state [:run :server]))]
-                         (not-empty (get-in @state [:corp :servers server :ices]))))
+             :req (req (not-empty run-ices))
              :msg (msg "deal 2 meat damage")
              :async true
              :effect (effect (damage eid :meat 2 {:card card}))}
@@ -283,15 +282,15 @@
    :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                           (host state side (get-card state target) (assoc card :seen true :condition true))
                           (effect-completed state side eid)))
-   :events [{:event :encounter-ice-ends
+   :events [{:event :end-of-encounter
              :condition :hosted
              :async true
-             :req (req (and (same-card? target (:host card))
-                            (empty? (remove :broken (:subroutines target)))))
+             :req (req (and (same-card? (:ice context) (:host card))
+                            (empty? (remove :broken (:subroutines (:ice context))))))
              :effect (effect (system-msg :corp
-                                         (str "derezzes " (:title target)
+                                         (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp target)
+                             (derez :corp (:ice context))
                              (trash :corp eid card {:unpreventable true}))}]})
 
 (defcard "Biotic Labor"
@@ -440,7 +439,7 @@
              :async true
              :effect (effect (gain-credits :corp eid 1))}
             {:event :runner-trash
-             :req (req (some installed? targets))
+             :req (req (installed? (:card target)))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
@@ -472,7 +471,7 @@
 
 (defcard "Digital Rights Management"
   {:req (req (and (< 1 (:turn @state))
-                  (not (in-coll? (get-in @state [:runner :register-last-turn :successful-run]) :hq))))
+                  (not (some #{:hq} (:successful-run runner-reg-last)))))
    :prompt "Choose an Agenda"
    :implementation "Does not prevent scoring agendas installed later in the turn"
    ; ToDo: When floating triggers are implemented, this should be an effect that listens to :corp-install as Clot does
@@ -581,7 +580,7 @@
    :effect (effect (host target (assoc card :seen true :condition true)))
    :events [{:event :encounter-ice
              :condition :hosted
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :trace {:base 3
                      :successful {:msg "give the Runner 1 tag"
                                   :async true
@@ -625,7 +624,7 @@
 (defcard "Enhanced Login Protocol"
   {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
    :constant-effects [{:type :run-additional-cost
-                       :req (req (and (no-event? state side :run #(:click-run (nth % 2)))
+                       :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
                                       (:click-run (second targets))))
                        :value [:click 1]}]})
 
@@ -1359,8 +1358,6 @@
                                    (and (not (has-subtype? target-card "Icebreaker"))
                                         (:break ability))))
                        :value true}]
-   :effect (effect (update-all-ice))
-   :trash-effect {:effect (effect (update-all-ice))}
    :events [{:event :corp-turn-begins
              :async true
              :effect (effect (trash eid card nil))}]})
@@ -1837,7 +1834,7 @@
                        :value (req (get-counters card :power))}]
    :events [{:event :pass-ice
              :condition :hosted
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:ice context) (:host card)))
              :msg (msg "add 1 power counter to itself")
              :effect (effect (add-counter card :power 1))}]})
 

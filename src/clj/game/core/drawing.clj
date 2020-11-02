@@ -1,7 +1,7 @@
 (ns game.core.drawing
   (:require
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.events :refer [trigger-event-simult trigger-event-sync]]
+    [game.core.engine :refer [trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [prevent-draw]]
     [game.core.moving :refer [move]]
     [game.core.say :refer [system-msg]]

@@ -2,9 +2,9 @@
   (:require
     [game.core.card :refer [get-card]]
     [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.engine :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.payment :refer [can-pay?]]
     [game.core.prompts :refer [show-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]

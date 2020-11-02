@@ -419,7 +419,6 @@
   `(when (play-from-hand ~state :runner ~card)
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
-     (is (get-in @~state [:run :run-effects]) "There is a run-effect")
      (when (run-continue ~state)
        (is (get-in @~state [:runner :prompt]) "A prompt is shown")
        (is (get-in @~state [:run :successful]) "Run is marked successful"))))
@@ -528,3 +527,7 @@
   [state title]
   `(when (play-from-hand ~state :corp ~title "New remote")
      (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
+
+(defmacro damage
+  [state side dmg-type qty]
+  `(core/damage ~state ~side (core/make-eid ~state) ~dmg-type ~qty nil))

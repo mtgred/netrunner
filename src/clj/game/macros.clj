@@ -22,6 +22,12 @@
                         (contains? t :value))
                  (:value t)
                  t))
+      context (let [t (first targets)]
+                (if (and (map? t)
+                         (contains? t :uuid)
+                         (contains? t :value))
+                  (:value t)
+                  t))
       installed (#{:rig :servers} (first (get-zone card)))
       remotes (get-remote-names state)
       servers (zones->sorted-names (get-zones state))
@@ -104,7 +110,7 @@
 
 (defmacro continue-ability
   [state side ability card targets]
-  `(game.core.resolve-ability/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
+  `(game.core.engine/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
 
 (defmacro when-let*
   ([bindings & body]

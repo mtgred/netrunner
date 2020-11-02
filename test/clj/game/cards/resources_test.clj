@@ -242,7 +242,7 @@
         (is (some? bj2) "Bank Job 2 still installed")
         (is (= 1 (count (:discard (get-runner)))) "One Bank Job moved to heap")
         (is (= 8 (get-counters (refresh bj2) :credit)) "8 credits remaining on 2nd copy"))))
-  (testing "Security Testing takes priority"
+  (testing "You can choose between Security Testing and Bank Job"
     (do-game
       (new-game {:corp {:deck ["PAD Campaign"]}
                  :runner {:deck ["Bank Job" "Security Testing"]}})
@@ -255,6 +255,7 @@
       (click-prompt state :runner "Server 1")
       (is (= 6 (:credit (get-runner))))
       (run-empty-server state "Server 1")
+      (click-prompt state :runner "Security Testing")
       (is (empty? (:prompt (get-runner))) "No Bank Job replacement choice")
       (is (= 8 (:credit (get-runner))) "Security Testing paid 2c"))))
 
@@ -262,8 +263,7 @@
   ;; Bazaar - Only triggers when installing from Grip
   (testing "basic test"
     (do-game
-      (new-game {:runner {:deck ["Street Peddler"
-                                "Bazaar"
+      (new-game {:runner {:deck ["Street Peddler" "Bazaar"
                                 (qty "Spy Camera" 6)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
@@ -359,6 +359,56 @@
       (run-empty-server state :hq)
       (is (= 0 (count-tags state)) "Runner has no tag")
       (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card"))))
+
+(deftest charlatan
+  ;; Charlatan
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Charlatan"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Charlatan")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "HQ")
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (is (last-n-log-contains? state 2 "Runner bypasses Ice Wall."))))
+  (testing "Only works on first rezzed ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Ice Wall" 2)]}
+                   :runner {:hand ["Charlatan"]
+                            :credits 10}})
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (rez state :corp (get-ice state :hq 0))
+        (rez state :corp (get-ice state :hq 1))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Charlatan")
+        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "HQ")
+        (click-prompt state :runner "Yes")
+        (run-continue state)
+        (is (empty? (:prompt (get-runner))))))
+  (testing "Only works if ice is already rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Charlatan"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Charlatan")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (is (empty? (:prompt (get-runner))))
+      (run-continue state)
+      (is (last-log-contains? state "Runner encounters Ice Wall protecting HQ at position 0.")))))
 
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
@@ -604,7 +654,7 @@
           (is (refresh councilman) "Councilman's trash is prevented"))))))
 
 (deftest counter-surveillance
-  ;; Counter-Surveillance
+  ;; Counter Surveillance
   (testing "Trash to run, on successful run access cards equal to Tags and pay that amount in credits"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
@@ -1517,7 +1567,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Eden Shard")
       (is (= 5 (:credit (get-runner))) "Eden Shard installed for 0c")
       (is (not (:run @state)) "Run is over")
       (card-ability state :runner (get-resource state 0) 0)
@@ -1531,7 +1581,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Access cards")
       (click-prompt state :runner "No action")
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
@@ -1863,10 +1913,10 @@
       (play-from-hand state :runner "Neutralize All Threats")
       (run-empty-server state :remote1)
       (is (= "Use Find the Truth to look at the top card of R&D?" (:msg (prompt-map :runner))) "FTT prompt")
-      (is (= "Waiting for Runner to resolve successful-run triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
+      (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
       (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Vanilla" (:msg (prompt-map :runner))) "FTT shows card")
-      (is (= "Waiting for Runner to resolve successful-run triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
+      (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
       (click-prompt state :runner "OK")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= "Waiting for Corp to use Marilyn Campaign" (:msg (prompt-map :runner))) "Now Corp gets shuffle choice")
@@ -2938,7 +2988,7 @@
       (let [nm (get-resource state 0)
             ff (get-hardware state 0)]
         (core/add-counter state :runner (refresh nm) :credit 4)
-        (core/damage state :corp :net 2)
+        (damage state :corp :net 2)
         (card-ability state :runner ff 0)
         (click-card state :runner nm)
         (click-card state :runner nm)
@@ -3388,10 +3438,10 @@
         (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
   (testing "Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744."
     (do-game
-      (new-game {:runner {:deck [(qty "Patron" 3) (qty "Jak Sinclair" 3)]}})
+      (new-game {:runner {:deck [(qty "Patron" 3) (qty "Jak Sinclair" 3)]
+                          :hand ["Patron" "Jak Sinclair"]
+                          :credits 15}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (starting-hand state :runner ["Patron" "Jak Sinclair"])
       (play-from-hand state :runner "Patron")
       (play-from-hand state :runner "Jak Sinclair")
       (take-credits state :runner)

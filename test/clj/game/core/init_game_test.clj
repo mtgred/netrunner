@@ -1,4 +1,4 @@
-(ns game.engine.init-game-test
+(ns game.core.init-game-test
   (:require [game.core :as core]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]

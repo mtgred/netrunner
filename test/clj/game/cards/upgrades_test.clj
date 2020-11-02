@@ -1448,9 +1448,9 @@
       (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (click-prompt state :runner "Eden Shard")
+      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (click-prompt state :runner "Yes")
+      (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
       (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
       (click-prompt state :corp "Carry on!"))))
 
@@ -3187,10 +3187,8 @@
       (click-prompt state :runner "0") ; Corp wins trace
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-program state 1))
-      (click-card state :runner (get-program state 2))
-      (click-card state :runner (get-program state 3))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
-      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards")))
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards")))
   (testing "Shouldn't trigger from self-trash in root of central server. Issue #4813"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]

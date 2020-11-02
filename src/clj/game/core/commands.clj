@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.effects :refer [register-floating-effect]]
-    [game.core.events :refer [trigger-event]]
+    [game.core.engine :refer [resolve-ability trigger-event]]
     [game.core.flags :refer [is-scored?]]
     [game.core.hosting :refer [host]]
     [game.core.identities :refer [disable-identity]]
@@ -16,7 +16,6 @@
     [game.core.prompts :refer [show-prompt]]
     [game.core.props :refer [set-prop]]
     [game.core.psi :refer [psi-game]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.rezzing :refer [rez]]
     [game.core.runs :refer [end-run jack-out]]
     [game.core.say :refer [system-msg]]
@@ -363,9 +362,12 @@
                                 :effect (effect (swap-installed (first targets) (second targets)))}
                                 (map->Card {:title "/swap-installed command"}) nil))
         "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
-        "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
-        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
-        "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
+        "/take-brain" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (max 0 value)
+                                                    {:card (map->Card {:title "/damage command" :side %2})}))
+        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (max 0 value)
+                                                    {:card (map->Card {:title "/damage command" :side %2})}))
+        "/take-net"   #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :net   (max 0 value)
+                                                    {:card (map->Card {:title "/damage command" :side %2})}))
         "/trace"      #(when (= %2 :corp) (init-trace %1 %2
                                                       (map->Card {:title "/trace command" :side %2})
                                                       {:base (max 0 value)
