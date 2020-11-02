@@ -463,10 +463,14 @@
                                                                    (clear-wait-prompt :corp))}
                                       :yes-ability
                                       {:async true
-                                       :effect (req (system-msg state :runner "pays 2 [Credits] to draw 1 card")
-                                                    (wait-for (lose-credits state side 2)
+                                       :effect (req 
+                                                    (wait-for (pay state :runner card [:credit 2])
+                                                              (if (:cost-paid async-result)
+                                                                (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
+                                                                    (draw state :runner eid 1 nil))
+                                                                (system-msg state :runner "does not draw 1 card"))
                                                               (clear-wait-prompt state :corp)
-                                                              (draw eid 1 nil)))}}}
+                                                              (effect-completed state side eid)))}}}
                                     card nil))}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                     :async true

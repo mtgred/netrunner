@@ -164,7 +164,62 @@
         (changes-val-macro 0 (count (:hand (get-runner)))
                            "No further net damage"
                            (card-ability state :corp (refresh border) 0))
-        (is (nil? (get-run)) "Run ended")))))
+        (is (nil? (get-run)) "Run ended"))))
+  (testing "Runner has to pay 2c to draw card. Issue #5335"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:credits 0
+                         :deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "No new card from Anansi"
+                          (click-prompt state :runner "Yes"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+  (testing "2nd sub test - runner clicks YES"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 1 (count (:hand (get-runner)))
+                          "New card from Anansi"
+                          (click-prompt state :runner "Yes"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+  (testing "2nd sub test - runner clicks NO"
+    (do-game
+     (new-game {:corp {:hand ["Anansi"]
+                       :credits 15}
+                :runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Anansi" "HQ")
+     (take-credits state :corp)
+     (let [anansi (get-ice state :hq 0)]
+       (run-on state :hq)
+       (rez state :corp anansi)
+       (run-continue state)
+       (card-subroutine state :corp anansi 1)
+       (click-prompt state :corp "No")
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "No new card from Anansi"
+                          (click-prompt state :runner "No"))
+       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi")))))
 
 (deftest akhet
   ;; Akhet
