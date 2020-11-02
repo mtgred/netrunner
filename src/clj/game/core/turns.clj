@@ -93,13 +93,13 @@
 (defn- handle-end-of-turn-discard
   [state side eid _]
   (let [cur-hand-size (count (get-in @state [side :hand]))
-        max-hand-size (max (hand-size state side) 0)]
+        max-hand-size (hand-size state side)]
     (if (> cur-hand-size max-hand-size)
       (continue-ability
         state side
         {:prompt (str "Discard down to " (quantify max-hand-size "card"))
          :choices {:card in-hand?
-                   :max (- cur-hand-size max-hand-size)
+                   :max (- cur-hand-size (max (hand-size state side) 0))
                    :all true}
          :effect (req (system-msg state side
                                   (str "discards "
