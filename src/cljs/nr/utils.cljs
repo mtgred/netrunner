@@ -176,9 +176,10 @@
 
 (def card-patterns (memoize card-patterns-impl))
 
-(defn contains-card-pattern-impl []
+(defn contains-card-pattern-impl
   "A card pattern regex, used to match a card name in text to check if the rest
   of the text should be tested as one pass is far faster than 1500 passes"
+  []
   (re-pattern
     (->> @all-cards
       (filter #(not (:replaced_by %)))
