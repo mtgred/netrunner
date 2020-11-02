@@ -1532,9 +1532,9 @@
                                                :choices {:card #(has-subtype? % "Icebreaker")}
                                                :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
                                                :effect (req (wait-for (trash state side card nil)
-                                                                      (move :runner target :deck)
-                                                                      (clear-wait-prompt :runner)
-                                                                      (effect-completed eid)))}
-                                 :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                              (effect-completed eid))}}}
+                                                                      (move state :runner target :deck)
+                                                                      (clear-wait-prompt state :runner)
+                                                                      (effect-completed state side eid)))}
+                                 :no-ability {:effect (req (clear-wait-prompt state :runner)
+                                                           (effect-completed state side eid))}}}
                                card nil))}]})
