@@ -1525,16 +1525,16 @@
                             (some #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
              :effect (effect (show-wait-prompt :runner "Corp to use Will-o'-the-Wisp")
                              (continue-ability
-                               {:optional
-                                {:prompt "Trash Will-o'-the-Wisp?"
-                                 :yes-ability {:async true
-                                               :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
-                                               :choices {:card #(has-subtype? % "Icebreaker")}
-                                               :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                                               :effect (req (wait-for (trash state side card nil)
-                                                                      (move :runner target :deck)
-                                                                      (clear-wait-prompt :runner)
-                                                                      (effect-completed eid)))}
-                                 :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                              (effect-completed eid))}}}
-                               card nil))}]})
+                              {:optional
+                               {:prompt "Trash Will-o'-the-Wisp?"
+                                :yes-ability {:async true
+                                              :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
+                                              :choices {:card #(has-subtype? % "Icebreaker")}
+                                              :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                                              :effect (req (wait-for (trash state side card nil)
+                                                                     (move state :runner target :deck)
+                                                                     (clear-wait-prompt state :runner)
+                                                                     (effect-completed state side eid)))}
+                                :no-ability {:effect (req (clear-wait-prompt state :runner)
+                                                          (effect-completed state side eid))}}}
+                              card nil))}]})

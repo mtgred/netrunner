@@ -3257,3 +3257,27 @@
         (click-card state :corp mar1)
         (click-card state :corp war)
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")))))
+
+(deftest will-o-the-wisp
+  ;; Will-o'-the-Wisp
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck ["Will-o'-the-Wisp"
+                              "Vanilla"]}
+                :runner {:deck ["Corroder"]}})
+     (play-from-hand state :corp "Will-o'-the-Wisp" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (play-from-hand state :corp "Vanilla" "Server 1")
+     (rez state :corp (get-ice state :remote1 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (let [cor (get-program state 0)]
+       (run-on state "Server 1")
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+       (core/continue state :corp nil)
+       (run-continue state)
+       (click-prompt state :corp "Yes")
+       (click-card state :corp (refresh cor))
+       (is (empty? (get-program state)) "Corroder uninstalled")
+       (is (= "Corroder" (:title (last (:deck (get-runner))))) "GoCorroderrdian on bottom of Stack")))))
