@@ -2629,7 +2629,23 @@
     (take-credits state :runner)
     (let [N (:credit (get-runner))]
       (take-credits state :corp)
-      (is (= (+ N 2) (:credit (get-runner)))))))
+      (is (= (+ N 2) (:credit (get-runner))))))
+  (testing "Malia and Miss Bones"
+    ;; Malia Z0L0K4 - Malia blanking Miss Bones still gives a prompt on option to use the credits #5350
+    (do-game
+      (new-game {:corp {:deck [(qty "Malia Z0L0K4" 2)]}
+                 :runner {:deck ["Miss Bones"]}})
+      (play-from-hand state :corp "Malia Z0L0K4" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [malia1 (get-content state :remote1 0)
+            missbones (get-resource state 0)]
+        (run-empty-server state :remote1)
+        (rez state :corp malia1)
+        (click-card state :corp (get-resource state 0))
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (empty? (:prompt (get-runner))) "Select credit source prompt did not come up")
+        (is (nil? (refresh malia1)) "Malia has been trashed")))))
 
 (deftest marilyn-campaign
   ;; Marilyn Campaign
