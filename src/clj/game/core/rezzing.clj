@@ -5,12 +5,11 @@
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
-    [game.core.events :refer [register-events trigger-event trigger-event-sync unregister-events]]
+    [game.core.engine :refer [pay register-events resolve-ability trigger-event trigger-event-sync unregister-events]]
     [game.core.flags :refer [can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
-    [game.core.payment :refer [build-spend-msg can-pay? pay]]
-    [game.core.resolve-ability :refer [resolve-ability]]
+    [game.core.payment :refer [build-spend-msg can-pay?]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.toasts :refer [toast]]
@@ -71,7 +70,7 @@
          (let [cdef (card-def card)
                costs (get-rez-cost state side card args)]
            (wait-for (pay state side (make-eid state eid) card costs)
-                     (if-let [cost-str (and (string? async-result) async-result)]
+                     (if-let [payment-str (:msg async-result)]
                        (do (when (:derezzed-events cdef)
                              (unregister-events state side card))
                            (if-not disabled
@@ -83,7 +82,7 @@
                                                      (update-in [:host :zone] #(map to-keyword %)))))
                            (when-not no-msg
                              (system-msg state side
-                                         (str (build-spend-msg cost-str "rez" "rezzes")
+                                         (str (build-spend-msg payment-str "rez" "rezzes")
                                               (:title card)
                                               (cond
                                                 (:alternative-cost args) " by paying its alternative cost"
@@ -103,6 +102,7 @@
                        (effect-completed state side eid)))))
        (effect-completed state side eid)))))
 
+;; TODO: make async
 (defn derez
   "Derez a corp card."
   [state side card]

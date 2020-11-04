@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.events :refer [register-events unregister-events]]
+    [game.core.engine :refer [register-events unregister-events]]
     [game.core.initializing :refer [card-init]]
     [game.core.update :refer [update! update-hosted!]]
     [game.utils :refer [remove-once]]))

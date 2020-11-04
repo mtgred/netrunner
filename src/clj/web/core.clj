@@ -76,7 +76,7 @@
 
     ;; Clear inactive lobbies after 30 minutes
     (web.utils/tick #(lobby/clear-inactive-lobbies 1800) 1000)
-    (web.utils/tick lobby/send-lobby 1000)
+    (web.utils/tick lobby/reset-send-lobby 1000)
 
     (reset! server (org.httpkit.server/run-server app {:port port}))
     (println "Jinteki server running in" @server-mode "mode on port" port)

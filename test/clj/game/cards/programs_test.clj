@@ -96,6 +96,57 @@
       (run-continue state)
       (is (empty? (:prompt (get-runner))) "No bypass prompt"))))
 
+(deftest aghora
+  ;; Aghora
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Aghora" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Aghora")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Aghora" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Aghora")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with rez cost 5 or higher"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Endless EULA"]
+                        :credits 10}
+                 :runner {:hand ["Aghora"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Endless EULA" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aghora")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "End the run unless the Runner pays 1 [Credits]")
+      (click-prompt state :runner "Done")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
+
 (deftest algernon
   ;; Algernon - pay 2 credits to gain a click, trash if no successful run
   (testing "Use, successful run"
@@ -1114,15 +1165,48 @@
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
     (do-game
-      (new-game {:runner {:hand ["Cordyceps"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Cordyceps")
-      (take-credits state :runner)
-      (core/purge state :corp)
-      (take-credits state :corp)
-      (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
+      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (is (= 0 (get-counters (get-program state 0) :virus)) "Has no virus tokens")
       (run-on state "HQ")
       (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No prompt with no virus counters")))
+  (testing "Works with Hivemind installed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps" "Hivemind"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cordyceps")
+      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (play-from-hand state :runner "Hivemind")
+      (run-on state "HQ")
+      (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Select ice protecting this server" (:msg (prompt-map :runner))))
+      (is (= :select (prompt-type :runner)))
+      (click-card state :runner "Ice Wall")
+      (click-card state :runner "Enigma")
+      (is (= "Select a card with virus counters (0 of 1 virus counters)" (:msg (prompt-map :runner))))
+      (click-card state :runner "Hivemind")
+      (is (= "Enigma" (:title (get-ice state :hq 0))))
+      (is (= "Ice Wall" (:title (get-ice state :hq 1))))
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
 
@@ -1161,10 +1245,12 @@
       (dotimes [n 5]
         (when (pos? n)
           (core/draw state :runner n))
+        (core/fake-checkpoint state)
         (is (= (- strength n) (get-strength (refresh cradle))) (str "Cradle should lose " n " strength"))
         (starting-hand state :runner [])
+        (core/fake-checkpoint state)
         (is (= strength (get-strength (refresh cradle))) (str "Cradle should be back to original strength")))
-      (core/draw state :runner 1)
+      (click-draw state :runner)
       (is (= (dec strength) (get-strength (refresh cradle))) "Cradle should lose 1 strength")
       (play-from-hand state :runner "Cache")
       (is (= strength (get-strength (refresh cradle))) (str "Cradle should be back to original strength")))))
@@ -1814,6 +1900,20 @@
       (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
       (core/continue state :corp nil))))
 
+(deftest expert-schedule-analyzer
+  ;; Expert Schedule Analyzer
+  (do-game
+    (new-game {:runner {:deck ["Expert Schedule Analyzer"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Expert Schedule Analyzer")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue state)
+    (is (= "Choose an access replacement ability" (:msg (prompt-map :runner)))
+        "Replacement effect is optional")
+    (click-prompt state :runner "Expert Schedule Analyzer")
+    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
+        "All of HQ is revealed correctly")))
+
 (deftest faerie
   (testing "Trash after encounter is over, not before"
     (do-game
@@ -2064,7 +2164,6 @@
         (card-ability state :runner gh1 0)
         (is (seq (:prompt (get-runner))) "Grappling Hook creates break prompt")
         (click-prompt state :runner "End the run")
-        (click-prompt state :runner "1: End the run")
         (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
         (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
         (run-jack-out state)
@@ -2094,7 +2193,6 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Trace 3 - Give the Runner 1 tag")
-      (click-prompt state :runner "1: Trace 3 - Give the Runner 1 tag")
       (fire-subs state (get-ice state :hq 0))
       (click-prompt state :runner "10")
       (click-prompt state :corp "1")
@@ -2116,12 +2214,9 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (card-ability state :runner (get-program state 0) 0)
-      (click-prompt state :runner "End the run")
-      (is (= "Which of the \"End the run\" subroutines did you want to not break? (Top to bottom)"
-             (:msg (prompt-map :runner))))
-      (click-prompt state :runner "5: End the run")
-      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner (get-program state 0) "Break all but 1 subroutine")
+      (click-prompt state :runner "End the run" {:idx 4})
+      (card-ability state :runner (get-resource state 0) "Break the last subroutine")
       (is (core/all-subs-broken? (get-ice state :hq 0))
           "Grappling Hook and Gbahali worked together"))))
 
@@ -2330,7 +2425,9 @@
       (is (= 0 (get-counters (get-program state 1) :virus)))
       (run-empty-server state "HQ")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
-      (is (= 1 (count (:discard (get-corp)))))))
+      (click-card state :runner "Hivemind")
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 0 (get-counters (get-program state 0) :virus)))))
   (testing "can't be used when empty #5190"
     (do-game
       (new-game {:corp {:hand ["Hostile Takeover"]}
@@ -2592,6 +2689,34 @@
       (run-continue state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
+
+(deftest keyhole
+  ;; Keyhole
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Herald" "Troll"]}
+                 :runner {:hand ["Keyhole"]}})
+      (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+      (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+      (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+      (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keyhole")
+      (card-ability state :runner (get-program state 0) 0)
+      (is (:run @state) "Run initiated")
+      (run-continue state)
+      (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+        (click-prompt state :runner "Troll")
+        (is (empty? (:prompt (get-runner))) "Prompt closed")
+        (is (not (:run @state)) "Run ended")
+        (is (-> (get-corp) :discard first :seen) "Troll is faceup")
+        (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+        (is (find-card "Herald" (:deck (get-corp))) "Herald now in R&D")
+        (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck)))
+            "Corp has shuffled R&D"))
+      (card-ability state :runner (get-program state 0) 0)
+      (is (:run @state) "Keyhole can be used multiple times per turn"))))
 
 (deftest kyuban
   ;; Kyuban
@@ -4043,6 +4168,56 @@
       (click-prompt state :runner "5")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward"))))
 
+(deftest sadyojata
+  ;; Sadyojata
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Sadyojata" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sadyojata")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Sadyojata" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Sadyojata")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with 3 or more subtypes"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Executive Functioning"]
+                        :credits 10}
+                 :runner {:hand ["Sadyojata"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Executive Functioning" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sadyojata")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "Trace 4 - Do 1 brain damage")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
+
 (deftest sage
   ;; Sage
   (do-game
@@ -4275,32 +4450,45 @@
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
 
 (deftest snitch
-  ;; Snitch - Only works on unrezzed ice
-  (do-game
-    (new-game {:corp {:deck [(qty "Quandary" 2)]}
-               :runner {:deck ["Snitch"]}})
-    (play-from-hand state :corp "Quandary" "R&D")
-    (play-from-hand state :corp "Quandary" "HQ")
-    (let [hqice (get-ice state :hq 0)]
-      (rez state :corp hqice))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Snitch")
-    (let [snitch (get-program state 0)]
-      ;; unrezzed ice scenario
-      (run-on state "R&D")
-      (is (prompt-is-card? state :runner snitch) "Option to expose")
-      (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Yes")
-      (is (= "Jack out?" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Yes")
-      ;; rezzed ice scenario
+  ;; Snitch
+  (testing "Only works on rezzed ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Quandary"]}
+                 :runner {:deck ["Snitch"]}})
+      (play-from-hand state :corp "Quandary" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
+      (let [snitch (get-program state 0)]
+        (run-on state "R&D")
+        (is (prompt-is-card? state :runner snitch) "Option to expose")
+        (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes")
+        (is (= "Jack out?" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Yes"))))
+  (testing "Doesn't work if ice is rezzed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Quandary"]}
+                 :runner {:deck ["Snitch"]}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
       (run-on state "HQ")
       (is (empty? (:prompt (get-runner))) "No option to jack out")
       (run-continue state)
-      (run-jack-out state)
-      ;; no ice scenario
+      (run-jack-out state)))
+  (testing "Doesn't work if there is no ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Snitch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Snitch")
       (run-on state "Archives")
-      (is (empty? (:prompt (get-runner))) "No option to jack out"))))
+      (is (empty? (:prompt (get-runner))) "No option to jack out")
+      (run-continue state))))
 
 (deftest snowball
   (testing "Strength boost until end of run when used to break a subroutine"
@@ -4492,24 +4680,49 @@
 
 (deftest surfer
   ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall" "Quandary"]}
-               :runner {:deck ["Surfer"]}})
-    (play-from-hand state :corp "Quandary" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Surfer")
-    (is (= 3 (:credit (get-runner))) "Paid 2 credits to install Surfer")
-    (run-on state "HQ")
-    (rez state :corp (get-ice state :hq 1))
-    (run-continue state)
-    (is (= 2 (get-in @state [:run :position])) "Starting run at position 2")
-    (let [surf (get-program state 0)]
-      (card-ability state :runner surf 0)
-      (click-card state :runner (get-ice state :hq 0))
-      (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
-      (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
-      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Quandary"]}
+                 :runner {:deck ["Surfer"]}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surfer")
+      (is (= 3 (:credit (get-runner))) "Paid 2 credits to install Surfer")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (is (= 2 (get-in @state [:run :position])) "Starting run at position 2")
+      (let [surf (get-program state 0)]
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
+        (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
+        (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
+ (testing "Swapping twice across two turns"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Vanilla"]}
+                 :runner {:deck ["Surfer"]
+                          :credits 10}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surfer")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (let [surf (get-program state 0)]
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (run-jack-out state)
+        (run-on state "HQ")
+        (rez state :corp (get-ice state :hq 1))
+        (run-continue state)
+        (card-ability state :runner surf 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (= ["Vanilla" "Ice Wall"] (map :title (get-ice state :hq)))
+            "Vanilla is innermost, Ice Wall is outermost again")
+        (is (= [0 1] (map :index (get-ice state :hq))))))))
 
 (deftest takobi
   ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
@@ -4802,6 +5015,56 @@
         (click-prompt state :runner "Done")
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
+
+(deftest vamadeva
+  ;; Vamadeva
+  (testing "Swap ability"
+    (testing "Doesnt work if no Deva in hand"
+      (do-game
+        (new-game {:runner {:hand ["Vamadeva" "Corroder"]
+                            :credits 10}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Vamadeva")
+        (card-ability state :runner (get-program state 0) 2)
+        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+    (testing "Works with another deva in hand"
+      (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
+        (do-game
+          (new-game {:runner {:hand ["Vamadeva" deva]
+                              :credits 10}})
+          (take-credits state :corp)
+          (play-from-hand state :runner "Vamadeva")
+          (let [installed-deva (get-program state 0)]
+            (card-ability state :runner installed-deva 2)
+            (click-card state :runner (first (:hand (get-runner))))
+            (is (not (utils/same-card? installed-deva (get-program state 0)))
+                "Installed deva is not same as previous deva")
+            (is (= deva (:title (get-program state 0)))))))))
+  (testing "Break ability targets ice with 1 subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma" "Ice Wall"]
+                        :credits 10}
+                 :runner {:hand ["Vamadeva"]
+                          :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Vamadeva")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "End the run")
+      (is (:broken (first (:subroutines (get-ice state :rd 0))))
+          "The break ability worked"))))
 
 (deftest wari
   (do-game

@@ -6,7 +6,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.events :refer [card-as-handler register-events trigger-event-simult]]
+    [game.core.engine :refer [card-as-handler pay register-events trigger-event-simult]]
     [game.core.finding :refer [find-latest]]
     [game.core.flags :refer [turn-flag?]]
     [game.core.gaining :refer [toast-check-mu use-mu]]
@@ -14,7 +14,7 @@
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg merge-costs pay]]
+    [game.core.payment :refer [build-spend-msg merge-costs]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
@@ -22,9 +22,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? to-keyword]]
-    )
-  )
+    [game.utils :refer [dissoc-in in-coll? to-keyword]]))
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -209,11 +207,11 @@
     (if (and (corp-can-install? state side card slot)
              (not (install-locked? state :corp)))
       (wait-for (pay state side (make-eid state eid) card costs {:action action})
-                (if-let [cost-str async-result]
+                (if-let [payment-str (:msg async-result)]
                   (if (= server "New remote")
                     (wait-for (trigger-event-simult state side :server-created nil card)
-                              (corp-install-continue state side eid card server args slot cost-str))
-                    (corp-install-continue state side eid card server args slot cost-str))
+                              (corp-install-continue state side eid card server args slot payment-str))
+                    (corp-install-continue state side eid card server args slot payment-str))
                   (effect-completed state side eid)))
       (effect-completed state side eid))))
 
@@ -362,7 +360,7 @@
            (if (not (runner-can-install? state side card facedown))
              (effect-completed state side eid)
              (wait-for (pay state side (make-eid state eid) card cost)
-                       (if-let [cost-str async-result]
+                       (if-let [payment-str (:msg async-result)]
                          (let [c (if host-card
                                    (host state side host-card card)
                                    (move state side card
@@ -376,7 +374,7 @@
                                                 (card-init state side c {:resolve-effect false
                                                                          :init-data true}))]
                            (when-not no-msg
-                             (runner-install-message state side (:title installed-card) cost-str params))
+                             (runner-install-message state side (:title installed-card) payment-str params))
                            (play-sfx state side "install-runner")
                            (when (and (program? installed-card)
                                       (not facedown)

@@ -1,7 +1,6 @@
 (ns game.core.revealing
   (:require
-    [game.core.eid :refer [make-eid]]
-    [game.core.events :refer [trigger-event-sync]]))
+    [game.core.engine :refer [trigger-event-sync]]))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."
@@ -15,5 +14,5 @@
 
 (defn reveal
   "Trigger the event for revealing one or more cards."
-  [state side & targets]
-  (apply trigger-event-sync state side (make-eid state) (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
+  [state side eid & targets]
+  (apply trigger-event-sync state side eid (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))

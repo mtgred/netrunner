@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -euo pipefail
+
+backup_path=${1:-}
+mongo_host=${MONGO_HOST:-localhost}
+mongo_port=${MONGO_PORT:-27017}
+
+err () {
+  2>&1 echo "$@"
+  exit 1
+}
+
+usage () {
+  err "usage:
+  $0 backup_path
+
+  Environment variables:
+    MONGO_HOST:       mongodb host, defaults to localhost
+    MONGO_PORT:       mongodb port, defaults to 27017"
+}
+
+log () {
+  2>&1 echo "$@"
+}
+
+check_usage () {
+  [[ $# -eq 1 ]]        || usage
+  [[ -n $backup_path ]] || usage
+  [[ -f $backup_path ]] || err "Could not find $backup_path"
+}
+
+backup () {
+  log "Saving a copy of the current database to pre-restore.gzip. Use this to recover if the restore process overwrites important data."
+  mongodump \
+    --host="$mongo_host" \
+    --port="$mongo_port" \
+    --db="netrunner" \
+    --gzip \
+    --archive="pre-restore.gzip"
+}
+
+restore () {
+  mongorestore \
+    --host="$mongo_host" \
+    --port="$mongo_port" \
+    --gzip \
+    --drop \
+    --archive="$backup_path"
+}
+
+check_usage "$@"
+backup
+restore

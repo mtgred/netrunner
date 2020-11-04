@@ -56,6 +56,7 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
 (deftest aniccam
+  ;; Aniccam
   (testing "Aniccam gives 1 MU"
     (do-game
       (new-game {:runner {:hand ["Aniccam" "Sure Gamble"]
@@ -122,7 +123,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :meat 1)
+      (damage state :runner :meat 1)
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "The effect triggers on net damage"
     (do-game
@@ -130,7 +131,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "The effect triggers on brain damage"
     (do-game
@@ -138,7 +139,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :brain 1)
+      (damage state :runner :brain 1)
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
   (testing "Trashing an event from R&D triggers Aniccam"
     (do-game
@@ -722,21 +723,21 @@
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/damage state :runner :meat 1)
+      (damage state :runner :meat 1)
       (is (not (empty? (:prompt (get-runner)))))))
   (testing "The effect triggers on net damage"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (not (empty? (:prompt (get-runner)))))))
   (testing "The effect triggers on brain damage"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/damage state :runner :brain 1)
+      (damage state :runner :brain 1)
       (is (not (empty? (:prompt (get-runner)))))))
   (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the top of the Stack"
     (do-game
@@ -1628,7 +1629,7 @@
     (let [hb (get-hardware state 0)
           cache (get-program state 0)
           hbdown (get-runner-facedown state 0)]
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (= (:msg (prompt-map :runner))
              "Prevent any of the 1 net damage?")
           "Damage prevention message correct.")
@@ -1637,7 +1638,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
       (is (second-last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 damage\\."))
-      (core/damage state :corp :net 3)
+      (damage state :corp :net 3)
       (is (= (:msg (prompt-map :runner))
              "Prevent any of the 3 net damage?")
           "Damage prevention message correct.")
@@ -2047,26 +2048,41 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "PAD Campaign"]}
-                 :runner {:deck ["Imp" "Mâché" "Cache"]}})
+                 :runner {:deck ["Cache"]
+                          :hand ["Mâché"]
+                          :credits 15}})
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (starting-hand state :runner ["Imp" "Mâché"])
-      (play-from-hand state :runner "Imp")
       (play-from-hand state :runner "Mâché")
-      (let [imp (get-program state 0)
-            mache (get-hardware state 0)
+      (let [mache (get-hardware state 0)
             counters (get-counters (refresh mache) :power)
             hand (-> (get-runner) :hand count)]
-        (run-empty-server state :hq)
-        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
-        (is (= counters (get-counters (refresh mache) :power)) "Mache should gain no counters from trashing a card with no trash cost")
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 4 [Credits] to trash")
         (is (= (+ counters 4) (get-counters (refresh mache) :power)) "Mache should gain 4 counters for trashing a card with a trash cost of 4")
         (card-ability state :runner mache 0)
         (is (= (inc hand) (-> (get-runner) :hand count)) "Runner should draw one card for using Mache's ability")
         (is (= 1 (get-counters (refresh mache) :power)) "Mache ability should cost 3 counters"))))
+  (testing "Fizzles if a card with no trash cost is trashed"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "PAD Campaign"]}
+                 :runner {:deck ["Cache"]
+                          :hand ["Imp" "Mâché"]
+                          :creditw 15}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Mâché")
+      (let [imp (get-program state 0)
+            mache (get-hardware state 0)
+            counters (get-counters (refresh mache) :power)]
+        (run-empty-server state :hq)
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+        (is (= counters (get-counters (refresh mache) :power)) "Mache should gain no counters from trashing a card with no trash cost")
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (is (= counters (get-counters (refresh mache) :power)) "Mache gains no counters as it's been used this turn already"))))
   (testing "with Political Operative"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "PAD Campaign"]}
@@ -3073,7 +3089,7 @@
       (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")
-      (core/lose state :runner :credit 100)
+      (core/lose state :runner :credit :all)
       ; can only stop 1 damage due to credits
       (core/gain state :runner :credit 1)
       (run-empty-server state "Server 2")
@@ -3090,7 +3106,7 @@
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Prisec")
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd3 0)
-      (is (= 1 (:number (:choices (prompt-map :runner)))) "Recon Drone choice limited to 1 meat")
+      (is (= 101 (:number (:choices (prompt-map :runner)))) "Recon Drone choice is not limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
@@ -3874,6 +3890,7 @@
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
 (deftest top-hat
+  ;; Top Hat
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
@@ -3890,7 +3907,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Top Hat")
       (run-empty-server state "R&D")
-      (click-prompt state :runner "Yes") ;Top Hat Prompt
+      (click-prompt state :runner "Top Hat") ;Top Hat Prompt
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
@@ -3915,10 +3932,10 @@
         (core/gain state :runner :credit 100)
         (play-from-hand state :runner "Top Hat")
         (run-empty-server state "R&D")
-        (click-prompt state :runner "Yes") ; Top Hat activation
-        (click-prompt state :runner "1") ; Top Hat
         (click-prompt state :corp "0") ; init Ash trace
         (click-prompt state :runner "0") ; lose Ash trace
+        (click-prompt state :runner "Top Hat") ; Top Hat activation
+        (click-prompt state :runner "1") ; Top Hat
         (is (empty? (:prompt (get-runner))) "Can't trash Ash"))))
   (testing "Mad Dash interaction issue #4542"
     (do-game
@@ -3941,7 +3958,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "Top Hat") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
       (click-prompt state :runner "No action")
@@ -3950,7 +3967,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
-      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "Top Hat") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
       (click-prompt state :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")

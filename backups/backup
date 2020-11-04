@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -euo pipefail
+
+keep_last=${BACKUP_KEEP_LAST:-}
+mongo_host=${MONGO_HOST:-localhost}
+mongo_port=${MONGO_PORT:-27017}
+backup_dir=${BACKUP_DIR:-data}
+backup_name="netrunner-$(date --iso=seconds).gzip"
+
+err () {
+  2>&1 echo "$@"
+  exit 1
+}
+
+warn () {
+  warning='\033[0;31mWARNING:'
+  clear_color='\033[0m'
+  2>&1 echo -e "$warning" "$@" "$clear_color"
+}
+
+usage () {
+  err "usage:
+  $0
+
+  Environment variables:
+    BACKUP_KEEP_LAST: number of backups to keep, defaults to all
+    MONGO_HOST:       mongodb host, defaults to localhost
+    MONGO_PORT:       mongodb port, defaults to 27017
+    BACKUP_DIR:       directory to keep backups, defaults to ./backups/data in this repo"
+}
+
+log () {
+  2>&1 echo "$@"
+}
+
+check_usage () {
+  [[ "$#" -eq 0 ]] || usage
+
+  if [ -z "$keep_last" ]; then
+    warn '$BACKUP_KEEP_LAST is not set, not removing old backups'
+  fi
+}
+
+cd_to_script () {
+  echo -n "Changing directory to the backup script's location... "
+  script_dir=$(dirname "$0")
+  cd "$script_dir" || err "Could not cd to $script_dir."
+  echo ok
+}
+
+backup () {
+  mongodump \
+    --host="$mongo_host" \
+    --port="$mongo_port" \
+    --db="netrunner" \
+    --gzip \
+    --archive="$backup_dir/$backup_name"
+}
+
+cleanup () {
+  old_backups=$(ls -t $backup_dir | tail -n +$(($keep_last + 1)))
+  log "Deleting old backups:"
+  for backup in $old_backups; do
+      log "$backup_dir/$backup"
+      rm "$backup_dir/$backup"
+  done
+}
+
+check_usage "$@"
+cd_to_script
+backup
+[[ -z "$keep_last" ]] || cleanup

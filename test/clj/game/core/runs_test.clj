@@ -1,6 +1,7 @@
 (ns game.core.runs-test
   (:require [game.core :as core]
             [game.core-test :refer :all]
+            [game.core.card :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
@@ -177,15 +178,100 @@
       (rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :hq)
-      (is (= "Vanilla" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
+      (is (= "Vanilla" (:title (:ice (ffirst (core/turn-events state :corp :approach-ice))))))
       (is (= 1 (count (core/turn-events state :corp :approach-ice))))
       (is (last-log-contains? state "Runner approaches Vanilla"))
       (core/redirect-run state :corp "Archives" :approach-ice)
       (run-next-phase state)
       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
-      (is (= "Ice Wall" (:title (ffirst (core/turn-events state :corp :approach-ice)))))
+      (is (= "Ice Wall" (:title (:ice (ffirst (core/turn-events state :corp :approach-ice))))))
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
-      (is (last-log-contains? state "Runner approaches Ice Wall")))))
+      (is (last-log-contains? state "Runner approaches Ice Wall"))))
+  (testing "cr 1.4 6.8.2c: any other priority window is closed normally"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Embolus" "Giordano Memorial Field" "Hostile Takeover"]
+                        :credits 20}})
+      (play-from-hand state :corp "Embolus" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (core/add-counter state :corp (get-content state :remote1 0) :power 4)
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (rez state :corp (get-content state :remote2 0))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote3)
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        -1 (get-counters (get-content state :remote1 0) :power)
+        "Embolus loses a power counter even tho GMF is resolved first and ends the run"
+        (run-empty-server state :remote2)
+        (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+        (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
+        (click-prompt state :corp "Giordano Memorial Field")
+        (click-prompt state :runner "End the run")))))
+
+(deftest replace-access
+  (testing "'You may' only"
+    (testing "and choosing replacement effect"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Hedge Fund"]}
+                   :runner {:hand ["Account Siphon"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Account Siphon")
+        (run-continue state)
+        (is (= ["Account Siphon" "Access cards"] (prompt-buttons :runner)) "Runner can choose")
+        (click-prompt state :runner "Account Siphon")
+        (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
+            "Replacement effect is noted")
+        (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+    (testing "and choosing to access cards"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Hedge Fund"]}
+                   :runner {:hand ["Account Siphon"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Account Siphon")
+        (run-continue state)
+        (is (= ["Account Siphon" "Access cards"] (prompt-buttons :runner)) "Runner can choose")
+        (click-prompt state :runner "Access cards")
+        (is (second-last-log-contains? state "Runner chooses to access cards instead of use a replacement effect")
+            "Not choosing replacement effect is noted")
+        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "Normal access prompt")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
+  (testing "must replacement effects only"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Security Testing"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (run-empty-server state :hq)
+      (is (empty? (:prompt (get-runner))))
+      (is (second-last-log-contains? state "Runner uses the replacement effect from Security Testing")
+          "Replacement effect is noted")
+      (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+  (testing "'You may' and must replacement effects"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Account Siphon" "Security Testing"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (play-from-hand state :runner "Account Siphon")
+      (run-continue state)
+      (is (= ["Account Siphon" "Security Testing"] (prompt-buttons :runner)) "Runner can choose")
+      (click-prompt state :runner "Account Siphon")
+      (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
+          "Replacement effect is noted")
+      (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
 
 (deftest buffered-continue
   (testing "Buffered continue on approaching ice"

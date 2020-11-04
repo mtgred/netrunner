@@ -60,4 +60,4 @@
         (change state :runner :hand-size -1)
         (is (= 5 (hand-size :runner)) "Runner has lost 1 hand size")
         (change state :runner :hand-size -6)
-        (is (zero? (hand-size :runner)) "Runner can't go below 0 hand size")))))
+        (is (neg? (hand-size :runner)) "Runner has negative hand size")))))

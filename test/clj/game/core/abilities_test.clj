@@ -1,4 +1,4 @@
-(ns game.engine.abilities-test
+(ns game.core.abilities-test
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.card :refer :all]
@@ -73,6 +73,10 @@
     (is (string? (or (:label ability) (:msg ability)))
         (str title ": Ability " (inc idx) " doesn't have an appropriate label"))))
 
+(defn generate-label
+  [card]
+  (add-cost-to-label (first (:abilities card))))
+
 (deftest cost-label
   (testing "Conditional costs"
     (do-game
@@ -81,15 +85,28 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Simulchip")
       (is (= "[trash], trash 1 installed program: Install a program from the heap"
-             (add-cost-to-label (first (:abilities (get-hardware state 0))))))
+             (generate-label (get-hardware state 0))))
       (play-from-hand state :runner "Gorman Drip v1")
       (card-ability state :runner (get-program state 0) 0)
       (is (= "[trash]: Install a program from the heap"
-             (add-cost-to-label (first (:abilities (get-hardware state 0))))))))
+             (generate-label (get-hardware state 0))))))
   (testing "trash icon"
     (do-game
-      (new-game {:runner {:hand ["Recon Drone"]}})
+      (new-game {:runner {:hand ["Bankroll"]}})
       (take-credits state :corp)
-      (play-from-hand state :runner "Recon Drone")
-      (is (= "[trash]: Prevent damage"
-             (add-cost-to-label (first (:abilities (get-hardware state 0)))))))))
+      (play-from-hand state :runner "Bankroll")
+      (is (= "[trash]: Take all credits from Bankroll" (generate-label (get-program state 0))))))
+  (testing "x credits"
+    (do-game
+      (new-game {:runner {:hand ["Misdirection"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Misdirection")
+      (is (= "[Click][Click], X [Credits]: Remove X tags" (generate-label (get-program state 0))))))
+  (testing "x power counters"
+    (do-game
+      (new-game {:corp {:hand ["Lakshmi Smartfabrics"]}})
+      (play-from-hand state :corp "Lakshmi Smartfabrics" "New remote")
+      (let [lak (get-content state :remote1 0)]
+        (rez state :corp lak)
+        (is (= "X hosted power counters: Reveal an agenda worth X points from HQ"
+               (generate-label (refresh lak))))))))

@@ -190,12 +190,18 @@
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
   [state side card ability & targets]
-  `(let [card# (get-card ~state ~card)]
+  `(let [card# (get-card ~state ~card)
+         ability# (cond
+                    (number? ~ability) ~ability
+                    (string? ~ability) (some #(when (= (:label (second %)) ~ability) (first %)) (map-indexed vector (:abilities card#)))
+                    :else -1)]
      (is (active? card#) (str (:title card#) " is active"))
-     (is (nth (:abilities card#) ~ability nil) (str (:title card#) " has ability #" ~ability))
-     (when (nth (:abilities card#) ~ability nil)
+     (is (and (number? ability#)
+              (nth (:abilities card#) ability# nil)) (str (:title card#) " has ability #" ability#))
+     (when (and (number? ability#)
+                (nth (:abilities card#) ability# nil))
        (core/process-action "ability" ~state ~side {:card card#
-                                                    :ability ~ability
+                                                    :ability ability#
                                                     :targets (first ~targets)}))))
 
 (defmacro card-subroutine
@@ -413,7 +419,6 @@
   `(when (play-from-hand ~state :runner ~card)
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
-     (is (get-in @~state [:run :run-effects]) "There is a run-effect")
      (when (run-continue ~state)
        (is (get-in @~state [:runner :prompt]) "A prompt is shown")
        (is (get-in @~state [:run :successful]) "Run is marked successful"))))
@@ -522,3 +527,7 @@
   [state title]
   `(when (play-from-hand ~state :corp ~title "New remote")
      (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
+
+(defmacro damage
+  [state side dmg-type qty]
+  `(core/damage ~state ~side (core/make-eid ~state) ~dmg-type ~qty nil))

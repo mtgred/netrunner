@@ -1,7 +1,7 @@
 (ns game.core.gaining
   (:require
     [game.core.eid :refer [make-eid effect-completed]]
-    [game.core.events :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-sync]]
     [game.core.toasts :refer [toast]]))
 
 (defn safe-inc-n
@@ -80,25 +80,26 @@
 
 (defn gain-credits
   "Utility function for triggering events"
-  ([state side amount] (gain-credits state side (make-eid state) amount nil))
-  ([state side amount args] (gain-credits state side (make-eid state) amount args))
+  ([state side eid amount] (gain-credits state side eid amount nil))
   ([state side eid amount args]
    (if (and amount
             (pos? amount))
      (do (gain state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) args))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) amount args))
      (effect-completed state side eid))))
 
 (defn lose-credits
   "Utility function for triggering events"
-  ([state side amount] (lose-credits state side (make-eid state) amount nil))
-  ([state side amount args] (lose-credits state side (make-eid state) amount args))
+  ([state side eid amount] (lose-credits state side eid amount nil))
   ([state side eid amount args]
    (if (and amount
             (or (= :all amount)
                 (pos? amount)))
      (do (lose state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) args))
+         (when (and (= side :runner)
+                    (= :all amount))
+           (lose state :runner :run-credit :all))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) amount args))
      (effect-completed state side eid))))
 
 ;;; Stuff for handling {:base x :mod y} data structures

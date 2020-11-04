@@ -1,12 +1,12 @@
 (ns game.core.shuffling
   (:require
+    [clojure.string :as string]
     [game.core.card :refer [corp? in-discard?]]
-    [game.core.events :refer [trigger-event]]
+    [game.core.engine :refer [trigger-event]]
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [quantify]]
-    [clojure.string :as string]))
+    [game.utils :refer [quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."

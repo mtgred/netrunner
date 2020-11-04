@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-floating-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]
@@ -93,13 +93,13 @@
 (defn- handle-end-of-turn-discard
   [state side eid _]
   (let [cur-hand-size (count (get-in @state [side :hand]))
-        max-hand-size (max (hand-size state side) 0)]
+        max-hand-size (hand-size state side)]
     (if (> cur-hand-size max-hand-size)
       (continue-ability
         state side
         {:prompt (str "Discard down to " (quantify max-hand-size "card"))
          :choices {:card in-hand?
-                   :max (- cur-hand-size max-hand-size)
+                   :max (- cur-hand-size (max (hand-size state side) 0))
                    :all true}
          :effect (req (system-msg state side
                                   (str "discards "

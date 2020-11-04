@@ -2,9 +2,9 @@
   (:require
     [game.core.card :refer [get-card]]
     [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.engine :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.payment :refer [can-pay?]]
     [game.core.prompts :refer [show-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
@@ -20,7 +20,7 @@
                    no-ability (:no-ability ability)
                    end-effect (:end-effect ability)
                    new-eid (make-eid state eid)
-                   ability-to-do (if (and (= prompt-choice "Yes")
+                   ability-to-do (if (and (= (:value prompt-choice) "Yes")
                                           yes-ability
                                           (can-pay? state side eid card (:title card) (:cost yes-ability)))
                                    yes-ability
@@ -33,8 +33,8 @@
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))]
        (case autoresolve-answer
-         "Yes" (prompt-fn "Yes")
-         "No" (prompt-fn "No")
+         "Yes" (prompt-fn {:value "Yes"})
+         "No" (prompt-fn {:value "No"})
          (do (when autoresolve-fn
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
@@ -67,7 +67,7 @@
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
-   :effect (effect (update! (update-in card [:special toggle-kw] (fn [_] (keyword (string/lower-case target)))))
+   :effect (effect (update! (assoc-in card [:special toggle-kw] (keyword (string/lower-case target))))
                    (toast (str "From now on, " ability-name " will "
                                ({:always "always" :never "never" :ask "ask whether it should"}
                                 (get-in (get-card state card) [:special toggle-kw]))
@@ -79,4 +79,3 @@
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
-

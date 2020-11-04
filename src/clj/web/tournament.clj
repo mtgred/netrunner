@@ -102,6 +102,7 @@
               :tournament-name tournament-name
               :players players
               :spectators []
+              :spectator-count 0
               :messages [{:user "__system__"
                           :text "The game has been created."}]
               :allow-spectator allow-spectator
@@ -111,8 +112,7 @@
               :last-update (t/now)
               :on-close on-close}]
     (when (= 2 (count players))
-      (swap! all-games assoc gameid game)
-      (refresh-lobby :create gameid)
+      (refresh-lobby gameid game)
       game)))
 
 (defn create-lobbies-for-tournament
@@ -154,10 +154,10 @@
 
           players (build-players data)
           rounds (process-all-rounds data players)]
-      (ws/send! client-id [:tournament/loaded {:data {:players players
+      (ws/broadcast-to! [client-id] :tournament/loaded {:data {:players players
                                                       :missing-players missing-players
                                                       :rounds rounds
-                                                      :tournament-name (:name data)}}])
+                                                      :tournament-name (:name data)}})
       (when reply-fn (reply-fn 200)))
     (when reply-fn (reply-fn 403))))
 
@@ -170,7 +170,7 @@
   (if (:tournament-organizer user)
     (let [data (download-cobra-data cobra-link)
           created-rounds (create-lobbies-for-tournament data (str->int selected-round))]
-      (ws/send! client-id [:tournament/created {:data {:created-rounds (count created-rounds)}}])
+      (ws/broadcast-to! [client-id] :tournament/created {:data {:created-rounds (count created-rounds)}})
       (when reply-fn (reply-fn 200)))
     (when reply-fn (reply-fn 403))))
 
@@ -190,7 +190,7 @@
     :as msg}]
   (if (:tournament-organizer user)
     (let [deleted-rounds (close-tournament-tables tournament-name)]
-      (ws/send! client-id [:tournament/deleted {:data {:deleted-rounds (count deleted-rounds)}}])
+      (ws/broadcast-to! [client-id] :tournament/deleted {:data {:deleted-rounds (count deleted-rounds)}})
       (when reply-fn (reply-fn 200)))
     (when reply-fn (reply-fn 403))))
 

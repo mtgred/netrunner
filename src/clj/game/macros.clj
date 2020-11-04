@@ -16,7 +16,18 @@
       corp-reg-last (get-in @state [:corp :register-last-turn])
       runner-reg (get-in @state [:runner :register])
       runner-reg-last (get-in @state [:runner :register-last-turn])
-      target (first targets)
+      target (let [t (first targets)]
+               (if (and (map? t)
+                        (contains? t :uuid)
+                        (contains? t :value))
+                 (:value t)
+                 t))
+      context (let [t (first targets)]
+                (if (and (map? t)
+                         (contains? t :uuid)
+                         (contains? t :value))
+                  (:value t)
+                  t))
       installed (#{:rig :servers} (first (get-zone card)))
       remotes (get-remote-names state)
       servers (zones->sorted-names (get-zones state))
@@ -83,23 +94,23 @@
 
 (defmacro wait-for
   ([action & expr]
-   (let [reqmac `(fn [state# side# eid#]
-                   (let [~'async-result (:result eid#)]
-                     ~@expr))
-   ;; this creates a five-argument function to be resolved later,
-   ;; without overriding any local variables name state, card, etc.
+   (let [awaited-fn `(fn [eid#]
+                       (let [~'async-result (:result eid#)]
+                         ~@expr))
+         ;; this creates a five-argument function to be resolved later,
+         ;; without overriding any local variables name state, card, etc.
          totake (if (#{'apply 'handler 'payable?} (first action)) 4 3)
          th (nth action totake)]
      `(let [~'use-eid# (and (map? ~th) (:eid ~th))
             ~'new-eid# (if ~'use-eid# ~th (game.core.eid/make-eid ~'state))]
-        (~'game.core.eid/register-effect-completed ~'state ~'side ~'new-eid# ~reqmac)
+        (~'game.core.eid/register-effect-completed ~'state ~'new-eid# ~awaited-fn)
         (if ~'use-eid#
           ~(concat (take totake action) (list 'new-eid#) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid#) (drop totake action)))))))
 
 (defmacro continue-ability
   [state side ability card targets]
-  `(game.core.resolve-ability/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
+  `(game.core.engine/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
 
 (defmacro when-let*
   ([bindings & body]

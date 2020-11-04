@@ -157,22 +157,30 @@
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
-  (-> []
-      (#(if (or (and (= type "Agenda")
-                     (#{"servers" "onhost"} (first zone)))
-                (= advanceable "always")
-                (and rezzed
-                     (= advanceable "while-rezzed"))
-                (and (not rezzed)
-                     (= advanceable "while-unrezzed")))
-          (cons "advance" %) %))
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
-      (#(if (#{"ICE" "Program"} type)
-          (cons "trash" %) %))
-      (#(if (#{"Asset" "ICE" "Upgrade"} type)
-          (if-not rezzed (cons "rez" %) (cons "derez" %))
-          %))))
+  (cond->> []
+    ;; advance
+    (or (and (= type "Agenda")
+             (#{"servers" "onhost"} (first zone)))
+        (= advanceable "always")
+        (and rezzed
+             (= advanceable "while-rezzed"))
+        (and (not rezzed)
+             (= advanceable "while-unrezzed")))
+    (cons "advance")
+    ;; score
+    (and (= type "Agenda") (>= advance-counter current-cost))
+    (cons "score")
+    ;; trash
+    (#{"ICE" "Program"} type)
+    (cons "trash")
+    ;; rez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         (not rezzd))
+    (cons "rez")
+    ;; derez
+    (and (#{"Asset" "ICE" "Upgrade"} type)
+         rezzd)
+    (cons "derez")))
 
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
@@ -427,15 +435,16 @@
       (swap! s assoc :msg ""))))
 
 (defn send-typing [s]
-  "Send a typing event to server for this user if it is not already set in game state"
+  "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
-    (if (empty? text)
-      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                       :typing false}])
-      (when (not-any? #{username} (:typing @game-state))
+    (when (not-spectator?)
+      (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing true}])))))
+                                        :typing false}])
+        (when (not-any? #{username} (:typing @game-state))
+          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                          :typing true}]))))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -455,13 +464,12 @@
                   (not (:mutespectators game)))
           [:div
            [:form {:on-submit #(do (.preventDefault %)
-                                   (send-msg s))
-                   :on-input #(do (.preventDefault %)
-                                  (send-typing s))}
+                                   (send-msg s))}
             [:input {:placeholder "Say something"
                      :type "text"
                      :value (:msg @s)
-                     :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+                     :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
+                                     (send-typing s))}]]
            [indicate-action]])))))
 
 (defn handle-dragstart [e card]
@@ -1227,11 +1235,8 @@
     [:div.server
      [:div.ices {:style {:width (when (pos? max-hosted)
                                   (+ 84 3 (* 42 (dec max-hosted))))}}
-      (when-let [run-cards (seq (filter :card (:run-effects run)))]
-        [:div
-         (doall (for [card (map :card (reverse run-cards))]
-                  [:div.run-card {:key (:cid card)}
-                   [card-img card]]))])
+      (when-let [run-card (:source-card run)]
+        [:div.run-card [card-img run-card]])
       (doall
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)
@@ -1281,7 +1286,7 @@
                       (nth ices (dec run-pos)))]
     [:div.server
      [:div.ices
-      (when-let [run-card (:card (:run-effect run))]
+      (when-let [run-card (:source-card run)]
         [:div.run-card [card-img run-card]])
       (when (and run (not current-ice))
         [run-arrow run])]
@@ -1821,20 +1826,16 @@
 
             ;; otherwise choice of all present choices
             :else
-            (map-indexed (fn [i {:keys [uuid value]}]
-                           (when (not= value "Hide")
-                             [:button {:key i
-                                       :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                       :on-mouse-over
-                                       #(card-highlight-mouse-over % value button-channel)
-                                       :on-mouse-out
-                                       #(card-highlight-mouse-out % value button-channel)
-                                       :id {:code value}}
-                              (render-message
-                                (if-let [title (:title value)]
-                                  title
-                                  value))]))
-                         (:choices prompt)))]
+            (doall (for [{:keys [idx uuid value]} (:choices prompt)]
+                     (when (not= value "Hide")
+                       [:button {:key idx
+                                 :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                 :on-mouse-over
+                                 #(card-highlight-mouse-over % value button-channel)
+                                 :on-mouse-out
+                                 #(card-highlight-mouse-out % value button-channel)
+                                 :id {:code value}}
+                        (render-message (or (not-empty (:title value)) value))]))))]
          (if @run
            [run-div side run]
            [:div.panel.blue-shade

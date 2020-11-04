@@ -835,10 +835,10 @@
       (is (= 8 (:credit (get-corp))))
       (rez state :corp ct)
       (card-ability state :corp ct 0)
-      (click-prompt state :corp "5")
       (click-card state :corp q2)
       (is (zero? (get-strength (refresh q2))) "Outer Quandary unrezzed; can't be targeted")
       (click-card state :corp q1)
+      (click-prompt state :corp "5")
       (is (= 5 (get-strength (refresh q1))) "Inner Quandary boosted to 5 strength")
       (is (empty? (get-content state :hq))
           "Corporate Troubleshooter trashed from root of HQ")
@@ -970,6 +970,41 @@
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
+
+(deftest daruma
+  ;; Daruma
+  (testing "swapping with another installed card"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (play-from-hand state :corp "Snare!" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (is (find-card "Daruma" (:discard (get-corp))))
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
+  (testing "swapping with a card in HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                        :credits 10}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Snare!")
+      (run-continue state)
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp)))))))
 
 (deftest dedicated-technician-team
   ;; Dedicated Technician Team
@@ -1413,9 +1448,9 @@
       (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (click-prompt state :runner "Eden Shard")
+      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (click-prompt state :runner "Yes")
+      (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
       (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
       (click-prompt state :corp "Carry on!"))))
 
@@ -1701,40 +1736,33 @@
       (new-game {:corp {:deck ["Mumbad City Grid" "Quandary"]}})
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
-      (let [mcg (get-content state :remote1 0)]
-        (rez state :corp mcg)
-        (take-credits state :corp)
-        (run-on state "Server 1")
-        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-continue state)
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-jack-out state)
-        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server"))))
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
+      (run-continue state)
+      (is (empty? (:prompt (get-corp))))
+      (run-jack-out state)
+      (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server")))
   (testing "fire before pass"
     (do-game
       (new-game {:corp {:deck ["Mumbad City Grid" "Quandary" "Ice Wall"]}})
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
       (play-from-hand state :corp "Ice Wall" "Server 1")
-      (let [mcg (get-content state :remote1 0)]
-        (rez state :corp mcg)
-        (take-credits state :corp)
-        (run-on state "Server 1")
-        (is (= 2 (:position (:run @state))) "Runner at position 2")
-        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "2 ice on server")
-        (is (= "Quandary" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Quandary inner ice")
-        (is (= "Ice Wall" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall outer ice")
-        (card-ability state :corp (refresh mcg) 0) ; does not fire
-        (run-continue state)
-        (is (= 1 (:position (:run @state))) "Runner at position 1")
-        (card-ability state :corp (refresh mcg) 0)
-        (click-card state :corp (get-ice state :remote1 0))
-        (is (= 1 (:position (:run @state))) "Runner at position 1")
-        (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
-        (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
-        (run-jack-out state)
-        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")))))
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (= 2 (:position (:run @state))) "Runner at position 2")
+      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "2 ice on server")
+      (is (= "Quandary" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Quandary inner ice")
+      (is (= "Ice Wall" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall outer ice")
+      (run-continue state)
+      (click-card state :corp "Quandary")
+      (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
+      (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
+      (run-jack-out state)
+      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server"))))
 
 (deftest mumbad-virtual-tour
   ;; Tests that Mumbad Virtual Tour forces trash
@@ -2062,7 +2090,7 @@
       (click-prompt state :runner "Yes")
       (is (= "Guess a number" (:msg (prompt-map :runner))))
       (click-prompt state :runner "3")
-      (is (= "Use Nihongai Grid to look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
+      (is (= "Look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes")
       (is (= "Choose a card in R&D" (:msg (prompt-map :corp))))
       (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]
@@ -3159,10 +3187,8 @@
       (click-prompt state :runner "0") ; Corp wins trace
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-program state 1))
-      (click-card state :runner (get-program state 2))
-      (click-card state :runner (get-program state 3))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
-      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards")))
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards")))
   (testing "Shouldn't trigger from self-trash in root of central server. Issue #4813"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
@@ -3229,3 +3255,27 @@
         (click-card state :corp mar1)
         (click-card state :corp war)
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")))))
+
+(deftest will-o-the-wisp
+  ;; Will-o'-the-Wisp
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck ["Will-o'-the-Wisp"
+                              "Vanilla"]}
+                :runner {:deck ["Corroder"]}})
+     (play-from-hand state :corp "Will-o'-the-Wisp" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (play-from-hand state :corp "Vanilla" "Server 1")
+     (rez state :corp (get-ice state :remote1 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (let [cor (get-program state 0)]
+       (run-on state "Server 1")
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+       (core/continue state :corp nil)
+       (run-continue state)
+       (click-prompt state :corp "Yes")
+       (click-card state :corp (refresh cor))
+       (is (empty? (get-program state)) "Corroder uninstalled")
+       (is (= "Corroder" (:title (last (:deck (get-runner))))) "GoCorroderrdian on bottom of Stack")))))

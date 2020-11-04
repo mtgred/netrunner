@@ -167,15 +167,26 @@
 (defn card-patterns-impl []
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
-  (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])
-          (regex-of [card-title] (re-pattern (regex-escape card-title)))]
+  (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])]
     (->> @all-cards
          (filter #(not (:replaced_by %)))
          (map (juxt :title :code))
-         (map (fn [[k v]] [(regex-of k) (span-of k v)]))
+         (map (fn [[k v]] [k (span-of k v)]))
          (sort-by (comp count str first) >))))
 
 (def card-patterns (memoize card-patterns-impl))
+
+(defn contains-card-pattern-impl
+  "A card pattern regex, used to match a card name in text to check if the rest
+  of the text should be tested as one pass is far faster than 1500 passes"
+  []
+  (re-pattern
+    (->> @all-cards
+      (filter #(not (:replaced_by %)))
+      (map (fn [k] (regex-escape (:title k))))
+      (join "|"))))
+
+(def contains-card-pattern (memoize contains-card-pattern-impl))
 
 (def special-patterns
   (letfn [(regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
@@ -185,25 +196,16 @@
       (map (fn [[k v]] [(regex-of k) v]))
       (sort-by (comp count str first) >))))
 
-(defn padded-interleave [pad & seqs]
-  "Interleave sequences of uneven lengths by padding out the shorter ones"
-  (let [lazy-padded-seqs (map #(concat % (repeat pad)) seqs)
-        num-seqs (count lazy-padded-seqs)
-        max-len (reduce max (map count seqs))]
-    (take (* max-len num-seqs) (apply interleave lazy-padded-seqs))))
-
 (defn replace-in-element [element [regex replacement]]
   "Given a string element, split that string on `regex`, then replace the
   matches removed by split with `replacement`. The replacement is performed by
-  first counting the number of matches, then interleaving that many
-  `replacement`s into the context. `padded-interleave` allows us to interleave
-  sequences of varying lengths by padding out the shorter of the two sequences,
-  in this case with empty strings."
+  interleaving `replacement`s into the context and dropping the last one as
+  interleave always weaves in excess"
   (if (string? element)
-    (let [context (split element regex)
-          match-count (count (re-seq regex element))
-          replacements (repeat match-count replacement)]
-      (->> (padded-interleave "" context replacements)
+    (let [context (.split element regex)
+          replacements (repeat replacement)]
+      (->> (interleave context replacements)
+           (drop-last)
            (filter not-empty)))
     [element]))
 
@@ -246,7 +248,11 @@
 
 (defn render-cards [input]
   "Render all cards in a given text or HTML fragment input"
-  (render-input input (card-patterns)))
+  (if (re-find (contains-card-pattern) input)
+    (render-input input (card-patterns))
+    (if (not (or (string? input) (vector? input)))
+      [:<>]
+      (if (string? input) [:<> input] input))))
 
 (defn render-specials [input]
   "Render all special codes in a given text or HTML fragment input"

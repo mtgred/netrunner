@@ -4,12 +4,11 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.events :refer [register-events unregister-events]]
+    [game.core.engine :refer [register-events resolve-ability unregister-events]]
     [game.core.gaining :refer [toast-check-mu use-mu]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [move]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.servers :refer [type->rig-zone]]
     [game.core.update :refer [update!]]))
 

@@ -9,6 +9,7 @@
                  [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
+                 [stylefruits/gniazdo "1.1.4"]
                  [danhut/monger "3.1.0"]
                  [differ "0.3.3"]
                  [com.taoensso/sente "1.11.0"]
@@ -54,6 +55,7 @@
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
+            "load-test" ["run" "-m" "tasks.load-test/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
@@ -75,7 +77,8 @@
   ;; Misc
   :test-paths ["test/clj"]
   :eftest {:report eftest.report.pretty/report
-           :fast-fail? true}
+           ; :capture-output? false
+           :fail-fast? true}
 
   :ring {:handler web.api/app}
 

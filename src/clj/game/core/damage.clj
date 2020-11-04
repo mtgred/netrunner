@@ -1,7 +1,7 @@
 (ns game.core.damage
   (:require
-    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.events :refer [trigger-event trigger-event-simult]]
+    [game.core.eid :refer [effect-completed make-eid make-result]]
+    [game.core.engine :refer [trigger-event trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.moving :refer [trash-cards]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -109,8 +109,9 @@
                     (wait-for (trash-cards state side cards-trashed {:unpreventable true :cause type})
                               (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                               (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
-                              (trigger-event state side :damage type card n cards-trashed)
-                              (complete-with-result state side eid (seq [type card n cards-trashed])))))
+                              (trigger-event-simult state side
+                                                    (make-result eid cards-trashed)
+                                                    :damage nil type card n cards-trashed))))
                 (effect-completed state side eid)))))
 
 (defn damage-count
@@ -124,8 +125,6 @@
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
   prevention/boosting process and eventually resolves the damage."
-  ([state side type n] (damage state side (make-eid state) type n nil))
-  ([state side type n args] (damage state side (make-eid state) type n args))
   ([state side eid type n {:keys [unpreventable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
@@ -137,7 +136,7 @@
               (cards-can-prevent? state :runner prevent type))
        ;; runner can prevent the damage.
        (do (system-msg state :runner "has the option to avoid damage")
-           (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
+           (show-wait-prompt state :corp "Runner to prevent damage")
            (swap! state assoc-in [:prevent :current] type)
            (show-prompt
              state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
@@ -147,6 +146,5 @@
                                    (if prevent (str "prevents " (if (>= prevent Integer/MAX_VALUE) "all" prevent)
                                                     " " (name type) " damage") "will not prevent damage"))
                        (clear-wait-prompt state :corp)
-                       (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
-             {:priority 10}))
+                       (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))))
        (resolve-damage state side eid type n args)))))

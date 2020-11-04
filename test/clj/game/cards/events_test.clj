@@ -33,7 +33,6 @@
       (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
   (testing "New Angeles City Hall interaction"
-    ;; Account Siphon - Access
     (do-game
       (new-game {:runner {:deck ["Account Siphon"
                                  "New Angeles City Hall"]}})
@@ -296,6 +295,7 @@
         (is (empty? (:prompt (get-corp))) "No Jinja City Grid")))))
 
 (deftest because-i-can
+  ;; Because I Can
   ;; make a successful run on a remote to shuffle its contents into R&D
   (testing "Basic test"
     (do-game
@@ -1437,7 +1437,7 @@
      (play-from-hand state :runner "Direct Access")
      (click-prompt state :runner "Archives")
      (run-continue state)
-     (is (= "Waiting for Runner to resolve run-ends triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
+     (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
      (click-prompt state :runner "Yes")
      (click-draw state :runner)
      (take-credits state :runner)
@@ -1625,7 +1625,18 @@
       (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing R&D")
       (click-prompt state :runner "Steal")
       (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing HQ")
-      (click-prompt state :runner "Steal"))))
+      (click-prompt state :runner "Steal")))
+  (testing "interaction with Crisium Grid on archives. Issue #5315"
+    (do-game
+     (new-game {:corp {:deck ["Hostile Takeover"]
+                       :hand ["Hostile Takeover" "Crisium Grid"]}
+                :runner {:hand ["Divide and Conquer"]}})
+     (play-from-hand state :corp "Crisium Grid" "Archives")
+     (rez state :corp (get-content state :archives 0))
+     (take-credits state :corp)
+     (play-run-event state "Divide and Conquer" :archives)
+     (click-prompt state :runner "No action")
+     (is (empty? (:prompt (get-runner))) "There's no prompt for accessing R&D"))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
@@ -2345,6 +2356,7 @@
     (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
 (deftest glut-cipher
+  ;; Glut Cipher
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Ice Wall" "Fire Wall" "Wraparound"]
@@ -2352,10 +2364,8 @@
                :runner {:hand [(qty "Glut Cipher" 3)]}})
     (take-credits state :corp)
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")
-    ;; Gotta play it manually because the run effect won't happen
     (play-from-hand state :runner "Glut Cipher")
     (is (:run @state) "There is a run happening")
-    (is (get-in @state [:run :run-effects]) "There is a run-effect")
     (run-continue state)
     (is (= 3 (count (:discard (get-corp)))) "Glut Cipher did not fire when < 5 cards")
     (is (zero? (count (filter :seen (:discard (get-corp))))) "There are no faceup cards in Archives")
@@ -2611,11 +2621,11 @@
                         :credits 10}
                  :runner {:deck ["I've Had Worse" (qty "Sure Gamble" 3) (qty "Imp" 2)]
                           :hand ["I've Had Worse"]}})
-      (core/damage state :corp :net 1)
+      (damage state :corp :net 1)
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
       (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
-      (core/damage state :corp :meat 4)
+      (damage state :corp :meat 4)
       (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline")
@@ -2789,6 +2799,7 @@
           "Infiltration properly exposes the ice"))))
 
 (deftest information-sifting
+  ;; Information Sifting
   (testing "Hudson interaction :max-access"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
@@ -2951,6 +2962,7 @@
     (is (= 1 (hand-size :corp)))))
 
 (deftest khusyuk
+  ;; Khusyuk
   (testing "Basic functionality"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
@@ -3923,19 +3935,19 @@
       (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
       (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
       (run-on state "HQ")
-      (is (not (:run @state)) "Not allowed to make a run"))))
+      (is (not (:run @state)) "Not allowed to make a run")))
   (testing "cannot play if agenda scored previously"
     (do-game
-        (new-game {:runner {:deck ["Peace in Our Time"]}
-                    :corp {:hand ["Hostile Takeover"]}})
-        (play-from-hand state :corp "Hostile Takeover" "New remote")
-        (let [hostile (get-content state :remote1 0)]
-          (advance state hostile 2)
-          (core/score state :corp {:card (refresh hostile)})
-          (take-credits state :corp)
-          (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
-          (play-from-hand state :runner "Peace in Our Time")
-          (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits"))))
+      (new-game {:runner {:deck ["Peace in Our Time"]}
+                 :corp {:hand ["Hostile Takeover"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (let [hostile (get-content state :remote1 0)]
+        (advance state hostile 2)
+        (core/score state :corp {:card (refresh hostile)})
+        (take-credits state :corp)
+        (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+        (play-from-hand state :runner "Peace in Our Time")
+        (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits")))))
 
 (deftest planned-assault
   ;; Planned Assault
@@ -4600,7 +4612,6 @@
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
-      (click-prompt state :runner "Rip Deal")
       (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
@@ -4634,7 +4645,6 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (click-prompt state :runner "Rip Deal")
         (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
@@ -5302,13 +5312,13 @@
       ;; Put a card into hand so I can confirm it's not discarded by damage
       ;; Don't want to dealing with checking damage on a zero card hand
       (starting-hand state :runner ["Sure Gamble"])
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (= 1 (hand-count)) "Damage was prevented")
       ;; Finish the run and check that damage works again
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "No action")
-      (core/damage state :runner :net 1)
+      (damage state :runner :net 1)
       (is (zero? (hand-count)) "Damage works again after run"))))
 
 (deftest the-price-of-freedom
@@ -5393,13 +5403,15 @@
       (let [runner-credits (:credit (get-runner))]
         (play-from-hand state :runner "Trade-In")
         (click-card state :runner (get-hardware state 0))
-        (is (= 2 (count (:discard (get-runner)))) "Trade-In and Astrolabe in discard")
+        (is (= 1 (count (:discard (get-runner)))) "Astrolabe in discard")
+        (is (= "Astrolabe" (:title (first (:discard (get-runner))))) "Astrolabe in discard")
         (is (= (dec runner-credits) (:credit (get-runner)))
             "Paid 1 credit to play Trade-In and gained 0 credits from trashing Astrolabe")))
     (testing "Trade-In lets runner search for Hardware and add it to Grip"
       (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
       ;; Add sports hopper to hand
       (click-prompt state :runner (first (prompt-buttons :runner)))
+      (is (= 2 (count (:discard (get-runner)))) "Trade-In now in the heap as well")
       (is (= 2 (count (:hand (get-runner)))) "Sports Hopper added to Grip"))
     (testing "Gain credits when install cost is greater than 1"
       (let [runner-credits (:credit (get-runner))]
@@ -5407,6 +5419,7 @@
         (click-card state :runner (get-hardware state 0))
         (is (= runner-credits (:credit (get-runner)))
             "Paid 1 credit to play Trade-In and gained 1 credits from trashing Sports Hopper")
+        (click-prompt state :runner (first (prompt-buttons :runner)))
         (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))))
 
 (deftest traffic-jam

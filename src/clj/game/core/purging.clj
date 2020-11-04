@@ -2,7 +2,7 @@
   (:require
     [game.core.board :refer [all-installed]]
     [game.core.card :refer [get-counters has-subtype?]]
-    [game.core.events :refer [trigger-event]]
+    [game.core.engine :refer [trigger-event]]
     [game.core.ice :refer [update-all-ice]]
     [game.core.props :refer [add-counter]]))
 

@@ -5,13 +5,12 @@
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid make-result]]
-    [game.core.events :refer [trigger-event-sync unregister-events]]
+    [game.core.engine :refer [pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move remove-old-current trash]]
-    [game.core.payment :refer [build-spend-msg merge-costs pay]]
-    [game.core.resolve-ability :refer [resolve-ability should-trigger?]]
+    [game.core.payment :refer [build-spend-msg merge-costs]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card?]]))
@@ -34,10 +33,10 @@
 ;;; Playing cards.
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
-  [state side eid {:keys [title] :as card} cost-str ignore-cost]
+  [state side eid {:keys [title] :as card} payment-str ignore-cost]
   (let [play-msg (if ignore-cost
                    "play "
-                   (build-spend-msg cost-str "play"))]
+                   (build-spend-msg payment-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
     ;; Need to await trashing the existing current
@@ -117,8 +116,8 @@
          (when (has-subtype? card "Run")
            (swap! state assoc-in [:runner :register :click-type] :run))
          (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
-                   (if-let [cost-str async-result]
-                     (complete-play-instant state side eid moved-card cost-str ignore-cost)
+                   (if-let [payment-str (:msg async-result)]
+                     (complete-play-instant state side eid moved-card payment-str ignore-cost)
                      ;; could not pay the card's price; put it back and mark the effect as being over.
                      (do
                        (move state side moved-card original-zone)

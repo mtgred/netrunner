@@ -6,13 +6,12 @@
     [game.core.cost-fns :refer [card-ability-cost]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [register-events unregister-events]]
+    [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.gaining :refer [free-mu gain lose]]
     [game.core.ice :refer [add-sub]]
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [set-prop]]
-    [game.core.resolve-ability :refer [is-ability? resolve-ability]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req]]
     [game.utils :refer [make-cid server-card]]
@@ -37,10 +36,10 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [cdef (card-def card)
-        c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :new
-                  :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
+        c (dissoc card :current-strength :runner-abilities :corp-abilities :rezzed :new
+                  :added-virus-counter :subtype-target :server-target :extra-advance-counter)
         c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
+        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
     c))
 
 (defn- trigger-leave-effect

@@ -7,15 +7,14 @@
     [game.core.cost-fns :refer [card-ability-cost]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
-    [game.core.events :refer [ability-as-handler card-as-handler trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler card-as-handler pay resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
     [game.core.ice :refer [break-subroutine! get-current-ice get-run-ices get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move remove-old-current trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs pay]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.runs :refer [continue total-run-cost]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
@@ -56,8 +55,10 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
-      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
+      ("Event" "Operation")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
 
 (defn click-draw
   "Click to draw."
@@ -200,7 +201,7 @@
                   (cancel-effect choice)
                   (effect-completed state side (:eid prompt)))
                 (finish-prompt state side prompt card))
-            (do (effect (:value match))
+            (do (effect match)
                 (finish-prompt state side prompt card)))))
 
       :else
@@ -259,7 +260,7 @@
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                (system-msg state side (str (build-spend-msg async-result "increase")
+                (system-msg state side (str (build-spend-msg (:msg async-result) "increase")
                                             "the strength of " (:title card) " to "
                                             (get-strength (get-card state card))))
                 (effect-completed state side eid)))))
@@ -334,13 +335,13 @@
                 (if x-breaker
                   (pump state side (get-card state card) x-number)
                   (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
-                (let [cost-str async-result
+                (let [payment-str (:msg async-result)
                       sub-groups-to-break (if (and (number? subs-broken-at-once) (pos? subs-broken-at-once))
                                         (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
                                         [(remove :broken (:subroutines current-ice))])]
                   (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
                             (system-msg state side
-                                        (str (build-spend-msg cost-str "increase")
+                                        (str (build-spend-msg payment-str "increase")
                                              "the strength of " (:title card)
                                              " to " (get-strength (get-card state card))
                                              " and break all subroutines on " (:title current-ice)))
@@ -413,23 +414,24 @@
                                       times-break)
                              (repeat times-break (:break-cost break-ability)))
           total-cost (merge-costs (conj total-pump-cost total-break-cost))]
-      (when (can-pay? state side eid card (:title card) total-cost)
+      (when (and break-ability
+                 (can-pay? state side eid card (:title card) total-cost))
         (wait-for (pay state side (make-eid state eid) card total-cost)
                   (dotimes [_ times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                  (let [cost-str async-result
+                  (let [payment-str (:msg async-result)
                         sub-groups-to-break (if (pos? subs-broken-at-once)
                                               (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
                                               [(remove :broken (:subroutines current-ice))])]
                     (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)
                               (system-msg state side
                                           (if (pos? times-pump)
-                                            (str (build-spend-msg cost-str "increase")
+                                            (str (build-spend-msg payment-str "increase")
                                                  "the strength of " (:title card)
                                                  " to " (get-strength (get-card state card))
                                                  " and break all " (when (< 1 unbroken-subs) unbroken-subs)
                                                  " subroutines on " (:title current-ice))
-                                            (str (build-spend-msg cost-str "use")
+                                            (str (build-spend-msg payment-str "use")
                                                  (:title card)
                                                  " to break "
                                                  (if some-already-broken
@@ -558,16 +560,16 @@
   ([state side eid card no-cost]
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
-     (when (can-advance? state side card)
+     (if (can-advance? state side card)
        (wait-for (pay state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
-                 (when-let [cost-str async-result]
-                   (let [spent   (build-spend-msg cost-str "advance")
-                         card    (card-str state card)
-                         message (str spent card)]
-                     (system-msg state side message))
-                   (update-advancement-cost state side card)
-                   (add-prop state side (get-card state card) :advance-counter 1)
-                   (play-sfx state side "click-advance")))))))
+                 (if-let [payment-str (:msg async-result)]
+                   (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
+                       (update-advancement-cost state side card)
+                       (add-prop state side (get-card state card) :advance-counter 1)
+                       (play-sfx state side "click-advance")
+                       (effect-completed state side eid))
+                   (effect-completed state side eid)))
+       (effect-completed state side eid)))))
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."

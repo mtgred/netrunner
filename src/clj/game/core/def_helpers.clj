@@ -3,12 +3,11 @@
     [game.core.card :refer [get-counters]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
-    [game.core.events :refer [trigger-event-sync]]
-    [game.core.gaining :refer [gain]]
+    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [trash]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-prop]]
-    [game.core.resolve-ability :refer [resolve-ability]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect req wait-for]]
@@ -138,8 +137,8 @@
            :req (req (pos? (get-counters card :recurring)))
            :async true
            :effect (req (add-prop state side card :rec-counter -1)
-                        (gain state side :credit 1)
-                        (trigger-event-sync state side eid :spent-credits-from-card card))}]
+                        (wait-for (gain-credits state side 1)
+                                  (trigger-event-sync state side eid :spent-credits-from-card card)))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 

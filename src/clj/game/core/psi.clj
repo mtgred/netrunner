@@ -3,11 +3,9 @@
     [game.core.card :refer [corp?]]
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [trigger-event-simult]]
+    [game.core.engine :refer [can-trigger? pay register-ability-type register-once resolve-ability trigger-event-simult]]
     [game.core.flags :refer [any-flag-fn?]]
-    [game.core.payment :refer [pay]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt-with-dice show-wait-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? register-ability-type register-once resolve-ability]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability effect wait-for]]
     [jinteki.utils :refer [str->int]]
@@ -22,10 +20,10 @@
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (wait-for
         (pay state opponent (make-eid state eid) card [:credit opponent-bet])
-        (system-msg state opponent async-result)
+        (system-msg state opponent (:msg async-result))
         (wait-for
           (pay state side (make-eid state eid) card [:credit bet])
-          (system-msg state side async-result)
+          (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
@@ -50,7 +48,7 @@
                                    all-amounts)]
          (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                                 (map #(str % " [Credits]") valid-amounts)
-                                #(resolve-psi state s eid card psi (str->int (first (string/split % #" "))))
+                                #(resolve-psi state s eid card psi (str->int (first (string/split (:value %) #" "))))
                                 {:priority 2
                                  :prompt-type :psi}))))))
 

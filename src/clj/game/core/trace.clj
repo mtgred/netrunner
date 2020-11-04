@@ -2,11 +2,9 @@
   (:require
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.events :refer [trigger-event-simult trigger-event-sync]]
+    [game.core.engine :refer [can-trigger? pay register-ability-type resolve-ability trigger-event-simult trigger-event-sync]]
     [game.core.link :refer [get-link]]
-    [game.core.payment :refer [pay]]
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
-    [game.core.resolve-ability :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.say :refer [system-msg system-say]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [dissoc-in]]))
@@ -39,11 +37,12 @@
                           strength)
         trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
     (wait-for (pay state other (make-eid state eid) card [:credit boost])
-              (system-msg state other (str async-result
-                                           " to increase " (if (corp-start? trace) "link" "trace")
-                                           " strength to " (if (corp-start? trace)
-                                                             runner-strength
-                                                             corp-strength)))
+              (let [payment-str (:msg async-result)]
+                (system-msg state other (str payment-str
+                                             " to increase " (if (corp-start? trace) "link" "trace")
+                                             " strength to " (if (corp-start? trace)
+                                                               runner-strength
+                                                               corp-strength))))
               (clear-wait-prompt state player)
               (let [successful (> corp-strength runner-strength)
                     which-ability (assoc (if successful
@@ -80,9 +79,10 @@
                    ((fnil + 0 0) link boost))
         trace (assoc trace :strength strength)]
     (wait-for (pay state player (make-eid state eid) card [:credit boost])
-              (system-msg state player (str async-result
-                                            " to increase " (if (corp-start? trace) "trace" "link")
-                                            " strength to " strength))
+              (let [payment-str (:msg async-result)]
+                (system-msg state player (str payment-str
+                                              " to increase " (if (corp-start? trace) "trace" "link")
+                                              " strength to " strength)))
               (clear-wait-prompt state other)
               (show-wait-prompt state player
                                 (str (if (corp-start? trace) "Runner" "Corp")
