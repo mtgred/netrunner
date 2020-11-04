@@ -51,16 +51,17 @@
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
   currents, or the corp's scored area."
   [state side]
-  (if (= side :runner)
-    (cons (get-in @state [:runner :identity]) (remove :disabled
-                                                (concat (get-in @state [:runner :current])
-                                                  (all-active-installed state side)
-                                                  (get-in @state [:runner :play-area]))))
-    (cons (get-in @state [:corp :identity]) (remove :disabled
-                                              (concat (all-active-installed state side)
-                                                (get-in @state [:corp :current])
-                                                (get-in @state [:corp :scored])
-                                                (get-in @state [:corp :play-area]))))))
+  (remove :disabled
+    (if (= side :runner)
+      (cons (get-in @state [:runner :identity])
+        (concat (get-in @state [:runner :current])
+          (all-active-installed state side)
+          (get-in @state [:runner :play-area])))
+      (cons (get-in @state [:corp :identity])
+        (concat (all-active-installed state side)
+          (get-in @state [:corp :current])
+          (get-in @state [:corp :scored])
+          (get-in @state [:corp :play-area]))))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
