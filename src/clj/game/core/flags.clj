@@ -1,7 +1,7 @@
 (ns game.core.flags
   (:require [clojure.string :as string]
             [game.core.board :refer [all-active all-installed]]
-            [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
+            [game.core.card :refer [condition-counter? corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [zone->name]]
@@ -349,6 +349,7 @@
         (and (or (installed? card)
                  (:host card))
              (or (operation? card)
+                 (condition-counter? card)
                  (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
