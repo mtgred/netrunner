@@ -1212,8 +1212,8 @@
          (let [{:keys [base additional]} bad-publicity]
            [:div (str (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
             (when me? (controls :bad-publicity))])
-         (let [{:keys [base mod]} hand-size]
-           [:div (str (+ base mod) " Max hand size")
+         (let [{:keys [total]} hand-size]
+           [:div (str total " Max hand size")
             (when me? (controls :hand-size))])]))))
 
 (defn run-arrow [run]
