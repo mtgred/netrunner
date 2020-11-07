@@ -36,7 +36,9 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [cdef (card-def card)
-        c (dissoc card :current-strength :runner-abilities :corp-abilities :rezzed :new
+        c (dissoc card
+                  :current-strength :current-advancement-requirement :current-points
+                  :runner-abilities :corp-abilities :rezzed :new
                   :added-virus-counter :subtype-target :server-target :extra-advance-counter)
         c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]

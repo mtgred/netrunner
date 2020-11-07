@@ -3,10 +3,9 @@
     [clojure.string :as string]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [ice?]]
-    [game.core.eid :refer [complete-with-result make-eid]]
+    [game.core.eid :refer [make-eid]]
     [game.core.flags :refer [card-flag?]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [wait-for]]
     [jinteki.utils :refer [capitalize]]))
 
 (defmulti cost-name (fn [[cost-type _]] cost-type))

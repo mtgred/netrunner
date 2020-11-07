@@ -1,11 +1,11 @@
 (ns game.core.access
   (:require
-    [game.core.agendas :refer [get-agenda-points update-all-agenda-points]]
+    [game.core.agendas :refer [get-agenda-points update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? corp? get-card get-zone in-discard? in-hand? in-scored? installed? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
-    [game.core.effects :refer [any-effects register-floating-effect sum-effects unregister-floating-effects]]
+    [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler can-trigger? pay register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
@@ -169,7 +169,13 @@
   "Moves a card to the runner's :scored area, triggering events from the completion of the steal."
   [state side eid card]
   (let [c (move state :runner (dissoc card :advance-counter :new) :scored {:force true})
-        points (get-agenda-points state :runner c)]
+        _ (when (card-flag? c :has-events-when-stolen true)
+            (register-events state side c)
+            (register-constant-effects state side c))
+        _ (update-all-advancement-requirements state)
+        _ (update-all-agenda-points state)
+        c (get-card state c)
+        points (get-agenda-points c)]
     (wait-for
       (trigger-event-simult
         state :runner :agenda-stolen
@@ -183,8 +189,6 @@
                                       (play-sfx state side "agenda-steal")
                                       (when (:run @state)
                                         (swap! state assoc-in [:run :did-steal] true))
-                                      (when (card-flag? c :has-events-when-stolen true)
-                                        (register-events state side c))
                                       (remove-old-current state side eid :corp))}
          :card-abilities (ability-as-handler c (:stolen (card-def c)))}
         c)

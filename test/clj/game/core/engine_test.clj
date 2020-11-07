@@ -66,3 +66,50 @@
                  [:test-event [{:a 1, :b 2, :c 3}]]
                  [:test-event [{:a a, :b b, :c c}]])
                (:order @state)))))))
+
+(deftest merge-costs-paid
+  (let [eid1 {:cost-paid {:click {:type :click
+                                  :value 3}
+                          :credit {:type :credit
+                                   :value 1}
+                          :forfeit {:type :forfeit
+                                    :targets [{:title "NAPD Contract"}]
+                                    :value 1}}}
+        eid2 {:cost-paid {:click {:type :click
+                                  :value 1}}}
+        eid3 {:cost-paid {:trash {:type :trash
+                                  :value 1
+                                  :targets [{:title "C.I. Fund"}]}}}]
+    (is (= {:click {:type :click
+                    :targets nil
+                    :value 3}
+            :credit {:type :credit
+                     :targets nil
+                     :value 1}
+            :forfeit {:type :forfeit
+                      :targets [{:title "NAPD Contract"}]
+                      :value 1}}
+           (e/merge-costs-paid (:cost-paid eid1))))
+    (is (= {:click {:type :click
+                    :targets nil
+                    :value 4}
+            :credit {:type :credit
+                     :targets nil
+                     :value 1}
+            :forfeit {:type :forfeit
+                      :targets [{:title "NAPD Contract"}]
+                      :value 1}}
+           (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2))))
+    (is (= {:click {:type :click
+                    :targets nil
+                    :value 4}
+            :credit {:type :credit
+                     :targets nil
+                     :value 1}
+            :forfeit {:type :forfeit
+                      :targets [{:title "NAPD Contract"}]
+                      :value 1}
+            :trash {:type :trash
+                    :targets [{:title "C.I. Fund"}]
+                    :value 1}}
+           (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2) (:cost-paid eid3))))))

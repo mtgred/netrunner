@@ -1,6 +1,6 @@
 (ns game.core.checkpoint
   (:require
-    [game.core.agendas :refer [update-all-advancement-costs update-all-agenda-points]]
+    [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [get-remotes]]
     [game.core.ice :refer [update-all-ice update-all-icebreakers]]
     [game.core.hand-size :refer [update-hand-size]]
@@ -22,7 +22,7 @@
   (update-all-ice state :corp)
   (update-all-icebreakers state :runner)
   (update-all-card-labels state)
-  (update-all-advancement-costs state :corp)
+  (update-all-advancement-requirements state)
   (update-all-agenda-points state)
   (update-link state)
   (update-hand-size state :corp)

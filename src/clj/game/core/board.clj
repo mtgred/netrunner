@@ -1,38 +1,86 @@
 (ns game.core.board
   (:require [clojure.string :as string]
-            [game.core.card :refer [agenda? asset? corp? facedown? get-counters installed? is-type? rezzed? runner?]]
+            [game.core.card :refer [agenda? asset? condition-counter? corp? facedown? get-counters installed? is-type? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [is-remote? zones->sorted-names]]
             [game.core.state :refer [make-rid]]
             [game.utils :refer [to-keyword]]))
 
+(defn get-all-cards
+  "Every single card in the game. All cards in the hand, deck, discard, play-area,
+  score zone, currents, and removed from the game. And all cards that are installed and hosted"
+  [state]
+  (let [installed-corp (for [server-key (keys (get-in @state [:corp :servers]))
+                             :let [server (get-in @state [:corp :servers server-key])]
+                             installed-card (concat (:content server) (:ices server))]
+                         installed-card)
+        installed-runner (for [card-type [:program :hardware :resource :facedown]
+                               installed-card (get-in @state [:runner :rig card-type])]
+                           installed-card)
+        cards-in-zones (for [side [:corp :runner]
+                             zone [:deck :hand :discard :current :scored :play-area :rfg]
+                             card (get-in @state [side zone])]
+                         card)
+        identities (for [side [:corp :runner]]
+                     (get-in @state [side :identity]))]
+    (loop [checked '()
+           unchecked (concat installed-corp installed-runner cards-in-zones identities)]
+      (if (empty? unchecked)
+        checked
+        (let [[card & remaining] unchecked]
+          (recur (conj checked card) (concat remaining (:hosted card))))))))
+
+(defn- all-installed-runner
+  [state]
+  (let [installed-cards (for [card-type [:program :hardware :resource :facedown]
+                              installed-card (get-in @state [:runner :rig card-type])]
+                          installed-card)
+        hosted-on-corp-cards (for [server-key (keys (get-in @state [:corp :servers]))
+                                   :let [server (get-in @state [:corp :servers server-key])]
+                                   installed-card (concat (:content server) (:ices server))
+                                   hosted-card (:hosted installed-card)]
+                               hosted-card)]
+    (loop [installed '()
+           unchecked (concat installed-cards hosted-on-corp-cards)]
+      (if (empty? unchecked)
+        (filter #(and (runner? %)
+                      (installed? %))
+                installed)
+        (let [[card & remaining] unchecked]
+          (recur (conj installed card) (concat remaining (:hosted card))))))))
+
+(defn- all-installed-corp
+  [state]
+  (let [installed-cards (for [server-key (keys (get-in @state [:corp :servers]))
+                              :let [server (get-in @state [:corp :servers server-key])]
+                              installed-card (concat (:content server) (:ices server))]
+                          installed-card)
+        hosted-on-runner-cards (for [card-type [:program :hardware :resource :facedown]
+                                     installed-card (get-in @state [:runner :rig card-type])
+                                     hosted-card (:hosted installed-card)]
+                                 hosted-card)]
+    (loop [installed '()
+           unchecked (concat installed-cards hosted-on-runner-cards)]
+      (if (empty? unchecked)
+        (filter #(and (corp? %)
+                      (installed? %))
+                installed)
+        (let [[card & remaining] unchecked]
+          (recur (conj installed card) (concat remaining (:hosted card))))))))
+
 (defn all-installed
   "Returns a vector of all installed cards for the given side, including those hosted on other cards,
   but not including 'inactive hosting' like Personal Workshop."
   [state side]
   (if (= side :runner)
-    (let [top-level-cards (flatten (for [t [:program :hardware :resource :facedown]] (get-in @state [:runner :rig t])))
-          hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
-      (loop [unchecked (concat top-level-cards (filter runner? hosted-on-ice)) installed ()]
-        (if (empty? unchecked)
-          (filter installed? installed)
-          (let [[card & remaining] unchecked]
-            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))
-    (let [servers (->> (:corp @state) :servers seq flatten)
-          content (mapcat :content servers)
-          ice (mapcat :ices servers)
-          top-level-cards (concat ice content)]
-      (loop [unchecked top-level-cards installed ()]
-        (if (empty? unchecked)
-          (filter corp? installed)
-          (let [[card & remaining] unchecked]
-            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))))
+    (all-installed-runner state)
+    (all-installed-corp state)))
 
 (defn get-all-installed
   "Returns a list of all installed cards"
   [state]
-  (concat (all-installed state :corp) (all-installed state :runner)))
+  (concat (all-installed-corp state) (all-installed-runner state)))
 
 (defn all-installed-runner-type
   "Returns a list of all installed, non-facedown runner cards of the requested type."

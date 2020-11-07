@@ -172,7 +172,6 @@
         (run-empty-server state "Server 2")
         (click-prompt state :runner "Steal")
         (is (zero? (count (get-content state :remote2))) "Agenda was stolen")
-        (click-prompt state :corp "Medical Breakthrough") ; simult. effect resolution
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "0")
         (is (= 3 (:strength (prompt-map :runner))) "Trace base strength is 3 after stealing first Breakthrough")
@@ -184,7 +183,6 @@
           (is (= (inc grip) (-> (get-runner) :hand count)) "Analog Dreamers was added to hand"))
         (take-credits state :runner)
         (score-agenda state :corp breakthrough)
-        ;; (click-prompt state :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
         (click-prompt state :corp "Yes") ; corp should get to trigger trace even when no runner cards are installed
         (click-prompt state :corp "0")
         (is (= 2 (:strength (prompt-map :runner))) "Trace base strength is 2 after scoring second Breakthrough"))))
@@ -238,7 +236,21 @@
       (click-prompt state :runner "0")
       (click-card state :corp "Gang Sign")
       (click-prompt state :runner "Done") ; Leela trigger, no Gang Sign prompt
-      (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt"))))
+      (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt")))
+  (testing "with SanSan City Grid #5344"
+    (do-game
+      (new-game {:corp {:deck ["Amani Senai" "Merger" "SanSan City Grid"]
+                        :credits 100}})
+      (core/gain state :corp :click 100)
+      (play-from-hand state :corp "Amani Senai" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :corp "SanSan City Grid" "New remote")
+      (rez state :corp (get-content state :remote2 0))
+      (play-from-hand state :corp "Merger" "Server 2")
+      (is (= 2 (core/get-advancement-requirement (get-content state :remote2 1))))
+      (score-agenda state :corp (get-content state :remote2 1))
+      (click-prompt state :corp "Yes")
+      (is (= 3 (:base (prompt-map :corp))) "Merger's advancement requirement is back to 3"))))
 
 (deftest anson-rose
   ;; Anson Rose

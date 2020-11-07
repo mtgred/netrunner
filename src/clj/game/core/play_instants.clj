@@ -5,7 +5,7 @@
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid make-result]]
-    [game.core.engine :refer [pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
+    [game.core.engine :refer [merge-costs-paid pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
@@ -51,9 +51,9 @@
                                   card)
                      {:resolve-effect false :init-data true}))
         (let [card (get-card state card)]
-          (wait-for (trigger-event-sync state side (if (= side :corp) :play-operation :play-event) card)
+          (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :play-operation :play-event) card)
                     ;; Resolve ability, removing :req as that has already been checked
-                    (wait-for (resolve-ability state side (dissoc cdef :req :cost :additional-cost) card nil)
+                    (wait-for (resolve-ability state side (make-eid state eid) (dissoc cdef :req :cost :additional-cost) card nil)
                               (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
                                     trash-after-resolving (:trash-after-resolving cdef true)
                                     zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
@@ -116,11 +116,13 @@
          (when (has-subtype? card "Run")
            (swap! state assoc-in [:runner :register :click-type] :run))
          (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
-                   (if-let [payment-str (:msg async-result)]
-                     (complete-play-instant state side eid moved-card payment-str ignore-cost)
-                     ;; could not pay the card's price; put it back and mark the effect as being over.
-                     (do
-                       (move state side moved-card original-zone)
-                       (effect-completed state side eid)))))
+                   (let [payment-str (:msg async-result)
+                         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
+                     (if payment-str
+                       (complete-play-instant state side (assoc eid :cost-paid (:cost-paid async-result)) moved-card payment-str ignore-cost)
+                       ;; could not pay the card's price; put it back and mark the effect as being over.
+                       (do
+                         (move state side moved-card original-zone)
+                         (effect-completed state side eid))))))
        ;; card's req or other effects was not satisfied; mark the effect as being over.
        (effect-completed state side eid)))))

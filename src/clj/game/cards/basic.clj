@@ -42,7 +42,7 @@
                 :async true
                 :msg (msg "advance " (card-str state target))
                 :req (req (can-advance? state side target))
-                :effect (effect (update-advancement-cost target)
+                :effect (effect (update-advancement-requirement target)
                                 (add-prop (get-card state target) :advance-counter 1)
                                 (play-sfx "click-advance")
                                 (effect-completed eid))}

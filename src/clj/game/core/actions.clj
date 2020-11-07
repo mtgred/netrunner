@@ -1,6 +1,6 @@
 (ns game.core.actions
   (:require
-    [game.core.agendas :refer [get-agenda-points update-advancement-cost update-all-agenda-points]]
+    [game.core.agendas :refer [get-agenda-points update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [get-zones installable-servers]]
     [game.core.card :refer [facedown? get-card rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
@@ -564,7 +564,7 @@
        (wait-for (pay state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
                  (if-let [payment-str (:msg async-result)]
                    (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
-                       (update-advancement-cost state side card)
+                       (update-advancement-requirement state card)
                        (add-prop state side (get-card state card) :advance-counter 1)
                        (play-sfx state side "click-advance")
                        (effect-completed state side eid))
@@ -578,12 +578,15 @@
    (let [card (or (:card args) args)]
      (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
                (if (can-score? state side card)
-                 ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
                  (let [moved-card (move state :corp card :scored)
                        c (card-init state :corp moved-card {:resolve-effect false
                                                             :init-data true})
-                       points (get-agenda-points state :corp c)]
-                   (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
+                       _ (update-all-advancement-requirements state)
+                       _ (update-all-agenda-points state)
+                       c (get-card state c)
+                       points (get-agenda-points c)]
+                   (system-msg state :corp (str "scores " (:title c)
+                                                " and gains " (quantify points "agenda point")))
                    (trigger-event-simult
                      state :corp eid :agenda-scored
                      {:first-ability {:async true
@@ -594,12 +597,11 @@
                                                    (remove-old-current state side eid :runner))}
                       :card-abilities (card-as-handler c)
                       :after-active-player
-                      {:effect (req (let [c (get-card state c)
-                                          points (or (get-agenda-points state :corp c) points)]
+                      {:effect (req (let [c (get-card state c)]
                                       (set-prop state :corp (get-card state moved-card) :advance-counter 0)
                                       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                       (swap! state dissoc-in [:corp :disable-id])
-                                      (update-all-agenda-points state side)
+                                      (update-all-agenda-points state)
                                       (check-winner state side)
                                       (play-sfx state side "agenda-score")))}}
                      c))

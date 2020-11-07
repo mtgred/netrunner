@@ -1,6 +1,6 @@
 (ns game.core.turns
   (:require
-    [game.core.agendas :refer [update-all-advancement-costs]]
+    [game.core.agendas :refer [update-all-advancement-requirements]]
     [game.core.board :refer [all-active all-active-installed all-installed]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
@@ -46,7 +46,7 @@
                          (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
              (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
-               (update-all-advancement-costs state side)))))
+               (update-all-advancement-requirements state)))))
 
 (defn start-turn
   "Start turn."

@@ -1,6 +1,6 @@
 (ns game.core.installing
   (:require
-    [game.core.agendas :refer [update-advancement-cost]]
+    [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
     [game.core.card :refer [agenda? asset? get-card get-counters get-zone has-subtype? ice? program? resource? rezzed?]]
     [game.core.card-defs :refer [card-def]]
@@ -142,11 +142,11 @@
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
                        (move state side c slot {:front front
-                                                :index index}))]
-      (update! state side moved-card)
+                                                :index index}))
+          _ (when (agenda? c)
+              (update-advancement-requirement state moved-card))
 
-      (when (agenda? c)
-        (update-advancement-cost state side moved-card))
+          moved-card (get-card state moved-card)]
 
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)

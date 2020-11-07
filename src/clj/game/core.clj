@@ -126,11 +126,10 @@
    view-deck]
 
   [game.core.agendas
-   advancement-cost
-   advancement-cost-bonus
+   get-advancement-requirement
    get-agenda-points
-   update-advancement-cost
-   update-all-advancement-costs
+   update-advancement-requirement
+   update-all-advancement-requirements
    update-all-agenda-points]
 
   [game.core.bad-publicity
@@ -144,6 +143,7 @@
    all-installed
    all-installed-runner-type
    card->server
+   get-all-cards
    get-all-installed
    get-remote-names
    get-remote-zones
@@ -297,6 +297,7 @@
    gather-events
    is-ability?
    make-pending-event
+   merge-costs-paid
    not-used-once?
    pay
    prompt!

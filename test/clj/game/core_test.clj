@@ -429,13 +429,13 @@
    (get-in @state [:runner :play-area pos])))
 
 (defmacro rez
-  [state side card & args]
+  [state _ card & args]
   `(let [card# (get-card ~state ~card)]
      (is (installed? card#) (str (:title card#) " is installed"))
      (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
      (when (and (installed? card#)
                 (not (rezzed? card#)))
-       (core/process-action "rez" ~state ~side (merge {:card card#} ~(first args))))))
+       (core/process-action "rez" ~state :corp (merge {:card card#} ~(first args))))))
 
 (defmacro derez
   [state side card]
