@@ -1811,14 +1811,14 @@
                                        (mill state side eid :runner 1))))))}]})
 
 (defcard "Order of Sol"
-  (let [ability {:event :runner-credit-loss
-                 :msg "gain 1 [Credits]"
+  (let [ability {:msg "gain 1 [Credits]"
                  :req (req (zero? (:credit runner)))
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
     {:effect (effect (continue-ability ability card nil))
-     :events [ability]}))
+     :events [(assoc ability :event :runner-credit-loss)
+              (assoc ability :event :runner-spent-credits)]}))
 
 (defcard "PAD Tap"
   {:events [{:event :corp-credit-gain
