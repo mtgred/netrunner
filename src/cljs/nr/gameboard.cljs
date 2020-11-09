@@ -169,7 +169,7 @@
              (= advanceable "while-unrezzed")))
     (cons "advance")
     ;; score
-    (and (= type "Agenda") (>= advance-counter (or advancementcost current-advancement-requirement)))
+    (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
     (cons "score")
     ;; trash
     (#{"ICE" "Program"} type)
@@ -880,18 +880,7 @@
       (when (pos? (count corp-abilities))
         [corp-abs card c-state corp-abilities])
 
-      [card-abilities card c-state abilities subroutines]
-
-      (when (#{"servers" "onhost"} (first zone))
-        (cond
-          (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
-          [:div.panel.blue-shade.menu.abilities
-           [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
-           [:div {:on-click #(send-command "score" {:card card})} "Score"]]
-          (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
-          [:div.panel.blue-shade.menu.abilities
-           [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
-           [:div {:on-click #(send-command "rez" {:card card})} "Rez"]]))]
+      [card-abilities card c-state abilities subroutines]]
      (when (pos? (count hosted))
        [:div.hosted
           (let [distinct-hosted (vals (group-by :title hosted))]
