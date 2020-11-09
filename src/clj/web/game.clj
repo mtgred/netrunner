@@ -84,7 +84,7 @@
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
   (when-let [{:keys [players gameid started messages] :as game} (lobby/game-for-client client-id)]
-    (when (and (lobby/first-player? client-id gameid)
+    (when (and (lobby/first-player? client-id game)
                (not started))
       (let [strip-deck (fn [player] (-> player
                                         (update-in [:deck] #(select-keys % [:_id :identity :name]))
@@ -142,7 +142,7 @@
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [started players state] :as game} (lobby/game-for-id gameid)
           side (some #(when (= client-id (:ws-id %)) (:side %)) players)]
-      (when (lobby/player? client-id gameid)
+      (when (lobby/player? client-id game)
         (main/handle-concede state (side-from-str side))
         (swap-and-send-diffs! game)))))
 
@@ -154,7 +154,7 @@
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [started state] :as game} (lobby/game-for-id gameid)
           message (if mute-state "muted" "unmuted")]
-      (when (lobby/player? client-id gameid)
+      (when (lobby/player? client-id game)
         (lobby/refresh-lobby-assoc-in gameid [:mute-spectators] mute-state)
         (main/handle-notification state (str username " " message " specatators."))
         (swap-and-send-diffs! game)))))
@@ -167,7 +167,7 @@
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [players state] :as game} (lobby/game-for-id gameid)
           side (some #(when (= client-id (:ws-id %)) (:side %)) players)
-          spectator (spectator? client-id gameid)]
+          spectator (spectator? client-id game)]
       (if (and state side)
         (do
           (main/handle-action user command state (side-from-str side) args)
@@ -224,18 +224,17 @@
   (when (active-game? gameid-str client-id)
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [state mute-spectators] :as game} (lobby/game-for-id gameid)
-          {:keys [side user]} (lobby/player? client-id gameid)]
+          {:keys [side]} (lobby/player? client-id game)]
       (if (and state side user)
         (do (main/handle-say state (jinteki.utils/side-from-str side) user msg)
             (swap-and-send-diffs! game))
-        (let [{:keys [user]} (lobby/spectator? client-id gameid)]
-          (when (and user (not mute-spectators))
-            (main/handle-say state :spectator user msg)
-            (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
-            (try
-              (swap-and-send-diffs! game)
-              (catch Exception ex
-                (println (str "handle-game-say exception:" (.getMessage ex) "\n"))))))))))
+        (when (and (lobby/spectator? client-id game) (not mute-spectators))
+          (main/handle-say state :spectator user msg)
+          (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
+          (try
+            (swap-and-send-diffs! game)
+            (catch Exception ex
+              (println (str "handle-game-say exception:" (.getMessage ex) "\n")))))))))
 
 (defn handle-game-typing
   [{{{:keys [username] :as user} :user} :ring-req
@@ -244,7 +243,7 @@
   (when (active-game? gameid-str client-id)
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [state] :as game} (lobby/game-for-id gameid)
-          {:keys [side user]} (lobby/player? client-id gameid)]
+          {:keys [side user]} (lobby/player? client-id game)]
       (when (and state side user)
         (main/handle-typing state (jinteki.utils/side-from-str side) user typing)
         (try
