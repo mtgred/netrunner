@@ -107,7 +107,7 @@
                                     :current-ice nil
                                     :events nil
                                     :can-access true
-                                    :source-card (select-keys card [:code :cid :zone :title :type])})
+                                    :source-card (select-keys card [:code :cid :zone :title :side :type :art])})
                        (when card
                          (update! state side (assoc-in card [:special :run-id] run-id))))
                      (wait-for
