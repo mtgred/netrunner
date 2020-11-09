@@ -68,7 +68,7 @@
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"
                    ["Keep" "Mulligan"]
-                   #(if (= % "Keep")
+                   #(if (= (:value %) "Keep")
                       (keep-hand state side nil)
                       (mulligan state side nil))
                    {:prompt-type :mulligan})))
