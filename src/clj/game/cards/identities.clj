@@ -1324,8 +1324,8 @@
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
-   :abilities [{:req (req (:run @state))
-                :label "add card from Archives to HQ"
+   :abilities [{:req (req (and run (seq (:discard corp))))
+                :label "add card from Archives to R&D during a run"
                 :once :per-turn
                 :prompt "Select a card to add to the top of R&D"
                 :show-discard true
