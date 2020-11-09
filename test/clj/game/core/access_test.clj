@@ -398,6 +398,7 @@
       (run-empty-server state "Archives")
       (is (= ["Global Food Initiative" "Everything else"] (prompt-buttons :runner)))
       (click-prompt state :runner "Everything else")
+      (is (last-log-contains? state "Runner accesses everything else in Archives"))
       (is (= ["Global Food Initiative"] (prompt-buttons :runner)))
       (click-prompt state :runner "Global Food Initiative")
       (is (= ["Steal"] (prompt-buttons :runner)))
