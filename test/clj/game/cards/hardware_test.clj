@@ -1305,7 +1305,24 @@
         (click-card state :runner fo)
         (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
         (take-credits state :runner)
-        (is (empty? (:hosted (refresh fo))) "Mimic trashed")))))
+        (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
+  (testing "Pump abilities don't disappear when card is hosted #4770"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Owl"]}
+                 :runner {:hand ["Flame-out" "Cybertrooper Talut" "Mimic"]
+                          :credits 20}})
+      (play-from-hand state :corp "Owl" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Cybertrooper Talut")
+      (play-from-hand state :runner "Flame-out")
+      (play-from-hand state :runner "Mimic")
+      (let [mimic-strength (get-strength (get-program state 0))
+            fo (get-hardware state 0)]
+        (card-ability state :runner fo 3)
+        (click-card state :runner "Mimic")
+        (is (= mimic-strength (get-strength (first (:hosted (get-hardware state 0))))))))))
 
 (deftest flip-switch
   ;; Flip Switch

@@ -136,7 +136,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
+  ([state side {:keys [zone host cid] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -154,6 +154,21 @@
            (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
+           (if (= cid (:cid moved-card))
+             ;; Moving the card hasn't changed the cid
+             (let [new-effects (reduce
+                                 (fn [all-effects current-effect]
+                                   (if (= cid (:cid (:card current-effect)))
+                                     (conj all-effects (assoc current-effect :card moved-card))
+                                     (conj all-effects current-effect)))
+                                 []
+                                 (:effects @state))]
+               (swap! state assoc :effects (into [] new-effects)))
+             ;; Moving the card has changed the cid
+             (swap! state assoc :effects
+                    (->> (:effects @state)
+                         (remove #(same-card? card (:card %)))
+                         (into []))))
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
                                       front 0
