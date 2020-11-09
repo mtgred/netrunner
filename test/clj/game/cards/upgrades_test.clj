@@ -2632,6 +2632,18 @@
       (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
+(deftest sansan-city-grid
+  ;; SanSan City Grid
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Merger" "SanSan City Grid"]
+                        :credits 10}})
+      (play-from-hand state :corp "SanSan City Grid" "New remote")
+      (play-from-hand state :corp "Merger" "Server 1")
+      (is (= 3 (core/get-advancement-requirement (get-content state :remote1 1))))
+      (rez state :corp (get-content state :remote1 0))
+      (is (= 2 (core/get-advancement-requirement (get-content state :remote1 1)))))))
+
 (deftest satellite-grid
   ;; Satellite Grid - Add 1 fake advancement on all ICE protecting server
   (do-game
