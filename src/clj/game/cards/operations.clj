@@ -2116,14 +2116,11 @@
                         (advance-n-times state side eid card target (dec n)))
               (effect-completed state side eid)))]
     {:additional-cost [:forfeit]
+     :choices {:card can-be-advanced?}
+     :msg (msg "advance " (card-str state target)
+            " " (quantify (get-advancement-requirement (cost-target eid :forfeit)) "time"))
      :async true
-     :effect (effect (continue-ability
-                       {:choices {:card can-be-advanced?}
-                        :msg (msg "advance " (card-str state target) " "
-                                  (advancement-cost state side (last (:rfg corp))) " times")
-                        :async true
-                        :effect (effect (advance-n-times eid card target (advancement-cost state side (last (:rfg corp)))))}
-                       card nil))}))
+     :effect (effect (advance-n-times eid card target (get-advancement-requirement (cost-target eid :forfeit))))}))
 
 (defcard "Successful Demonstration"
   {:req (req (last-turn? state :runner :unsuccessful-run))

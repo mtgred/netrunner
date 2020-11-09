@@ -1205,16 +1205,9 @@
                 :effect (effect (damage eid :brain 1 {:card card}))}]})
 
 (defcard "SanSan City Grid"
-  {:effect (req (when-let [agenda (some #(when (agenda? %) %)
-                                        (:content (card->server state card)))]
-                  (update-advancement-cost state side agenda)))
-   :events [{:event :corp-install
-             :req (req (and (agenda? target)
-                            (in-same-server? card target)))
-             :effect (effect (update-advancement-cost target))}
-            {:event :pre-advancement-cost
-             :req (req (in-same-server? card target))
-             :effect (effect (advancement-cost-bonus -1))}]})
+  {:constant-effects [{:type :advancement-requirement
+                       :req (req (in-same-server? card target))
+                       :value -1}]})
 
 (defcard "Satellite Grid"
   {:effect (req (doseq [c (:ices (card->server state card))]

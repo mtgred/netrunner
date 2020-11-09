@@ -325,6 +325,27 @@
 
 (declare checkpoint)
 
+(defn merge-costs-paid
+  ([cost-paid]
+   (into {} (map (fn [[k {:keys [type value targets]}]]
+                   [k {:type type
+                       :value value
+                       :targets targets}])
+                 cost-paid)))
+  ([cost-paid1 cost-paid2]
+   (let [costs-paid [cost-paid1 cost-paid2]
+         cost-keys (mapcat keys costs-paid)]
+     (reduce (fn [acc cur]
+               (let [costs (map cur costs-paid)
+                     cost-obj {:type cur
+                               :value (apply + (keep :value costs))
+                               :targets (seq (apply concat (keep :targets costs)))}]
+                 (assoc acc cur cost-obj)))
+             {}
+             cost-keys)))
+  ([cost-paid1 cost-paid2 & costs-paid]
+   (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
+
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
   [state side {:keys [async eid cost] :as ability} card targets]
@@ -332,7 +353,7 @@
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
             (let [payment-str (:msg async-result)
-                  cost-paid (:cost-paid async-result)]
+                  cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
               (if payment-str
                 (wait-for (checkpoint state side (make-eid state eid) nil)
                           (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]

@@ -871,6 +871,39 @@
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
+(deftest chakana
+  ;; Chakana
+  (testing "gain counters on r&d runs"
+    (do-game
+      (new-game {:runner {:hand ["Chakana"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Chakana")
+      (let [chakana (get-program state 0)]
+        (is (zero? (get-counters (refresh chakana) :virus)) "Chakana starts with 0 counters")
+        (run-empty-server state "R&D")
+        (is (= 1 (get-counters (refresh chakana) :virus)) "Chakana starts with 0 counters")
+        (run-empty-server state "R&D")
+        (is (= 2 (get-counters (refresh chakana) :virus)) "Chakana starts with 0 counters")
+        (run-empty-server state "HQ")
+        (is (= 2 (get-counters (refresh chakana) :virus)) "Chakana starts with 0 counters"))))
+  (testing "3 counters increases advancement requirements by 1"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover"]}
+                 :runner {:hand ["Chakana"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Chakana")
+      (is (= 2 (core/get-advancement-requirement (get-content state :remote1 0)))
+          "Hostile Takeover is a 2/1 by default")
+      (let [chakana (get-program state 0)]
+        (core/gain state :runner :click 10)
+        (run-empty-server state "R&D")
+        (run-empty-server state "R&D")
+        (run-empty-server state "R&D")
+        (is (= 3 (get-counters (refresh chakana) :virus)))
+        (is (= 3 (core/get-advancement-requirement (get-content state :remote1 0)))
+            "Hostile Takeover is affected by Chakana")))))
+
 (deftest chameleon
   ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn
   (testing "with Clone Chip"

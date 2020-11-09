@@ -2847,11 +2847,10 @@
                                 card nil))))}))
 
 (defcard "Traffic Jam"
-  {:effect (effect (update-all-advancement-costs))
-   :leave-play (effect (update-all-advancement-costs))
-   :events [{:event :pre-advancement-cost
-             :effect (req (advancement-cost-bonus
-                            state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}]})
+  {:constant-effects [{:type :advancement-requirement
+                       :value (req (->> (:scored corp)
+                                        (filter #(= (:title %) (:title target)))
+                                        (count)))}]})
 
 (defcard "Uninstall"
   {:req (req (some #(or (hardware? %)

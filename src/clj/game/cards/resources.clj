@@ -1086,9 +1086,9 @@
                   :async true
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
-                                   (quantify (get-agenda-points state :runner c) "agenda point"))))
+                                   (quantify (get-agenda-points c) "agenda point"))))
                   :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)
+                                     points (get-agenda-points c)
                                      args {:register-events (card-flag? c :has-events-when-stolen true)}]
                                  (as-agenda state :runner eid c points args)))}]}))
 
@@ -1219,13 +1219,13 @@
 
 (defcard "Human First"
   {:events [{:event :agenda-scored
-             :msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points target) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points state :corp target)))}
+             :effect (effect (gain-credits :runner eid (get-agenda-points target)))}
             {:event :agenda-stolen
-             :msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points target) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points state :runner target)))}]})
+             :effect (effect (gain-credits :runner eid (get-agenda-points target)))}]})
 
 (defcard "Hunting Grounds"
   {:implementation "Use prevention ability during approach, after ice is rezzed"
@@ -2701,16 +2701,14 @@
                   :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
 (defcard "The Source"
-  {:effect (effect (update-all-advancement-costs))
-   :leave-play (effect (update-all-advancement-costs))
+  {:constant-effects [{:type :advancement-requirement
+                       :value 1}]
    :events [{:event :agenda-scored
              :async true
              :effect (effect (trash eid card nil))}
             {:event :agenda-stolen
              :async true
              :effect (effect (trash eid card nil))}
-            {:event :pre-advancement-cost
-             :effect (effect (advancement-cost-bonus 1))}
             {:event :pre-steal-cost
              :effect (effect (steal-cost-bonus [:credit 3]))}]})
 

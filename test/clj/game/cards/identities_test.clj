@@ -3041,6 +3041,39 @@
         (core/score state :corp (refresh house))
         (is (= 1 (:agenda-point (get-corp))) "House of Knives was able to be scored")))))
 
+(deftest seidr-laboratories-destiny-defined
+  ;; Seidr Laboratories: Destiny Defined
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:id "Seidr Laboratories: Destiny Defined"
+                        :discard ["IPO"]
+                        :hand ["Hedge Fund"]}})
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (is (prompt-map :corp))
+      (is (= "Select a card to add to the top of R&D" (:msg (prompt-map :corp))))
+      (click-card state :corp "IPO")
+      (is (find-card "IPO" (:deck (get-corp))))))
+  (testing "Must be used during a run"
+    (do-game
+      (new-game {:corp {:id "Seidr Laboratories: Destiny Defined"
+                        :discard ["Hedge Fund"]}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (is (empty? (prompt-map :corp)))
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (is (prompt-map :corp))))
+  (testing "Must have at least 1 card in archives"
+    (do-game
+      (new-game {:corp {:id "Seidr Laboratories: Destiny Defined"
+                        :hand ["Hedge Fund"]}})
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (is (empty? (prompt-map :corp))))))
+
 (deftest silhouette-stealth-operative
   ;; Silhouette
   (testing "Expose trigger ability resolves completely before access. Issue #2173"

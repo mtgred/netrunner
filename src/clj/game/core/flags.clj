@@ -1,7 +1,8 @@
 (ns game.core.flags
   (:require [clojure.string :as string]
+            [game.core.agendas :refer [get-advancement-requirement]]
             [game.core.board :refer [all-active all-installed]]
-            [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
+            [game.core.card :refer [agenda? condition-counter? corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [zone->name]]
@@ -295,13 +296,12 @@
   (check-flag-types? state side card :can-advance [:current-turn :persistent]))
 
 (defn can-score?
-  "Checks if the corp can score cards"
+  "Checks if the corp can score a given card"
   [state side card]
   (and
-    (some? card)
+    (agenda? card)
     ;; The agenda has enough agenda counters to legally score
-    (let [cost (or (:current-cost card)
-                   (:advancementcost card))]
+    (let [cost (get-advancement-requirement card)]
       (and cost
            (<= cost (get-counters card :advancement))))
     ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
@@ -349,6 +349,7 @@
         (and (or (installed? card)
                  (:host card))
              (or (operation? card)
+                 (condition-counter? card)
                  (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))

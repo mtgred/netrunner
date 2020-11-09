@@ -173,7 +173,7 @@
              :optional {:prompt "Trace with Amani Senai?"
                         :player :corp
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:trace {:base (effect (advancement-cost agenda))
+                        :yes-ability {:trace {:base (get-advancement-requirement agenda)
                                               :successful
                                               {:choices {:card #(and (installed? %)
                                                                      (runner? %))}
@@ -646,14 +646,14 @@
                                           (in-discard? %)))}
                 :label "Reveal an agenda from HQ or Archives"
                 :msg (msg "reveal " (:title target) " from " (zone->name (get-zone target))
-                          (let [target-agenda-points (get-agenda-points state :corp target)]
+                          (let [target-agenda-points (get-agenda-points target)]
                             (str ", gain " target-agenda-points " [Credits], "))
                           " and shuffle it into R&D")
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
                                (wait-for
-                                 (gain-credits state :corp (get-agenda-points state :corp target))
+                                 (gain-credits state :corp (get-agenda-points target))
                                  (move state :corp target :deck)
                                  (shuffle! state :corp :deck)
                                  (effect-completed state side eid))))}]})
@@ -1483,10 +1483,10 @@
                                  (fn [state side card]
                                    (if (and (= tgtcid
                                                (:cid card))
-                                            (>= (get-counters card :advancement)
-                                                (or (:current-cost card)
-                                                    (:advancementcost card))))
-                                     ((constantly false) (toast state :corp "Cannot score due to PAD Factory." "warning"))
+                                            (<= (get-advancement-requirement card)
+                                                (get-counters card :advancement)))
+                                     ((constantly false)
+                                      (toast state :corp "Cannot score due to PAD Factory." "warning"))
                                      true)))))}]})
 
 (defcard "Pālanā Agroplex"
@@ -1517,19 +1517,20 @@
   (advance-ambush
     0
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
+     :async true
      :effect (req (show-wait-prompt state :runner "Corp to select an agenda to score with Plan B")
-                  (doseq [ag (filter agenda? (:hand corp))]
-                    (update-advancement-cost state side ag))
                   (continue-ability
                     state side
                     {:prompt "Select an Agenda in HQ to score"
                      :choices {:card #(and (agenda? %)
-                                           (<= (:current-cost %) (get-counters (get-card state card) :advancement))
+                                           (<= (get-advancement-requirement %)
+                                               (get-counters (get-card state card) :advancement))
                                            (in-hand? %))}
                      :msg (msg "score " (:title target))
-                     :effect (effect (score (assoc target :advance-counter
-                                                   (:current-cost target)))
-                                     (clear-wait-prompt :runner))}
+                     :async true
+                     :effect (effect (clear-wait-prompt :runner)
+                                     (score eid (assoc target :advance-counter
+                                                       (get-advancement-requirement target))))}
                     card nil))}
     "Score an Agenda from HQ?"))
 

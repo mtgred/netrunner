@@ -202,8 +202,7 @@
   {:events [{:event :runner-trash
              :async true
              :interactive (req true)
-             :req (req (and (= side :runner)
-                            (= :ability-cost (:cause target))))
+             :req (req (and (= side :runner) (= :ability-cost (:cause target))))
              :msg "draw a card"
              :effect (effect (draw eid 1 nil))}]})
 
@@ -734,13 +733,14 @@
   {:events [{:event :corp-forfeit-agenda
              :async true
              :effect (req (show-wait-prompt state :runner "Corp to place advancement tokens")
-                          (let [p (inc (get-agenda-points state :corp target))]
+                          (let [p (inc (get-agenda-points target))]
                             (continue-ability
                               state side
-                              {:prompt "Select a card to place advancement tokens on with Jemison Astronautics: Sacrifice. Audacity. Success."
+                              {:prompt (str "Select a card to place advancement tokens on with " (:title card))
                                :choices {:card #(and (installed? %)
                                                      (corp? %))}
-                               :msg (msg "place " p " advancement tokens on " (card-str state target))
+                               :msg (msg "place " (quantify p "advancement token")
+                                         " on " (card-str state target))
                                :cancel-effect (effect (clear-wait-prompt :runner))
                                :effect (effect (add-prop :corp target :advance-counter p {:placed true})
                                                (clear-wait-prompt :runner))}
@@ -1297,15 +1297,17 @@
                               card :can-rez
                               (fn [state side card]
                                 (if (= (:cid card) tgtcid)
-                                  ((constantly false) (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                  ((constantly false)
+                                   (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                   true)))
                             (register-turn-flag!
                               state side
                               card :can-score
                               (fn [state side card]
                                 (if (and (= (:cid card) tgtcid)
-                                         (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
-                                  ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                         (<= (get-advancement-requirement card) (get-counters card :advancement)))
+                                  ((constantly false)
+                                   (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                   true))))
                           (wait-for (corp-install state side chosen target nil)
                                     (add-prop state :corp (find-latest state chosen) :advance-counter 1 {:placed true})
@@ -1322,8 +1324,8 @@
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
-   :abilities [{:req (req (:run @state))
-                :label "add card from Archives to HQ"
+   :abilities [{:req (req (and run (seq (:discard corp))))
+                :label "add card from Archives to R&D during a run"
                 :once :per-turn
                 :prompt "Select a card to add to the top of R&D"
                 :show-discard true

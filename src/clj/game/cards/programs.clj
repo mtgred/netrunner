@@ -619,13 +619,13 @@
   (power-counter-break "Code Gate"))
 
 (defcard "Chakana"
-  {::events [{:event :successful-run
+  {:constant-effects [{:type :advancement-requirement
+                       :req (req (<= 3 (get-virus-counters state card)))
+                       :value 1}]
+   :events [{:event :successful-run
              :silent (req true)
              :req (req (= :rd (target-server context)))
-             :effect (effect (add-counter card :virus 1))}
-            {:event :pre-advancement-cost
-             :req (req (>= (get-virus-counters state card) 3))
-             :effect (effect (advancement-cost-bonus 1))}]})
+             :effect (effect (add-counter card :virus 1))}]})
 
 (defcard "Chameleon"
   {:prompt "Choose one subtype"
@@ -2126,7 +2126,7 @@
                               state side
                               (let [guess (get-in card [:special :rng-guess])]
                                 (when (or (= guess (:cost target))
-                                          (= guess (:advancementcost target)))
+                                          (= guess (get-advancement-requirement target)))
                                   {:prompt "Choose RNG Key reward"
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                    :async true

@@ -913,11 +913,10 @@
    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 2 3))})
 
 (defcard "Medical Breakthrough"
-  {:silent (req true)
-   :effect (effect (update-all-advancement-costs))
-   :stolen {:effect (effect (update-all-advancement-costs))}
-   :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
-                                                  (concat (:scored corp) (:scored runner))))))})
+  {:flags {:has-events-when-stolen true}
+   :constant-effects [{:type :advancement-requirement
+                       :req (req (= (:title target) "Medical Breakthrough"))
+                       :value -1}]})
 
 (defcard "Megaprix Qualifier"
   {:silent (req true)
@@ -949,7 +948,7 @@
 
 (defcard "NAPD Contract"
   {:steal-cost-bonus (req [:credit 4])
-   :advancement-cost-bonus (req (count-bad-pub state))})
+   :advancement-requirement (req (count-bad-pub state))})
 
 (defcard "Net Quarantine"
   (let [nq {:async true
@@ -1163,12 +1162,12 @@
                :msg (msg "remove 1 agenda token from " (:title card))
                :effect (req (when (pos? (get-counters card :agenda))
                               (add-counter state side card :agenda -1))
-                            (when (= 0 (get-counters (get-card state card) :agenda))
-                              (let [points (get-agenda-points state :runner (assoc-in card [:counter :agenda] 0))]
+                            (update-all-agenda-points state side)
+                            (when (zero? (get-counters (get-card state card) :agenda))
+                              (let [points (get-agenda-points (get-card state card))]
                                 (system-msg state :runner
                                             (str "gains " (quantify points "agenda point")
                                                  " from " (:title card)))))
-                            (update-all-agenda-points state side)
                             (check-winner state side))}]
      :flags {:has-events-when-stolen true}}))
 

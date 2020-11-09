@@ -34,11 +34,7 @@
                (string? card)))
       (if (map? card)
         (core/process-action "select" state side {:card card})
-        (let [all-cards (concat (core/get-all-installed state)
-                                (mapcat (fn [side]
-                                          (mapcat #(-> @state side %)
-                                                  [:hand :discard :deck :rfg :scored :play-area]))
-                                        [:corp :runner]))
+        (let [all-cards (core/get-all-cards state)
               matching-cards (filter #(= card (:title %)) all-cards)]
           (if (= (count matching-cards) 1)
             (core/process-action "select" state side {:card (first matching-cards)})

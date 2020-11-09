@@ -156,7 +156,8 @@
     (send-command "toast")))
 
 (defn action-list
-  [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
+  [{:keys [type zone rezzed advanceable advance-counter
+           advancementcost current-advancement-requirement] :as card}]
   (cond->> []
     ;; advance
     (or (and (= type "Agenda")
@@ -168,18 +169,18 @@
              (= advanceable "while-unrezzed")))
     (cons "advance")
     ;; score
-    (and (= type "Agenda") (>= advance-counter current-cost))
+    (and (= type "Agenda") (>= advance-counter (or advancementcost current-advancement-requirement)))
     (cons "score")
     ;; trash
     (#{"ICE" "Program"} type)
     (cons "trash")
     ;; rez
     (and (#{"Asset" "ICE" "Upgrade"} type)
-         (not rezzd))
+         (not rezzed))
     (cons "rez")
     ;; derez
     (and (#{"Asset" "ICE" "Upgrade"} type)
-         rezzd)
+         rezzed)
     (cons "derez")))
 
 (defn handle-abilities
@@ -809,8 +810,8 @@
 (defn card-view
   [card filpped]
   (let [c-state (r/atom {})]
-    (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
-                 advanceable rezzed strength current-strength title remotes selected hosted
+    (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
+                 subtype advanceable rezzed strength current-strength title remotes selected hosted
                  side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
                  corp-abilities]
           :as card}
@@ -883,7 +884,7 @@
 
       (when (#{"servers" "onhost"} (first zone))
         (cond
-          (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
+          (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
           [:div.panel.blue-shade.menu.abilities
            [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
            [:div {:on-click #(send-command "score" {:card card})} "Score"]]
@@ -1212,8 +1213,8 @@
          (let [{:keys [base additional]} bad-publicity]
            [:div (str (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
             (when me? (controls :bad-publicity))])
-         (let [{:keys [base mod]} hand-size]
-           [:div (str (+ base mod) " Max hand size")
+         (let [{:keys [total]} hand-size]
+           [:div (str total " Max hand size")
             (when me? (controls :hand-size))])]))))
 
 (defn run-arrow [run]
