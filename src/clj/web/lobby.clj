@@ -81,12 +81,15 @@
     [gameid targets func]
     (let [[old] (swap-vals! all-games update-in (concat [gameid] targets) func)
           old-key-diff (select-keys (get old gameid) [(first targets)])
-          key-diff (select-keys (game-for-id gameid) [(first targets)])]
-      
-      (if (seq (game-lobby-view gameid key-diff))
+          key-diff (select-keys (game-for-id gameid) [(first targets)])
+          lobby-updates (game-lobby-view gameid key-diff)
+          public-updates (game-public-view gameid key-diff)]
+
+      (when (seq lobby-updates)
         (swap! game-lobby-updates update-in [:update gameid]
           (fn [v]
-            (conj v (differ/diff (game-lobby-view gameid old-key-diff) (game-lobby-view gameid key-diff)))))
+            (conj v (differ/diff (game-lobby-view gameid old-key-diff) lobby-updates)))))
+      (when (seq public-updates)
         (swap! public-lobby-updates assoc-in (concat [:update gameid] [(first targets)]) ((first targets) (game-public-view gameid key-diff))))
       (send-lobby)))
 
