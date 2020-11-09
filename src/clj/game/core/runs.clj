@@ -434,15 +434,17 @@
 (defn successful-run-replace-access
   [props]
   (let [ability (:ability props)
-        attacked-server (:target-server props)]
+        attacked-server (:target-server props)
+        use-this-card-run (:this-card-run props)]
     {:event :successful-run
-     :req (case attacked-server
-            (:archives :rd :hq)
-            (req (= attacked-server (target-server context)))
-            :remote
-            (req (is-remote? (target-server context)))
-            ; else
-            (req true))
+     :req (req (and (if use-this-card-run this-card-run true)
+                    (case attacked-server
+                      (:archives :rd :hq)
+                      (= attacked-server (target-server context))
+                      :remote
+                      (is-remote? (target-server context))
+                      ; else
+                      true)))
      :silent (req true)
      :effect (req (add-run-effect state card ability props))}))
 
@@ -459,8 +461,8 @@
       (zero? (count titles))
       (wait-for (do-access state :runner (get-in @state [:run :server]))
                 (handle-end-run state :runner))
-      ;; If there's only 1 handler but it's not mandatory
-      ;; give the runner the option below
+      ;; If there's only 1 handler and it's mandatory
+      ;; just execute it
       (and mandatory (= 1 (count titles)))
       (let [chosen (first handlers)
             ability (:ability chosen)
@@ -479,8 +481,7 @@
          :choices (if mandatory titles (conj titles "Access cards"))
          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
                             ability (:ability chosen)
-                            card (:card chosen)
-                            ]
+                            card (:card chosen)]
                         (if chosen
                           (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
                               (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])

@@ -408,6 +408,7 @@
                 :effect (effect (make-run eid :rd nil card))}]
    :events [(successful-run-replace-access
               {:target-server :rd
+               :this-card-run true
                :ability
                {:prompt "Choose a card to shuffle into R&D"
                 :choices {:card #(and (not (ice? %))
@@ -1153,6 +1154,7 @@
                 :effect (effect (make-run eid :hq nil card))}]
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :ability
                {:msg (msg "reveal all of the cards cards in HQ: "
                           (string/join ", " (map :title (:hand corp))))
@@ -1480,6 +1482,7 @@
                 :effect (effect (make-run eid :rd nil card))}]
    :events [(successful-run-replace-access
               {:target-server :rd
+               :this-card-run true
                :mandatory true
                :ability
                {:prompt "Choose a card to trash"
@@ -2343,6 +2346,7 @@
                 :effect (effect (make-run eid :rd nil card))}]
    :events [(successful-run-replace-access
               {:target-server :rd
+               :this-card-run true
                :mandatory true
                :ability
                {:async true
