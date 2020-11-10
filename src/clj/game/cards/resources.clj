@@ -618,7 +618,7 @@
                                      (continue-ability
                                        state :runner
                                        {:cost [:credit tags]
-                                        :msg (str "access up to " tags " cards")
+                                        :msg (str "access up to " (quantify tags "card"))
                                         :effect (effect (access-bonus (target-server run) (dec tags)))}
                                        card targets)
                                      ;; Can't pay, don't access cards
@@ -632,8 +632,9 @@
                   :prompt "Choose a server"
                   :msg (msg "make a run on " target)
                   :choices (req runnable-servers)
-                  :effect (effect (make-run target nil card)
-                                  (register-events card [(assoc ability :duration :end-of-run)]))}]}))
+                  :async true
+                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                                  (make-run eid target nil card))}]}))
 
 (defcard "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
@@ -1811,14 +1812,14 @@
                                        (mill state side eid :runner 1))))))}]})
 
 (defcard "Order of Sol"
-  (let [ability {:event :runner-credit-loss
-                 :msg "gain 1 [Credits]"
+  (let [ability {:msg "gain 1 [Credits]"
                  :req (req (zero? (:credit runner)))
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
     {:effect (effect (continue-ability ability card nil))
-     :events [ability]}))
+     :events [(assoc ability :event :runner-credit-loss)
+              (assoc ability :event :runner-spent-credits)]}))
 
 (defcard "PAD Tap"
   {:events [{:event :corp-credit-gain

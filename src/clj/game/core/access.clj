@@ -296,15 +296,16 @@
 
 (defn msg-handle-access
   "Generate the message from the access"
-  [state side eid {:keys [zone] :as card} title {:keys [cost-msg]}]
+  [state side eid {:keys [zone] :as card} title {:keys [cost-msg no-msg]}]
   (let [cost-str (join-cost-strs cost-msg)]
-    (system-msg state side
-                (str (if (seq cost-msg)
-                       (str cost-str " to access ")
-                       "accesses ")
-                     title
-                     (when card
-                       (str " from " (name-zone side zone))))))
+    (when-not no-msg
+      (system-msg state side
+                  (str (if (seq cost-msg)
+                         (str cost-str " to access ")
+                         "accesses ")
+                       title
+                       (when card
+                         (str " from " (name-zone side zone)))))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))
@@ -312,7 +313,7 @@
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
-  [state side eid c title {:keys [no-msg] :as args}]
+  [state side eid c title args]
   (let [cdef (card-def c)
         c (assoc c :seen true)
         access-effect (when-let [acc (:access cdef)]

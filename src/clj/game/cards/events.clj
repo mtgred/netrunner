@@ -29,6 +29,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :ability
                {:async true
                 :msg (msg "force the Corp to lose " (min 5 (:credit corp))
@@ -127,6 +128,7 @@
    :effect (effect (make-run eid target nil card))
    :events [(successful-run-replace-access
               {:target-server :remote
+               :this-card-run true
                :ability
                {:msg "shuffle all cards in the server into R&D"
                 :effect (req (doseq [c (:content run-server)]
@@ -358,6 +360,7 @@
      :events [(successful-run-replace-access
                 {:target-server :hq
                  :mandatory true
+                 :this-card-run true
                  :ability
                  {:msg "force the Corp to add all cards in HQ to the top of R&D"
                   :async true
@@ -377,6 +380,7 @@
      :effect (effect (make-run eid :rd nil card))
      :events [(successful-run-replace-access
                 {:target-server :rd
+                 :this-card-run true
                  :ability
                  {:async true
                   :prompt "Choose a program to install"
@@ -764,6 +768,7 @@
      :effect (effect (make-run eid :hq nil card))
      :events [(successful-run-replace-access
                 {:target-server :hq
+                 :this-card-run true
                  :ability
                  {:msg (msg "force the Corp to lose " (five-or-all corp)
                             " [Credits], and gain " (five-or-all corp)
@@ -820,6 +825,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :mandatory true
                :ability
                {:prompt "Choose a card type"
@@ -932,6 +938,7 @@
      :effect (effect (make-run eid :hq nil card))
      :events [(successful-run-replace-access
                 {:target-server :hq
+                 :this-card-run true
                  :mandatory true
                  :ability
                  {:async true
@@ -997,6 +1004,7 @@
    :effect (effect (make-run eid target nil card))
    :events [(successful-run-replace-access
               {:mandatory true
+               :this-card-run true
                :ability
                {:req (req (some #(and (pos? (get-counters % :advancement))
                                       (= (first (:server run)) (second (get-zone %))))
@@ -1054,6 +1062,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :mandatory true
                :ability
                {:async true
@@ -1223,6 +1232,7 @@
      :effect (effect (make-run eid :archives nil card))
      :events [(successful-run-replace-access
                 {:target-server :archives
+                 :this-card-run true
                  :mandatory true
                  :ability access-effect})]}))
 
@@ -1410,6 +1420,7 @@
    :effect (effect (make-run eid :rd nil card))
    :events [(successful-run-replace-access
               {:target-server :rd
+               :this-card-run true
                :ability
                {:msg "rearrange the top 5 cards of R&D"
                 :async true
@@ -1487,6 +1498,7 @@
        :effect (effect (make-run eid :hq nil card))
        :events [(successful-run-replace-access
                   {:target-server :hq
+                   :this-card-run true
                    :mandatory true
                    :ability access-effect})]})))
 
@@ -1634,6 +1646,7 @@
      :effect (effect (make-run eid :rd nil card))
      :events [(successful-run-replace-access
                 {:target-server :rd
+                 :this-card-run true
                  :mandatory true
                  :ability access-effect})]}))
 
@@ -2069,6 +2082,7 @@
                                     (effect-completed state side eid)))}
             (successful-run-replace-access
               {:target-server :archives
+               :this-card-run true
                :mandatory true
                :ability
                {:prompt "Select an agenda to host Political Graffiti"
@@ -2265,6 +2279,7 @@
      :effect (effect (make-run eid :archives nil card))
      :events [(successful-run-replace-access
                 {:target-server :archives
+                 :this-card-run true
                  :mandatory true
                  :ability
                  {:req (req (not (zone-locked? state :runner :discard)))
@@ -2334,6 +2349,7 @@
    :effect (effect (make-run eid :archives nil card))
    :events [(successful-run-replace-access
               {:target-server :archives
+               :this-card-run true
                :ability
                {:async true
                :req (req (not (zone-locked? state :runner :discard)))
@@ -2393,6 +2409,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :mandatory true
                :ability
                {:async true
@@ -2550,6 +2567,7 @@
    :effect (effect (make-run eid :rd nil card))
    :events [(successful-run-replace-access
               {:target-server :rd
+               :this-card-run true
                :can-access true
                :mandatory true
                :ability {:msg "access cards from the bottom of R&D"
@@ -2569,6 +2587,7 @@
    :effect (effect (make-run eid target nil card))
    :events [(successful-run-replace-access
               {:target-server :remote
+               :this-card-run true
                :mandatory true
                :ability
                {:async true
@@ -2882,6 +2901,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :ability
                {:async true
                 :prompt "How many [Credits]?"
@@ -2897,6 +2917,7 @@
    :effect (effect (make-run eid :hq nil card))
    :events [(successful-run-replace-access
               {:target-server :hq
+               :this-card-run true
                :ability
                {:msg (msg "force the Corp to discard " target " cards from HQ at random")
                 :prompt "How many [Click] do you want to spend?"

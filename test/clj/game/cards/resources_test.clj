@@ -3238,6 +3238,45 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
 
+(deftest order-of-sol
+  ;; Order of Sol
+  (testing "Get down to zero credits from playing OoS"
+    (do-game
+      (new-game {:runner {:hand ["Order of Sol"]
+                          :credits 2}})
+      (take-credits state :corp)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Only spends 1 credit total to install Order of Sol"
+        (play-from-hand state :runner "Order of Sol"))
+      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 \\[Credits]."))))
+  (testing "Get down to zero credits from playing an event"
+    (do-game
+      (new-game {:runner {:hand ["Order of Sol" "Sure Gamble"]
+                          :credits 7}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Order of Sol")
+      (changes-val-macro
+        5 (:credit (get-runner))
+        "Gain 5 total credits from playing Sure Gamble"
+        (play-from-hand state :runner "Sure Gamble"))
+      (is (last-n-log-contains? state 2 "Runner uses Order of Sol to gain 1 \\[Credits]."))))
+  (testing "Losing credits"
+    (do-game
+      (new-game {:corp {:id "Spark Agency: Worldswide Reach"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["PAD Campaign"]}
+                 :runner {:hand ["Order of Sol"]
+                          :credits 3}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Order of Sol")
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gain and lose 1 credit"
+        (rez state :corp (get-content state :remote1 0)))
+      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 \\[Credits].")))))
+
 (deftest pad-tap
   ;; PAD Tap
   (testing "Basic test"
