@@ -402,7 +402,6 @@
              (fn [idx player]
                (let [player-id (get-in player [:user :_id])
                      this-player (= player-id (:_id @user))]
-                  ; (prn (or player-id idx))
                  ^{:key (or player-id idx)}
                  [:div
                   [player-view player game]
