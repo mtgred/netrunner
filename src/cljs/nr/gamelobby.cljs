@@ -42,7 +42,7 @@
             (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
                   update-diff (reduce-kv
                                 (fn [m k v]
-                                  (assoc m k (merge (get m k {}) v)))
+                                  (assoc m k (merge {:spectators '()} (get m k {}) v))) ;spectators is nil on the client but not the API, confusing differ which expects an empty set
                                 gamemap
                                 (:update diff))
                   delete-diff (apply dissoc update-diff (:delete diff))]
@@ -402,6 +402,7 @@
              (fn [idx player]
                (let [player-id (get-in player [:user :_id])
                      this-player (= player-id (:_id @user))]
+                  ; (prn (or player-id idx))
                  ^{:key (or player-id idx)}
                  [:div
                   [player-view player game]
