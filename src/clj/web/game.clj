@@ -202,11 +202,11 @@
             ;; Add as a spectator, inform the client that this is the active game,
             ;; Send existing state to spectator
             ;; add a chat message, then send diff state to all players.
-            (lobby/spectate-game user client-id gameid)
-            (main/handle-notification state (str username " joined the game as a spectator."))
             (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid
                                                          :started started})
             (send-state! :netrunner/state (lobby/game-for-id gameid) (public-states (:state game)) client-id)
+            (lobby/spectate-game user client-id gameid)
+            (main/handle-notification state (str username " joined the game as a spectator."))
             (swap-and-send-diffs! (lobby/game-for-id gameid))
             (when reply-fn (reply-fn 200))
             true)
