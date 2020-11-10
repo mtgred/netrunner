@@ -22,7 +22,7 @@
    [:span.player
     [avatar (:user player) {:opts {:size 22}}]
     [user-status-span player]
-    (when (empty? (:password game))
+    (when (not (:password game))
       (let [side (:side player)
             faction (:faction (:identity (:deck player)))
             identity (:title (:identity (:deck player)))

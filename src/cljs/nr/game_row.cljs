@@ -43,7 +43,7 @@
                       (let [password (:password password-game password)
                             input-password (:password @s)]
                         (cond
-                          (empty? password)
+                          (not password)
                           (join-game (if password-game (:gameid password-game) gameid) s action nil)
                           input-password
                           (join-game (if password-game (:gameid password-game) gameid) s action input-password)
@@ -82,7 +82,7 @@
          :class (when (or (:isadmin user)
                           (:ismoderator user))
                   "clickable")}
-        (str (when-not (empty? (:password game))
+        (str (when (:password game)
                "[PRIVATE] ")
              (:title game)
              (when (pos? c)

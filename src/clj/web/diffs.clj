@@ -29,6 +29,7 @@
   [full-game game-update]
     (-> game-update
         (dissoc :state :last-update :on-close)
+        (update-if-contains :password (fn [_] true))
         (update-if-contains :players #(map (partial user-public-view full-game) %))
         (update-if-contains :original-players #(map (partial user-public-view full-game) %))
         (update-if-contains :spectators #(map (partial user-public-view full-game) %))
