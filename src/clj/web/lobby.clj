@@ -109,22 +109,22 @@
   (defn reset-send-lobby
     []
     (let [[old] (reset-vals! send-ready true)]
-      (if-not old (send-lobby)))))
+      (when-not old (send-lobby)))))
 
 (defn player?
   "True if the given client-id is a player in the given game"
   [client-id game]
-    (some #(when (= client-id (:ws-id %)) %) (:players game)))
+  (some #(when (= client-id (:ws-id %)) %) (:players game)))
 
 (defn first-player?
   "True if the given client-id is the first player in the given game"
   [client-id game]
-    (= client-id (-> game :players first :ws-id)))
+  (= client-id (-> game :players first :ws-id)))
 
 (defn spectator?
   "True if the given client-id is a spectator in the given game"
   [client-id game]
-    (some #(when (= client-id (:ws-id %)) %) (:spectators game)))
+  (some #(when (= client-id (:ws-id %)) %) (:spectators game)))
 
 (defn player-or-spectator
   "True if the given client-id is a player or spectator in the given game"
