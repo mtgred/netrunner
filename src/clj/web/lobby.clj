@@ -49,7 +49,7 @@
       game-lobby-updates (atom {})
       send-ready (atom true)]
 
-  (def lobby-only-keys [:messages :spectators :mute-spectators :password :spectatorhands])
+  (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands])
 
   (defn game-public-view
     "Strips private server information from a game map, preparing to send the game to clients."
@@ -95,7 +95,7 @@
 
   (defn refresh-lobby-assoc-in
     [gameid targets val]
-    (refresh-lobby-update-in gameid targets (fn [n] val)))
+    (refresh-lobby-update-in gameid targets (fn [_] val)))
 
   (defn refresh-lobby-dissoc
     [gameid]
