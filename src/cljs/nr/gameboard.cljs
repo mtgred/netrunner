@@ -61,7 +61,7 @@
     (reset! last-state @game-state)
     (reset! lock false)))
 
-(defn launch-game [{:keys [state]}]
+(defn launch-game [state]
   (init-game state)
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
@@ -87,8 +87,6 @@
                 (get-in @last-state aid))
       (reset! lock false))))
 
-(defn handle-state [{:keys [state]}] (init-game state))
-
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))
     (swap! game-state #(differ/patch @last-state diff))
@@ -102,7 +100,7 @@
 (defn parse-state [state]
   (js->clj (.parse js/JSON state) :keywordize-keys true))
 
-(ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
+(ws/register-ws-handler! :netrunner/state #(init-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
 (ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
