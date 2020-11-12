@@ -248,7 +248,7 @@
 
 (defn render-cards [input]
   "Render all cards in a given text or HTML fragment input"
-  (if (re-find (contains-card-pattern) input)
+  (if (re-find (contains-card-pattern) (or input ""))
     (render-input input (card-patterns))
     (if (not (or (string? input) (vector? input)))
       [:<>]
