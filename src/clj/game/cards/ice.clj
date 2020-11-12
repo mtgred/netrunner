@@ -3118,8 +3118,8 @@
 (defcard "Tollbooth"
   {:on-encounter {:async true
                   :effect (req (wait-for (pay state :runner card [:credit 3])
-                                         (if-let [payment-str (:msg async-result)]
-                                           (do (system-msg state :corp "uses Tollbooth to force the Runner to " payment-str)
+                                         (if (:cost-paid async-result)
+                                           (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
                                                (effect-completed state side eid))
                                            (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
                                                (end-run state :corp eid card)))))}
