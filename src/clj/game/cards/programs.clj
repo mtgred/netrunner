@@ -2548,6 +2548,8 @@
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
                                    ; no break-req to not enable auto-pumping
+                                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                             " on " (card-str state current-ice))
                                    :effect (effect
                                              (continue-ability
                                                (when (pos? (cost-value eid :x-credits))
