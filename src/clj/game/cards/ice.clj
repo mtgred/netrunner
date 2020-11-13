@@ -3119,9 +3119,9 @@
   {:on-encounter {:async true
                   :effect (req (wait-for (pay state :runner card [:credit 3])
                                          (if (:cost-paid async-result)
-                                           (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
+                                           (do (system-msg state :runner (str (:msg async-result) " when encountering Tollbooth"))
                                                (effect-completed state side eid))
-                                           (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
+                                           (do (system-msg state :runner "ends the run, as the Runner can't pay 3 [Credits] when encountering Tollbooth")
                                                (end-run state :corp eid card)))))}
    :subroutines [end-the-run]})
 
