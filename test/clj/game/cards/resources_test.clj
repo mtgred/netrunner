@@ -2947,6 +2947,8 @@
       (let [sil (get-hardware state 0)
             nm (get-resource state 0)
             gr (get-resource state 1)]
+        (card-ability state :runner nm 0)
+        (is (empty? (:prompt (get-runner))) "Net Mercur doesn't stack overflow if you click on it")
         (card-ability state :runner gr 0)
         (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
         (run-on state :hq)
