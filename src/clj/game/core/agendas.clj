@@ -39,9 +39,9 @@
 
 (defn get-agenda-points
   [card]
-  (when (agenda? card)
-    (or (:agendapoints card)
-        (:current-points card))))
+  (or (:agendapoints card)
+      (:current-points card)
+      0))
 
 (defn- agenda-points
   "Apply agenda-point modifications to calculate the number of points this card is worth
