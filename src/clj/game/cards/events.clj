@@ -1987,9 +1987,9 @@
                    :async true
                    :effect (effect (make-run eid target nil card))}
         ashes-recur (fn ashes-recur [n]
-                      {:req (req (not (zone-locked? state :runner :discard)))
-                       :optional
-                       {:prompt "Remove Out of the Ashes from the game to make a run?"
+                      {:optional
+                       {:req (req (not (zone-locked? state :runner :discard)))
+                        :prompt "Remove Out of the Ashes from the game to make a run?"
                         :yes-ability
                         {:msg "removes Out of the Ashes from the game to make a run"
                          :effect
