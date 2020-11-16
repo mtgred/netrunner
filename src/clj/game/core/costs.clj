@@ -131,13 +131,13 @@
            (and (pos? cost)
                 (pos? (count (provider-func))))
            (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost) card nil)
-                     (swap! state update-in [:stats side :spent :credits] (fnil + 0) cost)
+                     (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
                      (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                            :type :x-credits
                                                            :value (:number async-result)
                                                            :targets (:targets async-result)}))
            (pos? cost)
-           (do (lose state side :credits cost)
+           (do (lose state side :credit cost)
                (wait-for (trigger-event-sync
                            state side (make-eid state eid)
                            (if (= side :corp) :corp-spent-credits :runner-spent-credits)

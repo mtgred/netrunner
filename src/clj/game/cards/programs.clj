@@ -1632,8 +1632,7 @@
                                  :cost [:x-credits]
                                  :req (req (:runner-phase-12 @state))
                                  :async true
-                                 :effect (effect (add-counter card :power (cost-value eid :x-credits))
-                                                 (lose-credits eid (cost-value eid :x-credits)))
+                                 :effect (effect (add-counter card :power (cost-value eid :x-credits)))
                                  :msg (msg "place " (cost-value eid :x-credits) " power counters on it")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
@@ -2549,10 +2548,12 @@
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
                                    ; no break-req to not enable auto-pumping
+                                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                             " on " (card-str state current-ice))
                                    :effect (effect
                                              (continue-ability
                                                (when (pos? (cost-value eid :x-credits))
-                                                 (break-sub (cost-value eid :x-credits) (cost-value eid :x-credits) "Code Gate"))
+                                                 (break-sub nil (cost-value eid :x-credits) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
