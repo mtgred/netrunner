@@ -2153,13 +2153,13 @@
                           (update! state :runner (assoc-in card [:special :rng-highest] cost))
                           cost)))]
               {:event :successful-run
-               :req (req (and (#{:hq :rd} (target-server context))
-                              (first-event? state :runner :successful-run
-                                            (fn [targets]
-                                              (let [context (first targets)]
-                                                (#{:hq :rd} (target-server context)))))))
                :optional
-               {:prompt "Fire RNG Key?"
+               {:req (req (and (#{:hq :rd} (target-server context))
+                               (first-event? state :runner :successful-run
+                                             (fn [targets]
+                                               (let [context (first targets)]
+                                                 (#{:hq :rd} (target-server context)))))))
+                :prompt "Fire RNG Key?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability {:prompt "Guess a number"
                               :choices {:number (req (highest-cost state card))}

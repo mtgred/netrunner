@@ -291,10 +291,10 @@
                :effect (ability "installing an icebreaker")}]}))
 
 (defcard "Bifrost Array"
-  {:req (req (seq (filter #(not= (:title %)
-                                 "Bifrost Array")
-                          (:scored corp))))
-   :optional {:prompt "Trigger the ability of a scored agenda?"
+  {:optional {:req (req (seq (filter #(not= (:title %)
+                                            "Bifrost Array")
+                                     (:scored corp))))
+              :prompt "Trigger the ability of a scored agenda?"
               :yes-ability {:prompt "Select an agenda to trigger the \"when scored\" ability of"
                             :choices {:card #(and (agenda? %)
                                                   (not= (:title %)
@@ -358,17 +358,13 @@
   (letfn [(add-counters [state side card eid]
             (add-counter state :corp card :agenda (count-bad-pub state))
             (effect-completed state side eid))]
-    {:async true
-     :effect (effect
-               (continue-ability
-                 {:optional
-                  {:prompt "Take 1 bad publicity?"
-                   :async true
-                   :yes-ability {:effect (req (wait-for (gain-bad-publicity state :corp 1)
-                                                        (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
-                                                        (add-counters state side card eid)))}
-                   :no-ability {:effect (effect (add-counters card eid))}}}
-                 card nil))
+    {:optional
+     {:prompt "Take 1 bad publicity?"
+      :async true
+      :yes-ability {:effect (req (wait-for (gain-bad-publicity state :corp 1)
+                                           (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
+                                           (add-counters state side card eid)))}
+      :no-ability {:effect (effect (add-counters card eid))}}
      :abilities [{:cost [:click 1 :agenda 1]
                   :async true
                   :label "Do 2 meat damage"

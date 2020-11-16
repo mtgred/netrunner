@@ -903,9 +903,9 @@
              :async true
              :effect (effect (lose-credits :corp eid 1))}
             {:event :successful-run
-             :req (req (= :archives (target-server context)))
              :optional
-             {:prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
+             {:req (req (= :archives (target-server context)))
+              :prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
               :yes-ability
               {:async true
                :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
@@ -954,9 +954,9 @@
    :in-play [:memory 3]
    :events [{:event :successful-run
              :interactive (req true)
-             :req (req (and (first-event? state :runner :successful-run)
-                            (pos? (count-virus-programs state))))
-             :optional {:prompt "Place a virus counter?"
+             :optional {:req (req (and (first-event? state :runner :successful-run)
+                                       (pos? (count-virus-programs state))))
+                        :prompt "Place a virus counter?"
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:prompt "Select an installed virus program for Knobkierie to add a virus counter to"
                                       :choices {:card #(and (installed? %)

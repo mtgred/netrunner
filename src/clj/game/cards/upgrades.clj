@@ -217,8 +217,8 @@
 
 (defcard "Caprice Nisei"
   {:events [{:event :pass-all-ice
-             :req (req this-server)
-             :psi {:not-equal {:msg "end the run"
+             :psi {:req (req this-server)
+                   :not-equal {:msg "end the run"
                                :effect (effect (end-run eid card))}}}]})
 
 (defcard "Cayambe Grid"
@@ -484,9 +484,9 @@
 
 (defcard "Forced Connection"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not (in-discard? card)))
-            :interactive (req true)
-            :trace {:base 3
+   :access {:interactive (req true)
+            :trace {:req (req (not (in-discard? card)))
+                    :base 3
                     :successful {:msg "give the Runner 2 tags"
                                  :async true
                                  :effect (effect (gain-tags :corp eid 2))}}}})
@@ -676,9 +676,9 @@
 
 (defcard "Intake"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not (in-discard? card)))
-            :interactive (req true)
-            :trace {:base 4
+   :access {:interactive (req true)
+            :trace {:req (req (not (in-discard? card)))
+                    :base 4
                     :label "add an installed program or virtual resource to the Grip"
                     :successful
                     {:async true
@@ -1312,11 +1312,9 @@
 
 (defcard "Tempus"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not (in-discard? card)))
-            :interactive (req true)
-            :effect (req (when (= (first (get-zone card)) :deck)
-                           (system-msg state :runner (str "accesses Tempus"))))
-            :trace {:base 3
+   :access {:interactive (req true)
+            :trace {:req (req (not (in-discard? card)))
+                    :base 3
                     :successful
                     {:msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
                      :async true

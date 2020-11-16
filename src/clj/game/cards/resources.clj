@@ -2328,14 +2328,14 @@
 
 (defcard "Slipstream"
   {:events [{:event :pass-ice
-             :req (req (and (rezzed? (get-card state (:ice context)))
-                            (some #(and (ice? %)
-                                        (not (protecting-same-server? (:ice context) %))
-                                        (= run-position (card-index state %))
-                                        (is-central? (second (get-zone %))))
-                                  (all-installed state :corp))))
              :optional
-             {:prompt "Trash Slipstream to change servers?"
+             {:req (req (and (rezzed? (get-card state (:ice context)))
+                             (some #(and (ice? %)
+                                         (not (protecting-same-server? (:ice context) %))
+                                         (= run-position (card-index state %))
+                                         (is-central? (second (get-zone %))))
+                                   (all-installed state :corp))))
+              :prompt "Trash Slipstream to change servers?"
               :yes-ability
               {:async true
                :effect

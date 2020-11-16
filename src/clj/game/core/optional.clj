@@ -48,7 +48,7 @@
     (resolve-ability
       state side
       (-> ability
-          (dissoc :optional)
+          (dissoc :optional :req)
           (assoc :async true
                  :effect (req (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
       card targets)

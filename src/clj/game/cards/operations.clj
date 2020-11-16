@@ -352,8 +352,8 @@
                   (gain-credits state side eid (* 2 (count targets)))))})
 
 (defcard "Cerebral Cast"
-  {:req (req (last-turn? state :runner :successful-run))
-   :psi {:not-equal {:player :runner
+  {:psi {:req (req (last-turn? state :runner :successful-run))
+         :not-equal {:player :runner
                      :prompt "Take 1 tag or 1 brain damage?"
                      :choices ["1 tag" "1 brain damage"]
                      :msg (msg "give the Runner " target)
@@ -1200,8 +1200,8 @@
 (defcard "Manhunt"
   {:events [{:event :successful-run
              :interactive (req true)
-             :req (req (first-event? state side :successful-run))
-             :trace {:base 2
+             :trace {:req (req (first-event? state side :successful-run))
+                     :base 2
                      :successful {:msg "give the Runner 1 tag"
                                   :async true
                                   :effect (effect (gain-tags eid 1))}}}]})
@@ -1270,8 +1270,8 @@
                           (gain-credits state :runner eid 3)))})
 
 (defcard "Midseason Replacements"
-  {:req (req (last-turn? state :runner :stole-agenda))
-   :trace {:base 6
+  {:trace {:req (req (last-turn? state :runner :stole-agenda))
+           :base 6
            :label "Trace 6 - Give the Runner X tags"
            :successful {:msg "give the Runner X tags"
                         :async true
@@ -1867,8 +1867,8 @@
                     (trash-cards state side eid cards {:unpreventable true}))))})
 
 (defcard "Scapenet"
-  {:req (req (last-turn? state :runner :successful-run))
-   :trace {:base 7
+  {:trace {:req (req (last-turn? state :runner :successful-run))
+           :base 7
            :successful
            {:async true
             :prompt "Choose an installed virtual or chip card to remove from game"

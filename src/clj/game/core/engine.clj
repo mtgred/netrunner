@@ -221,8 +221,8 @@
    (when ability
      (let [ab (select-ability-kw ability)]
        (cond
-         req (req state side eid card targets)
          ab (should-trigger? state side eid card targets (get ability ab))
+         req (req state side eid card targets)
          :else true)))))
 
 (defn not-used-once?

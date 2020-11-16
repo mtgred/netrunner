@@ -137,9 +137,9 @@
 
 (defcard "Akiko Nisei: Head Case"
   {:events [{:event :pre-access
-             :req (req (= target :rd))
              :interactive (req true)
-             :psi {:player :runner
+             :psi {:req (req (= target :rd))
+                   :player :runner
                    :equal {:msg "access 1 additional card"
                            :effect (effect (access-bonus :rd 1)
                                            (effect-completed eid))}}}]})
@@ -925,8 +925,8 @@
 
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
-             :req (req (= (count (:hand runner)) (count (:hand corp))))
-             :optional {:autoresolve (get-autoresolve :auto-lat)
+             :optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
+                        :autoresolve (get-autoresolve :auto-lat)
                         :prompt "Draw 1 card?"
                         :yes-ability {:async true
                                       :msg "draw 1 card"
