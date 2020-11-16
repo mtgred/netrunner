@@ -1321,18 +1321,14 @@
                                                    (remove #(= (:index %) (:index target))))]
                               (break-subroutines-msg current-ice broken-subs card)))
                   :async true
-                  :effect (req (let [subroutines (:subroutines current-ice)
-                                     available (filter #(and (not (:broken %))
-                                                            (= target (make-label (:sub-effect %))))
-                                                      subroutines)
-                                     selected (nth available (:idx (first targets)))]
-                                 (let [subs-to-break (remove #(= (:index %) (:index selected)) subroutines)]
-                                   (break-subs state current-ice subs-to-break)
-                                   (let [ice (get-card state current-ice)
-                                         on-break-subs (when ice (:on-break-subs (card-def ice)))
-                                         event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
-                                     (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
-                                               (effect-completed state side eid))))))}]}))
+                  :effect (req (let [selected (:idx (first targets))
+                                     subs-to-break (remove #(= (:index %) selected) (:subroutines current-ice))]
+                                 (break-subs state current-ice subs-to-break)
+                                 (let [ice (get-card state current-ice)
+                                       on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                       event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                   (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                                             (effect-completed state side eid)))))}]}))
 
 (defcard "Gravedigger"
   (let [e {:req (req (and (installed? (:card target))
