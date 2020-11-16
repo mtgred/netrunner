@@ -2210,6 +2210,23 @@
         (card-ability state :runner gh2 0)
         (is (empty? (:prompt (get-runner))) "No break prompt as Little Engine has more than 1 broken sub")
         (is (refresh gh2) "Grappling Hook isn't trashed"))))
+  (testing "Interaction with Fairchild 3.0"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Fairchild 3.0"]
+                        :credits 6}
+                 :runner {:hand ["Grappling Hook"] }})
+      (play-from-hand state :corp "Fairchild 3.0" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grappling Hook")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Do 1 brain damage or end the run")
+      (is (= 1 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broke all but one subroutine")
+      (is (= "Do 1 brain damage or end the run" (:label (first (remove :broken (:subroutines (get-ice state :hq 0)))))) "Broke all but selected sub")
+      (is (nil? (refresh (get-program state 0))) "Grappling Hook is now trashed")))
   (testing "interaction with News Hound #4988"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
