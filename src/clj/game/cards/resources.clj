@@ -1668,8 +1668,8 @@
                 :async true
                 :req (req (pos? (get-counters (get-card state card) :credit)))
                 :effect (req (add-counter state side card :credit -1)
-                             (wait-for (gain-credits state side eid 1)
-                                       (trigger-event-sync state side (make-eid state eid) :spent-credits-from-card card)))}]
+                             (wait-for (gain-credits state side (make-eid state eid) 1)
+                                       (trigger-event-sync state side eid :spent-credits-from-card card)))}]
    :events [{:event :spent-credits-from-card
              :req (req (and (:run @state)
                             (has-subtype? target "Stealth")))
