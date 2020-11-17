@@ -7,6 +7,7 @@
             [web.config :refer [server-config]]
             [crypto.password.pbkdf2 :as pbkdf2]
             [jinteki.cards :refer [all-cards]]
+            [jinteki.utils :refer [slugify]]
             [jinteki.validator :refer [calculate-deck-status]]))
 
 
@@ -43,7 +44,7 @@
         decklist (s/join (for [entry sorted-cards]
                            (str (:qty entry) (:code (:card entry)))))
         deckstr (str id decklist)
-        salt (byte-array (map byte (:name deck)))]
+        salt (byte-array (map byte (slugify (:name deck))))]
     (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
 (defn decks-create-handler [{{username :username} :user
