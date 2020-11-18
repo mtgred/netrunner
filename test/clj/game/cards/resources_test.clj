@@ -3465,16 +3465,17 @@
           (take-credits state :runner)
           (take-credits state :corp))
         (is (= 3 (get-counters (refresh pp) :credit)) "Paladin has 3c")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used Poemu to install Black Orchestra for free"
-                           (run-on state "HQ")
-                           (run-continue state)
-                           (click-prompt state :runner "Yes") ; install BO
-                           (dotimes [_ 3]
-                             (click-card state :runner pp))
-                           (is (zero? (count (:discard (get-runner)))) "BO installed from heap")
-                           (is (= 1 (count (get-program state))) "BO installed")
-                           (is (zero? (get-counters (refresh pp) :credit)) "Paladin spent 3c"))))))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Used Poemu to install Black Orchestra for free"
+          (run-on state "HQ")
+          (run-continue state)
+          (click-prompt state :runner "Yes") ; install BO
+          (dotimes [_ 3]
+            (click-card state :runner pp))
+          (is (zero? (count (:discard (get-runner)))) "BO installed from heap")
+          (is (= 1 (count (get-program state))) "BO installed")
+          (is (zero? (get-counters (refresh pp) :credit)) "Paladin spent 3c"))))))
 
 (deftest patron
   ;; Patron
