@@ -34,6 +34,10 @@
              :status status
              :hash deck-hash)))
 
+(defn make-salt
+  [deck-name]
+  (byte-array (map byte (slugify deck-name))))
+
 (defn hash-deck
   [deck]
   (let [check-deck (-> deck
@@ -44,7 +48,7 @@
         decklist (s/join (for [entry sorted-cards]
                            (str (:qty entry) (:code (:card entry)))))
         deckstr (str id decklist)
-        salt (byte-array (map byte (slugify (:name deck))))]
+        salt (make-salt (:name deck))]
     (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
 (defn decks-create-handler [{{username :username} :user
