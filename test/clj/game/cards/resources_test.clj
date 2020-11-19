@@ -3450,7 +3450,32 @@
       (click-card state :runner "Paladin Poemu")
       (is (find-card "Paladin Poemu" (:discard (get-runner))) "Paladin Poemu should be trashed")
       (is (empty? (:prompt (get-runner))) "Runner has no prompt")
-      (is (empty? (:prompt (get-corp))) "Corp has no prompt"))))
+      (is (empty? (:prompt (get-corp))) "Corp has no prompt")))
+  (testing "Bin breakers trigger Paladin Poemu"
+    (do-game
+      (new-game {:corp {:hand ["Lotus Field"]}
+                 :runner {:hand ["Paladin Poemu"]
+                          :discard ["Black Orchestra"]}})
+      (play-from-hand state :corp "Lotus Field" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paladin Poemu")
+      (let [pp (get-resource state 0)]
+        (dotimes [_ 3]
+          (take-credits state :runner)
+          (take-credits state :corp))
+        (is (= 3 (get-counters (refresh pp) :credit)) "Paladin has 3c")
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Used Poemu to install Black Orchestra for free"
+          (run-on state "HQ")
+          (run-continue state)
+          (click-prompt state :runner "Yes") ; install BO
+          (dotimes [_ 3]
+            (click-card state :runner pp))
+          (is (zero? (count (:discard (get-runner)))) "BO installed from heap")
+          (is (= 1 (count (get-program state))) "BO installed")
+          (is (zero? (get-counters (refresh pp) :credit)) "Paladin spent 3c"))))))
 
 (deftest patron
   ;; Patron

@@ -56,7 +56,7 @@
                            :player :runner
                            :prompt (str "Install " title "?")
                            :yes-ability {:async true
-                                         :effect (effect (runner-install :runner eid card nil))}
+                                         :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
                            ;; Add a register to note that the player was already asked about installing,
                            ;; to prevent multiple copies from prompting multiple times.
                            :no-ability {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}}}

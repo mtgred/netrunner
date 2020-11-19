@@ -1882,8 +1882,7 @@
                                (trash eid target {:cause :runner-ability}))}
               card nil))
     ;; companion-builder: ability
-    {:req (req (and (pos? (get-counters (get-card state card) :credit))
-                    (:successful run)))
+    {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"
      :async true
      :effect (effect (add-counter card :credit -1)
