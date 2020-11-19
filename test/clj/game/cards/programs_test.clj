@@ -1088,9 +1088,6 @@
         (run-continue state)
         (click-prompt state :runner "Devil Charm")
         (click-prompt state :runner "Yes")
-        (println (prompt-fmt :runner))
-        (println (clojure.string/join "\n" (map :text (:log @state))))
-        (run-jack-out state)
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed")))))
 (deftest cloak
