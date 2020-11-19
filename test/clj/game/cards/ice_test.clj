@@ -781,6 +781,23 @@
         (rez state :corp paper)
         (is (= 6 (get-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
+(deftest datapike
+  ;; Datapike - Runner pays 2 credits or end the run
+  (do-game
+    (new-game {:corp {:deck ["Datapike"]}})
+    (play-from-hand state :corp "Datapike" "HQ")
+    (let [dp (get-ice state :hq 0)]
+      (rez state :corp dp)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+      (card-subroutine state :corp dp 0)
+      (is (= 3 (:credit (get-runner))) "Runner spent 2 credits")
+      (is (some? (:run @state)) "Run is continuing")
+      (card-subroutine state :corp dp 1)
+      (is (nil? (:run @state)) "Run has ended"))))
+
 (deftest data-hound
   ;; Data Hound - Full test
   (do-game

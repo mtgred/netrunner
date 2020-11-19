@@ -1031,7 +1031,7 @@
 (defcard "Datapike"
   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
                   :async true
-                  :effect (req (wait-for (pay :runner card :credit 2)
+                  :effect (req (wait-for (pay state :runner card :credit 2)
                                          (when-let [payment-str (:msg async-result)]
                                            (system-msg state :runner payment-str))
                                          (effect-completed state side eid)))}
