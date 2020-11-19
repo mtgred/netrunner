@@ -1071,8 +1071,28 @@
         (derez state :corp iw)
         (run-on state "HQ")
         (run-continue state)
-        (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
-
+        (is (refresh iw) "Ice Wall should still be around as it's unrezzed"))))
+  (testing "Chisel does not account for other sources of strength modification on hosted ICE #5391"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Chisel" "Devil Charm"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Chisel")
+      (play-from-hand state :runner "Devil Charm")
+      (click-card state :runner "Ice Wall")
+      (let [iw (get-ice state :hq 0)
+            chisel (first (:hosted (refresh iw)))]
+        (run-on state "HQ")
+        (rez state :corp iw)
+        (run-continue state)
+        (click-prompt state :runner "Devil Charm")
+        (click-prompt state :runner "Yes")
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))
+        (run-jack-out state)
+        (is (nil? (refresh iw)) "Ice Wall should be trashed")
+        (is (nil? (refresh chisel)) "Chisel should likewise be trashed")))))
 (deftest cloak
   ;; Cloak
   (testing "Pay-credits prompt"
