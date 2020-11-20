@@ -2,26 +2,34 @@
   "Database maintenance tasks"
   (:require [web.db :refer [db object-id] :as webdb]
             [web.decks :refer [update-deck prepare-deck-for-db]]
+            [web.core :refer [load-data]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]))
 
+(defn- get-deck-status
+  [deck]
+  (if (or (nil? (:identity deck)) (empty? (:identity deck)))
+    (throw (Exception. "Nil/Empty identity"))
+    (let [updated-deck (update-deck deck)]
+      (calculate-deck-status updated-deck))))
+
 (defn update-all-decks
   "Run after fetching the data to update all decks"
   [& args]
   (webdb/connect)
-  (try
-    (doseq [deck (mc/find-maps db "decks" nil)
-            :when (:identity deck)
-            :let [deck-id (:_id deck)
-                  status (calculate-deck-status (update-deck deck))]]
-      (mc/update db "decks"
-                 {:_id (object-id deck-id)}
-                 {"$set" {"status" status}}))
-    (catch Exception e (do (println "Something got hecked" (.getMessage e))
-                           (.printStackTrace e)))
-    (finally (webdb/disconnect))))
+  (load-data)
+  (doseq [deck (mc/find-maps db "decks" nil)]
+    (let [deck-id (:_id deck)]
+      (try
+        (let [status (get-deck-status deck)]
+          (mc/update db "decks"
+                     {:_id (object-id deck-id)}
+                     {"$set" {"status" status}}))
+        (catch Exception e (do (println "Something got hecked" (.getMessage e))
+                               (println "Deck id:" deck-id))))))
+  (webdb/disconnect))
 
 (defn- get-all-users
   "Get all users in the database. Takes a list of fields."
