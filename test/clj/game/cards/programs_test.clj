@@ -3659,7 +3659,30 @@
       (run-continue state)
       (is (empty? (:prompt (get-runner))) "Paperclip prompt did not come up")
       (fire-subs state (get-ice state :archives 0))
-      (is (not (:run @state)) "Run ended"))))
+      (is (not (:run @state)) "Run ended")))
+  (testing "Breaking some subs"
+    (do-game
+      (new-game {:corp {:hand ["Hive"]}
+                 :runner {:hand ["Paperclip"]
+                          :credits 10}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paperclip")
+      (let [pc (get-program state 0)]
+        (run-on state :hq)
+        (run-continue state)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Paid 2 to break two of the subs on Hive"
+          (is (= 5 (count (:subroutines (get-ice state :hq 0)))) "Hive starts with 5 subs")
+          (is (= 3 (core/get-strength (get-ice state :hq 0))) "Hive has strength 3")
+          (card-ability state :runner pc 0)
+          (click-prompt state :runner "2")
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "End the run")
+          (is (= 3 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 3")
+          (is (= 3 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broke all but 3 subs"))))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"
