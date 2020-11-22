@@ -4,7 +4,7 @@
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [can-trigger? register-ability-type resolve-ability]]
     [game.core.payment :refer [can-pay?]]
-    [game.core.prompts :refer [show-prompt]]
+    [game.core.prompts :refer [add-to-prompt-queue show-prompt]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
@@ -38,6 +38,13 @@
          (do (when autoresolve-fn
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
+             (when-let [waiting-prompt (:waiting-prompt ability)]
+               (add-to-prompt-queue
+                 state (if (= :corp side) :runner :corp)
+                 {:eid (select-keys eid [:eid])
+                  :card card
+                  :prompt-type :waiting
+                  :msg (str "Waiting for " waiting-prompt)}))
              (show-prompt state side eid card message ["Yes" "No"]
                           prompt-fn ability)))))))
 

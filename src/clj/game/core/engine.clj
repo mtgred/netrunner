@@ -9,7 +9,7 @@
     [game.core.effects :refer [unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
+    [game.core.prompts :refer [add-to-prompt-queue clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -348,7 +348,17 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost] :as ability} card targets]
+  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
+  (when waiting-prompt
+    (add-to-prompt-queue
+      state (cond
+              player (if (= :corp player) :runner :corp)
+              (= :corp side) :runner
+              :else :corp)
+      {:eid (select-keys eid [:eid])
+       :card card
+       :prompt-type :waiting
+       :msg (str "Waiting for " waiting-prompt)}))
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
@@ -371,8 +381,8 @@
   "Handle a choices ability"
   [state side {:keys [choices eid not-distinct player prompt] :as ability} card targets]
   (let [s (or player side)
-        ab (dissoc ability :choices)
-        args (select-keys ability [:priority :cancel-effect :prompt-type :show-discard :end-effect])]
+        ab (dissoc ability :choices :waiting-prompt)
+        args (select-keys ability [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -414,10 +424,11 @@
   Please refer to the documentation at the top of resolve_ability.clj for a full description."
   ([state side card message choices ability] (prompt! state side card message choices ability nil))
   ([state side card message choices ability args]
-   (show-prompt state side (:eid ability) card message choices #(resolve-ability state side ability card [%])
-                (if-let [f (:cancel-effect args)]
-                  (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
-                  args))))
+   (let [f #(resolve-ability state side ability card [%])]
+     (show-prompt state side (:eid ability) card message choices f
+                  (if-let [f (:cancel-effect args)]
+                    (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
+                    args)))))
 
 ;; EVENTS
 

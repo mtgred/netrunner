@@ -575,7 +575,7 @@
   ([state side eid]
    (if (get-in @state [:run :successful])
      (do (handle-end-run state side)
-         (effect-completed state nil eid))
+         (effect-completed state side eid))
      (register-unsuccessful-run state side eid))))
 
 (defn end-run

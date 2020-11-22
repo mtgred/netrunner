@@ -45,21 +45,22 @@
   ([reorder-side cards] (reorder-choice reorder-side (other-side reorder-side) cards `() (count cards) cards nil))
   ([reorder-side wait-side remaining chosen n original] (reorder-choice reorder-side wait-side remaining chosen n original nil))
   ([reorder-side wait-side remaining chosen n original dest]
-  {:prompt (str "Select a card to move next "
-                (if (= dest "bottom") "under " "onto ")
-                (if (= reorder-side :corp) "R&D" "your Stack"))
-   :choices remaining
-   :async true
-   :effect (req (let [chosen (cons target chosen)]
-                  (if (< (count chosen) n)
-                    (continue-ability
-                      state side
-                      (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
-                      card nil)
-                    (continue-ability
-                      state side
-                      (reorder-final reorder-side wait-side chosen original dest)
-                      card nil))))}))
+   (when (not-empty remaining)
+     {:prompt (str "Select a card to move next "
+                   (if (= dest "bottom") "under " "onto ")
+                   (if (= reorder-side :corp) "R&D" "your Stack"))
+      :choices remaining
+      :async true
+      :effect (req (let [chosen (cons target chosen)]
+                     (if (< (count chosen) n)
+                       (continue-ability
+                         state side
+                         (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
+                         card nil)
+                       (continue-ability
+                         state side
+                         (reorder-final reorder-side wait-side chosen original dest)
+                         card nil))))})))
 
 (defn- reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)

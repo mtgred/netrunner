@@ -29,6 +29,13 @@
    type
    uniqueness])
 
+(defn card-summary
+  [card]
+  (-> card
+      (select-keys [:cid :side :title :zone :counter :advance-counter :new])
+      (assoc :hosted (mapv card-summary (:hosted card)))
+      ))
+
 (defn private-card
   "Returns only the public information of a given card when it's in a private state,
   for example, when it's facedown or in the hand"

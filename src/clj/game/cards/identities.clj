@@ -38,44 +38,43 @@
                             (pos? (:turn @state))
                             (not (rezzed? target))
                             (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :faceup} (second targets)))))
+             :waiting-prompt "Runner to use 419: Amoral Scammer"
              :effect
-             (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
-                  (let [itarget target]
-                    (continue-ability
-                      state side
-                      {:optional
-                       {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
-                        :player :runner
-                        :autoresolve (get-autoresolve :auto-419)
-                        :no-ability {:effect (req (clear-wait-prompt state :corp))}
-                        :yes-ability
-                        {:async true
-                         :effect (req (clear-wait-prompt state :corp)
-                                      (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
-                                        (do
-                                          (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
-                                          (expose state :runner eid itarget))
-                                        (do
-                                          (show-wait-prompt state :runner "Corp decision")
-                                          (continue-ability
-                                            state side
-                                            {:optional
-                                             {:prompt "Pay 1 [Credits] to prevent exposure of installed card?"
-                                              :player :corp
-                                              :no-ability
-                                              {:async true
-                                               :effect (req (clear-wait-prompt state :runner)
-                                                            (expose state :runner eid itarget))}
-                                              :yes-ability
-                                              {:async true
-                                               :effect (req (wait-for (pay state :corp card [:credit 1])
-                                                                      (system-msg state :corp (str (:msg async-result)
-                                                                                                   " to prevent "
-                                                                                                   " card from being exposed"))
-                                                                      (clear-wait-prompt state :runner)
-                                                                      (effect-completed state side eid)))}}}
-                                            card nil))))}}}
-                      card nil)))}]
+             (effect
+               (continue-ability
+                 (let [itarget target]
+                   {:optional
+                    {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                     :player :runner
+                     :autoresolve (get-autoresolve :auto-419)
+                     :no-ability {:effect (req (clear-wait-prompt state :corp))}
+                     :yes-ability
+                     {:async true
+                      :effect (req (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
+                                     (do
+                                       (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
+                                       (expose state :runner eid itarget))
+                                     (continue-ability
+                                       state side
+                                       {:optional
+                                        {:waiting-prompt "Corp to decide about 419: Amoral Scammer"
+                                         :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
+                                         :player :corp
+                                         :no-ability
+                                         {:async true
+                                          :effect (effect (expose :runner eid itarget))}
+                                         :yes-ability
+                                         {:async true
+                                          :effect
+                                          (req (wait-for
+                                                 (pay state :corp card [:credit 1])
+                                                 (system-msg state :corp
+                                                             (str (:msg async-result)
+                                                                  " to prevent "
+                                                                  " card from being exposed"))
+                                                 (effect-completed state side eid)))}}}
+                                       card nil)))}}})
+                 card nil))}]
    :abilities [(set-autoresolve :auto-419 "419")]})
 
 (defcard "Acme Consulting: The Truth You Need"
@@ -93,27 +92,27 @@
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
-                          (let [directives (->> (server-cards)
+             :waiting-prompt "Runner to choose starting directives"
+             :effect (req (let [directives (->> (server-cards)
                                                 (filter #(has-subtype? % "Directive"))
                                                 (map make-card)
                                                 (map #(assoc % :zone [:play-area]))
                                                 (into []))]
                             ;; Add directives to :play-area - assumed to be empty
                             (swap! state assoc-in [:runner :play-area] directives)
-                            (continue-ability state side
-                                              {:prompt (str "Choose 3 starting directives")
-                                               :choices {:max 3
-                                                         :all true
-                                                         :card #(and (runner? %)
-                                                                     (in-play-area? %))}
-                                               :effect (req (doseq [c targets]
-                                                              (runner-install state side c
-                                                                              {:ignore-all-cost true
-                                                                               :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
-                                                            (swap! state assoc-in [:runner :play-area] [])
-                                                            (clear-wait-prompt state :corp))}
-                                              card nil)))}]})
+                            (continue-ability
+                              state side
+                              {:prompt (str "Choose 3 starting directives")
+                               :choices {:max 3
+                                         :all true
+                                         :card #(and (runner? %)
+                                                     (in-play-area? %))}
+                               :effect (req (doseq [c targets]
+                                              (runner-install state side c
+                                                              {:ignore-all-cost true
+                                                               :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
+                                            (swap! state assoc-in [:runner :play-area] []))}
+                              card nil)))}]})
 
 (defcard "AgInfusion: New Miracles for a New World"
   {:abilities [{:label "Trash a piece of ice to choose another server- the runner is now running that server"
