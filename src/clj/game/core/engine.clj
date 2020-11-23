@@ -13,7 +13,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
+    [game.utils :refer [dissoc-in distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
     [jinteki.utils :refer [other-side]]))
 
 ;; resolve-ability docs
@@ -212,7 +212,12 @@
   [ability]
   (first (keys (select-keys ability (keys @ability-types)))))
 
-;;; Ability related function
+(defn dissoc-req
+  [ability]
+  (if-let [ab (select-ability-kw ability)]
+    (dissoc-in ability [ab :req])
+    (dissoc ability :req)))
+
 (defn should-trigger?
   "Checks if the specified ability definition should trigger.
   Checks for a :req, either in the top level map, or in an :optional or :psi sub-map
@@ -221,8 +226,8 @@
    (when ability
      (let [ab (select-ability-kw ability)]
        (cond
-         req (req state side eid card targets)
          ab (should-trigger? state side eid card targets (get ability ab))
+         req (req state side eid card targets)
          :else true)))))
 
 (defn not-used-once?

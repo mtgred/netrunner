@@ -7,7 +7,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
+    [game.core.engine :refer [checkpoint dissoc-req make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [find-cid get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
@@ -322,7 +322,7 @@
                                           (let [once-per (:once-per-instance trash-effect)]
                                             (-> trash-effect
                                                 (assoc :once-per-instance (if (some? once-per) once-per true))
-                                                (dissoc trash-effect :req))))))
+                                                dissoc-req)))))
                    ;; No card should end up in the opponent's discard pile, so instead
                    ;; of using `side`, we use the card's `:side`.
                    move-card (fn [card]
