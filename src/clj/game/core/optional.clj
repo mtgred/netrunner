@@ -38,13 +38,6 @@
          (do (when autoresolve-fn
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
-             (when-let [waiting-prompt (:waiting-prompt ability)]
-               (add-to-prompt-queue
-                 state (if (= :corp side) :runner :corp)
-                 {:eid (select-keys eid [:eid])
-                  :card card
-                  :prompt-type :waiting
-                  :msg (str "Waiting for " waiting-prompt)}))
              (show-prompt state side eid card message ["Yes" "No"]
                           prompt-fn ability)))))))
 
