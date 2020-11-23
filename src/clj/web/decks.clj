@@ -36,7 +36,8 @@
 
 (defn make-salt
   [deck-name]
-  (byte-array (map byte (slugify deck-name))))
+  (let [salt (byte-array (map byte (slugify deck-name)))]
+    (if (empty? salt) (byte-array (map byte "default-salt")) salt)))
 
 (defn hash-deck
   [deck]
