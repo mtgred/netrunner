@@ -50,7 +50,6 @@
 (defn deck-format-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity for a single format."
   [deck fmt use-trusted-info?]
-  (let [fmt (keyword fmt)]
-    (format-deck-status-span
-      (assoc (deck-status-details (assoc deck :format fmt) use-trusted-info?) :format fmt)
-      false false)))
+  (format-deck-status-span
+    (assoc (deck-status-details (assoc deck :format (:keyword fmt)) use-trusted-info?) :format fmt)
+    false false))
