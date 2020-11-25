@@ -269,8 +269,8 @@
 (defn build-core-experience-legality
   [valid {:keys [cards] :as deck}]
   (let [mwl (legal-format? :core-experience deck)
-        example-card (first (or (cards-not-in-most-recent-core cards)
-                                (cards-over-one-core cards)))]
+        example-card (first (concat (cards-not-in-most-recent-core cards)
+                                    (cards-over-one-core cards)))]
     {:legal (and (nil? example-card)
                  (:legal valid)
                  (:legal mwl))
