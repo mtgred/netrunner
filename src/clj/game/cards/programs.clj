@@ -1860,17 +1860,19 @@
                             :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
                             :subroutines-changed]]
                  (assoc heap-breaker-auto-pump-and-break :event event))
-        cdef (install-from-heap "Paperclip" "Barrier"
-                                [{:label "+X strength, break X subroutines"
-                                  :cost [:x-credits]
-                                  :heap-breaker-pump :x ; strength gained
-                                  :heap-breaker-break :x ; number of subs broken
-                                  :effect (effect (continue-ability
-                                                    (pump-and-break [:credit (cost-value eid :x-credits)]
-                                                                    (cost-value eid :x-credits)
-                                                                    "Barrier")
-                                                    card nil))}])]
-    (assoc cdef :events (apply conj events (:events cdef)))))
+        cdef (install-from-heap "Paperclip" "Barrier" [])
+        abilities [{:label "+X strength, break X subroutines"
+                           :cost [:x-credits]
+                           :heap-breaker-pump :x ; strength gained
+                           :heap-breaker-break :x ; number of subs broken
+                           :pump :x
+                           :effect (effect (pump card (cost-value eid :x-credits))
+                                           (continue-ability
+                                             (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
+                                             (get-card state card) nil))
+                           :msg (msg "increase its strength from " (get-strength card)
+                                     " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
+    (assoc cdef :events (apply conj events (:events cdef)) :abilities abilities)))
 
 (defcard "Parasite"
   {:hosting {:card #(and (ice? %)
