@@ -4270,7 +4270,7 @@
   ;; Wake Up Call
   (testing "should fire after using En Passant to trash ice"
     (do-game
-      (new-game {:corp {:deck ["Enigma" "Wake Up Call"]}
+      (new-game {:corp {:hand ["Enigma" "Wake Up Call"]}
                  :runner {:deck ["En Passant" "Maya"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
@@ -4279,7 +4279,6 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
       (is (zero? (count (:discard (get-corp)))) "Corp starts with no discards")
       (play-from-hand state :runner "En Passant")
       (click-card state :runner (get-ice state :hq 0))

@@ -336,14 +336,13 @@
                               {:req (req (and (has-subtype? (:ice context) "Sentry")
                                               (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
                                :once :per-turn
-                               :prompt (msg "Pay 2 [Credits] to bypass" (:title (:ice context)))
+                               :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)))
                                :yes-ability
                                {:async true
                                 :effect
                                 (effect
                                   (continue-ability
                                     {:eid (assoc eid :source-type :ability)
-                                     :once :per-turn
                                      :cost [:credit 2]
                                      :msg (msg "bypass " (:title (:ice context)))
                                      :effect (req (bypass-ice state))}

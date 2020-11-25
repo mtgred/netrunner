@@ -1336,7 +1336,7 @@
      :install-cost-bonus (req (- (get-link state)))
      :events [{:event :runner-turn-begins
                :optional
-               {:req (req (not (get-in @state [:per-turn (:cid card)])))
+               {:once :per-turn
                 :prompt "Use Jak Sinclair to make a run?"
                 :yes-ability ability}}]
      :abilities [ability]}))
@@ -1453,11 +1453,10 @@
                                         (continue-ability state side (lab-keep from) card nil))))}]}))
 
 (defcard "Lewi Guilherme"
-  (let [ability {:once :per-turn
-                 :label "lose 1 [Credits] or trash"
+  (let [ability {:label "lose 1 [Credits] or trash"
                  :optional
-                 {:once :per-turn
-                  :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                 {:prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                  :once :per-turn
                   :yes-ability
                   {:async true
                    :effect (req (if (pos? (:credit runner))

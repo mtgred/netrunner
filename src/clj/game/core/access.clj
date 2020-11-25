@@ -40,8 +40,9 @@
                                   ;; Don't increment :no-trash-or-steal if accessing a card in Archives
                                   (not (in-discard? c)))
                          (no-trash-or-steal state))
-                       (swap! state dissoc :access)
-                       (trigger-event-sync state side eid :post-access-card c)))))
+                       (let [accessed-card (:access @state)]
+                         (swap! state dissoc :access)
+                         (trigger-event-sync state side eid :post-access-card c accessed-card))))))
 
 ;;; Accessing rules
 (defn interactions
@@ -397,9 +398,7 @@
     ;; Indicate that we are in the access step.
    (swap! state assoc :access card)
     ;; Reset counters for increasing costs of trash, steal, and access.
-   (swap! state update-in [:bonus] dissoc :trash)
-   (swap! state update-in [:bonus] dissoc :steal-cost)
-   (swap! state update-in [:bonus] dissoc :access-cost)
+   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
    (when (:run @state)
      (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
                     (second (get-zone card)))]

@@ -232,7 +232,9 @@
 
 (defn not-used-once?
   [state {:keys [once once-key]} {:keys [cid]}]
-  (not (get-in @state [once (or once-key cid)])))
+  (if once
+    (not (get-in @state [once (or once-key cid)]))
+    true))
 
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -387,7 +389,9 @@
   [state side {:keys [choices eid not-distinct player prompt] :as ability} card targets]
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
-        args (select-keys ability [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])]
+        args (-> ability
+                 (select-keys [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (assoc :targets targets))]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond

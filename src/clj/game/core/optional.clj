@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [get-card]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [can-trigger? register-ability-type resolve-ability]]
+    [game.core.engine :refer [can-trigger? register-ability-type register-once resolve-ability]]
     [game.core.payment :refer [can-pay?]]
     [game.core.prompts :refer [add-to-prompt-queue show-prompt]]
     [game.core.toasts :refer [toast]]
@@ -23,11 +23,11 @@
                    ability-to-do (if (and (= (:value prompt-choice) "Yes")
                                           yes-ability
                                           (can-pay? state side eid card (:title card) (:cost yes-ability)))
-                                   yes-ability
+                                   (assoc yes-ability :once (:once ability))
                                    no-ability)]
                (wait-for (resolve-ability state side new-eid ability-to-do card targets)
                          (when end-effect
-                           (end-effect state side new-eid card nil))
+                           (end-effect state side new-eid card targets))
                          (effect-completed state side eid))))]
      (let [autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
@@ -39,19 +39,13 @@
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
              (show-prompt state side eid card message ["Yes" "No"]
-                          prompt-fn ability)))))))
+                          prompt-fn (assoc ability :targets targets))))))))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid optional] :as ability} card targets]
   (if (can-trigger? state side eid optional card targets)
-    (resolve-ability
-      state side
-      (-> ability
-          (dissoc :optional :req)
-          (assoc :async true
-                 :effect (req (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
-      card targets)
+    (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
     (effect-completed state side eid)))
 
 (register-ability-type :optional check-optional)

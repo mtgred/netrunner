@@ -25,8 +25,8 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect]}]
-   (let [prompt (if (string? message) message (message state side eid card nil))
+    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets]}]
+   (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
          newitem {:eid eid
                   :msg prompt
@@ -72,8 +72,8 @@
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
    Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link]}]
-   (let [prompt (if (string? message) message (message state side nil card nil))
+  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link targets]}]
+   (let [prompt (if (string? message) message (message state side eid card targets))
          corp-credits (corp-credits eid)
          runner-credits (runner-credits eid)
          newitem {:eid eid

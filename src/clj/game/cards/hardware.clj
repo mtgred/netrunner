@@ -185,11 +185,11 @@
                                   (register-events
                                     boomerang
                                     [{:event :run-ends
-                                      :once :per-run
                                       :duration :end-of-run
                                       :optional
                                       {:req (req (and (:successful target)
                                                       (not (zone-locked? state :runner :discard))))
+                                       :once :per-run
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
@@ -1086,24 +1086,15 @@
 (defcard "Maya"
   {:in-play [:memory 2]
    :events [{:event :post-access-card
-             :async true
-             :effect
-             (effect
-               (continue-ability
-                 (let [accessed-card target]
-                   {:optional
-                    {:req (req (or (in-deck? accessed-card)
-                                   (= [:deck] (:previous-zone accessed-card))))
-                     :once :per-turn
-                     :async true
-                     :prompt (str "Move " (:title accessed-card) " to the bottom of R&D?")
-                     :yes-ability
-                     {:once :per-turn
-                      :msg "move the card just accessed to the bottom of R&D"
-                      :async true
-                      :effect (req (move state :corp accessed-card :deck)
-                                   (gain-tags state :runner eid 1))}}})
-                 card nil))}]})
+             :optional
+             {:req (req (in-deck? (second targets)))
+              :once :per-turn
+              :prompt (msg "Move " (:title target) " to the bottom of R&D?")
+              :yes-ability
+              {:msg "move the card just accessed to the bottom of R&D"
+               :async true
+               :effect (req (move state :corp target :deck)
+                            (gain-tags state :runner eid 1))}}}]})
 
 (defcard "MemStrips"
   {:implementation "MU usage restriction not enforced"
@@ -1676,11 +1667,10 @@
    :events [{:event :encounter-ice
              :interactive (req true)
              :optional
-             {:req (req (not-used-once? state {:once :per-turn} card))
-              :prompt "Trace 5 to bypass current ice?"
+             {:prompt "Trace 5 to bypass current ice?"
+              :once :per-turn
               :yes-ability
-              {:once :per-turn
-               :msg "force the Corp to initiate a trace"
+              {:msg "force the Corp to initiate a trace"
                :trace {:base 5
                        :successful {:msg "give the Runner 1 tag and end the run"
                                     :async true
@@ -1742,11 +1732,10 @@
     {:in-play [:memory 2]
      :events [{:event :encounter-ice
                :optional
-               {:req (req (not-used-once? state {:once :per-turn} card))
-                :prompt "Use Şifr?"
+               {:prompt "Use Şifr?"
+                :once :per-turn
                 :yes-ability
-                {:once :per-turn
-                 :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                {:msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
                  :effect (effect
                            (register-floating-effect
                              card

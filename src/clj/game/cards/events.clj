@@ -436,9 +436,9 @@
      :makes-run true
      :effect (effect (make-run eid target nil card))
      :events [{:event :encounter-ice
-               :once :per-run
                :optional
                {:prompt "Install a program?"
+                :once :per-run
                 :yes-ability
                 {:async true
                  :prompt "Install from where?"
@@ -2110,17 +2110,17 @@
                      {:optional
                       {:prompt (str "Use Prey to trash " (quantify (get-strength ice) "card")
                                     " to trash " (:title ice) "?")
+                       :once :per-run
                        :yes-ability
                        {:async true
-                        :once :per-run
                         :cost [:installed (get-strength ice)]
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}
                      {:optional
                       {:prompt (str "Use Prey to trash " (:title ice) "?")
+                       :once :per-run
                        :yes-ability
                        {:async true
-                        :once :per-run
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}))
                  card nil))}]})

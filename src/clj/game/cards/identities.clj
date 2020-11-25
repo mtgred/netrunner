@@ -1030,12 +1030,11 @@
 (defcard "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
              :optional
-             {:req (req (and (not-used-once? state {:once :per-turn} card)
-                             (some ice? (:hand corp))))
+             {:req (req (some ice? (:hand corp)))
               :prompt "Install an ice?"
+              :once :per-turn
               :yes-ability
-              {:once :per-turn
-               :prompt "Choose ICE to install from HQ"
+              {:prompt "Choose ICE to install from HQ"
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :async true
@@ -1132,11 +1131,10 @@
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
              :optional
-             {:req (req (and (not-used-once? state {:once :per-turn} card)
-                             (has-subtype? (:ice context) "Sentry")))
+             {:req (req (has-subtype? (:ice context) "Sentry"))
               :prompt "Do you want to jack out?"
-              :yes-ability {:once :per-turn
-                            :async true
+              :once :per-turn
+              :yes-ability {:async true
                             :msg "jack out"
                             :effect (effect (jack-out eid))}}}]})
 
@@ -1197,12 +1195,11 @@
 (defcard "Null: Whistleblower"
   {:events [{:event :encounter-ice
              :optional
-             {:req (req (and (not-used-once? state {:once :per-turn} card)
-                             (pos? (count (:hand runner)))))
+             {:req (req (pos? (count (:hand runner))))
               :prompt "Trash a card in grip to lower ice strength by 2?"
+              :once :per-turn
               :yes-ability
               {:prompt "Select a card in your Grip to trash"
-               :once :per-turn
                :choices {:card in-hand?}
                :msg (msg "trash " (:title target)
                          " and reduce the strength of " (:title current-ice)
