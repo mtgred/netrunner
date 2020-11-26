@@ -101,7 +101,5 @@
         (response 403 {:message "Forbidden"}))
       (response 401 {:message "Unauthorized"}))
     (catch Exception ex
-      (.printStackTrace ex)
-      (println "Deck delete failure: User:" username ", Deck ID:", id)
-      (println "Known decks:" (map #(select-keys % [:_id :date :name]) (mc/find-maps db "decks" {:username username})))
+      ;; Deleting a deck that was never saved throws an exception
       (response 409 {:message "Unknown deck id"}))))
