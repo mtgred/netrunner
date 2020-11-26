@@ -199,21 +199,16 @@
 
 (def add-runner-card-to-grip
   "Add 1 installed Runner card to the grip"
-  {:async true
-   :label "Add an installed Runner card to the grip"
+  {:label "Add an installed Runner card to the grip"
    :req (req (not-empty (all-installed state :runner)))
-   :effect (effect (show-wait-prompt :runner (str "Corp to select " (:title card) " target"))
-                   (continue-ability
-                     {:choices {:card #(and (installed? %)
-                                            (runner? %))}
-                      :msg "add 1 installed card to the Runner's Grip"
-                      :effect (effect (clear-wait-prompt :runner)
-                                      (move :runner target :hand true)
-                                      (system-msg (str "adds " (:title target)
-                                                       " to the Runner's Grip")))
-                      :cancel-effect (effect (clear-wait-prompt :runner)
-                                             (effect-completed eid))}
-                     card nil))})
+   :waiting-prompt "Corp to select a target"
+   :prompt "Choose a card"
+   :choices {:card #(and (installed? %)
+                         (runner? %))}
+   :msg "add 1 installed card to the Runner's Grip"
+   :effect (effect (move :runner target :hand true)
+                   (system-msg (str "adds " (:title target)
+                                    " to the Runner's Grip")))})
 
 (def trash-program-sub
   {:prompt "Select a program to trash"
@@ -222,8 +217,7 @@
    :choices {:card #(and (installed? %)
                          (program? %))}
    :async true
-   :effect (effect (clear-wait-prompt :runner)
-                   (trash eid target {:cause :subroutine}))})
+   :effect (effect (trash eid target {:cause :subroutine}))})
 
 (def trash-hardware-sub
   {:prompt "Select a piece of hardware to trash"
@@ -448,39 +442,34 @@
      :strength-bonus (req (if (<= 3 (get-counters card :advancement)) 3 0))}))
 
 (defcard "Anansi"
-  (let [corp-draw {:optional {:prompt "Draw 1 card?"
-                              :yes-ability {:async true
-                                            :msg "draw 1 card"
-                                            :effect (effect (draw eid 1 nil))}}}
-        runner-draw {:async true
-                     :effect (req (show-wait-prompt state :corp "Runner to decide on card draw")
-                                  (continue-ability
-                                    state side
-                                    {:player :runner
-                                     :optional
-                                     {:prompt "Pay 2 [Credits] to draw 1 card?"
-                                      :no-ability {:effect (effect (system-msg :runner "does not draw 1 card")
-                                                                   (clear-wait-prompt :corp))}
-                                      :yes-ability
-                                      {:async true
-                                       :effect (req (wait-for (pay state :runner card [:credit 2])
-                                                              (clear-wait-prompt state :corp)
-                                                              (if (:cost-paid async-result)
-                                                                (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
-                                                                    (draw state :runner eid 1 nil))
-                                                                (do (system-msg state :runner "does not draw 1 card")
-                                                                    (effect-completed state side eid)))))}}}
-                                    card nil))}]
+  (let [corp-draw {:optional
+                   {:waiting-prompt "Corp to draw a card"
+                    :prompt "Draw 1 card?"
+                    :yes-ability {:async true
+                                  :msg "draw 1 card"
+                                  :effect (effect (draw eid 1 nil))}}}
+        runner-draw {:player :runner
+                     :optional
+                     {:waiting-prompt "Runner to decide on card draw"
+                      :prompt "Pay 2 [Credits] to draw 1 card?"
+                      :yes-ability
+                      {:async true
+                       :effect (req (wait-for (pay state :runner card [:credit 2])
+                                              (if (:cost-paid async-result)
+                                                (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
+                                                    (draw state :runner eid 1 nil))
+                                                (do (system-msg state :runner "does not draw 1 card")
+                                                    (effect-completed state side eid)))))}
+                      :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                     :async true
-                    :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
-                                 (let [from (take 5 (:deck corp))]
-                                   (if (pos? (count from))
-                                     (continue-ability state side (reorder-choice :corp :runner from '()
-                                                                                  (count from) from)
-                                                       card nil)
-                                     (do (clear-wait-prompt state :runner)
-                                         (effect-completed state side eid)))))}
+                    :waiting-prompt "Corp to rearrange the top cards of R&D"
+                    :effect (req (let [from (take 5 (:deck corp))]
+                                   (continue-ability
+                                     state side
+                                     (when (pos? (count from))
+                                       (reorder-choice :corp :runner from '() (count from) from))
+                                     card nil)))}
                    {:label "Draw 1 card, runner draws 1 card"
                     :async true
                     :effect (req (wait-for (resolve-ability state side corp-draw card nil)
@@ -494,29 +483,24 @@
 (defcard "Archangel"
   {:flags {:rd-reveal (req true)}
    :access
-   {:async true
-    :req (req (not (in-discard? card)))
-    :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
-                    (continue-ability
-                      {:optional
-                       {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
-                        :yes-ability
-                        {:cost [:credit 3]
-                         :async true
-                         :effect (effect (system-msg :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
-                                         (clear-wait-prompt :runner)
-                                         (continue-ability
-                                           :runner
-                                           {:optional
-                                            {:player :runner
-                                             :prompt "You are encountering Archangel. Allow its subroutine to fire?"
-                                             :yes-ability {:async true
-                                                           :effect (effect (resolve-unbroken-subs! eid card))}
-                                             :no-ability {:effect (effect (effect-completed eid))}}}
-                                           card nil))}
-                        :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
-                                                     (clear-wait-prompt :runner))}}}
-                      card nil))}
+   {:optional
+    {:req (req (not (in-discard? card)))
+     :waiting-prompt "Corp to decide to trigger Archangel"
+     :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
+     :player :corp
+     :yes-ability
+     {:cost [:credit 3]
+      :async true
+      :msg "force the Runner to encounter Archangel"
+      :effect (effect (continue-ability
+                        :runner
+                        {:optional
+                         {:player :runner
+                          :prompt "You are encountering Archangel. Allow its subroutine to fire?"
+                          :yes-ability {:async true
+                                        :effect (effect (resolve-unbroken-subs! eid card))}}}
+                        card nil))}
+     :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel"))}}}
    :subroutines [(trace-ability 6 add-runner-card-to-grip)]})
 
 (defcard "Archer"
@@ -634,20 +618,22 @@
   {:subroutines [{:async true
                   :label "Runner trashes 1 program or top 2 cards of their Stack"
                   :effect (req (if (empty? (filter program? (all-active-installed state :runner)))
-                                 (do (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
+                                 (do (system-msg state :runner "trashes the top 2 cards of their Stack")
                                      (mill state :runner eid :runner 2))
-                                 (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
-                                     (continue-ability
-                                       state :runner
-                                       {:async true
-                                        :prompt "Trash 1 program or trash top 2 cards of the Stack?"
-                                        :choices ["Trash 1 program" "Trash top 2 of Stack"]
-                                        :effect (req (clear-wait-prompt state :corp)
-                                                     (if (and (= target "Trash top 2 of Stack") (> (count (:deck runner)) 1))
-                                                       (do (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
-                                                           (mill state :runner eid :runner 2))
-                                                       (continue-ability state :runner trash-program-sub card nil)))}
-                                       card nil))))}]})
+                                 (continue-ability
+                                   state :runner
+                                   {:waiting-prompt "Runner to choose an option for Bloodletter"
+                                    :prompt "Trash 1 program or trash top 2 cards of the Stack?"
+                                    :choices (req [(when (seq (filter program? (all-active-installed state :runner)))
+                                                     "Trash 1 program")
+                                                   (when (<= 1 (count (:deck runner)))
+                                                     "Trash top 2 of Stack")])
+                                    :async true
+                                    :effect (req (if (= target "Trash top 2 of Stack")
+                                                   (do (system-msg state :runner "trashes the top 2 cards of their Stack")
+                                                       (mill state :runner eid :runner 2))
+                                                   (continue-ability state :runner trash-program-sub card nil)))}
+                                   card nil)))}]})
 
 (defcard "Bloom"
   {:subroutines
@@ -807,18 +793,13 @@
 (defcard "Chrysalis"
   {:flags {:rd-reveal (req true)}
    :subroutines [(do-net-damage 2)]
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
-                            (continue-ability
-                              :runner {:optional
-                                       {:player :runner
-                                        :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
-                                        :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                      (resolve-unbroken-subs! :corp eid card))}
-                                        :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                     (effect-completed eid))}}}
-                              card nil))}})
+   :access {:optional
+            {:req (req (not (in-discard? card)))
+             :player :runner
+             :waiting-prompt "Runner to decide to break Chrysalis subroutine"
+             :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
+             :yes-ability {:async true
+                           :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
 
 (defcard "Chum"
   {:subroutines
@@ -959,8 +940,8 @@
                      {:async true
                       :label "Look at the top of the stack"
                       :msg "look at top X cards of the stack"
-                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the stack")
-                                   (let [c (- target (second targets))
+                      :waiting-prompt "Corp to rearrange the top cards of the stack"
+                      :effect (req (let [c (- target (second targets))
                                          from (take c (:deck runner))]
                                      (system-msg state :corp
                                                  (str "looks at the top " (quantify c "card") " of the stack"))
@@ -969,7 +950,6 @@
                                        (wait-for (trash state side (first from) {:unpreventable true
                                                                                  :cause :subroutine})
                                                  (system-msg state :corp (str "trashes " (:title (first from))))
-                                                 (clear-wait-prompt state :runner)
                                                  (effect-completed state side eid)))))})]}))
 
 (defcard "Data Loop"
@@ -1094,7 +1074,7 @@
 (defcard "Endless EULA"
   (let [sub (end-the-run-unless-runner-pays 1)]
     (letfn [(break-fn [unbroken-subs total]
-              {:asycn true
+              {:async true
                :effect
                (req (if (seq unbroken-subs)
                       (wait-for (pay state :runner (make-eid state {:source-type :subroutine}) card [:credit 1])
@@ -1537,18 +1517,13 @@
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
-                            (continue-ability
-                              :runner {:optional
-                                       {:player :runner
-                                        :prompt "You are encountering Herald. Allow its subroutines to fire?"
-                                        :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                      (resolve-unbroken-subs! :corp eid card))}
-                                        :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                     (effect-completed eid))}}}
-                              card nil))}})
+   :access {:optional
+            {:req (req (not (in-discard? card)))
+             :player :runner
+             :waiting-prompt "Runner to decide to break Herald subroutines"
+             :prompt "You are encountering Herald. Allow its subroutines to fire?"
+             :yes-ability {:async true
+                           :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
 
 (defcard "Himitsu-Bako"
   {:abilities [{:msg "add it to HQ"
@@ -1817,18 +1792,15 @@
                   :msg (msg "add either " (card-str state (first targets))
                             " or " (card-str state (second targets))
                             " to the Stack")
-                  :effect (req (if (= 2 (count targets))
-                                 (do (show-wait-prompt state :corp "Runner to decide which card to move")
-                                     (continue-ability
-                                       state :runner
-                                       {:player :runner
-                                        :prompt "Select a card to move to the Stack"
-                                        :choices {:card #(some (partial same-card? %) targets)}
-                                        :effect (req (clear-wait-prompt state :corp)
-                                                     (move state :runner target :deck {:front true})
-                                                     (system-msg state :runner (str "selected " (card-str state target) " to move to the Stack")))}
-                                       card nil))
-                                 (effect-completed state side eid)))}]})
+                  :effect (effect (continue-ability
+                                    (when (= 2 (count targets))
+                                      {:player :runner
+                                       :waiting-prompt "Runner to decide which card to move"
+                                       :prompt "Select a card to move to the Stack"
+                                       :choices {:card #(some (partial same-card? %) targets)}
+                                       :effect (req (move state :runner target :deck {:front true})
+                                                    (system-msg state :runner (str "selected " (card-str state target) " to move to the Stack")))})
+                                    card nil))}]})
 
 (defcard "Kakugo"
   {:events [{:event :pass-ice
@@ -1853,6 +1825,7 @@
           (sub-map [kind]
             {:player :runner
              :async true
+             :waiting-prompt "Runner to decide on Kamali 1.0 action"
              :prompt "Choose one"
              :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
              :effect (req (if (= target "Take 1 brain damage")
@@ -1863,8 +1836,7 @@
             {:label (str "Force the Runner to take 1 brain damage or trash an installed " (better-name kind))
              :msg (str "force the Runner to take 1 brain damage or trash an installed " (better-name kind))
              :async true
-             :effect (req (show-wait-prompt state :corp "Runner to decide on Kamali 1.0 action")
-                          (wait-for (resolve-ability state side (sub-map kind) card nil)
+             :effect (req (wait-for (resolve-ability state side (sub-map kind) card nil)
                                     (clear-wait-prompt state :corp)))})]
     {:subroutines [(brain-trash "resource")
                    (brain-trash "hardware")
@@ -1956,22 +1928,22 @@
                   :effect (req (if (zero? (count (:hand runner)))
                                  (do (system-msg state :corp (str "uses Loki to end the run"))
                                      (end-run state side eid card))
-                                 (do (show-wait-prompt state :corp "Runner to decide to shuffle their Grip into the Stack")
-                                     (continue-ability
-                                       state :runner
-                                       {:optional
-                                        {:prompt "Reshuffle your Grip into the Stack?"
-                                         :player :runner
-                                         :yes-ability {:effect (req (doseq [c (:hand runner)]
-                                                                      (move state :runner c :deck))
-                                                                    (shuffle! state :runner :deck)
-                                                                    (system-msg state :runner (str "shuffles their Grip into their Stack"))
-                                                                    (clear-wait-prompt state :corp))}
-                                         :no-ability {:async true
-                                                      :effect (effect (clear-wait-prompt :corp)
-                                                                      (system-msg :runner (str "doesn't shuffle their Grip into their Stack. Loki ends the run"))
-                                                                      (end-run eid card))}}}
-                                       card nil))))}]})
+                                 (continue-ability
+                                   state :runner
+                                   {:optional
+                                    {:waiting-prompt "Runner to decide to shuffle their Grip into the Stack"
+                                     :prompt "Reshuffle your Grip into the Stack?"
+                                     :player :runner
+                                     :yes-ability
+                                     {:effect (req (doseq [c (:hand runner)]
+                                                     (move state :runner c :deck))
+                                                   (shuffle! state :runner :deck)
+                                                   (system-msg state :runner "shuffles their Grip into their Stack"))}
+                                     :no-ability
+                                     {:async true
+                                      :effect (effect (system-msg :runner "doesn't shuffle their Grip into their Stack. Loki ends the run")
+                                                      (end-run eid card))}}}
+                                   card nil)))}]})
 
 (defcard "Loot Box"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
@@ -1983,10 +1955,10 @@
                                                              (string/join ", " (top-3-names state))))
                               (wait-for
                                 (reveal state side (top-3 state))
-                                (show-wait-prompt state :runner "Corp to choose a card to add to the Grip")
                                 (continue-ability
                                   state side
-                                  {:prompt "Choose a card to add to the Grip"
+                                  {:waiting-prompt "Corp to choose a card to add to the Grip"
+                                   :prompt "Choose a card to add to the Grip"
                                    :choices (req (top-3 state))
                                    :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
                                              " [Credits] and shuffle the Stack. Loot Box is trashed")
@@ -1994,7 +1966,6 @@
                                    :effect (req (move state :runner target :hand)
                                                 (wait-for (gain-credits state :corp (:cost target))
                                                           (shuffle! state :runner :deck)
-                                                          (clear-wait-prompt state :runner)
                                                           (trash state side eid card {:cause :subroutine})))}
                                   card nil)))}]}))
 
@@ -2123,28 +2094,22 @@
                                  (effect-completed state side eid)))}]})
 
 (defcard "Meridian"
-  {:subroutines [{:label "Gain 4 [Credits] and end the run, unless the runner adds Meridian to their score area as an agenda worth -1 agenda points"
+  {:subroutines [{:label "Gain 4 [Credits] and end the run"
+                  :waiting-prompt "Runner to choose an option for Meridian"
+                  :prompt "Choose one"
+                  :choices ["End the run" "Add Meridian to score area"]
+                  :player :runner
                   :async true
-                  :effect (req (show-wait-prompt state :corp "Runner to choose an option for Meridian")
-                               (continue-ability
-                                 state :runner
-                                 {:prompt "Choose one"
-                                  :choices ["End the run" "Add Meridian to score area"]
-                                  :player :runner
-                                  :async true
-                                  :effect (req (if (= target "End the run")
-                                                 (do (system-msg state :corp (str "uses Meridian to gain 4 [Credits] and end the run"))
-                                                     (clear-wait-prompt state :corp)
-                                                     (wait-for (gain-credits state :corp 4)
-                                                               (end-run state :runner eid card)))
-                                                 (do (system-msg state :runner (str "adds Meridian to their score area as an agenda worth -1 agenda points"))
-                                                     (clear-wait-prompt state :corp)
-                                                     (wait-for (as-agenda state :runner card -1)
-                                                               (when current-ice
-                                                                 (continue state :corp nil)
-                                                                 (continue state :runner nil))
-                                                               (effect-completed state side eid)))))}
-                                 card nil))}]})
+                  :effect (req (if (= target "End the run")
+                                 (do (system-msg state :corp "uses Meridian to gain 4 [Credits] and end the run")
+                                     (wait-for (gain-credits state :corp 4)
+                                               (end-run state :runner eid card)))
+                                 (do (system-msg state :runner "adds Meridian to their score area as an agenda worth -1 agenda points")
+                                     (wait-for (as-agenda state :runner card -1)
+                                               (when current-ice
+                                                 (continue state :corp nil)
+                                                 (continue state :runner nil))
+                                               (effect-completed state side eid)))))}]})
 
 (defcard "Merlin"
   (grail-ice (do-net-damage 2)))
@@ -2252,28 +2217,23 @@
 (defcard "Mlinzi"
   (letfn [(net-or-trash [net-dmg mill-cnt]
             {:label (str "Do " net-dmg " net damage")
+             :player :runner
+             :waiting-prompt "Runner to choose an option for Mlinzi"
+             :prompt "Take net damage or trash cards from the stack?"
+             :choices (req [(str "Take " net-dmg " net damage")
+                            (when (<= mill-cnt (count (:deck runner)))
+                              (str "Trash the top " mill-cnt " cards of the stack"))])
              :async true
-             :effect (req (show-wait-prompt state :corp "Runner to choose an option for Mlinzi")
-                          (continue-ability
-                            state :runner
-                            {:prompt "Take net damage or trash cards from the stack?"
-                             :choices [(str "Take " net-dmg " net damage")
-                                       (when (<= mill-cnt (count (:deck runner)))
-                                         (str "Trash the top " mill-cnt " cards of the stack"))]
-                             :async true
-                             :effect (req (clear-wait-prompt state :corp)
-                                          (if (= target (str "Take " net-dmg " net damage"))
-                                            (do (system-msg state :corp
-                                                            (str "uses Mlinzi to do "
-                                                                 net-dmg " net damage"))
-                                                (clear-wait-prompt state :corp)
-                                                (damage state :runner eid :net net-dmg {:card card}))
-                                            (do (system-msg state :corp
-                                                            (str "uses Mlinzi to trash "
-                                                                 (string/join ", " (map :title (take mill-cnt (:deck runner))))
-                                                                 " from the runner's stack"))
-                                                (mill state :runner eid :runner mill-cnt))))}
-                            card nil))})]
+             :effect (req (if (= target (str "Take " net-dmg " net damage"))
+                            (do (system-msg state :corp
+                                            (str "uses Mlinzi to do "
+                                                 net-dmg " net damage"))
+                                (damage state :runner eid :net net-dmg {:card card}))
+                            (do (system-msg state :corp
+                                            (str "uses Mlinzi to trash "
+                                                 (string/join ", " (map :title (take mill-cnt (:deck runner))))
+                                                 " from the runner's stack"))
+                                (mill state :runner eid :runner mill-cnt))))})]
     {:subroutines [(net-or-trash 1 2)
                    (net-or-trash 2 3)
                    (net-or-trash 3 4)]}))
@@ -2485,11 +2445,11 @@
                                              (:title c)
                                              "selected unrezzed card")]
                                  (add-counter state side c :advancement 3)
-                                 (show-wait-prompt state side "Runner to resolve Otoroshi")
                                  (continue-ability
                                    state side
                                    {:player :runner
                                     :async true
+                                    :waiting-prompt "Runner to resolve Otoroshi"
                                     :prompt (str "Access " title " or pay 3 [Credits]?")
                                     :choices ["Access card"
                                               (when (>= (:credit runner) 3)
@@ -2498,8 +2458,7 @@
                                               (if (= target "Access card")
                                                 (str "access " title)
                                                 "pay 3 [Credits]"))
-                                    :effect (req (clear-wait-prompt state :corp)
-                                                 (if (= target "Access card")
+                                    :effect (req (if (= target "Access card")
                                                    (access-card state :runner eid c)
                                                    (wait-for (pay state :runner card :credit 3)
                                                              (system-msg state :runner (:msg async-result))
@@ -2618,56 +2577,46 @@
 
 (defcard "Sadaka"
   (let [maybe-draw-effect
-        {:async true
-         :effect (req (show-wait-prompt state :runner "Corp to decide on Sadaka card draw action")
-                      (continue-ability
-                        state side
-                        {:optional
-                         {:player :corp
-                          :prompt "Draw 1 card?"
-                          :yes-ability
-                          {:async true
-                           :effect (effect (clear-wait-prompt :runner)
-                                           (draw eid 1 nil))
-                           :msg "draw 1 card"}
-                          :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                       (effect-completed eid))}}}
-                        card nil))}]
+        {:optional
+         {:player :corp
+          :waiting-prompt "Corp to decide on Sadaka card draw action"
+          :prompt "Draw 1 card?"
+          :yes-ability
+          {:async true
+           :effect (effect (draw eid 1 nil))
+           :msg "draw 1 card"}}}]
     {:subroutines [{:label "Look at the top 3 cards of R&D"
                     :req (req (not-empty (:deck corp)))
                     :async true
-                    :effect (req (let [top-cards (take 3 (:deck corp))
-                                       top-names (map :title top-cards)]
-                                   (show-wait-prompt state :runner "Corp to decide on Sadaka R&D card actions")
-                                   (continue-ability
-                                     state side
-                                     {:prompt (str "Top 3 cards of R&D: " (clojure.string/join ", " top-names))
-                                      :choices ["Arrange cards" "Shuffle R&D"]
-                                      :async true
-                                      :effect
-                                      (req (if (= target "Arrange cards")
-                                             (wait-for
-                                               (resolve-ability state side (reorder-choice :corp top-cards) card nil)
-                                               (do
-                                                 (system-msg state :corp (str "rearranges the top "
-                                                                              (quantify (count top-cards) "card")
-                                                                              " of R&D"))
-                                                 (clear-wait-prompt state :runner)
-                                                 (continue-ability state side maybe-draw-effect card nil)))
-                                             (do
-                                               (shuffle! state :corp :deck)
-                                               (system-msg state :corp (str "shuffles R&D"))
-                                               (clear-wait-prompt state :runner)
-                                               (continue-ability state side maybe-draw-effect card nil))))}
-                                     card nil)))}
+                    :effect
+                    (effect (continue-ability
+                              (let [top-cards (take 3 (:deck corp))
+                                    top-names (map :title top-cards)]
+                                {:waiting-prompt "Corp to decide on Sadaka R&D card actions"
+                                 :prompt (str "Top 3 cards of R&D: " (string/join ", " top-names))
+                                 :choices ["Arrange cards" "Shuffle R&D"]
+                                 :async true
+                                 :effect
+                                 (req (if (= target "Arrange cards")
+                                        (wait-for
+                                          (resolve-ability state side (reorder-choice :corp top-cards) card nil)
+                                          (system-msg state :corp (str "rearranges the top "
+                                                                       (quantify (count top-cards) "card")
+                                                                       " of R&D"))
+                                          (continue-ability state side maybe-draw-effect card nil))
+                                        (do
+                                          (shuffle! state :corp :deck)
+                                          (system-msg state :corp (str "shuffles R&D"))
+                                          (continue-ability state side maybe-draw-effect card nil))))})
+                              card nil))}
                    {:label "Trash 1 card in HQ"
                     :async true
                     :effect
-                    (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
-                         (wait-for
+                    (req (wait-for
                            (resolve-ability
                              state side
-                             {:prompt "Choose a card in HQ to trash"
+                             {:waiting-prompt "Corp to select cards to trash with Sadaka"
+                              :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
                               :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
@@ -2677,11 +2626,10 @@
                                              (system-msg state :corp "trashes a card from HQ")
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
-                           (system-msg state :corp "trashes Sadaka")
-                           (clear-wait-prompt state :runner)
                            (when current-ice
                              (continue state :corp nil)
                              (continue state :runner nil))
+                           (system-msg state :corp "trashes Sadaka")
                            (trash state :corp eid card nil)))}]}))
 
 (defcard "Sagittarius"
@@ -2697,15 +2645,11 @@
                                                 dmg (some #(when (= (:type %) choice) %) cards)]
                                                (system-msg state :corp "uses Saisentan to deal a second net damage")
                                                (damage state side eid :net 1 {:card card}))))}]
-    {:on-encounter
-     {:effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
-                      (continue-ability
-                        {:prompt "Choose a card type"
-                         :choices ["Event" "Hardware" "Program" "Resource"]
-                         :msg (msg "choose the card type " target)
-                         :effect (effect (update! (assoc-in card [:special :saisentan] target))
-                                         (clear-wait-prompt :runner))}
-                        card nil))}
+    {:on-encounter {:waiting-prompt "Corp to choose Saisentan card type"
+                    :prompt "Choose a card type"
+                    :choices ["Event" "Hardware" "Program" "Resource"]
+                    :msg (msg "choose the card type " target)
+                    :effect (effect (update! (assoc-in card [:special :saisentan] target)))}
      :events [{:event :end-of-encounter
                :req (req (get-in card [:special :saisentan]))
                :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
@@ -2740,22 +2684,15 @@
   {:flags {:rd-reveal (req true)}
    :subroutines [trash-program-sub]
    :access {:async true
-            :req (req (and (not (in-discard? card))
-                           (some program? (all-active-installed state :runner))))
-            :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
-                            (continue-ability
-                              :runner
-                              {:optional
-                               {:player :runner
-                                :prompt "Allow Sapper subroutine to fire?"
-                                :yes-ability
-                                {:effect (effect (clear-wait-prompt :corp)
-                                                 (show-wait-prompt :runner "Corp to trash a program with Sapper")
-                                                 (resolve-unbroken-subs! :corp eid card))}
-                                :no-ability
-                                {:effect (effect (clear-wait-prompt :corp)
-                                                 (effect-completed eid))}}}
-                              card nil))}})
+            :optional
+            {:req (req (and (not (in-discard? card))
+                            (some program? (all-active-installed state :runner))))
+             :player :runner
+             :waiting-prompt "Runner to decide to break Sapper subroutine"
+             :prompt "Allow Sapper subroutine to fire?"
+             :yes-ability
+             {:async true
+              :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"
@@ -2829,13 +2766,12 @@
   {:subroutines [{:label "Rearrange the top 3 cards of R&D"
                   :msg "rearrange the top 3 cards of R&D"
                   :async true
-                  :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
-                               (let [from (take 3 (:deck corp))]
-                                 (if (pos? (count from))
-                                   (continue-ability state side (reorder-choice :corp :runner from '()
-                                                                                (count from) from) card nil)
-                                   (do (clear-wait-prompt state :runner)
-                                       (effect-completed state side eid)))))}
+                  :waiting-prompt "Corp to rearrange the top cards of R&D"
+                  :effect (effect (continue-ability
+                                    (let [from (take 3 (:deck corp))]
+                                      (when (pos? (count from))
+                                        (reorder-choice :corp :runner from '() (count from) from)))
+                                    card nil))}
                  {:optional
                   {:prompt "Pay 1 [Credits] to keep the Runner from accessing the top card of R&D?"
                    :yes-ability {:cost [:credit 1]
