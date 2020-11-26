@@ -236,8 +236,12 @@
   (-> (:viewport @db-dom) js/$ (.removeClass "edit")))
 
 (defn cancel-edit [s]
-  (end-edit s)
-  (put! select-channel (:old-deck @s)))
+  (let [deck (:deck @s)
+        decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
+        selected (or (:old-deck @s) (first decks))]
+    (end-edit s)
+    (load-decks decks)
+    (put! select-channel selected)))
 
 (defn delete-deck [s]
   (swap! s assoc :delete true)
@@ -796,15 +800,15 @@
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
    [edit-textbox s]])
 
-(defn collection-buttons [s user]
+(defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" @user #(new-deck s "Corp")]
-   [cond-button "New Runner deck" @user #(new-deck s "Runner")]])
+   [cond-button  "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
+   [cond-button  "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
 
 (defn list-panel
   [s user decks decks-loaded]
   [:div.decks
-   [collection-buttons s user]
+   [collection-buttons s user decks-loaded]
    [deck-collection s decks decks-loaded]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]
