@@ -1862,16 +1862,15 @@
                  (assoc heap-breaker-auto-pump-and-break :event event))
         cdef (install-from-heap "Paperclip" "Barrier" [])
         abilities [{:label "+X strength, break X subroutines"
-                           :cost [:x-credits]
-                           :heap-breaker-pump :x ; strength gained
-                           :heap-breaker-break :x ; number of subs broken
-                           :pump :x
-                           :effect (effect (pump card (cost-value eid :x-credits))
-                                           (continue-ability
-                                             (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
-                                             (get-card state card) nil))
-                           :msg (msg "increase its strength from " (get-strength card)
-                                     " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
+                    :cost [:x-credits]
+                    :heap-breaker-pump :x ; strength gained
+                    :heap-breaker-break :x ; number of subs broken
+                    :effect (effect (pump card (cost-value eid :x-credits))
+                                    (continue-ability
+                                      (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
+                                      (get-card state card) nil))
+                    :msg (msg "increase its strength from " (get-strength card)
+                              " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
     (assoc cdef :events (apply conj events (:events cdef)) :abilities abilities)))
 
 (defcard "Parasite"

@@ -215,9 +215,9 @@
     (let [alias (get-program state 0)
           zed1 (get-ice state :hq 0)
           zed2 (get-ice state :remote1 0)]
-      (is (= 1 (core/get-strength (refresh alias))) "Starts with 2 strength")
+      (is (= 1 (get-strength (refresh alias))) "Starts with 2 strength")
       (card-ability state :runner (refresh alias) 1)
-      (is (= 4 (core/get-strength (refresh alias))) "Can gain strength outside of a run")
+      (is (= 4 (get-strength (refresh alias))) "Can gain strength outside of a run")
       (run-on state :hq)
       (rez state :corp (refresh zed1))
       (run-continue state)
@@ -226,7 +226,7 @@
       (click-prompt state :runner "Done")
       (is (= 1 (count (filter :broken (:subroutines (refresh zed1))))) "The subroutine is broken")
       (run-jack-out state)
-      (is (= 1 (core/get-strength (refresh alias))) "Drops back down to base strength on run end")
+      (is (= 1 (get-strength (refresh alias))) "Drops back down to base strength on run end")
       (run-on state :remote1)
       (rez state :corp (refresh zed2))
       (run-continue state)
@@ -343,7 +343,7 @@
           "Boost ability costs 1 credit each"
           (card-ability state :runner ankusa 1)
           (is (= (dec credits) (:credit (get-runner))) "Boost 1 for 1 credit")
-          (is (= (inc (core/get-strength ankusa)) (core/get-strength (refresh ankusa)))
+          (is (= (inc (get-strength ankusa)) (get-strength (refresh ankusa)))
               "Ankusa gains 1 strength"))))
   (testing "Break 1 for 2 credits"
     (do-game
@@ -530,20 +530,20 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Berserker")
     (let [berserker (get-program state 0)]
-      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength starts at 2")
+      (is (= 2 (get-strength (refresh berserker))) "Berserker strength starts at 2")
       (run-on state :archives)
       (run-continue state)
-      (is (= 3 (core/get-strength (refresh berserker))) "Berserker gains 1 strength from Ice Wall")
+      (is (= 3 (get-strength (refresh berserker))) "Berserker gains 1 strength from Ice Wall")
       (run-jack-out state)
-      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (is (= 2 (get-strength (refresh berserker))) "Berserker strength resets at end of run")
       (run-on state :rd)
       (run-continue state)
-      (is (= 7 (core/get-strength (refresh berserker))) "Berserker gains 5 strength from Hive")
+      (is (= 7 (get-strength (refresh berserker))) "Berserker gains 5 strength from Hive")
       (run-jack-out state)
-      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (is (= 2 (get-strength (refresh berserker))) "Berserker strength resets at end of run")
       (run-on state :hq)
       (run-continue state)
-      (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
+      (is (= 2 (get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
 (deftest black-orchestra
   (testing "Basic test"
@@ -564,7 +564,7 @@
         (card-ability state :runner bo 0)
         (is (empty? (:prompt (get-runner))) "Has no break prompt as strength isn't high enough")
         (card-ability state :runner bo 0)
-        (is (= 8 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 8")
+        (is (= 8 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 8")
         (click-prompt state :runner "Trace 4 - Purge virus counters")
         (click-prompt state :runner "Trace 3 - Trash a virus")
         (is (= 2 (count (filter :broken (:subroutines (get-ice state :hq 0)))))))))
@@ -586,7 +586,7 @@
           (changes-val-macro -12 (:credit (get-runner))
                              "Paid 12 to fully break Macrophage with Black Orchestra"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
-          (is (= 10 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
+          (is (= 10 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No pumping, breaking more than once"
       (do-game
@@ -605,7 +605,7 @@
           (changes-val-macro -6 (:credit (get-runner))
                              "Paid 6 to fully break Aiki with Black Orchestra"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
-          (is (= 6 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
+          (is (= 6 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping and breaking once"
       (do-game
@@ -624,7 +624,7 @@
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Enigma with Black Orchestra"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
-          (is (= 4 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
+          (is (= 4 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No auto-break on unbreakable subs"
       (do-game
@@ -1392,7 +1392,7 @@
       (card-ability state :runner cc 1)
       (card-ability state :runner cc 1)
       (card-ability state :runner cc 1)
-      (is (= 7 (core/get-strength (refresh cc))) "Can pump Cyber-Cypher on the right server")
+      (is (= 7 (get-strength (refresh cc))) "Can pump Cyber-Cypher on the right server")
       (card-ability state :runner cc 0)
       (click-prompt state :runner "Trace 4 - Purge virus counters")
       (click-prompt state :runner "Trace 3 - Trash a virus")
@@ -1403,9 +1403,9 @@
       (run-on state :rd)
       (run-continue state)
       (card-ability state :runner cc 1)
-      (is (= 4 (core/get-strength (refresh cc))) "Can't pump Cyber-Cyper on a different server")
+      (is (= 4 (get-strength (refresh cc))) "Can't pump Cyber-Cyper on a different server")
       (core/update! state :runner (assoc (refresh cc) :current-strength 7))
-      (is (= 7 (core/get-strength (refresh cc))) "Manually set equal strength")
+      (is (= 7 (get-strength (refresh cc))) "Manually set equal strength")
       (card-ability state :runner cc 0)
       (is (empty? (:prompt (get-runner))) "Can't break subs on a different server")
       (is (zero? (count (filter :broken (:subroutines (get-ice state :rd 0))))) "No subs are broken"))))
@@ -3009,7 +3009,7 @@
         "Boost ability costs 2 credits"
         (card-ability state :runner (get-program state 0) 1))
       (changes-val-macro
-        2 (core/get-strength (get-program state 0))
+        2 (get-strength (get-program state 0))
         "Boost ability increases strength by 2"
         (card-ability state :runner (get-program state 0) 1))))
   (testing "Break all subs ability gives 1 credit"
@@ -3238,7 +3238,7 @@
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Rototurret with MKUltra"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
-          (is (= 3 (core/get-strength (refresh pc))) "Pumped MKUltra up to str 3")
+          (is (= 3 (get-strength (refresh pc))) "Pumped MKUltra up to str 3")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")))))
   (testing "Heap Locked"
     (do-game
@@ -3552,7 +3552,7 @@
           (changes-val-macro -1 (:credit (get-runner))
                              "Paid 1 to fully break Vanilla with Paperclip"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
-          (is (= 2 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 2")
+          (is (= 2 (get-strength (refresh pc))) "Pumped Paperclip up to str 2")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for >1 and breaking for 1"
       (do-game
@@ -3571,7 +3571,7 @@
           (changes-val-macro -4 (:credit (get-runner))
                              "Paid 4 to fully break Fire Wall with Paperclip"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
-          (is (= 5 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 5")
+          (is (= 5 (get-strength (refresh pc))) "Pumped Paperclip up to str 5")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for 1 and breaking for >1"
       (do-game
@@ -3590,7 +3590,7 @@
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Spiderweb with Paperclip"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
-          (is (= 4 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 4")
+          (is (= 4 (get-strength (refresh pc))) "Pumped Paperclip up to str 4")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for >1 and breaking for >1"
       (do-game
@@ -3609,7 +3609,7 @@
           (changes-val-macro -7 (:credit (get-runner))
                              "Paid 7 to fully break Chiyashi with Paperclip"
                              (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
-          (is (= 8 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 8")
+          (is (= 8 (get-strength (refresh pc))) "Pumped Paperclip up to str 8")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No auto-pump on unbreakable subs"
       (do-game
@@ -3676,12 +3676,12 @@
           -2 (:credit (get-runner))
           "Paid 2 to break two of the subs on Hive"
           (is (= 5 (count (:subroutines (get-ice state :hq 0)))) "Hive starts with 5 subs")
-          (is (= 3 (core/get-strength (get-ice state :hq 0))) "Hive has strength 3")
+          (is (= 3 (get-strength (get-ice state :hq 0))) "Hive has strength 3")
           (card-ability state :runner pc 0)
           (click-prompt state :runner "2")
           (click-prompt state :runner "End the run")
           (click-prompt state :runner "End the run")
-          (is (= 3 (core/get-strength (refresh pc))) "Pumped Paperclip up to str 3")
+          (is (= 3 (get-strength (refresh pc))) "Pumped Paperclip up to str 3")
           (is (= 3 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broke all but 3 subs"))))))
 
 (deftest parasite
