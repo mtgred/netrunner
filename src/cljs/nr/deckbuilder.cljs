@@ -802,8 +802,8 @@
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button  "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button  "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
 
 (defn list-panel
   [s user decks decks-loaded]
