@@ -318,13 +318,7 @@
      :socr (build-socr-legality valid deck)}))
 
 (defn trusted-deck-status
-  [{:keys [status date] :as deck}]
-  (let [deck-date #?(:clj  (f/parse (f/formatters :date-time) date)
-                     :cljs (js/Date.parse date))
-        mwl-epoch (:date-start @cards/mwl)
-        mwl-date #?(:clj  (f/unparse (f/formatters :date-time) (c/from-long mwl-epoch))
-                    :cljs (js/Date. mwl-epoch))]
-    (if (and status
-             (> deck-date mwl-date))
+  [{:keys [status] :as deck}]
+    (if status
       status
-      (calculate-deck-status deck))))
+      (calculate-deck-status deck)))
