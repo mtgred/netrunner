@@ -3220,6 +3220,27 @@
           (click-card state :runner multi)
           (click-card state :runner multi))
         (is (zero? (count-tags state)) "Runner has lost both tags"))))
+  (testing "Using credits from Mantle and credit pool"
+    (do-game
+      (new-game {:runner {:hand ["Misdirection" "Mantle"]
+                          :credits 10
+                          :tags 4}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 2)
+      (play-from-hand state :runner "Misdirection")
+      (play-from-hand state :runner "Mantle")
+      (let [mis (get-program state 0)
+            mantle (get-program state 1)]
+        (changes-val-macro
+          -3 (:credit (get-runner))
+          "Using recurring credits and credits from credit pool"
+          (card-ability state :runner mis 0)
+          (click-prompt state :runner "4")
+          (is (= "Select a credit providing card (0 of 4 credits)"
+                 (:msg (prompt-map :runner)))
+              "Runner has pay-credit prompt")
+          (click-card state :runner mantle))
+        (is (zero? (count-tags state)) "Runner has lost all 4 tags"))))
   (testing "Basic behavior"
     (do-game
       (new-game {:runner {:hand ["Misdirection"]
