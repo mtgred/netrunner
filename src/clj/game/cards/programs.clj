@@ -650,7 +650,7 @@
    :events [{:event :encounter-ice
              :req (req (same-card? (:ice context) (:host card)))
              :async true
-             :effect (req (if (pos? (get-strength (:ice context)))
+             :effect (req (if (pos? (ice-strength state side (:ice context)))
                             (do (system-msg state side "places 1 virus counter on Chisel")
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
