@@ -396,6 +396,26 @@
                     :first-player player-name
                     :date (java.util.Date.)})))))
 
+(defn handle-delete-game
+  [{{{:keys [username isadmin ismoderator] :as user} :user} :ring-req
+    client-id                                     :client-id
+    {:keys [gameid]} :?data :as event}]
+  (when-let [game (game-for-id gameid)]
+    (when (and username
+               (or isadmin ismoderator))
+      (let [player-name (:username (:user (first (:players game))))
+            clientids (lobby-clients gameid)]
+        (doseq [client-id clientids]
+          (swap! client-gameids dissoc client-id))
+        (close-lobby game)
+        (ws/broadcast-to! clientids :lobby/timeout {:gameid gameid})
+        (mc/insert db log-collection
+                   {:moderator username
+                    :action :delete-game
+                    :game-name (:title game)
+                    :first-player player-name
+                    :date (java.util.Date.)})))))
+
 (ws/register-ws-handlers!
   :chsk/uidport-open #'handle-lobby-list
   :lobby/list #'handle-lobby-list
@@ -406,4 +426,5 @@
   :lobby/say #'handle-lobby-say
   :lobby/swap #'handle-swap-sides
   :lobby/deck #'handle-select-deck
-  :lobby/rename-game #'handle-rename-game)
+  :lobby/rename-game #'handle-rename-game
+  :lobby/delete-game #'handle-delete-game)
