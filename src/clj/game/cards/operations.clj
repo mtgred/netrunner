@@ -78,19 +78,21 @@
    :prompt "Choose a server"
    :choices ["Archives" "R&D" "HQ"]
    :effect
-   (effect (continue-ability
+   (effect (show-wait-prompt (str "Runner to decide on running " target))
+           (continue-ability
              (let [serv target]
                {:optional
-                {:waiting-prompt (str "Runner to decide on running " serv)
-                 :prompt (str "Make a run on " serv "?")
+                {:prompt (str "Make a run on " serv "?")
                  :player :runner
                  :yes-ability {:msg (str "let the Runner make a run on " serv)
                                :async true
-                               :effect (effect (make-run eid serv nil card)
+                               :effect (effect (clear-wait-prompt :corp)
+                                               (make-run eid serv nil card)
                                                (prevent-jack-out))}
                  :no-ability {:async true
                               :msg "add it to their score area as an agenda worth 1 agenda point"
-                              :effect (effect (as-agenda :corp eid card 1))}}})
+                              :effect (effect (clear-wait-prompt :corp)
+                                              (as-agenda :corp eid card 1))}}})
              card nil))})
 
 (defcard "Anonymous Tip"
