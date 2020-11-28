@@ -78,6 +78,14 @@
           (core/command-parser state :runner {:user user :text "/summon DDoS"})
           (is (= ["DDoS"] (->> (get-runner) :hand (mapv :title))) "DDoS should now be added into hand")))
 
+      (testing "Add non-existant card"
+        (do-game
+          (new-game {:runner {:hand []}})
+          (take-credits state :corp)
+          (is (empty? (:hand (get-runner))) "Runner starts with empty grip")
+          (core/command-parser state :runner {:user user :text "/summon Probably Not A Real Card Name"})
+          (is (empty? (:hand (get-runner))) "Runner still has an empty grip")))
+
       (testing "Add card with long title"
         (do-game
           (new-game {:runner {:hand []}})
