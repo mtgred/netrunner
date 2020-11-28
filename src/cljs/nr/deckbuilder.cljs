@@ -184,9 +184,18 @@
     ;; lookup each card and replace title with cardmap
     (map #(assoc % :card (lookup side (assoc % :title (:card %)))) card-list)))
 
+(defn process-cards-in-deck
+  "Process the raw deck from the database into a more useful format"
+  [deck]
+  (if (:parsed? deck)
+    deck
+    (let [cards (lookup-deck (:side (:identity deck)) (:cards deck))]
+      (assoc deck :cards cards :parsed? true))))
+
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)]
-    (swap! app-state assoc :decks decks)
+  (let [decks (sort-by :date > decks)
+        updated-decks (map process-cards-in-deck decks)]
+    (swap! app-state assoc :decks updated-decks)
     (swap! app-state assoc :decks-loaded true)))
 
 (defn- add-deck-name
@@ -248,14 +257,6 @@
 (defn end-delete [s]
   (swap! s assoc :delete false)
   (-> (:viewport @db-dom) js/$ (.removeClass "delete")))
-
-(defn process-cards-in-deck
-  "Process the raw deck from the database into a more useful format"
-  [deck]
-  (if (:parsed? deck)
-    deck
-    (let [cards (lookup-deck (:side (:identity deck)) (:cards deck))]
-      (assoc deck :cards cards :parsed? true))))
 
 (defn set-deck-on-state
   [s deck]
