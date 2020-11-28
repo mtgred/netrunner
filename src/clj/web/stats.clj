@@ -155,18 +155,22 @@
 
 (defn game-finished [{:keys [state gameid]}]
   (when state
-    (mc/update db :game-logs
-               {:gameid (str gameid)}
-               {"$set" {:winner (:winner @state)
-                        :reason (:reason @state)
-                        :end-date (java.util.Date.)
-                        :stats (-> (:stats @state)
-                                   (dissoc-in [:time :started])
-                                   (dissoc-in [:time :ended]))
-                        :turn (:turn @state)
-                        :corp.agenda-points (get-in @state [:corp :agenda-point])
-                        :runner.agenda-points (get-in @state [:runner :agenda-point])
-                        :log (:log @state)}})))
+    (try
+      (mc/update db :game-logs
+                 {:gameid (str gameid)}
+                 {"$set" {:winner (:winner @state)
+                          :reason (:reason @state)
+                          :end-date (java.util.Date.)
+                          :stats (-> (:stats @state)
+                                     (dissoc-in [:time :started])
+                                     (dissoc-in [:time :ended]))
+                          :turn (:turn @state)
+                          :corp.agenda-points (get-in @state [:corp :agenda-point])
+                          :runner.agenda-points (get-in @state [:runner :agenda-point])
+                          :log (:log @state)}})
+      (catch Exception e
+        (println "Caught exception saving game stats: " (.getMessage e))
+        (println "Stats: " (:stats @state))))))
 
 (defn history [{{username :username} :user}]
   (if username
