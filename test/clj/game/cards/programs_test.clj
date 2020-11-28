@@ -4575,7 +4575,29 @@
         (card-ability state :runner sb 0)
         (run-continue state)
         (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
-        (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
+        (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
+  (testing "Sneakdoor Beta trashed during run"
+    (do-game
+      (new-game {:runner {:hand ["Sneakdoor Beta"]}
+                 :corp {:hand ["Ichi 1.0" "Hedge Fund"]}})
+      (play-from-hand state :corp "Ichi 1.0" "Archives")
+      (let [ichi (get-ice state :archives 0)]
+        (rez state :corp ichi)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sneakdoor Beta")
+        (let [sb (get-program state 0)]
+          (card-ability state :runner sb 0)
+          (run-continue state)
+          (fire-subs state (refresh ichi))
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to select program to delete")
+          (click-card state :corp "Sneakdoor Beta")
+          (click-prompt state :corp "Done")
+          (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
+          (click-prompt state :corp "0")
+          (click-prompt state :runner "1")
+          (run-continue state)
+          (run-continue state)
+          (is (= :hq (get-in @state [:run :server 0])) "Run continues on HQ"))))))
 
 (deftest snitch
   ;; Snitch

@@ -2291,19 +2291,19 @@
   {:abilities [{:cost [:click 1]
                 :msg "make a run on Archives"
                 :makes-run true
-                :effect (effect (update! (assoc-in card [:special :sneakdoor] true))
-                                (make-run :archives nil (get-card state card)))}]
-   :events [{:event :pre-successful-run
-             :interactive (req true)
-             :req (req (and (get-in card [:special :sneakdoor])
-                            (= :archives (-> run :server first))))
-             :effect (req (swap! state update-in [:runner :register :successful-run] next)
-                          (swap! state assoc-in [:run :server] [:hq])
-                          (trigger-event state :corp :no-action)
-                          (swap! state update-in [:runner :register :successful-run] conj :hq)
-                          (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}
-            {:event :run-ends
-             :effect (effect (update! (dissoc-in card [:special :sneakdoor])))}]})
+                :effect (effect (register-events
+                                  card
+                                  [{:event :pre-successful-run
+                                    :duration :run-ends
+                                    :unregister-once-resolved true
+                                    :interactive (req true)
+                                    :req (req (= :archives (-> run :server first)))
+                                    :effect (req (swap! state update-in [:runner :register :successful-run] next)
+                                                 (swap! state assoc-in [:run :server] [:hq])
+                                                 (trigger-event state :corp :no-action)
+                                                 (swap! state update-in [:runner :register :successful-run] conj :hq)
+                                                 (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}])
+                                (make-run :archives nil (get-card state card)))}]})
 
 (defcard "Snitch"
   {:events [{:event :approach-ice
