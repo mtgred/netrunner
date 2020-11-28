@@ -674,10 +674,11 @@
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                 (wait-for (corp-install state side ice server {:cost-bonus -4})
-                                          (if (= 1 (count ices))
-                                            (effect-completed state side eid)
-                                            (continue-ability state side (choose-ice remaining grids)
-                                                              card nil))))))}))
+                                          (continue-ability
+                                            state side
+                                            (when-not (= 1 (count ices))
+                                              (choose-ice remaining grids))
+                                            card nil)))))}))
           (choose-grid [ice ices grids]
             (if (= 1 (count grids))
               (install-ice ice ices grids (-> (first grids) :zone second zone->name))
@@ -690,17 +691,17 @@
               {:async true
                :prompt "Choose an ice to reveal and install, or None to decline"
                :choices (conj (mapv :title ices) "None")
-               :effect (req (if (= "None" target)
-                              (effect-completed state side eid)
-                              (continue-ability state side
-                                                (choose-grid (some #(when (= target (:title %)) %) ices)
-                                                             ices grids)
-                                                card nil)))}))]
+               :effect
+               (effect (continue-ability
+                         (when-not (= "None" target)
+                           (choose-grid (some #(when (= target (:title %)) %) ices) ices grids))
+                         card nil))}))]
     {:events [{:event :corp-draw
                ;; This prevents multiple Jinja from showing the "choose a server to install into" sequence
                :once :per-turn
                :once-key :jinja-city-grid-draw
                :async true
+               :waiting-prompt "Corp to resolve Jinja City Grid"
                :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                :effect (req (cond
                               ;; if ice were drawn, do the full routine
@@ -710,28 +711,24 @@
                                                  (:most-recent-drawn corp-reg))
                                     grids (filterv #(= "Jinja City Grid" (:title %))
                                                    (all-active-installed state :corp))]
-                                (when (= :runner (:active-player @state))
-                                  (show-wait-prompt state :runner "Corp to resolve Jinja City Grid"))
-                                (if (not-empty ices)
-                                  (continue-ability state side (choose-ice ices grids) card nil)
-                                  (effect-completed state side eid)))
+                                (continue-ability
+                                  state side
+                                  (when (not-empty ices)
+                                    (choose-ice ices grids))
+                                  card nil))
                               ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
                               (= :runner (:active-player @state))
-                              (do (show-wait-prompt state :runner "Corp to resolve Jinja City Grid")
-                                  (continue-ability
-                                    state :corp
-                                    {:prompt "You did not draw any ice to use with Jinja City Grid"
-                                     :choices ["Carry on!"]
-                                     :prompt-type :bogus
-                                     :effect (effect (clear-wait-prompt :runner))}
-                                    card nil))
+                              (continue-ability
+                                state :corp
+                                {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                 :choices ["Carry on!"]
+                                 :prompt-type :bogus}
+                                card nil)
                               ;; otherwise, we done
                               :else
                               (effect-completed state side eid)))}
               {:event :post-corp-draw
-               :effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
-                         (when (= :runner (:active-player @state))
-                           (clear-wait-prompt state :runner)))}]}))
+               :effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}]}))
 
 (defcard "K. P. Lynn"
   {:events [{:event :pass-all-ice
