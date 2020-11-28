@@ -20,16 +20,21 @@
   [& args]
   (webdb/connect)
   (load-data)
-  (doseq [deck (mc/find-maps db "decks" nil)]
-    (let [deck-id (:_id deck)]
-      (try
-        (let [status (get-deck-status deck)]
-          (mc/update db "decks"
-                     {:_id (object-id deck-id)}
-                     {"$set" {"status" status}}))
-        (catch Exception e (do (println "Something got hecked" (.getMessage e))
-                               (println "Deck id:" deck-id))))))
-  (webdb/disconnect))
+  (let [cnt (atom 0)]
+    (doseq [deck (mc/find-maps db "decks" nil)]
+      (let [deck-id (:_id deck)]
+        (swap! cnt inc)
+        (when (zero? (mod @cnt 1000)) (do (print ".") (flush)))
+        (try
+          (let [status (get-deck-status deck)]
+            (mc/update db "decks"
+                       {:_id (object-id deck-id)}
+                       {"$set" {"status" status}}))
+          (catch Exception e (do (println "Something got hecked" (.getMessage e))
+                                 (println "Deck id:" deck-id))))))
+    (newline)
+    (println "Updated" @cnt "decks"))
+    (webdb/disconnect))
 
 (defn- get-all-users
   "Get all users in the database. Takes a list of fields."
