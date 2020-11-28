@@ -1090,6 +1090,7 @@
         (click-prompt state :runner "Yes")
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed")))))
+
 (deftest cloak
   ;; Cloak
   (testing "Pay-credits prompt"
