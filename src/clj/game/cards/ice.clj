@@ -1440,8 +1440,9 @@
                   :label "Reduce Runner's hand size by 2"
                   :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
                   :effect (effect (register-floating-effect
+                                    card
                                     {:type :hand-size
-                                     :duration :until-start-of-corp-turn
+                                     :duration :until-corp-turn-begins
                                      :req (req (= :runner side))
                                      :value -2}))}]})
 
