@@ -1370,22 +1370,44 @@
 
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
-  (do-game
-    (new-game {:corp {:deck ["Free Lunch"]}})
-    (play-from-hand state :corp "Free Lunch" "HQ")
-    (take-credits state :corp)
-    (let [fl (get-ice state :hq 0)]
-      (rez state :corp fl)
-      (run-on state "HQ")
-      (run-continue state)
-      (card-subroutine state :corp fl 0)
-      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
-      (card-subroutine state :corp fl 0)
-      (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
-      (is (= 5 (:credit (get-runner))))
-      (card-ability state :corp (refresh fl) 0)
-      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
-      (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:deck ["Free Lunch"]}})
+      (play-from-hand state :corp "Free Lunch" "HQ")
+      (take-credits state :corp)
+      (let [fl (get-ice state :hq 0)]
+        (rez state :corp fl)
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp fl 0)
+        (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+        (card-subroutine state :corp fl 0)
+        (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
+        (is (= 5 (:credit (get-runner))))
+        (card-ability state :corp (refresh fl) 0)
+        (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+        (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+  (testing "Derez/re-rez"
+    (do-game
+      (new-game {:corp {:hand ["Free Lunch"]
+                        :credits 20}})
+      (play-from-hand state :corp "Free Lunch" "HQ")
+      (take-credits state :corp)
+      (let [fl (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp fl)
+        (run-continue state)
+        (fire-subs state (refresh fl))
+        (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (derez state :corp (refresh fl))
+        (rez state :corp fl)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state (refresh fl))
+        (is (= 4 (get-counters (refresh fl) :power)) "Free Lunch has 4 power counters")))))
 
 (deftest gatekeeper
   ;; Gatekeeper
