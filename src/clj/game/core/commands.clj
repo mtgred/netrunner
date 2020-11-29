@@ -30,6 +30,10 @@
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
 
+(defn- constrain-value [value min-value max-value]
+  "Constrain value to [min-value max-value]"
+  (min max-value (max min-value value)))
+
 (defn- set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
   (system-msg state side (str "sets advancement counters to " value " on "
@@ -37,17 +41,18 @@
   (trigger-event state side :advancement-placed target))
 
 (defn command-adv-counter [state side value]
-  (resolve-ability state side
-                   {:effect (effect (set-adv-counter target value))
-                    :choices {:card (fn [t] (same-side? (:side t) side))}}
-                   (map->Card {:title "/adv-counter command"}) nil))
+  (let [value (constrain-value value 0 1000)]
+    (resolve-ability state side
+                     {:effect (effect (set-adv-counter target value))
+                      :choices {:card (fn [t] (same-side? (:side t) side))}}
+                     (map->Card {:title "/adv-counter command"}) nil)))
 
 (defn command-counter-smart [state side args]
   (resolve-ability
     state side
     {:choices {:card (fn [t] (same-side? (:side t) side))}
      :effect (req (let [existing (:counter target)
-                        value (if-let [n (string->num (first args))] n 0)
+                        value (constrain-value (if-let [n (string->num (first args))] n 0) 0 1000)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
                                      (and (agenda? target) (is-scored? state side target)) :agenda
@@ -88,7 +93,7 @@
 
     :else
     (let [typestr (.toLowerCase (first args))
-          value (if-let [n (string->num (second args))] n 1)
+          value (constrain-value (if-let [n (string->num (second args))] n 1) 0 1000)
           one-letter (if (<= 1 (.length typestr)) (.substring typestr 0 1) "")
           two-letter (if (<= 2 (.length typestr)) (.substring typestr 0 2) one-letter)
           counter-type (cond (= "v" one-letter) :virus
@@ -97,15 +102,14 @@
                              (= "ag" two-letter) :agenda
                              :else :advance-counter)
           advance (= :advance-counter counter-type)]
-      (when (not (neg? value))
-        (if advance
-          (command-adv-counter state side value)
-          (resolve-ability state side
-                           {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
-                                            (system-msg (str "sets " (name counter-type) " counters to " value " on "
-                                                             (card-str state target))))
-                            :choices {:card (fn [t] (same-side? (:side t) side))}}
-                           (map->Card {:title "/counter command"}) nil))))))
+      (if advance
+        (command-adv-counter state side value)
+        (resolve-ability state side
+                         {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
+                                          (system-msg (str "sets " (name counter-type) " counters to " value " on "
+                                                           (card-str state target))))
+                          :choices {:card (fn [t] (same-side? (:side t) side))}}
+                         (map->Card {:title "/counter command"}) nil)))))
 
 (defn command-rezall
   [state side]
@@ -119,7 +123,8 @@
     (map->Card {:title "/rez-all command"}) nil))
 
 (defn command-roll [state side value]
-  (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
+  (let [value (constrain-value value 1 1000)]
+    (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value))))))
 
 (defn command-undo-click
   "Resets the game state back to start of the click"
@@ -264,7 +269,7 @@
         nil)
       (case command
         "/adv-counter" #(command-adv-counter %1 %2 value)
-        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (max 0 value))
+        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value 0 1000))
         "/card-info"  #(resolve-ability %1 %2
                                         {:effect (effect (system-msg (str "shows card-info of "
                                                                           (card-str state target)
@@ -272,14 +277,14 @@
                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/card-info command"}) nil)
         "/clear-win"  clear-win
-        "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
+        "/click"      #(swap! %1 assoc-in [%2 :click] (constrain-value value 0 1000))
         "/close-prompt" command-close-prompt
         "/counter"    #(command-counter %1 %2 args)
-        "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
+        "/credit"     #(swap! %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
         "/discard"    #(toast %1 %2 "/discard number takes the format #n")
         "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
-        "/draw"       #(draw %1 %2 (max 0 value))
+        "/draw"       #(draw %1 %2 (constrain-value value 0 1000))
         "/end-run"    (fn [state side]
                         (when (and (= side :corp)
                                     (:run @state))
@@ -299,7 +304,7 @@
                           (jack-out state side (make-eid state))))
         "/link"       (fn [state side]
                         (when (= side :runner)
-                          (swap! state assoc-in [:runner :link] (max 0 value))))
+                          (swap! state assoc-in [:runner :link] (constrain-value value 0 1000))))
         "/memory"     (fn [state side]
                         (when (= side :runner)
                           (swap! state assoc-in [:runner :memory :used]

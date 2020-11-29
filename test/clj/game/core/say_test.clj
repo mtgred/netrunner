@@ -8,6 +8,83 @@
 
 (deftest chat-commands
 
+  (testing "/adv-counter"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game {:corp {:hand ["Project Beale"]}})
+        (play-from-hand state :corp "Project Beale" "New remote")
+        (let [pb (get-content state :remote1 0)]
+          (is (= 0 (get-counters (refresh pb) :advancement)) "Project Beale starts with 0 counters")
+          (core/command-parser state :corp {:user user :text "/adv-counter 3"})
+          (click-card state :corp "Project Beale")
+          (is (= 3 (get-counters (refresh pb) :advancement)) "Project Beale gained 3 counters")
+          (core/command-parser state :corp {:user user :text "/adv-counter -1"})
+          (click-card state :corp "Project Beale")
+          (is (= 0 (get-counters (refresh pb) :advancement)) "Project Beale gained 0 counters on negative adv")
+          (core/command-parser state :corp {:user user :text "/adv-counter 999999999999999999999999999999999"})
+          (click-card state :corp "Project Beale")
+          (is (= 1000 (get-counters (refresh pb) :advancement)) "Project Beale gained 1000 counters on super large adv")))))
+
+  (testing "/bp"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :corp {:user user :text "/bp 3"})
+        (is (= 3 (count-bad-pub state)) "Should gain 3 bad publicity")
+        (core/command-parser state :corp {:user user :text "/bp -5"})
+        (is (= 0 (count-bad-pub state)) "Should gain 0 bad publicity")
+        (core/command-parser state :corp {:user user :text "/bp 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (count-bad-pub state)) "Should gain 1000 bad publicity"))))
+
+  (testing "/click"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :corp {:user user :text "/click 3"})
+        (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
+        (core/command-parser state :corp {:user user :text "/click -5"})
+        (is (= 0 (:click (get-corp))) "Corp has 0 clicks")
+        (core/command-parser state :corp {:user user :text "/click 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:click (get-corp))) "Corp has 1000 clicks"))))
+
+  (testing "/counter"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game {:corp {:hand ["Project Beale"]}})
+        (play-from-hand state :corp "Project Beale" "New remote")
+        (let [pb (get-content state :remote1 0)]
+          (is (= 0 (get-counters (refresh pb) :advancement)) "Project Beale starts with 0 counters")
+          (core/command-parser state :corp {:user user :text "/counter 3"})
+          (click-card state :corp "Project Beale")
+          (is (= 3 (get-counters (refresh pb) :advancement)) "Project Beale gained 3 counters")
+          (core/command-parser state :corp {:user user :text "/counter -1"})
+          (click-card state :corp "Project Beale")
+          (is (= 0 (get-counters (refresh pb) :advancement)) "Project Beale gained 0 counters on negative adv")
+          (core/command-parser state :corp {:user user :text "/counter 999999999999999999999999999999999"})
+          (click-card state :corp "Project Beale")
+          (is (= 1000 (get-counters (refresh pb) :advancement)) "Project Beale gained 1000 counters on super large adv")))))
+
+  (testing "/credit"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :corp {:user user :text "/credit 3"})
+        (is (= 3 (:credit (get-corp))) "Corp has 3 credits")
+        (core/command-parser state :corp {:user user :text "/credit -5"})
+        (is (= 0 (:credit (get-corp))) "Corp has 0 credits")
+        (core/command-parser state :corp {:user user :text "/credit 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:credit (get-corp))) "Corp has 1000 credits"))))
+
+  (testing "/discard #n"
+    (let [user {:username "Runner"}]
+      (testing "Add card with long title"
+        (do-game
+          (new-game {:runner {:hand ["Cache"]}})
+          (take-credits state :corp)
+          (is (= ["Cache"] (->> (get-runner) :hand (mapv :title))) "Cache should be in hand")
+          (core/command-parser state :runner {:user user :text "/discard #1"})
+          (is (empty? (:hand (get-runner))) "Runner has empty grip")))))
+
   (testing "/end-run"
     (let [user {:username "Corp"}]
       (testing "Ends an active run"
@@ -58,15 +135,47 @@
           (core/command-parser state :corp {:user user :text "/jack-out"})
           (is (:run @state) "Run is still active")))))
 
-  (testing "/discard #n"
+  (testing "/link"
     (let [user {:username "Runner"}]
-      (testing "Add card with long title"
+      (testing "Can increase link"
         (do-game
-          (new-game {:runner {:hand ["Cache"]}})
-          (take-credits state :corp)
-          (is (= ["Cache"] (->> (get-runner) :hand (mapv :title))) "Cache should be in hand")
-          (core/command-parser state :runner {:user user :text "/discard #1"})
-          (is (empty? (:hand (get-runner))) "Runner has empty grip")))))
+          (new-game)
+          (changes-val-macro
+            1 (get-link state)
+            "Link increases by 1"
+            (core/command-parser state :runner {:user user :text "/link 1"}))))
+
+      (testing "/link sizes"
+        (do-game
+          (new-game)
+          (core/command-parser state :runner {:user user :text "/link 3"})
+          (is (= 3 (get-link state)) "runner has 3 link")
+          (core/command-parser state :runner {:user user :text "/link -5"})
+          (is (= 0 (get-link state)) "runner has 0 link")
+          (core/command-parser state :runner {:user user :text "/link 99999999999999999999999999999999999999999999"})
+          (is (= 1000 (get-link state)) "runner has 1000 link")))))
+
+  (testing "/memory"
+      (let [user {:username "Runner"}]
+        (do-game
+          (new-game)
+          (core/command-parser state :runner {:user user :text "/memory 3"})
+          (is (= 3 (:memory (get-runner))) "runner has 3 memory")
+          (core/command-parser state :runner {:user user :text "/memory -5"})
+          (is (= 0 (:memory (get-runner))) "runner has 0 memory")
+          (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
+          (is (= 1000 (:memory (get-runner))) "runner has 1000 memory"))))
+
+  (testing "/roll"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/roll 6"})
+        (is (second-last-log-contains? state "rolls a 6 sided die") "Correct message, reasonable number")
+        (core/command-parser state :runner {:user user :text "/roll -5"})
+        (is (second-last-log-contains? state "rolls a 1 sided die") "Correct message, negative number")
+        (core/command-parser state :runner {:user user :text "/roll 99999999999999999999999999999999999999999999"})
+        (is (second-last-log-contains? state "rolls a 1000 sided die") "Correct message, very large number"))))
 
   (testing "/summon"
     (let [user {:username "Runner"}]
@@ -93,16 +202,6 @@
           (is (empty? (:hand (get-runner))) "Runner starts with empty grip")
           (core/command-parser state :runner {:user user :text "/summon Harmony AR Therapy"})
           (is (= ["Harmony AR Therapy"] (->> (get-runner) :hand (mapv :title))) "Harmony AR Therapy should now be added into hand")))))
-
-  (testing "/link"
-    (let [user {:username "Runner"}]
-      (testing "Can increase link"
-        (do-game
-          (new-game)
-          (changes-val-macro
-            1 (get-link state)
-            "Link increases by 1"
-            (core/command-parser state :runner {:user user :text "/link 1"}))))))
 
   (testing "/unique"
     (let [user {:username "Runner"}]
