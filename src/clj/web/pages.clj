@@ -6,6 +6,7 @@
             [monger.collection :as mc]
             [monger.operators :refer :all]
             [monger.result :refer [acknowledged?]]
+            [ring.middleware.anti-forgery :as anti-forgery]
             [web.db :refer [db object-id]]
             [web.config :refer [server-config]]
             [web.utils :refer [response]]))
@@ -32,6 +33,8 @@
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
      (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
+     (when user
+        [:div#sente-csrf-token {:data-csrf-token anti-forgery/*anti-forgery-token*}])
      [:script {:type "text/javascript"}
       (str "var user=" (json/generate-string user) ";")]
 
