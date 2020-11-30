@@ -92,7 +92,7 @@
 (defroutes routes
   (wrap-routes private-routes wrap-anti-forgery)
   (wrap-routes public-CSRF-routes wrap-anti-forgery)
-  public-routes wrap-anti-forgery)
+  public-routes)
 
 (defn wrap-return-favicon [handler]
   (fn [req]
