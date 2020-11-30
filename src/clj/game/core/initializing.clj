@@ -20,10 +20,11 @@
 (defn subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [card cdef]
-  (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines
-       (into [])))
+  (let [no-subs-card (dissoc card :subroutines)]
+    (->> (:subroutines cdef)
+         (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) no-subs-card)
+         :subroutines
+         (into []))))
 
 (defn ability-init
   "Gets abilities associated with the card"
@@ -40,7 +41,7 @@
                   :current-strength :current-advancement-requirement :current-points
                   :runner-abilities :corp-abilities :rezzed :new
                   :added-virus-counter :subtype-target :server-target :extra-advance-counter)
-        c (assoc c :abilities (ability-init cdef) :special nil)
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
     c))
 
