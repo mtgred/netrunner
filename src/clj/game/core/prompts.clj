@@ -54,7 +54,7 @@
    (let [dice-msg "Roll a d6",
          choices (conj other-choices dice-msg)]
      (show-prompt state side card message choices
-                  #(if (not= % dice-msg)
+                  #(if (not= (:value %) dice-msg)
                      (f %)
                      (show-prompt state side card
                                   (str message " (Dice result: " (inc (rand-int 6)) ")")

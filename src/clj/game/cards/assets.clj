@@ -980,7 +980,7 @@
                {:label "Shuffle up to 3 cards from Archives into R&D"
                 :cost [:remove-from-game]
                 :async true
-                :effect (effect (shuffle-into-rd-effect card eid 3))}]})
+                :effect (effect (shuffle-into-rd-effect eid card 3))}]})
 
 (defcard "Jeeves Model Bioroids"
   (let [ability {:label "Gain [Click]"

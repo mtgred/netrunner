@@ -34,38 +34,39 @@
 
 (defonce server (atom nil))
 
-
 (defn stop-server! []
   (when-not (nil? @server)
     (@server :timeout 100)
     (reset! server nil)))
 
+(defn load-data []
+  (web.db/connect)
+  (let [cards (mc/find-maps db "cards" nil)
+        all-cards (into {} (map (juxt :title identity) cards))
+        sets (mc/find-maps db "sets" nil)
+        cycles (mc/find-maps db "cycles" nil)
+        mwl (mc/find-maps db "mwls" nil)
+        latest-mwl (->> mwl
+                        (filter #(= "standard" (:format %)))
+                        (map (fn [e] (update e :date-start #(f/parse (f/formatters :date) %))))
+                        (sort-by :date-start)
+                        last)
+        ;; Gotta turn the card names back to strings
+        latest-mwl (assoc latest-mwl
+                          :cards
+                          (reduce-kv (fn [m k v]
+                                       (assoc m (name k) v))
+                                     {}
+                                     (:cards latest-mwl)))
+        ]
+    (reset! cards/all-cards all-cards)
+    (reset! cards/sets sets)
+    (reset! cards/cycles cycles)
+    (reset! cards/mwl latest-mwl)))
+
 (defn -main [& args]
   (let [port (or (-> server-config :web :port) 4141)]
-    (web.db/connect)
-    (let [cards (mc/find-maps db "cards" nil)
-          all-cards (into {} (map (juxt :title identity) cards))
-          sets (mc/find-maps db "sets" nil)
-          cycles (mc/find-maps db "cycles" nil)
-          mwl (mc/find-maps db "mwls" nil)
-          latest-mwl (->> mwl
-                          (filter #(= "standard" (:format %)))
-                          (map (fn [e] (update e :date-start #(f/parse (f/formatters :date) %))))
-                          (sort-by :date-start)
-                          last)
-          ;; Gotta turn the card names back to strings
-          latest-mwl (assoc latest-mwl
-                            :cards
-                            (reduce-kv (fn [m k v]
-                                         (assoc m (name k) v))
-                                       {}
-                                       (:cards latest-mwl)))
-          ]
-      (reset! cards/all-cards all-cards)
-      (reset! cards/sets sets)
-      (reset! cards/cycles cycles)
-      (reset! cards/mwl latest-mwl))
-
+    (load-data)
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))
 

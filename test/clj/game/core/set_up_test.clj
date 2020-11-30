@@ -27,7 +27,9 @@
         (new-game setup)
         (let [corp-hand (:hand (get-corp))]
           (click-prompt state :corp "Mulligan")
+          (is (not (identical? corp-hand (:hand (get-corp)))))
           (is (last-log-contains? state "Corp takes a mulligan")))
         (let [runner-hand (:hand (get-runner))]
           (click-prompt state :runner "Mulligan")
+          (is (not (identical? runner-hand (:hand (get-runner)))))
           (is (last-log-contains? state "Runner takes a mulligan")))))))

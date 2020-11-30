@@ -1764,6 +1764,29 @@
           (click-card state :corp (get-in (get-corp) [:scored 0]))
           (click-card state :corp iwall)
           (is (= 4 (get-counters (refresh iwall) :advancement)) "Jemison placed 4 advancements")))))
+  (testing "Gene Splicer"
+    (do-game
+      (new-game {:corp {:id "Jemison Astronautics: Sacrifice. Audacity. Success."
+                        :deck ["Ice Wall" "Archer" "Gene Splicer"]
+                        :credits 10}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Archer" "HQ")
+      (play-from-hand state :corp "Gene Splicer" "New remote")
+      (let [gs (get-content state :remote1 0)
+            arch (get-ice state :hq 0)
+            iwall (get-ice state :rd 0)]
+        (core/add-counter state :corp gs :advancement 3)
+        (rez state :corp (refresh gs))
+        (card-ability state :corp (refresh gs) 0)
+        (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+        (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area")
+        (rez state :corp arch)
+        (click-card state :corp (get-in (get-corp) [:scored 0]))
+        (is (zero? (:agenda-point (get-corp))) "Gene Splicer agenda points removed")
+        (is (= "Gene Splicer" (-> (get-corp) :rfg first :title)) "Gene Splicer should be removed from game")
+        (click-card state :corp iwall)
+        (is (= 2 (get-counters (refresh iwall) :advancement)) "Jemison placed 2 advancements"))))
   (testing "24/7 - Armed Intimidation combination"
     ;; Expected result: 24/7 causes Forfeit, Jemison places counters, AI triggers
     (do-game

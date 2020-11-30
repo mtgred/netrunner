@@ -106,7 +106,7 @@
   (defn refresh-lobby
     [gameid game]
     (swap! all-games assoc gameid game)
-    (swap! public-lobby-updates assoc-in [:update gameid] (game-public-view gameid game))
+    (swap! public-lobby-updates assoc-in [:update gameid] (game-internal-view game game))
     (send-lobby))
 
   (defn reset-send-lobby
@@ -171,9 +171,9 @@
   [client-id gameid]
   (when-let [{:keys [players started state] :as game} (game-for-id gameid)]
     (cond (player? client-id game)
-          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (= client-id (:ws-id p))) %))
+          (refresh-lobby-update-in gameid [:players] #(remove-once (fn [p] (= client-id (:ws-id p))) %))
           (spectator? client-id game)
-          (do 
+          (do
             (refresh-lobby-update-in gameid [:spectator-count] dec)
             (refresh-lobby-update-in gameid [:spectators] #(remove-once (fn [p] (= client-id (:ws-id p))) %))))
 
@@ -319,12 +319,13 @@
     (when (and user game (allowed-in-game game user))
       (if (or (empty? game-password)
               (bcrypt/check password game-password))
-        (do (join-game user client-id gameid)
+        (do
+            (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
+            (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
+            (join-game user client-id gameid)
             (lobby-say gameid {:user "__system__"
                                :text (str username " joined the game.")})
             (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
-            (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
-            (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
             (when reply-fn (reply-fn 200)))
         (when reply-fn (reply-fn 403))))
     (when reply-fn (reply-fn 404))))
@@ -344,12 +345,12 @@
                  (or (empty? game-password)
                      (bcrypt/check password game-password)))
           (do 
+              (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
+              (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
               (spectate-game user client-id gameid)
               (lobby-say gameid {:user "__system__"
                                  :text (str username " joined the game as a spectator.")})
-              (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
               (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
-              (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid :started started})
               (when reply-fn (reply-fn 200))
               true)
           (when reply-fn
@@ -395,6 +396,26 @@
                     :first-player player-name
                     :date (java.util.Date.)})))))
 
+(defn handle-delete-game
+  [{{{:keys [username isadmin ismoderator] :as user} :user} :ring-req
+    client-id                                     :client-id
+    {:keys [gameid]} :?data :as event}]
+  (when-let [game (game-for-id gameid)]
+    (when (and username
+               (or isadmin ismoderator))
+      (let [player-name (:username (:user (first (:players game))))
+            clientids (lobby-clients gameid)]
+        (doseq [client-id clientids]
+          (swap! client-gameids dissoc client-id))
+        (close-lobby game)
+        (ws/broadcast-to! clientids :lobby/timeout {:gameid gameid})
+        (mc/insert db log-collection
+                   {:moderator username
+                    :action :delete-game
+                    :game-name (:title game)
+                    :first-player player-name
+                    :date (java.util.Date.)})))))
+
 (ws/register-ws-handlers!
   :chsk/uidport-open #'handle-lobby-list
   :lobby/list #'handle-lobby-list
@@ -405,4 +426,5 @@
   :lobby/say #'handle-lobby-say
   :lobby/swap #'handle-swap-sides
   :lobby/deck #'handle-select-deck
-  :lobby/rename-game #'handle-rename-game)
+  :lobby/rename-game #'handle-rename-game
+  :lobby/delete-game #'handle-delete-game)

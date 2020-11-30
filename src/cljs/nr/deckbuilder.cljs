@@ -184,9 +184,18 @@
     ;; lookup each card and replace title with cardmap
     (map #(assoc % :card (lookup side (assoc % :title (:card %)))) card-list)))
 
+(defn process-cards-in-deck
+  "Process the raw deck from the database into a more useful format"
+  [deck]
+  (if (:parsed? deck)
+    deck
+    (let [cards (lookup-deck (:side (:identity deck)) (:cards deck))]
+      (assoc deck :cards cards :parsed? true))))
+
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)]
-    (swap! app-state assoc :decks decks)
+  (let [decks (sort-by :date > decks)
+        updated-decks (map process-cards-in-deck decks)]
+    (swap! app-state assoc :decks updated-decks)
     (swap! app-state assoc :decks-loaded true)))
 
 (defn- add-deck-name
@@ -236,8 +245,12 @@
   (-> (:viewport @db-dom) js/$ (.removeClass "edit")))
 
 (defn cancel-edit [s]
-  (end-edit s)
-  (put! select-channel (:old-deck @s)))
+  (let [deck (:deck @s)
+        decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
+        selected (or (:old-deck @s) (first decks))]
+    (end-edit s)
+    (load-decks decks)
+    (put! select-channel selected)))
 
 (defn delete-deck [s]
   (swap! s assoc :delete true)
@@ -248,14 +261,6 @@
 (defn end-delete [s]
   (swap! s assoc :delete false)
   (-> (:viewport @db-dom) js/$ (.removeClass "delete")))
-
-(defn process-cards-in-deck
-  "Process the raw deck from the database into a more useful format"
-  [deck]
-  (if (:parsed? deck)
-    deck
-    (let [cards (lookup-deck (:side (:identity deck)) (:cards deck))]
-      (assoc deck :cards cards :parsed? true))))
 
 (defn set-deck-on-state
   [s deck]
@@ -796,15 +801,15 @@
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
    [edit-textbox s]])
 
-(defn collection-buttons [s user]
+(defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" @user #(new-deck s "Corp")]
-   [cond-button "New Runner deck" @user #(new-deck s "Runner")]])
+   [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
 
 (defn list-panel
   [s user decks decks-loaded]
   [:div.decks
-   [collection-buttons s user]
+   [collection-buttons s user decks-loaded]
    [deck-collection s decks decks-loaded]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]

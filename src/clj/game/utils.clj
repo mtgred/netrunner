@@ -13,10 +13,7 @@
   (let [card (get @all-cards title)]
     (if (and title card)
       card
-      (.println *err* (with-out-str
-                        (print-stack-trace
-                          (Exception. (str "Tried to select server-card for " title))
-                          2500))))))
+      (throw (Exception. (str "Tried to select server-card for " title))))))
 
 (defn server-cards
   []

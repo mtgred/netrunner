@@ -61,6 +61,11 @@
               "ga('send', 'pageview');"]))]))
 
 
+(defn- version-string []
+  (if-let [config (mc/find-one-as-map db "config" nil)]
+      (:version config "0.0")
+      "0.0"))
+
 (defn index-page [req]
   (layout
     req
@@ -77,7 +82,8 @@
         [:div.container
          [:h1 "Play Android: Netrunner in your browser"]
          [:div#news]
-         [:div#chat]]]
+         [:div#chat]]
+        [:div#version [:span (str "Version " (version-string))]]]
        [:div.item
         [:div.cardbrowser-bg]
         [:div#cardbrowser]]

@@ -100,7 +100,7 @@
                   (let [cards (map :card (vals selected-cards))]
                     (wait-for (trigger-spend-credits-from-cards state side cards)
                               ; Now we trigger all of the :counter-added events we'd neglected previously
-                              (pick-counter-triggers state side eid selected-cards selected-cards counter-count message))))
+                              (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
                 (continue-ability
                   state side
                   (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)

@@ -1031,7 +1031,7 @@
 (defcard "Datapike"
   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
                   :async true
-                  :effect (req (wait-for (pay :runner card :credit 2)
+                  :effect (req (wait-for (pay state :runner card :credit 2)
                                          (when-let [payment-str (:msg async-result)]
                                            (system-msg state :runner payment-str))
                                          (effect-completed state side eid)))}
@@ -3118,10 +3118,10 @@
 (defcard "Tollbooth"
   {:on-encounter {:async true
                   :effect (req (wait-for (pay state :runner card [:credit 3])
-                                         (if-let [payment-str (:msg async-result)]
-                                           (do (system-msg state :corp "uses Tollbooth to force the Runner to " payment-str)
+                                         (if (:cost-paid async-result)
+                                           (do (system-msg state :runner (str (:msg async-result) " when encountering Tollbooth"))
                                                (effect-completed state side eid))
-                                           (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
+                                           (do (system-msg state :runner "ends the run, as the Runner can't pay 3 [Credits] when encountering Tollbooth")
                                                (end-run state :corp eid card)))))}
    :subroutines [end-the-run]})
 

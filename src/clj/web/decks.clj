@@ -7,6 +7,7 @@
             [web.config :refer [server-config]]
             [crypto.password.pbkdf2 :as pbkdf2]
             [jinteki.cards :refer [all-cards]]
+            [jinteki.utils :refer [slugify]]
             [jinteki.validator :refer [calculate-deck-status]]))
 
 
@@ -33,6 +34,11 @@
              :status status
              :hash deck-hash)))
 
+(defn make-salt
+  [deck-name]
+  (let [salt (byte-array (map byte (slugify deck-name)))]
+    (if (empty? salt) (byte-array (map byte "default-salt")) salt)))
+
 (defn hash-deck
   [deck]
   (let [check-deck (-> deck
@@ -43,7 +49,7 @@
         decklist (s/join (for [entry sorted-cards]
                            (str (:qty entry) (:code (:card entry)))))
         deckstr (str id decklist)
-        salt (byte-array (map byte (:name deck)))]
+        salt (make-salt (:name deck))]
     (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
 (defn decks-create-handler [{{username :username} :user
@@ -89,8 +95,12 @@
 
 (defn decks-delete-handler [{{username :username} :user
                              {id :id}             :params}]
-  (if (and username id)
-    (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
-      (response 200 {:message "Deleted"})
-      (response 403 {:message "Forbidden"}))
-    (response 401 {:message "Unauthorized"})))
+  (try
+    (if (and username id)
+      (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
+        (response 200 {:message "Deleted"})
+        (response 403 {:message "Forbidden"}))
+      (response 401 {:message "Unauthorized"}))
+    (catch Exception ex
+      ;; Deleting a deck that was never saved throws an exception
+      (response 409 {:message "Unknown deck id"}))))

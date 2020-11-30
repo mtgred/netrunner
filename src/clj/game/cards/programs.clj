@@ -56,7 +56,7 @@
                            :player :runner
                            :prompt (str "Install " title "?")
                            :yes-ability {:async true
-                                         :effect (effect (runner-install :runner eid card nil))}
+                                         :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
                            ;; Add a register to note that the player was already asked about installing,
                            ;; to prevent multiple copies from prompting multiple times.
                            :no-ability {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}}}
@@ -650,7 +650,7 @@
    :events [{:event :encounter-ice
              :req (req (same-card? (:ice context) (:host card)))
              :async true
-             :effect (req (if (pos? (get-strength (:ice context)))
+             :effect (req (if (pos? (ice-strength state side (:ice context)))
                             (do (system-msg state side "places 1 virus counter on Chisel")
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
@@ -1321,18 +1321,14 @@
                                                    (remove #(= (:index %) (:index target))))]
                               (break-subroutines-msg current-ice broken-subs card)))
                   :async true
-                  :effect (req (let [subroutines (:subroutines current-ice)
-                                     available (filter #(and (not (:broken %))
-                                                            (= target (make-label (:sub-effect %))))
-                                                      subroutines)
-                                     selected (nth available (:idx (first targets)))]
-                                 (let [subs-to-break (remove #(= (:index %) (:index selected)) subroutines)]
-                                   (break-subs state current-ice subs-to-break)
-                                   (let [ice (get-card state current-ice)
-                                         on-break-subs (when ice (:on-break-subs (card-def ice)))
-                                         event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
-                                     (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
-                                               (effect-completed state side eid))))))}]}))
+                  :effect (req (let [selected (:idx (first targets))
+                                     subs-to-break (remove #(= (:index %) selected) (:subroutines current-ice))]
+                                 (break-subs state current-ice subs-to-break)
+                                 (let [ice (get-card state current-ice)
+                                       on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                       event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                   (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                                             (effect-completed state side eid)))))}]}))
 
 (defcard "Gravedigger"
   (let [e {:req (req (and (installed? (:card target))
@@ -1632,8 +1628,7 @@
                                  :cost [:x-credits]
                                  :req (req (:runner-phase-12 @state))
                                  :async true
-                                 :effect (effect (add-counter card :power (cost-value eid :x-credits))
-                                                 (lose-credits eid (cost-value eid :x-credits)))
+                                 :effect (effect (add-counter card :power (cost-value eid :x-credits)))
                                  :msg (msg "place " (cost-value eid :x-credits) " power counters on it")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
@@ -1865,17 +1860,18 @@
                             :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
                             :subroutines-changed]]
                  (assoc heap-breaker-auto-pump-and-break :event event))
-        cdef (install-from-heap "Paperclip" "Barrier"
-                                [{:label "+X strength, break X subroutines"
-                                  :cost [:x-credits]
-                                  :heap-breaker-pump :x ; strength gained
-                                  :heap-breaker-break :x ; number of subs broken
-                                  :effect (effect (continue-ability
-                                                    (pump-and-break [:credit (cost-value eid :x-credits)]
-                                                                    (cost-value eid :x-credits)
-                                                                    "Barrier")
-                                                    card nil))}])]
-    (assoc cdef :events (apply conj events (:events cdef)))))
+        cdef (install-from-heap "Paperclip" "Barrier" [])
+        abilities [{:label "+X strength, break X subroutines"
+                    :cost [:x-credits]
+                    :heap-breaker-pump :x ; strength gained
+                    :heap-breaker-break :x ; number of subs broken
+                    :effect (effect (pump card (cost-value eid :x-credits))
+                                    (continue-ability
+                                      (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
+                                      (get-card state card) nil))
+                    :msg (msg "increase its strength from " (get-strength card)
+                              " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
+    (assoc cdef :events (apply conj events (:events cdef)) :abilities abilities)))
 
 (defcard "Parasite"
   {:hosting {:card #(and (ice? %)
@@ -2295,19 +2291,19 @@
   {:abilities [{:cost [:click 1]
                 :msg "make a run on Archives"
                 :makes-run true
-                :effect (effect (update! (assoc-in card [:special :sneakdoor] true))
-                                (make-run :archives nil (get-card state card)))}]
-   :events [{:event :pre-successful-run
-             :interactive (req true)
-             :req (req (and (get-in card [:special :sneakdoor])
-                            (= :archives (-> run :server first))))
-             :effect (req (swap! state update-in [:runner :register :successful-run] next)
-                          (swap! state assoc-in [:run :server] [:hq])
-                          (trigger-event state :corp :no-action)
-                          (swap! state update-in [:runner :register :successful-run] conj :hq)
-                          (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}
-            {:event :run-ends
-             :effect (effect (update! (dissoc-in card [:special :sneakdoor])))}]})
+                :effect (effect (register-events
+                                  card
+                                  [{:event :pre-successful-run
+                                    :duration :run-ends
+                                    :unregister-once-resolved true
+                                    :interactive (req true)
+                                    :req (req (= :archives (-> run :server first)))
+                                    :effect (req (swap! state update-in [:runner :register :successful-run] next)
+                                                 (swap! state assoc-in [:run :server] [:hq])
+                                                 (trigger-event state :corp :no-action)
+                                                 (swap! state update-in [:runner :register :successful-run] conj :hq)
+                                                 (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}])
+                                (make-run :archives nil (get-card state card)))}]})
 
 (defcard "Snitch"
   {:events [{:event :approach-ice
@@ -2549,10 +2545,12 @@
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
                                    ; no break-req to not enable auto-pumping
+                                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                             " on " (card-str state current-ice))
                                    :effect (effect
                                              (continue-ability
                                                (when (pos? (cost-value eid :x-credits))
-                                                 (break-sub (cost-value eid :x-credits) (cost-value eid :x-credits) "Code Gate"))
+                                                 (break-sub nil (cost-value eid :x-credits) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")

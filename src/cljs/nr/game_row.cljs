@@ -34,6 +34,12 @@
     (fn [user]
       (ws/ws-send! [:lobby/rename-game {:gameid gameid}]))))
 
+(defn- delete-game
+  [gameid]
+  (authenticated
+    (fn [user]
+      (ws/ws-send! [:lobby/delete-game {:gameid gameid}]))))
+
 (defn game-row
   [{:keys [title format room password started players gameid current-game
            password-game original-players editing] :as game}]
@@ -93,6 +99,8 @@
        [:div.panel.blue-shade.mod-menu
         [:div {:on-click #(do (reset-game-name gameid)
                               (swap! s assoc :show-mod-menu false))} "Reset Game Name"]
+        [:div {:on-click #(do (delete-game gameid)
+                              (swap! s assoc :show-mod-menu false))} "Delete Game"]
         [:div {:on-click #(swap! s assoc :show-mod-menu false)} "Cancel"]])
 
      [:div {:class "game-format"}
