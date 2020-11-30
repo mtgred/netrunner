@@ -45,7 +45,13 @@
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid optional] :as ability} card targets]
   (if (can-trigger? state side eid optional card targets)
-    (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
+    (resolve-ability
+      state side
+      (-> ability
+          (dissoc :optional :once :req)
+          (assoc :async true
+                 :effect (req (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
+      card targets)
     (effect-completed state side eid)))
 
 (register-ability-type :optional check-optional)

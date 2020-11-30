@@ -757,9 +757,9 @@
 
 (defcard "Letheia Nisei"
   {:events [{:event :approach-server
-             :once :per-run
-             :req (req this-server)
-             :psi {:not-equal
+             :psi {:req (req this-server)
+                   :once :per-run
+                   :not-equal
                    {:optional
                     {:waiting-prompt "Corp to use Letheia Nisei"
                      :prompt "Trash to force re-approach outer ice?"
@@ -802,14 +802,15 @@
              :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]})
 
 (defcard "Marcus Batty"
-  {:abilities [{:req (req this-server)
-                :label "Start a Psi game to resolve a subroutine"
+  {:abilities [{:label "Start a Psi game to resolve a subroutine"
                 :cost [:trash]
-                :psi {:not-equal
+                :psi {:req (req this-server)
+                      :not-equal
                       {:prompt "Select the ice"
                        :choices {:card #(and (ice? %)
                                              (rezzed? %))
                                  :all true}
+                       :async true
                        :effect (effect
                                  (continue-ability
                                    (let [ice target]
@@ -817,6 +818,7 @@
                                       :choices (req (unbroken-subroutines-choice ice))
                                       :msg (msg "resolve the subroutine (\"[subroutine] "
                                                                                         target "\") from " (:title ice))
+                                      :async true
                                       :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
                                                      (continue-ability state side (:sub-effect sub) ice nil)))})
                                    card nil))}}}]})

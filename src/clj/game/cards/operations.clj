@@ -1026,8 +1026,9 @@
    :msg (msg "choose " target)
    :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))
    :events [{:event :successful-run
-             :req (req (= (zone->name (get-in @state [:run :server])) (get-in card [:special :hyoubu-precog-target])))
-             :psi {:not-equal {:msg "end the run"
+             :psi {:req (req (= (zone->name (get-in @state [:run :server]))
+                                (get-in card [:special :hyoubu-precog-target])))
+                   :not-equal {:msg "end the run"
                                :async true
                                :effect (effect (end-run eid card))}}}
             {:event :corp-turn-begins
@@ -2338,8 +2339,8 @@
                           (draw state side eid 4 nil)))})
 
 (defcard "Voter Intimidation"
-  {:req (req (seq (:scored runner)))
-   :psi {:not-equal {:player :corp
+  {:psi {:req (req (seq (:scored runner)))
+         :not-equal {:player :corp
                      :async true
                      :prompt "Select a resource to trash"
                      :choices {:card #(and (installed? %)
