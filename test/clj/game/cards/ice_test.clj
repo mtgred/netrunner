@@ -1797,6 +1797,34 @@
         (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
         (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
 
+(deftest hive
+  ;; Hive - 5x ETR. Lose an ETR for each agenda point in corp's score area
+  (do-game
+    (new-game {:corp {:hand ["Hive" "Hostile Takeover" "Rebranding Team" "Government Takeover"]
+                      :credits 50}})
+    (core/gain state :corp :click 20)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Rebranding Team" "New remote")
+    (play-from-hand state :corp "Government Takeover" "New remote")
+    (play-from-hand state :corp "Hive" "HQ")
+    (let [ht (get-content state :remote1 0)
+          rt (get-content state :remote2 0)
+          gt (get-content state :remote3 0)
+          hive (get-ice state :hq 0)]
+      (rez state :corp hive)
+      (is (= 5 (count (:subroutines (refresh hive)))) "Starts with 5 subs")
+      (score-agenda state :corp ht)
+      (click-prompt state :corp "Hive")
+      (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored for 1 agenda point")
+      (is (= 4 (count (:subroutines (refresh hive)))) "Loses one sub for scoring Hostile Takeover")
+      (score-agenda state :corp rt)
+      (click-prompt state :corp "Hive")
+      (is (= 3 (:agenda-point (get-corp))) "Rebranding Team scored for 2 agenda points")
+      (is (= 2 (count (:subroutines (refresh hive)))) "Loses two more subs")
+      (score-agenda state :corp gt)
+      (is (= 9 (:agenda-point (get-corp))) "Government Takeover scored for 6 agenda points")
+      (is (= 0 (count (:subroutines (refresh hive)))) "Hive has lost all subs"))))
+
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
   (do-game
