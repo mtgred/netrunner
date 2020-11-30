@@ -34,7 +34,7 @@
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
      (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
      (when user
-        [:div#sente-csrf-token {:data-csrf-token anti-forgery/*anti-forgery-token*}])
+      [:div#sente-csrf-token {:data-csrf-token anti-forgery/*anti-forgery-token*}])
      [:script {:type "text/javascript"}
       (str "var user=" (json/generate-string user) ";")]
 
