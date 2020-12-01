@@ -750,7 +750,7 @@
 
 (defcard "Cell Portal"
   {:subroutines [{:msg "make the Runner approach the outermost ICE"
-                  :effect (req (let [server (central->name (target-server run))]
+                  :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
                                  (derez state side card)))}]})
 
