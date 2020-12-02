@@ -32,7 +32,7 @@
         (core/command-parser state :corp {:user user :text "/bp 3"})
         (is (= 3 (count-bad-pub state)) "Should gain 3 bad publicity")
         (core/command-parser state :corp {:user user :text "/bp -5"})
-        (is (= 0 (count-bad-pub state)) "Should gain 0 bad publicity")
+        (is (= -5 (count-bad-pub state)) "Should gain -5 bad publicity")
         (core/command-parser state :corp {:user user :text "/bp 99999999999999999999999999999999999999999999"})
         (is (= 1000 (count-bad-pub state)) "Should gain 1000 bad publicity"))))
 
@@ -160,11 +160,11 @@
         (do-game
           (new-game)
           (core/command-parser state :runner {:user user :text "/memory 3"})
-          (is (= 3 (:memory (get-runner))) "runner has 3 memory")
+          (is (= 3 (:used (:memory (get-runner)))) "runner has 3 memory")
           (core/command-parser state :runner {:user user :text "/memory -5"})
-          (is (= 0 (:memory (get-runner))) "runner has 0 memory")
+          (is (= -5 (:used (:memory (get-runner)))) "runner has -5 memory")
           (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
-          (is (= 1000 (:memory (get-runner))) "runner has 1000 memory"))))
+          (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
 
   (testing "/roll"
     (let [user {:username "Corp"}]
@@ -202,6 +202,39 @@
           (is (empty? (:hand (get-runner))) "Runner starts with empty grip")
           (core/command-parser state :runner {:user user :text "/summon Harmony AR Therapy"})
           (is (= ["Harmony AR Therapy"] (->> (get-runner) :hand (mapv :title))) "Harmony AR Therapy should now be added into hand")))))
+
+  (testing "/tag"
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/tag 3"})
+        (is (= 3 (:base (:tag (get-runner)))) "Runner has 3 tags")
+        (core/command-parser state :runner {:user user :text "/tag -5"})
+        (is (= 0 (:base (:tag (get-runner)))) "Runner has 0 tags")
+        (core/command-parser state :runner {:user user :text "/tag 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:base (:tag (get-runner)))) "Runner has 1000 tags"))))
+
+  (testing "/take-brain"
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/take-brain 3"})
+        (is (= 3 (:brain-damage (get-runner))) "Runner gains 3 brain")
+        (core/command-parser state :runner {:user user :text "/take-brain -5"})
+        (is (= 3 (:brain-damage (get-runner))) "Runner gains 0 brain")
+        (core/command-parser state :runner {:user user :text "/take-brain 99999999999999999999999999999999999999999999"})
+        (is (= 1003 (:brain-damage (get-runner))) "Runner gains 1000 brain"))))
+
+  (testing "/trace"
+    (let [user {:username "Corp"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :corp {:user user :text "/trace 6"})
+        (is (= 6 (:base (prompt-map :corp))) "Base trace should now be 6")
+        (core/command-parser state :corp {:user user :text "/trace -5"})
+        (is (= -5 (:base (prompt-map :corp))) "Base trace should now be -5")
+        (core/command-parser state :corp {:user user :text "/trace 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:base (prompt-map :corp))) "Base trace should now be 1000"))))
 
   (testing "/unique"
     (let [user {:username "Runner"}]

@@ -269,7 +269,7 @@
         nil)
       (case command
         "/adv-counter" #(command-adv-counter %1 %2 value)
-        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value 0 1000))
+        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value -1000 1000))
         "/card-info"  #(resolve-ability %1 %2
                                         {:effect (effect (system-msg (str "shows card-info of "
                                                                           (card-str state target)
@@ -295,7 +295,7 @@
                          %1 %2 nil
                          {:type :user-hand-size
                           :req (req (= %2 side))
-                          :value (req (- value (get-in @%1 [%2 :hand-size :base])))})
+                          :value (req (- (constrain-value value -1000 1000) (get-in @%1 [%2 :hand-size :base])))})
         "/host"       command-host
         "/install-ice" command-install-ice
         "/jack-out"   (fn [state side]
@@ -307,10 +307,7 @@
                           (swap! state assoc-in [:runner :link] (constrain-value value 0 1000))))
         "/memory"     (fn [state side]
                         (when (= side :runner)
-                          (swap! state assoc-in [:runner :memory :used]
-                                  (- (+ (get-in @state [:runner :memory :base])
-                                        (get-in @state [:runner :memory :mod]))
-                                    value))))
+                          (swap! state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
         "/move-bottom"  #(resolve-ability %1 %2
                                           {:prompt "Select a card in hand to put on the bottom of your deck"
                                             :effect (effect (move target :deck))
@@ -370,16 +367,16 @@
                                                               (not (ice? c))))}
                                 :effect (effect (swap-installed (first targets) (second targets)))}
                                 (map->Card {:title "/swap-installed command"}) nil))
-        "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
-        "/take-brain" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (max 0 value)
+        "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
+        "/take-brain" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
-        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (max 0 value)
+        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
-        "/take-net"   #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :net   (max 0 value)
+        "/take-net"   #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :net   (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
         "/trace"      #(when (= %2 :corp) (init-trace %1 %2
                                                       (map->Card {:title "/trace command" :side %2})
-                                                      {:base (max 0 value)
+                                                      {:base (constrain-value value -1000 1000)
                                                         :msg "resolve successful trace effect"}))
         "/trash"      command-trash
         "/undo-click" #(command-undo-click %1 %2)
