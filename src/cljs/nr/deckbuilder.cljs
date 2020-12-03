@@ -4,7 +4,7 @@
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
             [goog.string :as gstring]
             [goog.string.format]
-            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.cards :refer [all-cards identity-cards] :as cards]
             [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
             [nr.account :refer [load-alt-arts]]
@@ -63,35 +63,30 @@
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
-  (let [q (lower-case (:title card ""))
-        id (:id card)
+  (let [id (:id card)
         cards (filter #(= (:side %) side) @all-cards)
-        exact-matches (filter-exact-title q cards)
         first-id (first (filter #(= id (:code %)) cards))]
-    (cond
-
-      (and id first-id)
+    (if (and id first-id)
       first-id
+      (let [q (lower-case (:title card ""))
+            exact-matches (filter-exact-title q cards)]
+        (if (not-empty exact-matches)
+          (take-best-card exact-matches)
+          (loop [i 2
+                 matches cards]
+            (let [subquery (subs q 0 i)]
+              (cond
+                (zero? (count matches))
+                card
 
-      (not-empty exact-matches)
-      (take-best-card exact-matches)
+                (or (= (count matches) 1) (identical-cards? matches))
+                (take-best-card matches)
 
-      :else
-      (loop [i 2
-             matches cards]
-        (let [subquery (subs q 0 i)]
-          (cond
-            (zero? (count matches))
-            card
+                (<= i (count (:title card)))
+                (recur (inc i) (filter-title subquery matches))
 
-            (or (= (count matches) 1) (identical-cards? matches))
-            (take-best-card matches)
-
-            (<= i (count (:title card)))
-            (recur (inc i) (filter-title subquery matches))
-
-            :else
-            card))))))
+                :else
+                card))))))))
 
 (defn- build-identity-name
   [title setname]
@@ -99,12 +94,19 @@
     (str title " (" setname ")")
     title))
 
+(defn lookup-identity
+  "Find an identity card from the card code or title"
+  [side card]
+  (if-let [ident (first (filter #(= (:code card) (:code %)) @identity-cards))]
+    ident
+    (lookup side card)))
+
 (defn parse-identity
   "Parse an id to the corresponding card map"
-  [{:keys [side title setname]}]
+  [{:keys [side title setname code]}]
   (if (nil? title)
     {:display-name "Missing Identity"}
-    (let [card (lookup side {:title title})]
+    (let [card (lookup-identity side {:title title :code code})]
       (assoc card :display-name (build-identity-name title setname)))))
 
 (defn add-params-to-card

@@ -6,6 +6,9 @@
 (defonce all-cards #?(:clj (atom {})
                       :cljs (r/atom {})))
 
+(defonce identity-cards #?(:clj (atom {})
+                           :cljs (r/atom {})))
+
 (defonce mwl (atom []))
 
 (defonce sets (atom []))
