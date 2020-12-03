@@ -193,9 +193,8 @@
       (assoc deck :cards cards :parsed? true))))
 
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)
-        updated-decks (map process-cards-in-deck decks)]
-    (swap! app-state assoc :decks updated-decks)
+  (let [decks (sort-by :date > decks)]
+    (swap! app-state assoc :decks decks)
     (swap! app-state assoc :decks-loaded true)))
 
 (defn- add-deck-name
