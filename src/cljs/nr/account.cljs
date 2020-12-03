@@ -242,7 +242,6 @@
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
           [:h3 "Pronouns"]
           [:select {:value (:pronouns @s "none")
-                    :default-value "none"
                     :on-change #(swap! s assoc :pronouns (.. % -target -value))}
            (doall
              (for [option [{:name "Unspecified" :ref "none"}
@@ -250,7 +249,7 @@
                            {:name "She/her" :ref "she"}
                            {:name "He/him" :ref "he"}
                            {:name "Any" :ref "any"}]]
-               [:option {:value (:ref option)} (:name option)]))]]
+               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
          [:section
           [:h3 "Sounds"]
           [:div
