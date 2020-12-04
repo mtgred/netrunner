@@ -2057,18 +2057,31 @@
 
 (deftest hostile-infrastructure
   ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
-  (do-game
-    (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}})
-    (core/gain state :runner :credit 50)
-    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-    (rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (click-prompt state :runner "Pay 5 [Credits] to trash")
-    (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
-    (run-empty-server state :remote1)
-    (click-prompt state :runner "Pay 5 [Credits] to trash")
-    (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}})
+      (core/gain state :runner :credit 50)
+      (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
+  (testing "Overwrite by Corp"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}})
+      (core/gain state :runner :credit 50)
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :corp "Hostile Infrastructure" "Server 1")
+      (click-prompt state :corp "OK")
+      (rez state :corp (get-content state :remote1 0))
+      (is (= 1 (count (:discard (get-corp)))) "Overwrote first Hostile")
+      (is (zero? (count (:discard (get-runner)))) "Runner doesn't take damage"))))
 
 (deftest hyoubu-research-facility
   ;; Hyoubu Research Facility
