@@ -60,7 +60,6 @@
                                      (:cards latest-mwl)))
         ]
     (reset! cards/all-cards all-cards)
-    (reset! cards/identity-cards (filter #(= "Identity" (:type %)) all-cards))
     (reset! cards/sets sets)
     (reset! cards/cycles cycles)
     (reset! cards/mwl latest-mwl)))

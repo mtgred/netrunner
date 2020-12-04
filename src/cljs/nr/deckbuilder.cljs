@@ -4,7 +4,7 @@
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
             [goog.string :as gstring]
             [goog.string.format]
-            [jinteki.cards :refer [all-cards identity-cards] :as cards]
+            [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
             [nr.account :refer [load-alt-arts]]
@@ -94,19 +94,12 @@
     (str title " (" setname ")")
     title))
 
-(defn lookup-identity
-  "Find an identity card from the card code or title"
-  [side card]
-  (if-let [ident (first (filter #(= (:code card) (:code %)) @identity-cards))]
-    ident
-    (lookup side card)))
-
 (defn parse-identity
   "Parse an id to the corresponding card map"
   [{:keys [side title setname code]}]
   (if (nil? title)
     {:display-name "Missing Identity"}
-    (let [card (lookup-identity side {:title title :code code})]
+    (let [card (lookup side {:title title})]
       (assoc card :display-name (build-identity-name title setname)))))
 
 (defn add-params-to-card
