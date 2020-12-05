@@ -519,7 +519,7 @@
                                                (rezzed? %))}
                          :msg (msg "to encounter " (:title target))
                          :effect (req (clear-wait-prompt state :runner)
-                                      (wait-for (trash state :corp card {:unpreventable true})
+                                      (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                                                 (show-wait-prompt state :corp (str "Runner to decide about encountering " (:title target)))
                                                 (continue-ability
                                                   state :runner
