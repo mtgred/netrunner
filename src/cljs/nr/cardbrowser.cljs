@@ -16,6 +16,8 @@
 
 (def browser-state (atom {}))
 
+(declare generate-previous-cards)
+
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
           need-update? (or (not local-cards) (not= server-version (:version local-cards)))
@@ -39,7 +41,36 @@
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
       (swap! app-state assoc :cards-loaded true)
+      (swap! app-state assoc :previous-cards (generate-previous-cards cards))
       (put! cards-channel cards)))
+
+(defn- expand-one
+  "Reducer function to create a previous card from a newer card definition."
+  [acc version c]
+  (let [number (js/parseInt (subs version 3))
+        cycle-pos (js/parseInt (subs version 0 2))
+        prev-set (first (filter #(= cycle-pos (:cycle_position %1)) @cards/sets))
+        prev (assoc c
+                    :code version
+                    :rotated true
+                    :cycle_code (:cycle_code prev-set)
+                    :setname (:name prev-set)
+                    :set_code (:id prev-set)
+                    :number number
+                    :future-version (:code c))
+        prev (dissoc prev :previous-versions)]
+    (conj acc prev)))
+
+(defn- expand-previous
+  "Reducer function to expand a card with :previous-cards defined"
+  [acc c]
+  (reduce #(expand-one %1 %2 c) acc (:previous-versions c)))
+
+(defn- generate-previous-cards
+  "The cards database only has the latest version of a card. Create stubs for previous versions of a card for display purposes."
+  [cards]
+  (let [c (filter #(contains? % :previous-versions) cards)]
+    (reduce expand-previous `() c)))
 
 (defn make-span [text sym icon-class]
   (s/replace text (js/RegExp. sym "gi") (str "<span class='anr-icon " icon-class "'></span>")))
@@ -63,7 +94,7 @@
                       (contains? (:alt_art alt-card) (keyword art)))
          version-path (if has-art
                         (get (:alt_art alt-card) (keyword art) (:code card))
-                        (:code card))]
+                        (:future-version card (:code card)))]
      (str "/img/cards/" version-path ".png"))))
 
 (defn- alt-version-from-string
@@ -294,13 +325,14 @@
 (defn card-list-view [state]
   (let [selected (selected-set-name state)
         selected-cycle (-> selected s/lower-case (s/replace " " "-"))
+        combined-cards (concat @all-cards (:previous-cards @app-state))
         [alt-filter cards] (cond
-                             (= selected "All") [nil @all-cards]
-                             (= selected "Alt Art") [nil (filter-alt-art-cards @all-cards)]
-                             (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) @all-cards)]
-                             (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected @all-cards)]
+                             (= selected "All") [nil combined-cards]
+                             (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]
+                             (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) combined-cards)]
+                             (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected combined-cards)]
                              :else
-                             [nil (filter #(= (:setname %) selected) @all-cards)])
+                             [nil (filter #(= (:setname %) selected) combined-cards)])
         cards (->> cards
                    (filter-cards (:side-filter @state) :side)
                    (filter-cards (:faction-filter @state) :faction)
@@ -313,7 +345,7 @@
     [:div.card-list {:on-scroll #(handle-scroll % state)}
      (doall
        (for [card cards]
-         ^{:key (or (:display-name card) (:code card))}
+         ^{:key (or (:code card) (:display-name card))}
          [card-view card state]))]))
 
 (defn handle-search [e state]
