@@ -40,8 +40,7 @@
       (when need-update?
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
-      (swap! app-state assoc :cards-loaded true)
-      (swap! app-state assoc :previous-cards (generate-previous-cards cards))
+      (swap! app-state assoc :cards-loaded true :previous-cards (generate-previous-cards cards))
       (put! cards-channel cards)))
 
 (defn- expand-one
