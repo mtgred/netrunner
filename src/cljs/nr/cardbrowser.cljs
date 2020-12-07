@@ -344,7 +344,7 @@
     [:div.card-list {:on-scroll #(handle-scroll % state)}
      (doall
        (for [card cards]
-         ^{:key (or (:code card) (:display-name card))}
+         ^{:key (or (image-url card true) (:code card) (:display-name card))}
          [card-view card state]))]))
 
 (defn handle-search [e state]
