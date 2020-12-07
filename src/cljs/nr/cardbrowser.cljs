@@ -66,7 +66,7 @@
   [acc c]
   (reduce #(expand-one %1 %2 c) acc (:previous-versions c)))
 
-(defn- generate-previous-cards
+(defn generate-previous-cards
   "The cards database only has the latest version of a card. Create stubs for previous versions of a card for display purposes."
   [cards]
   (let [c (filter #(contains? % :previous-versions) cards)]
@@ -94,7 +94,7 @@
                       (contains? (:alt_art alt-card) (keyword art)))
          version-path (if has-art
                         (get (:alt_art alt-card) (keyword art) (:code card))
-                        (:future-version card (:code card)))]
+                        (:code card))]
      (str "/img/cards/" version-path ".png"))))
 
 (defn- alt-version-from-string
