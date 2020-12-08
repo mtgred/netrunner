@@ -55,11 +55,22 @@
   [{:keys [version name cards] :as alt-set}]
   (let [k (keyword (str "alt_art." version))
         cnt (reduce (fn [acc code]
-                      (mc/update db card-collection {:code code} {$set {k (str code "-" version)}})
-                      (mc/update db card-collection {:replaces code} {$set {k (str code "-" version)}})
+                      (mc/update db card-collection {:code code} {$push {k (str code "-" version)}})
+                      (mc/update db card-collection {:previous-versions code} {$push {k (str code "-" version)}})
                       (inc acc))
                     0 cards)]
     (println "Added" cnt "alt art cards to set" name)))
+
+(defn add-previous-version-art
+  "For cards with previous versions, use the first of the previous versions as a core set alt art"
+  []
+  (let [k (keyword "alt_art.core1")
+        cards (mc/find-maps db card-collection {:previous-versions {$exists true}})
+        cnt (reduce (fn [acc {:keys [code previous-versions]}]
+                      (mc/update db card-collection {:code code} {$push {k (first previous-versions)}})
+                      (inc acc))
+                    0 cards)]
+    (println "Added" cnt "previous version cards as alt arts")))
 
 (defn add-art
   "Add alt art card images to the database"
@@ -75,6 +86,7 @@
        (println (count alt-sets-cards) "alt art sets imported")
        (remove-old-alt-art)
        (doall (map add-alt-art alt-sets-cards))
+       (add-previous-version-art)
        (when standalone?
          (update-config)))
      (catch Exception e (do
