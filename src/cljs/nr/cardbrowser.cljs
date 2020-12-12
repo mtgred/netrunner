@@ -28,19 +28,28 @@
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
           mwls (:json (<! (GET "/data/mwl")))
-          latest_mwl (->> mwls
+          latest-mwl (->> mwls
                           (filter #(= "standard" (:format %)))
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
                           (sort-by :date-start)
-                          last)]
-      (reset! cards/mwl latest_mwl)
+                          last)
+            alt-cards (->> cards
+                       (map #(select-keys % [:title :code :alt_art]))
+                       (filter :alt_art)
+                       (into {} (map (juxt :code identity))))
+          alt-info (->> (<! (GET "/data/cards/altarts"))
+                        (:json)
+                        (map #(select-keys % [:version :name :description :position])))]
+      (reset! cards/mwl latest-mwl)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
-      (swap! app-state assoc :cards-loaded true :previous-cards (generate-previous-cards cards))
+      (swap! app-state assoc
+             :cards-loaded true :previous-cards (generate-previous-cards cards)
+             :alt-info alt-info :alt-cards alt-cards)
       (put! cards-channel cards)))
 
 (defn- expand-one
@@ -57,7 +66,7 @@
                     :set_code (:id prev-set)
                     :number number
                     :future-version (:code c))
-        prev (dissoc prev :previous-versions)]
+        prev (dissoc prev :previous-versions :alt_art)]
     (conj acc prev)))
 
 (defn- expand-previous
@@ -87,14 +96,21 @@
   ([card allow-all-users]
    (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                  (get-in @app-state [:options :alt-arts (keyword (:code card))]))
-         alt-card (get (:alt-arts @app-state) (:code card))
-         has-art (and (show-alt-art? allow-all-users)
-                      art
-                      (contains? (:alt_art alt-card) (keyword art)))
+         alt-card (get (:alt-cards @app-state) (:code card))
+         has-art (and (show-alt-art? allow-all-users) art)
+         previous-version (get-in card [:alt_art (:art card)] (:code card))
          version-path (if has-art
-                        (get (:alt_art alt-card) (keyword art) (:code card))
+                        (get (:alt_art alt-card) (keyword art) art)
                         (:code card))]
      (str "/img/cards/" version-path ".png"))))
+
+(defn- base-image-url
+  "The default card image. Displays an alternate image if the card is specified as one."
+  [card]
+  (let [path (if (keyword? (:art card))
+                 (get-in card [:alt_art (:art card)] (:code card))
+                 (:code card))]
+    (str "/img/cards/" path ".png")))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
@@ -104,7 +120,7 @@
 
 (defn- expand-alts
   [only-version acc card]
-  (let [alt-card (get (:alt-arts @app-state) (:code card))
+  (let [alt-card (get (:alt-cards @app-state) (:code card))
         alt-only (alt-version-from-string only-version)
         alt-keys (keys (:alt_art alt-card))
         alt-arts (if alt-only
@@ -142,30 +158,43 @@
       (non-game-toast "Updated Art" "success" nil))
     (non-game-toast "Failed to Update Art" "error" nil)))
 
-(defn selected-alt-art [card]
-  (let [code (keyword (:code card))
-        alt-card (get (:alt-arts @app-state) (name code) nil)
+(defn- future-selected-alt-art [card]
+  (let [future-code (keyword (:future-version card))
         selected-alts (:alt-arts (:options @app-state))
-        selected-art (keyword (get selected-alts code nil))
-        card-art (:art card)]
-    (and alt-card
-         (cond
-           (= card-art selected-art) true
-           (and (nil? selected-art)
-                (not (keyword? card-art))) true
-           (and (= :default selected-art)
-                (not (keyword? card-art))) true
-           :else false))))
+        selected-art (get selected-alts future-code)]
+    (= (:code card) selected-art)))
 
-(defn select-alt-art [card]
-  (when-let [art (:art card)]
+(defn- selected-alt-art [card]
+  (if (contains? card :future-version)
+    (future-selected-alt-art card)
     (let [code (keyword (:code card))
-          alts (:alt-arts (:options @app-state))
-          new-alts (if (keyword? art)
-                     (assoc alts code (name art))
-                     (dissoc alts code))]
-      (swap! app-state assoc-in [:options :alt-arts] new-alts)
-      (nr.account/post-options "/profile" (partial post-response)))))
+          alt-card (get (:alt-cards @app-state) (name code) nil)
+          selected-alts (:alt-arts (:options @app-state))
+          selected-art (keyword (get selected-alts code nil))
+          card-art (:art card)]
+      (and alt-card
+           (cond
+             (= card-art selected-art) true
+             (and (nil? selected-art)
+                  (not (keyword? card-art))) true
+             (and (= :default selected-art)
+                  (not (keyword? card-art))) true
+             :else false)))))
+
+;; Alts can only be set on th most recent version of a card
+;; So if the card has a :future-version key, we apply the alt to
+;; that card, setting the alt to the code of the old card.
+(defn- select-alt-art [card]
+  (let [is-old-card (contains? card :future-version)
+        art (:art card)
+        code-kw (keyword (:future-version card (:code card)))
+        alts (:alt-arts (:options @app-state))
+        new-alts (cond
+                   (keyword? art) (assoc alts code-kw (name art))
+                   is-old-card (assoc alts code-kw (:code card))
+                   true (dissoc alts code-kw))] ; remove the key entirely if the newest card is selected
+    (swap! app-state assoc-in [:options :alt-arts] new-alts)
+    (nr.account/post-options "/profile" (partial post-response))))
 
 (defn- text-class-for-status
   [status]
@@ -230,7 +259,7 @@
     (when (show-alt-art?)
       (if (selected-alt-art card)
         [:div.selected-alt "Selected Alt Art"]
-        (when (:art card)
+        (when (or (:art card) (:future-version card))
           [:button.alt-art-selector
            {:on-click #(select-alt-art card)}
            "Select Art"])))]])
@@ -251,14 +280,14 @@
       "Runner" (conj runner-factions "Neutral")
       "Corp" corp-factions)))
 
-(defn filter-alt-art-cards [cards]
-  (let [alt-arts (:alt-arts @app-state)]
+(defn- filter-alt-art-cards [cards]
+  (let [alt-arts (:alt-cards @app-state)]
     (filter #(contains? alt-arts (:code %)) cards)))
 
-(defn filter-alt-art-set [setname cards]
+(defn- filter-alt-art-set [setname cards]
   (when-let [alt-key (alt-version-from-string setname)]
     (let [sa (map first
-                  (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-arts @app-state)))]
+                  (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-cards @app-state)))]
       (filter (fn [c] (some #(= (:code c) %) sa)) cards))))
 
 (defn filter-cards [filter-value field cards]
@@ -300,7 +329,7 @@
     (when (> (.scrollTop $cardlist) (- height 600))
       (swap! state update-in [:page] (fnil inc 0)))))
 
-(defn card-view [card state]
+(defn- card-view [card state]
   (let [cv (r/atom {:show-text false})]
     (fn [card state]
       [:div.card-preview.blue-shade
@@ -310,12 +339,12 @@
                          (swap! state assoc :selected-card card)))
         :class (if (:decorate-card @state)
                  (cond (= (:selected-card @state) card) "selected"
-                       (selected-alt-art card) "selected-alt")
+                       (and (show-alt-art?) (selected-alt-art card)) "selected-alt")
                  nil)}
        (if (or (= card (:selected-card @state))
                (:show-text @cv))
          [card-as-text card]
-         (when-let [url (image-url card true)]
+         (when-let [url (base-image-url card)]
            [:img {:src url
                   :alt (:title card)
                   :onError #(-> (swap! cv assoc :show-text true))
@@ -344,7 +373,7 @@
     [:div.card-list {:on-scroll #(handle-scroll % state)}
      (doall
        (for [card cards]
-         ^{:key (or (image-url card true) (:code card) (:display-name card))}
+         ^{:key (str (image-url card true) "-" (:code card))}
          [card-view card state]))]))
 
 (defn handle-search [e state]

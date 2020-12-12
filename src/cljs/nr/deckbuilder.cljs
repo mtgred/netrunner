@@ -7,11 +7,10 @@
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
-            [nr.account :refer [load-alt-arts]]
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
+            [nr.cardbrowser :refer [cards-channel filter-title image-url] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
@@ -22,7 +21,6 @@
 (def zoom-channel (chan))
 
 (defonce db-dom (atom {}))
-
 
 (defn- format-status-impl
   [format card]
@@ -806,6 +804,13 @@
    [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
    [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
 
+(defn- zoom-card-view [card state]
+  [card state]
+  (when-let [url (image-url card)]
+    [:div.card-preview.blue-shade
+     [:img {:src url
+            :alt (:title card)}]]))
+
 (defn list-panel
   [s user decks decks-loaded]
   [:div.decks
@@ -816,7 +821,7 @@
       (let [art (:art line)
             id (:id line)
             updated-card (add-params-to-card (:card line) id art)]
-        [card-view updated-card s]))]])
+        [zoom-card-view updated-card s]))]])
 
 (defn deck-builder
   "Make the deckbuilder view"
@@ -848,5 +853,4 @@
           json (:json (<! (GET (str "/data/decks"))))
           decks (load-decks-from-json json)]
       (load-decks decks)
-      (load-alt-arts)
       (>! cards-channel cards)))
