@@ -178,7 +178,7 @@
                    :volume (get-in @app-state [:options :sounds-volume])
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
                    :alt-arts (get-in @app-state [:options :alt-arts])
-                   :all-art-select ""
+                   :all-art-select "wc2015"
                    :stacked-servers (get-in @app-state [:options :stacked-servers])
                    :runner-board-order (get-in @app-state [:options :runner-board-order])
                    :log-width (get-in @app-state [:options :log-width])
@@ -349,10 +349,13 @@
                 :on-click #(reset-card-art s)}
                "Set"]]
              [:div.reset-all
-              [:button
-               {:type "button"
-                :on-click #(reset-card-art s "default")}
-               "Reset All to Official Art"]]])]
+              (let [disabled (empty? (:alt-arts @s))]
+                [:button
+                 {:type "button"
+                  :disabled disabled
+                  :class (if disabled "disabled" "")
+                  :on-click #(reset-card-art s "default")}
+                 "Reset All to Official Art"])]])]
 
          [:section
           [:h3 "Blocked users"]

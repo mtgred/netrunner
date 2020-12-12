@@ -98,7 +98,6 @@
                  (get-in @app-state [:options :alt-arts (keyword (:code card))]))
          alt-card (get (:alt-cards @app-state) (:code card))
          has-art (and (show-alt-art? allow-all-users) art)
-         previous-version (get-in card [:alt_art (:art card)] (:code card))
          version-path (if has-art
                         (get (:alt_art alt-card) (keyword art) art)
                         (:code card))]
