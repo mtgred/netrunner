@@ -281,13 +281,18 @@
 
 (defn- filter-alt-art-cards [cards]
   (let [alt-arts (:alt-cards @app-state)]
-    (filter #(contains? alt-arts (:code %)) cards)))
+    (filter #(or (contains? alt-arts (:code %))
+                 (contains? % :future-version)
+                 (contains? % :previous-versions))
+            cards)))
 
 (defn- filter-alt-art-set [setname cards]
   (when-let [alt-key (alt-version-from-string setname)]
+    (if (= alt-key :prev)
+      (filter #(or (contains? % :future-version) (contains? % :previous-versions)) cards)
     (let [sa (map first
                   (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-cards @app-state)))]
-      (filter (fn [c] (some #(= (:code c) %) sa)) cards))))
+      (filter (fn [c] (some #(= (:code c) %) sa)) cards)))))
 
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")

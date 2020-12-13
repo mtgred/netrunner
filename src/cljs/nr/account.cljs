@@ -98,12 +98,13 @@
         (when (some #(= % (keyword art)) versions)
           (add-card-art card art s))))))
 
-(defn reset-card-art
-  ([s] (let [art (:all-art-select @s)]
-        (reset-card-art s art)))
-  ([s art]
-   (doseq [card (vals (:alt-cards @app-state))]
-     (update-card-art card art s))))
+(defn- clear-card-art [s]
+  (swap! s assoc-in [:alt-arts] {}))
+
+(defn- reset-card-art [s]
+  (let [art (:all-art-select @s)]
+    (doseq [card (vals (:alt-cards @app-state))]
+      (update-card-art card art s))))
 
 (defn log-width-option [s]
   (let [log-width (r/atom (:log-width @s))]
@@ -354,7 +355,7 @@
                  {:type "button"
                   :disabled disabled
                   :class (if disabled "disabled" "")
-                  :on-click #(reset-card-art s "default")}
+                  :on-click #(clear-card-art s)}
                  "Reset All to Official Art"])]])]
 
          [:section
