@@ -129,12 +129,8 @@
              (show-alt-art? true))
       (->> alt-arts
            (concat [""])
-           (map (fn [art] (if art
-                            (assoc card :art art)
-                            card)))
-           (map (fn [c] (if (:art c)
-                          (assoc c :display-name (str (:code c) "[" (alt-art-name (:art c)) "]"))
-                          c)))
+           (map #(if % (assoc card :art %) card))
+           (map #(if (not= "" (:art %)) (dissoc % :previous-versions) %))
            (concat acc))
       (conj acc card))))
 
@@ -163,22 +159,22 @@
         selected-art (get selected-alts future-code)]
     (= (:code card) selected-art)))
 
+(defn- previous-selected-alt-art [card]
+  (let [selected-alts (:alt-arts (:options @app-state))
+        selected-art (get selected-alts (keyword (:code card)))]
+    (nil? selected-art)))
+
 (defn- selected-alt-art [card]
-  (if (contains? card :future-version)
-    (future-selected-alt-art card)
-    (let [code (keyword (:code card))
-          alt-card (get (:alt-cards @app-state) (name code) nil)
-          selected-alts (:alt-arts (:options @app-state))
-          selected-art (keyword (get selected-alts code nil))
-          card-art (:art card)]
-      (and alt-card
-           (cond
-             (= card-art selected-art) true
-             (and (nil? selected-art)
-                  (not (keyword? card-art))) true
-             (and (= :default selected-art)
-                  (not (keyword? card-art))) true
-             :else false)))))
+  (cond (contains? card :future-version) (future-selected-alt-art card)
+        (contains? card :previous-versions) (previous-selected-alt-art card)
+        :else
+        (let [code (keyword (:code card))
+              alt-card (get (:alt-cards @app-state) (:code card))
+              selected-alts (:alt-arts (:options @app-state))
+              selected-art (keyword (get selected-alts code))
+              card-art (:art card)]
+          (or (and card-art (nil? selected-art) (= "" card-art))
+              (and alt-card selected-art (= card-art selected-art))))))
 
 ;; Alts can only be set on th most recent version of a card
 ;; So if the card has a :future-version key, we apply the alt to
@@ -258,7 +254,7 @@
     (when (show-alt-art?)
       (if (selected-alt-art card)
         [:div.selected-alt "Selected Alt Art"]
-        (when (or (:art card) (:future-version card))
+        (when (or (:art card) (:previous-versions card) (:future-version card))
           [:button.alt-art-selector
            {:on-click #(select-alt-art card)}
            "Select Art"])))]])
