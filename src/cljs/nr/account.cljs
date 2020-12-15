@@ -245,10 +245,21 @@
                     :on-change #(swap! s assoc :pronouns (.. % -target -value))}
            (doall
              (for [option [{:name "Unspecified" :ref "none"}
-                           {:name "They/them" :ref "they"}
-                           {:name "She/her" :ref "she"}
+                           {:name "Any" :ref "any"}
+                           {:name "Prefer not to say" :ref "myodb"}
+                           {:name "" :ref "blank"}
                            {:name "He/him" :ref "he"}
-                           {:name "Any" :ref "any"}]]
+                           {:name "She/her" :ref "she"}
+                           {:name "He/they" :ref "hethey"}
+                           {:name "She/they" :ref "shethey"}
+                           {:name "It" :ref "it"}
+                           {:name "They/them" :ref "they"}
+                           {:name "Ne/nem" :ref "ne"}
+                           {:name "Ve/ver" :ref "ve"}
+                           {:name "Ey/em" :ref "ey"}
+                           {:name "Ze/hir" :ref "zehir"}
+                           {:name "Ze/zir" :ref "zezir"}
+                           {:name "Xe/xem" :ref "xe"}]]
                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
          [:section
           [:h3 "Sounds"]
