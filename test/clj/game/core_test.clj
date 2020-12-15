@@ -133,57 +133,53 @@
    :dont-start-turn (:dont-start-turn options)
    :dont-start-game (:dont-start-game options)})
 
-(defn- new-game-internal
-  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game] :as players}]
-  (let [state (core/init-game
-                {:gameid 1
-                 :players [{:side "Corp"
-                            :user {:username "Corp"}
-                            :deck {:identity (:identity corp)
-                                   :cards (:deck corp)}}
-                           {:side "Runner"
-                            :user {:username "Runner"}
-                            :deck {:identity (:identity runner)
-                                   :cards (:deck runner)}}]})]
-    (when-not dont-start-game
-      (if (#{:both :corp} mulligan)
-        (click-prompt state :corp "Mulligan")
-        (click-prompt state :corp "Keep"))
-      (if (#{:both :runner} mulligan)
-        (click-prompt state :runner "Mulligan")
-        (click-prompt state :runner "Keep"))
-      (when-not dont-start-turn (core/start-turn state :corp nil)))
-    ;; Gotta move cards where they need to go
-    (doseq [side [:corp :runner]]
-      (let [side-map (if (= :corp side) corp runner)]
-        (when-let [hand (:hand side-map)]
-          (starting-hand state side hand))
-        (when (seq (:discard side-map))
-          (doseq [ctitle (:discard side-map)]
-            (core/move state side
-                       (or (find-card ctitle (get-in @state [side :deck]))
-                           ;; This is necessary as a :discard card will only end up in
-                           ;; the hand when we're not already using (starting-hand)
-                           (when (empty? (:hand side-map))
-                             (find-card ctitle (get-in @state [side :hand]))))
-                       :discard)))
-        (when (:credits side-map)
-          (swap! state assoc-in [side :credit] (:credits side-map))))
-      (core/clear-win state side))
-    ;; These are side independent so they happen ouside the loop
-    (when-let [bad-pub (:bad-pub corp)]
-      (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))
-    (when-let [tags (:tags runner)]
-      (swap! state assoc-in [:runner :tag :base] tags))
-    (when (= start-as :runner) (take-credits state :corp))
-    state))
-
 (defn new-game
-  "A small wrapper so we can unpack in the parameters and not in a let"
-  ([] (new-game-internal (make-decks nil)))
+  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
+  ([] (new-game nil))
   ([players]
-   (new-game-internal (make-decks players))))
+   (let [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game]} (make-decks players)
+         state (core/init-game
+                 {:gameid 1
+                  :players [{:side "Corp"
+                             :user {:username "Corp"}
+                             :deck {:identity (:identity corp)
+                                    :cards (:deck corp)}}
+                            {:side "Runner"
+                             :user {:username "Runner"}
+                             :deck {:identity (:identity runner)
+                                    :cards (:deck runner)}}]})]
+     (when-not dont-start-game
+       (if (#{:both :corp} mulligan)
+         (click-prompt state :corp "Mulligan")
+         (click-prompt state :corp "Keep"))
+       (if (#{:both :runner} mulligan)
+         (click-prompt state :runner "Mulligan")
+         (click-prompt state :runner "Keep"))
+       (when-not dont-start-turn (core/start-turn state :corp nil)))
+     ;; Gotta move cards where they need to go
+     (doseq [side [:corp :runner]]
+       (let [side-map (if (= :corp side) corp runner)]
+         (when-let [hand (:hand side-map)]
+           (starting-hand state side hand))
+         (when (seq (:discard side-map))
+           (doseq [ctitle (:discard side-map)]
+             (core/move state side
+                        (or (find-card ctitle (get-in @state [side :deck]))
+                            ;; This is necessary as a :discard card will only end up in
+                            ;; the hand when we're not already using (starting-hand)
+                            (when (empty? (:hand side-map))
+                              (find-card ctitle (get-in @state [side :hand]))))
+                        :discard)))
+         (when (:credits side-map)
+           (swap! state assoc-in [side :credit] (:credits side-map))))
+       (core/clear-win state side))
+     ;; These are side independent so they happen ouside the loop
+     (when-let [bad-pub (:bad-pub corp)]
+       (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))
+     (when-let [tags (:tags runner)]
+       (swap! state assoc-in [:runner :tag :base] tags))
+     (when (= start-as :runner) (take-credits state :corp))
+     state)))
 
 ;;; Card related functions
 (defmacro card-ability
