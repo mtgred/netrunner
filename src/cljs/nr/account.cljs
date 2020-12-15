@@ -82,11 +82,11 @@
 
 (defn- remove-card-art
   [card s]
-  (swap! s update-in [:alt-arts] #(dissoc % (keyword (:code card)))))
+  (swap! s update :alt-arts dissoc (keyword (:code card))))
 
 (defn- add-card-art
   [card art s]
-  (swap! s update-in [:alt-arts] #(assoc % (keyword (:code card)) art)))
+  (swap! s update :alt-arts assoc (keyword (:code card)) art))
 
 (defn- update-card-art
   "Set the alt art for a card"

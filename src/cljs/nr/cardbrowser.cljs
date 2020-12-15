@@ -36,7 +36,8 @@
             alt-cards (->> cards
                        (map #(select-keys % [:title :code :alt_art]))
                        (filter :alt_art)
-                       (into {} (map (juxt :code identity))))
+                       (map (juxt :code identity))
+                       (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
                         (map #(select-keys % [:version :name :description :position])))]
@@ -286,9 +287,9 @@
   (when-let [alt-key (alt-version-from-string setname)]
     (if (= alt-key :prev)
       (filter #(or (contains? % :future-version) (contains? % :previous-versions)) cards)
-    (let [sa (map first
-                  (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-cards @app-state)))]
-      (filter (fn [c] (some #(= (:code c) %) sa)) cards)))))
+      (let [sa (map first
+                    (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-cards @app-state)))]
+        (filter (fn [c] (some #(= (:code c) %) sa)) cards)))))
 
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
