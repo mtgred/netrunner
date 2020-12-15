@@ -247,13 +247,13 @@
              (for [option [{:name "Unspecified" :ref "none"}
                            {:name "Any" :ref "any"}
                            {:name "Prefer not to say" :ref "myodb"}
-                           {:name "" :ref "blank"}
-                           {:name "He/him" :ref "he"}
-                           {:name "She/her" :ref "she"}
-                           {:name "He/they" :ref "hethey"}
-                           {:name "She/they" :ref "shethey"}
-                           {:name "It" :ref "it"}
+                           {:name "[blank]" :ref "blank"}
                            {:name "They/them" :ref "they"}
+                           {:name "She/her" :ref "she"}
+                           {:name "She/they" :ref "shethey"}
+                           {:name "He/him" :ref "he"}
+                           {:name "He/they" :ref "hethey"}
+                           {:name "It" :ref "it"}
                            {:name "Ne/nem" :ref "ne"}
                            {:name "Ve/ver" :ref "ve"}
                            {:name "Ey/em" :ref "ey"}
