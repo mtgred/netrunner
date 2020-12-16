@@ -2,7 +2,7 @@
   (:require [clojure.string :refer [split split-lines join escape] :as s]
             [game.core.card :refer [has-subtype?]]
             [jinteki.utils :refer [faction-label INFINITY]]
-            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.cards :as cards]
             #?@(:clj [[clj-time.core :as t]
                       [clj-time.format :as f]
                       [clj-time.coerce :as c]])))
