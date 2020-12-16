@@ -1601,8 +1601,8 @@
                                     (do (shuffle! state side :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid))))})]
-    (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
-                              (not (has-subtype? target "AI"))
+    (let [breakable-fn (req (when (or (> 3 (get-counters card :advancement))
+                                      (not (has-subtype? target "AI")))
                               :unrestricted))]
       {:advanceable :always
        :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
