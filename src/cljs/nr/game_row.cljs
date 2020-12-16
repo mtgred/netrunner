@@ -96,12 +96,13 @@
 
      (when (and (:show-mod-menu @s)
                 (or (:isadmin user) (:ismoderator user)))
-       [:div.panel.blue-shade.mod-menu
-        [:div {:on-click #(do (reset-game-name gameid)
-                              (swap! s assoc :show-mod-menu false))} "Reset Game Name"]
-        [:div {:on-click #(do (delete-game gameid)
-                              (swap! s assoc :show-mod-menu false))} "Delete Game"]
-        [:div {:on-click #(swap! s assoc :show-mod-menu false)} "Cancel"]])
+       [:div.ctrl-menu
+        [:div.panel.blue-shade.mod-menu
+         [:div {:on-click #(do (reset-game-name gameid)
+                               (swap! s assoc :show-mod-menu false))} "Reset Game Name"]
+         [:div {:on-click #(do (delete-game gameid)
+                               (swap! s assoc :show-mod-menu false))} "Delete Game"]
+         [:div {:on-click #(swap! s assoc :show-mod-menu false)} "Cancel"]]])
 
      [:div {:class "game-format"}
       [:span.format-label "Format:  "]
