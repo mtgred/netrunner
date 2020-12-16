@@ -447,9 +447,10 @@
                user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])]
     (when (= "/play" (first @active))
+      (authenticated (fn [_] nil))
       [:div.container
-       [:div.lobby-bg]
-       [:div.lobby.panel.blue-shade
-        [games-list-panel s games gameid password-gameid user]
-        [right-panel decks s games gameid password-gameid sets user]
-        [reagent-modals/modal-window]]])))
+        [:div.lobby-bg]
+        [:div.lobby.panel.blue-shade
+          [games-list-panel s games gameid password-gameid user]
+          [right-panel decks s games gameid password-gameid sets user]
+          [reagent-modals/modal-window]]])))

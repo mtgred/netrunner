@@ -4,15 +4,19 @@
   (:require
     [cljs.core.async :as async :refer [<! >! put! chan]]
     [nr.cardbrowser :refer [non-game-toast] :as cb]
+    [nr.ajax :refer [?csrf-token]]
     [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
-(let [{:keys [chsk ch-recv send-fn state]}
-      (sente/make-channel-socket! "/ws" {:type :ws})]
-  (def chsk       chsk)
-  (def <ws-recv ch-recv) ; ChannelSocket's receive channel
-  (def ws-send! send-fn) ; ChannelSocket's send API fn
-  (def chsk-state state)   ; Watchable, read-only atom
-  )
+(if-not ?csrf-token
+  (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
+  (let [{:keys [chsk ch-recv send-fn state]}
+        (sente/make-channel-socket! "/ws" ?csrf-token {:type :ws})]
+    (def chsk       chsk)
+    (def <ws-recv ch-recv) ; ChannelSocket's receive channel
+    (def ws-send! send-fn) ; ChannelSocket's send API fn
+    (def chsk-state state)   ; Watchable, read-only atom
+    ))
+
 
 (enable-console-print!)
 
@@ -46,4 +50,5 @@
         :chsk/recv (handle-netrunner-msg data)
         (println "unknown event message" event-type data)))))
 
-(start-client-chsk-router! <ws-recv event-msg-handler)
+(when ?csrf-token
+  (start-client-chsk-router! <ws-recv event-msg-handler))

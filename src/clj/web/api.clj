@@ -16,6 +16,7 @@
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :refer [resource-response]]
             [web.db :refer [db]]
@@ -24,10 +25,8 @@
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(defroutes public-routes
+(defroutes public-CSRF-routes
            (route/resources "/")
-           (POST "/register" [] auth/register-handler)
-           (POST "/login" [] auth/login-handler)
            (GET "/check-username/:username" [] auth/check-username-handler)
            (GET "/check-email/:email" [] auth/check-email-handler)
 
@@ -44,14 +43,18 @@
            (GET "/chat/config" [] chat/config-handler)
            (GET "/messages/:channel" [] chat/messages-handler)
 
-           (POST "/forgot" [] auth/forgot-password-handler)
            (GET "/reset/:token" [] pages/reset-password-page)
-           (POST "/reset/:token" [] auth/reset-password-handler)
 
            (GET "/ws" req ws/handshake-handler)
            (POST "/ws" req ws/post-handler)
 
            (GET "/*" [] pages/index-page))
+
+(defroutes public-routes
+           (POST "/register" [] auth/register-handler)
+           (POST "/login" [] auth/login-handler)
+           (POST "/forgot" [] auth/forgot-password-handler)
+           (POST "/reset/:token" [] auth/reset-password-handler))
 
 (defroutes admin-routes
            (GET "/admin/announce" [] pages/announce-page)
@@ -81,10 +84,14 @@
 (defroutes tournament-routes
   (GET "/tournament-auth/:username" [] tournament/auth))
 
-(defroutes routes
+(defroutes private-routes
   (wrap-routes user-routes auth/wrap-authentication-required)
   (wrap-routes tournament-routes auth/wrap-tournament-auth-required)
-  (wrap-routes admin-routes auth/wrap-authorization-required)
+  (wrap-routes admin-routes auth/wrap-authorization-required))
+
+(defroutes routes
+  (wrap-routes private-routes wrap-anti-forgery)
+  (wrap-routes public-CSRF-routes wrap-anti-forgery)
   public-routes)
 
 (defn wrap-return-favicon [handler]
