@@ -226,10 +226,11 @@
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- prevent-trash-impl
-  [state side eid {:keys [zone type] :as card} oid {:keys [unpreventable cause] :as args}]
+  [state side eid {:keys [zone type] :as card} oid {:keys [unpreventable cause game-trash] :as args}]
   (if (and card (not-any? #{:discard} zone))
     (cond
-      (untrashable-while-rezzed? card)
+      (and (not game-trash)
+           (untrashable-while-rezzed? card))
       (do (enforce-msg state card "cannot be trashed while installed")
           (effect-completed state side eid))
       (and (= side :runner)
