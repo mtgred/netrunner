@@ -1150,7 +1150,9 @@
         (is (not (get-run)) "Run has been ended")
         (last-log-contains? state "Corp resolves 1 unbroken subroutine on Ice Wall")
         (is (empty? (:prompt (get-corp))) "No more prompts")
-        (is (empty? (:prompt (get-runner))) "No more prompts"))))
+        (is (empty? (:prompt (get-runner))) "No more prompts")
+        (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+        (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup"))))
   (testing "Access ability and not firing subs"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
