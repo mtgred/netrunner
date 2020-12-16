@@ -7,6 +7,7 @@
             [monger.operators :refer :all]
             [monger.result :refer [acknowledged?]]
             [ring.middleware.anti-forgery :as anti-forgery]
+            [ring.util.anti-forgery :refer [anti-forgery-field]]
             [web.db :refer [db object-id]]
             [web.config :refer [server-config]]
             [web.utils :refer [response]]))
@@ -113,6 +114,7 @@
     [:body
      [:div.reset-bg]
      [:form.panel.blue-shade.reset-form {:method "POST"}
+      (anti-forgery-field)
       [:h3 "Announcement"]
       [:p
        [:textarea.form-control {:rows 5 :style "height: 80px; width: 250px"
@@ -128,6 +130,7 @@
     [:body
      [:div.reset-bg]
      [:form.panel.blue-shade.reset-form {:method "POST"}
+      (anti-forgery-field)
       [:h3 "App Version"]
       [:p
        [:input {:type "text" :name "version" :value version}]]
@@ -142,6 +145,7 @@
     [:body
      [:div.reset-bg]
      [:form.panel.blue-shade.reset-form {:method "POST"}
+      (anti-forgery-field)
       (when-let [card-info (mc/find-one-as-map db "config" {})]
         [:div.admin
          [:div
