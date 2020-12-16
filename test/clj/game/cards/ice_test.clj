@@ -564,23 +564,42 @@
 
 (deftest cell-portal
   ;; Cell Portal - Bounce Runner to outermost position and derez itself
-  (do-game
-    (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Cell Portal" "HQ")
-    (play-from-hand state :corp "Paper Wall" "HQ")
-    (play-from-hand state :corp "Paper Wall" "HQ")
-    (take-credits state :corp)
-    (let [cp (get-ice state :hq 0)]
-      (rez state :corp cp)
-      (run-on state :hq)
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
-      (is (= 1 (get-in @state [:run :position])))
-      (card-subroutine state :corp cp 0)
-      (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-      (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
+  (testing "Run on centrals"
+    (do-game
+      (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (take-credits state :corp)
+      (let [cp (get-ice state :hq 0)]
+        (rez state :corp cp)
+        (run-on state :hq)
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (is (= 1 (get-in @state [:run :position])))
+        (card-subroutine state :corp cp 0)
+        (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
+  (testing "Run on servers"
+    (do-game
+      (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Cell Portal" "New remote")
+      (play-from-hand state :corp "Paper Wall" "Server 1")
+      (play-from-hand state :corp "Paper Wall" "Server 1")
+      (take-credits state :corp)
+      (let [cp (get-ice state :remote1 0)]
+        (rez state :corp cp)
+        (run-on state "Server 1")
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (is (= 1 (get-in @state [:run :position])))
+        (card-subroutine state :corp cp 0)
+        (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
