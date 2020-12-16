@@ -1654,6 +1654,23 @@
           (card-ability state :runner gh 0)
           (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
+(deftest gyri-labyrinth
+  ;; Gyri Labyrinth - reduce runner handsize by 2 until beginning of corp's next turn
+  (do-game
+    (new-game {:corp {:hand ["Gyri Labyrinth"]}})
+    (play-from-hand state :corp "Gyri Labyrinth" "HQ")
+    (take-credits state :corp)
+    (let [gyri (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp gyri)
+      (run-continue state)
+      (is (= 5 (hand-size :runner)) "Runner starts with handsize of 5")
+      (card-subroutine state :corp gyri 0)
+      (is (= 3 (hand-size :runner)) "Runner handsize reduced to 3")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (is (= 5 (hand-size :runner)) "Runner handsize returns to 5"))))
+
 (deftest hagen
   ;; Hagen
   (testing "Trashing only non-fracter non-decoder non-killer cards."
