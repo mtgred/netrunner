@@ -2802,14 +2802,12 @@
    :msg "prevent the Corp from advancing cards during their next turn"
    :rfg-instead-of-trashing true
    :events [{:event :corp-turn-begins
-             :duration :until-start-of-runner-turn
+             :duration :until-runner-turn-begins
              :effect (effect (register-turn-flag!
                                card :can-advance
                                (fn [state side card]
                                  ((constantly false)
-                                  (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning"))))
-                             ;; This is a hack
-                             (unregister-floating-events :until-start-of-runner-turn))}]})
+                                  (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))}]})
 
 (defcard "Three Steps Ahead"
   {:effect (effect (register-events
