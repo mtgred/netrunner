@@ -3864,7 +3864,23 @@
       (is (= "Choose a card to host Parasite on" (:msg (prompt-map :runner))))
       (click-card state :runner "Enigma")
       (is (= "Customized Secretary" (:title (first (:hosted (get-program state 0))))))
-      (is (empty? (:hosted (first (:hosted (get-program state 0)))))))))
+      (is (empty? (:hosted (first (:hosted (get-program state 0))))))))
+  (testing "Triggers Hostile Infrastructure"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Infrastructure" "Vanilla"]}
+                 :runner {:deck [(qty "Parasite" 2)]}})
+      (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (let [van (get-ice state :hq 0)
+            hi (get-content state :remote1 0)]
+        (rez state :corp hi)
+        (rez state :corp van)
+        (take-credits state :corp)
+        (changes-val-macro 2 (count (:discard (get-runner)))
+                           "Took net damage (Parasite on Vanilla was trashed + card from hand"
+                           (play-from-hand state :runner "Parasite")
+                           (click-card state :runner van))))))
 
 (deftest paricia
   ;; Paricia
