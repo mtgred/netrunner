@@ -3,7 +3,7 @@
             [game.core.eid :refer [effect-completed make-eid]]
             [game.core.toasts :refer [toast]]))
 
-(defn- add-to-prompt-queue
+(defn add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
   [state side prompt]
   (swap! state update-in [side :prompt] #(cons prompt %)))
@@ -25,8 +25,8 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [prompt-type show-discard cancel-effect end-effect]}]
-   (let [prompt (if (string? message) message (message state side eid card nil))
+    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets]}]
+   (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
          newitem {:eid eid
                   :msg prompt
@@ -42,6 +42,13 @@
                (:card-title choices)
                (#{:credit :counter} choices)
                (pos? (count choices)))
+       (when waiting-prompt
+         (add-to-prompt-queue
+           state (if (= :corp side) :runner :corp)
+           {:eid (select-keys eid [:eid])
+            :card card
+            :prompt-type :waiting
+            :msg (str "Waiting for " waiting-prompt)}))
        (add-to-prompt-queue state side newitem)))))
 
 (defn show-prompt-with-dice
@@ -65,8 +72,8 @@
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
    Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link]}]
-   (let [prompt (if (string? message) message (message state side nil card nil))
+  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link targets]}]
+   (let [prompt (if (string? message) message (message state side eid card targets))
          corp-credits (corp-credits eid)
          runner-credits (runner-credits eid)
          newitem {:eid eid
@@ -117,7 +124,7 @@
            m (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (-> ability
-                                           (dissoc :choices)
+                                           (dissoc :choices :waiting-prompt)
                                            (assoc :card card))
                               :cards []
                               :card (get-in ability [:choices :card])
@@ -125,7 +132,8 @@
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max m
                               :all all}))
-       (show-prompt state side card
+       (show-prompt state side (:eid ability)
+                    card
                     (if-let [message (:prompt ability)]
                       message
                       (if m

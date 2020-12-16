@@ -9,11 +9,11 @@
     [game.core.effects :refer [unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
+    [game.core.prompts :refer [add-to-prompt-queue clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
+    [game.utils :refer [dissoc-in distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
     [jinteki.utils :refer [other-side]]))
 
 ;; resolve-ability docs
@@ -212,7 +212,12 @@
   [ability]
   (first (keys (select-keys ability (keys @ability-types)))))
 
-;;; Ability related function
+(defn dissoc-req
+  [ability]
+  (if-let [ab (select-ability-kw ability)]
+    (dissoc-in ability [ab :req])
+    (dissoc ability :req)))
+
 (defn should-trigger?
   "Checks if the specified ability definition should trigger.
   Checks for a :req, either in the top level map, or in an :optional or :psi sub-map
@@ -221,13 +226,15 @@
    (when ability
      (let [ab (select-ability-kw ability)]
        (cond
-         req (req state side eid card targets)
          ab (should-trigger? state side eid card targets (get ability ab))
+         req (req state side eid card targets)
          :else true)))))
 
 (defn not-used-once?
   [state {:keys [once once-key]} {:keys [cid]}]
-  (not (get-in @state [once (or once-key cid)])))
+  (if once
+    (not (get-in @state [once (or once-key cid)]))
+    true))
 
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -348,7 +355,17 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost] :as ability} card targets]
+  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
+  (when waiting-prompt
+    (add-to-prompt-queue
+      state (cond
+              player (if (= :corp player) :runner :corp)
+              (= :corp side) :runner
+              :else :corp)
+      {:eid (select-keys eid [:eid])
+       :card card
+       :prompt-type :waiting
+       :msg (str "Waiting for " waiting-prompt)}))
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
@@ -371,8 +388,10 @@
   "Handle a choices ability"
   [state side {:keys [choices eid not-distinct player prompt] :as ability} card targets]
   (let [s (or player side)
-        ab (dissoc ability :choices)
-        args (select-keys ability [:priority :cancel-effect :prompt-type :show-discard :end-effect])]
+        ab (dissoc ability :choices :waiting-prompt)
+        args (-> ability
+                 (select-keys [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (assoc :targets targets))]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -414,10 +433,11 @@
   Please refer to the documentation at the top of resolve_ability.clj for a full description."
   ([state side card message choices ability] (prompt! state side card message choices ability nil))
   ([state side card message choices ability args]
-   (show-prompt state side (:eid ability) card message choices #(resolve-ability state side ability card [%])
-                (if-let [f (:cancel-effect args)]
-                  (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
-                  args))))
+   (let [f #(resolve-ability state side ability card [%])]
+     (show-prompt state side (:eid ability) card message choices f
+                  (if-let [f (:cancel-effect args)]
+                    (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
+                    args)))))
 
 ;; EVENTS
 

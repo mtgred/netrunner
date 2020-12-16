@@ -2819,7 +2819,8 @@
         (click-prompt state :runner "Pile 2 (3 cards)")
         (click-prompt state :runner "Card from pile 2")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt to access further cards.")))))
+        (is (empty? (:prompt (get-runner))) "No prompt to access further cards.")
+        (is (empty? (:prompt (get-corp))) "No more Info Sifting prompts")))))
 
 (deftest inject
   ;; Inject - Draw 4 cards from Stack and gain 1 credit per trashed program
@@ -3583,26 +3584,30 @@
 (deftest mining-accident
   ;; Mining Accident
   (do-game
-    (new-game {:runner {:deck [(qty "Mining Accident" 3)]}})
+    (new-game {:runner {:deck [(qty "Mining Accident" 3)]
+                        :credits 10}})
     (take-credits state :corp)
-    (changes-val-macro 0 (:click (get-runner))
-                       "Couldn't play Mining Accident without running a central first"
-                       (play-from-hand state :runner "Mining Accident"))
+    (changes-val-macro
+      0 (:click (get-runner))
+      "Couldn't play Mining Accident without running a central first"
+      (play-from-hand state :runner "Mining Accident"))
     (run-empty-server state "HQ")
-    (core/gain state :runner :credit 1) ; you need 6c for 3 Mining Accidents...
-    (changes-val-macro 1 (count-bad-pub state)
-                       "Corp took 1 BP"
-                       (play-from-hand state :runner "Mining Accident")
-                       (click-prompt state :corp "Take 1 Bad Publicity"))
-    (changes-val-macro -5 (:credit (get-corp))
-                       "Corp paid 5c"
-                       (play-from-hand state :runner "Mining Accident")
-                       (click-prompt state :corp "Pay 5 [Credits]"))
-    (changes-val-macro 1 (count-bad-pub state)
-                       "Corp took 1 BP without getting a prompt"
-                       (play-from-hand state :runner "Mining Accident")
-                       (is (= 1 (count (prompt-buttons :corp))) "No option to pay credits if corp is below 5c")
-                       (click-prompt state :corp "Take 1 Bad Publicity"))))
+    (changes-val-macro
+      1 (count-bad-pub state)
+      "Corp took 1 BP"
+      (play-from-hand state :runner "Mining Accident")
+      (click-prompt state :corp "Take 1 Bad Publicity"))
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "Corp paid 5c"
+      (play-from-hand state :runner "Mining Accident")
+      (click-prompt state :corp "Pay 5 [Credits]"))
+    (changes-val-macro
+      1 (count-bad-pub state)
+      "Corp took 1 BP without getting a prompt"
+      (play-from-hand state :runner "Mining Accident")
+      (is (= 1 (count (prompt-buttons :corp))) "No option to pay credits if corp is below 5c")
+      (click-prompt state :corp "Take 1 Bad Publicity"))))
 
 (deftest mobius
   ;; Mobius
