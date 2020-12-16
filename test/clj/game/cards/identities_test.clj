@@ -928,7 +928,7 @@
       (rez state :corp (get-ice state :remote2 0))
       (play-and-score state "Project Atlas")
       (click-prompt state :corp "Server 2")
-      (is (= 0 (count (:discard (get-corp)))) "None of the Architects were trashed")))
+      (is (= 1 (count (:discard (get-corp)))) "One of the Architects was trashed, since it gets trashed by the game and not by players")))
   (testing "Worlds Plaza interaction. Issue #4723"
     (do-game
       (new-game {:corp {:id "Earth Station: SEA Headquarters"
