@@ -1137,10 +1137,22 @@
    [:div.namebox
     [:div.username (:username user)]
     (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "they" "they/them"
-                        "she" "she/her"
-                        "he" "he/him"
+                        "none" "unspecified" 
                         "any" "any"
+                        "myodb" "prefer not to say"
+                        "blank" ""
+                        "he" "he/him"
+                        "she" "she/her"
+                        "hethey" "he/they"
+                        "shethey" "she/they"
+                        "it" "it"
+                        "they" "they/them"
+                        "ne" "ne/nem"
+                        "ve" "ve/ver"
+                        "ey" "ey/em"
+                        "zehir" "ze/hir"
+                        "zezir" "ze/zir"
+                        "xe" "xe/xem"
                         "unspecified pronouns")]
       [:div.pronouns pronouns])]])
 

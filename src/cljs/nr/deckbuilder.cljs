@@ -61,35 +61,30 @@
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
-  (let [q (lower-case (:title card ""))
-        id (:id card)
+  (let [id (:id card)
         cards (filter #(= (:side %) side) @all-cards)
-        exact-matches (filter-exact-title q cards)
         first-id (first (filter #(= id (:code %)) cards))]
-    (cond
-
-      (and id first-id)
+    (if (and id first-id)
       first-id
+      (let [q (lower-case (:title card ""))
+            exact-matches (filter-exact-title q cards)]
+        (if (not-empty exact-matches)
+          (take-best-card exact-matches)
+          (loop [i 2
+                 matches cards]
+            (let [subquery (subs q 0 i)]
+              (cond
+                (zero? (count matches))
+                card
 
-      (not-empty exact-matches)
-      (take-best-card exact-matches)
+                (or (= (count matches) 1) (identical-cards? matches))
+                (take-best-card matches)
 
-      :else
-      (loop [i 2
-             matches cards]
-        (let [subquery (subs q 0 i)]
-          (cond
-            (zero? (count matches))
-            card
+                (<= i (count (:title card)))
+                (recur (inc i) (filter-title subquery matches))
 
-            (or (= (count matches) 1) (identical-cards? matches))
-            (take-best-card matches)
-
-            (<= i (count (:title card)))
-            (recur (inc i) (filter-title subquery matches))
-
-            :else
-            card))))))
+                :else
+                card))))))))
 
 (defn- build-identity-name
   [title setname]
@@ -99,7 +94,7 @@
 
 (defn parse-identity
   "Parse an id to the corresponding card map"
-  [{:keys [side title setname]}]
+  [{:keys [side title setname code]}]
   (if (nil? title)
     {:display-name "Missing Identity"}
     (let [card (lookup side {:title title})]
@@ -191,9 +186,8 @@
       (assoc deck :cards cards :parsed? true))))
 
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)
-        updated-decks (map process-cards-in-deck decks)]
-    (swap! app-state assoc :decks updated-decks)
+  (let [decks (sort-by :date > decks)]
+    (swap! app-state assoc :decks decks)
     (swap! app-state assoc :decks-loaded true)))
 
 (defn- add-deck-name

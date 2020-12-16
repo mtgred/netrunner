@@ -224,10 +224,14 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")
     (take-credits state :runner 3)
     ;; corp's turn. install something from HQ to trigger Astrolabe draw
+    (is (= 4 (count (:hand (get-runner)))) "Started with 4 cards")
     (play-from-hand state :corp "Snare!" "New remote")
     (is (= 5 (count (:hand (get-runner)))) "Drew 1 card from server install")
     ;; install over the old server; make sure nothing is drawn
-    (play-from-hand state :corp "Snare!" "Server 0")
+    (is (zero? (count (:discard (get-corp)))) "No cards in discard")
+    (play-from-hand state :corp "Snare!" "Server 1")
+    (click-prompt state :corp "OK")
+    (is (= 1 (count (:discard (get-corp)))) "Wrote over old snare")
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 

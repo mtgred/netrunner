@@ -31,17 +31,8 @@
      (hiccup/include-js "/lib/marked/marked.min.js")
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
-     (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
      [:script {:type "text/javascript"}
       (str "var user=" (json/generate-string user) ";")]
-
-     (when-let [sentry-dsn (:sentry-dsn server-config)]
-       [:script {:type "text/javascript"}
-        (str "Sentry.init({ dsn: '" sentry-dsn "' });"
-             (when user
-               (str "Sentry.configureScope((scope) => {scope.setUser({\"username\": \""
-                    (:username user)
-                    "\"});});")))])
 
      (if (= "dev" @web.config/server-mode)
        (list (hiccup/include-js "/cljs/goog/base.js")
