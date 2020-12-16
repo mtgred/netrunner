@@ -20,10 +20,11 @@
 (defn subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [card cdef]
-  (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines
-       (into [])))
+  (let [no-subs-card (dissoc card :subroutines)]
+    (->> (:subroutines cdef)
+         (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) no-subs-card)
+         :subroutines
+         (into []))))
 
 (defn ability-init
   "Gets abilities associated with the card"
