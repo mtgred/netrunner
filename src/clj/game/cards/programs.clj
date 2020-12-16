@@ -1894,8 +1894,8 @@
              :effect (req (unregister-events state side card)
                           (when (get-in card [:special :installing])
                             (update! state side (update-in card [:special] dissoc :installing))
-                            (trigger-event state side :runner-install card))
-                          (trash state side eid target {:unpreventable true}))
+                            (trigger-event state :runner :runner-install card))
+                          (trash state :runner eid target {:unpreventable true}))
              :msg (msg "trash " (:title target))}]})
 
 (defcard "Paricia"
