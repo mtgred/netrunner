@@ -31,6 +31,7 @@
                            (:options (js->clj js/user :keywordize-keys true)))
 
            :cards-loaded false
+           :previous-cards {}
            :sets [] :mwl [] :cycles []
            :decks [] :decks-loaded false
            :stats (:stats (js->clj js/user :keywordize-keys true))

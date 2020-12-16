@@ -10,31 +10,11 @@
             [nr.avatar :refer [avatar]]
             [reagent.core :as r]))
 
-(def alt-arts-channel (chan))
-
-(defn load-alt-arts []
-  (go (let [alt_info (->> (<! (GET "/data/cards/altarts"))
-                          (:json)
-                          (map #(select-keys % [:version :name :description :position])))
-            cards (->> @all-cards
-                       (filter #(not (:replaced_by %)))
-                       (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))
-                       (filter :alt_art)
-                       (into {} (map (juxt :code identity))))]
-        (swap! app-state assoc :alt-arts cards)
-        (swap! app-state assoc :alt-info alt_info)
-        (put! alt-arts-channel cards))))
-
-(defn image-url [card-code version]
-  (let [card (get (:alt-arts @app-state) card-code)
-        version-path (get (:alt_art card) (keyword version) card-code)]
-    (str "/img/cards/" version-path ".png")))
-
 (defn- all-alt-art-types
   []
   (map :version (:alt-info @app-state)))
 
-(defn alt-art-name
+(defn- alt-art-name
   [version]
   (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
     (get alt :name "Official")))
@@ -102,22 +82,14 @@
 
 (defn- remove-card-art
   [card s]
-  (swap! s update-in [:alt-arts] #(dissoc % (keyword (:code card))))
-  (when-let [replaces (:replaces card)]
-    (let [replaced-card (some #(when (= replaces (:code %)) %) (:cards @app-state))]
-      (when replaced-card
-        (remove-card-art replaced-card s)))))
+  (swap! s update :alt-arts dissoc (keyword (:code card))))
 
 (defn- add-card-art
   [card art s]
-  (swap! s update-in [:alt-arts] #(assoc % (keyword (:code card)) art))
-  (when-let [replaces (:replaces card)]
-    (let [replaced-card (some #(when (= replaces (:code %)) %) (:cards @app-state))]
-      (when replaced-card
-        (add-card-art replaced-card art s)))))
+  (swap! s update :alt-arts assoc (keyword (:code card)) art))
 
 (defn- update-card-art
-  "Set the alt art for a card and any card it replaces (recursively)"
+  "Set the alt art for a card"
   [card art s]
   (when (and card (string? art))
     (if (= "default" art)
@@ -126,12 +98,13 @@
         (when (some #(= % (keyword art)) versions)
           (add-card-art card art s))))))
 
-(defn reset-card-art
-  ([s] (let [art (:all-art-select @s)]
-        (reset-card-art s art)))
-  ([s art]
-   (doseq [card (vals (:alt-arts @app-state))]
-     (update-card-art card art s))))
+(defn- clear-card-art [s]
+  (swap! s assoc-in [:alt-arts] {}))
+
+(defn- reset-card-art [s]
+  (let [art (:all-art-select @s)]
+    (doseq [card (vals (:alt-cards @app-state))]
+      (update-card-art card art s))))
 
 (defn log-width-option [s]
   (let [log-width (r/atom (:log-width @s))]
@@ -205,7 +178,8 @@
                    :lobby-sounds (get-in @app-state [:options :lobby-sounds])
                    :volume (get-in @app-state [:options :sounds-volume])
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
-                   :all-art-select ""
+                   :alt-arts (get-in @app-state [:options :alt-arts])
+                   :all-art-select "wc2015"
                    :stacked-servers (get-in @app-state [:options :stacked-servers])
                    :runner-board-order (get-in @app-state [:options :runner-board-order])
                    :log-width (get-in @app-state [:options :log-width])
@@ -217,15 +191,6 @@
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))
             (swap! s assoc :email (:email (:json response))))))
-
-    (go (while true
-          (let [cards (<! alt-arts-channel)
-                first-alt (first (sort-by :title (vals cards)))]
-            (swap! s assoc-in [:alt-arts] (get-in @app-state [:options :alt-arts]))
-            (swap! s assoc-in [:alt-card] (:code first-alt))
-            (swap! s assoc-in [:alt-card-version]
-                   (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
-                         "default")))))
 
     (fn [user]
       [:div.account
@@ -242,15 +207,25 @@
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
           [:h3 "Pronouns"]
           [:select {:value (:pronouns @s "none")
-                    :default-value "none"
                     :on-change #(swap! s assoc :pronouns (.. % -target -value))}
            (doall
              (for [option [{:name "Unspecified" :ref "none"}
+                           {:name "Any" :ref "any"}
+                           {:name "Prefer not to say" :ref "myodb"}
+                           {:name "[blank]" :ref "blank"}
                            {:name "They/them" :ref "they"}
                            {:name "She/her" :ref "she"}
+                           {:name "She/they" :ref "shethey"}
                            {:name "He/him" :ref "he"}
-                           {:name "Any" :ref "any"}]]
-               [:option {:value (:ref option)} (:name option)]))]]
+                           {:name "He/they" :ref "hethey"}
+                           {:name "It" :ref "it"}
+                           {:name "Ne/nem" :ref "ne"}
+                           {:name "Ve/ver" :ref "ve"}
+                           {:name "Ey/em" :ref "ey"}
+                           {:name "Ze/hir" :ref "zehir"}
+                           {:name "Ze/zir" :ref "zezir"}
+                           {:name "Xe/xem" :ref "xe"}]]
+               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
          [:section
           [:h3 "Sounds"]
           [:div
@@ -370,7 +345,7 @@
                             :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
             "Show alternate card arts"]]
 
-          (when (and (:special @user) (:alt-arts @app-state))
+          (when (and (:special @user) (:show-alt-art @s) (:alt-info @app-state))
             [:div {:id "my-alt-art"}
              [:div {:id "set-all"}
               "Set all cards to: "
@@ -378,16 +353,20 @@
                         :value (:all-art-select @s)
                         :on-change #(swap! s assoc-in [:all-art-select] (-> % .-target .-value))}
                (doall (for [t (all-alt-art-types)]
-                        [:option {:value t :key t} (alt-art-name t)]))]
+                        (when (not= "prev" t)
+                          [:option {:value t :key t} (alt-art-name t)])))]
               [:button
                {:type "button"
                 :on-click #(reset-card-art s)}
                "Set"]]
              [:div.reset-all
-              [:button
-               {:type "button"
-                :on-click #(reset-card-art s "default")}
-               "Reset All to Official Art"]]])]
+              (let [disabled (empty? (:alt-arts @s))]
+                [:button
+                 {:type "button"
+                  :disabled disabled
+                  :class (if disabled "disabled" "")
+                  :on-click #(clear-card-art s)}
+                 "Reset All to Official Art"])]])]
 
          [:section
           [:h3 "Blocked users"]

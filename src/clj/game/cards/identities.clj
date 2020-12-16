@@ -405,8 +405,8 @@
                                  (system-msg state side (str "chooses " target
                                                              " to be saved from the rules apocalypse and trashes "
                                                              (quantify (count to-be-trashed) "card")))
-                                 ; even :unpreventable does not trash Architect
-                                 (trash-cards state side eid to-be-trashed {:unpreventable true})))}
+                                 ; these cards get trashed by the game and not by players
+                                 (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
                  card nil))
      :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))

@@ -750,7 +750,7 @@
 
 (defcard "Cell Portal"
   {:subroutines [{:msg "make the Runner approach the outermost ICE"
-                  :effect (req (let [server (central->name (target-server run))]
+                  :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
                                  (derez state side card)))}]})
 
@@ -1440,8 +1440,9 @@
                   :label "Reduce Runner's hand size by 2"
                   :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
                   :effect (effect (register-floating-effect
+                                    card
                                     {:type :hand-size
-                                     :duration :until-start-of-corp-turn
+                                     :duration :until-corp-turn-begins
                                      :req (req (= :runner side))
                                      :value -2}))}]})
 
@@ -1601,8 +1602,8 @@
                                     (do (shuffle! state side :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid))))})]
-    (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
-                              (not (has-subtype? target "AI"))
+    (let [breakable-fn (req (when (or (> 3 (get-counters card :advancement))
+                                      (not (has-subtype? target "AI")))
                               :unrestricted))]
       {:advanceable :always
        :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"

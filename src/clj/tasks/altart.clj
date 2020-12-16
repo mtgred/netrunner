@@ -56,7 +56,7 @@
   (let [k (keyword (str "alt_art." version))
         cnt (reduce (fn [acc code]
                       (mc/update db card-collection {:code code} {$set {k (str code "-" version)}})
-                      (mc/update db card-collection {:replaces code} {$set {k (str code "-" version)}})
+                      (mc/update db card-collection {:previous-versions code} {$set {k (str code "-" version)}})
                       (inc acc))
                     0 cards)]
     (println "Added" cnt "alt art cards to set" name)))

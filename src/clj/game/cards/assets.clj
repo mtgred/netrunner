@@ -892,7 +892,7 @@
          :req (req (corp? (:card target)))
          :msg "do 1 net damage"
          :effect (effect (damage :corp eid :net 1 {:card card}))}]
-    {:on-trash ability
+    {:on-trash (assoc ability :req (req (= :runner side)))
      :events [ability]}))
 
 (defcard "Hyoubu Research Facility"

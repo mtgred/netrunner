@@ -564,23 +564,42 @@
 
 (deftest cell-portal
   ;; Cell Portal - Bounce Runner to outermost position and derez itself
-  (do-game
-    (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Cell Portal" "HQ")
-    (play-from-hand state :corp "Paper Wall" "HQ")
-    (play-from-hand state :corp "Paper Wall" "HQ")
-    (take-credits state :corp)
-    (let [cp (get-ice state :hq 0)]
-      (rez state :corp cp)
-      (run-on state :hq)
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
-      (is (= 1 (get-in @state [:run :position])))
-      (card-subroutine state :corp cp 0)
-      (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-      (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
+  (testing "Run on centrals"
+    (do-game
+      (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (take-credits state :corp)
+      (let [cp (get-ice state :hq 0)]
+        (rez state :corp cp)
+        (run-on state :hq)
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (is (= 1 (get-in @state [:run :position])))
+        (card-subroutine state :corp cp 0)
+        (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
+  (testing "Run on servers"
+    (do-game
+      (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Cell Portal" "New remote")
+      (play-from-hand state :corp "Paper Wall" "Server 1")
+      (play-from-hand state :corp "Paper Wall" "Server 1")
+      (take-credits state :corp)
+      (let [cp (get-ice state :remote1 0)]
+        (rez state :corp cp)
+        (run-on state "Server 1")
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (is (= 1 (get-in @state [:run :position])))
+        (card-subroutine state :corp cp 0)
+        (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -1370,22 +1389,44 @@
 
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
-  (do-game
-    (new-game {:corp {:deck ["Free Lunch"]}})
-    (play-from-hand state :corp "Free Lunch" "HQ")
-    (take-credits state :corp)
-    (let [fl (get-ice state :hq 0)]
-      (rez state :corp fl)
-      (run-on state "HQ")
-      (run-continue state)
-      (card-subroutine state :corp fl 0)
-      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
-      (card-subroutine state :corp fl 0)
-      (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
-      (is (= 5 (:credit (get-runner))))
-      (card-ability state :corp (refresh fl) 0)
-      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
-      (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:deck ["Free Lunch"]}})
+      (play-from-hand state :corp "Free Lunch" "HQ")
+      (take-credits state :corp)
+      (let [fl (get-ice state :hq 0)]
+        (rez state :corp fl)
+        (run-on state "HQ")
+        (run-continue state)
+        (card-subroutine state :corp fl 0)
+        (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+        (card-subroutine state :corp fl 0)
+        (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
+        (is (= 5 (:credit (get-runner))))
+        (card-ability state :corp (refresh fl) 0)
+        (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+        (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+  (testing "Derez/re-rez"
+    (do-game
+      (new-game {:corp {:hand ["Free Lunch"]
+                        :credits 20}})
+      (play-from-hand state :corp "Free Lunch" "HQ")
+      (take-credits state :corp)
+      (let [fl (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp fl)
+        (run-continue state)
+        (fire-subs state (refresh fl))
+        (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (derez state :corp (refresh fl))
+        (rez state :corp fl)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state (refresh fl))
+        (is (= 4 (get-counters (refresh fl) :power)) "Free Lunch has 4 power counters")))))
 
 (deftest gatekeeper
   ;; Gatekeeper
@@ -1613,6 +1654,23 @@
           (card-ability state :runner gh 0)
           (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))))))
 
+(deftest gyri-labyrinth
+  ;; Gyri Labyrinth - reduce runner handsize by 2 until beginning of corp's next turn
+  (do-game
+    (new-game {:corp {:hand ["Gyri Labyrinth"]}})
+    (play-from-hand state :corp "Gyri Labyrinth" "HQ")
+    (take-credits state :corp)
+    (let [gyri (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp gyri)
+      (run-continue state)
+      (is (= 5 (hand-size :runner)) "Runner starts with handsize of 5")
+      (card-subroutine state :corp gyri 0)
+      (is (= 3 (hand-size :runner)) "Runner handsize reduced to 3")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (is (= 5 (hand-size :runner)) "Runner handsize returns to 5"))))
+
 (deftest hagen
   ;; Hagen
   (testing "Trashing only non-fracter non-decoder non-killer cards."
@@ -1774,6 +1832,34 @@
         (click-card state :corp beale)
         (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
         (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
+
+(deftest hive
+  ;; Hive - 5x ETR. Lose an ETR for each agenda point in corp's score area
+  (do-game
+    (new-game {:corp {:hand ["Hive" "Hostile Takeover" "Rebranding Team" "Government Takeover"]
+                      :credits 50}})
+    (core/gain state :corp :click 20)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Rebranding Team" "New remote")
+    (play-from-hand state :corp "Government Takeover" "New remote")
+    (play-from-hand state :corp "Hive" "HQ")
+    (let [ht (get-content state :remote1 0)
+          rt (get-content state :remote2 0)
+          gt (get-content state :remote3 0)
+          hive (get-ice state :hq 0)]
+      (rez state :corp hive)
+      (is (= 5 (count (:subroutines (refresh hive)))) "Starts with 5 subs")
+      (score-agenda state :corp ht)
+      (click-prompt state :corp "Hive")
+      (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored for 1 agenda point")
+      (is (= 4 (count (:subroutines (refresh hive)))) "Loses one sub for scoring Hostile Takeover")
+      (score-agenda state :corp rt)
+      (click-prompt state :corp "Hive")
+      (is (= 3 (:agenda-point (get-corp))) "Rebranding Team scored for 2 agenda points")
+      (is (= 2 (count (:subroutines (refresh hive)))) "Loses two more subs")
+      (score-agenda state :corp gt)
+      (is (= 9 (:agenda-point (get-corp))) "Government Takeover scored for 6 agenda points")
+      (is (= 0 (count (:subroutines (refresh hive)))) "Hive has lost all subs"))))
 
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace

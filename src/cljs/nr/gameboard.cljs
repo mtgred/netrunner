@@ -29,17 +29,13 @@
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
-        art-options (:alt_art (get (:alt-arts @app-state) code))
+        alt-card (get (:alt-cards @app-state) (:code card))
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
         show-art (and special-user special-wants-art viewer-wants-art)
-        art-available (and art-options (not-empty art-options))
-        has-art (and art-options
-                     art
-                     (contains? art-options (keyword art)))
-        version-path (if (and has-art show-art)
-                       (get art-options (keyword art) (:code card))
+        version-path (if (and art show-art)
+                       (get (:alt_art alt-card) (keyword art) art)
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
@@ -1141,10 +1137,22 @@
    [:div.namebox
     [:div.username (:username user)]
     (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "they" "they/them"
-                        "she" "she/her"
-                        "he" "he/him"
+                        "none" "unspecified" 
                         "any" "any"
+                        "myodb" "prefer not to say"
+                        "blank" ""
+                        "he" "he/him"
+                        "she" "she/her"
+                        "hethey" "he/they"
+                        "shethey" "she/they"
+                        "it" "it"
+                        "they" "they/them"
+                        "ne" "ne/nem"
+                        "ve" "ve/ver"
+                        "ey" "ey/em"
+                        "zehir" "ze/hir"
+                        "zezir" "ze/zir"
+                        "xe" "xe/xem"
                         "unspecified pronouns")]
       [:div.pronouns pronouns])]])
 

@@ -2,7 +2,7 @@
   (:require [clojure.string :refer [split split-lines join escape] :as s]
             [game.core.card :refer [has-subtype?]]
             [jinteki.utils :refer [faction-label INFINITY]]
-            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.cards :as cards]
             #?@(:clj [[clj-time.core :as t]
                       [clj-time.format :as f]
                       [clj-time.coerce :as c]])))
@@ -72,7 +72,7 @@
   [identity]
   (if (or (draft-id? identity) (multiplayer-id? identity))
     INFINITY
-    (:influencelimit identity)))
+    (:influencelimit identity 0)))
 
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
@@ -85,26 +85,6 @@
   [deck card]
   (and (= "The Professor: Keeper of Knowledge" (get-in deck [:identity :title]))
        (= "Program" (:type card))))
-
-(defn before-today? [date]
-  #?(:clj  (let [parsed-date (if (string? date)
-                               (f/parse (f/formatters :date) date)
-                               date)]
-             (if (nil? parsed-date)
-               false
-               (t/before? parsed-date (t/now))))
-     :cljs (< date (.toJSON (js/Date.)))))
-
-(defn released?
-  "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [sets card]
-  (let [card-set (:setname card)
-        rotated (:rotated card)
-        date (some #(when (= (:name %) card-set) (:available %)) sets)]
-    (and (not rotated)
-         (not= date "")
-         (not (nil? date))
-         (before-today? date))))
 
 ;; Influence
 ;; Note: line is a map with a :card and a :qty
@@ -179,8 +159,8 @@
         min-deck-size (min-deck-size identity)
         card-count? (>= card-count min-deck-size)
         influence-count (influence-count deck)
-        id-inf-limit (id-inf-limit identity)
-        influence-limit? (<= influence-count id-inf-limit)
+        inf-limit (id-inf-limit identity)
+        influence-limit? (<= influence-count inf-limit)
         allowed-cards-fn #(allowed? (:card %) identity)
         legal-num-copies-fn #(legal-num-copies? identity %)
         allowed-cards? (every? allowed-cards-fn cards)

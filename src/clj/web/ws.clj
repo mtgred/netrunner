@@ -33,7 +33,8 @@
     ;; TODO in high stress situations, multiple go blocks could be competing. This could result in out of order messages and thus a stale client.
     ;; To fix, we would want to keep the order of loading correct perhaps by blocking successive go blocks until the previous ones have completed
     (go
-      (doseq [client uids]
+      (doseq [client uids
+              :when (some? client)]
         (>! websocket-buffer true) ;; Block if we have recently sent a lot of messages. The data supplied is arbitrary
         (send! client [event msg])))))
 

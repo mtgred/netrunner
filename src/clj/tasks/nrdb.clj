@@ -9,8 +9,8 @@
             [clojure.edn :as edn]))
 
 (def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
-(def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
-(def ^:const nrdb-image-url "https://netrunnerdb.com/card_image/")
+;; XXX - NRDB has two slashes currently in the card image download url
+(def ^:const nrdb-image-url "https://netrunnerdb.com/card_image//")
 
 (defn download-edn-data
   [localpath]
@@ -34,31 +34,45 @@
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
-  [card]
-  (io/file "resources" "public" "img" "cards" (str (:code card) ".png")))
+  [code]
+  (io/file "resources" "public" "img" "cards" (str code ".png")))
 
 (defn- download-card-image
   "Download a single card image from NRDB"
-  [card]
-  (println "Downloading: " (:title card) "\t\t(" (:image_url card) ")")
-  (http/get (:image_url card) {:as :byte-array :timeout 120000}
-            (fn [{:keys [status body error]}]
-              (case status
-                404 (println "No image for card" (:code card) (:title card))
-                200 (with-open [w (io/output-stream (.getPath (card-image-file card)))]
-                      (.write w body))
-                (println "Error downloading art for card" (:code card) error)))))
+  [{:keys [code title]}]
+  (let [url (str nrdb-image-url code ".png")]
+    (println "Downloading: " title "\t\t(" url ")")
+    (http/get url {:as :byte-array :timeout 120000}
+              (fn [{:keys [status body error]}]
+                (case status
+                  404 (println "No image for card" code title)
+                  200 (with-open [w (io/output-stream (.getPath (card-image-file code )))]
+                        (.write w body))
+                  (println "Error downloading art for card" code error))))))
 
 (def download-card-image-throttled
   (throttle-fn download-card-image 5 :second))
+
+(defn- expand-card
+  "Make a card stub for all previous versions specified in a card."
+  [acc card]
+  (reduce #(conj %1 {:title (:title card) :code %2}) acc (:previous-versions card)))
+
+(defn- generate-previous-card-stubs
+  "The cards database only has the latest version of a card. Create stubs for previous versions of a card."
+  [cards]
+  (let [c (filter #(contains? % :previous-versions) cards)]
+    (reduce expand-card `() c)))
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
   [cards]
   (let [img-dir (io/file "resources" "public" "img" "cards")]
     (io/make-parents img-dir)
-    (let [missing-cards (remove #(.exists (card-image-file %)) cards)
-          total (count cards)
+    (let [previous-cards (generate-previous-card-stubs cards)
+          total-cards (concat cards previous-cards)
+          missing-cards (remove #(.exists (card-image-file (:code %))) total-cards)
+          total (count total-cards)
           missing (count missing-cards)]
       (if (pos? missing)
         (do
