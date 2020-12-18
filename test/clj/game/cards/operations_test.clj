@@ -1011,23 +1011,40 @@
     (is (= 2 (-> (get-runner) :hand count)) "Runner should take 1 meat damage from Door to Door")))
 
 (deftest eavesdrop
-  ;; Ice Wall
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Eavesdrop" "Ice Wall"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Eavesdrop")
-    (click-card state :corp "Ice Wall")
-    (is (= "Eavesdrop" (:title (first (:hosted (get-ice state :hq 0))))) "Eavesdrop is successfully hosted on Ice Wall")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (rez state :corp (get-ice state :hq 0))
-    (run-continue state)
-    (is (= :trace (prompt-type :corp)) "Corp should initiate a trace")
-    (is (zero? (count-tags state)) "Runner should have no tags")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
-    (is (= 1 (count-tags state)) "Runner should gain 1 tag from Eavesdrop ability")))
+  ;; Eavesdrop - host on ice, trace 3 when encountered
+  (testing "Basic Behavior"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Eavesdrop" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Eavesdrop")
+      (click-card state :corp "Ice Wall")
+      (is (= "Eavesdrop" (:title (first (:hosted (get-ice state :hq 0))))) "Eavesdrop is successfully hosted on Ice Wall")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= :trace (prompt-type :corp)) "Corp should initiate a trace")
+      (is (zero? (count-tags state)) "Runner should have no tags")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count-tags state)) "Runner should gain 1 tag from Eavesdrop ability")))
+  (testing "Fire only for hosted ice"
+    (do-game
+      (new-game {:corp {:hand ["Eavesdrop" "Ice Wall" "Wall of Static"]}})
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Eavesdrop")
+      (click-card state :corp "Ice Wall")
+      (is (= "Eavesdrop" (:title (first (:hosted (get-ice state :hq 0))))) "Eavesdrop is successfully hosted on Ice Wall")
+      (play-from-hand state :corp "Wall of Static" "R&D")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (is (nil? (seq (:prompt (get-corp)))) "Corp should have no prompts")
+      (is (nil? (seq (:prompt (get-runner)))) "Runner should have no prompts")
+      (is (zero? (count-tags state)) "Runner should have no tags"))))
 
 (deftest economic-warfare
   ;; Economic Warfare - If successful run last turn, make the runner lose 4 credits if able
