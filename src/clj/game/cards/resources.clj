@@ -494,11 +494,11 @@
                 :cost [:trash :trash-entire-hand]
                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
    :events [{:event :runner-turn-ends
-             :req (req tagged)
              :interactive (req true)
              :msg "force the Corp to initiate a trace"
              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
              :trace {:base 1
+                     :req (req tagged)
                      :unsuccessful {:msg "remove 1 tag"
                                     :async true
                                     :effect (effect (lose-tags :runner eid 1))}}}]})

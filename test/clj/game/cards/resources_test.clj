@@ -446,6 +446,22 @@
       (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
       (card-ability state :runner (get-resource state 0) 0)
       (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
+  (testing "End of turn trace"
+    (do-game
+      (new-game {:runner {:hand ["Citadel Sanctuary"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "No Runner prompt because not tagged")
+      (is (empty? (:prompt (get-corp))) "No Corp prompt because runner not tagged")
+      (take-credits state :corp)
+      (gain-tags state :runner 2)
+      (core/end-turn state :runner nil)
+      (is (= "Waiting for Corp to boost trace strength" (:msg (prompt-map :runner))) "Runner has trace waiting prompt")
+      (is (= "Boost trace strength?" (:msg (prompt-map :corp))) "Corp has trace prompt")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "1")
+      (is (= 1 (count-tags state)) "Tag removed")))
   (testing "Interaction with Corporate Grant and Thunder Art Gallery"
     (do-game
       (new-game {:runner {:deck ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]}})
