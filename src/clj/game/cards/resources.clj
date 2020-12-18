@@ -2489,13 +2489,13 @@
   {:constant-effects [{:type :link
                        :value 1}]
    :events [{:event :agenda-scored
-             :req (req (or (has-subtype? target "Initiative")
-                           (has-subtype? target "Security")))
              :interactive (req true)
              :async true
              :msg "force the Corp to initiate a trace"
              :label "Trace 1 - If unsuccessful, take 1 bad publicity"
              :trace {:base 1
+                     :req (req (or (has-subtype? target "Initiative")
+                                   (has-subtype? target "Security")))
                      :unsuccessful
                      {:effect (effect (gain-bad-publicity :corp 1)
                                       (system-msg :corp (str "takes 1 bad publicity")))}}}]})

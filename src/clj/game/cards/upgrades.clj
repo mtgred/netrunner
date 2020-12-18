@@ -50,8 +50,8 @@
 (defcard "Ash 2X3ZB9CY"
   {:events [{:event :successful-run
              :interactive (req true)
-             :req (req this-server)
              :trace {:base 4
+                     :req (req this-server)
                      :successful
                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
                       :effect (effect (set-only-card-to-access card)
@@ -134,8 +134,8 @@
 (defcard "Bernice Mai"
   {:events [{:event :successful-run
              :interactive (req true)
-             :req (req this-server)
              :trace {:base 5
+                     :req (req this-server)
                      :successful {:msg "give the Runner 1 tag"
                                   :async true
                                   :effect (effect (gain-tags :corp eid 1))}
@@ -414,9 +414,9 @@
 
 (defcard "Drone Screen"
   {:events [{:event :run
-             :req (req (and this-server tagged))
              :async true
              :trace {:base 3
+                     :req (req (and this-server tagged))
                      :successful
                      {:msg "do 1 meat damage"
                       :effect (effect (damage eid :meat 1 {:card card
@@ -1339,10 +1339,10 @@
 
 (defcard "Traffic Analyzer"
   {:events [{:event :rez
-             :req (req (and (protecting-same-server? card target)
-                            (ice? target)))
              :interactive (req true)
              :trace {:base 2
+                     :req (req (and (protecting-same-server? card target)
+                                    (ice? target)))
                      :successful {:msg "gain 1 [Credits]"
                                   :async true
                                   :effect (effect (gain-credits eid 1))}}}]})

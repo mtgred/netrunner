@@ -905,8 +905,8 @@
              card targets))})
 
 (defcard "Hard-Hitting News"
-  {:req (req (last-turn? state :runner :made-run))
-   :trace {:base 4
+  {:trace {:base 4
+           :req (req (last-turn? state :runner :made-run))
            :label "Give the Runner 4 tags"
            :successful {:async true
                         :msg "give the Runner 4 tags"
@@ -954,8 +954,8 @@
    :effect (effect (gain-credits eid 9))})
 
 (defcard "Hellion Alpha Test"
-  {:req (req (last-turn? state :runner :installed-resource))
-   :trace {:base 2
+  {:trace {:base 2
+           :req (req (last-turn? state :runner :installed-resource))
            :successful {:msg "add a Resource to the top of the Stack"
                         :choices {:card #(and (installed? %)
                                               (resource? %))}
@@ -965,8 +965,8 @@
                           :effect (effect (gain-bad-publicity :corp 1))}}})
 
 (defcard "Hellion Beta Test"
-  {:req (req (last-turn? state :runner :trashed-card))
-   :trace {:base 2
+  {:trace {:base 2
+           :req (req (last-turn? state :runner :trashed-card))
            :label "Trash 2 installed non-program cards or take 1 bad publicity"
            :successful {:choices {:max (req (min 2 (count (filter #(or (facedown? %)
                                                                        (not (program? %)))
@@ -1427,8 +1427,8 @@
                              0 (flatten (seq (:servers corp))))))})
 
 (defcard "Power Grid Overload"
-  {:req (req (last-turn? state :runner :made-run))
-   :trace {:base 2
+  {:trace {:base 2
+           :req (req (last-turn? state :runner :made-run))
            :successful {:msg "trash 1 piece of hardware"
                         :async true
                         :effect
@@ -1871,8 +1871,8 @@
    :effect (effect (damage eid :meat 4 {:card card}))})
 
 (defcard "SEA Source"
-  {:req (req (last-turn? state :runner :successful-run))
-   :trace {:base 3
+  {:trace {:base 3
+           :req (req (last-turn? state :runner :successful-run))
            :label "Trace 3 - Give the Runner 1 tag"
            :successful {:msg "give the Runner 1 tag"
                         :async true
@@ -2283,8 +2283,8 @@
                card nil))})
 
 (defcard "Trojan Horse"
-  {:req (req (:accessed-cards runner-reg-last))
-   :trace {:base 4
+  {:trace {:base 4
+           :req (req (:accessed-cards runner-reg-last))
            :label "Trace 4 - Trash a program"
            :successful {:async true
                         :effect (req (let [exceed (- target (second targets))]

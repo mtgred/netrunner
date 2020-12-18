@@ -2942,8 +2942,8 @@
                                    (not= "None" target))
                             (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
                             (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
-    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-     :trace {:base 3
+    {:trace {:base 3
+             :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
              :unsuccessful
              {:async true
               :msg (msg "reveal all cards in HQ" (when-let [hand (seq (:hand corp))]
