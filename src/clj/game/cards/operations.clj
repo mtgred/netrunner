@@ -1120,12 +1120,12 @@
 (defcard "Kill Switch"
   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
                                 :trace {:base 3
+                                        :req (req (agenda? target))
                                         :successful {:msg "do 1 brain damage"
                                                      :async true
                                                      :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
     {:events [(assoc trace-for-brain-damage
                      :event :access
-                     :req (req (agenda? target))
                      :interactive (req (agenda? target)))
               (assoc trace-for-brain-damage :event :agenda-scored)]}))
 
