@@ -4613,7 +4613,29 @@
           (click-prompt state :runner "1")
           (run-continue state)
           (run-continue state)
-          (is (= :hq (get-in @state [:run :server 0])) "Run continues on HQ"))))))
+          (is (= :hq (get-in @state [:run :server 0])) "Run continues on HQ")))))
+  (testing "Sneakdoor Beta effect ends at end of run"
+    (do-game
+      (new-game {:runner {:hand ["Sneakdoor Beta"]}
+                 :corp {:hand ["Rototurret" "Hedge Fund"]
+                        :discard ["Hedge Fund"]}})
+      (play-from-hand state :corp "Rototurret" "Archives")
+      (let [roto (get-ice state :archives 0)]
+        (rez state :corp roto)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sneakdoor Beta")
+        (let [sb (get-program state 0)]
+          (card-ability state :runner sb 0)
+          (run-continue state)
+          (fire-subs state (refresh roto))
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to select program to delete")
+          (click-card state :corp "Sneakdoor Beta")
+          (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
+          (run-on state "Archives")
+          (run-continue state)
+          (run-continue state)
+          (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+          (is (= :archives (get-in @state [:run :server 0])) "Run continues on Archives"))))))
 
 (deftest snitch
   ;; Snitch
