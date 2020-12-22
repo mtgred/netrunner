@@ -612,7 +612,8 @@
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital"))))]
+                                                      :subtype "Digital")))
+                         (update-link state))]
     {:constant-effects [{:type :link
                          :req (req (:flipped card))
                          :value 1}]
