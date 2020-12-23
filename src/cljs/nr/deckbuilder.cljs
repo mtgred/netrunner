@@ -680,6 +680,10 @@
                 [line-name-span deck line]]
                [line-span deck line])]))]))])
 
+(defn decklist-notes
+  [deck]
+  [:div.notes (:notes deck "")])
+
 (defn edit-buttons
   [s]
   [:div.button-bar
@@ -714,7 +718,9 @@
           :else [view-buttons s deck])
         [:h3 (:name deck)]
         [decklist-header deck cards]
-        [decklist-contents s deck cards]]))])
+        [decklist-contents s deck cards]
+        (when-not (:edit @s)
+          [decklist-notes deck])]))])
 
 (defn deck-name-editor
   [s]
@@ -781,6 +787,14 @@
               :value (:deck-edit @s)
               :on-change #(handle-edit s)}])
 
+(defn notes-textbox
+  [s]
+  [:textarea.notes-edit
+   {:placeholder "Deck notes"
+    :ref #(swap! db-dom assoc :deck-notes %)
+    :value (get-in @s [:deck :notes])
+    :on-change #(swap! s assoc-in [:deck :notes] (.. % -target -value))}])
+
 (defn edit-panel
   [s]
   [:div.deckedit
@@ -791,7 +805,10 @@
    [:div
     [:h3 "Decklist"
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
-   [edit-textbox s]])
+   [edit-textbox s]
+   [:div
+    [:h3 "Notes"]]
+   [notes-textbox s]])
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
