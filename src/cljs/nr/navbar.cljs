@@ -23,6 +23,7 @@
          (when (or (not show-fn?)
                    (show-fn? @app-state))
            [:li {:class (if (= (first @active) route) "active" "")
+                 :id (str (clojure.string/lower-case name) "-nav")
                  :key name
                  :on-click #(.setToken history route)
                  :data-target "#main"
