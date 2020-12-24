@@ -60,9 +60,7 @@
            (POST "/admin/news" [] admin/news-create-handler)
            (DELETE "/admin/news/:id" [] admin/news-delete-handler)
            (GET "/admin/version" [] admin/version-handler)
-           (PUT "/admin/version" [] admin/version-update-handler)
-           (GET "/admin/fetch" [] pages/fetch-page)
-           (POST "/admin/fetch" [] admin/fetch-handler))
+           (PUT "/admin/version" [] admin/version-update-handler))
 
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
