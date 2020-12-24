@@ -10,12 +10,15 @@
             [web.config :refer [frontend-version]])
   (:import org.bson.types.ObjectId))
 
-(defn announcement-handler
-  [{{:keys [message]} :params :as req}]
-  (doseq [{state :state} (vals @all-games)]
-    (when state
-      (main/handle-announcement state message)))
-  (response 200 {:message "ok"}))
+(defn announce-create-handler [{body :body}]
+  (let [message (:message body)]
+    (if-not (empty? message)
+      (do
+        (doseq [{state :state} (vals @all-games)]
+          (when state
+            (main/handle-announcement state message)))
+        (response 200 {:message "ok"}))
+      (response 409 {:message "Missing announcement"}))))
 
 (defn news-create-handler [{body :body}]
   (let [msg (:item body)]

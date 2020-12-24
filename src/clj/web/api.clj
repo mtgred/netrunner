@@ -56,8 +56,7 @@
            (POST "/reset/:token" [] auth/reset-password-handler))
 
 (defroutes admin-routes
-           (GET "/admin/announce" [] pages/announce-page)
-           (POST "/admin/announce" [] admin/announcement-handler)
+           (POST "/admin/announce" [] admin/announce-create-handler)
            (POST "/admin/news" [] admin/news-create-handler)
            (DELETE "/admin/news/:id" [] admin/news-delete-handler)
            (GET "/admin/version" [] admin/version-handler)

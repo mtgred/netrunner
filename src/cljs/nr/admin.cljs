@@ -17,10 +17,6 @@
   (go (let [response (<! (POST url data :json))]
         (callback response))))
 
-(defn- delete-data [url callback]
-  (go (let [response (<! (DELETE url))]
-        (callback response))))
-
 (defn- update-news-response [response]
   (if (= 200 (:status response))
     (do
@@ -29,7 +25,8 @@
     (non-game-toast "Failed to update news items" "error" nil)))
 
 (defn- delete-news-item [id]
-  (delete-data (str "/admin/news/" id) update-news-response))
+  (go (let [response (<! (DELETE (str "/admin/news/" id)))]
+        (update-news-response response))))
 
 (defn- post-news-item [msg]
   (post-data "/admin/news" update-news-response {:item msg}))
@@ -44,6 +41,14 @@
 (defn- update-version-item [msg]
   (go (let [response (<! (PUT "/admin/version" {:version msg} :json))]
         (update-version-response response))))
+
+(defn- update-announce-response [response]
+  (if (= 200 (:status response))
+    (non-game-toast "Sent announcement" "success" nil)
+    (non-game-toast "Failed to send announcement" "error" nil)))
+
+(defn- post-announce-item [msg]
+  (post-data "/admin/announce" update-announce-response {:message msg}))
 
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])
@@ -99,6 +104,23 @@
             [:button {:disabled disabled
                       :class (if disabled "disabled" "")}
              "Update"])]
+
+         [:br]
+         [:h3 "Site Announcement"]
+         [:form.msg-box {:on-submit #(let [msg (:announce-msg @s)]
+                                       (.preventDefault %)
+                                       (when-not (s/blank? msg)
+                                         (post-announce-item msg)
+                                         (swap! s assoc :announce-msg "")))}
+          [:input {:type "text"
+                   :placeholder "Type something...."
+                   :value (:announce-msg @s "")
+                   :on-change #(swap! s assoc :announce-msg (-> % .-target .-value))}]
+          (let [msg (:announce-msg @s "")
+                disabled (s/blank? msg)]
+            [:button {:disabled disabled
+                      :class (if disabled "disabled" "")}
+             "Send"])]
          ]))))
 
 (defn admin []
