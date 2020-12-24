@@ -12,7 +12,8 @@
    ["Settings" "/account" 5 #(:user %)]
    ["Stats" "/stats" 6 #(:user %)]
    ["About" "/about" 7 nil]
-   ["Tournaments" "/tournament" 8 #(:tournament-organizer (:user %))]])
+   ["Tournaments" "/tournament" 8 #(:tournament-organizer (:user %))]
+   ["Admin" "/admin" 9 #(:isadmin (:user %))]])
 
 (defn navbar []
   (r/with-let [active (r/cursor app-state [:active-page])]

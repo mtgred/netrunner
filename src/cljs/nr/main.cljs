@@ -15,6 +15,7 @@
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
+            [nr.admin :refer [admin]]
             [reagent.core :as r]))
 
 (defn status []
@@ -71,7 +72,8 @@
   (r/render [help] (.getElementById js/document "help"))
   (r/render [news] (.getElementById js/document "news"))
   (r/render [stats] (.getElementById js/document "stats"))
-  (r/render [tournament] (.getElementById js/document "tournament")))
+  (r/render [tournament] (.getElementById js/document "tournament"))
+  (r/render [admin] (.getElementById js/document "admin")))
 
 (defn init! []
   (mount-root))

@@ -5,8 +5,10 @@
             [tasks.nrdb :refer [fetch-data]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
+            [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
-            [web.config :refer [frontend-version]]))
+            [web.config :refer [frontend-version]])
+  (:import org.bson.types.ObjectId))
 
 (defn wrap-version [handler]
   (fn [request]
@@ -18,6 +20,24 @@
     (when state
       (main/handle-announcement state message)))
   (response 200 {:message "ok"}))
+
+(defn news-create-handler [{body :body}]
+  (let [msg (:item body)]
+    (if-not (empty? msg)
+      (do
+        (mc/insert db "news" {:_id (ObjectId.) :item msg :date (java.util.Date.)})
+        (response 200 {:message "ok"}))
+      (response 409 {:message "Missing news item"}))))
+
+(defn news-delete-handler [{{id :id} :params}]
+  (try
+    (if id
+      (if (acknowledged? (mc/remove db "news" {:_id (object-id id)}))
+        (response 200 {:message "Deleted"})
+        (response 403 {:message "Forbidden"}))
+      (response 401 {:message "Missing new items id"}))
+    (catch Exception ex
+      (response 409 {:message "Unknown news item id"}))))
 
 (defn version-handler
   [{{:keys [version]} :params :as req}]

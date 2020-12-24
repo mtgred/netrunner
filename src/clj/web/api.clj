@@ -9,7 +9,6 @@
             [web.stats :as stats]
             [web.admin :as admin]
             [web.tournament :as tournament]
-            [web.news :as news]
             [web.decks :as decks]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
@@ -34,7 +33,7 @@
            (GET "/data/cards/version" [] data/cards-version-handler)
            (GET "/data/cards/altarts" [] data/alt-arts-handler)
 
-           (GET "/data/news" [] news/news-handler)
+           (GET "/data/news" [] data/news-handler)
            (GET "/data/sets" [] data/sets-handler)
            (GET "/data/mwl" [] data/mwl-handler)
            (GET "/data/cycles" [] data/cycles-handler)
@@ -59,6 +58,8 @@
 (defroutes admin-routes
            (GET "/admin/announce" [] pages/announce-page)
            (POST "/admin/announce" [] admin/announcement-handler)
+           (POST "/admin/news" [] admin/news-create-handler)
+           (DELETE "/admin/news/:id" [] admin/news-delete-handler)
            (GET "/admin/version" [] pages/version-page)
            (POST "/admin/version" [] admin/version-handler)
            (GET "/admin/fetch" [] pages/fetch-page)

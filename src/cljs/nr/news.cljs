@@ -22,4 +22,4 @@
             [:li.news-item
              {:key (:date d)}
              [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-             [:span.title (render-icons (js/marked (:title d)))]]))]])))
+             [:span.title (render-icons (:item d ""))]]))]])))
