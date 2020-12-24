@@ -1,18 +1,17 @@
 (ns web.data
-  (:refer-clojure :exclude [sort find])
   (:require [web.db :refer [db object-id]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
-            [monger.query :refer :all]
+            [monger.query :as mq]
             [web.config :refer [server-config]]
             [clojure.edn :as edn]))
 
 (defn news-handler [req]
-  (let [data (with-collection db "news"
-                  (find {})
-                  (fields [:_id :item :date])
-                  (sort (array-map :date -1)))]
+  (let [data (mq/with-collection db "news"
+               (mq/find {})
+               (mq/fields [:_id :item :date])
+               (mq/sort (array-map :date -1)))]
     (response 200 data)))
 
 (defn cards-handler [req]
