@@ -43,7 +43,7 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link "[Admin]"])
+       [:a.block-link {:href "/admin"} "[Admin]"])
      (when (:ismoderator user)
        [:a.block-link "[Moderator]"])
      [:a.block-link {:href "/account"} "Settings"]
