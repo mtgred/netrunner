@@ -11,6 +11,7 @@
 (def admin-state (r/atom {}))
 
 (go (swap! admin-state assoc :news (:json (<! (GET "/data/news")))))
+(go (swap! admin-state assoc :version (:json (<! (GET "/admin/version")))))
 
 (defn- post-data [url callback data]
   (go (let [response (<! (POST url data :json))]
@@ -33,11 +34,23 @@
 (defn- post-news-item [msg]
   (post-data "/admin/news" update-news-response {:item msg}))
 
+(defn- update-version-response [response]
+  (if (= 200 (:status response))
+    (do
+      (go (swap! admin-state assoc :version (:json (<! (GET "/admin/version")))))
+      (non-game-toast "Updated version" "success" nil))
+    (non-game-toast "Failed to update version" "error" nil)))
+
+(defn- update-version-item [msg]
+  (go (let [response (<! (PUT "/admin/version" {:version msg} :json))]
+        (update-version-response response))))
+
 (defn admin-container []
-  (r/with-let [news (r/cursor admin-state [:news])]
+  (r/with-let [news (r/cursor admin-state [:news])
+               version (r/cursor admin-state [:version])]
     (let [s (r/atom {})]
       (fn []
-        [:div.container
+        [:div.container.panel.blue-shade.content-page
          [:h3 "Site News"]
          [:div.news-box.panel.blue-shade
           [:ul.list
@@ -56,17 +69,36 @@
                                        (.preventDefault %)
                                        (when-not (s/blank? msg)
                                          (post-news-item msg)
-                                         (swap! s assoc :news-msg "")
-                                         ))}
+                                         (swap! s assoc :news-msg "")))}
           [:input {:type "text"
                    :placeholder "Post something...."
-                   :value (:news-msg @s)
+                   :value (:news-msg @s "")
                    :on-change #(swap! s assoc :news-msg (-> % .-target .-value))}]
           (let [msg (:news-msg @s "")
                 disabled (s/blank? msg)]
             [:button {:disabled disabled
                       :class (if disabled "disabled" "")}
              "Post"])]
+
+         [:br]
+         [:h3 "App Version"]
+         [:div.panel
+          [:input {:type "text" :name "version" :value (:version @version "") :read-only true}]]
+         [:h4 "Update app version string"]
+         [:form.msg-box {:on-submit #(let [msg (:version-msg @s)]
+                                       (.preventDefault %)
+                                       (when-not (s/blank? msg)
+                                         (update-version-item msg)
+                                         (swap! s assoc :version-msg "")))}
+          [:input {:type "text"
+                   :placeholder "Type something...."
+                   :value (:version-msg @s "")
+                   :on-change #(swap! s assoc :version-msg (-> % .-target .-value))}]
+          (let [msg (:version-msg @s "")
+                disabled (s/blank? msg)]
+            [:button {:disabled disabled
+                      :class (if disabled "disabled" "")}
+             "Update"])]
          ]))))
 
 (defn admin []

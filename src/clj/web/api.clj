@@ -60,8 +60,8 @@
            (POST "/admin/announce" [] admin/announcement-handler)
            (POST "/admin/news" [] admin/news-create-handler)
            (DELETE "/admin/news/:id" [] admin/news-delete-handler)
-           (GET "/admin/version" [] pages/version-page)
-           (POST "/admin/version" [] admin/version-handler)
+           (GET "/admin/version" [] admin/version-handler)
+           (PUT "/admin/version" [] admin/version-update-handler)
            (GET "/admin/fetch" [] pages/fetch-page)
            (POST "/admin/fetch" [] admin/fetch-handler))
 
@@ -109,6 +109,5 @@
       wrap-json-response
       wrap-session
       (wrap-json-body {:keywords? true})
-      admin/wrap-version
       wrap-return-favicon
       wrap-stacktrace))

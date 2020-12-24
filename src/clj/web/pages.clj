@@ -124,21 +124,6 @@
       [:p
        [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
 
-(defn version-page [{:keys [version] :as req}]
-  (hiccup/html5
-    [:head
-     [:title "App Version"]
-     (hiccup/include-css "/css/netrunner.css")]
-    [:body
-     [:div.reset-bg]
-     [:form.panel.blue-shade.reset-form {:method "POST"}
-      (anti-forgery-field)
-      [:h3 "App Version"]
-      [:p
-       [:input {:type "text" :name "version" :value version}]]
-      [:p
-       [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
-
 (defn fetch-page [req]
   (hiccup/html5
     [:head

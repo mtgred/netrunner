@@ -10,10 +10,6 @@
             [web.config :refer [frontend-version]])
   (:import org.bson.types.ObjectId))
 
-(defn wrap-version [handler]
-  (fn [request]
-    (handler (assoc request :version @frontend-version))))
-
 (defn announcement-handler
   [{{:keys [message]} :params :as req}]
   (doseq [{state :state} (vals @all-games)]
@@ -39,11 +35,19 @@
     (catch Exception ex
       (response 409 {:message "Unknown news item id"}))))
 
-(defn version-handler
-  [{{:keys [version]} :params :as req}]
-  (reset! frontend-version version)
-  (mc/update db "config" {} {$set {:version version}})
-  (response 200 {:message "ok" :version version}))
+(defn version-handler [req]
+  (let [config (mc/find-one-as-map db "config" nil)
+        version (:version config "0.0")]
+    (response 200 {:message "ok" :version version})))
+
+(defn version-update-handler [{body :body}]
+  (let [version (:version body "")]
+    (if-not (empty? version)
+      (do
+        (reset! frontend-version version)
+        (mc/update db "config" {} {$set {:version version}})
+        (response 200 {:message "ok" :version version}))
+      (response 409 {:message "Missing version item"}))))
 
 (defn fetch-handler
   "Provide an admin endpoint for fetching card data. Options to fetch can be supplied as parameters to the fetch endpoint."
