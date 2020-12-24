@@ -30,7 +30,6 @@
      (hiccup/include-js "/lib/jqueryui/jquery-ui.min.js")
      (hiccup/include-js "/lib/bootstrap/dist/js/bootstrap.js")
      (hiccup/include-js "/lib/moment/min/moment.min.js")
-     (hiccup/include-js "/lib/marked/marked.min.js")
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
      (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
