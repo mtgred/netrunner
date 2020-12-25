@@ -102,8 +102,11 @@
         [:div.about-bg]
         [:div#tournament]]
        [:div.item
-        [:div.about-bg]
-        [:div#admin]]]]
+        [:div.help-bg]
+        [:div#admin]]
+       [:div.item
+        [:div.account-bg]
+        [:div#users]]]]
     [:audio#ting
       [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
      [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]))
