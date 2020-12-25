@@ -10,23 +10,21 @@
             [web.config :refer [frontend-version]])
   (:import org.bson.types.ObjectId))
 
-(defn announce-create-handler [{body :body}]
-  (let [message (:message body)]
-    (if-not (empty? message)
-      (do
-        (doseq [{state :state} (vals @all-games)]
-          (when state
-            (main/handle-announcement state message)))
-        (response 200 {:message "ok"}))
-      (response 400 {:message "Missing announcement"}))))
+(defn announce-create-handler [{{message :message} :body}]
+  (if-not (empty? message)
+    (do
+      (doseq [{state :state} (vals @all-games)]
+        (when state
+          (main/handle-announcement state message)))
+      (response 200 {:message "ok"}))
+    (response 400 {:message "Missing announcement"})))
 
-(defn news-create-handler [{body :body}]
-  (let [msg (:item body)]
-    (if-not (empty? msg)
-      (do
-        (mc/insert db "news" {:_id (ObjectId.) :item msg :date (java.util.Date.)})
-        (response 200 {:message "ok"}))
-      (response 400 {:message "Missing news item"}))))
+(defn news-create-handler [{{item :item} :body}]
+  (if-not (empty? item)
+    (do
+      (mc/insert db "news" {:_id (ObjectId.) :item item :date (java.util.Date.)})
+      (response 200 {:message "ok"}))
+    (response 400 {:message "Missing news item"})))
 
 (defn news-delete-handler [{{id :id} :params}]
   (try
@@ -43,35 +41,51 @@
         version (:version config "0.0")]
     (response 200 {:message "ok" :version version})))
 
-(defn version-update-handler [{body :body}]
-  (let [version (:version body "")]
-    (if-not (empty? version)
-      (do
-        (reset! frontend-version version)
-        (mc/update db "config" {} {$set {:version version}})
-        (response 200 {:message "ok" :version version}))
-      (response 400 {:message "Missing version item"}))))
+(defn version-update-handler [{{version :version} :body}]
+  (if-not (empty? version)
+    (do
+      (reset! frontend-version version)
+      (mc/update db "config" {} {$set {:version version}})
+      (response 200 {:message "ok" :version version}))
+    (response 400 {:message "Missing version item"})))
 
-(defn mods-handler [req]
+(defn- find-user [criteria]
   (let [data (mq/with-collection db "users"
-               (mq/find {:ismoderator true})
+               (mq/find criteria)
                (mq/fields [:_id :username])
                (mq/sort (array-map :username 1)))]
     (response 200 data)))
 
-(defn mods-update-handler [{body :body}]
-  (let [username (:username body "")]
-    (if-not (empty? username)
-      (do
-        (if (updated-existing? (mc/update db "users" {:username username} {$set {:ismoderator true}}))
-          (response 200 {:message "ok"})
-          (response 404 {:message "Unknown user"})))
-      (response 400 {:message "Missing username"}))))
+(defn- update-user [criteria field value]
+  (if (updated-existing? (mc/update db "users" criteria {$set {field value}}))
+    (response 200 {:message "ok"})
+    (response 404 {:message "Unknown user"})))
+
+(defn mods-handler [req]
+  (find-user {:ismoderator true}))
+
+(defn mods-update-handler [{{username :username} :body}]
+  (if-not (empty? username)
+    (update-user {:username username} :ismoderator true)
+    (response 400 {:message "Missing username"})))
 
 (defn mods-delete-handler [{{id :id} :params}]
   (if id
+    (update-user {:_id (object-id id)} :ismoderator false)
+    (response 400 {:message "Missing id"})))
+
+(defn specials-handler [req]
+  (find-user {:special {$exists true}}))
+
+(defn specials-update-handler [{{username :username} :body}]
+  (if-not (empty? username)
+    (update-user {:username username} :special true)
+    (response 400 {:message "Missing username"})))
+
+(defn specials-delete-handler [{{id :id} :params}]
+  (if id
     (do
-      (if (updated-existing? (mc/update db "users" {:_id (object-id id)} {$set {:ismoderator false}}))
+      (if (updated-existing? (mc/update db "users" {:_id (object-id id)} {$unset {:special false}}))
         (response 200 {:message "Removed"})
         (response 404 {:message "Unknown user"})))
     (response 400 {:message "Missing id"})))

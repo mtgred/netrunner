@@ -63,7 +63,10 @@
            (PUT "/admin/version" [] admin/version-update-handler)
            (GET "/admin/mods" [] admin/mods-handler)
            (PUT "/admin/mods" [] admin/mods-update-handler)
-           (DELETE "/admin/mods/:id" [] admin/mods-delete-handler))
+           (DELETE "/admin/mods/:id" [] admin/mods-delete-handler)
+           (GET "/admin/specials" [] admin/specials-handler)
+           (PUT "/admin/specials" [] admin/specials-update-handler)
+           (DELETE "/admin/specials/:id" [] admin/specials-delete-handler))
 
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
