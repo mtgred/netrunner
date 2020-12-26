@@ -10,7 +10,7 @@
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [cards-channel filter-title image-url] :as cb]
+            [nr.cardbrowser :refer [cards-channel filter-title image-url non-game-toast] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
@@ -21,11 +21,6 @@
 
 (def select-channel (chan))
 (def zoom-channel (chan))
-
-;; (ws/register-ws-handler!
-;;   :lobby/notification
-;;   (fn [notification]
-;;     (play-sound notification)))
 
 (defonce db-dom (atom {}))
 
@@ -876,3 +871,16 @@
           decks (load-decks-from-json json)]
       (load-decks decks)
       (>! cards-channel cards)))
+
+(ws/register-ws-handler!
+  :decks/import-failure
+  (fn [msg]
+    (non-game-toast msg "error" nil)))
+
+(ws/register-ws-handler!
+  :decks/import-success
+  (fn [msg]
+    (non-game-toast msg "success" nil)
+    (go (let [json (:json (<! (GET (str "/data/decks"))))
+              decks (load-decks-from-json json)]
+          (load-decks decks)))))

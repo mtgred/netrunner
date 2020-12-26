@@ -2,6 +2,7 @@
   (:require [web.db :refer [db object-id]]
             [web.utils :refer [response]]
             [web.ws :as ws]
+            [web.nrdb :as nrdb]
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
@@ -9,7 +10,8 @@
             [crypto.password.pbkdf2 :as pbkdf2]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :refer [slugify]]
-            [jinteki.validator :refer [calculate-deck-status]]))
+            [jinteki.validator :refer [calculate-deck-status]])
+  (:import org.bson.types.ObjectId))
 
 
 (defn decks-handler [req]
@@ -107,9 +109,25 @@
       (response 409 {:message "Unknown deck id"}))))
 
 (defn handle-deck-import
-  [{{user :user}         :ring-req
+  [{{{username :username} :user}    :ring-req
+    client-id       :client-id
     {:keys [input]} :?data :as values}]
-  )
+  (try
+    (let [deck (nrdb/download-public-decklist input)]
+      (if (every? #(contains? deck %) [:name :identity :cards])
+        (let [db-deck (assoc deck
+                             :_id (ObjectId.)
+                             :date (java.util.Date.)
+                             :format "standard")
+              updated-deck (update-deck db-deck)
+              status (calculate-deck-status updated-deck)
+              deck-hash (hash-deck updated-deck)
+              deck (prepare-deck-for-db db-deck username status deck-hash)]
+          (mc/insert db "decks" deck)
+          (ws/broadcast-to! [client-id] :decks/import-success "Imported"))
+        (ws/broadcast-to! [client-id] :decks/import-failure "Failed to parse imported deck.")))
+    (catch Exception ex
+      (ws/broadcast-to! [client-id] :decks/import-failure "Failed to import deck."))))
 
 (ws/register-ws-handlers!
   :decks/import #'handle-deck-import)
