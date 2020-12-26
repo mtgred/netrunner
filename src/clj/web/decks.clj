@@ -1,6 +1,7 @@
 (ns web.decks
   (:require [web.db :refer [db object-id]]
             [web.utils :refer [response]]
+            [web.ws :as ws]
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
@@ -104,3 +105,11 @@
     (catch Exception ex
       ;; Deleting a deck that was never saved throws an exception
       (response 409 {:message "Unknown deck id"}))))
+
+(defn handle-deck-import
+  [{{user :user}         :ring-req
+    {:keys [input]} :?data :as values}]
+  )
+
+(ws/register-ws-handlers!
+  :decks/import #'handle-deck-import)

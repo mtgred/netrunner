@@ -15,10 +15,17 @@
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
                               slug->format checkbox-button cond-button]]
-            [reagent.core :as r]))
+            [nr.ws :as ws]
+            [reagent.core :as r]
+            [reagent-modals.modals :as reagent-modals]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
+
+;; (ws/register-ws-handler!
+;;   :lobby/notification
+;;   (fn [notification]
+;;     (play-sound notification)))
 
 (defonce db-dom (atom {}))
 
@@ -298,6 +305,25 @@
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
+
+(defn import-deck-modal []
+  (r/with-let [s (r/atom {})]
+    (fn []
+      [:div
+       [:h3 "Enter a Public NRDB Deck ID or URL"]
+       [:p [:input.url {:type "text"
+                        :placeholder "NRDB ID"
+                        :value (:msg @s)
+                        :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+       [:p.float-right
+        (let [disabled (empty? (:msg @s))]
+          [:button
+           {:disabled disabled
+            :class (when disabled "disabled")
+            :on-click #(do (ws/ws-send! [:decks/import {:input (:msg @s)}])
+                           (reagent-modals/close-modal!))}
+           "Import"])
+        [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]])))
 
 (defn load-decks-from-json
   [json]
@@ -796,7 +822,8 @@
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
    [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]
+   [cond-button "Import deck" (and @user @decks-loaded) #(reagent-modals/modal! [import-deck-modal])]])
 
 (defn- zoom-card-view [card state]
   [card state]
@@ -841,6 +868,7 @@
          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
           [list-panel s user decks decks-loaded]
           [selected-panel s]
+          [reagent-modals/modal-window]
           [edit-panel s]]]))))
 
 (go (let [cards (<! cards-channel)
