@@ -10,11 +10,11 @@
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [cards-channel filter-title image-url] :as cb]
+            [nr.cardbrowser :refer [cards-channel filter-title image-url factions] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
-                              slug->format checkbox-button cond-button]]
+                              slug->format format->slug checkbox-button cond-button]]
             [reagent.core :as r]))
 
 (def select-channel (chan))
@@ -537,23 +537,61 @@
          " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
          " - Lost: " losses]))]])
 
+(def all-sides-filter "Any Side")
+(def all-factions-filter "Any Faction")
+(def all-formats-filter "Any Format")
+
+(defn- filter-side [state decks]
+  (let [side (:side-filter @state)]
+    (if (= all-sides-filter (:side-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :side]) side) decks))))
+
+(defn- filter-faction [state decks]
+  (let [faction (:faction-filter @state)]
+    (if (= all-factions-filter (:faction-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :faction]) faction) decks))))
+
+(defn- filter-format [state decks]
+  (let [fmt (:format-filter @state)
+        fmt-slug (format->slug fmt)]
+    (if (= all-formats-filter fmt)
+      decks
+      (filter #(= (:format %) fmt-slug) decks))))
+
+(defn- filter-selected [state]
+  (not (and (= all-sides-filter (:side-filter @state))
+            (= all-factions-filter (:faction-filter @state))
+            (= all-formats-filter (:format-filter @state)))))
+
 (defn deck-collection
   [s decks decks-loaded]
-  [:div.deck-collection
-   (when-not (:edit @s)
-     (cond
+  (when-not (:edit @s)
+    (cond
 
-       (not @decks-loaded)
-       [:h4 "Loading deck collection..."]
+      (not @decks-loaded)
+      [:div.deck-collection
+       [:h4 "Loading deck collection..."]]
 
-       (empty? @decks)
-       [:h4 "No decks"]
+      (empty? @decks)
+      [:div.deck-collection
+       [:h4 "No decks"]]
 
-       :else
-       (doall
-         (for [deck (sort-by :date > @decks)]
-           ^{:key (:_id deck)}
-           [deck-entry s deck]))))])
+      :else
+      (let [filtered-decks (->> @decks
+                                (filter-side s)
+                                (filter-faction s)
+                                (filter-format s))
+            n (count filtered-decks)
+            deck-str (if (= n 1) "Deck" "Decks")]
+        [:div.deck-collection
+         [:h4 (str n " " deck-str
+                   (when (filter-selected s) " (filtered)"))]
+         (doall
+           (for [deck (sort-by :date > filtered-decks)]
+             ^{:key (:_id deck)}
+             [deck-entry s deck]))]))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -793,10 +831,54 @@
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
    [edit-textbox s]])
 
+(defn- reset-deck-filters [state]
+  (swap! state assoc
+         :side-filter all-sides-filter
+         :faction-filter all-factions-filter
+         :format-filter all-formats-filter))
+
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button "New Corp deck" (and @user @decks-loaded) #(do
+                                                             (reset-deck-filters s)
+                                                             (new-deck s "Corp"))]
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(do
+                                                               (reset-deck-filters s)
+                                                               (new-deck s "Runner"))]])
+
+(defn- simple-filter-builder
+  [state state-key options decks-loaded callback]
+  [:select.deckfilter-select {:class (if-not @decks-loaded "disabled" state-key)
+                              :value (get @state state-key)
+                              :on-change #(let [old-value (get @state state-key)
+                                                new-value (.. % -target -value)]
+                                            (swap! state assoc state-key new-value)
+                                            (when callback
+                                              (callback state old-value new-value)))}
+   (for [option options]
+     ^{:key option}
+     [:option.deckfilter-option {:value option
+                                 :key option
+                                 :dangerouslySetInnerHTML #js {:__html option}}])])
+
+(defn- handle-side-changed [state old-value new-value]
+  (swap! state assoc :faction-filter all-factions-filter))
+
+(defn- filter-builder
+  [state decks-loaded]
+  (let [formats (-> format->slug keys butlast)]
+    [:div.deckfilter
+     (doall
+       (for [[state-key options callback]
+             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed]
+              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil]
+              [:format-filter (cons all-formats-filter formats) nil]]]
+         ^{:key state-key}
+         [simple-filter-builder state state-key options decks-loaded callback]))
+
+     [:button {:class (if-not @decks-loaded "disabled" "")
+               :on-click #(reset-deck-filters state)}
+      "Reset"]]))
 
 (defn- zoom-card-view [card state]
   [card state]
@@ -809,6 +891,7 @@
   [s user decks decks-loaded]
   [:div.decks
    [collection-buttons s user decks-loaded]
+   [filter-builder s decks-loaded]
    [deck-collection s decks decks-loaded]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]
@@ -823,7 +906,10 @@
   (let [active (r/cursor app-state [:active-page])
         s (r/atom {:edit false
                    :old-deck nil
-                   :deck nil})
+                   :deck nil
+                   :side-filter all-sides-filter
+                   :faction-filter all-factions-filter
+                   :format-filter all-formats-filter})
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])]
