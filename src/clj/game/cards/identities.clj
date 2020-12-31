@@ -308,9 +308,9 @@
              :effect (effect (lose-tags eid 1))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :corp side))
-                       :value (req (:credit corp))}]
+  {:constant-effects [(hand-size+
+                        (req (= :corp side))
+                        (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
    :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
@@ -352,8 +352,7 @@
               {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
-  {:constant-effects [{:type :hand-size
-                       :value -1}]})
+  {:constant-effects [(hand-size+ -1)]})
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
@@ -612,9 +611,7 @@
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
                                                       :subtype "Digital"))))]
-    {:constant-effects [{:type :link
-                         :req (req (:flipped card))
-                         :value 1}]
+    {:constant-effects [(link+ (req (:flipped card)) 1)]
      :events [{:event :pre-first-turn
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
@@ -1090,9 +1087,7 @@
                                 :type :recurring}}})
 
 (defcard "NBN: The World is Yours*"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :corp value))
-                       :value 1}]})
+  {:constant-effects [(hand-size+ (req (= :corp value)) 1)]})
 
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created

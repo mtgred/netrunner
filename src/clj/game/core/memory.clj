@@ -3,8 +3,7 @@
     [game.core.card :refer [get-card program? virus-program?]]
     [game.core.effects :refer [gather-effects sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.toasts :refer [toast]]
-    ))
+    [game.core.toasts :refer [toast]]))
 
 (defn- sum-available-memory
   [state]
@@ -56,8 +55,7 @@
 (defn update-mu
   ([state] (update-mu state nil))
   ([state _]
-   (let [
-         ;; non-virus memory
+   (let [;; non-virus memory
          available-memory (sum-available-memory state)
          used-memory (sum-non-virus-programs-mu state)
          ;; virus memory
@@ -80,8 +78,7 @@
                      :available total-available
                      :used total-used}
          old-memory (select-keys (get-in @state [:runner :memory]) [:available-virus :used-virus :available :used])
-         changed? (not= old-memory new-memory)
-         ]
+         changed? (not= old-memory new-memory)]
      (when (neg? total-used)
        (toast state :runner "You have exceeded your memory units!"))
      (when changed?
@@ -89,11 +86,15 @@
      changed?)))
 
 (defn mu+
-  [value]
-  {:type :available-mu
-   :value value})
+  ([value] (mu+ (constantly true) value))
+  ([req value]
+   {:type :available-mu
+    :req req
+    :value value}))
 
 (defn virus-mu+
-  [value]
-  {:type :available-virus-mu
-   :value value})
+  ([value] (virus-mu+ (constantly true) value))
+  ([req value]
+   {:type :available-virus-mu
+    :req req
+    :value value}))

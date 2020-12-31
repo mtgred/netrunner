@@ -193,24 +193,21 @@
 
 (defcard "Box-E"
   {:constant-effects [(mu+ 2)
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 2}]})
+                      (hand-size+ (req (= :runner side)) 2)]})
 
 (defcard "Brain Cage"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 3}]
+  {:constant-effects [(hand-size+ (req (= :runner side)) 3)]
+   :async true
    :effect (effect (damage eid :brain 1 {:card card}))})
 
 (defcard "Brain Chip"
   (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
-    {:constant-effects [{:type :available-mu
-                         :req (req (pos? (runner-points state)))
-                         :value (req (runner-points state))}
-                        {:type :hand-size
-                         :req (req (= :runner side))
-                         :value (req (runner-points state))}]}))
+    {:constant-effects [(mu+
+                          (req (pos? (runner-points state)))
+                          (req (runner-points state)))
+                        (hand-size+
+                          (req (= :runner side))
+                          (req (runner-points state)))]}))
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -533,8 +530,7 @@
 
 (defcard "Dyson Mem Chip"
   {:constant-effects [(mu+ 2)
-                      {:type :link
-                       :value 1}]})
+                      (link+ 1)]})
 
 (defcard "e3 Feedback Implants"
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
@@ -674,8 +670,7 @@
 (defcard "Forger"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :constant-effects [{:type :link
-                       :value 1}]
+   :constant-effects [(link+ 1)]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
@@ -947,11 +942,8 @@
                 :msg "expose 1 card"}]})
 
 (defcard "LLDS Memory Diamond"
-  {:constant-effects [{:type :link
-                       :value 1}
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}
+  {:constant-effects [(link+ 1)
+                      (hand-size+ (req (= :runner side)) 1)
                       (mu+ 1)]})
 
 (defcard "LLDS Processor"
@@ -969,9 +961,7 @@
 
 (defcard "Logos"
   {:constant-effects [(mu+ 1)
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]
+                      (hand-size+ (req (= :runner side)) 1)]
    :events [{:event :agenda-scored
              :player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
              :choices (req (cancellable (:deck runner)))
@@ -1211,9 +1201,9 @@
 
 (defcard "Obelus"
   {:constant-effects [(mu+ 1)
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value (req (count-tags state))}]
+                      (hand-size+
+                        (req (= :runner side))
+                        (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
              :req (req (and (:successful target)
@@ -1339,8 +1329,7 @@
               :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
-                        {:type :link
-                         :value 1}]
+                        (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
                               (= (:position run) 1) ; trigger when last ICE passed
@@ -1439,8 +1428,7 @@
   {:in-play [:rd-access 1]})
 
 (defcard "Rabbit Hole"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
               :prompt "Install another Rabbit Hole?"
               :msg "install another Rabbit Hole"
@@ -1497,8 +1485,7 @@
 
 (defcard "Reflection"
   {:constant-effects [(mu+ 1)
-                      {:type :link
-                       :value 1}]
+                      (link+ 1)]
    :events [{:event :jack-out
              :async true
              :effect (req (let [card (first (shuffle (:hand corp)))]
@@ -1611,8 +1598,7 @@
 
 (defcard "Security Nexus"
   {:constant-effects [(mu+ 1)
-                      {:type :link
-                       :value 1}]
+                      (link+ 1)]
    :events [{:event :encounter-ice
              :interactive (req true)
              :optional
@@ -1758,8 +1744,7 @@
                                 :type :recurring}}})
 
 (defcard "Sports Hopper"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
@@ -1787,9 +1772,7 @@
 
 (defcard "Supercorridor"
   {:constant-effects [(mu+ 2)
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]
+                      (hand-size+ (req (= :runner side)) 1)]
    :events [{:event :runner-turn-ends
              :interactive (get-autoresolve :autofire (complement never?))
              :silent (get-autoresolve :autofire never?)
@@ -1841,8 +1824,7 @@
 
 (defcard "The Toolbox"
   {:constant-effects [(mu+ 2)
-                      {:type :link
-                       :value 2}]
+                      (link+ 2)]
    :recurring 2
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
@@ -1948,7 +1930,8 @@
      :effect (effect (trash eid target nil))}]})
 
 (defcard "Vigil"
-  (let [ability {:req (req (and (:runner-phase-12 @state) (= (count (:hand corp)) (hand-size state :corp))))
+  (let [ability {:req (req (and (:runner-phase-12 @state)
+                                (= (count (:hand corp)) (hand-size state :corp))))
                  :msg "draw 1 card"
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn

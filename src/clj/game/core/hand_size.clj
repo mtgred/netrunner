@@ -23,3 +23,10 @@
     (when changed?
       (swap! state assoc-in [side :hand-size :total] new-total))
     changed?))
+
+(defn hand-size+
+  ([value] (hand-size+ (constantly true) value))
+  ([req value]
+   {:type :hand-size
+    :req req
+    :value value}))

@@ -413,6 +413,7 @@
 
   [game.core.hand-size
    hand-size
+   hand-size+
    sum-hand-size-effects
    update-hand-size]
 
@@ -499,6 +500,7 @@
 
   [game.core.link
    get-link
+   link+
    update-link]
 
   [game.core.memory

@@ -26,3 +26,10 @@
      (when changed?
        (swap! state assoc-in [:runner :link] new-link))
      changed?)))
+
+(defn link+
+  ([value] (link+ (constantly true) value))
+  ([req value]
+   {:type :link
+    :req req
+    :value value}))
