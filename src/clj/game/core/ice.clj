@@ -316,22 +316,30 @@
   [state side ice]
   (let [ice (get-card state ice)
         old-strength (get-strength ice)
-        new-strength (ice-strength state side ice)]
+        new-strength (ice-strength state side ice)
+        changed? (not= old-strength new-strength)]
     (when (rezzed? ice)
       (update! state side (assoc ice :current-strength new-strength))
-      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength))))
+      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength))
+    changed?))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
-  (doseq [ice (:ices server)]
-    (update-ice-strength state side ice)))
+  (reduce (fn [changed? ice]
+            (or (update-ice-strength state side ice)
+                changed?))
+          false
+          (:ices server)))
 
 (defn update-all-ice
   "Updates all installed ice."
   [state side]
-  (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server))))
+  (reduce (fn [changed? server]
+            (or (update-ice-in-server state side (second server))
+                changed?))
+          false
+          (get-in @state [:corp :servers])))
 
 (defn pump-ice
   "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
@@ -367,14 +375,20 @@
   [state side breaker]
   (let [breaker (get-card state breaker)
         old-strength (get-strength breaker)
-        new-strength (breaker-strength state side breaker)]
+        new-strength (breaker-strength state side breaker)
+        changed? (not= old-strength new-strength)]
     (update! state side (assoc (get-card state breaker) :current-strength new-strength))
-    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)))
+    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)
+    changed?))
 
 (defn update-all-icebreakers
   [state side]
-  (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-    (update-breaker-strength state side icebreaker)))
+  (reduce (fn [changed? icebreaker]
+            (or (update-breaker-strength state side icebreaker)
+                changed?))
+          false
+          (filter #(has-subtype? % "Icebreaker")
+                  (all-active-installed state :runner))))
 
 (defn pump
   "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"

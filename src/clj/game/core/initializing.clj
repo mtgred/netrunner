@@ -1,20 +1,21 @@
 (ns game.core.initializing
   (:require
     [game.core.board :refer [all-active all-active-installed]]
-    [game.core.card :refer [get-card runner? map->Card]]
+    [game.core.card :refer [get-card has-subtype? program? runner? map->Card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
-    [game.core.gaining :refer [free-mu gain lose]]
+    [game.core.gaining :refer [gain lose]]
     [game.core.ice :refer [add-sub]]
+    [game.core.memory :refer [update-mu]]
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [set-prop]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req]]
-    [game.utils :refer [make-cid server-card]]
+    [game.utils :refer [make-cid server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
@@ -62,14 +63,14 @@
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
   some events."
   ([state side card] (deactivate state side card nil))
-  ([state side {:keys [cid disabled facedown installed memoryunits rezzed] :as card} keep-counter]
+  ([state side {:keys [cid disabled facedown installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
    (unregister-constant-effects state side card)
+   ; (when (runner? card)
+   ;   (print (:title card) (:cid card) "")
+   ;   (clojure.pprint/pprint (map #(assoc % :card (select-keys (:card %) [:title :cid :memoryunits]))
+   ;                               (game.core.effects/gather-effects state :runner :used-mu))))
    (trigger-leave-effect state side card)
-   (when (and memoryunits
-              installed
-              (not facedown))
-     (free-mu state memoryunits))
    (when (and (find-cid cid (all-active-installed state side))
               (not disabled)
               (or rezzed
@@ -96,7 +97,7 @@
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
   ([state side card args] (card-init state side (make-eid state) card args))
-  ([state side eid card {:keys [resolve-effect init-data]}]
+  ([state side eid card {:keys [resolve-effect init-data no-mu]}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          run-abs (runner-ability-init cdef)
@@ -119,6 +120,15 @@
      (update! state side c)
      (register-events state side c)
      (register-constant-effects state side c)
+     ;; Facedown cards can't be initialized
+     (when (and (program? card)
+                (not no-mu))
+       (register-floating-effect
+         state side c
+         {:type :used-mu
+          :duration :constant
+          :value (:memoryunits c)})
+       (update-mu state))
      (if (and resolve-effect (is-ability? cdef))
        (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
@@ -143,9 +153,14 @@
 
 (defn update-all-card-labels
   [state]
-  (doseq [side [:corp :runner]
-          card (all-active state side)]
-    (update! state side (update-abilities-cost-str state side card))))
+  (reduce (fn [changed? card]
+            (let [side (to-keyword (:side card))
+                  new-card (update-abilities-cost-str state side card)]
+              (when (not= card new-card)
+                (update! state side new-card))
+              (or (not= card new-card) changed?)))
+          false
+          (concat (all-active state :corp) (all-active state :runner))))
 
 (defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.

@@ -21,12 +21,11 @@
 
 (defn unregister-constant-effects
   [state _ card]
-  (when (:constant-effects (card-def card))
-    (swap! state assoc :effects
-           (->> (:effects @state)
-                (remove #(and (same-card? card (:card %))
-                              (= :constant (:duration %))))
-                (into [])))))
+  (swap! state assoc :effects
+         (->> (:effects @state)
+              (remove #(and (same-card? card (:card %))
+                            (= :constant (:duration %))))
+              (into []))))
 
 (defn register-floating-effect
   [state _ card ability]
@@ -44,6 +43,15 @@
               (remove #(= duration (:duration %)))
               (into []))))
 
+(defn unregister-effects-for-card
+  ([state _ card] (unregister-effects-for-card state nil card identity))
+  ([state _ card pred]
+   (swap! state assoc :effects
+          (->> (:effects @state)
+               (remove #(and (same-card? card (:card %))
+                             (pred %)))
+               (into [])))))
+
 (defn gather-effects
   [state _ effect-type]
   (let [get-side #(-> % :card :side to-keyword)
@@ -59,19 +67,20 @@
   ([state side card effect-type targets]
    (let [eid (make-eid state)]
      (->> (gather-effects state side effect-type)
+          (map #(assoc % :card (get-card state (:card %))))
           (filter #(if-not (:req %)
                      true
-                     ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
+                     ((:req %) state side eid (:card %) (cons card targets))))
           (map #(if-not (fn? (:value %))
                   (:value %)
-                  ((:value %) state side eid (get-card state (:card %)) (cons card targets))))
+                  ((:value %) state side eid (:card %) (cons card targets))))
           (into [])))))
 
 (defn sum-effects
   "Sums the results from get-effects."
   ([state side card effect-type] (sum-effects state side card effect-type nil))
   ([state side card effect-type targets]
-   (reduce + (filter identity (get-effects state side card effect-type targets)))))
+   (reduce + (filter number? (get-effects state side card effect-type targets)))))
 
 (defn any-effects
   "Check if any effects return true for pred"

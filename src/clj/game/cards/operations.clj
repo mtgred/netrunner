@@ -200,17 +200,12 @@
   {:implementation "Any required program trashing is manual"
    :req (req tagged)
    :msg "force the Runner to lose 2[mu] until the end of the turn"
-   :effect (req (lose state :runner :memory 2)
-                (when (neg? (available-mu state))
-                  ;; Give runner a toast as well
-                  (toast-check-mu state)
-                  (system-msg state :runner "must trash programs to free up [mu]"))
-                (register-events
-                  state side card
-                  [{:event :corp-turn-ends
-                    :duration :end-of-turn
-                    :effect (effect (gain :runner :memory 2)
-                                    (system-msg :runner "regains 2[mu]"))}]))})
+   :effect (req (register-floating-effect
+                  state :corp card
+                  {:type :available-mu
+                   :duration :end-of-turn
+                   :value -2})
+                (update-mu state))})
 
 (defcard "Beanstalk Royalties"
   {:msg "gain 3 [Credits]"

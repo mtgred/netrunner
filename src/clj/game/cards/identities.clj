@@ -315,8 +315,7 @@
    :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
 (defcard "Chaos Theory: Wünderkind"
-  {:effect (effect (gain :memory 1))
-   :leave-play (effect (lose :runner :memory 1))})
+  {:constant-effects [(mu+ 1)]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))

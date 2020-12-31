@@ -883,14 +883,8 @@
      ;; Handle Dr. Lovegood / Malia
      :disable {:effect (req (doseq [hosted (:hosted card)]
                               (disable-card state side hosted)))}
-     :reactivate {:effect (req (doseq [hosted (:hosted card)
-                                       :let [c (dissoc hosted :disabled)
-                                             {:keys [effect events]} (card-def c)]]
-                                 ;; Manually enable card to trigger `:effect`, similar to `enable-identity`
-                                 (update! state side c)
-                                 (when effect
-                                   (effect state side (make-eid state) c nil))
-                                 (register-events state side c)))}}))
+     :reactivate {:effect (req (doseq [hosted (:hosted card)]
+                                 (enable-card state side hosted)))}}))
 
 (defcard "Donut Taganes"
   {:constant-effects [{:type :play-cost

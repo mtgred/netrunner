@@ -18,5 +18,8 @@
   "Update the player's hand-size"
   [state side]
   (let [old-total (get-in @state [side :hand-size :total])
-        new-total (sum-hand-size-effects state side)]
-    (swap! state assoc-in [side :hand-size :total] new-total)))
+        new-total (sum-hand-size-effects state side)
+        changed? (not= old-total new-total)]
+    (when changed?
+      (swap! state assoc-in [side :hand-size :total] new-total))
+    changed?))

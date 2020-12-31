@@ -3,7 +3,7 @@
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.effects :refer [register-floating-effect]]
     [game.core.engine :refer [trigger-event]]
-    [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
+    [game.core.gaining :refer [base-mod-size deduct gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]
     [game.core.say :refer [system-msg]]
@@ -24,13 +24,13 @@
   (gain state side key {:mod delta})
   (change-msg state side key (base-mod-size state side key) delta))
 
-(defn- change-mu
-  "Send a system message indicating how mu was changed"
-  [state side delta]
-  (free-mu state delta)
-  (system-msg state side
-              (str "sets unused MU to " (available-mu state)
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+; (defn- change-mu
+;   "Send a system message indicating how mu was changed"
+;   [state side delta]
+;   (free-mu state delta)
+;   (system-msg state side
+;               (str "sets unused MU to " (available-mu state)
+;                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags
   "Change a player's tag count"
@@ -105,7 +105,7 @@
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
   (case key
-    :memory (change-mu state side delta)
+    ; :memory (change-mu state side delta)
     :hand-size (change-hand-size state side delta)
     :tag (change-tags state delta)
     :bad-publicity (change-bad-pub state delta)
