@@ -30,8 +30,9 @@
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
 
-(defn- constrain-value [value min-value max-value]
+(defn- constrain-value
   "Constrain value to [min-value max-value]"
+  [value min-value max-value]
   (min max-value (max min-value value)))
 
 (defn- set-adv-counter [state side target value]
