@@ -74,7 +74,7 @@
          total-used (+ used-mu
                        (cond
                          ;; when diff is positive, there's MU left over so we want to
-                         ;; add the used virus memory
+                         ;; add only the used virus memory
                          (pos? virus-mu-diff) used-virus-mu
                          ;; otherwise, the virus memory "overflowed" and we want to add
                          ;; the overflow to the total used
@@ -93,6 +93,9 @@
      changed?)))
 
 (defn mu+
+  "For use in :constant-effects and register-floating-effect.
+  Returns an effect map for :available-mu.
+  Takes either the mu value or a :req 5-fn and the value."
   ([value] (mu+ (constantly true) value))
   ([req value]
    {:type :available-mu
@@ -100,6 +103,9 @@
     :value value}))
 
 (defn virus-mu+
+  "For use in :constant-effects and register-floating-effect.
+  Returns an effect map for :available-virus-mu.
+  Takes either the mu value or a :req 5-fn and the value."
   ([value] (virus-mu+ (constantly true) value))
   ([req value]
    {:type :available-virus-mu
