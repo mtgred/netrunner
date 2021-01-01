@@ -5,7 +5,7 @@
     [game.core.eid :refer [make-eid]]
     [game.core.toasts :refer [toast]]))
 
-(defn- sum-available-memory
+(defn- sum-available-mu
   [state]
   (+ (or (get-in @state [:runner :memory :base]) 0)
      (sum-effects state :runner nil :user-available-mu nil)
@@ -27,7 +27,7 @@
          (filter number?)
          (reduce +))))
 
-(defn- sum-available-virus-memory
+(defn- sum-available-virus-mu
   [state]
   (sum-effects state :runner nil :available-virus-mu nil))
 
@@ -56,33 +56,40 @@
   ([state] (update-mu state nil))
   ([state _]
    (let [;; non-virus memory
-         available-memory (sum-available-memory state)
-         used-memory (sum-non-virus-programs-mu state)
+         available-mu- (sum-available-mu state)
+         used-mu (sum-non-virus-programs-mu state)
          ;; virus memory
-         available-virus-memory (sum-available-virus-memory state)
-         used-virus-memory (sum-virus-programs-mu state)
+         available-virus-mu (sum-available-virus-mu state)
+         used-virus-mu (sum-virus-programs-mu state)
          ;; if this is negative, there's more virus programs than available virus-specific MU
-         virus-memory-diff (- available-virus-memory used-virus-memory)
+         virus-mu-diff (- available-virus-mu used-virus-mu)
          ;; total available memory (both non-virus and virus)
-         total-available (+ available-memory
-                            (cond (pos? virus-memory-diff) available-virus-memory
-                                  (neg? virus-memory-diff) 0
-                                  :else 0))
+         total-available (+ available-mu-
+                            ;; when diff is positive, there's MU left over
+                            (if (pos? virus-mu-diff)
+                              available-virus-mu
+                              ;; otherwise, add nothing
+                              0))
          ;; total used memory (both non-virus and virus)
-         total-used (+ used-memory
-                       (cond (pos? virus-memory-diff) used-virus-memory
-                             (neg? virus-memory-diff) (- virus-memory-diff)
-                             :else 0))
-         new-memory {:available-virus available-virus-memory
-                     :used-virus used-virus-memory
-                     :available total-available
-                     :used total-used}
-         old-memory (select-keys (get-in @state [:runner :memory]) [:available-virus :used-virus :available :used])
-         changed? (not= old-memory new-memory)]
+         total-used (+ used-mu
+                       (cond
+                         ;; when diff is positive, there's MU left over so we want to
+                         ;; add the used virus memory
+                         (pos? virus-mu-diff) used-virus-mu
+                         ;; otherwise, the virus memory "overflowed" and we want to add
+                         ;; the overflow to the total used
+                         (neg? virus-mu-diff) (- virus-mu-diff)
+                         :else 0))
+         new-mu {:available-virus available-virus-mu
+                 :used-virus used-virus-mu
+                 :available total-available
+                 :used total-used}
+         old-mu (select-keys (get-in @state [:runner :memory]) [:available-virus :used-virus :available :used])
+         changed? (not= old-mu new-mu)]
      (when (neg? total-used)
        (toast state :runner "You have exceeded your memory units!"))
      (when changed?
-       (swap! state update-in [:runner :memory] merge new-memory))
+       (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
 
 (defn mu+

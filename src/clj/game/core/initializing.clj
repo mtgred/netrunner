@@ -66,10 +66,6 @@
   ([state side {:keys [cid disabled facedown installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
    (unregister-constant-effects state side card)
-   ; (when (runner? card)
-   ;   (print (:title card) (:cid card) "")
-   ;   (clojure.pprint/pprint (map #(assoc % :card (select-keys (:card %) [:title :cid :memoryunits]))
-   ;                               (game.core.effects/gather-effects state :runner :used-mu))))
    (trigger-leave-effect state side card)
    (when (and (find-cid cid (all-active-installed state side))
               (not disabled)

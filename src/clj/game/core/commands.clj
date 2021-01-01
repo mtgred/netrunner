@@ -26,7 +26,7 @@
     [game.core.trace :refer [init-trace]]
     [game.core.winning :refer [clear-win]]
     [game.macros :refer [continue-ability effect msg req]]
-    [game.utils :refer [dissoc-in make-cid quantify safe-split same-card? same-side? server-card string->num]]
+    [game.utils :refer [dissoc-in quantify safe-split same-card? same-side? server-card string->num]]
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
 

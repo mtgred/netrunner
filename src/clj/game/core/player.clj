@@ -112,8 +112,7 @@
               :available 0
               :used 0
               :available-virus 0
-              :used-virus 0
-              }
+              :used-virus 0}
      :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
      :rd-access 0
