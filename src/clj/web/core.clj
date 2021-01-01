@@ -42,7 +42,8 @@
 (defn load-data []
   (web.db/connect)
   (let [cards (mc/find-maps db "cards" nil)
-        all-cards (into {} (map (juxt :title identity) cards))
+        stripped-cards (map (fn [c] (update c :_id #(str %))) cards)
+        all-cards (into {} (map (juxt :title identity) stripped-cards))
         sets (mc/find-maps db "sets" nil)
         cycles (mc/find-maps db "cycles" nil)
         mwl (mc/find-maps db "mwls" nil)
