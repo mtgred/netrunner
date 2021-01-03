@@ -130,10 +130,8 @@
         :else
         (do (swap! s assoc :editing false)
             (ws/ws-send! [:lobby/create
-                          (assoc
                           (select-keys @s [:title :password :allow-spectator
-                                           :spectatorhands :side :format :room])
-                          :options (:options @app-state))]))))))
+                                           :spectatorhands :side :format :room])]))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])
