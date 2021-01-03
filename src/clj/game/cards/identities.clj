@@ -175,7 +175,12 @@
                  :req (req (and (pos? (count (:hand runner)))
                                 (:runner-phase-12 @state)))
                  :async true
-                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
+                 :msg "install a card facedown"
+                 :effect (effect
+                           (runner-install
+                             (assoc eid :source card :source-type :runner-install)
+                             target
+                             {:facedown true :no-msg true}))}]
     {:implementation "Install restriction not enforced"
      :events [(assoc ability :event :runner-turn-begins)]
      :flags {:runner-phase-12 (req true)}
