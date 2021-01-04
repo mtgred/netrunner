@@ -301,6 +301,10 @@
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
 
+(defn- send-import [s]
+  (ws/ws-send! [:decks/import {:input (:msg @s)}])
+  (reagent-modals/close-modal!))
+
 (defn import-deck-modal []
   (r/with-let [s (r/atom {})]
     (fn []
@@ -309,14 +313,15 @@
        [:p [:input.url {:type "text"
                         :placeholder "NRDB ID"
                         :value (:msg @s)
+                        :on-key-press #(when (= 13 (.. % -charCode))
+                                         (send-import s))
                         :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
        [:p.float-right
         (let [disabled (empty? (:msg @s))]
           [:button
            {:disabled disabled
             :class (when disabled "disabled")
-            :on-click #(do (ws/ws-send! [:decks/import {:input (:msg @s)}])
-                           (reagent-modals/close-modal!))}
+            :on-click #(send-import s)}
            "Import"])
         [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]])))
 
