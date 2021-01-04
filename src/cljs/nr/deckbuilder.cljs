@@ -307,23 +307,23 @@
 
 (defn import-deck-modal []
   (r/with-let [s (r/atom {})]
-    (fn []
-      [:div
-       [:h3 "Enter a Public NRDB Deck ID or URL"]
-       [:p [:input.url {:type "text"
-                        :placeholder "NRDB ID"
-                        :value (:msg @s)
-                        :on-key-press #(when (= 13 (.. % -charCode))
-                                         (send-import s))
-                        :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
-       [:p.float-right
-        (let [disabled (empty? (:msg @s))]
-          [:button
-           {:disabled disabled
-            :class (when disabled "disabled")
-            :on-click #(send-import s)}
-           "Import"])
-        [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]])))
+    [:div
+     [:h3 "Enter a Public NRDB Deck ID or URL"]
+     [:p [:input.url {:type "text"
+                      :id "nrdb-input"
+                      :placeholder "NRDB ID"
+                      :value (:msg @s)
+                      :on-key-press #(when (= 13 (.. % -charCode))
+                                       (send-import s))
+                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+     [:p.float-right
+      (let [disabled (empty? (:msg @s))]
+        [:button
+         {:disabled disabled
+          :class (when disabled "disabled")
+          :on-click #(send-import s)}
+         "Import"])
+      [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]]))
 
 (defn load-decks-from-json
   [json]
@@ -823,7 +823,9 @@
   [:div.button-bar
    [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
    [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]
-   [cond-button "Import deck" (and @user @decks-loaded) #(reagent-modals/modal! [import-deck-modal])]])
+   [cond-button "Import deck" (and @user @decks-loaded)
+    #(reagent-modals/modal! [import-deck-modal]
+                            {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
 
 (defn- zoom-card-view [card state]
   [card state]
