@@ -48,9 +48,10 @@
 
 (defn available-mu
   "Returns the available MU the runner has"
-  [state]
-  (- (get-in @state [:runner :memory :available] 0)
-     (get-in @state [:runner :memory :used] 0)))
+  ([state] (available-mu state nil))
+  ([state _]
+   (- (get-in @state [:runner :memory :available] 0)
+      (get-in @state [:runner :memory :used] 0))))
 
 (defn update-mu
   ([state] (update-mu state nil))
