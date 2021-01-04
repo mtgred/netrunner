@@ -15,8 +15,7 @@
   [state]
   (let [eid (make-eid state)]
     (->> (gather-effects state :runner :used-mu)
-         (keep #(when-let [card (get-card state (:card %))]
-                  (assoc % :card card)))
+         (map #(assoc % :card (get-card state (:card %))))
          (remove #(virus-program? (:card %)))
          (filter #(if-not (:req %)
                     true
@@ -50,44 +49,41 @@
   "Returns the available MU the runner has"
   ([state] (available-mu state nil))
   ([state _]
-   (- (get-in @state [:runner :memory :available] 0)
-      (get-in @state [:runner :memory :used] 0))))
+   (- (or (get-in @state [:runner :memory :available]) 0)
+      (or (get-in @state [:runner :memory :used]) 0))))
+
+(defn build-new-mu
+  [state]
+  (let [;; non-virus memory
+        total-available (sum-available-mu state)
+        used-mu (sum-non-virus-programs-mu state)
+        ;; virus memory
+        available-virus-mu (sum-available-virus-mu state)
+        used-virus-mu (sum-virus-programs-mu state)
+        ;; if this is negative, there's more virus programs than available virus-specific MU
+        virus-mu-diff (- available-virus-mu used-virus-mu)
+        ;; total used memory (both non-virus and virus)
+        total-used (+ used-mu
+                      (cond
+                        ;; when diff is positive, there's MU left over so we want to
+                        ;; add only the used virus memory
+                        (pos? virus-mu-diff) used-virus-mu
+                        ;; otherwise, the virus memory "overflowed" and we want to add
+                        ;; the overflow to the total used
+                        (neg? virus-mu-diff) (- virus-mu-diff)
+                        :else 0))]
+    {:available-virus available-virus-mu
+     :used-virus used-virus-mu
+     :available total-available
+     :used total-used}))
 
 (defn update-mu
   ([state] (update-mu state nil))
   ([state _]
-   (let [;; non-virus memory
-         available-mu- (sum-available-mu state)
-         used-mu (sum-non-virus-programs-mu state)
-         ;; virus memory
-         available-virus-mu (sum-available-virus-mu state)
-         used-virus-mu (sum-virus-programs-mu state)
-         ;; if this is negative, there's more virus programs than available virus-specific MU
-         virus-mu-diff (- available-virus-mu used-virus-mu)
-         ;; total available memory (both non-virus and virus)
-         total-available (+ available-mu-
-                            ;; when diff is positive, there's MU left over
-                            (if (pos? virus-mu-diff)
-                              available-virus-mu
-                              ;; otherwise, add nothing
-                              0))
-         ;; total used memory (both non-virus and virus)
-         total-used (+ used-mu
-                       (cond
-                         ;; when diff is positive, there's MU left over so we want to
-                         ;; add only the used virus memory
-                         (pos? virus-mu-diff) used-virus-mu
-                         ;; otherwise, the virus memory "overflowed" and we want to add
-                         ;; the overflow to the total used
-                         (neg? virus-mu-diff) (- virus-mu-diff)
-                         :else 0))
-         new-mu {:available-virus available-virus-mu
-                 :used-virus used-virus-mu
-                 :available total-available
-                 :used total-used}
-         old-mu (select-keys (get-in @state [:runner :memory]) [:available-virus :used-virus :available :used])
+   (let [old-mu (select-keys (get-in @state [:runner :memory]) [:available-virus :used-virus :available :used])
+         new-mu (build-new-mu state)
          changed? (not= old-mu new-mu)]
-     (when (neg? total-used)
+     (when (neg? (:used new-mu))
        (toast state :runner "You have exceeded your memory units!"))
      (when changed?
        (swap! state update-in [:runner :memory] merge new-mu))
