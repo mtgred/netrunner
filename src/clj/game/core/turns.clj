@@ -94,25 +94,29 @@
   [state side eid _]
   (let [cur-hand-size (count (get-in @state [side :hand]))
         max-hand-size (hand-size state side)]
-    (if (> cur-hand-size max-hand-size)
-      (continue-ability
-        state side
-        {:prompt (str "Discard down to " (quantify max-hand-size "card"))
-         :choices {:card in-hand?
-                   :max (- cur-hand-size (max (hand-size state side) 0))
-                   :all true}
-         :effect (req (system-msg state side
-                                  (str "discards "
-                                       (if (= :runner side)
-                                         (string/join ", " (map :title targets))
-                                         (quantify (count targets) "card"))
-                                       " from " (if (= :runner side) "their Grip" "HQ")
-                                       " at end of turn"))
-                      (doseq [t targets]
-                        (move state side t :discard))
-                      (effect-completed state side eid))}
-        nil nil)
-      (effect-completed state side eid))))
+    (if (and (= side :runner)
+             (neg? (hand-size state side)))
+      (do (flatline state)
+          (effect-completed state side eid))
+      (if (> cur-hand-size max-hand-size)
+        (continue-ability
+          state side
+          {:prompt (str "Discard down to " (quantify max-hand-size "card"))
+           :choices {:card in-hand?
+                     :max (- cur-hand-size (max (hand-size state side) 0))
+                     :all true}
+           :effect (req (system-msg state side
+                                    (str "discards "
+                                         (if (= :runner side)
+                                           (string/join ", " (map :title targets))
+                                           (quantify (count targets) "card"))
+                                         " from " (if (= :runner side) "their Grip" "HQ")
+                                         " at end of turn"))
+                        (doseq [t targets]
+                          (move state side t :discard))
+                        (effect-completed state side eid))}
+          nil nil)
+        (effect-completed state side eid)))))
 
 (defn end-turn
   ([state side _] (end-turn state side (make-eid state) nil))
@@ -120,9 +124,6 @@
    (wait-for
      (handle-end-of-turn-discard state side nil)
      (turn-message state side false)
-     (when (and (= side :runner)
-                (neg? (hand-size state side)))
-       (flatline state))
      (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
