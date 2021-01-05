@@ -202,9 +202,7 @@
    :msg "force the Runner to lose 2[mu] until the end of the turn"
    :effect (req (register-floating-effect
                   state :corp card
-                  {:type :available-mu
-                   :duration :end-of-turn
-                   :value -2})
+                  (assoc (mu+ -2) :duration :end-of-turn))
                 (update-mu state))})
 
 (defcard "Beanstalk Royalties"

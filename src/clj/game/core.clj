@@ -275,6 +275,8 @@
    any-effects
    gather-effects
    get-effects
+   get-effect-maps
+   get-effect-value
    register-constant-effects
    register-floating-effect
    sum-effects
@@ -505,6 +507,7 @@
 
   [game.core.memory
    available-mu
+   caissa-mu+
    mu+
    update-mu
    virus-mu+]

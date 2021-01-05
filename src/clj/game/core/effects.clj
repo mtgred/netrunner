@@ -61,26 +61,61 @@
          (sort-by (complement is-active-player))
          (into []))))
 
+(defn update-effect-card
+  "Updates the effect map's :card with the result of `get-card`."
+  [state ability]
+  (update ability :card #(get-card state %)))
+
+(defn effect-pred
+  "Returns a function that returns the boolean result of the :req on the effect map.
+  If the :req is an fn, it is called with the given state, side, eid, and targets,
+  and the effect map's card. Otherwise, return true."
+  [state side eid targets]
+  (fn [{:keys [req card]}]
+    (if (fn? req)
+      (boolean (req state side eid card targets))
+      true)))
+
+(defn get-effect-maps
+  "Returns the filtered effects for a given effect type. Updates the :card before
+  filtering, so the :card might be nil."
+  ([state side effect-type] (get-effect-maps state side (make-eid state) effect-type nil))
+  ([state side eid effect-type] (get-effect-maps state side eid effect-type nil))
+  ([state side eid effect-type targets]
+   (->> (gather-effects state side effect-type)
+        (map #(update-effect-card state %))
+        (filter (effect-pred state side eid targets))
+        (into []))))
+
+(defn get-effect-value
+  "Returns a function that returns the value of a given effect. If the :value is an fn,
+  it is called with the given state, side, eid, and targets. Otherwise, return the raw
+  value."
+  ([state side] (get-effect-value state side (make-eid state) nil))
+  ([state side eid] (get-effect-value state side eid nil))
+  ([state side eid targets]
+   (fn [{:keys [value card]}]
+     (if (fn? value)
+       (value state side eid card targets)
+       value))))
+
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
   ([state side card effect-type] (get-effects state side card effect-type nil))
   ([state side card effect-type targets]
-   (let [eid (make-eid state)]
-     (->> (gather-effects state side effect-type)
-          (map #(assoc % :card (get-card state (:card %))))
-          (filter #(if-not (:req %)
-                     true
-                     ((:req %) state side eid (:card %) (cons card targets))))
-          (map #(if-not (fn? (:value %))
-                  (:value %)
-                  ((:value %) state side eid (:card %) (cons card targets))))
+   (let [eid (make-eid state)
+         targets (cons card targets)]
+     (->> (get-effect-maps state side eid effect-type targets)
+          (map (get-effect-value state side eid targets))
           (into [])))))
 
 (defn sum-effects
   "Sums the results from get-effects."
   ([state side card effect-type] (sum-effects state side card effect-type nil))
   ([state side card effect-type targets]
-   (reduce + (filter number? (get-effects state side card effect-type targets)))))
+   (->> (get-effects state side card effect-type targets)
+        (filter number?)
+        (reduce +))))
 
 (defn any-effects
   "Check if any effects return true for pred"

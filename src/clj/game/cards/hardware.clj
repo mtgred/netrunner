@@ -204,7 +204,8 @@
   (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
     {:constant-effects [(mu+
                           (req (pos? (runner-points state)))
-                          (req (runner-points state)))
+                          ;; [:regular N] is needed to make the mu system work
+                          (req [:regular (runner-points state)]))
                         (hand-size+
                           (req (= :runner side))
                           (req (runner-points state)))]}))
@@ -392,8 +393,7 @@
                 :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]})
 
 (defcard "Deep Red"
-  {:implementation "MU use restriction not enforced"
-   :constant-effects [(mu+ 3)]
+  {:constant-effects [(caissa-mu+ 3)]
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? target "Caïssa"))

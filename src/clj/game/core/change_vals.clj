@@ -31,7 +31,7 @@
   (register-floating-effect
     state side nil
     {:type :user-available-mu
-     :value delta})
+     :value [:regular delta]})
   (update-mu state)
   (system-msg state side
               (str "sets unused MU to " (available-mu state)
