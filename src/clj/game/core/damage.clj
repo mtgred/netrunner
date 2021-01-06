@@ -129,7 +129,8 @@
    (let [interrupts (get-prevent-list state player type)
          other-player (if (= player :corp) :runner :corp)
          already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
-     (if (cards-can-prevent? state player interrupts type)
+     (if (and (cards-can-prevent? state player interrupts type)
+              (> n already-prevented))
        ;; player can prevent damage
        (do (system-msg state player "has the option to prevent damage")
            (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
@@ -150,6 +151,7 @@
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
   prevention/boosting process and eventually resolves the damage."
+  ([state side eid type n] (damage state side eid type n nil)) 
   ([state side eid type n {:keys [unpreventable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)

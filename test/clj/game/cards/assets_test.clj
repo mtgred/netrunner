@@ -3360,9 +3360,6 @@
         (is (zero? (count (:hand (get-corp)))))
         (is (= (:title agenda1) (:title (last (:deck (get-corp))))))))))
 
-
-;;        (card-ability state :runner ff 0)
-
 (deftest prana-condenser
   ;; Prāna Condenser
   (testing "Basic test"
@@ -3378,14 +3375,12 @@
         (play-from-hand state :corp "Neural EMP")
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (card-ability state :corp pc 0)
-          (click-prompt state :corp "Done")
+          (card-ability state :corp (refresh pc) 0)
           (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power token")
           (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
           (play-from-hand state :corp "Neural EMP")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
           (card-ability state :corp pc 0)
-          (click-prompt state :corp "Done")
           (is (= 2 (get-counters (refresh pc) :power)) "Added another power token")
           (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
@@ -3409,22 +3404,6 @@
           (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
           (is (= 0 (get-counters (refresh pc) :power)) "No power token added")
           (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
-  (testing "Only prevents 1 net damage"
-    (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" "Snare!"]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (let [pc (get-content state :remote1 0)]
-        (rez state :corp pc)
-        (take-credits state :corp)
-        (run-empty-server state :hq)
-        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (click-prompt state :corp "Yes") ;Snare
-        (card-ability state :corp (refresh pc) 0)
-        (card-ability state :corp (refresh pc) 0)
-        (click-prompt state :corp "Done") ;Prana
-        (is (= 3 (count (:hand (get-runner)))) "2 net damage dealt")
-        (is (= 1 (get-counters (refresh pc) :power)) "Only 1 power token added"))))
   (testing "Runner preventing damage on their turn"
     (do-game
       (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
@@ -3455,18 +3434,20 @@
         (play-from-hand state :corp "Neural EMP")
         (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
         (is (= :waiting (prompt-type :runner))))))
-    (testing "Runner cards don't trigger Prana"
+    (testing "Runner cards and costs don't trigger Prana"
       (do-game
         (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
                    :runner {:deck [(qty "Sure Gamble" 5)]
-                            :hand ["Zer0" "Sure Gamble"]}})
+                            :hand ["Zer0" "Sure Gamble" "Sure Gamble"]}})
         (play-from-hand state :corp "Prāna Condenser" "New remote")
         (let [pc (get-content state :remote1 0)]
           (rez state :corp pc)
           (take-credits state :corp)
           (play-from-hand state :runner "Zer0")
           (card-ability state :runner (get-hardware state 0) 0)
-          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc from Zer0"))))
+          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on 'unpreventable' net damage")
+          ;; (damage state :runner :net 1)
+          ;; (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on net damage of the runner"))))
     (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
       (do-game
         (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
@@ -3484,7 +3465,6 @@
           (play-from-hand state :runner "PAD Tap")
           (take-credits state :runner)
           (card-ability state :corp (refresh pc) 0)
-          (click-prompt state :corp "Done")
           (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana")))))
 
 (deftest primary-transmission-dish
@@ -3703,7 +3683,7 @@
       ; pay 8 per Chiyashi - 24 total
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
       (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
-
+      
 (deftest raman-rai
   ;; Raman Rai
   (do-game

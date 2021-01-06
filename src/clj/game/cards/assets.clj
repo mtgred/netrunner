@@ -1528,21 +1528,18 @@
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
-                             :req (req true) }]}
-   :events [{:event :pre-resolve-damage
-             :effect (req (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false)))}]
-   :abilities [{:msg (msg "deal " (get-counters card :power) " net damage")
-                :label "deal net damage"
-                :cost [[:click 2] [:trash]]
-                :effect (effect (damage eid :net (get-counters card :power) {:card card}))}
-               {:label "Prevent 1 net damage to add power token to Prāna Condenser"
+                             :req (req true)}]}
+   :abilities [{:label "Prevent 1 net damage to add power token to Prāna Condenser"
                 :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
                 :async true
-                :effect (req (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false))
-                             (damage-prevent state :corp :net 1)
-                             (add-counter state side (get-card state card) :power 1)
+                :req (req true)
+                :effect (req (add-counter state side card :power 1)
                              (gain-credits state :corp eid 3)
-                             (effect-completed state side eid))}]})
+                             (damage-prevent state :corp :net 1))}
+               {:msg (msg "deal " (get-counters card :power) " net damage")
+                :label "deal net damage"
+                :cost [[:click 2] [:trash]]
+                :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]})
 
 (defcard "Primary Transmission Dish"
   {:recurring 3
