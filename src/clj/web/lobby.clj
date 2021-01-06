@@ -310,7 +310,7 @@
       (refresh-lobby-update-in gameid [:players] (partial mapv swap-side)))))
 
 (defn handle-lobby-join
-  [{{{:keys [username] :as user} :user} :ring-req
+  [{{{:keys [username isadmin] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid password]}           :?data
     reply-fn                            :?reply-fn
@@ -318,9 +318,9 @@
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
       (if (or (empty? game-password)
-              (bcrypt/check password game-password))
-        (do
-            (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
+              (bcrypt/check password game-password)
+              isadmin)
+        (do (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
             (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
             (join-game user client-id gameid)
             (lobby-say gameid {:user "__system__"
@@ -344,8 +344,7 @@
         (if (and (not (already-in-game? user game))
                  (or (empty? game-password)
                      (bcrypt/check password game-password)))
-          (do 
-              (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
+          (do (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
               (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
               (spectate-game user client-id gameid)
               (lobby-say gameid {:user "__system__"
