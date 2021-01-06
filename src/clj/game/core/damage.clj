@@ -129,7 +129,7 @@
    (let [interrupts (get-prevent-list state player type)
          other-player (if (= player :corp) :runner :corp)
          already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
-     (if (and (cards-can-prevent? state player interrupts type)
+     (if (and (cards-can-prevent? state player interrupts type nil {:side side})
               (> n already-prevented))
        ;; player can prevent damage
        (do (system-msg state player "has the option to prevent damage")
@@ -158,8 +158,8 @@
    ;; alert listeners that damage is about to be calculated.
    (trigger-event state side :pre-damage type card n)
    (let [active-player (get-in @state [:active-player])]
-     (if (not unpreventable)
+     (if unpreventable
+       (resolve-damage state side eid type (damage-count state side type n args) args)
        (wait-for (check-damage-prevention state side type n args active-player)
                  (wait-for (check-damage-prevention state side type n args (if (= active-player :corp) :runner :corp))
-                           (resolve-damage state side eid type (damage-count state side type n args) args)))
-       (resolve-damage state side eid type (damage-count state side type n args) args)))))
+                           (resolve-damage state side eid type (damage-count state side type n args) args)))))))

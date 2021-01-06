@@ -1528,7 +1528,7 @@
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
-                             :req (req true)}]}
+                             :req (req (= :corp (:side target)))}]}
    :abilities [{:label "Prevent 1 net damage to add power token to Prāna Condenser"
                 :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
                 :async true

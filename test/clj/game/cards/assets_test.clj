@@ -3446,8 +3446,8 @@
           (play-from-hand state :runner "Zer0")
           (card-ability state :runner (get-hardware state 0) 0)
           (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on 'unpreventable' net damage")
-          ;; (damage state :runner :net 1)
-          ;; (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on net damage of the runner"))))
+          (damage state :runner :net 1)
+          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on net damage of the runner"))))
     (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
       (do-game
         (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
