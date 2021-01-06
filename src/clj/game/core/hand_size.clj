@@ -30,3 +30,19 @@
    {:type :hand-size
     :req req
     :value value}))
+
+(defn corp-hand-size+
+  ([value] (corp-hand-size+ (constantly true) value))
+  ([req value]
+   (hand-size+ (fn [state side eid card targets]
+                 (and (= :corp side)
+                      (req state side eid card targets)))
+               value)))
+
+(defn runner-hand-size+
+  ([value] (runner-hand-size+ (constantly true) value))
+  ([req value]
+   (hand-size+ (fn [state side eid card targets]
+                 (and (= :runner side)
+                      (req state side eid card targets)))
+               value)))

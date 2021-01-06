@@ -308,9 +308,7 @@
              :effect (effect (lose-tags eid 1))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:constant-effects [(hand-size+
-                        (req (= :corp side))
-                        (req (:credit corp)))]
+  {:constant-effects [(corp-hand-size+ (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
    :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
@@ -1087,7 +1085,7 @@
                                 :type :recurring}}})
 
 (defcard "NBN: The World is Yours*"
-  {:constant-effects [(hand-size+ (req (= :corp value)) 1)]})
+  {:constant-effects [(corp-hand-size+ 1)]})
 
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created

@@ -193,10 +193,10 @@
 
 (defcard "Box-E"
   {:constant-effects [(mu+ 2)
-                      (hand-size+ (req (= :runner side)) 2)]})
+                      (runner-hand-size+ 2)]})
 
 (defcard "Brain Cage"
-  {:constant-effects [(hand-size+ (req (= :runner side)) 3)]
+  {:constant-effects [(runner-hand-size+ 3)]
    :async true
    :effect (effect (damage eid :brain 1 {:card card}))})
 
@@ -206,9 +206,7 @@
                           (req (pos? (runner-points state)))
                           ;; [:regular N] is needed to make the mu system work
                           (req [:regular (runner-points state)]))
-                        (hand-size+
-                          (req (= :runner side))
-                          (req (runner-points state)))]}))
+                        (runner-hand-size+ (req (runner-points state)))]}))
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -943,7 +941,7 @@
 
 (defcard "LLDS Memory Diamond"
   {:constant-effects [(link+ 1)
-                      (hand-size+ (req (= :runner side)) 1)
+                      (runner-hand-size+ 1)
                       (mu+ 1)]})
 
 (defcard "LLDS Processor"
@@ -961,7 +959,7 @@
 
 (defcard "Logos"
   {:constant-effects [(mu+ 1)
-                      (hand-size+ (req (= :runner side)) 1)]
+                      (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
              :player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
              :choices (req (cancellable (:deck runner)))
@@ -1201,9 +1199,7 @@
 
 (defcard "Obelus"
   {:constant-effects [(mu+ 1)
-                      (hand-size+
-                        (req (= :runner side))
-                        (req (count-tags state)))]
+                      (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
              :req (req (and (:successful target)
@@ -1772,7 +1768,7 @@
 
 (defcard "Supercorridor"
   {:constant-effects [(mu+ 2)
-                      (hand-size+ (req (= :runner side)) 1)]
+                      (runner-hand-size+ 1)]
    :events [{:event :runner-turn-ends
              :interactive (get-autoresolve :autofire (complement never?))
              :silent (get-autoresolve :autofire never?)

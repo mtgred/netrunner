@@ -1127,7 +1127,7 @@
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
-   :constant-effects [(hand-size+ (req (= :corp value)) 2)]})
+   :constant-effects [(corp-hand-size+ 2)]})
 
 (defcard "Ruhr Valley"
   {:constant-effects [{:type :run-additional-cost

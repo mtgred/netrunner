@@ -1299,7 +1299,7 @@
 (defcard "Remote Data Farm"
   {:silent (req true)
    :msg "increase their maximum hand size by 2"
-   :constant-effects [(hand-size+ (req (= :corp side)) 2)]})
+   :constant-effects [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"
   {:interactive (req true)
@@ -1367,7 +1367,7 @@
 (defcard "Self-Destruct Chips"
   {:silent (req true)
    :msg "decrease the Runner's maximum hand size by 1"
-   :constant-effects [(hand-size+ (req (= :runner side)) -1)]})
+   :constant-effects [(runner-hand-size+ -1)]})
 
 (defcard "Sensor Net Activation"
   {:effect (effect (add-counter card :agenda 1))

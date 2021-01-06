@@ -296,7 +296,7 @@
                                  card nil))}]}))
 
 (defcard "Beach Party"
-  {:constant-effects [(hand-size+ (req (= :runner side)) 5)]
+  {:constant-effects [(runner-hand-size+ 5)]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
              :effect (effect (lose :click 1))}]})
@@ -387,7 +387,7 @@
 
 (defcard "Borrowed Satellite"
   {:constant-effects [(link+ 1)
-                      (hand-size+ (req (= :runner side)) 1)]})
+                      (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
   {:prompt "How many power counters?"
@@ -1446,7 +1446,7 @@
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
-     :constant-effects [(hand-size+ (req (= :corp side)) -1)]
+     :constant-effects [(corp-hand-size+ -1)]
      :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
@@ -2034,7 +2034,7 @@
              :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})
 
 (defcard "Public Sympathy"
-  {:constant-effects [(hand-size+ (req (= :runner side)) 2)]})
+  {:constant-effects [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
@@ -2181,7 +2181,7 @@
                                 (trash-prevent :hardware 1))}]})
 
 (defcard "Safety First"
-  {:constant-effects [(hand-size+ (req (= :runner side)) -2)]
+  {:constant-effects [(runner-hand-size+ -2)]
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
@@ -2718,9 +2718,7 @@
                  (ttw-bounce "HQ" :hq)]}))
 
 (defcard "Theophilius Bagbiter"
-  {:constant-effects [(hand-size+
-                        (req (= :runner side))
-                        (req (:credit runner)))]
+  {:constant-effects [(runner-hand-size+ (req (:credit runner)))]
    :async true
    :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
                 (lose-credits state :runner eid :all))
