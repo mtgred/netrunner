@@ -57,7 +57,7 @@
 
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
-  (swap! state assoc :turn-state (dissoc @state :log))
+  (swap! state assoc :turn-state (dissoc @state :log :turn-state))
 
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
