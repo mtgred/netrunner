@@ -123,28 +123,28 @@
       (- (or (when-not unpreventable (get-in @state [:damage :damage-prevent dtype])) 0))
       (max 0)))
 
-(defn resolve-damage-prevent-side
-  "resolves all damage prevention effects for a player"
+(defn check-damage-prevention
+  "for a preventable damage instance, handles all damage prevention effects that a player can use for it"
   ([state side eid type n args player]
-   (let [prevent (get-prevent-list state player type)
+   (let [interrupts (get-prevent-list state player type)
          other-player (if (= player :corp) :runner :corp)
          already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
-     (if (cards-can-prevent? state player prevent type)
-       ;; player with priority can prevent damage
-       (do 
-         (system-msg state player "has the option to prevent damage")
-         (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
-         (swap! state assoc-in [:prevent :current] type)
-         (show-prompt
-           state player nil (str "Prevent any of the " (- n already-prevented) " " (name type) " damage?") ["Done"]
-           (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
-                         damage-prevented (if prevent (- prevent already-prevented) false)]
-                     (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
-                     (system-msg state player
-                                 (if damage-prevented (str "prevents " (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
-                                                                 " " (name type) " damage") "will not prevent damage"))
-                     (clear-wait-prompt state other-player)
-                     (effect-completed state side eid)))))
+     (if (cards-can-prevent? state player interrupts type)
+       ;; player can prevent damage
+       (do (system-msg state player "has the option to prevent damage")
+           (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
+           (swap! state assoc-in [:prevent :current] type)
+           (show-prompt
+             state player nil (str "Prevent any of the " (- n already-prevented) " " (name type) " damage?") ["Done"]
+             (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
+                           damage-prevented (if prevent (- prevent already-prevented) false)]
+                       (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
+                       (system-msg state player
+                                   (if damage-prevented (str "prevents " 
+                                                             (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
+                                                             " " (name type) " damage") "will not prevent damage"))
+                       (clear-wait-prompt state other-player)
+                       (effect-completed state side eid)))))
        (effect-completed state side eid)))))
 
 (defn damage
@@ -157,7 +157,7 @@
    (trigger-event state side :pre-damage type card n)
    (let [active-player (get-in @state [:active-player])]
      (if (not unpreventable)
-       (wait-for (resolve-damage-prevent-side state side type n args active-player)
-                 (wait-for (resolve-damage-prevent-side state side type n args (if (= active-player :corp) :runner :corp))
+       (wait-for (check-damage-prevention state side type n args active-player)
+                 (wait-for (check-damage-prevention state side type n args (if (= active-player :corp) :runner :corp))
                            (resolve-damage state side eid type (damage-count state side type n args) args)))
        (resolve-damage state side eid type (damage-count state side type n args) args)))))
