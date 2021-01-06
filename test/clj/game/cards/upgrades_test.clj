@@ -3082,8 +3082,9 @@
         (run-continue state)
         (run-continue state)
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
+        (is (= 4 (hand-size :runner)) "Valley Grids effect persists through trash")
         (take-credits state :runner)
-        (is (= 5 (hand-size :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
+        (is (= 5 (hand-size :runner)) "Runner max hand size back to normal")))))
 
 (deftest warroid-tracker
   ;; Warroid Tracker

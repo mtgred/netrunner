@@ -167,7 +167,8 @@
              ;; Moving the card has changed the cid
              (swap! state assoc :effects
                     (->> (:effects @state)
-                         (remove #(same-card? card (:card %)))
+                         (remove #(and (= :constant (:duration %))
+                                       (same-card? card (:card %))))
                          (into []))))
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
