@@ -608,7 +608,8 @@
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital"))))]
+                                                      :subtype "Digital")))
+                         (update-link state))]
     {:constant-effects [(link+ (req (:flipped card)) 1)]
      :events [{:event :pre-first-turn
                :req (req (= side :runner))

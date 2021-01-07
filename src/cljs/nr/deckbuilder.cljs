@@ -10,12 +10,14 @@
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [cards-channel filter-title image-url] :as cb]
+            [nr.cardbrowser :refer [cards-channel factions filter-title image-url non-game-toast] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
-                              slug->format checkbox-button cond-button]]
-            [reagent.core :as r]))
+                              slug->format format->slug checkbox-button cond-button]]
+            [nr.ws :as ws]
+            [reagent.core :as r]
+            [reagent-modals.modals :as reagent-modals]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -299,6 +301,30 @@
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
 
+(defn- send-import [s]
+  (ws/ws-send! [:decks/import {:input (:msg @s)}])
+  (reagent-modals/close-modal!))
+
+(defn import-deck-modal []
+  (r/with-let [s (r/atom {})]
+    [:div
+     [:h3 "Enter a Public NRDB Deck ID or URL"]
+     [:p [:input.url {:type "text"
+                      :id "nrdb-input"
+                      :placeholder "NRDB ID"
+                      :value (:msg @s)
+                      :on-key-press #(when (= 13 (.. % -charCode))
+                                       (send-import s))
+                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+     [:p.float-right
+      (let [disabled (empty? (:msg @s))]
+        [:button
+         {:disabled disabled
+          :class (when disabled "disabled")
+          :on-click #(send-import s)}
+         "Import"])
+      [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]]))
+
 (defn load-decks-from-json
   [json]
   (when-not (= {:message "Not authorized"} json)
@@ -537,23 +563,61 @@
          " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
          " - Lost: " losses]))]])
 
+(def all-sides-filter "Any Side")
+(def all-factions-filter "Any Faction")
+(def all-formats-filter "Any Format")
+
+(defn- filter-side [state decks]
+  (let [side (:side-filter @state)]
+    (if (= all-sides-filter (:side-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :side]) side) decks))))
+
+(defn- filter-faction [state decks]
+  (let [faction (:faction-filter @state)]
+    (if (= all-factions-filter (:faction-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :faction]) faction) decks))))
+
+(defn- filter-format [state decks]
+  (let [fmt (:format-filter @state)
+        fmt-slug (format->slug fmt)]
+    (if (= all-formats-filter fmt)
+      decks
+      (filter #(= (:format %) fmt-slug) decks))))
+
+(defn- filter-selected [state]
+  (not (and (= all-sides-filter (:side-filter @state))
+            (= all-factions-filter (:faction-filter @state))
+            (= all-formats-filter (:format-filter @state)))))
+
 (defn deck-collection
   [s decks decks-loaded]
-  [:div.deck-collection
-   (when-not (:edit @s)
-     (cond
+  (when-not (:edit @s)
+    (cond
 
-       (not @decks-loaded)
-       [:h4 "Loading deck collection..."]
+      (not @decks-loaded)
+      [:div.deck-collection
+       [:h4 "Loading deck collection..."]]
 
-       (empty? @decks)
-       [:h4 "No decks"]
+      (empty? @decks)
+      [:div.deck-collection
+       [:h4 "No decks"]]
 
-       :else
-       (doall
-         (for [deck (sort-by :date > @decks)]
-           ^{:key (:_id deck)}
-           [deck-entry s deck]))))])
+      :else
+      (let [filtered-decks (->> @decks
+                                (filter-side s)
+                                (filter-faction s)
+                                (filter-format s))
+            n (count filtered-decks)
+            deck-str (if (= n 1) "Deck" "Decks")]
+        [:div.deck-collection
+         [:h4 (str n " " deck-str
+                   (when (filter-selected s) " (filtered)"))]
+         (doall
+           (for [deck (sort-by :date > filtered-decks)]
+             ^{:key (:_id deck)}
+             [deck-entry s deck]))]))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -680,6 +744,10 @@
                 [line-name-span deck line]]
                [line-span deck line])]))]))])
 
+(defn decklist-notes
+  [deck]
+  [:div.notes (:notes deck "")])
+
 (defn edit-buttons
   [s]
   [:div.button-bar
@@ -714,7 +782,9 @@
           :else [view-buttons s deck])
         [:h3 (:name deck)]
         [decklist-header deck cards]
-        [decklist-contents s deck cards]]))])
+        [decklist-contents s deck cards]
+        (when-not (:edit @s)
+          [decklist-notes deck])]))])
 
 (defn deck-name-editor
   [s]
@@ -781,6 +851,14 @@
               :value (:deck-edit @s)
               :on-change #(handle-edit s)}])
 
+(defn notes-textbox
+  [s]
+  [:textarea.notes-edit
+   {:placeholder "Deck notes"
+    :ref #(swap! db-dom assoc :deck-notes %)
+    :value (get-in @s [:deck :notes])
+    :on-change #(swap! s assoc-in [:deck :notes] (.. % -target -value))}])
+
 (defn edit-panel
   [s]
   [:div.deckedit
@@ -791,12 +869,62 @@
    [:div
     [:h3 "Decklist"
      [:span.small "(Type or paste a decklist, it will be parsed)"]]]
-   [edit-textbox s]])
+   [edit-textbox s]
+   [:div
+    [:h3 "Notes"]]
+   [notes-textbox s]])
+
+(defn- reset-deck-filters [state]
+  (swap! state assoc
+         :side-filter all-sides-filter
+         :faction-filter all-factions-filter
+         :format-filter all-formats-filter))
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button "New Corp deck" (and @user @decks-loaded) #(do
+                                                             (reset-deck-filters s)
+                                                             (new-deck s "Corp"))]
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(do
+                                                               (reset-deck-filters s)
+                                                               (new-deck s "Runner"))]
+   [cond-button "Import deck" (and @user @decks-loaded)
+    #(reagent-modals/modal! [import-deck-modal]
+                            {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
+
+(defn- simple-filter-builder
+  [state state-key options decks-loaded callback]
+  [:select.deckfilter-select {:class (if-not @decks-loaded "disabled" state-key)
+                              :value (get @state state-key)
+                              :on-change #(let [old-value (get @state state-key)
+                                                new-value (.. % -target -value)]
+                                            (swap! state assoc state-key new-value)
+                                            (when callback
+                                              (callback state old-value new-value)))}
+   (for [option options]
+     ^{:key option}
+     [:option.deckfilter-option {:value option
+                                 :key option
+                                 :dangerouslySetInnerHTML #js {:__html option}}])])
+
+(defn- handle-side-changed [state old-value new-value]
+  (swap! state assoc :faction-filter all-factions-filter))
+
+(defn- filter-builder
+  [state decks-loaded]
+  (let [formats (-> format->slug keys butlast)]
+    [:div.deckfilter
+     (doall
+       (for [[state-key options callback]
+             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed]
+              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil]
+              [:format-filter (cons all-formats-filter formats) nil]]]
+         ^{:key state-key}
+         [simple-filter-builder state state-key options decks-loaded callback]))
+
+     [:button {:class (if-not @decks-loaded "disabled" "")
+               :on-click #(reset-deck-filters state)}
+      "Reset"]]))
 
 (defn- zoom-card-view [card state]
   [card state]
@@ -809,6 +937,7 @@
   [s user decks decks-loaded]
   [:div.decks
    [collection-buttons s user decks-loaded]
+   [filter-builder s decks-loaded]
    [deck-collection s decks decks-loaded]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]
@@ -823,7 +952,10 @@
   (let [active (r/cursor app-state [:active-page])
         s (r/atom {:edit false
                    :old-deck nil
-                   :deck nil})
+                   :deck nil
+                   :side-filter all-sides-filter
+                   :faction-filter all-factions-filter
+                   :format-filter all-formats-filter})
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])]
@@ -841,6 +973,7 @@
          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
           [list-panel s user decks decks-loaded]
           [selected-panel s]
+          [reagent-modals/modal-window]
           [edit-panel s]]]))))
 
 (go (let [cards (<! cards-channel)
@@ -848,3 +981,16 @@
           decks (load-decks-from-json json)]
       (load-decks decks)
       (>! cards-channel cards)))
+
+(ws/register-ws-handler!
+  :decks/import-failure
+  (fn [msg]
+    (non-game-toast msg "error" nil)))
+
+(ws/register-ws-handler!
+  :decks/import-success
+  (fn [msg]
+    (non-game-toast msg "success" nil)
+    (go (let [json (:json (<! (GET (str "/data/decks"))))
+              decks (load-decks-from-json json)]
+          (load-decks decks)))))

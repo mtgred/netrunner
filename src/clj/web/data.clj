@@ -3,8 +3,16 @@
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
+            [monger.query :as mq]
             [web.config :refer [server-config]]
             [clojure.edn :as edn]))
+
+(defn news-handler [req]
+  (let [data (mq/with-collection db "news"
+               (mq/find {})
+               (mq/fields [:_id :item :date])
+               (mq/sort (array-map :date -1)))]
+    (response 200 data)))
 
 (defn cards-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "cards"))))

@@ -2210,7 +2210,7 @@
                 :effect (effect (register-events
                                   card
                                   [{:event :pre-successful-run
-                                    :duration :run-ends
+                                    :duration :end-of-run
                                     :unregister-once-resolved true
                                     :interactive (req true)
                                     :req (req (= :archives (-> run :server first)))

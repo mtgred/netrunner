@@ -1601,7 +1601,35 @@
               credits (:credit (get-runner))]
           (run-empty-server state :hq)
           (is (= (inc cards) (count (:hand (get-runner)))) "Runner has drawn 1 card on successful run")
-          (is (= (inc credits) (:credit (get-runner))) "Runner has gained 1 credit on successful run"))))))
+          (is (= (inc credits) (:credit (get-runner))) "Runner has gained 1 credit on successful run")))))
+(testing "Citadel interaction"
+  (do-game
+   (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
+                       :deck ["Citadel Sanctuary"]}
+              :corp {:hand ["SEA Source"]
+                     :deck [(qty "Hedge Fund" 5)]}})
+   (take-credits state :corp)
+   (let [ho (get-in @state [:runner :identity])]
+     (play-from-hand state :runner "Citadel Sanctuary")
+     (run-on state "Archives")
+     (run-continue state)
+     (take-credits state :runner)
+     (play-from-hand state :corp "SEA Source")
+     (click-prompt state :corp "0")
+     (click-prompt state :runner "0")
+     (take-credits state :corp)
+     (run-empty-server state :hq)
+     (click-prompt state :runner "No action")
+     (core/end-turn state :runner nil)
+     (is (= 0 (get-link state)) "Hoshiko is not flipped yet")
+     (click-prompt state :runner "Hoshiko Shiro: Untold Protagonist")
+     (is (:flipped (refresh ho)) "Only Hoshiko flip has been resolved")
+     (is (= 1 (get-link state)) "Flipped Hoshiko has 1 Link")
+     (is (= 1 (:link (prompt-map :corp))) "Trace link should be 1")
+     (click-prompt state :corp "0")
+     (click-prompt state :runner "0")
+     (is (:flipped (refresh ho)) "All end of turn effects have been resolved including a flip")
+     (is (= 1 (get-link state)) "Flipped Hoshiko has 1 Link")))))
 
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"

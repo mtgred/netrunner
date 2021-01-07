@@ -30,10 +30,8 @@
      (hiccup/include-js "/lib/jqueryui/jquery-ui.min.js")
      (hiccup/include-js "/lib/bootstrap/dist/js/bootstrap.js")
      (hiccup/include-js "/lib/moment/min/moment.min.js")
-     (hiccup/include-js "/lib/marked/marked.min.js")
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
-     (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
      (when user
       [:div#sente-csrf-token {:data-csrf-token anti-forgery/*anti-forgery-token*}])
      [:script {:type "text/javascript"}
@@ -101,61 +99,16 @@
         [:div#about]]
        [:div.item
         [:div.about-bg]
-        [:div#tournament]]]]
+        [:div#tournament]]
+       [:div.item
+        [:div.help-bg]
+        [:div#admin]]
+       [:div.item
+        [:div.account-bg]
+        [:div#users]]]]
     [:audio#ting
       [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
      [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]))
-
-(defn announce-page [req]
-  (hiccup/html5
-    [:head
-     [:title "Announce"]
-     (hiccup/include-css "/css/netrunner.css")]
-    [:body
-     [:div.reset-bg]
-     [:form.panel.blue-shade.reset-form {:method "POST"}
-      (anti-forgery-field)
-      [:h3 "Announcement"]
-      [:p
-       [:textarea.form-control {:rows 5 :style "height: 80px; width: 250px"
-                                :name "message" :autofocus true :required "required"}]]
-      [:p
-       [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
-
-(defn version-page [{:keys [version] :as req}]
-  (hiccup/html5
-    [:head
-     [:title "App Version"]
-     (hiccup/include-css "/css/netrunner.css")]
-    [:body
-     [:div.reset-bg]
-     [:form.panel.blue-shade.reset-form {:method "POST"}
-      (anti-forgery-field)
-      [:h3 "App Version"]
-      [:p
-       [:input {:type "text" :name "version" :value version}]]
-      [:p
-       [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
-
-(defn fetch-page [req]
-  (hiccup/html5
-    [:head
-     [:title "Update Card Data"]
-     (hiccup/include-css "/css/netrunner.css")]
-    [:body
-     [:div.reset-bg]
-     [:form.panel.blue-shade.reset-form {:method "POST"}
-      (anti-forgery-field)
-      (when-let [card-info (mc/find-one-as-map db "config" {})]
-        [:div.admin
-         [:div
-          [:h3 "Card Version:"]
-          (:cards-version card-info)]
-         [:div
-          [:h3 "Last Updated:"]
-          (:last-updated card-info)]])
-      [:br]
-      [:button.btn.btn-primary {:type "submit"} "Fetch Cards"]]]))
 
 (defn reset-password-page
   [{{:keys [token]} :params}]
