@@ -1292,6 +1292,38 @@
       (is (= 6 (get-strength (refresh gutenberg))))
       (is (zero? (get-strength (refresh vanilla)))))))
 
+(deftest henry-phillips
+  ;; Henry Philips - gain 2c when runner is tagged and breaks a sub on this server
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:deck ["Henry Phillips" "Hadrian's Wall"]
+                        :credits 30}
+                 :runner {:deck ["Paperclip"]
+                          :credits 30}})
+      (play-from-hand state :corp "Henry Phillips" "New remote")
+      (play-from-hand state :corp "Hadrian's Wall" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paperclip")
+      (let [pc (get-program state 0)
+            corp-creds (:credit (get-corp))]
+        (run-on state :remote1)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card pc})
+        (core/continue state :corp nil)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (= corp-creds (:credit (get-corp))) "Henry doesn't gain credits if runner not tagged")
+        (gain-tags state :runner 1)
+        (run-on state :remote1)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card pc})
+        (core/continue state :corp nil)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (= (+ 4 corp-creds) (:credit (get-corp))) "Henry gains 4 credits if runner tagged and breaks two subs")))))
+
 (deftest hired-help
   ;; Hired Help - trash an agenda if you wanna run my server
   (testing "Normal usage"
