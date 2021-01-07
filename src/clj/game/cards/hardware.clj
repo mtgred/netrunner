@@ -270,7 +270,6 @@
   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
    :abilities [{:req (req (:runner-phase-12 @state))
                 :label "trash and draw or remove tag"
-                :msg (msg "trash " (:title target))
                 :choices {:card #(and (runner? %)
                                       (installed? %))
                           :not-self true}
@@ -278,7 +277,8 @@
                 :effect (req (wait-for (trash state :runner target nil)
                                        (continue-ability
                                          state side
-                                         (let [deck (pos? (count (:deck runner)))
+                                         (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
+                                               deck (pos? (count (:deck runner)))
                                                tags (pos? (count-real-tags state))]
                                            {:req (req (or deck tags))
                                             :prompt "Draw 1 card or remove 1 tag"
@@ -286,8 +286,10 @@
                                                       (when tags "Remove 1 tag")]
                                             :async true
                                             :effect (req (if (= target "Draw 1 card")
-                                                           (draw state :runner eid 1 nil)
-                                                           (lose-tags state :runner eid 1)))})
+                                                           (do (system-msg state :runner (str trash-str " and draw 1 card"))
+                                                               (draw state :runner eid 1 nil))
+                                                           (do (system-msg state :runner (str trash-str " and remove 1 tag"))
+                                                               (lose-tags state :runner eid 1))))})
                                          card nil)))}]})
 
 (defcard "Clone Chip"
