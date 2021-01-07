@@ -3637,7 +3637,7 @@
   (testing "Firing subs with play-unbroken-subroutines"
     (do-game
       (new-game {:corp {:hand ["Saisentan"]}
-                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+                 :runner {:hand [(qty "Sure Gamble" 9)]}})
       (play-from-hand state :corp "Saisentan" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
@@ -3647,13 +3647,21 @@
         (click-prompt state :corp "Event")
         (changes-val-macro -6 (count (:hand (get-runner)))
           "6 damage in total"
+          (core/play-unbroken-subroutines state :corp {:card (refresh sai)}))
+        (run-jack-out state)
+        (run-on state "HQ")
+        (run-continue state)
+        (click-prompt state :corp "Hardware")
+        (changes-val-macro -3 (count (:hand (get-runner)))
+          "3 damage in total"
           (core/play-unbroken-subroutines state :corp {:card (refresh sai)})))))
   (testing "Preventing damage"
     (do-game
       (new-game {:corp {:hand ["Saisentan"]}
-                 :runner {:hand ["Sure Gamble" "Caldera" "Diesel" "Deuces Wild"]}})
+                 :runner {:hand ["Sure Gamble" "Sure Gamble" "Caldera" "Diesel" "Deuces Wild"]}})
       (play-from-hand state :corp "Saisentan" "HQ")
       (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Caldera")
       (run-on state "HQ")
