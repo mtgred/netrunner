@@ -10,12 +10,14 @@
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [cards-channel filter-title image-url] :as cb]
+            [nr.cardbrowser :refer [cards-channel filter-title image-url non-game-toast] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
                               slug->format checkbox-button cond-button]]
-            [reagent.core :as r]))
+            [nr.ws :as ws]
+            [reagent.core :as r]
+            [reagent-modals.modals :as reagent-modals]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -298,6 +300,30 @@
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
+
+(defn- send-import [s]
+  (ws/ws-send! [:decks/import {:input (:msg @s)}])
+  (reagent-modals/close-modal!))
+
+(defn import-deck-modal []
+  (r/with-let [s (r/atom {})]
+    [:div
+     [:h3 "Enter a Public NRDB Deck ID or URL"]
+     [:p [:input.url {:type "text"
+                      :id "nrdb-input"
+                      :placeholder "NRDB ID"
+                      :value (:msg @s)
+                      :on-key-press #(when (= 13 (.. % -charCode))
+                                       (send-import s))
+                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+     [:p.float-right
+      (let [disabled (empty? (:msg @s))]
+        [:button
+         {:disabled disabled
+          :class (when disabled "disabled")
+          :on-click #(send-import s)}
+         "Import"])
+      [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]]))
 
 (defn load-decks-from-json
   [json]
@@ -813,7 +839,10 @@
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
    [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]
+   [cond-button "Import deck" (and @user @decks-loaded)
+    #(reagent-modals/modal! [import-deck-modal]
+                            {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
 
 (defn- zoom-card-view [card state]
   [card state]
@@ -858,6 +887,7 @@
          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
           [list-panel s user decks decks-loaded]
           [selected-panel s]
+          [reagent-modals/modal-window]
           [edit-panel s]]]))))
 
 (go (let [cards (<! cards-channel)
@@ -865,3 +895,16 @@
           decks (load-decks-from-json json)]
       (load-decks decks)
       (>! cards-channel cards)))
+
+(ws/register-ws-handler!
+  :decks/import-failure
+  (fn [msg]
+    (non-game-toast msg "error" nil)))
+
+(ws/register-ws-handler!
+  :decks/import-success
+  (fn [msg]
+    (non-game-toast msg "success" nil)
+    (go (let [json (:json (<! (GET (str "/data/decks"))))
+              decks (load-decks-from-json json)]
+          (load-decks decks)))))
