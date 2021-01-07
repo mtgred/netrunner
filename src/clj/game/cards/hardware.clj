@@ -40,7 +40,7 @@
              :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}]})
 
 (defcard "Akamatsu Mem Chip"
-  {:in-play [:memory 1]})
+  {:constant-effects [(mu+ 1)]})
 
 (defcard "Aniccam"
   (let [ability {:async true
@@ -51,7 +51,7 @@
                                   (first-trash? state event-targets?))))
                  :msg "draw 1 card"
                  :effect (effect (draw :runner eid 1 nil))}]
-    {:in-play [:memory 1]
+    {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
               (assoc ability :event :runner-trash)]}))
 
@@ -74,7 +74,7 @@
                                     :effect (effect (move :corp target :rfg))}}} card nil))}]})
 
 (defcard "Astrolabe"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :server-created
              :msg "draw 1 card"
              :async true
@@ -101,7 +101,7 @@
                              (trash eid card nil))}]})
 
 (defcard "Blackguard"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :expose
              :msg (msg "attempt to force the rez of " (:title target))
              :async true
@@ -192,30 +192,21 @@
                           card nil))))]})
 
 (defcard "Box-E"
-  {:in-play [:memory 2]
-   :constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 2}]})
+  {:constant-effects [(mu+ 2)
+                      (runner-hand-size+ 2)]})
 
 (defcard "Brain Cage"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 3}]
+  {:constant-effects [(runner-hand-size+ 3)]
+   :async true
    :effect (effect (damage eid :brain 1 {:card card}))})
 
 (defcard "Brain Chip"
   (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
-    {:constant-effects [{:type :hand-size
-                         :req (req (= :runner side))
-                         :value (req (runner-points state))}]
-     :effect (req (gain state :runner :memory (runner-points state))
-                  (add-watch state (keyword (str "brainchip" (:cid card)))
-                             (fn [k ref old new]
-                               (let [bonus (- (runner-points (atom new)) (runner-points (atom old)))]
-                                 (when-not (zero? bonus)
-                                   (gain state :runner :memory bonus))))))
-     :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
-                      (lose state :runner :memory (runner-points state)))}))
+    {:constant-effects [(mu+
+                          (req (pos? (runner-points state)))
+                          ;; [:regular N] is needed to make the mu system work
+                          (req [:regular (runner-points state)]))
+                        (runner-hand-size+ (req (runner-points state)))]}))
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -279,7 +270,6 @@
   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
    :abilities [{:req (req (:runner-phase-12 @state))
                 :label "trash and draw or remove tag"
-                :msg (msg "trash " (:title target))
                 :choices {:card #(and (runner? %)
                                       (installed? %))
                           :not-self true}
@@ -287,7 +277,8 @@
                 :effect (req (wait-for (trash state :runner target nil)
                                        (continue-ability
                                          state side
-                                         (let [deck (pos? (count (:deck runner)))
+                                         (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
+                                               deck (pos? (count (:deck runner)))
                                                tags (pos? (count-real-tags state))]
                                            {:req (req (or deck tags))
                                             :prompt "Draw 1 card or remove 1 tag"
@@ -295,8 +286,10 @@
                                                       (when tags "Remove 1 tag")]
                                             :async true
                                             :effect (req (if (= target "Draw 1 card")
-                                                           (draw state :runner eid 1 nil)
-                                                           (lose-tags state :runner eid 1)))})
+                                                           (do (system-msg state :runner (str trash-str " and draw 1 card"))
+                                                               (draw state :runner eid 1 nil))
+                                                           (do (system-msg state :runner (str trash-str " and remove 1 tag"))
+                                                               (lose-tags state :runner eid 1))))})
                                          card nil)))}]})
 
 (defcard "Clone Chip"
@@ -318,7 +311,7 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
 (defcard "Comet"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :play-event
              :req (req (first-event? state side :play-event))
              :effect (req (system-msg state :runner
@@ -351,7 +344,7 @@
                                      :value [:credit 2]})))}]})
 
 (defcard "Cyberdelia"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :subroutines-broken
              :req (req (and (every? :broken (:subroutines target))
                             (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %))))))
@@ -369,7 +362,7 @@
                                 :type :recurring}}})
 
 (defcard "CyberSolutions Mem Chip"
-  {:in-play [:memory 2]})
+  {:constant-effects [(mu+ 2)]})
 
 (defcard "Cybsoft MacroDrive"
   {:recurring 1
@@ -378,7 +371,7 @@
                                 :type :recurring}}})
 
 (defcard "Daredevil"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :run
              :once :per-turn
              :req (req (and (<= 2 (:position target))
@@ -400,8 +393,7 @@
                 :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]})
 
 (defcard "Deep Red"
-  {:implementation "MU use restriction not enforced"
-   :in-play [:memory 3]
+  {:constant-effects [(caissa-mu+ 3)]
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? target "Caïssa"))
@@ -421,8 +413,8 @@
                                              card nil)))}}}]})
 
 (defcard "Demolisher"
-  {:in-play [:memory 1]
-   :constant-effects [{:type :trash-cost
+  {:constant-effects [(mu+ 1)
+                      {:type :trash-cost
                        :value -1}]
    :events [{:event :runner-trash
              :req (req (and (corp? (:card target))
@@ -434,7 +426,7 @@
              :effect (effect (gain-credits :runner eid 1))}]})
 
 (defcard "Desperado"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :successful-run
              :silent (req true)
              :async true
@@ -467,8 +459,7 @@
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
                 :async true
-                :effect (effect (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target)))
-                                (runner-install eid target {:host-card card :no-mu true}))}
+                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed non-AI icebreaker on Dinosaurus"
                 :req (req (empty? (:hosted card)))
                 :prompt "Select an installed non-AI icebreaker to host on Dinosaurus"
@@ -476,22 +467,15 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                 :msg (msg "host " (:title target))
-                :effect (req (free-mu state (:memoryunits target))
-                             (->> target
-                                  (get-card state)
-                                  (host state side card)
-                                  (update-breaker-strength state side))
-                             (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
+                :effect (effect (host card target)
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu))}]
    :constant-effects [{:type :breaker-strength
                        :req (req (same-card? target (first (:hosted card))))
-                       :value 2}]
-   :events [{:event :card-moved
-             :req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
-             :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
-                             (use-mu (:memoryunits target)))}]})
+                       :value 2}]})
 
 (defcard "Doppelgänger"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :runner-install
              :req (req (= card target))
              :silent (req true)
@@ -545,9 +529,8 @@
                                 :type :recurring}}})
 
 (defcard "Dyson Mem Chip"
-  {:in-play [:memory 1]
-   :constant-effects [{:type :link
-                       :value 1}]})
+  {:constant-effects [(mu+ 2)
+                      (link+ 1)]})
 
 (defcard "e3 Feedback Implants"
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
@@ -687,8 +670,7 @@
 (defcard "Forger"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :constant-effects [{:type :link
-                       :value 1}]
+   :constant-effects [(link+ 1)]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
@@ -867,14 +849,14 @@
                 :effect (effect (expose eid current-ice))}]})
 
 (defcard "Grimoire"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :runner-install
              :silent (req true)
              :req (req (has-subtype? target "Virus"))
              :effect (effect (add-counter target :virus 1))}]})
 
 (defcard "Heartbeat"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
    :abilities [{:label "Prevent 1 damage"
@@ -932,13 +914,12 @@
                        :msg "gain 1 [Credit]"
                        :async true
                        :effect (effect (gain-credits :runner eid 1))}]
-    {:in-play [:memory 2]
+    {:constant-effects [(mu+ 2)]
      :events [(assoc keiko-ability :event :spent-credits-from-card)
               (assoc keiko-ability :event :runner-install)]}))
 
 (defcard "Knobkierie"
-  {:implementation "MU usage restriction not enforced"
-   :in-play [:memory 3]
+  {:constant-effects [(virus-mu+ 3)]
    :events [{:event :successful-run
              :interactive (req true)
              :optional {:req (req (and (first-event? state :runner :successful-run)
@@ -961,12 +942,9 @@
                 :msg "expose 1 card"}]})
 
 (defcard "LLDS Memory Diamond"
-  {:constant-effects [{:type :link
-                       :value 1}
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]
-   :in-play [:memory 1]})
+  {:constant-effects [(link+ 1)
+                      (runner-hand-size+ 1)
+                      (mu+ 1)]})
 
 (defcard "LLDS Processor"
   {:events [{:event :runner-install
@@ -982,10 +960,8 @@
                                 :type :recurring}}})
 
 (defcard "Logos"
-  {:in-play [:memory 1]
-   :constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]
+  {:constant-effects [(mu+ 1)
+                      (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
              :player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
              :choices (req (cancellable (:deck runner)))
@@ -1022,7 +998,7 @@
                                 (add-counter state side card :power cost))))}]}))
 
 (defcard "Masterwork (v37)"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :run
              :interactive (req true)
              :optional
@@ -1048,14 +1024,14 @@
              :effect (effect (draw eid 1 nil))}]})
 
 (defcard "Māui"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
    :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
                                 :type :recurring}}})
 
 (defcard "Maw"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :post-access-card
              :label "Trash a card from HQ"
              :async true
@@ -1071,7 +1047,7 @@
                             (trash state :corp eid card-to-trash nil)))}]})
 
 (defcard "Maya"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :post-access-card
              :optional
              {:req (req (in-deck? (second targets)))
@@ -1084,12 +1060,11 @@
                             (gain-tags state :runner eid 1))}}}]})
 
 (defcard "MemStrips"
-  {:implementation "MU usage restriction not enforced"
-   :in-play [:memory 3]})
+  {:constant-effects [(virus-mu+ 3)]})
 
 (defcard "Mind's Eye"
-  {:in-play [:memory 1]
-   :implementation "Power counters added automatically"
+  {:implementation "Power counters added automatically"
+   :constant-effects [(mu+ 1)]
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :rd (target-server context)))
@@ -1100,7 +1075,7 @@
                 :effect (req (do-access state side eid [:rd] {:no-root true}))}]})
 
 (defcard "Mirror"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :successful-run
              :async true
              :req (req (= :rd (target-server context)))
@@ -1124,7 +1099,7 @@
                                   (continue-ability state side (when (< n 3) (mh (inc n))) card nil)))})]
     {:interactions {:prevent [{:type #{:net :brain}
                                :req (req true)}]}
-     :in-play [:memory 3]
+     :constant-effects [(mu+ 3)]
      :async true
      :effect (effect (continue-ability (mhelper 1) card nil))
      :abilities [{:msg "prevent 1 brain or net damage"
@@ -1206,10 +1181,7 @@
                                                      (<= (:memoryunits %) n)
                                                      (in-hand? %))}
                                :msg (msg "host " (:title target))
-                               :effect (effect (update! (assoc (get-card state card)
-                                                               :hosted-programs
-                                                               (cons (:cid target) (:hosted-programs card))))
-                                               (runner-install eid target {:host-card card :no-mu true}))})
+                               :effect (effect (runner-install eid target {:host-card card :no-mu true}))})
                             card nil))}
                {:async true
                 :label "Host an installed program on NetChip"
@@ -1223,23 +1195,13 @@
                                                      (installed? %))}
                                :msg (msg "host " (:title target))
                                :effect (effect (host card target)
-                                               (free-mu (:memoryunits target))
-                                               (update! (assoc (get-card state card)
-                                                               :hosted-programs
-                                                               (cons (:cid target) (:hosted-programs card)))))})
-                            card nil))}]
-   :events [{:event :card-moved
-             :req (req (some #{(:cid target)} (:hosted-programs card)))
-             :effect (effect (update! (assoc card
-                                             :hosted-programs
-                                             (remove #(= (:cid target) %) (:hosted-programs card))))
-                             (use-mu (:memoryunits target)))}]})
+                                               (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                               (update-mu))})
+                            card nil))}]})
 
 (defcard "Obelus"
-  {:in-play [:memory 1]
-   :constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value (req (count-tags state))}]
+  {:constant-effects [(mu+ 1)
+                      (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
              :req (req (and (:successful target)
@@ -1254,36 +1216,31 @@
 (defcard "Omni-drive"
   {:recurring 1
    :abilities [{:async true
-                :label "Install and host a program of 1[Memory Unit] or less on Omni-drive"
+                :label "Install and host a program of 1[mu] or less on Omni-drive"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Select a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
+                :prompt "Select a program of 1[mu] or less to install on Omni-drive from your grip"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                 :msg (msg "host " (:title target))
-                :effect (effect (update! (assoc-in (get-card state card) [:special :omni-drive] (:cid target)))
-                                (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
-                :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
+                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
+               {:label "Host an installed program of 1[mu] or less on Omni-drive"
+                :prompt "Select an installed program of 1[mu] or less to host on Omni-drive"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
                 :msg (msg "host " (:title target))
                 :effect (effect (host card target)
-                                (free-mu (:memoryunits target))
-                                (update! (assoc-in (get-card state card) [:special :omni-drive] (:cid target))))}]
-   :events [{:event :card-moved
-             :req (req (= (:cid target) (get-in (get-card state card) [:special :omni-drive])))
-             :effect (effect (update! (dissoc-in card [:special :omni-drive]))
-                             (use-mu (:memoryunits target)))}]
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (program? target)
                                                (same-card? card (:host target))))
                                 :type :recurring}}})
 
 (defcard "Paragon"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :successful-run
              :interactive (get-autoresolve :autofire (complement never?))
              :silent (get-autoresolve :autofire never?)
@@ -1316,7 +1273,7 @@
 (defcard "Patchwork"
   (let [patchwork-ability {:once :per-turn
                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
-    {:in-play [:memory 1]
+    {:constant-effects [(mu+ 1)]
      :interactions
      {:pay-credits
       {:req (req (and (or (= :play (:source-type eid))
@@ -1369,9 +1326,8 @@
                                                    (draw state :corp eid 1 nil)))}
               :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                         (effect-completed state side eid))}}}]
-    {:constant-effects [{:type :link
-                       :value 1}]
-     :in-play [:memory 1]
+    {:constant-effects [(mu+ 1)
+                        (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
                               (= (:position run) 1) ; trigger when last ICE passed
@@ -1437,7 +1393,7 @@
                                 :type :recurring}}})
 
 (defcard "Q-Coherence Chip"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events (let [e {:async true
                     :interactive (req true)
                     :req (req (and (installed? (:card target))
@@ -1470,8 +1426,7 @@
   {:in-play [:rd-access 1]})
 
 (defcard "Rabbit Hole"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
               :prompt "Install another Rabbit Hole?"
               :msg "install another Rabbit Hole"
@@ -1527,9 +1482,8 @@
                 :effect (effect (move :corp target :deck {:front true}))}})]})
 
 (defcard "Reflection"
-  {:in-play [:memory 1]
-   :constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(mu+ 1)
+                      (link+ 1)]
    :events [{:event :jack-out
              :async true
              :effect (req (let [card (first (shuffle (:hand corp)))]
@@ -1641,9 +1595,8 @@
                                (update-breaker-strength state side t)))}]})
 
 (defcard "Security Nexus"
-  {:constant-effects [{:type :link
-                       :value 1}]
-   :in-play [:memory 1]
+  {:constant-effects [(mu+ 1)
+                      (link+ 1)]
    :events [{:event :encounter-ice
              :interactive (req true)
              :optional
@@ -1709,7 +1662,7 @@
                             ((:value %) state side eid (get-card state (:card %)) (cons target targets))))
                    (reduce +)
                    (abs))))]
-    {:in-play [:memory 2]
+    {:constant-effects [(mu+ 2)]
      :events [{:event :encounter-ice
                :optional
                {:prompt "Use Şifr?"
@@ -1778,7 +1731,7 @@
                        :value -1}]})
 
 (defcard "Spinal Modem"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :recurring 2
    :events [{:event :successful-trace
              :req (req run)
@@ -1789,8 +1742,7 @@
                                 :type :recurring}}})
 
 (defcard "Sports Hopper"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
@@ -1817,10 +1769,8 @@
                 :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {}))}]})
 
 (defcard "Supercorridor"
-  {:in-play [:memory 2]
-   :constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]
+  {:constant-effects [(mu+ 2)
+                      (runner-hand-size+ 1)]
    :events [{:event :runner-turn-ends
              :interactive (get-autoresolve :autofire (complement never?))
              :silent (get-autoresolve :autofire never?)
@@ -1837,7 +1787,7 @@
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :play-event
              :req (req (and (has-subtype? target "Run")
                             (first-event? state side :play-event #(has-subtype? (first %) "Run"))))
@@ -1845,7 +1795,7 @@
              :effect (effect (gain :click 1))}]})
 
 (defcard "The Gauntlet"
-  {:in-play [:memory 2]
+  {:constant-effects [(mu+ 2)]
    :events [{:event :pre-access
              :req (req (= :hq target))
              :effect (req (let [broken-ice
@@ -1871,9 +1821,8 @@
                        :value 1}]})
 
 (defcard "The Toolbox"
-  {:constant-effects [{:type :link
-                       :value 2}]
-   :in-play [:memory 2]
+  {:constant-effects [(mu+ 2)
+                      (link+ 2)]
    :recurring 2
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
@@ -1922,7 +1871,7 @@
                                         (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
 
 (defcard "Turntable"
-  {:in-play [:memory 1]
+  {:constant-effects [(mu+ 1)]
    :events [{:event :agenda-stolen
              :interactive (req true)
              :req (req (not (empty? (:scored corp))))
@@ -1946,7 +1895,7 @@
                  :once :per-turn
                  :async true
                  :effect (effect (draw eid 1 nil))}]
-    {:in-play [:memory 1]
+    {:constant-effects [(mu+ 1)]
      :flags {:runner-turn-draw true
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                        (cons (get-in @state [:runner :identity])
@@ -1979,13 +1928,14 @@
      :effect (effect (trash eid target nil))}]})
 
 (defcard "Vigil"
-  (let [ability {:req (req (and (:runner-phase-12 @state) (= (count (:hand corp)) (hand-size state :corp))))
+  (let [ability {:req (req (and (:runner-phase-12 @state)
+                                (= (count (:hand corp)) (hand-size state :corp))))
                  :msg "draw 1 card"
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn
                  :async true
                  :effect (effect (draw eid 1 nil))}]
-    {:in-play [:memory 1]
+    {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
@@ -1995,7 +1945,7 @@
 
 (defcard "Zamba"
   {:implementation "Credit gain is automatic"
-   :in-play [:memory 2]
+   :constant-effects [(mu+ 2)]
    :events [{:event :expose
              :async true
              :effect (effect (gain-credits :runner eid 1))

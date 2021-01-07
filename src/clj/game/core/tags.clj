@@ -23,11 +23,15 @@
    (let [old-total (get-in @state [:runner :tag :total])
          new-total (sum-tag-effects state)
          is-tagged? (or (any-effects state :runner :is-tagged)
-                        (pos? new-total))]
-     (swap! state assoc-in [:runner :tag :total] new-total)
-     (swap! state assoc-in [:runner :tag :is-tagged] is-tagged?)
-     (when (not= old-total new-total)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?)))))
+                        (pos? new-total))
+         old-tags (select-keys (get-in @state [:runner :tag]) [:total :is-tagged])
+         new-tags {:total new-total
+                   :is-tagged is-tagged?}
+         changed? (not= old-tags new-tags)]
+     (when changed?
+       (swap! state update-in [:runner :tag] merge new-tags)
+       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+     changed?)))
 
 (defn tag-prevent
   [state side eid n]

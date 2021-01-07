@@ -590,7 +590,7 @@
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
                :req (req (and this-server tagged))
-               :msg (msg "gain " (count (second targets)) " [Credits]")
+               :msg (msg "gain " (* 2 (count (second targets))) " [Credits]")
                :async true
                :effect (effect (hp-gain-credits :corp eid (count (second targets))))}]}))
 
@@ -1127,9 +1127,7 @@
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
-   :constant-effects [{:type :hand-size
-                       :req (req (= :corp value))
-                       :value 2}]})
+   :constant-effects [(corp-hand-size+ 2)]})
 
 (defcard "Ruhr Valley"
   {:constant-effects [{:type :run-additional-cost

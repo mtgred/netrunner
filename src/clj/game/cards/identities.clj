@@ -175,7 +175,12 @@
                  :req (req (and (pos? (count (:hand runner)))
                                 (:runner-phase-12 @state)))
                  :async true
-                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
+                 :msg "install a card facedown"
+                 :effect (effect
+                           (runner-install
+                             (assoc eid :source card :source-type :runner-install)
+                             target
+                             {:facedown true :no-msg true}))}]
     {:implementation "Install restriction not enforced"
      :events [(assoc ability :event :runner-turn-begins)]
      :flags {:runner-phase-12 (req true)}
@@ -308,15 +313,12 @@
              :effect (effect (lose-tags eid 1))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :corp side))
-                       :value (req (:credit corp))}]
+  {:constant-effects [(corp-hand-size+ (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
    :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
 (defcard "Chaos Theory: Wünderkind"
-  {:effect (effect (gain :memory 1))
-   :leave-play (effect (lose :runner :memory 1))})
+  {:constant-effects [(mu+ 1)]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
@@ -353,8 +355,7 @@
               {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
-  {:constant-effects [{:type :hand-size
-                       :value -1}]})
+  {:constant-effects [(hand-size+ -1)]})
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
@@ -612,10 +613,9 @@
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital"))))]
-    {:constant-effects [{:type :link
-                         :req (req (:flipped card))
-                         :value 1}]
+                                                      :subtype "Digital")))
+                         (update-link state))]
+    {:constant-effects [(link+ (req (:flipped card)) 1)]
      :events [{:event :pre-first-turn
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false)))}
@@ -1091,9 +1091,7 @@
                                 :type :recurring}}})
 
 (defcard "NBN: The World is Yours*"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :corp value))
-                       :value 1}]})
+  {:constant-effects [(corp-hand-size+ 1)]})
 
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created

@@ -109,27 +109,3 @@
   (let [base (get-in @state [side prop :base] 0)
         mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
-
-(defn available-mu
-  "Returns the available MU the runner has"
-  [state]
-  (- (base-mod-size state :runner :memory)
-     (get-in @state [:runner :memory :used] 0)))
-
-(defn toast-check-mu
-  "Check runner has not exceeded, toast if they have"
-  [state]
-  (when (neg? (available-mu state))
-    (toast state :runner "You have exceeded your memory units!")))
-
-(defn free-mu
-  "Frees up specified amount of mu (reduces :used)"
-  ([state _ n] (free-mu state n))
-  ([state n]
-   (deduct state :runner [:memory {:used n}])))
-
-(defn use-mu
-  "Increases amount of mu used (increased :used)"
-  ([state _ n] (use-mu state n))
-  ([state n]
-   (gain state :runner :memory {:used n})))

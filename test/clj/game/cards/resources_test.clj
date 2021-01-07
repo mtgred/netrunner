@@ -25,7 +25,7 @@
     (is (= 1 (count-bad-pub state)) "Corp had 1 bad pub; didn't take another")))
 
 (deftest adjusted-chronotype
-  ;; Ensure adjusted chronotype gains only 1 click when 2 clicks are lost
+  ;; Adjusted Chronotype - Ensure adjusted chronotype gains only 1 click when 2 clicks are lost
   (testing "Basic test"
     (do-game
       (new-game {:runner {:deck ["Adjusted Chronotype" (qty "Beach Party" 2)]}})
@@ -85,7 +85,7 @@
       (is (= 3 (:click (get-runner))) "Should have lost 1 click and gained 0 clicks"))))
 
 (deftest aesop-s-pawnshop
-  ;; Tests use cases for Aesop's Pawnshop
+  ;; Aesop's Pawnshop
   (do-game
     (new-game {:runner {:deck ["Aesop's Pawnshop" "Cache"]}})
     (take-credits state :corp)
@@ -116,6 +116,7 @@
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
 (deftest baklan-bochkin
+  ;; Baklan Bochkin
   (testing "Gaining power counters each run."
     (do-game
       (new-game {:corp {:deck ["Vanilla" "Vanilla"]}
@@ -606,7 +607,7 @@
       (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
-  ;; Councilman reverses the rez and prevents re-rez
+  ;; Councilman
   (testing "Rez prevention"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -752,6 +753,7 @@
                            (click-card state :runner cs))))))
 
 (deftest crowdfunding
+  ;; Crowdfunding
   (testing "Credit gain behavior"
     (do-game
       (new-game {:runner {:deck ["Crowdfunding" "Sure Gamble"]}})
@@ -940,31 +942,44 @@
        (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal")))))
 
 (deftest dadiana-chacon
+  ;; Dadiana Chacon
   ;; gain 1 cr at start of turn if you have less than 6,
   ;; take 3 meat and trash if you have 0
   (testing "Can fire mid-trace"
     (do-game
-     (new-game {:runner {:deck ["Dadiana Chacon"
-                                "Corroder"
-                                (qty "Sure Gamble" 3)]}
-                :corp {:deck ["SEA Source"]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "Dadiana Chacon")
-     (play-from-hand state :runner "Corroder") ;to get money
-     (take-credits state :runner)
-     (is (< (:credit (get-runner)) 6)
-         "Chacon can trigger because runner has < 6 creds")
-     (is (changes-credits (get-runner) 1
-                          (take-credits state :corp)))
-     (run-empty-server state :hq)
-     (take-credits state :runner)
-     (play-from-hand state :corp "SEA Source")
-     (click-prompt state :corp "0")
-     (changes-val-macro -3 (count (:hand (get-runner)))
-                        "Spending all their money on trace causes Chacon to resolve"
-                        (click-prompt state :runner (str (:credit (get-runner))))))))
+      (new-game {:runner {:deck ["Dadiana Chacon"
+                                 "Corroder"
+                                 (qty "Sure Gamble" 3)]}
+                 :corp {:deck ["SEA Source"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dadiana Chacon")
+      (play-from-hand state :runner "Corroder") ;to get money
+      (take-credits state :runner)
+      (is (< (:credit (get-runner)) 6)
+          "Chacon can trigger because runner has < 6 creds")
+      (is (changes-credits (get-runner) 1
+                           (take-credits state :corp)))
+      (run-empty-server state :hq)
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (click-prompt state :corp "0")
+      (changes-val-macro -3 (count (:hand (get-runner)))
+                         "Spending all their money on trace causes Chacon to resolve"
+                         (click-prompt state :runner (str (:credit (get-runner)))))))
+  (testing "when playing a card"
+    (do-game
+      (new-game {:runner {:hand ["Dadiana Chacon" (qty "Corroder" 5)]
+                          :credits 2}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dadiana Chacon")
+      (play-from-hand state :runner "Corroder")
+      (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
+      (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to trashes Dadiana Chacon and suffers 3 meat damage."))
+      (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
+      (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder.")))))
 
 (deftest daily-casts
+  ;; Daily Casts
   ;; Play and tick through all turns of daily casts
   (do-game
     (new-game {:runner {:deck [(qty "Daily Casts" 3)]}})
@@ -4371,7 +4386,7 @@
   (testing "Installing Parasite with only 1cr. Issue #491."
     (do-game
       (new-game {:corp {:deck [(qty "Pop-up Window" 3)]}
-                 :runner {:deck ["Street Peddler" (qty "Parasite" 3)]}})
+                 :runner {:deck ["Street Peddler" "Parasite" "Corroder" "Cache"]}})
       (play-from-hand state :corp "Pop-up Window" "HQ")
       (take-credits state :corp 2)
       (starting-hand state :runner ["Street Peddler"])
@@ -4382,7 +4397,7 @@
             pu (get-ice state :hq 0)]
         (rez state :corp pu)
         (card-ability state :runner sp 0)
-        (click-prompt state :runner (first (:hosted sp))) ; choose to install Parasite
+        (click-prompt state :runner "Parasite") ; choose to install Parasite
         (is (= "Parasite" (:title (:card (prompt-map :runner))))
             "Parasite target prompt")
         (click-card state :runner pu)

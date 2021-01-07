@@ -12,7 +12,9 @@
    ["Settings" "/account" 5 #(:user %)]
    ["Stats" "/stats" 6 #(:user %)]
    ["About" "/about" 7 nil]
-   ["Tournaments" "/tournament" 8 #(:tournament-organizer (:user %))]])
+   ["Tournaments" "/tournament" 8 #(:tournament-organizer (:user %))]
+   ["Admin" "/admin" 9 #(:isadmin (:user %))]
+   ["Users" "/users" 10 #(:isadmin (:user %))]])
 
 (defn navbar []
   (r/with-let [active (r/cursor app-state [:active-page])]
@@ -22,6 +24,7 @@
          (when (or (not show-fn?)
                    (show-fn? @app-state))
            [:li {:class (if (= (first @active) route) "active" "")
+                 :id (str (clojure.string/lower-case name) "-nav")
                  :key name
                  :on-click #(.setToken history route)
                  :data-target "#main"

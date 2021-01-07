@@ -1,7 +1,7 @@
 (ns game.core.commands
   (:require
     [game.core.board :refer [all-installed get-zones server->zone]]
-    [game.core.card :refer [agenda? can-be-advanced? corp? get-card has-subtype? ice? in-hand? installed? map->Card rezzed? runner?]]
+    [game.core.card :refer [agenda? can-be-advanced? corp? get-card has-subtype? ice? identity? in-hand? installed? map->Card rezzed? runner?]]
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
@@ -30,8 +30,9 @@
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
 
-(defn- constrain-value [value min-value max-value]
+(defn- constrain-value
   "Constrain value to [min-value max-value]"
+  [value min-value max-value]
   (min max-value (max min-value value)))
 
 (defn- set-adv-counter [state side target value]
@@ -218,14 +219,19 @@
 
 (defn command-replace-id
   [state side args]
-  (let [s-card (server-card (string/join " " args))
-        card (when (and s-card (same-side? (:side s-card) side))
-               (build-card s-card))]
-    (when card
-      (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
-        (disable-identity state side)
-        (swap! state assoc-in [side :identity] new-id)
-        (card-init state side new-id {:resolve-effect true :init-data true})))))
+  (let [card-name (string/join " " args)]
+    (try
+      (let [s-card (server-card card-name)
+            card (when (and s-card (same-side? (:side s-card) side))
+                   (build-card s-card))]
+        (if card
+          (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
+            (disable-identity state side)
+            (swap! state assoc-in [side :identity] new-id)
+            (card-init state side new-id {:resolve-effect true :init-data true}))
+          (toast state side (str card-name " isn't a valid card"))))
+      (catch Exception ex
+        (toast state side (str card-name " isn't a real card"))))))
 
 (defn command-host
   [state side]

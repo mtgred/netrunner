@@ -1137,7 +1137,7 @@
    [:div.namebox
     [:div.username (:username user)]
     (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "none" "unspecified" 
+                        "none" "unspecified"
                         "any" "any"
                         "myodb" "prefer not to say"
                         "blank" ""
@@ -1158,6 +1158,31 @@
 
 (defmulti stats-view #(get-in @% [:identity :side]))
 
+(defn display-memory
+  [memory]
+  (let [me? (= (:side @game-state) :runner)]
+    (fn [memory]
+      (let [{:keys [available used only-for]} memory
+            unused (- available used)]
+        [:div (str unused " of " available " MU unused")
+         (when (neg? unused) [:div.warning "!"])
+         (when me? (controls :memory))]))))
+
+(defn display-special-memory
+  [memory]
+  (when-let [only-for (->> (:only-for memory)
+                           (filter #(pos? (:available (second %))))
+                           (into {})
+                           not-empty)]
+    [:div
+     (str "("
+          (join "), (" (for [[mu-type {:keys [available used]}] only-for
+                             :let [unused (max 0 (- available used))]]
+                         (str unused " of " available
+                              " " (capitalize (name mu-type))
+                              " MU unused")))
+          ")")]))
+
 (defmethod stats-view "Runner" [runner]
   (let [me? (= (:side @game-state) :runner)]
     (fn [runner]
@@ -1171,11 +1196,8 @@
                     (when (pos? run-credit)
                       (str " (" run-credit " for run)")))
           (when me? (controls :credit))]
-         (let [{:keys [base mod used]} memory
-               max-mu (+ base mod)
-               unused (- max-mu used)]
-           [:div (str unused " of " max-mu " MU unused")
-            (when (neg? unused) [:div.warning "!"]) (when me? (controls :memory))])
+         [display-memory memory]
+         [display-special-memory memory]
          [:div (str link " Link Strength")
           (when me? (controls :link))]
          [:div (str agenda-point " Agenda Point"

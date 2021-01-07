@@ -51,7 +51,7 @@
 
   (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands])
 
-  (defn game-public-view
+  (defn- game-public-view
     "Strips private server information from a game map, preparing to send the game to clients."
     [gameid game]
     (game-internal-view (game-for-id gameid) (apply dissoc game lobby-only-keys)))
@@ -61,7 +61,7 @@
     [gameid game]
     (game-internal-view (game-for-id gameid) (select-keys game lobby-only-keys)))
 
-  (defn send-lobby
+  (defn- send-lobby
     "Called by a background thread to periodically send game lobby updates to all clients."
     []
     ;; If public view keys exist, send to all connected
@@ -194,13 +194,13 @@
           (close-lobby game))))))
 
 (defn already-in-game?
-  "Checks if a user with the given database id (:_id) is already in the game"
+  "Checks if a user with the given username is already in the game"
   [{:keys [username] :as user} {:keys [players spectators] :as game}]
   (some #(= username (get-in % [:user :username])) (concat players spectators)))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
-  [{:keys [options _id username] :as user} client-id gameid]
+  [{:keys [username] :as user} client-id gameid]
   (let [{players :players :as game} (game-for-id gameid)
         existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
     (when (or (< existing-players-count 2)
@@ -210,8 +210,7 @@
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
                         :ws-id   client-id
-                        :side    new-side
-                        :options options}]
+                        :side    new-side}]
         (refresh-lobby-assoc-in gameid [:players] [remaining-player new-player])
         (swap! client-gameids assoc client-id gameid)
         new-player))))
@@ -222,7 +221,7 @@
   (when-let [{:keys [started spectators] :as game} (game-for-id gameid)]
     (refresh-lobby-update-in gameid [:spectator-count] inc)
     (refresh-lobby-update-in gameid [:spectators]
-           #(conj % {:user  user
+           #(conj % {:user user
                      :ws-id client-id}))
     (swap! client-gameids assoc client-id gameid)))
 
@@ -255,7 +254,7 @@
 (defn handle-lobby-create
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [title format allow-spectator spectatorhands password room side options]} :?data :as event}]
+    {:keys [title format allow-spectator spectatorhands password room side]} :?data :as event}]
   (let [gameid (java.util.UUID/randomUUID)
         game {
               :date            (java.util.Date.)
@@ -269,8 +268,7 @@
               :format          format
               :players         [{:user    user
                                  :ws-id   client-id
-                                 :side    side
-                                 :options options}]
+                                 :side    side}]
               :spectators      []
               :spectator-count  0
               :messages        [{:user "__system__"
@@ -280,10 +278,11 @@
     (swap! client-gameids assoc client-id gameid)
     (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})))
 
-(defn lobby-say
+(defn- lobby-say
   [gameid {:keys [user text]}]
-  (refresh-lobby-update-in gameid [:messages] #(conj % {:user user
-                                                        :text (trim text)})))
+  (let [user-name (if (map? user) (select-keys user [:username :emailhash]) user)]
+    (refresh-lobby-update-in gameid [:messages] #(conj % {:user user-name
+                                                          :text (trim text)}))))
 
 (defn handle-lobby-leave
   [{{{:keys [username]} :user} :ring-req

@@ -89,8 +89,7 @@
               (assoc am :event :agenda-stolen)]}))
 
 (defcard "Access to Globalsec"
-  {:constant-effects [{:type :link
-                       :value 1}]})
+  {:constant-effects [(link+ 1)]})
 
 (defcard "Activist Support"
   {:events [{:event :corp-turn-begins
@@ -297,9 +296,7 @@
                                  card nil))}]}))
 
 (defcard "Beach Party"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 5}]
+  {:constant-effects [(runner-hand-size+ 5)]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
              :effect (effect (lose :click 1))}]})
@@ -389,11 +386,8 @@
                                 (gain-credits eid 2))}]})
 
 (defcard "Borrowed Satellite"
-  {:constant-effects [{:type :link
-                       :value 1}
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]})
+  {:constant-effects [(link+ 1)
+                      (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
   {:prompt "How many power counters?"
@@ -710,8 +704,7 @@
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (defcard "Cybertrooper Talut"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :events [{:event :runner-install
              :silent (req true)
              :req (req (and (has-subtype? target "Icebreaker")
@@ -883,14 +876,8 @@
      ;; Handle Dr. Lovegood / Malia
      :disable {:effect (req (doseq [hosted (:hosted card)]
                               (disable-card state side hosted)))}
-     :reactivate {:effect (req (doseq [hosted (:hosted card)
-                                       :let [c (dissoc hosted :disabled)
-                                             {:keys [effect events]} (card-def c)]]
-                                 ;; Manually enable card to trigger `:effect`, similar to `enable-identity`
-                                 (update! state side c)
-                                 (when effect
-                                   (effect state side (make-eid state) c nil))
-                                 (register-events state side c)))}}))
+     :reactivate {:effect (req (doseq [hosted (:hosted card)]
+                                 (enable-card state side hosted)))}}))
 
 (defcard "Donut Taganes"
   {:constant-effects [{:type :play-cost
@@ -1459,9 +1446,7 @@
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
-     :constant-effects [{:type :hand-size
-                         :req (req (= :corp side))
-                         :value -1}]
+     :constant-effects [(corp-hand-size+ -1)]
      :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
@@ -1536,8 +1521,7 @@
              :effect (effect (trash-cards eid (filter program? (:hosted card))))}]})
 
 (defcard "Maxwell James"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
                 :prompt "Choose a piece of ICE protecting a remote server"
                 :choices {:card #(and (ice? %)
@@ -2050,9 +2034,7 @@
              :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})
 
 (defcard "Public Sympathy"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 2}]})
+  {:constant-effects [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
@@ -2199,9 +2181,7 @@
                                 (trash-prevent :hardware 1))}]})
 
 (defcard "Safety First"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value -2}]
+  {:constant-effects [(runner-hand-size+ -2)]
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
@@ -2486,8 +2466,7 @@
                             (gain-credits state side eid credits)))}]})
 
 (defcard "The Archivist"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
              :async true
@@ -2606,8 +2585,7 @@
                          card nil))}]}))
 
 (defcard "The Helpful AI"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
@@ -2740,9 +2718,7 @@
                  (ttw-bounce "HQ" :hq)]}))
 
 (defcard "Theophilius Bagbiter"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value (req (:credit runner))}]
+  {:constant-effects [(runner-hand-size+ (req (:credit runner)))]
    :async true
    :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
                 (lose-credits state :runner eid :all))

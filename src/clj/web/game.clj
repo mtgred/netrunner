@@ -73,7 +73,7 @@
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
-  (when-let [{:keys [players gameid started messages] :as game} (lobby/game-for-client client-id)]
+  (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id game)
                (not started))
       (let [strip-deck (fn [player] (-> player
@@ -147,7 +147,7 @@
           message (if mute-state "muted" "unmuted")]
       (when (lobby/player? client-id game)
         (lobby/refresh-lobby-assoc-in gameid [:mute-spectators] mute-state)
-        (main/handle-notification state (str username " " message " specatators."))
+        (main/handle-notification state (str username " " message " spectators."))
         (swap-and-send-diffs! game)))))
 
 (defn handle-game-action
@@ -179,7 +179,7 @@
   "Handles a watch command when a game has started."
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [gameid password options]}   :?data
+    {:keys [gameid password]}           :?data
     reply-fn                            :?reply-fn}]
   (if-let [{game-password :password state :state started :started :as game}
            (lobby/game-for-id gameid)]

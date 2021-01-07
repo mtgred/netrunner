@@ -2705,8 +2705,8 @@
       (play-from-hand state :runner "Patchwork")
       (play-from-hand state :runner "Cyberfeeder")
       (click-card state :runner (get-hardware state 0))
-      (click-card state :runner (find-card "Cyberfeeder" (:hand (get-runner))))
-      (is (= 2 (count (:hand (get-runner)))) "Cyberfeeder is still in hand")
+      (click-card state :runner "Cyberfeeder")
+      (is (find-card "Cyberfeeder" (:play-area (get-runner))) "Cyberfeeder is on the table")
       (is (not-empty (:prompt (get-runner))) "Prompt still open")))
   (testing "Used when runner credit pool is under printed cost. Issue #4563"
     (do-game

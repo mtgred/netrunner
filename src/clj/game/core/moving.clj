@@ -3,7 +3,7 @@
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [card-index corp? facedown? fake-identity? get-card get-zone
-                            ice? in-play-area? installed? resource? rezzed? runner?]]
+                            has-subtype? ice? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
@@ -11,11 +11,11 @@
     [game.core.finding :refer [find-cid get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
-    [game.core.ice :refer [get-current-ice set-current-ice]]
+    [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg system-say]]
-    [game.core.servers :refer [is-remote?]]
+    [game.core.servers :refer [is-remote? type->rig-zone]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-winner]]
     [game.macros :refer [wait-for]]
@@ -127,6 +127,25 @@
                      moved-card)]
     moved-card))
 
+(defn- update-effects
+  [state {:keys [cid] :as card} moved-card]
+  (if (= cid (:cid moved-card))
+    ;; Moving the card hasn't changed the cid
+    (let [new-effects (reduce
+                        (fn [all-effects current-effect]
+                          (if (= cid (:cid (:card current-effect)))
+                            (conj all-effects (assoc current-effect :card moved-card))
+                            (conj all-effects current-effect)))
+                        []
+                        (:effects @state))]
+      (swap! state assoc :effects (into [] new-effects)))
+    ;; Moving the card has changed the cid
+    (swap! state assoc :effects
+           (->> (:effects @state)
+                (remove #(and (same-card? card (:card %))
+                              (= :constant (:duration %))))
+                (into [])))))
+
 (defn update-installed-card-indices
   [state side server]
   (when (seq (get-in @state (cons side server)))
@@ -154,22 +173,7 @@
            (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
-           (if (= cid (:cid moved-card))
-             ;; Moving the card hasn't changed the cid
-             (let [new-effects (reduce
-                                 (fn [all-effects current-effect]
-                                   (if (= cid (:cid (:card current-effect)))
-                                     (conj all-effects (assoc current-effect :card moved-card))
-                                     (conj all-effects current-effect)))
-                                 []
-                                 (:effects @state))]
-               (swap! state assoc :effects (into [] new-effects)))
-             ;; Moving the card has changed the cid
-             (swap! state assoc :effects
-                    (->> (:effects @state)
-                         (remove #(and (= :constant (:duration %))
-                                       (same-card? card (:card %))))
-                         (into []))))
+           (update-effects state card moved-card)
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
                                       front 0
@@ -531,3 +535,23 @@
      (update-all-agenda-points state side)
      (check-winner state side)
      (trigger-event-sync state side eid (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) card))))
+
+(defn flip-facedown
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"
+  [state side {:keys [host] :as card}]
+  (if host
+    (let [card (deactivate state side card true)
+          card (assoc-in card [:facedown] true)]
+      (update! state side card))
+    (move state side card [:rig :facedown])))
+
+(defn flip-faceup
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
+  Wires events without calling effect/init-data"
+  [state side {:keys [host] :as card}]
+  (let [card (if host
+               (dissoc card :facedown)
+               (move state side card (type->rig-zone (:type card))))]
+   (card-init state side card {:resolve-effect false :init-data false})
+   (when (has-subtype? card "Icebreaker")
+     (update-breaker-strength state side card))))

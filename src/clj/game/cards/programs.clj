@@ -152,7 +152,7 @@
 (defn- mu-based-strength
   "Strength depends on available memory units
   (Greek/Philosopher suite: Adept, Sage, Savant)"
-  [card-name abilities]
+  [abilities]
   {:abilities abilities
    :strength-bonus (req (available-mu state))})
 
@@ -278,28 +278,9 @@
   "Reduce MU cost to 0 with 2+ link
   (Cloud subtype: Creeper, ZU.13 Key Master, B&E, GlobalSec)"
   [cdef]
-  (assoc cdef
-         :effect (req (let [link (get-link state)]
-                        (when (<= 2 link)
-                          (free-mu state (:memoryunits card))))
-                      (add-watch state (keyword (str "cloud" (:cid card)))
-                                 (fn [k ref old new]
-                                   (let [old-link (get-in old [:runner :link] 0)
-                                         new-link (get-in new [:runner :link] 0)
-                                         cloud-turned-on (and (< old-link 2)
-                                                              (>= new-link 2))
-                                         cloud-turned-off (and (>= old-link 2)
-                                                               (< new-link 2))]
-                                     (cond
-                                       cloud-turned-on
-                                       (free-mu state (:memoryunits card))
-                                       cloud-turned-off
-                                       (use-mu state (:memoryunits card)))))))
-         :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                          (let [link (get-link state)]
-                            (when (>= link 2)
-                              ;; To counteract the normal freeing of MU on program `:leave-play`
-                              (use-mu state (:memoryunits card)))))))
+  (update cdef :constant-effects conj {:type :used-mu
+                                       :req (req (<= 2 (get-link state)))
+                                       :value (req (- (:memoryunits card)))}))
 
 (defn- break-and-enter
   "No MU with 2+ link, strength based on installed Icebreakers, trash to break 3 subs
@@ -323,8 +304,7 @@
                    (strength-pump 2 2)))
 
 (defcard "Adept"
-  (mu-based-strength "adept"
-                     [(break-multiple-types
+  (mu-based-strength [(break-multiple-types
                         1 "Barrier"
                         1 "Sentry")]))
 
@@ -478,8 +458,7 @@
                    :choices {:card #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
-                   :effect (req (when (host state side card target)
-                                  (gain :memory (:memoryunits target))))}
+                   :effect (effect (host card target))}
         gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
                          (update! state :runner (assoc card :abilities (concat [host-click host-free] new-abis)))))]
     {:abilities [host-click host-free]
@@ -975,12 +954,13 @@
                                (when (-> target :cost pos?)
                                  ", lowering its cost by 1 [Credit]")))
                 :async true
-                :effect (req (free-mu state (:memoryunits target))
-                             (let [c (if (-> target :cost pos?) 1 0)]
+                :effect (req (let [c (if (-> target :cost pos?) 1 0)]
                                (wait-for (gain-credits state side c)
-                                         (update-breaker-strength state side target)
                                          (host state side card (get-card state target))
+                                         (unregister-effects-for-card state side target #(= :used-mu (:type %)))
+                                         (update-mu state)
                                          (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target)))
+                                         (update-breaker-strength state side target)
                                          (effect-completed state side eid))))}
                {:label "Host an installed program on Dhegdheer"
                 :req (req (nil? (get-in card [:special :dheg-prog])))
@@ -990,14 +970,11 @@
                 :msg (msg (str "host " (:title target)
                                (when (-> target :cost pos?)
                                  ", lowering its cost by 1 [Credit]")))
-                :effect (effect (free-mu (:memoryunits target))
+                :effect (effect (host card (get-card state target))
+                                (unregister-effects-for-card state side target #(= :used-mu (:type %)))
+                                (update-mu state)
                                 (update-breaker-strength target)
-                                (host card (get-card state target))
-                                (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]
-   :events [{:event :card-moved
-             :req (req (= (:cid target) (get-in (get-card state card) [:special :dheg-prog])))
-             :effect (effect (update! (dissoc-in card [:special :dheg-prog]))
-                             (use-mu (:memoryunits target)))}]})
+                                (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]})
 
 (defcard "Disrupter"
   {:events
@@ -1037,22 +1014,15 @@
                                 (shuffle! :deck)
                                 (move target :hand))}
                {:label "Install a non-Icebreaker program on Djinn"
+                :cost [:click 1]
+                :prompt "Choose a non-Icebreaker program in your grip"
+                :choices {:req (req (and (program? target)
+                                         (runner-can-install? state side target false)
+                                         (not (has-subtype? target "Icebreaker"))
+                                         (in-hand? target)))}
+                :msg (msg "install and host " (:title target))
                 :async true
-                :effect (effect (continue-ability
-                                  {:cost [:click 1]
-                                   :prompt "Choose a non-Icebreaker program in your grip"
-                                   :choices {:card #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (not (has-subtype? % "Icebreaker"))
-                                                         (in-hand? %))}
-                                   :msg (msg "install and host " (:title target))
-                                   :async true
-                                   :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
-                                                          (update! state side (assoc (get-card state card)
-                                                                                     :hosted-programs
-                                                                                     (cons (:cid target) (:hosted-programs card))))
-                                                          (effect-completed state side eid)))}
-                                  card nil))}
+                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed non-Icebreaker program on Djinn"
                 :prompt "Choose an installed non-Icebreaker program"
                 :choices {:card #(and (program? %)
@@ -1060,14 +1030,8 @@
                                       (installed? %))}
                 :msg (msg "host " (:title target))
                 :effect (effect (host card target)
-                                (free-mu (:memoryunits target))
-                                (update! (assoc (get-card state card)
-                                                :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
-   :events [{:event :card-moved
-             :req (req (some #{(:cid target)} (:hosted-programs card)))
-             :effect (effect (update! (assoc card
-                                             :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                             (use-mu (:memoryunits target)))}]})
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu))}]})
 
 (defcard "Eater"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
@@ -1387,7 +1351,8 @@
   {:flags {:runner-phase-12 (req true)}
    :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                 :req (req (:runner-phase-12 @state))
-                :effect (effect (move card :rfg) (gain :click 3))
+                :effect (effect (move card :rfg)
+                                (gain :click 3))
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
@@ -1536,43 +1501,22 @@
 
 (defcard "Leprechaun"
   {:abilities [{:label "Install a program on Leprechaun"
-                :req (req (< (count (get-in card [:special :hosted-programs])) 2))
+                :cost [:click 1]
+                :prompt "Choose a program in your Grip to install on Leprechaun"
+                :choices {:req (req (and (program? target)
+                                         (runner-can-install? state side target false)
+                                         (in-hand? target)))}
+                :msg (msg "host " (:title target))
                 :async true
-                :effect (effect (continue-ability
-                                  {:cost [:click 1]
-                                   :prompt "Choose a program in your Grip to install on Leprechaun"
-                                   :choices {:card #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (in-hand? %))}
-                                   :msg (msg "host " (:title target))
-                                   :async true
-                                   :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
-                                                          (update! state side (assoc-in (get-card state card)
-                                                                                        [:special :hosted-programs]
-                                                                                        (cons (:cid target)
-                                                                                              (get-in card [:special :hosted-programs]))))
-                                                          (effect-completed state side eid)))}
-                                  card nil))}
+                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed program on Leprechaun"
-                :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                 :prompt "Choose an installed program to host on Leprechaun"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target))
-                :effect (effect (free-mu (:memoryunits target))
-                                (update-breaker-strength target)
-                                (host card (get-card state target))
-                                (update! (assoc-in (get-card state card)
-                                                   [:special :hosted-programs]
-                                                   (cons (:cid target)
-                                                         (get-in card [:special :hosted-programs])))))}]
-   :events [{:event :card-moved
-             :req (req (some #{(:cid target)} (get-in card [:special :hosted-programs])))
-             :effect (effect (update! (assoc-in card
-                                                [:special :hosted-programs]
-                                                (remove #(= (:cid target) %)
-                                                        (get-in card [:special :hosted-programs]))))
-                             (use-mu (:memoryunits target)))}]})
+                :effect (effect (host card target)
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu))}]})
 
 (defcard "Leviathan"
   (auto-icebreaker {:abilities [(break-sub 3 3 "Code Gate")
@@ -2027,21 +1971,14 @@
 (defcard "Progenitor"
   {:abilities [{:label "Install a virus program on Progenitor"
                 :req (req (empty? (:hosted card)))
+                :cost [:click 1]
+                :prompt "Choose a Virus program to install on Progenitor"
+                :choices {:card #(and (program? %)
+                                      (has-subtype? % "Virus")
+                                      (in-hand? %))}
+                :msg (msg "host " (:title target))
                 :async true
-                :effect (effect (continue-ability
-                                  {:cost [:click 1]
-                                   :prompt "Choose a Virus program to install on Progenitor"
-                                   :choices {:card #(and (program? %)
-                                                         (has-subtype? % "Virus")
-                                                         (in-hand? %))}
-                                   :msg (msg "host " (:title target))
-                                   :async true
-                                   :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
-                                                          (update! state side (assoc (get-card state card)
-                                                                                     :hosted-programs
-                                                                                     (cons (:cid target) (:hosted-programs card))))
-                                                          (effect-completed state side eid)))}
-                                  card nil))}
+                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed virus on Progenitor"
                 :req (req (empty? (:hosted card)))
                 :prompt "Choose an installed virus program to host on Progenitor"
@@ -2050,20 +1987,15 @@
                                       (installed? %))}
                 :msg (msg "host " (:title target))
                 :effect (effect (host card target)
-                                (free-mu (:memoryunits target))
-                                (update! (assoc (get-card state card)
-                                                :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu))}]
    :events [{:event :pre-purge
              :effect (req (when-let [c (first (:hosted card))]
                             (update! state side (assoc-in card [:special :numpurged] (get-counters c :virus)))))}
             {:event :purge
              :req (req (pos? (get-in card [:special :numpurged] 0)))
              :effect (req (when-let [c (first (:hosted card))]
-                            (add-counter state side c :virus 1)))}
-            {:event :card-moved
-             :req (req (some #{(:cid target)} (:hosted-programs card)))
-             :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                             (use-mu (:memoryunits target)))}]})
+                            (add-counter state side c :virus 1)))}]})
 
 (defcard "Puffer"
   (auto-icebreaker {:implementation "Memory use must be manually tracked by the Runner"
@@ -2187,8 +2119,7 @@
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
 (defcard "Sage"
-  (mu-based-strength "sage"
-                     [(break-multiple-types
+  (mu-based-strength [(break-multiple-types
                         1 "Barrier"
                         1 "Code Gate")]))
 
@@ -2203,8 +2134,7 @@
                     (strength-pump 2 2)))
 
 (defcard "Savant"
-  (mu-based-strength "savant"
-                     [(break-multiple-types
+  (mu-based-strength [(break-multiple-types
                         2 "Code Gate"
                         1 "Sentry")]))
 
@@ -2280,7 +2210,7 @@
                 :effect (effect (register-events
                                   card
                                   [{:event :pre-successful-run
-                                    :duration :run-ends
+                                    :duration :end-of-run
                                     :unregister-once-resolved true
                                     :interactive (req true)
                                     :req (req (= :archives (-> run :server first)))

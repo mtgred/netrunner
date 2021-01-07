@@ -344,9 +344,7 @@
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
 
 (defcard "Chairman Hiro"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value -2}]
+  {:constant-effects [(runner-hand-size+ -2)]
    :on-trash executive-trash-effect})
 
 (defcard "Chief Slee"
@@ -528,9 +526,7 @@
      :abilities [ability]}))
 
 (defcard "Cybernetics Court"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :corp side))
-                       :value 4}]})
+  {:constant-effects [(corp-hand-size+ 4)]})
 
 (defcard "Daily Business Show"
   {:derezzed-events [corp-rez-toast]
@@ -1208,9 +1204,7 @@
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
-    {:constant-effects [{:type :hand-size
-                         :req (req (= :runner side))
-                         :value 1}]
+    {:constant-effects [(runner-hand-size+ 1)]
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
@@ -1527,39 +1521,16 @@
                               (continue-ability state side (pdhelper agendas 0) card nil)))}]}))
 
 (defcard "Prāna Condenser"
-  {:events [{:event :pre-resolve-damage
-             :async true
-             :req (req (and (not (get-in card [:special :prana-disabled]))
-                            (= target :net)
-                            (= :corp (second targets))
-                            (pos? (last targets))))
-             :effect (req (let [amount (last targets)
-                                damagecard (second targets)]
-                            (swap! state assoc-in [:damage :damage-replace] true)
-                            (continue-ability
-                              state side
-                              {:optional
-                               {:waiting-prompt "Corp to use Prāna Condenser"
-                                :prompt (str "Prevent 1 net damage to add power token to " (:title card) "?")
-                                :player :corp
-                                :yes-ability
-                                {:async true
-                                 :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
-                                 :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
-                                              (add-counter state side (get-card state card) :power 1)
-                                              (wait-for
-                                                (gain-credits state :corp 3)
-                                                ;temporarily disable prana to not trigger on X-1 net damage
-                                                (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true))
-                                                (wait-for
-                                                  (damage state side :net (dec amount) {:card damagecard})
-                                                  (swap! state assoc-in [:damage :damage-replace] true)
-                                                  (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false))
-                                                  (effect-completed state side eid))))}
-                                :no-ability
-                                {:effect (req (swap! state update-in [:damage] dissoc :damage-replace))}}}
-                              card nil)))}]
-   :abilities [{:msg (msg "deal " (get-counters card :power) " net damage")
+  {:interactions {:prevent [{:type #{:net}
+                             :req (req (= :corp (:side target)))}]}
+   :abilities [{:label "Prevent 1 net damage to add power token to Prāna Condenser"
+                :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
+                :async true
+                :req (req true)
+                :effect (req (add-counter state side card :power 1)
+                             (gain-credits state :corp eid 3)
+                             (damage-prevent state :corp :net 1))}
+               {:msg (msg "deal " (get-counters card :power) " net damage")
                 :label "deal net damage"
                 :cost [[:click 2] [:trash]]
                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]})

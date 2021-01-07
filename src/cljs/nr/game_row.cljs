@@ -18,8 +18,7 @@
                       "watch" :lobby/watch
                       "rejoin" :netrunner/rejoin)
                     {:gameid gameid
-                     :password password
-                     :options (:options @app-state)}]
+                     :password password}]
                    8000
                    #(if (sente/cb-success? %)
                       (case %

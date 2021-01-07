@@ -3375,17 +3375,17 @@
         (play-from-hand state :corp "Neural EMP")
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (click-prompt state :corp "Yes")
+          (card-ability state :corp (refresh pc) 0)
           (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power token")
           (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
           (play-from-hand state :corp "Neural EMP")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (click-prompt state :corp "Yes")
+          (card-ability state :corp pc 0)
           (is (= 2 (get-counters (refresh pc) :power)) "Added another power token")
           (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
         (take-credits state :runner)
-        (card-ability state :corp (refresh pc) 0)
+        (card-ability state :corp  pc 1)
         (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
   (testing "Refuse to prevent damage"
     (do-game
@@ -3400,29 +3400,15 @@
         (play-from-hand state :corp "Neural EMP")
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (click-prompt state :corp "No")
+          (click-prompt state :corp "Done")
           (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
           (is (= 0 (get-counters (refresh pc) :power)) "No power token added")
           (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
-  (testing "Only prevents 1 net damage"
-    (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" "Snare!"]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (let [pc (get-content state :remote1 0)]
-        (rez state :corp pc)
-        (take-credits state :corp)
-        (run-empty-server state :hq)
-        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (click-prompt state :corp "Yes") ;Snare
-        (click-prompt state :corp "Yes") ;Prana
-        (is (= 3 (count (:hand (get-runner)))) "2 net damage dealt")
-        (is (= 1 (get-counters (refresh pc) :power)) "Only 1 power token added"))))
   (testing "Runner preventing damage on their turn"
     (do-game
       (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
                  :runner {:hand [(qty "Caldera" 5)]
-                          :credits 6}})
+                          :credits 9}})
       (play-from-hand state :corp "Prāna Condenser" "New remote")
       (let [pc (get-content state :remote1 0)]
         (rez state :corp pc)
@@ -3431,7 +3417,6 @@
         (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards in grip")
         (run-empty-server state :hq)
         (card-ability state :runner (get-resource state 0) 0)
-        (click-prompt state :runner "No action")
         (is (= 4 (count (:hand (get-runner)))) "Runner took no damage")
         (is (empty? (:prompt (get-corp))) "No Prana prompt for Corp"))))
   (testing "Corp gets Prana prompt first"
@@ -3447,40 +3432,40 @@
         (run-empty-server state :archives)
         (take-credits state :runner)
         (play-from-hand state :corp "Neural EMP")
-        ; TODO: Implement interrupts to make these prompts work correctly
-        ; (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
-        ; (is (empty? (:prompt (get-runner))) "No Caldera prompt for Runner")
-        )))
-  (testing "Runner cards don't trigger Prana"
-    (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
-                 :runner {:deck [(qty "Sure Gamble" 5)]
-                          :hand ["Zer0" "Sure Gamble"]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (let [pc (get-content state :remote1 0)]
-        (rez state :corp pc)
-        (take-credits state :corp)
-        (play-from-hand state :runner "Zer0")
-        (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc from Zer0"))))
-  (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
-    (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
-                 :runner {:deck [(qty "Sure Gamble" 5)]
-                          :hand [(qty "PAD Tap" 3)]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (play-from-hand state :corp "Bio-Ethics Association" "New remote")
-      (let [pc (get-content state :remote1 0)
-            bio (get-content state :remote2 0)]
-        (rez state :corp pc)
-        (rez state :corp bio)
-        (take-credits state :corp)
-        (play-from-hand state :runner "PAD Tap")
-        (play-from-hand state :runner "PAD Tap")
-        (play-from-hand state :runner "PAD Tap")
-        (take-credits state :runner)
-        (click-prompt state :corp "Yes")
-        (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana")))))
+        (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
+        (is (= :waiting (prompt-type :runner))))))
+    (testing "Runner cards and costs don't trigger Prana"
+      (do-game
+        (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
+                   :runner {:deck [(qty "Sure Gamble" 5)]
+                            :hand ["Zer0" "Sure Gamble" "Sure Gamble"]}})
+        (play-from-hand state :corp "Prāna Condenser" "New remote")
+        (let [pc (get-content state :remote1 0)]
+          (rez state :corp pc)
+          (take-credits state :corp)
+          (play-from-hand state :runner "Zer0")
+          (card-ability state :runner (get-hardware state 0) 0)
+          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on 'unpreventable' net damage")
+          (damage state :runner :net 1)
+          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on net damage of the runner"))))
+    (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
+      (do-game
+        (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
+                   :runner {:deck [(qty "Sure Gamble" 5)]
+                            :hand [(qty "PAD Tap" 3)]}})
+        (play-from-hand state :corp "Prāna Condenser" "New remote")
+        (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+        (let [pc (get-content state :remote1 0)
+              bio (get-content state :remote2 0)]
+          (rez state :corp pc)
+          (rez state :corp bio)
+          (take-credits state :corp)
+          (play-from-hand state :runner "PAD Tap")
+          (play-from-hand state :runner "PAD Tap")
+          (play-from-hand state :runner "PAD Tap")
+          (take-credits state :runner)
+          (card-ability state :corp (refresh pc) 0)
+          (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana")))))
 
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish

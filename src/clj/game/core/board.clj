@@ -1,6 +1,6 @@
 (ns game.core.board
   (:require [clojure.string :as string]
-            [game.core.card :refer [agenda? asset? condition-counter? corp? facedown? get-counters installed? is-type? rezzed? runner?]]
+            [game.core.card :refer [agenda? asset? condition-counter? corp? event? facedown? get-counters installed? is-type? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [is-remote? zones->sorted-names]]
@@ -104,7 +104,7 @@
     (concat [(get-in @state [side :identity])]
       (all-active-installed state side)
       (get-in @state [side :current])
-      (get-in @state [side :play-area])
+      (filter #(or (event? %) (operation? %)) (get-in @state [side :play-area]))
       (when (= side :corp)
         (get-in @state [:corp :scored])))))
 

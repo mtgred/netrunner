@@ -29,6 +29,7 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.memory]
     [game.core.moving]
     [game.core.optional]
     [game.core.payment]
@@ -274,10 +275,13 @@
    any-effects
    gather-effects
    get-effects
+   get-effect-maps
+   get-effect-value
    register-constant-effects
    register-floating-effect
    sum-effects
    unregister-constant-effects
+   unregister-effects-for-card
    unregister-floating-effects]
 
   [game.core.eid
@@ -400,21 +404,20 @@
    zone-locked?]
 
   [game.core.gaining
-   available-mu
    base-mod-size
    deduct
-   free-mu
    gain
    gain-credits
    lose
    lose-credits
    safe-inc-n
-   sub->0
-   toast-check-mu
-   use-mu]
+   sub->0]
 
   [game.core.hand-size
+   corp-hand-size+
    hand-size
+   hand-size+
+   runner-hand-size+
    sum-hand-size-effects
    update-hand-size]
 
@@ -479,9 +482,7 @@
    disable-card
    disable-identity
    enable-card
-   enable-identity
-   flip-facedown
-   flip-faceup]
+   enable-identity]
 
   [game.core.initializing
    ability-init
@@ -503,11 +504,21 @@
 
   [game.core.link
    get-link
+   link+
    update-link]
+
+  [game.core.memory
+   available-mu
+   caissa-mu+
+   mu+
+   update-mu
+   virus-mu+]
 
   [game.core.moving
    as-agenda
    discard-from-hand
+   flip-facedown
+   flip-faceup
    forfeit
    mill
    move
