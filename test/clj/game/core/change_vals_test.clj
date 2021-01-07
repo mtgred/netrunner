@@ -60,4 +60,14 @@
         (change state :runner :hand-size -1)
         (is (= 5 (hand-size :runner)) "Runner has lost 1 hand size")
         (change state :runner :hand-size -6)
-        (is (neg? (hand-size :runner)) "Runner has negative hand size")))))
+        (is (neg? (hand-size :runner)) "Runner has negative hand size")))
+    (testing "Memory"
+      (do-game
+        (new-game)
+        (is (= 4 (core/available-mu state :runner)) "Runner starts with 4 MU")
+        (change state :runner :memory 1)
+        (is (= 5 (core/available-mu state :runner)) "Runner has gained 1 memory")
+        (change state :runner :memory -1)
+        (is (= 4 (core/available-mu state :runner)) "Runner has lost 1 memory")
+        (change state :runner :memory -6)
+        (is (neg? (core/available-mu state :runner)) "Runner has negative memory")))))

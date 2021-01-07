@@ -91,9 +91,6 @@
 (defrecord Tags
   [base total is-tagged])
 
-(defrecord Memory
-  [base mod used])
-
 (defn new-runner
   [user r-identity options deck deck-id r-quote]
   (map->Runner
@@ -111,7 +108,10 @@
      :credit 5 :run-credit 0
      :link 0
      :tag (map->Tags {:base 0 :total 0 :is-tagged false})
-     :memory (map->Memory {:base 4 :mod 0 :used 0})
+     :memory {:base 4
+              :available 0
+              :used 0
+              :only-for {}}
      :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
      :rd-access 0

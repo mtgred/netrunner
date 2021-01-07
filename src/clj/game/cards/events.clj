@@ -1568,9 +1568,7 @@
 
 (defcard "Itinerant Protesters"
   {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-   :constant-effects [{:type :hand-size
-                       :req (req (= :corp side))
-                       :value (req (- (count-bad-pub state)))}]})
+   :constant-effects [(corp-hand-size+ (req (- (count-bad-pub state))))]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]

@@ -27,15 +27,22 @@
   "Recalculates the advancement requirement for the given agenda."
   ([state agenda] (update-advancement-requirement state nil agenda))
   ([state _ agenda]
-   (let [new-req (advancement-requirement state agenda)
-         agenda (assoc agenda :current-advancement-requirement new-req)]
-     (update! state :corp agenda))))
+   (let [prev-req (:current-advancement-requirement agenda)
+         new-req (advancement-requirement state agenda)
+         changed? (not= prev-req new-req)]
+     (when changed?
+       (update! state :corp (assoc agenda :current-advancement-requirement new-req)))
+     changed?)))
 
 (defn update-all-advancement-requirements
   ([state] (update-all-advancement-requirements state nil))
   ([state _]
-   (doseq [agenda (filter agenda? (get-all-cards state))]
-     (update-advancement-requirement state agenda))))
+   (reduce
+     (fn [changed? agenda]
+       (or (update-advancement-requirement state agenda)
+           changed?))
+     false
+     (filter agenda? (get-all-cards state)))))
 
 (defn get-agenda-points
   [card]
@@ -61,25 +68,40 @@
 
 (defn- update-agenda-points-card
   [state side card]
-  (update! state side (assoc card :current-points (agenda-points state side card))))
+  (let [prev-points (:current-points card)
+        new-points (agenda-points state side card)
+        changed? (not= prev-points new-points)]
+    (when changed?
+      (update! state side (assoc card :current-points new-points)))
+    changed?))
 
 (defn- sum-side-agenda-points
   [state side]
-  (let [user-adjusted-points (sum-effects state side side :user-agenda-points nil)
+  (let [current-points (or (get-in @state [side :agenda-point]) 0)
+        user-adjusted-points (sum-effects state side side :user-agenda-points nil)
         scored-points (->> (get-in @state [side :scored])
                            (keep :current-points)
                            (reduce + 0))
-        total-points (+ user-adjusted-points scored-points)]
-    (swap! state assoc-in [side :agenda-point] total-points)))
+        total-points (+ user-adjusted-points scored-points)
+        changed? (not= current-points total-points)]
+    (when changed?
+      (swap! state assoc-in [side :agenda-point] total-points))
+    changed?))
 
 (defn- update-side-agenda-points
   [state side]
-  (doseq [card (get-in @state [side :scored])]
-    (update-agenda-points-card state side card))
-  (sum-side-agenda-points state side))
+  (let [card-points-changed?
+        (reduce (fn [changed? agenda]
+                  (or (update-agenda-points-card state side agenda)
+                      changed?))
+                false
+                (get-in @state [side :scored]))]
+    (or (sum-side-agenda-points state side)
+        card-points-changed?)))
 
 (defn update-all-agenda-points
   ([state] (update-all-agenda-points state nil))
   ([state _]
-   (doseq [side [:corp :runner]]
-     (update-side-agenda-points state side))))
+   (let [corp-changed? (update-side-agenda-points state :corp)
+         runner-changed? (update-side-agenda-points state :runner)]
+     (or corp-changed? runner-changed?))))
