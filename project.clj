@@ -24,7 +24,6 @@
                  [crypto-password "0.2.0"]
                  [digest "1.4.6"]
                  [http-kit "2.4.0"]
-                 [jwarwick/trello "0.3.3"]
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
@@ -107,7 +106,6 @@
                             "src/cljs/externs/$.js"
                             "src/cljs/externs/howler.js"
                             "src/cljs/externs/io.js"
-                            "src/cljs/externs/marked.js"
                             "src/cljs/externs/moment.js"
                             "src/cljs/externs/toastr.js"]}}]}
 
