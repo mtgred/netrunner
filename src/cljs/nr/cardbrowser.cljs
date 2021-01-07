@@ -273,6 +273,7 @@
         corp-factions ["Jinteki" "Haas-Bioroid" "NBN" "Weyland Consortium" "Neutral"]]
     (case side
       "All" (concat runner-factions corp-factions)
+      "Any Side" (concat runner-factions corp-factions)
       "Runner" (conj runner-factions "Neutral")
       "Corp" corp-factions)))
 
