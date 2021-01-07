@@ -3683,7 +3683,7 @@
       ; pay 8 per Chiyashi - 24 total
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
       (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
-      
+
 (deftest raman-rai
   ;; Raman Rai
   (do-game
