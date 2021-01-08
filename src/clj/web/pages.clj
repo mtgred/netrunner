@@ -9,10 +9,10 @@
             [ring.middleware.anti-forgery :as anti-forgery]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [web.db :refer [db object-id]]
-            [web.config :refer [server-config]]
+            [web.config :refer [server-config frontend-version]]
             [web.utils :refer [response]]))
 
-(defn layout [{:keys [version user] :as req} & content]
+(defn layout [{:keys [user] :as req} & content]
   (hiccup/html5
     [:head
      [:meta {:charset "utf-8"}]
@@ -21,7 +21,7 @@
      [:link {:rel "apple-touch-icon" :href "img/icons/jinteki_167.png"}]
      [:title "Jinteki"]
      (hiccup/include-css "/css/carousel.css")
-     (hiccup/include-css (str "/css/netrunner.css?v=" version))
+     (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version))
      (hiccup/include-css "/lib/toastr/toastr.min.css")
      (hiccup/include-css "/lib/jqueryui/themes/base/jquery-ui.min.css")]
     [:body
@@ -39,23 +39,17 @@
 
      (if (= "dev" @web.config/server-mode)
        (list (hiccup/include-js "/cljs/goog/base.js")
-             (hiccup/include-js (str "cljs/app10.js?v=" version))
+             (hiccup/include-js (str "cljs/app10.js?v=" @frontend-version))
              [:script
               (for [req ["dev.figwheel"]]
                 (str "goog.require(\"" req "\");"))])
-       (list (hiccup/include-js (str "js/app10.js?v=" version))
+       (list (hiccup/include-js (str "js/app10.js?v=" @frontend-version))
              [:script
               "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
               ga('create', 'UA-20250150-2', 'www.jinteki.net');"
               (when user
                 (str "ga('set', '&uid', '" (:username user) "');"))
               "ga('send', 'pageview');"]))]))
-
-
-(defn- version-string []
-  (if-let [config (mc/find-one-as-map db "config" nil)]
-      (:version config "0.0")
-      "0.0"))
 
 (defn index-page [req]
   (layout
@@ -75,7 +69,7 @@
          [:h1 "Play Android: Netrunner in your browser"]
          [:div#news]
          [:div#chat]]
-        [:div#version [:span (str "Version " (version-string))]]]
+        [:div#version [:span (str "Version " @frontend-version)]]]
        [:div.item
         [:div.cardbrowser-bg]
         [:div#cardbrowser]]
