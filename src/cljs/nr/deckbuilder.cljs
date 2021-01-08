@@ -973,7 +973,6 @@
          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
           [list-panel s user decks decks-loaded]
           [selected-panel s]
-          [reagent-modals/modal-window]
           [edit-panel s]]]))))
 
 (go (let [cards (<! cards-channel)

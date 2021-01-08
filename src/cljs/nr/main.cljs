@@ -17,6 +17,7 @@
             [nr.tournament :refer [tournament]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
+            [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
 
 (defn status []
@@ -63,6 +64,7 @@
   (r/render [auth-menu] (.getElementById js/document "right-menu"))
   (r/render [auth-forms] (.getElementById js/document "auth-forms"))
   ; main screens
+  (r/render [reagent-modals/modal-window] (.getElementById js/document "modal-window"))
   (r/render [about] (.getElementById js/document "about"))
   (r/render [account] (.getElementById js/document "account"))
   (r/render [card-browser] (.getElementById js/document "cardbrowser"))
