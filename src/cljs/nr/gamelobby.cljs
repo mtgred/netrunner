@@ -151,7 +151,7 @@
 (defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
     [:h3 "Select your deck"]
-    [:div.deck-collection
+    [:div.deck-collection.lobby-deck-selector
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
            same-side? (fn [deck] (= side (get-in deck [:identity :side])))
@@ -450,5 +450,4 @@
         [:div.lobby-bg]
         [:div.lobby.panel.blue-shade
           [games-list-panel s games gameid password-gameid user]
-          [right-panel decks s games gameid password-gameid sets user]
-          [reagent-modals/modal-window]]])))
+          [right-panel decks s games gameid password-gameid sets user]]])))

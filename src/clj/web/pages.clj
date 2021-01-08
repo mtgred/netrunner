@@ -66,6 +66,7 @@
       [:div#right-menu]
       [:div#status]]
      [:div#auth-forms]
+     [:div#modal-window]
      [:div#main.carousel.slide {:data-interval "false"}
       [:div.carousel-inner
        [:div.item.active
