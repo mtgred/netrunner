@@ -738,14 +738,14 @@
              :effect (effect (update! (assoc card :biotech-target target))
                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}]
    :abilities [{:label "Check chosen flip identity"
-                :req (req (:biotech-target card))
                 :effect (req (case (:biotech-target card)
                                "The Brewery"
                                (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
                                "The Tank"
                                (toast state :corp "Flip to: The Tank (Shuffle Archives into R&D)" "info")
                                "The Greenhouse"
-                               (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")))}
+                               (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")
+                               (toast state :corp "No flip identity specified" "info")))}
                {:cost [:click 3]
                 :req (req (not (:biotech-used card)))
                 :label "Flip this identity"
@@ -771,7 +771,8 @@
                                        {:prompt "Select a card that can be advanced"
                                         :choices {:card can-be-advanced?}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
-                                       card nil)))))}]})
+                                       card nil))
+                                 (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error"))))}]})
 
 (defcard "Jinteki: Personal Evolution"
   (let [ability {:async true
