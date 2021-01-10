@@ -9,8 +9,8 @@
 
 (def users-state (r/atom {}))
 
-(go (swap! users-state assoc :mods (:json (<! (GET "/admin/mods")))))
-(go (swap! users-state assoc :specials (:json (<! (GET "/admin/specials")))))
+(go (when (:isadmin (:user @app-state)) (swap! users-state assoc :mods (:json (<! (GET "/admin/mods"))))))
+(go (when (:isadmin (:user @app-state)) (swap! users-state assoc :specials (:json (<! (GET "/admin/specials"))))))
 
 (defn- update-mod-response [response]
   (case (:status response)

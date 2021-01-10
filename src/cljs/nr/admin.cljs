@@ -11,7 +11,7 @@
 (def admin-state (r/atom {}))
 
 (go (swap! admin-state assoc :news (:json (<! (GET "/data/news")))))
-(go (swap! admin-state assoc :version (:json (<! (GET "/admin/version")))))
+(go (when (:isadmin (:user @app-state)) (swap! admin-state assoc :version (:json (<! (GET "/admin/version"))))))
 
 (defn- post-data [url callback data]
   (go (let [response (<! (POST url data :json))]
