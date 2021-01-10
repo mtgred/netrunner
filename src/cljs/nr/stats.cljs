@@ -168,11 +168,11 @@
     [history state]))
 
 (defn stats []
-  (r/with-let [stats (r/cursor app-state [:stats])
-               active (r/cursor app-state [:active-page])]
-
-    (when (= "/stats" (first @active))
-      [:div.container
-       [:div.lobby.panel.blue-shade
-        [left-panel stats-state stats]
-        [right-panel stats-state]]])))
+  (let [stats (r/cursor app-state [:stats])
+        active (r/cursor app-state [:active-page])]
+    (fn []
+      (when (= "/stats" (first @active))
+        [:div.container
+         [:div.lobby.panel.blue-shade
+          [left-panel stats-state stats]
+          [right-panel stats-state]]]))))
