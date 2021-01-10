@@ -14,6 +14,14 @@
             [nr.ws :as ws]
             [reagent.core :as r]))
 
+(defonce stats-state (r/atom {:games nil}))
+
+(go (let [{:keys [status json]} (<! (GET "/profile/history"))
+          games (map #(assoc % :start-date (js/Date. (:start-date %))
+                             :end-date (js/Date. (:end-date %))) json)]
+      (when (= 200 status)
+        (swap! stats-state assoc :games games))))
+
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"
   [deck-id stats]
@@ -113,18 +121,18 @@
 
 (def faction-icon-memo (memoize faction-icon))
 
-(defn fetch-log [state game]
+(defn- fetch-log [game]
   (go (let [{:keys [status json]} (<! (GET (str "/profile/history/" (:gameid game))))]
         (when (= 200 status)
-          (swap! state assoc :view-game (assoc game :log json))))))
+          (swap! stats-state assoc :view-game (assoc game :log json))))))
 
-(defn game-row
-  [state {:keys [title corp runner turn winner reason] :as game}]
+(defn- game-row
+  [{:keys [title corp runner turn winner reason] :as game}]
   (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
         runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
-      {:on-click #(fetch-log state game)}
+      {:on-click #(fetch-log game)}
       "View log"]
      [:h4 title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")"]
 
@@ -152,7 +160,7 @@
         (doall
           (for [game games]
             ^{:key (:gameid game)}
-            [game-row state game])))]]))
+            [game-row game])))]]))
 
 (defn right-panel [state]
   (if (:view-game @state)
@@ -161,17 +169,10 @@
 
 (defn stats []
   (r/with-let [stats (r/cursor app-state [:stats])
-               active (r/cursor app-state [:active-page])
-               state (r/atom {:games nil})]
-
-    (go (let [{:keys [status json]} (<! (GET "/profile/history"))
-              games (map #(assoc % :start-date (js/Date. (:start-date %))
-                                 :end-date (js/Date. (:end-date %))) json)]
-          (when (= 200 status)
-            (swap! state assoc :games games))))
+               active (r/cursor app-state [:active-page])]
 
     (when (= "/stats" (first @active))
       [:div.container
        [:div.lobby.panel.blue-shade
-        [left-panel state stats]
-        [right-panel state]]])))
+        [left-panel stats-state stats]
+        [right-panel stats-state]]])))
