@@ -1960,8 +1960,8 @@
       (is (zero? (count (:subroutines (refresh io))))))))
 
 (deftest inazuma
-  ;;Inazuma
-  (testing "basic jack out test"
+  ;; Inazuma
+  (testing "Cannot jack out after encounter of next ICE"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
@@ -1979,9 +1979,9 @@
         (run-continue state)
         (fire-subs state (refresh inazuma))
         (run-continue state)
+        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
         (rez state :corp cl)
         (run-continue state)
-        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
         (fire-subs state cl)
         (run-continue state)
         (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out")))))
