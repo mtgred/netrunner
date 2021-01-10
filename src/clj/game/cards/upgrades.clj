@@ -569,6 +569,7 @@
 
 (defcard "Helheim Servers"
   {:abilities [{:label "All ice protecting this server has +2 strength until the end of the run"
+                :msg (msg "increase the strength of all ice protecting this server until the end of the run")
                 :req (req (and this-server
                                (pos? (count run-ices))
                                (pos? (count (:hand corp)))))
