@@ -745,6 +745,7 @@
                                (toast state :corp "Flip to: The Tank (Shuffle Archives into R&D)" "info")
                                "The Greenhouse"
                                (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")
+                               ;; default case
                                (toast state :corp "No flip identity specified" "info")))}
                {:cost [:click 3]
                 :req (req (not (:biotech-used card)))
