@@ -94,4 +94,5 @@
                active (r/cursor app-state [:active-page])]
     (when (and (= "/users" (first @active))
                (:isadmin @user))
-      [users-container])))
+      [:div.page-container
+       [users-container]])))

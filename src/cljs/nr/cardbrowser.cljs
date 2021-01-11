@@ -486,7 +486,7 @@
                            :selected-card nil})]
         (fn []
           (.focus (js/$ ".search"))
-          [:div.cardbrowser
+          [:div#cardbrowser.cardbrowser
            [:div.blue-shade.panel.filters
             [query-builder state]
             [sort-by-builder state]

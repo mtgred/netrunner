@@ -15,7 +15,7 @@
                active (r/cursor app-state [:active-page])]
     (when (or (= "/news" (first @active))
               (= "/" (first @active)))
-      [:div.news-box.panel.blue-shade
+      [:div#news.news-box.panel.blue-shade
        [:ul.list
         (doall
           (for [d @news]

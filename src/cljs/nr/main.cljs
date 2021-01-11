@@ -17,10 +17,17 @@
             [nr.tournament :refer [tournament]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
+            [nr.features :refer [features]]
             [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
 
-(defn status []
+(defn- get-data
+  [tag]
+  (-> (.getElementById js/document "server-originated-data")
+      (.getAttribute (str "data-" tag))
+      (cljs.reader/read-string)))
+
+(defn- status []
   (r/with-let [user (r/cursor app-state [:user])
                games (r/cursor app-state [:games])
                gameid (r/cursor app-state [:gameid])]
@@ -57,27 +64,60 @@
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
 
-(defn mount-root []
-  ; navbar stuff
-  (r/render [navbar] (.getElementById js/document "left-menu"))
-  (r/render [status] (.getElementById js/document "status"))
-  (r/render [auth-menu] (.getElementById js/document "right-menu"))
-  (r/render [auth-forms] (.getElementById js/document "auth-forms"))
-  ; main screens
-  (r/render [reagent-modals/modal-window] (.getElementById js/document "modal-window"))
-  (r/render [about] (.getElementById js/document "about"))
-  (r/render [account] (.getElementById js/document "account"))
-  (r/render [card-browser] (.getElementById js/document "cardbrowser"))
-  (r/render [chat] (.getElementById js/document "chat"))
-  (r/render [deck-builder] (.getElementById js/document "deckbuilder"))
-  (r/render [gameboard] (.getElementById js/document "gameboard"))
-  (r/render [game-lobby] (.getElementById js/document "gamelobby"))
-  (r/render [help] (.getElementById js/document "help"))
-  (r/render [news] (.getElementById js/document "news"))
-  (r/render [stats] (.getElementById js/document "stats"))
-  (r/render [tournament] (.getElementById js/document "tournament"))
-  (r/render [admin] (.getElementById js/document "admin"))
-  (r/render [users] (.getElementById js/document "users")))
+(defn pages []
+  (r/with-let [active (r/cursor app-state [:active-page])]
+    [:div#main.carousel.slide {:data-interval "false"}
+     [:div.carousel-inner
+      [:div.item.active
+       [:div.home-bg]
+       [:div.container
+        [:h1 "Play Android: Netrunner in your browser"]
+        [news]
+        [chat]]
+       [:div#version [:span (str "Version " (get-data "version"))]]]
+      [:div.item
+       [:div.cardbrowser-bg]
+       [card-browser]]
+      [:div.item
+       [:div.deckbuilder-bg]
+       [deck-builder]]
+      [:div.item
+       [:div#gamelobby [game-lobby]]
+       [:div#gameboard [gameboard]]]
+      [:div.item
+       [:div.help-bg]
+       [help]]
+      [:div.item
+       [:div.account-bg]
+       [account]]
+      [:div.item
+       [:div.stats-bg]
+       [stats]]
+      [:div.item
+       [:div.about-bg]
+       [about]]
+      [:div.item
+       [:div.about-bg]
+       [tournament]]
+      [:div.item
+       [:div.help-bg]
+       [admin]]
+      [:div.item
+       [:div.account-bg]
+       [users]]
+      [:div.item
+       [:div.help-bg]
+       [features]]]]))
+
+(defn main-window []
+  [:div
+   [:nav.topnav.blue-shade
+    [:div#left-menu [navbar]]
+    [:div#right-menu [auth-menu]]
+    [:div#status [status]]]
+   [:div#auth-forms [auth-forms]]
+   [reagent-modals/modal-window]
+   [pages]])
 
 (defn init! []
-  (mount-root))
+  (r/render [main-window] (.getElementById js/document "main-content")))

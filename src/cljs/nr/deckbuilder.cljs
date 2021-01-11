@@ -969,11 +969,12 @@
               (end-delete s)
               (set-deck-on-state s deck))))
       (fn []
-        [:div.deckbuilder.blue-shade.panel
-         [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
-          [list-panel s user decks decks-loaded]
-          [selected-panel s]
-          [edit-panel s]]]))))
+        [:div.container
+         [:div.deckbuilder.blue-shade.panel
+          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
+           [list-panel s user decks decks-loaded]
+           [selected-panel s]
+           [edit-panel s]]]]))))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))

@@ -3,7 +3,7 @@
   -webkit-box-sizing: border-box
   box-sizing: border-box
 
-html, body
+html, body, #main-content
   margin: 0
   padding: 0
   height: 100%
@@ -521,9 +521,11 @@ nav ul
       &:hover
         color: orange
 
+  li.active#features-nav a,
   li.active#users-nav a
     color: orange
 
+  #features-nav a,
   #users-nav a
       color: #ebec74
 
@@ -591,7 +593,10 @@ nav ul
 .win.th
   border-bottom: 1px solid #ffa500
 
-#stats
+.page-container
+  width: 1000px
+  margin: 0 auto
+
   .content-page
     margin-top: 9px
 
@@ -719,7 +724,7 @@ nav ul
 
     .item
       padding-top: 31px
-      height: 100%
+      height: 100vh
       color: white
 
 .home-bg
@@ -2274,19 +2279,11 @@ input.url
         > form input
             width: 100%
 
-#help
-  position: absolute
-  top: 0
-  left: 0
-  right: 0
-  bottom: 0
-  overflow: auto
-
-#help nav li
+.help nav li
   padding-left: 3px
   font-weight: bold
 
-#help nav li li
+.help nav li li
   padding-left: 8px
   font-weight: normal
 
@@ -2369,18 +2366,12 @@ input.url
   to
     opacity: 1
 
-#about
-  position: absolute
-  top: 0
-  left: 0
-  right: 0
-  bottom: 0
-  overflow: auto
-
 .content-page
   padding: 12px 20px
   width: 650px
   margin: 40px auto 10px
+  height: 90vh
+  overflow: auto
 
 .about
   .bitcoin
@@ -2424,13 +2415,6 @@ input.url
       font-weight: bold
 
 // Admin
-
-#admin, #users
-  display: block
-  height: 100%
-  overflow: auto
-  -webkit-overflow-scrolling: touch
-  margin-top: -31px
 
 .admin
   color: orange

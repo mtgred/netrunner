@@ -171,7 +171,7 @@
             (swap! state assoc :games games))))
 
     (when (= "/stats" (first @active))
-      [:div.container
+      [:div.page-container
        [:div.lobby.panel.blue-shade
         [left-panel state stats]
         [right-panel state]]])))

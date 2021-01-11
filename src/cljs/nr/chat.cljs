@@ -243,7 +243,7 @@
 
            :reagent-render
            (fn []
-             [:div.chat-app
+             [:div#chat.chat-app
               [:div.blue-shade.panel.channel-list
                [:h4 "Channels"]
                (doall
