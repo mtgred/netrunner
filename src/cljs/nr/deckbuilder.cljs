@@ -959,16 +959,17 @@
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])]
-    (when (= "/deckbuilder" (first @active))
 
-      (go (while true
-            (let [card (<! zoom-channel)]
-              (swap! s assoc :zoom card))))
-      (go (while true
-            (let [deck (<! select-channel)]
-              (end-delete s)
-              (set-deck-on-state s deck))))
-      (fn []
+    (go (while true
+          (let [card (<! zoom-channel)]
+            (swap! s assoc :zoom card))))
+    (go (while true
+          (let [deck (<! select-channel)]
+            (end-delete s)
+            (set-deck-on-state s deck))))
+
+    (fn []
+      (when (= "/deckbuilder" (first @active))
         [:div.container
          [:div.deckbuilder.blue-shade.panel
           [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}

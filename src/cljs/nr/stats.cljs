@@ -160,9 +160,9 @@
     [history state]))
 
 (defn stats []
-  (r/with-let [stats (r/cursor app-state [:stats])
-               active (r/cursor app-state [:active-page])
-               state (r/atom {:games nil})]
+  (let [stats (r/cursor app-state [:stats])
+        active (r/cursor app-state [:active-page])
+        state (r/atom {:games nil})]
 
     (go (let [{:keys [status json]} (<! (GET "/profile/history"))
               games (map #(assoc % :start-date (js/Date. (:start-date %))
@@ -170,8 +170,9 @@
           (when (= 200 status)
             (swap! state assoc :games games))))
 
-    (when (= "/stats" (first @active))
-      [:div.page-container
-       [:div.lobby.panel.blue-shade
-        [left-panel state stats]
-        [right-panel state]]])))
+    (fn []
+      (when (= "/stats" (first @active))
+        [:div.page-container
+         [:div.lobby.panel.blue-shade
+          [left-panel state stats]
+          [right-panel state]]]))))

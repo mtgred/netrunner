@@ -10,7 +10,6 @@
 
 (def feature-state (r/atom {}))
 
-(go (when (:isadmin (:user @app-state)) (reset! feature-state (:features (:json (<! (GET "/admin/features")))))))
 ;; 
 ;; (defn- update-version-response [response]
 ;;   (if (= 200 (:status response))
@@ -40,10 +39,14 @@
 
 
 (defn features []
-  (r/with-let [user (r/cursor app-state [:user])
-               active (r/cursor app-state [:active-page])]
-    (go (when (:isadmin (:user @app-state)) (reset! feature-state (:features (:json (<! (GET "/admin/features")))))))
-    (when (and (= "/features" (first @active))
-               (:isadmin @user))
-      [:div.page-container
-       [feature-container feature-state]])))
+  (let [user (r/cursor app-state [:user])
+        active (r/cursor app-state [:active-page])]
+
+    (go (when (:isadmin (:user @app-state))
+          (reset! feature-state (:features (:json (<! (GET "/admin/features")))))))
+
+    (fn []
+      (when (and (= "/features" (first @active))
+                 (:isadmin @user))
+        [:div.page-container
+         [feature-container feature-state]]))))

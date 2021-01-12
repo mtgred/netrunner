@@ -64,53 +64,65 @@
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
 
-(defn pages []
+(defn chat-page []
   (r/with-let [active (r/cursor app-state [:active-page])]
-    [:div#main.carousel.slide {:data-interval "false"}
-     [:div.carousel-inner
-      [:div.item.active
-       [:div.home-bg]
-       [:div.container
-        [:h1 "Play Android: Netrunner in your browser"]
-        [news]
-        [chat]]
-       [:div#version [:span (str "Version " (get-data "version"))]]]
-      [:div.item
-       [:div.cardbrowser-bg]
-       [card-browser]]
-      [:div.item
-       [:div.deckbuilder-bg]
-       [deck-builder]]
-      [:div.item
-       [:div#gamelobby [game-lobby]]
-       [:div#gameboard [gameboard]]]
-      [:div.item
-       [:div.help-bg]
-       [help]]
-      [:div.item
-       [:div.account-bg]
-       [account]]
-      [:div.item
-       [:div.stats-bg]
-       [stats]]
-      [:div.item
-       [:div.about-bg]
-       [about]]
-      [:div.item
-       [:div.about-bg]
-       [tournament]]
-      [:div.item
-       [:div.help-bg]
-       [admin]]
-      [:div.item
-       [:div.account-bg]
-       [users]]
-      [:div.item
-       [:div.help-bg]
-       [features]]]]))
+    (when (= "/" (first @active))
+      [:div.container
+       [:h1 "Play Android: Netrunner in your browser"]
+       [news]
+       [chat]
+       [:div#version [:span (str "Version " (get-data "version"))]]])))
+
+(defn pages []
+  (r/create-class
+    {:display-name "main-pages"
+
+     :component-did-mount
+     (fn [] (.setToken history (first (:active-page app-state "/"))))
+
+     :reagent-render
+     (fn []
+       [:div#main.carousel.slide {:data-interval "false"}
+        [:div.carousel-inner
+         [:div.item.active
+          [:div.home-bg]
+          [chat-page]]
+         [:div.item
+          [:div.cardbrowser-bg]
+          [card-browser]]
+         [:div.item
+          [:div.deckbuilder-bg]
+          [deck-builder]]
+         [:div.item
+          [:div#gamelobby [game-lobby]]
+          [:div#gameboard [gameboard]]]
+         [:div.item
+          [:div.help-bg]
+          [help]]
+         [:div.item
+          [:div.account-bg]
+          [account]]
+         [:div.item
+          [:div.stats-bg]
+          [stats]]
+         [:div.item
+          [:div.about-bg]
+          [about]]
+         [:div.item
+          [:div.about-bg]
+          [tournament]]
+         [:div.item
+          [:div.help-bg]
+          [admin]]
+         [:div.item
+          [:div.account-bg]
+          [users]]
+         [:div.item
+          [:div.help-bg]
+          [features]]]])}))
 
 (defn main-window []
-  [:div
+  [:<>
    [:nav.topnav.blue-shade
     [:div#left-menu [navbar]]
     [:div#right-menu [auth-menu]]

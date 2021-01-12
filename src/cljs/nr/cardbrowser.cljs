@@ -472,24 +472,23 @@
        "Clear"]])
 
 (defn card-browser []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    (when (= "/cards" (first @active))
-      (let [state (r/atom {:search-query ""
-                           :sort-field "Faction"
-                           :format-filter "All"
-                           :set-filter "All"
-                           :type-filter "All"
-                           :side-filter "All"
-                           :faction-filter "All"
-                           :page 1
-                           :decorate-card true
-                           :selected-card nil})]
-        (fn []
-          (.focus (js/$ ".search"))
-          [:div#cardbrowser.cardbrowser
-           [:div.blue-shade.panel.filters
-            [query-builder state]
-            [sort-by-builder state]
-            [dropdown-builder state]
-            [clear-filters state]]
-           [card-list-view state]])))))
+  (let [active (r/cursor app-state [:active-page])
+        state (r/atom {:search-query ""
+                       :sort-field "Faction"
+                       :format-filter "All"
+                       :set-filter "All"
+                       :type-filter "All"
+                       :side-filter "All"
+                       :faction-filter "All"
+                       :page 1
+                       :decorate-card true
+                       :selected-card nil})]
+    (fn []
+      (when (= "/cards" (first @active))
+        [:div#cardbrowser.cardbrowser
+         [:div.blue-shade.panel.filters
+          [query-builder state]
+          [sort-by-builder state]
+          [dropdown-builder state]
+          [clear-filters state]]
+         [card-list-view state]]))))
