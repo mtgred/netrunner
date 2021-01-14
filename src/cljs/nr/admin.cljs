@@ -1,8 +1,7 @@
 (ns nr.admin
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.cardbrowser :refer [non-game-toast] :as cb]
-            [nr.utils :refer [render-icons]]
+            [nr.utils :refer [render-icons non-game-toast]]
             [nr.ws :refer [ws-send!]]
             [nr.appstate :refer [app-state]]
             [clojure.string :as s]

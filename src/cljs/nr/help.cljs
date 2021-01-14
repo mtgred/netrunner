@@ -374,7 +374,7 @@
 
 (defn help []
   [:div.page-container
-  [:div.help.panel.content-page.blue-shade
-   [:h2 "Help Topics"]
-   help-toc
-   help-contents]])
+   [:div.help.panel.content-page.blue-shade
+    [:h2 "Help Topics"]
+    help-toc
+    help-contents]])

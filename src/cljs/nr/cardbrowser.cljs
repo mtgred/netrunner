@@ -7,7 +7,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span
-                              influence-dots slug->format format->slug render-icons]]
+                              influence-dots slug->format format->slug render-icons non-game-toast]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -139,13 +139,6 @@
   "Add copies of alt art cards to the list of cards. If `only-version` is nil, all alt versions will be added."
   [only-version cards]
   (reduce (partial expand-alts only-version) () (reverse cards)))
-
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
 
 (defn- post-response [response]
   (if (= 200 (:status response))

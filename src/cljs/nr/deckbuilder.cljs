@@ -10,11 +10,11 @@
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [cards-channel factions filter-title image-url non-game-toast] :as cb]
+            [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
             [nr.deck-status :refer [deck-status-span]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
                               influence-dots make-dots restricted-span rotated-span
-                              slug->format format->slug checkbox-button cond-button]]
+                              slug->format format->slug checkbox-button cond-button non-game-toast]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]))

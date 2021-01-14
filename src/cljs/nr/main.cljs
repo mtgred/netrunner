@@ -4,14 +4,13 @@
             [nr.auth :refer [auth-forms auth-menu]]
             [nr.account :refer [account]]
             [nr.cardbrowser :refer [card-browser]]
-            [nr.chat :refer [chat]]
+            [nr.chat :refer [chat-page]]
             [nr.deckbuilder :refer [deck-builder]]
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
             [nr.history :refer [history]]
             [nr.navbar :refer [navbar]]
-            [nr.news :refer [news news-state]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
@@ -20,12 +19,6 @@
             [nr.features :refer [features]]
             [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
-
-(defn- get-data
-  [tag]
-  (-> (.getElementById js/document "server-originated-data")
-      (.getAttribute (str "data-" tag))
-      (cljs.reader/read-string)))
 
 (defn- status []
   (r/with-let [user (r/cursor app-state [:user])
@@ -63,15 +56,6 @@
                (for [p (:spectators game)]
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
-
-(defn chat-page []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    (when (= "/" (first @active))
-      [:div.container
-       [:h1 "Play Android: Netrunner in your browser"]
-       [news]
-       [chat]
-       [:div#version [:span (str "Version " (get-data "version"))]]])))
 
 (defn pages []
   (r/create-class

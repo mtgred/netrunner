@@ -1,5 +1,6 @@
 (ns nr.utils
   (:require [clojure.string :refer [join lower-case split] :as s]
+            [reagent.dom :as rd]
             [jinteki.cards :refer [all-cards]]))
 
 ;; Dot definitions
@@ -276,3 +277,22 @@
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
   (if (pos? (int input)) input 0))
+
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
+(defn set-scroll-top
+  "Set the scrollTop parameter of a reagent component"
+  [this scroll-top]
+  (let [node (rd/dom-node this)]
+    (set! (.-scrollTop node) scroll-top)))
+
+(defn store-scroll-top
+  "Store the scrollTop parameter of a reagent component in an atom"
+  [this scroll-top-atom]
+  (let [h (.-scrollTop (rd/dom-node this))]
+    (reset! scroll-top-atom h)))
