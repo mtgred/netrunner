@@ -6,7 +6,7 @@
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span
+            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
                               influence-dots slug->format format->slug render-icons non-game-toast]]
             [reagent.core :as r]))
 
@@ -345,7 +345,7 @@
                   :onError #(-> (swap! cv assoc :show-text true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
-(defn card-list-view [state]
+(defn card-list-view [state scroll-top]
   (let [selected (selected-set-name state)
         selected-cycle (-> selected s/lower-case (s/replace " " "-"))
         combined-cards (concat @all-cards (:previous-cards @app-state))
@@ -365,11 +365,18 @@
                    (insert-alt-arts alt-filter)
                    (sort-by (sort-field (:sort-field @state)))
                    (take (* (:page @state) 28)))]
-    [:div.card-list {:on-scroll #(handle-scroll % state)}
-     (doall
-       (for [card cards]
-         ^{:key (str (image-url card true) "-" (:code card))}
-         [card-view card state]))]))
+    (r/create-class
+      {
+       :display-name "card-list-view"
+       :component-did-mount #(set-scroll-top % @scroll-top)
+       :component-will-unmount #(store-scroll-top % scroll-top)
+       :reagent-render
+       (fn [state scroll-top]
+         [:div.card-list {:on-scroll #(handle-scroll % state)}
+          (doall
+            (for [card cards]
+              ^{:key (str (image-url card true) "-" (:code card))}
+              [card-view card state]))])})))
 
 (defn handle-search [e state]
   (doseq [filter [:set-filter :type-filter :faction-filter]]
@@ -475,7 +482,9 @@
                        :faction-filter "All"
                        :page 1
                        :decorate-card true
-                       :selected-card nil})]
+                       :selected-card nil})
+        scroll-top (atom 0)]
+
     (fn []
       (when (= "/cards" (first @active))
         [:div#cardbrowser.cardbrowser
@@ -484,4 +493,4 @@
           [sort-by-builder state]
           [dropdown-builder state]
           [clear-filters state]]
-         [card-list-view state]]))))
+         [card-list-view state scroll-top]]))))
