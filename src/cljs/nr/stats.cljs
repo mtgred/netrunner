@@ -40,7 +40,8 @@
       [:div (str "Ended: " (:end-date game))]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
-      [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]]]]))
+      [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]
+       [:a {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} "Download replay"]]]]))
 
 (defn clear-user-stats []
   (authenticated

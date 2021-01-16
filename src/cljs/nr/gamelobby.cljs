@@ -109,6 +109,23 @@
              :side "Corp"
              :format "standard"
              :editing true
+             :replay false
+             :flash-message ""
+             :protected false
+             :password ""
+             :allow-spectator true
+             :spectatorhands false)
+      (-> ".game-title" js/$ .select))))
+
+(defn replay-game [s]
+  (authenticated
+    (fn [user]
+      (swap! s assoc
+             :title (str (:username user) "'s game")
+             :side "Corp"
+             :format "standard"
+             :editing true
+             :replay true
              :flash-message ""
              :protected false
              :password ""
@@ -119,19 +136,27 @@
 (defn create-game [s]
   (authenticated
     (fn [user]
-      (cond
-        (empty? (:title @s))
-        (swap! s assoc :flash-message "Please fill a game title.")
+      (if (:replay @s)
+        (cond
+          (or (nil? (:history @s))
+              (empty? (:history @s)))
+          (swap! s assoc :flash-message "Select a valid replay file.")
 
-        (and (:protected @s)
-             (empty? (:password @s)))
-        (swap! s assoc :flash-message "Please fill a password")
+          :else
+          (swap! s assoc :flash-message "Now a game should start."))
+        (cond
+          (empty? (:title @s))
+          (swap! s assoc :flash-message "Please fill a game title.")
 
-        :else
-        (do (swap! s assoc :editing false)
-            (ws/ws-send! [:lobby/create
-                          (select-keys @s [:title :password :allow-spectator
-                                           :spectatorhands :side :format :room])]))))))
+          (and (:protected @s)
+               (empty? (:password @s)))
+          (swap! s assoc :flash-message "Please fill a password.")
+
+          :else
+          (do (swap! s assoc :editing false)
+              (ws/ws-send! [:lobby/create
+                            (select-keys @s [:title :password :allow-spectator
+                                             :spectatorhands :side :format :room])])))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])
@@ -295,6 +320,16 @@
                empty?))
      #(do (new-game s)
           (resume-sound))]
+    [cond-button "Load Replay"
+     (and (not (or @gameid
+                   (:editing @s)
+                   (= "tournament" (:room @s))))
+          (->> @games
+               (mapcat :players)
+               (filter #(= (-> % :user :_id) (:_id @user)))
+               empty?))
+     #(do (replay-game s)
+          (resume-sound))]
     [:button {:type "button"
               :on-click #(ws/ws-send! [:lobby/list])} "Reload list"]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
@@ -307,72 +342,84 @@
 (defn create-new-game
   [s]
   (when (:editing @s)
-    [:div
-     [:div.button-bar
-      [:button {:type "button"
-                :on-click #(create-game s)} "Create"]
-      [:button {:type "button"
-                :on-click #(swap! s assoc :editing false)} "Cancel"]]
-     (when-let [flash-message (:flash-message @s)]
-       [:p.flash-message flash-message])
-     [:section
-      [:h3 "Title"]
-      [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
-                          :value (:title @s)
-                          :placeholder "Title"
-                          :maxLength "100"}]]
-     [:section
-      [:h3 "Side"]
-      (doall
-        (for [option ["Corp" "Runner"]]
-          ^{:key option}
-          [:p
-           [:label [:input {:type "radio"
-                            :name "side"
-                            :value option
-                            :on-change #(swap! s assoc :side (.. % -target -value))
-                            :checked (= (:side @s) option)}]
-            option]]))]
+    (if (:replay @s)
+      [:div
+       [:div.button-bar
+        [:button {:type "button"
+                  :on-click #(create-game s)} "Start replay"]
+        [:button {:type "button"
+                  :on-click #(swap! s assoc :editing false)} "Cancel"]]
+       (when-let [flash-message (:flash-message @s)]
+         [:p.flash-message flash-message])
+        [:div [:input {:field :file
+                       :type :file
+                       :on-change #(swap! s assoc :history (.. % -target -value))}]]]
+      [:div
+       [:div.button-bar
+        [:button {:type "button"
+                  :on-click #(create-game s)} "Create"]
+        [:button {:type "button"
+                  :on-click #(swap! s assoc :editing false)} "Cancel"]]
+       (when-let [flash-message (:flash-message @s)]
+         [:p.flash-message flash-message])
+       [:section
+        [:h3 "Title"]
+        [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
+                            :value (:title @s)
+                            :placeholder "Title"
+                            :maxLength "100"}]]
+       [:section
+        [:h3 "Side"]
+        (doall
+          (for [option ["Corp" "Runner"]]
+            ^{:key option}
+            [:p
+             [:label [:input {:type "radio"
+                              :name "side"
+                              :value option
+                              :on-change #(swap! s assoc :side (.. % -target -value))
+                              :checked (= (:side @s) option)}]
+              option]]))]
 
-     [:section
-      [:h3 "Format"]
-      [:select.format {:value (:format @s "standard")
-                       :on-change #(swap! s assoc :format (.. % -target -value))}
-       (for [[k v] slug->format]
-         ^{:key k}
-         [:option {:value k} v])]]
+       [:section
+        [:h3 "Format"]
+        [:select.format {:value (:format @s "standard")
+                         :on-change #(swap! s assoc :format (.. % -target -value))}
+         (for [[k v] slug->format]
+           ^{:key k}
+           [:option {:value k} v])]]
 
-     [:section
-      [:h3 "Options"]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:allow-spectator @s)
-                 :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
-        "Allow spectators"]]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:spectatorhands @s)
-                 :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
-                 :disabled (not (:allow-spectator @s))}]
-        "Make players' hidden information visible to spectators"]]
-      [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
-       [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-        "including hand and face-down cards."]
-       [:p "We recommend using a password to prevent strangers from spoiling the game."]]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:private @s)
-                 :on-change #(let [checked (.. % -target -checked)]
-                               (swap! s assoc :protected checked)
-                               (when (not checked) (swap! s assoc :password "")))}]
-        "Password protected"]]
-      (when (:protected @s)
+       [:section
+        [:h3 "Options"]
         [:p
-         [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                             :type "password"
-                             :value (:password @s)
-                             :placeholder "Password"
-                             :maxLength "30"}]])]]))
+         [:label
+          [:input {:type "checkbox" :checked (:allow-spectator @s)
+                   :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
+          "Allow spectators"]]
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:spectatorhands @s)
+                   :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
+                   :disabled (not (:allow-spectator @s))}]
+          "Make players' hidden information visible to spectators"]]
+        [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
+         [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+          "including hand and face-down cards."]
+         [:p "We recommend using a password to prevent strangers from spoiling the game."]]
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:private @s)
+                   :on-change #(let [checked (.. % -target -checked)]
+                                 (swap! s assoc :protected checked)
+                                 (when (not checked) (swap! s assoc :password "")))}]
+          "Password protected"]]
+        (when (:protected @s)
+          [:p
+           [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                               :type "password"
+                               :value (:password @s)
+                               :placeholder "Password"
+                               :maxLength "30"}]])]])))
 
 (defn pending-game
   [s decks games gameid password-gameid sets user]
