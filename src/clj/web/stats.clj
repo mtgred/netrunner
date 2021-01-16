@@ -168,6 +168,7 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
+                          :history (json/generate-string (:history @state))
                           :log (:log @state)}})
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))

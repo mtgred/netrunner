@@ -130,20 +130,31 @@
              :protected false
              :password ""
              :allow-spectator true
-             :spectatorhands false)
+             :spectatorhands true)
       (-> ".game-title" js/$ .select))))
+
+(defn start-replay [s]
+  (let [reader (js/FileReader.)
+        file (:history s)
+        onload (fn [onload-ev] (let [history (-> onload-ev .-target .-result)
+                                     history (js->clj (.parse js/JSON history) :keywordize-keys true)
+                                     init-state (first history)
+                                     init-state (assoc-in init-state [:options :spectatorhands] true)]
+                                     (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
+    (aset reader "onload" onload)
+    (.readAsText reader file)))
 
 (defn create-game [s]
   (authenticated
     (fn [user]
       (if (:replay @s)
         (cond
-          (or (nil? (:history @s))
-              (empty? (:history @s)))
+          (not (:history @s))
           (swap! s assoc :flash-message "Select a valid replay file.")
 
           :else
-          (swap! s assoc :flash-message "Now a game should start."))
+          (do (swap! s assoc :editing false)
+              (start-replay @s)))
         (cond
           (empty? (:title @s))
           (swap! s assoc :flash-message "Please fill a game title.")
@@ -353,7 +364,7 @@
          [:p.flash-message flash-message])
         [:div [:input {:field :file
                        :type :file
-                       :on-change #(swap! s assoc :history (.. % -target -value))}]]]
+                       :on-change #(swap! s assoc :history (aget (.. % -target -files) 0))}]]]
       [:div
        [:div.button-bar
         [:button {:type "button"
