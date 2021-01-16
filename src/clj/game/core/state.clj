@@ -13,6 +13,7 @@
    end-turn
    events
    gameid
+   history
    log
    loser
    losing-deck-id
@@ -51,6 +52,7 @@
   [gameid room now spectatorhands corp runner]
   (map->State
     {:gameid gameid :log [] :active-player :runner :end-turn true
+     :history []
      :room room
      :rid 0 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0

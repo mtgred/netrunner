@@ -6,7 +6,7 @@
 
 (defn- strip [state]
   (-> state
-    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
+    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
     (update-in [:corp :register] select-keys [:spent-click])
     (update-in [:runner :register] select-keys [:spent-click])
     (dissoc-in [:corp :register-last-turn])
@@ -49,10 +49,10 @@
     (private-card-vector state side deck)))
 
 (defn- private-states
-  "Generates privatized states for the Corp, Runner and any spectators from the base state.
+  "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
-  ;; corp, runner, spectator
+  ;; corp, runner, spectator, history
   (let [corp-private (make-private-corp state)
         runner-private (make-private-runner state)
         corp-deck (update-in (:corp @state) [:deck] #(make-private-deck state :corp %))
@@ -63,21 +63,24 @@
                    :runner runner-deck)
      (if (get-in @state [:options :spectatorhands])
        (assoc @state :corp corp-deck :runner runner-deck)
-       (assoc @state :corp corp-private :runner runner-private))]))
+       (assoc @state :corp corp-private :runner runner-private))
+     (assoc @state :corp corp-deck :runner runner-deck)]))
 
 (defn public-states [state]
-  (let [[new-corp new-runner new-spect] (private-states state)]
+  (let [[new-corp new-runner new-spect new-hist] (private-states state)]
     {:runner-state (strip new-runner)
      :corp-state   (strip new-corp)
-     :spect-state  (strip new-spect)}))
+     :spect-state  (strip new-spect)
+     :hist-state   (strip new-hist)}))
 
 (defn public-diffs [old-state new-state]
-  (let [[old-corp old-runner old-spect] (when old-state (private-states (atom old-state)))
-        [new-corp new-runner new-spect] (private-states new-state)
-
+  (let [[old-corp old-runner old-spect old-hist] (when old-state (private-states (atom old-state)))
+        [new-corp new-runner new-spect new-hist] (private-states new-state)
         runner-diff (differ/diff (strip old-runner) (strip new-runner))
         corp-diff (differ/diff (strip old-corp) (strip new-corp))
-        spect-diff (differ/diff (strip old-spect) (strip new-spect))]
+        spect-diff (differ/diff (strip old-spect) (strip new-spect))
+        hist-diff (differ/diff (strip old-hist) (strip new-hist))]
     {:runner-diff runner-diff
      :corp-diff   corp-diff
-     :spect-diff  spect-diff}))
+     :spect-diff  spect-diff
+     :hist-diff   hist-diff}))

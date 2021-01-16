@@ -54,10 +54,12 @@
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
   [{:keys [gameid state] :as game}]
-  (let [old-state (get @old-states gameid)]
+  (let [old-state (get @old-states gameid)
+        diffs (public-diffs old-state state)]
     (when (and state @state)
+      (swap! state update :history conj (:hist-diff diffs))
       (swap! old-states assoc gameid @state)
-      (send-state-diffs! game (public-diffs old-state state)))))
+      (send-state-diffs! game diffs))))
 
 (defn- active-game?
   [gameid-str client-id]
