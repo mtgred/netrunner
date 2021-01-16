@@ -9,7 +9,7 @@
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
-            [nr.history :refer [history]]
+            [nr.history :refer [navigate-to-current]]
             [nr.navbar :refer [navbar]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
@@ -62,7 +62,7 @@
     {:display-name "main-pages"
 
      :component-did-mount
-     (fn [] (.setToken history (first (:active-page app-state "/"))))
+     (fn [] (navigate-to-current))
 
      :reagent-render
      (fn []

@@ -346,37 +346,37 @@
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
 (defn card-list-view [state scroll-top]
-  (let [selected (selected-set-name state)
-        selected-cycle (-> selected s/lower-case (s/replace " " "-"))
-        combined-cards (concat @all-cards (:previous-cards @app-state))
-        [alt-filter cards] (cond
-                             (= selected "All") [nil combined-cards]
-                             (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]
-                             (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) combined-cards)]
-                             (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected combined-cards)]
-                             :else
-                             [nil (filter #(= (:setname %) selected) combined-cards)])
-        cards (->> cards
-                   (filter-cards (:side-filter @state) :side)
-                   (filter-cards (:faction-filter @state) :faction)
-                   (filter-cards (:type-filter @state) :type)
-                   (filter-format (:format-filter @state))
-                   (filter-title (:search-query @state))
-                   (insert-alt-arts alt-filter)
-                   (sort-by (sort-field (:sort-field @state)))
-                   (take (* (:page @state) 28)))]
-    (r/create-class
-      {
-       :display-name "card-list-view"
-       :component-did-mount #(set-scroll-top % @scroll-top)
-       :component-will-unmount #(store-scroll-top % scroll-top)
-       :reagent-render
-       (fn [state scroll-top]
+  (r/create-class
+    {
+     :display-name "card-list-view"
+     :component-did-mount #(set-scroll-top % @scroll-top)
+     :component-will-unmount #(store-scroll-top % scroll-top)
+     :reagent-render
+     (fn [state scroll-top]
+       (let [selected (selected-set-name state)
+             selected-cycle (-> selected s/lower-case (s/replace " " "-"))
+             combined-cards (concat @all-cards (:previous-cards @app-state))
+             [alt-filter cards] (cond
+                                  (= selected "All") [nil combined-cards]
+                                  (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]
+                                  (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) combined-cards)]
+                                  (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected combined-cards)]
+                                  :else
+                                  [nil (filter #(= (:setname %) selected) combined-cards)])
+             cards (->> cards
+                        (filter-cards (:side-filter @state) :side)
+                        (filter-cards (:faction-filter @state) :faction)
+                        (filter-cards (:type-filter @state) :type)
+                        (filter-format (:format-filter @state))
+                        (filter-title (:search-query @state))
+                        (insert-alt-arts alt-filter)
+                        (sort-by (sort-field (:sort-field @state)))
+                        (take (* (:page @state) 28)))]
          [:div.card-list {:on-scroll #(handle-scroll % state)}
           (doall
             (for [card cards]
               ^{:key (str (image-url card true) "-" (:code card))}
-              [card-view card state]))])})))
+              [card-view card state]))]))}))
 
 (defn handle-search [e state]
   (doseq [filter [:set-filter :type-filter :faction-filter]]

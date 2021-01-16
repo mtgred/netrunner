@@ -26,6 +26,7 @@
   (r/with-let [s (r/atom {})]
     [:div.container.panel.blue-shade.content-page
      [:h3 "Site Features"]
+     [:p "Not implemented yet"]
      @feature-state
      ]))
 ;; [:div
