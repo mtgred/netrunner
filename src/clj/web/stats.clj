@@ -8,7 +8,8 @@
             [game.utils :refer [dissoc-in]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
-            [clj-time.core :as t])
+            [clj-time.core :as t]
+            [cheshire.core :as json])
 
   (:import org.bson.types.ObjectId))
 
@@ -187,4 +188,12 @@
     (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])
           log (or log {})]
       (response 200 log))
+    (response 401 {:message "Unauthorized"})))
+
+(defn fetch-history [{{username :username} :user
+                      {:keys [gameid]}     :params}]
+  (if username
+    (let [{:keys [history]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history"])
+          history (or history {})]
+      (response 200 history))
     (response 401 {:message "Unauthorized"})))

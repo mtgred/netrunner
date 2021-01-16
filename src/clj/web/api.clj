@@ -79,6 +79,7 @@
 
            (GET "/profile/history" [] stats/history)
            (GET "/profile/history/:gameid" [] stats/fetch-log)
+           (GET "/profile/history/full/:gameid" [] stats/fetch-history)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
