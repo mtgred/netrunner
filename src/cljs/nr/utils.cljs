@@ -1,6 +1,8 @@
 (ns nr.utils
   (:require [clojure.string :refer [join lower-case split] :as s]
             [reagent.dom :as rd]
+            [goog.string :as gstring]
+            [goog.string.format]
             [jinteki.cards :refer [all-cards]]))
 
 ;; Dot definitions
@@ -277,6 +279,13 @@
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
   (if (pos? (int input)) input 0))
+
+(defn num->percent
+  "Converts an input number to a percent of the second input number for display"
+  [num1 num2]
+  (if (zero? num2)
+    "0"
+    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn non-game-toast
   "Display a toast warning with the specified message."

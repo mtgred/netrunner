@@ -2,8 +2,6 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
-            [goog.string :as gstring]
-            [goog.string.format]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
@@ -12,8 +10,9 @@
             [nr.auth :refer [authenticated] :as auth]
             [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
             [nr.deck-status :refer [deck-status-span]]
+            [nr.history :refer [history]]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot set-scroll-top store-scroll-top
-                              influence-dots make-dots restricted-span rotated-span
+                              influence-dots make-dots restricted-span rotated-span num->percent
                               slug->format format->slug checkbox-button cond-button non-game-toast]]
             [nr.ws :as ws]
             [reagent.core :as r]
@@ -29,13 +28,6 @@
   (keyword (get-in card [:format (keyword format)] "unknown")))
 
 (def format-status (fnil format-status-impl :standard {}))
-
-(defn num->percent
-  "Converts an input number to a percent of the second input number for display"
-  [num1 num2]
-  (if (zero? num2)
-    "0"
-    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn identical-cards?
   [cards]
@@ -778,7 +770,14 @@
    [:button {:on-click #(delete-deck s)} "Delete"]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
-     [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])])
+     [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])
+   (let [disabled (or (:editing-game @app-state false) (:gameid @app-state false))]
+     [:button.float-right {:on-click #(do
+                                        (swap! app-state assoc :create-game-deck (:deck @s))
+                                        (.setToken history "/play"))
+                           :disabled disabled
+                           :class (when disabled "disabled")}
+      "Create Game"])])
 
 (defn selected-panel
   [s]
