@@ -9,6 +9,7 @@
             [nr.ajax :refer [POST GET PUT]]
             [nr.avatar :refer [avatar]]
             [nr.utils :refer [non-game-toast set-scroll-top store-scroll-top]]
+            [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
 
 (defn- all-alt-art-types
@@ -139,8 +140,7 @@
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
     (fn [s]
-      [:div#change-email.modal.fade {:ref "change-email"}
-       [:div.modal-dialog
+      [:div
         [:h3 "Change email address"]
         [:p.flash-message (:flash-message @email-state)]
         [:form {:on-submit (fn [event]
@@ -153,22 +153,30 @@
                                          (-> js/document .-location (.reload true))
                                          (swap! email-state assoc :flash-message message)))))))}
          (when-let [email (:email @s)]
-           [:p [:label "Current email: "]
-            [:input {:type "text"
-                     :value email
-                     :name "current-email"
-                     :read-only true}]])
-         [:p [:label "Desired email: "]
-          [:input {:type "text"
-                   :placeholder "Email address"
-                   :name "email"
-                   :on-change #(let [value (-> % .-target .-value)]
-                                 (swap! email-state assoc :email value))
-                   :on-blur #(if (valid-email? (-> % .-target .-value))
-                               (swap! email-state assoc :flash-message "")
-                               (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
-         [:p [:button "Update"]
-          [:button {:data-dismiss "modal"} "Cancel"]]]]])))
+           [:p [:label.email "Current email: "]
+            [:input.email {:type "text"
+                           :value email
+                           :name "current-email"
+                           :read-only true}]])
+         [:p [:label.email "Desired email: "]
+          [:input.email {:type "text"
+                         :placeholder "Email address"
+                         :name "email"
+                         :on-change #(let [value (-> % .-target .-value)]
+                                       (swap! email-state assoc :email value))
+                         :on-blur #(if (valid-email? (-> % .-target .-value))
+                                     (swap! email-state assoc :flash-message "")
+                                     (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
+         [:p.float-right
+          (let [disabled (not (valid-email? (:email @email-state)))]
+            [:button
+             {:disabled disabled
+              :class (when disabled "disabled")
+              }
+             "Update"])
+          [:button {:on-click #(do (.preventDefault %)
+                                   (reagent-modals/close-modal!))}
+           "Cancel"]]]])))
 
 (defn account-content [user s scroll-top]
   (r/create-class
@@ -183,7 +191,9 @@
          [:form {:on-submit #(handle-post % "/profile" s)}
           [:section
            [:h3 "Email"]
-           [:a {:href "" :data-target "#change-email" :data-toggle "modal"} "Change email"]]
+           [:a {:href "" :on-click #(do
+                                      (.preventDefault %)
+                                      (reagent-modals/modal! [change-email s]))} "Change email"]]
           [:section
            [:h3 "Avatar"]
            [avatar @user {:opts {:size 38}}]
