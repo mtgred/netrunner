@@ -34,7 +34,6 @@
               (:date game)])
            games))
 
-
 (defn process-games-update 
   [{:keys [diff notification] :as msg}]
   (swap! app-state update :games
@@ -130,8 +129,7 @@
              :protected false
              :password ""
              :allow-spectator true
-             :spectatorhands true)
-      (-> ".game-title" js/$ .select))))
+             :spectatorhands true))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
@@ -139,8 +137,10 @@
         onload (fn [onload-ev] (let [history (-> onload-ev .-target .-result)
                                      history (js->clj (.parse js/JSON history) :keywordize-keys true)
                                      init-state (first history)
-                                     init-state (assoc-in init-state [:options :spectatorhands] true)]
-                                     (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
+                                     init-state (assoc-in init-state [:options :spectatorhands] true)
+                                     diffs (rest history)
+                                     init-state (assoc init-state :replay-diffs diffs)]
+                                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
     (aset reader "onload" onload)
     (.readAsText reader file)))
 

@@ -25,6 +25,8 @@
 
 (defonce board-dom (atom {}))
 (defonce sfx-state (atom {}))
+(defonce replay-timeline (atom []))
+
 
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
@@ -49,13 +51,28 @@
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
 
+(defn populate-replay-timeline
+  [init-state]
+  (let [state (dissoc init-state :replay-diffs)
+        diffs (:replay-diffs init-state)]
+    (reset! replay-timeline [])
+    (swap! replay-timeline conj {:type :click :state state})
+    (swap! replay-timeline conj {:type :click :state state})
+    (println @replay-timeline)
+    ))
+
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
-    (reset! game-state state)
+    (reset! game-state (dissoc state :replay-diffs))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
-    (reset! lock false)))
+    (reset! lock false)
+    (println state)
+    (when (:replay-diffs state)
+      (swap! game-state assoc :replay true)
+      (populate-replay-timeline state)
+      )))
 
 (defn launch-game [state]
   (init-game state)
@@ -2037,4 +2054,23 @@
 
                    [:div.me
                     [hand-view me-user (if (= :corp me-side) "HQ" "Grip") me-hand me-prompt
-                     corp-remotes true "me"]]]])))})))))
+                     corp-remotes true "me"]]]
+
+                  (when (:replay @game-state)
+                    [:div.bottompane
+                     [:div.replay.panel.blue-shade
+                      [:div.timeline
+                       (for [{step-type :type state :state :as step} @replay-timeline]
+                         [:div.step {:class (:active-player state)}
+                          [:div.step-label
+                           (case step-type
+                             :click (render-message "[click]")
+                             "?")]])]
+                      [:div.controls.panel.blue-shade
+                       [:button.small "⏮"]
+                       [:button.small "◀"]
+                       [:button.small "▶"]
+                       [:button.small "⏭"]
+                       ]
+                      ]])
+                  ])))})))))
