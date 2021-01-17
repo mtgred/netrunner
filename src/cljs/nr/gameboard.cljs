@@ -25,6 +25,7 @@
 
 (defonce board-dom (atom {}))
 (defonce sfx-state (atom {}))
+
 (defonce replay-timeline (atom []))
 (defonce replay-status (atom {}))
 (defonce replay-side (atom :spectator))
@@ -56,19 +57,21 @@
 
 (defn replay-prepare-state
   [state]
-  (assoc state
-         :side @replay-side
-         :replay true))
+  (-> state
+    (assoc :side @replay-side
+           :replay true)
+    (assoc-in [:options :spectatorhands] true)))
 
 (defn replay-apply-patch
   [patch]
-  (reset! game-state (replay-prepare-state
-                       (differ/patch @game-state patch)))
+  (reset! game-state (replay-prepare-state (differ/patch @last-state patch)))
+  (reset! lock false)
   (reset! last-state @game-state))
 
 (defn replay-jump [n]
   (when (nth @replay-timeline n nil)
     (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
+    (reset! lock false)
     (reset! last-state @game-state)
     (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
 
@@ -76,8 +79,9 @@
   (let [{:keys [n diffs]} @replay-status]
     (if (empty? diffs)
       (do
-        (replay-jump (inc n))
-        (replay-forward))
+        (when (< (inc n) (count @replay-timeline))
+          (replay-jump (inc n))
+          (replay-forward)))
       (do
         (replay-apply-patch (first diffs))
         (if (empty? (rest diffs))
