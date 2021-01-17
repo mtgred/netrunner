@@ -166,6 +166,8 @@
     (reset! last-state @game-state)
     (reset! lock false)
     (when (:replay-diffs state)
+      (.setItem js/localStorage "gameid" "replay")
+      (swap! app-state assoc :gameid "replay")
       (populate-replay-timeline state)
       (replay-jump 0))))
 

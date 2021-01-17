@@ -35,7 +35,7 @@
            [:div.float-right
             (when is-player
               [:a.concede-button {:on-click #(concede)} "Concede"])
-            [:a.leave-button {:on-click #(leave-game)} "Leave game"]
+            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) "Leave replay" "Leave game")]
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
@@ -46,7 +46,7 @@
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
                  "Rig layout: IRL" "Rig layout: jnet")])]))
        (when (not (nil? @gameid))
-         [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
+         [:div.float-right [:a {:on-click #(leave-game)} (if (= "replay" @gameid) "Leave replay" "Leave game")]]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]
