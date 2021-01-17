@@ -119,9 +119,6 @@
                                        (:run new-state)
                                        :run
 
-                                       (println (:text (last (:log new-state))))
-                                       :bla
-
                                        (some? (re-find (re-pattern #"spends \[Click\] to install")
                                                        (str (:text (last (:log new-state))))))
                                        :install
