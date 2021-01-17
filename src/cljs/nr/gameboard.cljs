@@ -1,7 +1,7 @@
 (ns nr.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split]]
+            [clojure.string :as s :refer [capitalize includes? join lower-case split ends-with?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?]]
@@ -80,19 +80,21 @@
         (replay-forward))
       (do
         (replay-apply-patch (first diffs))
-        (println (first diffs))
-        (swap! replay-status assoc :diffs (rest diffs))))))
+        (if (empty? (rest diffs))
+          (replay-jump (inc n))
+          (swap! replay-status assoc :diffs (rest diffs)))))))
 
 (defn replay-step-forward []
-  )
+  (replay-jump (inc (:n @replay-status))))
+
 (defn replay-step-back []
-  )
+  (replay-jump (dec (:n @replay-status))))
 
 (defn populate-replay-timeline
   [init-state]
   (let [state (dissoc init-state :replay-diffs)
         diffs (:replay-diffs init-state)]
-    (reset! replay-timeline [{:type :start :state state}])
+    (reset! replay-timeline [{:type :start-of-game :state state}])
     (dorun (loop [old-state @game-state
                   diffs diffs
                   inter-diffs []]
@@ -103,27 +105,57 @@
                      old-side (keyword (:active-player old-state))
                      new-side (keyword (:active-player new-state))
                      old-click (get-in old-state [old-side :click])
-                     new-click (get-in new-state [new-side :click])]
-                 (cond
-                   (not= old-side new-side)
-                   (do
-                     ; add diffs to last timeline step
-                     (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
-                     ; create new timeline step
-                     (swap! replay-timeline conj {:type :side-change :state new-state})
-                     (recur new-state diffs []))
+                     new-click (get-in new-state [new-side :click])
+                     new-step-type (when (not= old-click new-click)
+                                     (cond
+                                       (and (not= old-side new-side)
+                                            (= :corp new-side))
+                                       :start-of-turn-corp
 
-                   (not= old-click new-click)
-                   (do
-                     ; add diffs to last timeline step
-                     (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
-                     ; create new timeline step
-                     (swap! replay-timeline conj {:type :click :state new-state})
-                     (recur new-state diffs []))
+                                       (and (not= old-side new-side)
+                                            (= :runner new-side))
+                                       :start-of-turn-runner
 
-                   :else
-                   (recur new-state diffs inter-diffs))))))
-    (println @replay-timeline)))
+                                       (:run new-state)
+                                       :run
+
+                                       (println (:text (last (:log new-state))))
+                                       :bla
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to install")
+                                                       (str (:text (last (:log new-state))))))
+                                       :install
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] and pays \d+ \[Credits\] to install")
+                                                       (str (:text (last (:log new-state))))))
+                                       :install
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Corp Basic Action Card to gain 1 \[Credits\]")
+                                                       (str (:text (last (:log new-state))))))
+                                       :credit
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Runner Basic Action Card to gain 1 \[Credits\]")
+                                                       (str (:text (last (:log new-state))))))
+                                       :credit
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] and pays 1 \[Credits\] to use Corp Basic Action Card to advance")
+                                                       (str (:text (last (:log new-state))))))
+                                       :advance
+
+                                       :else
+                                       :click))]
+                 (when new-step-type
+                   ; add diffs to last timeline step
+                   (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                   ; create new timeline step
+                   (swap! replay-timeline conj {:type new-step-type :state new-state}))
+
+                 (when (:run new-state) ; If a card starts a run somewhere during the diffs, change the last step type to :run
+                   (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :type :run))))
+
+                 (if new-step-type
+                   (recur new-state diffs [])
+                   (recur new-state diffs inter-diffs))))))))
 
 (defn init-game [state]
   (let [side (get-side state)]
@@ -134,8 +166,7 @@
     (reset! lock false)
     (when (:replay-diffs state)
       (populate-replay-timeline state)
-      (replay-jump 0)
-      )))
+      (replay-jump 0))))
 
 (defn launch-game [state]
   (init-game state)
@@ -2126,16 +2157,18 @@
                        (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
                                 ^{:key (str "step-" n)}
                                 [:div.step {:class (:active-player state)}
-                                 [:div.step-label {:on-click #(replay-jump n)}
+                                 [:div.step-label {:on-click #(replay-jump n) :class (when (= n (:n @replay-status)) "active-step")}
                                   (case step-type
-                                    :start "S"
-                                    :side-change "C"
+                                    :start-of-game "↠"
+                                    :start-of-turn-corp "C"
+                                    :start-of-turn-runner "R"
+                                    :run "🏃"
+                                    :install "▼"
+                                    :credit (render-message "[credit]")
+                                    :advance "A"
                                     :click (render-message "[click]")
                                     "?")]]))]
                       [:div.controls.panel.blue-shade
                        [:button.small {:on-click #(replay-step-back) :type "button"} "⏮"]
                        [:button.small {:on-click #(replay-forward) :type "button"} "▶"]
-                       [:button.small {:on-click #(replay-step-forward) :type "button"} "⏭"]
-                       ]
-                      ]])
-                  ])))})))))
+                       [:button.small {:on-click #(replay-step-forward) :type "button"} "⏭"]]]])])))})))))
