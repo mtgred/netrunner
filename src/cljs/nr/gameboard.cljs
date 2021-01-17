@@ -142,6 +142,10 @@
                                                        (str (:text (last (:log new-state))))))
                                        :advance
 
+                                       (some? (re-find (re-pattern #"spends \[Click\]\[Click\]\[Click\] to use Corp Basic Action Card to purge all virus counters")
+                                                       (str (:text (last (:log new-state))))))
+                                       :purge
+
                                        :else
                                        :click))]
                  (when new-step-type
@@ -2166,6 +2170,7 @@
                                     :install "▼"
                                     :credit (render-message "[credit]")
                                     :advance "A"
+                                    :purge "☣️"
                                     :click (render-message "[click]")
                                     "?")]]))]
                       [:div.controls.panel.blue-shade
