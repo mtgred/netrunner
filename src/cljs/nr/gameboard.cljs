@@ -26,7 +26,8 @@
 (defonce board-dom (atom {}))
 (defonce sfx-state (atom {}))
 (defonce replay-timeline (atom []))
-
+(defonce replay-status (atom {}))
+(defonce replay-side (atom :spectator))
 
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
@@ -42,24 +43,87 @@
     (str "/img/cards/" version-path ".png")))
 
 (defn get-side [state]
-  (let [user-id (:_id (:user @app-state))]
-    (cond
-      (= (get-in state [:runner :user :_id]) user-id) :runner
-      (= (get-in state [:corp :user :_id]) user-id) :corp
-      :else :spectator)))
+  (if (:replay state)
+    @replay-side
+    (let [user-id (:_id (:user @app-state))]
+      (cond
+        (= (get-in state [:runner :user :_id]) user-id) :runner
+        (= (get-in state [:corp :user :_id]) user-id) :corp
+        :else :spectator))))
 
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
+
+(defn replay-prepare-state
+  [state]
+  (assoc state
+         :side @replay-side
+         :replay true))
+
+(defn replay-apply-patch
+  [patch]
+  (reset! game-state (replay-prepare-state
+                       (differ/patch @game-state patch)))
+  (reset! last-state @game-state))
+
+(defn replay-jump [n]
+  (when (nth @replay-timeline n nil)
+    (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
+    (reset! last-state @game-state)
+    (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
+
+(defn replay-forward []
+  (let [{:keys [n diffs]} @replay-status]
+    (if (empty? diffs)
+      (do
+        (replay-jump (inc n))
+        (replay-forward))
+      (do
+        (replay-apply-patch (first diffs))
+        (println (first diffs))
+        (swap! replay-status assoc :diffs (rest diffs))))))
+
+(defn replay-step-forward []
+  )
+(defn replay-step-back []
+  )
 
 (defn populate-replay-timeline
   [init-state]
   (let [state (dissoc init-state :replay-diffs)
         diffs (:replay-diffs init-state)]
-    (reset! replay-timeline [])
-    (swap! replay-timeline conj {:type :click :state state})
-    (swap! replay-timeline conj {:type :click :state state})
-    (println @replay-timeline)
-    ))
+    (reset! replay-timeline [{:type :start :state state}])
+    (dorun (loop [old-state @game-state
+                  diffs diffs
+                  inter-diffs []]
+             (when-not (empty? diffs)
+               (let [new-state (differ/patch old-state (first diffs))
+                     inter-diffs (conj inter-diffs (first diffs))
+                     diffs (rest diffs)
+                     old-side (keyword (:active-player old-state))
+                     new-side (keyword (:active-player new-state))
+                     old-click (get-in old-state [old-side :click])
+                     new-click (get-in new-state [new-side :click])]
+                 (cond
+                   (not= old-side new-side)
+                   (do
+                     ; add diffs to last timeline step
+                     (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                     ; create new timeline step
+                     (swap! replay-timeline conj {:type :side-change :state new-state})
+                     (recur new-state diffs []))
+
+                   (not= old-click new-click)
+                   (do
+                     ; add diffs to last timeline step
+                     (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                     ; create new timeline step
+                     (swap! replay-timeline conj {:type :click :state new-state})
+                     (recur new-state diffs []))
+
+                   :else
+                   (recur new-state diffs inter-diffs))))))
+    (println @replay-timeline)))
 
 (defn init-game [state]
   (let [side (get-side state)]
@@ -68,10 +132,9 @@
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
     (reset! lock false)
-    (println state)
     (when (:replay-diffs state)
-      (swap! game-state assoc :replay true)
       (populate-replay-timeline state)
+      (replay-jump 0)
       )))
 
 (defn launch-game [state]
@@ -2060,17 +2123,19 @@
                     [:div.bottompane
                      [:div.replay.panel.blue-shade
                       [:div.timeline
-                       (for [{step-type :type state :state :as step} @replay-timeline]
-                         [:div.step {:class (:active-player state)}
-                          [:div.step-label
-                           (case step-type
-                             :click (render-message "[click]")
-                             "?")]])]
+                       (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
+                                ^{:key (str "step-" n)}
+                                [:div.step {:class (:active-player state)}
+                                 [:div.step-label {:on-click #(replay-jump n)}
+                                  (case step-type
+                                    :start "S"
+                                    :side-change "C"
+                                    :click (render-message "[click]")
+                                    "?")]]))]
                       [:div.controls.panel.blue-shade
-                       [:button.small "⏮"]
-                       [:button.small "◀"]
-                       [:button.small "▶"]
-                       [:button.small "⏭"]
+                       [:button.small {:on-click #(replay-step-back) :type "button"} "⏮"]
+                       [:button.small {:on-click #(replay-forward) :type "button"} "▶"]
+                       [:button.small {:on-click #(replay-step-forward) :type "button"} "⏭"]
                        ]
                       ]])
                   ])))})))))

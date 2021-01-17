@@ -2306,17 +2306,25 @@ input.url
                     height:20px
                     top:15px
 
+                    &:hover
+                        background-color: darken(rgb(255, 165, 0), 20)
+                        border-color: orange
+                        box-shadow(0 0 6px blue)
+
+
             .step:after
                 content: ''
                 display: block
-                position: absolute
+                position: relative
                 z-index: 1
                 left: 25px
-                top: 25px
+                top: 2px
                 width: 15px
                 height: 5px
+
             .step.corp:after
                 background-color: blue
+
             .step.runner:after
                 background-color: red
 
