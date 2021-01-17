@@ -1,6 +1,6 @@
 (ns web.auth
   (:require [web.config :refer [server-config]]
-            [web.db :refer [db object-id]]
+            [web.db :refer [db find-one-as-map-case-insensitive object-id]]
             [web.utils :refer [response md5]]
             [aero.core :refer [read-config]]
             [clj-time.core :refer [days from-now]]
@@ -73,10 +73,10 @@
     (not= password confirm-password)
     (response 401 {:message "Passwords must match"})
 
-    (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})
+    (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
 
-    (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$") $options "i"}})
+    (find-one-as-map-case-insensitive db "users" {:email email})
     (response 424 {:message "Email taken"})
 
     :else
@@ -122,22 +122,19 @@
                          :max-age -1}}))
 
 (defn check-username-handler [{{:keys [username]} :params}]
-  (if (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
-                                                 $options "i"}})
+  (if (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn check-email-handler [{{:keys [email]} :params}]
-  (if (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$")
-                                              $options "i"}})
+  (if (find-one-as-map-case-insensitive db "users" {:email email})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn email-handler [{{username :username} :user
                       body                 :body}]
   (if username
-    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
-                                                                     $options "i"}})]
+    (let [{:keys [email]} (find-one-as-map-case-insensitive db "users" {:username username})]
       (response 200 {:email email}))
     (response 401 {:message "Unauthorized"})))
 

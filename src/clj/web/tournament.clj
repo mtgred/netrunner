@@ -1,6 +1,6 @@
 (ns web.tournament
   (:require [clojure.string :refer [lower-case]]
-            [web.db :refer [db object-id]]
+            [web.db :refer [db find-maps-case-insensitive object-id]]
             [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.utils :refer [response]]
             [web.ws :as ws]
@@ -83,10 +83,8 @@
   (let [gameid (uuid/v4)
         title (str tournament-name ", Round " selected-round
                    ", Table " table ": " username1 " vs " username2)
-        query (into [] (for [username [username1 username2]]
-                         {:username {$regex (str "^" username "$")
-                                     $options "i"}}))
-        players (->> (mc/find-maps db "users" {$or query})
+        query (into [] (for [username [username1 username2]] {:username username}))
+        players (->> (find-maps-case-insensitive db "users" {$or query})
                      (map #(select-keys % [:_id :username :emailhash :isadmin :options :stats]))
                      (map #(update % :_id str))
                      (map #(hash-map :user %)))
@@ -146,10 +144,8 @@
     (let [data (download-cobra-data cobra-link)
           player-count (count (:players data))
           player-names (keep :name (:players data))
-          query (into [] (for [username player-names]
-                           {:username {$regex (str "^" username "$")
-                                       $options "i"}}))
-          db-players (mc/find-maps db "users" {$or query})
+          query (into [] (for [username player-names] {:username username}))
+          db-players (find-maps-case-insensitive db "users" {$or query})
           missing-players (remove #(seq (filter (fn [e] (= (lower-case %) (lower-case e))) (map :username db-players))) player-names)
 
           players (build-players data)
