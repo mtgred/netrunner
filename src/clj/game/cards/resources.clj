@@ -687,6 +687,7 @@
              :silent (req true)
              :req (req (= :archives (target-server context)))
              :optional {:prompt "Place a virus counter on Crypt?"
+                        :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:effect (effect (add-counter card :virus 1)
                                                       (system-msg "places a virus counter on Crypt"))}}}]
