@@ -1336,7 +1336,7 @@
    :events [{:event :successful-run
              :async true
              :msg "gain 9 [Credits] and take 1 tag"
-             :req (req (and this-card-run (= :hq (first (:server run)))))
+             :req (req this-card-run)
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (gain-credits state :runner eid 9)))}]})
 
