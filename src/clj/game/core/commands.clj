@@ -132,7 +132,7 @@
   [state side]
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
-      (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil))
+      (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil :history (:history @state)))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 
@@ -142,7 +142,7 @@
   (when-let [turn-state (:turn-state @state)]
     (swap! state assoc-in [side :undo-turn] true)
     (when (and (-> @state :runner :undo-turn) (-> @state :corp :undo-turn))
-      (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state))
+      (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state :history (:history @state)))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of turn")))))
 
