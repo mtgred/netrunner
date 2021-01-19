@@ -15,6 +15,7 @@
                             :card-back (get-local-value "card-back" "nisei")
                             :card-zoom (get-local-value "card-zoom" "image")
                             :pronouns "none"
+                            :language "en"
                             :show-alt-art true
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
                             :runner-board-order (let [value (get-local-value "runner-board-order" "irl")]

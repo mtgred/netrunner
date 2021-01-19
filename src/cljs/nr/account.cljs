@@ -38,6 +38,7 @@
   (.preventDefault event)
   (swap! s assoc :flash-message "Updating profile...")
   (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
+  (swap! app-state assoc-in [:options :language] (:language @s))
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
   (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
@@ -143,42 +144,41 @@
                              :email ""})]
     (fn [s]
       [:div
-        [:h3 "Change email address"]
-        [:p.flash-message (:flash-message @email-state)]
-        [:form {:on-submit (fn [event]
-                             (.preventDefault event)
-                             (let [email (:email @email-state)]
-                               (when (valid-email? email)
-                                 (go (let [{status             :status
-                                            {message :message} :json} (<! (PUT "/profile/email" {:email email} :json))]
-                                       (if (= 200 status)
-                                         (-> js/document .-location (.reload true))
-                                         (swap! email-state assoc :flash-message message)))))))}
-         (when-let [email (:email @s)]
-           [:p [:label.email "Current email: "]
-            [:input.email {:type "text"
-                           :value email
-                           :name "current-email"
-                           :read-only true}]])
-         [:p [:label.email "Desired email: "]
-          [:input.email {:type "text"
-                         :placeholder "Email address"
-                         :name "email"
-                         :on-change #(let [value (-> % .-target .-value)]
-                                       (swap! email-state assoc :email value))
-                         :on-blur #(if (valid-email? (-> % .-target .-value))
-                                     (swap! email-state assoc :flash-message "")
-                                     (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
-         [:p.float-right
-          (let [disabled (not (valid-email? (:email @email-state)))]
-            [:button
-             {:disabled disabled
-              :class (when disabled "disabled")
-              }
-             "Update"])
-          [:button {:on-click #(do (.preventDefault %)
-                                   (reagent-modals/close-modal!))}
-           "Cancel"]]]])))
+       [:h3 "Change email address"]
+       [:p.flash-message (:flash-message @email-state)]
+       [:form {:on-submit (fn [event]
+                            (.preventDefault event)
+                            (let [email (:email @email-state)]
+                              (when (valid-email? email)
+                                (go (let [{status             :status
+                                           {message :message} :json} (<! (PUT "/profile/email" {:email email} :json))]
+                                      (if (= 200 status)
+                                        (-> js/document .-location (.reload true))
+                                        (swap! email-state assoc :flash-message message)))))))}
+        (when-let [email (:email @s)]
+          [:p [:label.email "Current email: "]
+           [:input.email {:type "text"
+                          :value email
+                          :name "current-email"
+                          :read-only true}]])
+        [:p [:label.email "Desired email: "]
+         [:input.email {:type "text"
+                        :placeholder "Email address"
+                        :name "email"
+                        :on-change #(let [value (-> % .-target .-value)]
+                                      (swap! email-state assoc :email value))
+                        :on-blur #(if (valid-email? (-> % .-target .-value))
+                                    (swap! email-state assoc :flash-message "")
+                                    (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
+        [:p.float-right
+         (let [disabled (not (valid-email? (:email @email-state)))]
+           [:button
+            {:disabled disabled
+             :class (when disabled "disabled")}
+            "Update"])
+         [:button {:on-click #(do (.preventDefault %)
+                                  (reagent-modals/close-modal!))}
+          "Cancel"]]]])))
 
 (defn account-content [user s scroll-top]
   (r/create-class
@@ -221,6 +221,19 @@
                             {:name "Ze/zir" :ref "zezir"}
                             {:name "Xe/xem" :ref "xe"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+          [:h3 "Language"]
+          [:select {:value (:language @s "en")
+                    :on-change #(swap! s assoc :language (.. % -target -value))}
+           (doall
+             (for [option [{:name "English" :ref "en"}
+                           {:name "中文 (Simplified)" :ref "zh-simp"}
+                           {:name "中文 (Traditional)" :ref "zh-trad"}
+                           {:name "Français" :ref "fr"}
+                           {:name "Deutsch" :ref "de"}
+                           {:name "Italiano" :ref "it"}
+                           {:name "日本語" :ref "jp"}
+                           {:name "한국어" :ref "ko"}]]
+               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
           [:section
            [:h3 "Sounds"]
            [:div
@@ -241,7 +254,6 @@
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
-
           [:section
            [:h3 "Layout options"]
            [:div
@@ -414,6 +426,7 @@
                        :card-back (get-in @app-state [:options :card-back])
                        :card-zoom (get-in @app-state [:options :card-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
+                       :language (get-in @app-state [:options :language])
                        :sounds (get-in @app-state [:options :sounds])
                        :lobby-sounds (get-in @app-state [:options :lobby-sounds])
                        :volume (get-in @app-state [:options :sounds-volume])
