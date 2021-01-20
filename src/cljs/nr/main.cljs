@@ -6,7 +6,7 @@
             [nr.cardbrowser :refer [card-browser]]
             [nr.chat :refer [chat]]
             [nr.deckbuilder :refer [deck-builder]]
-            [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
+            [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board set-replay-side]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
             [nr.history :refer [history]]
@@ -36,6 +36,12 @@
             (when is-player
               [:a.concede-button {:on-click #(concede)} "Concede"])
             [:a.leave-button {:on-click #(leave-game)} (if (:replay game) "Leave replay" "Leave game")]
+            (when (:replay game)
+              [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
+            (when (:replay game)
+              [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
+            (when (:replay game)
+              [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
@@ -46,7 +52,14 @@
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
                  "Rig layout: IRL" "Rig layout: jnet")])]))
        (when (not (nil? @gameid))
-         [:div.float-right [:a {:on-click #(leave-game)} (if (= "replay" @gameid) "Leave replay" "Leave game")]]))
+         [:div.float-right 
+          [:a {:on-click #(leave-game)} (if (= "replay" @gameid) "Leave replay" "Leave game")]
+          (when (= "replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
+          (when (= "replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
+          (when (= "replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]

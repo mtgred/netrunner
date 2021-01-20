@@ -43,6 +43,11 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
+(defn set-replay-side [side]
+  (reset! replay-side side)
+  (swap! game-state assoc :side @replay-side)
+  (reset! last-state @last-state))
+
 (defn get-side [state]
   (if (:replay state)
     @replay-side
@@ -1064,7 +1069,9 @@
 
 (defn- this-user?
   [user]
-  (= (:_id user) (-> @app-state :user :_id)))
+  (if (:replay @game-state)
+    (= (get-in @game-state [@replay-side :user :_id]) (:_id user))
+    (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
   [user hand prompt remotes wrapper-class]
