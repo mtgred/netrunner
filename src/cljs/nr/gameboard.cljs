@@ -71,7 +71,9 @@
 (defn replay-jump [n]
   (cond
     (neg? n)
-    (replay-jump 0)
+    (do
+      (swap! app-state assoc :start-shown false)
+      (replay-jump 0))
 
     (< n (count @replay-timeline))
     (do
@@ -81,6 +83,7 @@
       (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])}))))
 
 (defn replay-forward []
+  (swap! app-state assoc :start-shown true)
   (let [{:keys [n diffs]} @replay-status]
     (if (empty? diffs)
       (do
