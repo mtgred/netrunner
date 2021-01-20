@@ -139,6 +139,9 @@
                      new-click (get-in new-state [new-side :click])
                      new-step-type (when (not= old-click new-click)
                                      (cond
+                                       (not-empty (filter #(= "Game reset to start of turn" (:msg %)) (get-in new-state [:corp :toast])))
+                                       :undo-turn
+
                                        (and (not= old-side new-side)
                                             (= :corp new-side))
                                        :start-of-turn-corp
@@ -173,6 +176,10 @@
                                        (some? (re-find (re-pattern #"spends \[Click\]\[Click\]\[Click\] to use Corp Basic Action Card to purge all virus counters")
                                                        (str (:text (last (:log new-state))))))
                                        :purge
+
+                                       (some? (re-find (re-pattern #"uses a command: /undo-click")
+                                                       (str (:text (last (:log new-state))))))
+                                       :undo-click
 
                                        :else
                                        :click))]
@@ -2198,6 +2205,8 @@
                                     :start-of-game "↠"
                                     :start-of-turn-corp "C"
                                     :start-of-turn-runner "R"
+                                    :undo-click "⮌"
+                                    :undo-turn "⮰"
                                     :run "🏃"
                                     :install "▼"
                                     :credit (render-message "[credit]")
