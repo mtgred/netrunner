@@ -2133,7 +2133,12 @@
 
                   [build-win-box game-state]
 
-                  [:div {:class @background}]
+                  [:div {:class (if (:replay @game-state)
+                                  (case @replay-side
+                                    :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
+                                    :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
+                                    :spectator @background)
+                                  @background)}]
 
                   [:div.rightpane
                    [:div.card-zoom
