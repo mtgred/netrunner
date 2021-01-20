@@ -14,7 +14,7 @@
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
-                              checkbox-button cond-button]]
+                              checkbox-button cond-button image-language-name]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -40,10 +40,11 @@
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
         show-art (and special-user special-wants-art viewer-wants-art)
-        version-path (if (and art show-art)
+        version-name (if (and art show-art)
                        (get (:alt_art alt-card) (keyword art) art)
-                       (:code card))]
-    (str "/img/cards/" version-path ".png")))
+                       (:code card))
+        card-name (image-language-name card version-name)]
+    (str "/img/cards/" card-name ".png")))
 
 (defn generate-replay-link [origin]
   (let [n (:n @replay-status)

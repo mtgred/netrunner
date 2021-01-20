@@ -3,6 +3,7 @@
             [reagent.dom :as rd]
             [goog.string :as gstring]
             [goog.string.format]
+            [nr.appstate :refer [app-state]]
             [jinteki.cards :refer [all-cards]]))
 
 ;; Dot definitions
@@ -306,3 +307,12 @@
   [this scroll-top-atom]
   (let [h (.-scrollTop (rd/dom-node this))]
     (reset! scroll-top-atom h)))
+
+(defn image-language-name
+  "Generates a card name based on the user's language settings. Returns default if language is unavailable."
+  [card default]
+  (let [lang-pref (get-in @app-state [:options :language] "en")
+        lang-avail (:languages card)]
+    (if (some #(= % lang-pref) lang-avail)
+      (str (:code card) "[" lang-pref "]")
+      default)))

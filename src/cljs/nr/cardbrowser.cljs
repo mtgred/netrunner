@@ -7,7 +7,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon image-language-name]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -21,10 +21,11 @@
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
           need-update? (or (not local-cards) (not= server-version (:version local-cards)))
-          cards (sort-by :code
-                         (if need-update?
+          latest-cards (if need-update?
                            (:json (<! (GET "/data/cards")))
-                           (:cards local-cards)))
+                           (:cards local-cards))
+          cards (->> latest-cards
+                     (sort-by :code))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
           mwls (:json (<! (GET "/data/mwl")))
@@ -99,18 +100,20 @@
                  (get-in @app-state [:options :alt-arts (keyword (:code card))]))
          alt-card (get (:alt-cards @app-state) (:code card))
          has-art (and (show-alt-art? allow-all-users) art)
-         version-path (if has-art
-                        (get (:alt_art alt-card) (keyword art) art)
-                        (:code card))]
-     (str "/img/cards/" version-path ".png"))))
+         alt-name (if has-art
+                    (get (:alt_art alt-card) (keyword art) art)
+                    (:code card))
+         card-name (image-language-name card alt-name)]
+     (str "/img/cards/" card-name ".png"))))
 
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
   [card]
-  (let [path (if (keyword? (:art card))
-                 (get-in card [:alt_art (:art card)] (:code card))
-                 (:code card))]
-    (str "/img/cards/" path ".png")))
+  (let [alt-name (if (keyword? (:art card))
+                   (get-in card [:alt_art (:art card)] (:code card))
+                   (:code card))
+        image-name (image-language-name card alt-name)]
+    (str "/img/cards/" image-name ".png")))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
