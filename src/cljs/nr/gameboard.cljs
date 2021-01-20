@@ -129,7 +129,10 @@
     (dorun (loop [old-state @game-state
                   diffs diffs
                   inter-diffs []]
-             (when-not (empty? diffs)
+             (if (empty? diffs)
+               (do
+                 (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                 (swap! replay-timeline conj {:type :end-of-game :state old-state}))
                (let [new-state (differ/patch old-state (first diffs))
                      inter-diffs (conj inter-diffs (first diffs))
                      diffs (rest diffs)
@@ -2210,6 +2213,7 @@
                                     :start-of-game "↠"
                                     :start-of-turn-corp "C"
                                     :start-of-turn-runner "R"
+                                    :end-of-game "🎉"
                                     :undo-click "⮌"
                                     :undo-turn "⮰"
                                     :run "🏃"
