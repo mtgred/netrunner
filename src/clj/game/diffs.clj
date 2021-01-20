@@ -1,6 +1,7 @@
 (ns game.diffs
   (:require [game.core :refer [card-is-public?]]
             [game.core.card :refer [private-card]]
+            [game.core.set-up :refer [replay-strip]]
             [game.utils :refer [dissoc-in]]
             [differ.core :as differ]))
 
@@ -71,7 +72,7 @@
     {:runner-state (strip new-runner)
      :corp-state   (strip new-corp)
      :spect-state  (strip new-spect)
-     :hist-state   (strip new-hist)}))
+     :hist-state   (replay-strip new-hist)}))
 
 (defn public-diffs [old-state new-state]
   (let [[old-corp old-runner old-spect old-hist] (when old-state (private-states (atom old-state)))
@@ -79,7 +80,7 @@
         runner-diff (differ/diff (strip old-runner) (strip new-runner))
         corp-diff (differ/diff (strip old-corp) (strip new-corp))
         spect-diff (differ/diff (strip old-spect) (strip new-spect))
-        hist-diff (differ/diff (strip old-hist) (strip new-hist))]
+        hist-diff (differ/diff (replay-strip old-hist) (replay-strip new-hist))]
     {:runner-diff runner-diff
      :corp-diff   corp-diff
      :spect-diff  spect-diff

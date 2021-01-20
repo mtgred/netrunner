@@ -18,8 +18,7 @@
     [game.utils :refer [server-card dissoc-in]]
     [clj-time.core :as t]))
 
-;; XXX: UGLY hack to avoid cyclic dependency. fix later
-(defn- strip [state]
+(defn replay-strip [state]
   (-> state
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
     (update-in [:corp :register] select-keys [:spent-click])
@@ -27,7 +26,15 @@
     (dissoc-in [:corp :register-last-turn])
     (dissoc-in [:runner :register-last-turn])
     (dissoc-in [:run :current-ice])
-    (dissoc-in [:run :events])))
+    (dissoc-in [:run :events])
+    (dissoc-in [:runner :user :emailhash])
+    (dissoc-in [:runner :user :isadmin])
+    (dissoc-in [:runner :user :options :blocked-users])
+    (dissoc-in [:runner :user :stats])
+    (dissoc-in [:corp :user :emailhash])
+    (dissoc-in [:corp :user :isadmin])
+    (dissoc-in [:corp :user :options :blocked-users])
+    (dissoc-in [:corp :user :stats])))
 
 (defn build-card
   [card]
@@ -136,5 +143,5 @@
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)
                             (fake-checkpoint state)))))
-    (swap! state assoc :history [(strip @state)])
+    (swap! state assoc :history [(replay-strip @state)])
     state))
