@@ -38,7 +38,8 @@
                  [hawk "0.2.11"]
                  [danlentz/clj-uuid "0.1.9"]
                  [potemkin "0.4.5"]
-                 [cond-plus "1.0.1"]]
+                 [cond-plus "1.0.1"]
+                 [com.taoensso/tempura "1.2.1"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]

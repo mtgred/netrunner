@@ -11,6 +11,7 @@
             [nr.news :refer [news]]
             [nr.cardbrowser :refer [image-url]]
             [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
+            [nr.translations :refer [tr]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -142,12 +143,12 @@
                                       (when-not (illegal-message s)
                                         (send-msg s channel)))}
        [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
-                :placeholder "Say something...." :accessKey "l" :value (:msg @s)
+                :placeholder (tr [:chat/placeholder "Say something...."]) :accessKey "l" :value (:msg @s)
                 :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
        (let [disabled (illegal-message s)]
          [:button {:disabled disabled
                    :class (if disabled "disabled" "")}
-          "Send"])])))
+          (tr [:chat/send "Send"])])])))
 
 (defn channel-view [{:keys [channel active-channel]} s]
   [:div.block-link {:class (if (= active-channel channel) "active" "")
@@ -212,6 +213,7 @@
               data (:json x)]
           (update-message-channel channel data)))))
 
+<<<<<<< HEAD
 (fetch-all-messages)
 
 (defn message-panel [s old scroll-top]
@@ -315,4 +317,3 @@
          [news]
          [chat s old scroll-top]
          [:div#version [:span (str "Version " (get-data "version"))]]]))))
-

@@ -14,6 +14,7 @@
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
+            [nr.translations :refer [tr]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
             [nr.features :refer [features]]
@@ -27,7 +28,7 @@
     [:div
      [:div.float-right
       (let [c (count (filter-blocked-games @user @games))]
-        (str c " Game" (when (not= c 1) "s")))]
+        (tr [:nav/game-count] c))]
      (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (let [user-id (-> @user :_id)
              is-player (some #(= user-id (-> % :user :_id)) (:players game))]
