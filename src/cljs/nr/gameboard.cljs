@@ -60,6 +60,11 @@
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
 
+(defn replay-reached-end? []
+  (and (empty? (:diffs @replay-status))
+       (< (inc (:n @replay-status))
+          (count @replay-timeline))))
+
 (defn replay-prepare-state
   [state]
   (-> state
@@ -101,6 +106,14 @@
         (if (empty? (rest diffs))
           (replay-jump (inc n))
           (swap! replay-status assoc :diffs (rest diffs)))))))
+
+(defn replay-log-forward []
+  (let [prev-log (:log @game-state)]
+    (while (and 
+             (or (= prev-log (:log @game-state))
+                 (= "typing" (-> @game-state :log last :text)))
+             (not (replay-reached-end?)))
+      (replay-forward))))
 
 (defn replay-step-forward []
   (replay-jump (inc (:n @replay-status))))
@@ -2193,6 +2206,11 @@
                                     :click (render-message "[click]")
                                     "?")]]))]
                       [:div.controls.panel.blue-shade
-                       [:button.small {:on-click #(replay-step-back) :type "button"} "⏮"]
-                       [:button.small {:on-click #(replay-forward) :type "button"} "▶"]
-                       [:button.small {:on-click #(replay-step-forward) :type "button"} "⏭"]]]])])))})))))
+                       [:button.small {:on-click #(replay-step-back) :type "button"
+                                       :title "Rewind one click"} "⏮︎"]
+                       [:button.small {:on-click #(replay-forward) :type "button"
+                                       :title "Play next action"} "⏵︎"]
+                       [:button.small {:on-click #(replay-log-forward) :type "button"
+                                       :title "Forward to next log entry"} "⏩︎"]
+                       [:button.small {:on-click #(replay-step-forward) :type "button"
+                                       :title "Forward one click"} "⏭︎"]]]])])))})))))
