@@ -69,11 +69,16 @@
   (reset! last-state @game-state))
 
 (defn replay-jump [n]
-  (when (nth @replay-timeline n nil)
-    (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
-    (reset! lock false)
-    (reset! last-state @game-state)
-    (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
+  (cond
+    (neg? n)
+    (replay-jump 0)
+
+    (< n (count @replay-timeline))
+    (do
+      (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
+      (reset! lock false)
+      (reset! last-state @game-state)
+      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])}))))
 
 (defn replay-forward []
   (let [{:keys [n diffs]} @replay-status]
