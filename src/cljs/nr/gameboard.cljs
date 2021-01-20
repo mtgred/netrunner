@@ -82,6 +82,7 @@
 
     (< n (count @replay-timeline))
     (do
+      (swap! app-state assoc :start-shown true)
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
       (reset! lock false)
       (reset! last-state @game-state)
