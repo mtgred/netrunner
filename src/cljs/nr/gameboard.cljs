@@ -2214,8 +2214,8 @@
                       [:div#timeline
                        (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
                                 ^{:key (str "step-" n)}
-                                [:div.step {:class (:active-player state)}
-                                 [:div.step-label {:on-click #(replay-jump n) :class (when (= n (:n @replay-status)) "active-step")}
+                                [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
+                                 [:div.step-label {:on-click #(replay-jump n) :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
                                   (case step-type
                                     :start-of-game "↠"
                                     :start-of-turn-corp "C"

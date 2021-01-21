@@ -2288,29 +2288,41 @@ input.url
 
         #timeline
             width:100%
+            height: 80px
             display-flex()
             flex-direction(row)
             overflow: auto
+            position: relative
 
             .step
                 text-align: center
-                width:34px
+                width:50px
                 height:50px
 
+                .step-label .anr-icon
+                    font-size: inherit
+
                 .step-label
+                    text-align: center
+                    font-size: 20px
                     position: relative
                     background-color: rgb(39, 56, 76)
                     border-radius: 50%
                     border: 1px solid white
-                    margin-left: 5px
-                    margin-right: 5px
+                    margin: 0 4px
+                    padding-top: 5px
                     z-index: 2
-                    width: 25px
-                    height: 25px
-                    padding: 3px 3px 3px 3px
-                    top:15px
+                    width: 32px
+                    height: 32px
+                    top:20px
 
-                .active-step
+                .active-step-label
+                    font-size: 32px
+                    width: 45px
+                    height: 45px
+                    padding-top: 11px
+                    margin: 0 15px
+                    top:15px
                     border-color: orange
                     color: orange
                     box-shadow(0 0 6px orange)
@@ -2320,15 +2332,14 @@ input.url
                         border-color: orange
                         box-shadow(0 0 6px blue)
 
-
             .step:after
                 content: ''
                 display: block
                 position: relative
                 z-index: 1
                 left: 25px
-                top: 0px
-                width: 15px
+                top: 2px
+                width: 40px
                 height: 5px
 
             .step.corp:after
@@ -2337,9 +2348,27 @@ input.url
             .step.runner:after
                 background-color: red
 
+            .active-step
+                text-align: center
+                width: 54px
+                height: 50px
+                position: relative
+                top: -2px
+                left: -10px
+
+            .active-step:after
+                top:-10px
+                width: 50px
+
+            .start-of-turn-corp,.start-of-turn-runner
+                margin-left: 8px
+
+
         .controls
             width: 180px
             margin: 0 auto
+            position: relative
+            bottom: -10px
             text-align: center
 
             button.small
