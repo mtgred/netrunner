@@ -91,7 +91,14 @@
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
       (reset! lock false)
       (reset! last-state @game-state)
-      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])}))))
+      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})
+      (when-let [timeline (-> js/document (.getElementById "timeline"))]
+        (let [new-step (-> js/document (.getElementsByClassName "step") array-seq (nth n))
+              new-step-left (+ (.-left (.getBoundingClientRect new-step))
+                               (.-scrollLeft timeline))]
+          (set! (.-scrollLeft timeline)
+                (- new-step-left
+                   (/ (.-clientWidth timeline) 2))))))))
 
 (defn replay-forward []
   (swap! app-state assoc :start-shown true)
@@ -109,7 +116,7 @@
 
 (defn replay-log-forward []
   (let [prev-log (:log @game-state)]
-    (while (and 
+    (while (and
              (or (= prev-log (:log @game-state))
                  (= "typing" (-> @game-state :log last :text)))
              (not (replay-reached-end?)))
@@ -2204,7 +2211,7 @@
                   (when (:replay @game-state)
                     [:div.bottompane
                      [:div.replay.panel.blue-shade
-                      [:div.timeline
+                      [:div#timeline
                        (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
                                 ^{:key (str "step-" n)}
                                 [:div.step {:class (:active-player state)}
