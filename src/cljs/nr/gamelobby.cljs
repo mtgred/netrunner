@@ -134,8 +134,9 @@
 (defn start-replay [s]
   (let [reader (js/FileReader.)
         file (:history s)
-        onload (fn [onload-ev] (let [history (-> onload-ev .-target .-result)
-                                     history (js->clj (.parse js/JSON history) :keywordize-keys true)
+        onload (fn [onload-ev] (let [replay (-> onload-ev .-target .-result)
+                                     replay (js->clj (.parse js/JSON replay) :keywordize-keys true)
+                                     history (:history replay)
                                      init-state (first history)
                                      init-state (assoc-in init-state [:options :spectatorhands] true)
                                      diffs (rest history)

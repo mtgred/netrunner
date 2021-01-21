@@ -167,6 +167,19 @@
                  {:gameid (:gameid game)}
                  {"$unset" {:history nil}}))))
 
+(defn generate-replay [state]
+  (json/generate-string
+    {:metadata {:winner (:winner @state)
+                          :reason (:reason @state)
+                          :end-date (java.util.Date.)
+                          :stats (-> (:stats @state)
+                                     (dissoc-in [:time :started])
+                                     (dissoc-in [:time :ended]))
+                          :turn (:turn @state)
+                          :corp.agenda-points (get-in @state [:corp :agenda-point])
+                          :runner.agenda-points (get-in @state [:runner :agenda-point])}
+     :history (:history @state)}))
+
 (defn game-finished [{:keys [state gameid]}]
   (when state
     (try
@@ -181,7 +194,7 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :history (json/generate-string (:history @state))
+                          :history (generate-replay state)
                           :log (:log @state)}})
       (remove-old-history (get-in @state [:corp :user]))
       (remove-old-history (get-in @state [:corp :runner]))
