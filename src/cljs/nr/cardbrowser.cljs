@@ -8,6 +8,7 @@
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
                               influence-dots slug->format format->slug render-icons non-game-toast faction-icon image-language-name]]
+            [nr.translations :refer [tr]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -147,8 +148,8 @@
   (if (= 200 (:status response))
     (let [new-alts (get-in response [:json :altarts] {})]
       (swap! app-state assoc-in [:user :options :alt-arts] new-alts)
-      (non-game-toast "Updated Art" "success" nil))
-    (non-game-toast "Failed to Update Art" "error" nil)))
+      (non-game-toast (tr [:card-browser.update-success "Updated Art"]) "success" nil))
+    (non-game-toast (tr [:card-browser.update-failure "Failed to Update Art"]) "error" nil)))
 
 (defn- future-selected-alt-art [card]
   (let [future-code (keyword (:future-version card))
@@ -401,12 +402,12 @@
                               :on-click #(swap! state assoc :search-query "")}])
      [:input.search {:on-change #(handle-search % state)
                      :type "text"
-                     :placeholder "Search cards"
+                     :placeholder (tr [:card-browser.search-hint "Search cards"])
                      :value query}]]))
 
 (defn sort-by-builder [state]
   [:div
-   [:h4 "Sort by"]
+   [:h4 (tr [:card-browser.sort "Sort by"])]
    [:select {:value (:sort-field @state)
              :on-change #(swap! state assoc :sort-field (.. % -target -value))}
     (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
@@ -458,11 +459,11 @@
     [:div
      (doall
        (for [[title state-key options]
-             [["Format" :format-filter formats]
-              ["Set" :set-filter sets-to-display]
-              ["Side" :side-filter ["Corp" "Runner"]]
-              ["Faction" :faction-filter (factions (:side-filter @state))]
-              ["Type" :type-filter (types (:side-filter @state))]]]
+             [[(tr [:card-browser.format "Format"]) :format-filter formats]
+              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display]
+              [(tr [:card-browser.side "Side"]) :side-filter ["Corp" "Runner"]]
+              [(tr [:card-browser.faction "Faction"]) :faction-filter (factions (:side-filter @state))]
+              [(tr [:card-browser.type "Type"]) :type-filter (types (:side-filter @state))]]]
          ^{:key title}
          [simple-filter-builder title state state-key options]))]))
 
@@ -477,7 +478,7 @@
                           :type-filter "All"
                           :side-filter "All"
                           :faction-filter "All")}
-       "Clear"]])
+       (tr [:card-browser.clear "Clear"])]])
 
 (defn card-browser []
   (let [active (r/cursor app-state [:active-page])

@@ -25,13 +25,26 @@
      :admin "Admin"
      :users "Users"
      :game-count (fn [[cnt]] (str cnt " Game" (when (not= cnt 1) "s")))}
+    :menu
+    {:settings :en.nav/settings
+     :logout "Jack out"
+     :admin :en.nav/admin
+     :moderator "Moderator"}
+    :card-browser
+    {:search-hint "Search cards"
+     :sort "Sort by"
+     :format "Format"
+     :set "Set"
+     :side "Side"
+     :faction "Faction"
+     :type "Type"
+     :clear "Clear"
+     :select-art "Select Art"
+     :update-success "Updated Art"
+     :update-failure "Failed to Update Art"
+     }
     }
-   :menu
-   {:settings :en.nav/settings
-    :logout "Jack out"
-    :admin :en.nav/admin
-    :moderator "Moderator"}
-
+   
    :la-pig
    {:missing ":la-pig missing text"
     :chat
@@ -53,11 +66,24 @@
      :users "Usersyay"
      :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Amegay" " Amesgay")))
      }
-   :menu
-   {:settings :la-pig.nav/settings
-    :logout "Ackjay outyay"
-    :admin :la-pig.nav/admin
-    :moderator "Oderatormay"}
+    :menu
+    {:settings :la-pig.nav/settings
+     :logout "Ackjay outyay"
+     :admin :la-pig.nav/admin
+     :moderator "Oderatormay"}
+    :card-browser
+    {:search-hint "Earchsay ardscay"
+     :sort "Ortsay ybay"
+     :format "Ormatfay"
+     :set "Etsay"
+     :side "Idesay"
+     :faction "Actionfay"
+     :type "Etypay"
+     :clear "Earclay"
+     :select-art "Electsay Artyay"
+     :update-success "Updatedyay Artyay"
+     :update-failure "Ailedfay otay Updateyay Artyay"
+     }
    }})
 
 (def opts {:dict translation-dictionary})
