@@ -132,9 +132,11 @@
                         [:div "Apart from the chatrooms here on Jinteki.net, here are a few links to online Netrunner communities:"
                          [:ul
                           [:li [:a {:href "http://forum.stimhack.com/"} "Stimhack forums"]]
+                          [:li [:a {:href "https://stimslackinvite.herokuapp.com/"} "Stimslack"] " (herokuapp invite link)"]
+                          [:li [:a {:href "https://discord.gg/VxgbNj5"} "Green Level Clearance Discord server"]]
                           [:li [:a {:href "http://reddit.com/r/netrunner/"} "/r/netrunner subreddit"]]
-                          [:li "multiple Facebook groups, such as "
-                           [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]]})}
+                          [:li [:a {:href "https://www.facebook.com/groups/netrunnerdorks/"} "Netrunner Dorks Facebook group"]]
+                          [:li [:a {:href "https://www.nearearthhub.net/#h.c28pw9eqowgt"} "NearEarthHub#Community Resources"]]]]]})}
     {:id "formats"
      :title "Formats"
      :sub (list
