@@ -3481,16 +3481,17 @@
 (deftest overmind
   ;; Overmind - Start with counters equal to unused MU
   (do-game
-    (new-game {:runner {:deck ["Overmind" (qty "Akamatsu Mem Chip" 2)]}})
+    (new-game {:runner {:deck ["Overmind" "Deep Red" "Sure Gamble" "Akamatsu Mem Chip" ]}})
     (take-credits state :corp)
-    (take-credits state :runner 1)
+    (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Akamatsu Mem Chip")
-    (play-from-hand state :runner "Akamatsu Mem Chip")
-    (is (= 6 (core/available-mu state)))
-    (play-from-hand state :runner "Overmind")
     (is (= 5 (core/available-mu state)))
+    (play-from-hand state :runner "Deep Red")
+    (is (= 8 (core/available-mu state)))
+    (play-from-hand state :runner "Overmind")
+    (is (= 7 (core/available-mu state)))
     (let [ov (get-program state 0)]
-      (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
+      (is (= 7 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest paintbrush
   ;; Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run

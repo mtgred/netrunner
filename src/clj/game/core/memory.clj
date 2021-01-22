@@ -10,8 +10,10 @@
   "Returns the available MU the runner has"
   ([state] (available-mu state nil))
   ([state _]
-   (- (or (get-in @state [:runner :memory :available]) 0)
-      (or (get-in @state [:runner :memory :used]) 0))))
+   (let [memory (get-in @state [:runner :memory])]
+     (- (reduce + (or (:available memory) 0)
+                (keep :available (vals (:only-for memory))))
+        (or (:used memory) 0)))))
 
 (defn- get-available-mu
   "Returns a list of vec pairs: [mu-type value]"
