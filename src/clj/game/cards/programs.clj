@@ -338,9 +338,9 @@
 (defcard "Algernon"
   {:events
    [{:event :runner-turn-begins
-     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
      :optional
      {:prompt (msg "Pay 2 [Credits] to gain [Click]")
+      :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
       :player :runner
       :yes-ability {:cost [:credit 2]
                     :msg "gain [Click]"
@@ -1754,9 +1754,9 @@
 
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
-             :req (req (not (get-in @state [:per-turn (:cid card)])))
              :optional
              {:prompt "Give ice a subtype?"
+              :req (req (not (get-in @state [:per-turn (:cid card)])))
               :yes-ability
               {:prompt "Choose an ICE subtype"
                :choices (req (->> (server-cards)

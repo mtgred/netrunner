@@ -118,10 +118,10 @@
 
 (defcard "Aeneas Informant"
   {:events [{:event :no-trash
-             :req (req (and (:trash target)
-                            (not (in-discard? target))))
              :optional
              {:autoresolve (get-autoresolve :auto-reveal-and-gain)
+              :req (req (and (:trash target)
+                             (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                            (when-not (installed? target)

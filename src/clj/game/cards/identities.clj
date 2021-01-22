@@ -1492,10 +1492,10 @@
 
 (defcard "The Foundry: Refining the Process"
   {:events [{:event :rez
-             :req (req (and (ice? target) ;; Did you rez and ice just now
-                            (first-event? state :runner :rez #(ice? (first %)))))
              :optional
              {:prompt "Add another copy to HQ?"
+              :req (req (and (ice? target) ;; Did you rez and ice just now
+                             (first-event? state :runner :rez #(ice? (first %)))))
               :yes-ability
               {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]
                               (do (move state side found-card :hand)
