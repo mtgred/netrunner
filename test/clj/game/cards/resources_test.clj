@@ -868,6 +868,9 @@
         (click-prompt state :runner "Yes")
         (is (= 1 (get-counters (refresh crypt) :virus)))
         (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended")
+        (is (empty? (:prompt (get-runner))) "No prompt for virus tokens")
         (is (= 1 (get-counters (refresh crypt) :virus))))))
   (testing "Ability can install a virus card"
     (do-game
