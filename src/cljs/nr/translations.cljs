@@ -41,7 +41,19 @@
      :clear "Clear"
      :select-art "Select Art"
      :update-success "Updated Art"
-     :update-failure "Failed to Update Art"
+     :update-failure "Failed to Update Art"}
+    :deck-builder
+    {:loading-msg "Loading deck collection..."
+     :new-corp "New Corp deck"
+     :new-runner "New Runner deck"
+     :import-button "Import deck"
+     :reset "Reset"
+     :import-title "Enter a Public NRDB Deck ID or URL"
+     :import "Import"
+     :cancel "Cancel"
+     :import-placeholder "NRDB ID"
+     :deck-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Deck" " Decks")))
+     :filtered "(filtered)"
      }
     }
    
@@ -82,7 +94,19 @@
      :clear "Earclay"
      :select-art "Electsay Artyay"
      :update-success "Updatedyay Artyay"
-     :update-failure "Ailedfay otay Updateyay Artyay"
+     :update-failure "Ailedfay otay Updateyay Artyay"}
+    :deck-builder
+    {:loading-msg "Oadinglay eckday ollectioncay..."
+     :new-corp "Ewnay Orpcay eckday"
+     :new-runner "Ewnay Unnerray eckday"
+     :import-button "Importyay Eckday"
+     :reset "Esetray"
+     :import-title "Enteryay ayay ublicpay bnrday eckday idyay oryay urlyay"
+     :import "Importyay"
+     :cancel "Ancelcay"
+     :import-placeholder "Bnrday idyay"
+     :deck-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Eckday" " Ecksday")))
+     :filtered "(ilteredfay)"
      }
    }})
 

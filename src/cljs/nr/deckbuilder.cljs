@@ -14,6 +14,7 @@
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot set-scroll-top store-scroll-top
                               influence-dots make-dots restricted-span rotated-span num->percent
                               slug->format format->slug checkbox-button cond-button non-game-toast]]
+            [nr.translations :refer [tr]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]))
@@ -300,10 +301,10 @@
 (defn import-deck-modal []
   (r/with-let [s (r/atom {})]
     [:div
-     [:h3 "Enter a Public NRDB Deck ID or URL"]
+     [:h3 (tr [:deck-builder.import-title "Enter a Public NRDB Deck ID or URL"])]
      [:p [:input.url {:type "text"
                       :id "nrdb-input"
-                      :placeholder "NRDB ID"
+                      :placeholder (tr [:deck-builder.import-placeholder "NRDB ID"])
                       :value (:msg @s)
                       :on-key-press #(when (= 13 (.. % -charCode))
                                        (send-import s))
@@ -314,8 +315,8 @@
          {:disabled disabled
           :class (when disabled "disabled")
           :on-click #(send-import s)}
-         "Import"])
-      [:button {:on-click #(reagent-modals/close-modal!)} "Cancel"]]]))
+         (tr [:deck-builder.import "Import"])])
+      [:button {:on-click #(reagent-modals/close-modal!)} (tr [:deck-builder.cancel "Cancel"])]]]))
 
 (defn load-decks-from-json
   [json]
@@ -604,7 +605,7 @@
 
       (not @decks-loaded)
       [:div.deck-collection
-       [:h4 "Loading deck collection..."]]
+       [:h4 (tr [:deck-builder.loading-msg "Loading deck collection..."])]]
 
       (empty? @decks)
       [:div.deck-collection
@@ -616,10 +617,10 @@
                                 (filter-faction s)
                                 (filter-format s))
             n (count filtered-decks)
-            deck-str (if (= n 1) "Deck" "Decks")]
+            deck-str (tr [:deck-builder.deck-count] n)]
         [:<>
-         [:div.deck-count [:h4 (str n " " deck-str
-                                    (when (filter-selected s) " (filtered)"))]]
+         [:div.deck-count 
+          [:h4 (str deck-str (when (filter-selected s) (str "  " (tr [:deck-builder.filtered "(filtered)"]))))]]
          [decks-list filtered-decks s scroll-top]]))))
 
 (defn line-span
@@ -892,13 +893,15 @@
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" (and @user @decks-loaded) #(do
-                                                             (reset-deck-filters s)
-                                                             (new-deck s "Corp"))]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(do
-                                                               (reset-deck-filters s)
-                                                               (new-deck s "Runner"))]
-   [cond-button "Import deck" (and @user @decks-loaded)
+   [cond-button (tr [:deck-builder.new-corp "New Corp deck"])
+   (and @user @decks-loaded) #(do
+                                (reset-deck-filters s)
+                                (new-deck s "Corp"))]
+   [cond-button (tr [:deck-builder.new-runner "New Runner deck"])
+    (and @user @decks-loaded) #(do
+                                 (reset-deck-filters s)
+                                 (new-deck s "Runner"))]
+   [cond-button (tr [:deck-builder.import-button "Import deck"]) (and @user @decks-loaded)
     #(reagent-modals/modal! [import-deck-modal]
                             {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
 
@@ -934,10 +937,8 @@
          [simple-filter-builder state state-key options decks-loaded callback scroll-top]))
 
      [:button {:class (if-not @decks-loaded "disabled" "")
-               :on-click #(do
-                            (reset-deck-filters state)
-                            (reset! scroll-top 0))}
-      "Reset"]]))
+               :on-click #(reset-deck-filters state)}
+      (tr [:deck-builder.reset "Reset"])]]))
 
 (defn- zoom-card-view [card state]
   [card state]
