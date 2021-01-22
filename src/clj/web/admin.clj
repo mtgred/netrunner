@@ -89,3 +89,16 @@
         (response 200 {:message "Removed"})
         (response 404 {:message "Unknown user"})))
     (response 400 {:message "Missing id"})))
+
+(defn features-handler [req]
+  (let [config (mc/find-one-as-map db "config" nil)
+        features (:features config {})]
+    (response 200 {:message "ok" :features features})))
+
+(defn features-update-handler [{{version :version} :body}]
+  (if-not (empty? version)
+    (do
+      (reset! frontend-version version)
+      (mc/update db "config" {} {$set {:version version}})
+      (response 200 {:message "ok" :version version}))
+    (response 400 {:message "Missing version item"})))

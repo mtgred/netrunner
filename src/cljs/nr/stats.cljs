@@ -7,10 +7,9 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
-            [nr.deckbuilder :refer [num->percent]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.player-view :refer [player-view]]
-            [nr.utils :refer [faction-icon render-message notnum->zero]]
+            [nr.utils :refer [faction-icon render-message notnum->zero num->percent set-scroll-top store-scroll-top]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -93,23 +92,30 @@
     [game-details state]
     [stats-panel stats]))
 
-(defn game-log [state]
-  (let [game (:view-game @state)]
-    [:div {:style {:overflow "auto"}}
-     [:div.panel.messages
-      (if (seq (:log game))
-        (doall (map-indexed
-                 (fn [i msg]
-                   (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                     (if (= (:user msg) "__system__")
-                       [:div.system {:key i} (render-message (:text msg))]
-                       [:div.message {:key i}
-                        [avatar (:user msg) {:opts {:size 38}}]
-                        [:div.content
-                         [:div.username (get-in msg [:user :username])]
-                         [:div (render-message (:text msg))]]])))
-                 (:log game)))
-        [:h4 "No log available"])]]))
+(defn game-log [state log-scroll-top]
+  (r/create-class
+    {
+     :display-name "stats-game-log"
+     :component-did-mount #(set-scroll-top % @log-scroll-top)
+     :component-will-unmount #(store-scroll-top % log-scroll-top)
+     :reagent-render
+     (fn [state log-scroll-top]
+       (let [game (:view-game @state)]
+         [:div {:style {:overflow "auto"}}
+          [:div.panel.messages
+           (if (seq (:log game))
+             (doall (map-indexed
+                      (fn [i msg]
+                        (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                          (if (= (:user msg) "__system__")
+                            [:div.system {:key i} (render-message (:text msg))]
+                            [:div.message {:key i}
+                             [avatar (:user msg) {:opts {:size 38}}]
+                             [:div.content
+                              [:div.username (get-in msg [:user :username])]
+                              [:div (render-message (:text msg))]]])))
+                      (:log game)))
+             [:h4 "No log available"])]]))}))
 
 (def faction-icon-memo (memoize faction-icon))
 
@@ -119,12 +125,14 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason] :as game}]
+  [state {:keys [title corp runner turn winner reason] :as game} log-scroll-top]
   (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
         runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
-      {:on-click #(fetch-log state game)}
+      {:on-click #(do
+                    (fetch-log state game)
+                    (reset! log-scroll-top 0))}
       "View log"]
      [:h4 title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")"]
 
@@ -143,26 +151,35 @@
      (when winner
        [:h4 "Winner: " winner])]))
 
-(defn history [state]
-  (let [games (reverse (:games @state))]
-    [:div.game-panel
-     [:div.game-list
-      (if (empty? games)
-        [:h4 "No games"]
-        (doall
-          (for [game games]
-            ^{:key (:gameid game)}
-            [game-row state game])))]]))
+(defn history [state list-scroll-top log-scroll-top]
+  (r/create-class
+    {
+     :display-name "stats-history"
+     :component-did-mount #(set-scroll-top % @list-scroll-top)
+     :component-will-unmount #(store-scroll-top % list-scroll-top)
+     :reagent-render
+     (fn [state list-scroll-top log-scroll-top]
+       (let [games (reverse (:games @state))]
+         [:div.game-list
+          (if (empty? games)
+            [:h4 "No games"]
+            (doall
+              (for [game games]
+                ^{:key (:gameid game)}
+                [game-row state game log-scroll-top])))]))}))
 
-(defn right-panel [state]
+(defn right-panel [state list-scroll-top log-scroll-top]
   (if (:view-game @state)
-    [game-log state]
-    [history state]))
+    [game-log state log-scroll-top]
+    [:div.game-panel
+     [history state list-scroll-top log-scroll-top]]))
 
 (defn stats []
-  (r/with-let [stats (r/cursor app-state [:stats])
-               active (r/cursor app-state [:active-page])
-               state (r/atom {:games nil})]
+  (let [stats (r/cursor app-state [:stats])
+        active (r/cursor app-state [:active-page])
+        state (r/atom {:games nil})
+        list-scroll-top (atom 0)
+        log-scroll-top (atom 0)]
 
     (go (let [{:keys [status json]} (<! (GET "/profile/history"))
               games (map #(assoc % :start-date (js/Date. (:start-date %))
@@ -170,8 +187,9 @@
           (when (= 200 status)
             (swap! state assoc :games games))))
 
-    (when (= "/stats" (first @active))
-      [:div.container
-       [:div.lobby.panel.blue-shade
-        [left-panel state stats]
-        [right-panel state]]])))
+    (fn []
+      (when (= "/stats" (first @active))
+        [:div.page-container
+         [:div.lobby.panel.blue-shade
+          [left-panel state stats]
+          [right-panel state list-scroll-top log-scroll-top]]]))))

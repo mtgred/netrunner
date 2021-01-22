@@ -1,8 +1,7 @@
 (ns nr.player-view
   (:require [reagent.core :as r]
             [nr.avatar :refer [avatar]]
-            [nr.deckbuilder :refer [num->percent]]
-            [nr.utils :refer [faction-icon notnum->zero]]))
+            [nr.utils :refer [faction-icon notnum->zero num->percent]]))
 
 (defn user-status-span
   "Returns a [:span] showing players game completion rate"

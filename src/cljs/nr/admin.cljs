@@ -1,8 +1,7 @@
 (ns nr.admin
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.cardbrowser :refer [non-game-toast] :as cb]
-            [nr.utils :refer [render-icons]]
+            [nr.utils :refer [render-icons non-game-toast]]
             [nr.ws :refer [ws-send!]]
             [nr.appstate :refer [app-state]]
             [clojure.string :as s]
@@ -11,7 +10,7 @@
 (def admin-state (r/atom {}))
 
 (go (swap! admin-state assoc :news (:json (<! (GET "/data/news")))))
-(go (swap! admin-state assoc :version (:json (<! (GET "/admin/version")))))
+(go (when (:isadmin (:user @app-state)) (swap! admin-state assoc :version (:json (<! (GET "/admin/version"))))))
 
 (defn- post-data [url callback data]
   (go (let [response (<! (POST url data :json))]
@@ -52,80 +51,80 @@
 
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])
-               version (r/cursor admin-state [:version])]
-    (let [s (r/atom {})]
-      (fn []
-        [:div.container.panel.blue-shade.content-page
-         [:h3 "Site News"]
-         [:div.news-box.panel.blue-shade
-          [:ul.list
-           (doall
-             (for [d @news]
-               [:li.news-item
-                {:key (:date d)}
-                [:span 
-                 [:button.delete
-                  {:on-click #(delete-news-item (:_id d))}
-                  "Delete"]]
-                [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-                [:span.title (render-icons (:item d ""))]]))]]
-         [:h4 "Add news item"]
-         [:form.msg-box {:on-submit #(let [msg (:news-msg @s "")]
-                                       (.preventDefault %)
-                                       (when-not (s/blank? msg)
-                                         (post-news-item msg)
-                                         (swap! s assoc :news-msg "")))}
-          [:input {:type "text"
-                   :placeholder "Post something...."
-                   :value (:news-msg @s "")
-                   :on-change #(swap! s assoc :news-msg (-> % .-target .-value))}]
-          (let [msg (:news-msg @s "")
-                disabled (s/blank? msg)]
-            [:button {:disabled disabled
-                      :class (if disabled "disabled" "")}
-             "Post"])]
+               version (r/cursor admin-state [:version])
+               s (r/atom {})]
+    [:div.container.panel.blue-shade.content-page
+     [:h3 "Site News"]
+     [:div.news-box.panel.blue-shade
+      [:ul.list
+       (doall
+         (for [d @news]
+           [:li.news-item
+            {:key (:date d)}
+            [:span 
+             [:button.delete
+              {:on-click #(delete-news-item (:_id d))}
+              "Delete"]]
+            [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
+            [:span.title (render-icons (:item d ""))]]))]]
+     [:h4 "Add news item"]
+     [:form.msg-box {:on-submit #(let [msg (:news-msg @s "")]
+                                   (.preventDefault %)
+                                   (when-not (s/blank? msg)
+                                     (post-news-item msg)
+                                     (swap! s assoc :news-msg "")))}
+      [:input {:type "text"
+               :placeholder "Post something...."
+               :value (:news-msg @s "")
+               :on-change #(swap! s assoc :news-msg (-> % .-target .-value))}]
+      (let [msg (:news-msg @s "")
+            disabled (s/blank? msg)]
+        [:button {:disabled disabled
+                  :class (if disabled "disabled" "")}
+         "Post"])]
 
-         [:br]
-         [:h3 "App Version"]
-         [:div.panel
-          [:input {:type "text" :name "version" :value (:version @version "") :read-only true}]]
-         [:h4 "Update app version string"]
-         [:form.msg-box {:on-submit #(let [msg (:version-msg @s)]
-                                       (.preventDefault %)
-                                       (when-not (s/blank? msg)
-                                         (update-version-item msg)
-                                         (swap! s assoc :version-msg "")))}
-          [:input {:type "text"
-                   :placeholder "Type something...."
-                   :value (:version-msg @s "")
-                   :on-change #(swap! s assoc :version-msg (-> % .-target .-value))}]
-          (let [msg (:version-msg @s "")
-                disabled (s/blank? msg)]
-            [:button {:disabled disabled
-                      :class (if disabled "disabled" "")}
-             "Update"])]
+     [:br]
+     [:h3 "App Version"]
+     [:div.panel
+      [:input {:type "text" :name "version" :value (:version @version "") :read-only true}]]
+     [:h4 "Update app version string"]
+     [:form.msg-box {:on-submit #(let [msg (:version-msg @s)]
+                                   (.preventDefault %)
+                                   (when-not (s/blank? msg)
+                                     (update-version-item msg)
+                                     (swap! s assoc :version-msg "")))}
+      [:input {:type "text"
+               :placeholder "Type something...."
+               :value (:version-msg @s "")
+               :on-change #(swap! s assoc :version-msg (-> % .-target .-value))}]
+      (let [msg (:version-msg @s "")
+            disabled (s/blank? msg)]
+        [:button {:disabled disabled
+                  :class (if disabled "disabled" "")}
+         "Update"])]
 
-         [:br]
-         [:h3 "Site Announcement"]
-         [:form.msg-box {:on-submit #(let [msg (:announce-msg @s)]
-                                       (.preventDefault %)
-                                       (when-not (s/blank? msg)
-                                         (post-announce-item msg)
-                                         (swap! s assoc :announce-msg "")))}
-          [:input {:type "text"
-                   :placeholder "Type something...."
-                   :value (:announce-msg @s "")
-                   :on-change #(swap! s assoc :announce-msg (-> % .-target .-value))}]
-          (let [msg (:announce-msg @s "")
-                disabled (s/blank? msg)]
-            [:button {:disabled disabled
-                      :class (if disabled "disabled" "")}
-             "Send"])]
-         ]))))
+     [:br]
+     [:h3 "Site Announcement"]
+     [:form.msg-box {:on-submit #(let [msg (:announce-msg @s)]
+                                   (.preventDefault %)
+                                   (when-not (s/blank? msg)
+                                     (post-announce-item msg)
+                                     (swap! s assoc :announce-msg "")))}
+      [:input {:type "text"
+               :placeholder "Type something...."
+               :value (:announce-msg @s "")
+               :on-change #(swap! s assoc :announce-msg (-> % .-target .-value))}]
+      (let [msg (:announce-msg @s "")
+            disabled (s/blank? msg)]
+        [:button {:disabled disabled
+                  :class (if disabled "disabled" "")}
+         "Send"])]
+     ]))
 
 (defn admin []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])]
     (when (and (= "/admin" (first @active))
                (:isadmin @user))
-      [admin-container])))
+      [:div.page-container
+       [admin-container]])))

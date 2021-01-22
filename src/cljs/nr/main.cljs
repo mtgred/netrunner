@@ -4,23 +4,23 @@
             [nr.auth :refer [auth-forms auth-menu]]
             [nr.account :refer [account]]
             [nr.cardbrowser :refer [card-browser]]
-            [nr.chat :refer [chat]]
+            [nr.chat :refer [chat-page]]
             [nr.deckbuilder :refer [deck-builder]]
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
-            [nr.history :refer [history]]
+            [nr.history :refer [navigate-to-current]]
             [nr.navbar :refer [navbar]]
-            [nr.news :refer [news news-state]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
+            [nr.features :refer [features]]
             [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
 
-(defn status []
+(defn- status []
   (r/with-let [user (r/cursor app-state [:user])
                games (r/cursor app-state [:games])
                gameid (r/cursor app-state [:gameid])]
@@ -57,27 +57,63 @@
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
 
-(defn mount-root []
-  ; navbar stuff
-  (r/render [navbar] (.getElementById js/document "left-menu"))
-  (r/render [status] (.getElementById js/document "status"))
-  (r/render [auth-menu] (.getElementById js/document "right-menu"))
-  (r/render [auth-forms] (.getElementById js/document "auth-forms"))
-  ; main screens
-  (r/render [reagent-modals/modal-window] (.getElementById js/document "modal-window"))
-  (r/render [about] (.getElementById js/document "about"))
-  (r/render [account] (.getElementById js/document "account"))
-  (r/render [card-browser] (.getElementById js/document "cardbrowser"))
-  (r/render [chat] (.getElementById js/document "chat"))
-  (r/render [deck-builder] (.getElementById js/document "deckbuilder"))
-  (r/render [gameboard] (.getElementById js/document "gameboard"))
-  (r/render [game-lobby] (.getElementById js/document "gamelobby"))
-  (r/render [help] (.getElementById js/document "help"))
-  (r/render [news] (.getElementById js/document "news"))
-  (r/render [stats] (.getElementById js/document "stats"))
-  (r/render [tournament] (.getElementById js/document "tournament"))
-  (r/render [admin] (.getElementById js/document "admin"))
-  (r/render [users] (.getElementById js/document "users")))
+(defn pages []
+  (r/create-class
+    {:display-name "main-pages"
+
+     :component-did-mount
+     (fn [] (navigate-to-current))
+
+     :reagent-render
+     (fn []
+       [:div#main.carousel.slide {:data-interval "false"}
+        [:div.carousel-inner
+         [:div.item.active
+          [:div.home-bg]
+          [chat-page]]
+         [:div.item
+          [:div.cardbrowser-bg]
+          [card-browser]]
+         [:div.item
+          [:div.deckbuilder-bg]
+          [deck-builder]]
+         [:div.item
+          [:div#gamelobby [game-lobby]]
+          [:div#gameboard [gameboard]]]
+         [:div.item
+          [:div.help-bg]
+          [help]]
+         [:div.item
+          [:div.account-bg]
+          [account]]
+         [:div.item
+          [:div.stats-bg]
+          [stats]]
+         [:div.item
+          [:div.about-bg]
+          [about]]
+         [:div.item
+          [:div.about-bg]
+          [tournament]]
+         [:div.item
+          [:div.help-bg]
+          [admin]]
+         [:div.item
+          [:div.account-bg]
+          [users]]
+         [:div.item
+          [:div.help-bg]
+          [features]]]])}))
+
+(defn main-window []
+  [:<>
+   [:nav.topnav.blue-shade
+    [:div#left-menu [navbar]]
+    [:div#right-menu [auth-menu]]
+    [:div#status [status]]]
+   [:div#auth-forms [auth-forms]]
+   [reagent-modals/modal-window]
+   [pages]])
 
 (defn init! []
-  (mount-root))
+  (r/render [main-window] (.getElementById js/document "main-content")))

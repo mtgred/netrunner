@@ -1,7 +1,7 @@
 (ns nr.users
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.cardbrowser :refer [non-game-toast] :as cb]
+            [nr.utils :refer [non-game-toast]]
             [nr.ws :refer [ws-send!]]
             [nr.appstate :refer [app-state]]
             [clojure.string :as s]
@@ -9,8 +9,8 @@
 
 (def users-state (r/atom {}))
 
-(go (swap! users-state assoc :mods (:json (<! (GET "/admin/mods")))))
-(go (swap! users-state assoc :specials (:json (<! (GET "/admin/specials")))))
+(go (when (:isadmin (:user @app-state)) (swap! users-state assoc :mods (:json (<! (GET "/admin/mods"))))))
+(go (when (:isadmin (:user @app-state)) (swap! users-state assoc :specials (:json (<! (GET "/admin/specials"))))))
 
 (defn- update-mod-response [response]
   (case (:status response)
@@ -94,4 +94,5 @@
                active (r/cursor app-state [:active-page])]
     (when (and (= "/users" (first @active))
                (:isadmin @user))
-      [users-container])))
+      [:div.page-container
+       [users-container]])))
