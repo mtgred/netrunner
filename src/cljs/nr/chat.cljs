@@ -9,6 +9,7 @@
             [nr.avatar :refer [avatar]]
             [nr.gameboard :refer [card-preview-mouse-over card-preview-mouse-out card-zoom] :as gameboard]
             [nr.news :refer [news]]
+            [nr.cardbrowser :refer [image-url]]
             [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
             [nr.ws :as ws]
             [reagent.core :as r]))
@@ -192,6 +193,18 @@
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}
         (render-message (:msg message))]]])))
+
+(defn card-zoom-image
+  [card]
+  [:div.card-preview.blue-shade
+   (when-let [url (image-url card)]
+     [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])])
+
+(defn card-zoom [zoom-card]
+  (if-let [card @zoom-card]
+    (do (-> ".card-zoom" js/$ (.addClass "fade"))
+        [card-zoom-image card])
+    (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn fetch-all-messages []
   (doseq [channel (keys (:channels @app-state))]
