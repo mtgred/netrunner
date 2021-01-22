@@ -5,7 +5,7 @@
             [monger.operators :refer :all]
             [monger.query :as mq]
             [web.ws :as ws]
-            [web.utils :refer [response]]
+            [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
@@ -224,5 +224,5 @@
   (if username
     (let [{:keys [history]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history"])
           history (or history {})]
-      (response 200 history))
+      (json-response 200 history))
     (response 401 {:message "Unauthorized"})))

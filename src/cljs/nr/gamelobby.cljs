@@ -5,6 +5,7 @@
             [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
+            [nr.ajax :refer [GET]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [image-url non-game-toast] :as cb]
@@ -12,6 +13,7 @@
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.game-row :refer [game-row]]
+            [nr.history :refer [history]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
             [nr.utils :refer [slug->format cond-button]]
@@ -130,6 +132,30 @@
              :password ""
              :allow-spectator true
              :spectatorhands true))))
+
+(defn start-saved-replay [s gameid]
+  (authenticated
+    (fn [user]
+      (swap! s assoc
+             :title (str (:username user) "'s game")
+             :side "Corp"
+             :format "standard"
+             :editing false
+             :replay true
+             :flash-message ""
+             :protected false
+             :password ""
+             :allow-spectator true
+             :spectatorhands true)
+      (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
+            (when (= 200 status)
+              (let [replay (js->clj json :keywordize-keys true)
+                    history (:history replay)
+                    init-state (first history)
+                    init-state (assoc-in init-state [:options :spectatorhands] true)
+                    diffs (rest history)
+                    init-state (assoc init-state :replay-diffs diffs)]
+                (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))]))))))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
@@ -317,6 +343,12 @@
 
 (defn games-list-panel [s games gameid password-gameid user]
   [:div.games
+   (let [params (.-search (.-location js/window))]
+     (when (not-empty params)
+       (.replaceState (.-history js/window) {} "" "/play") ; remove GET parameters from url
+       (start-saved-replay s (subs params 1)) ; remove question mark from params
+       (resume-sound)
+       nil))
    [:div.button-bar
     [:div.rooms
      [room-tab user s games "tournament" "Tournament"]
