@@ -111,7 +111,7 @@
              :format "standard"
              :editing true
              :replay false
-             :save-replay true
+             :save-replay (if (= "casual" (:room @s)) false true)
              :flash-message ""
              :protected false
              :password ""
