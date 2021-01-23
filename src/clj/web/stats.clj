@@ -195,6 +195,7 @@
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
                           :history (generate-replay state)
+                          :replay-shared false
                           :log (:log @state)}})
       (remove-old-history (get-in @state [:corp :user]))
       (remove-old-history (get-in @state [:corp :runner]))
@@ -221,8 +222,27 @@
 
 (defn fetch-history [{{username :username} :user
                       {:keys [gameid]}     :params}]
+  (let [{:keys [history replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history" "replay-shared"])
+        history (or history {})]
+    (println "r-s:" replay-shared)
+    (if (or username
+            replay-shared)
+      (json-response 200 history)
+      (response 401 {:message "Unauthorized"}))))
+
+(defn share-replay [{{username :username} :user
+                     {:keys [gameid]}     :params}]
   (if username
     (let [{:keys [history]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history"])
           history (or history {})]
-      (json-response 200 history))
+      (try
+        (mc/update db :game-logs
+                   {$and [{:gameid (str gameid)}
+                          {$or [{:corp.player.username username}
+                                {:runner.player.username username}]}]}
+                   {"$set" {:replay-shared true}})
+        (response 200 {:message "Shared"})
+        (catch Exception e
+          (println "Caught exception sharing game: " (.getMessage e))
+          (response 500 {:message "Server error"}))))
     (response 401 {:message "Unauthorized"})))

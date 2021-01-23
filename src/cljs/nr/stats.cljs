@@ -27,6 +27,12 @@
   #(do (swap! app-state assoc :stats (-> % :userstats))
        (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
 
+(defn share-replay [state gameid]
+  (go (let [{:keys [status json]} (<! (GET (str "/profile/history/share/" gameid)))]
+        (when (= 200 status)
+          (swap! state assoc :view-game
+                 (assoc (:view-game @state) :replay-shared true))))))
+
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
@@ -41,11 +47,14 @@
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]
-       (when (:history game)
-         [:a.button {:href (str "/replay/" (:gameid game))} "Share replay"])
+       (when (and (:history game)
+                  (not (:replay-shared game)))
+         [:button {:on-click #(share-replay state (:gameid game))} "Share replay"])
        (if (:history game)
          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} "Download replay"]
-         "Replay unavailable")]]]))
+         "Replay unavailable")]
+      (when (:replay-shared game)
+        [:p [:input.share-link {:type "text" :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
 
 (defn clear-user-stats []
   (authenticated
