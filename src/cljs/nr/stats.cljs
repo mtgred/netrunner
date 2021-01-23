@@ -35,7 +35,7 @@
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
-     [:h4 (:title game)]
+     [:h4 (:title game) (when (:replay-shared game) " ⭐")]
      [:div
       [:div (str "Lobby: " (capitalize (str (:room game))))]
       [:div (str "Format: " (capitalize (str (:format game))))]
