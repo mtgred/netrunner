@@ -67,6 +67,15 @@
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
 
+(defn scroll-timeline []
+  (when-let [timeline (-> js/document (.getElementById "timeline"))]
+    (let [new-step (-> js/document (.getElementsByClassName "step") array-seq (nth (:n @replay-status)))
+          new-step-left (+ (.-left (.getBoundingClientRect new-step))
+                           (.-scrollLeft timeline))]
+      (set! (.-scrollLeft timeline)
+            (- new-step-left
+               (/ (.-clientWidth timeline) 2))))))
+
 (defn replay-reached-end? []
   (and (empty? (:diffs @replay-status))
        (< (inc (:n @replay-status))
@@ -98,14 +107,8 @@
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
       (reset! lock false)
       (reset! last-state @game-state)
-      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})
-      (when-let [timeline (-> js/document (.getElementById "timeline"))]
-        (let [new-step (-> js/document (.getElementsByClassName "step") array-seq (nth n))
-              new-step-left (+ (.-left (.getBoundingClientRect new-step))
-                               (.-scrollLeft timeline))]
-          (set! (.-scrollLeft timeline)
-                (- new-step-left
-                   (/ (.-clientWidth timeline) 2))))))))
+      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
+  (scroll-timeline))
 
 (defn replay-forward []
   (swap! app-state assoc :start-shown true)
@@ -119,7 +122,8 @@
         (replay-apply-patch (first diffs))
         (if (empty? (rest diffs))
           (replay-jump (inc n))
-          (swap! replay-status assoc :diffs (rest diffs)))))))
+          (swap! replay-status assoc :diffs (rest diffs))))))
+  (scroll-timeline))
 
 (defn replay-jump-to [{:keys [n d]}]
   (replay-jump n)
