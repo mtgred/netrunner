@@ -157,7 +157,8 @@
               :allow-spectator true
               :spectatorhands true)
        (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
-             (when (= 200 status)
+             (case status
+               200
                (let [replay (js->clj json :keywordize-keys true)
                      history (:history replay)
                      init-state (first history)
@@ -168,7 +169,9 @@
                  (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js
                                                                                   (if jump-to
                                                                                     (assoc init-state :replay-jump-to jump-to)
-                                                                                    init-state)))])))))))))
+                                                                                    init-state)))]))
+               404
+               (non-game-toast "Replay link invalid." "error" {:time-out 0 :close-button true}))))))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)

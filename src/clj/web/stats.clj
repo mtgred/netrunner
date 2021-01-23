@@ -227,7 +227,9 @@
         replay (or replay {})]
     (if (or username
             replay-shared)
-      (json-response 200 replay)
+      (if (empty? replay)
+        (response 404 {:message "Replay not found"})
+        (json-response 200 replay))
       (response 401 {:message "Unauthorized"}))))
 
 (defn share-replay [{{username :username} :user
