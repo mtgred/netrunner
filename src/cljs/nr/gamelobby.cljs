@@ -174,6 +174,7 @@
                                      history (:history replay)
                                      init-state (first history)
                                      init-state (assoc-in init-state [:options :spectatorhands] true)
+                                     init-state (assoc init-state :gameid "replay")
                                      diffs (rest history)
                                      init-state (assoc init-state :replay-diffs diffs)]
                                  (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
@@ -189,7 +190,7 @@
           (swap! s assoc :flash-message "Select a valid replay file.")
 
           :else
-          (do (swap! s assoc :editing false)
+          (do (swap! s assoc :editing false :gameid "replay")
               (start-replay @s)))
         (cond
           (empty? (:title @s))
