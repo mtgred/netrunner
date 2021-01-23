@@ -522,6 +522,25 @@
                                                            :format (:format game "standard")}])}
                      "Select Deck"])]))
              players))]
+        [:h3 "Options"]
+        (println game)
+        [:ul.options
+         (when (:allow-spectator game)
+           [:li "Allow spectators"])
+         (when (:spectatorhands game)
+           [:li "Make players' hidden information visible to spectators"])
+         (when (:password game)
+           [:li "Password protected"])
+         (when (:save-replay game)
+           [:li "Save replay"])
+         (when (:save-replay game)
+           [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
+            [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
+             " The file is available only after the game is finished."]
+            [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
+            [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
+             " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]])]
+
         (when (:allow-spectator game)
           [:div.spectators
            (let [c (:spectator-count game)]
