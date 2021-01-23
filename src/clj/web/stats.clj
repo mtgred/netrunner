@@ -155,11 +155,12 @@
                                        :deck-name (get-in runner [:deck :name])
                                        :identity (get-in runner [:deck :identity :title])}})))
 
-(defn remove-old-history [{:keys [username] :as user}]
+(defn delete-old-history [{:keys [username] :as user}]
   (let [games (mq/with-collection db "game-logs"
                 (mq/find {$and [{$or [{:corp.player.username username}
                                       {:runner.player.username username}]}
-                                {:history {$exists true}}]})
+                                {:history {$exists true}}
+                                {:replay-shared false}]})
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
     (doseq [game games]
@@ -194,11 +195,11 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :history (generate-replay state)
+                          :history (when (get-in @state [:options :save-replay]) (generate-replay state))
                           :replay-shared false
                           :log (:log @state)}})
-      (remove-old-history (get-in @state [:corp :user]))
-      (remove-old-history (get-in @state [:corp :runner]))
+      (delete-old-history (get-in @state [:corp :user]))
+      (delete-old-history (get-in @state [:corp :runner]))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))
@@ -224,7 +225,6 @@
                       {:keys [gameid]}     :params}]
   (let [{:keys [history replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history" "replay-shared"])
         history (or history {})]
-    (println "r-s:" replay-shared)
     (if (or username
             replay-shared)
       (json-response 200 history)

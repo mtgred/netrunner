@@ -49,7 +49,7 @@
   (get-in (swap! state update-in [:rid] inc) [:rid]))
 
 (defn new-state
-  [gameid room now spectatorhands corp runner]
+  [gameid room now spectatorhands save-replay corp runner]
   (map->State
     {:gameid gameid :log [] :active-player :runner :end-turn true
      :history []
@@ -57,6 +57,7 @@
      :rid 0 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0
      :stats {:time {:started now}}
-     :options {:spectatorhands spectatorhands}
+     :options {:spectatorhands spectatorhands
+               :save-replay save-replay}
      :corp corp
      :runner runner}))

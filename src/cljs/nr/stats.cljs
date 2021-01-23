@@ -133,14 +133,16 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason] :as game}]
+  [state {:keys [title corp runner turn winner reason replay-shared] :as game}]
   (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
         runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
       {:on-click #(fetch-log state game)}
       "View log"]
-     [:h4 title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")"]
+     [:h4
+      {:title (when replay-shared "Replay shared")}
+      title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")" (when replay-shared " ⭐")]
 
      [:div
       [:span.player
@@ -161,12 +163,19 @@
   (let [games (reverse (:games @state))]
     [:div.game-panel
      [:div.game-list
+      [:div.controls
+       [:button {:on-click #(swap! state update :filter-replays not)}
+       (if (:filter-replays @state)
+         "Show all games"
+         "Only show shared")]]
       (if (empty? games)
         [:h4 "No games"]
         (doall
           (for [game games]
-            ^{:key (:gameid game)}
-            [game-row state game])))]]))
+            (when (or (not (:filter-replays @state))
+                      (:replay-shared game))
+              ^{:key (:gameid game)}
+              [game-row state game]))))]]))
 
 (defn right-panel [state]
   (if (:view-game @state)

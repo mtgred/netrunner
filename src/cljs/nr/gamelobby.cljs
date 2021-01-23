@@ -111,6 +111,7 @@
              :format "standard"
              :editing true
              :replay false
+             :save-replay true
              :flash-message ""
              :protected false
              :password ""
@@ -193,7 +194,7 @@
           :else
           (do (swap! s assoc :editing false)
               (ws/ws-send! [:lobby/create
-                            (select-keys @s [:title :password :allow-spectator
+                            (select-keys @s [:title :password :allow-spectator :save-replay
                                              :spectatorhands :side :format :room])])))))))
 
 (defn leave-lobby [s]
@@ -446,7 +447,7 @@
                    :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
                    :disabled (not (:allow-spectator @s))}]
           "Make players' hidden information visible to spectators"]]
-        [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
+        [:div.infobox.blue-shade {:style {:display (if (:spectatorhands @s) "block" "none")}}
          [:p "This will reveal both players' hidden information to ALL spectators of your game, "
           "including hand and face-down cards."]
          [:p "We recommend using a password to prevent strangers from spoiling the game."]]
@@ -463,7 +464,18 @@
                                :type "password"
                                :value (:password @s)
                                :placeholder "Password"
-                               :maxLength "30"}]])]])))
+                               :maxLength "30"}]])
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:save-replay @s)
+                   :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
+          "Save replay"]]
+        [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
+         [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
+          " The file is available only after the game is finished."]
+         [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
+         [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
+          " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]])))
 
 (defn pending-game
   [s decks games gameid password-gameid sets user]
