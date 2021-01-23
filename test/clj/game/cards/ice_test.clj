@@ -1960,8 +1960,8 @@
       (is (zero? (count (:subroutines (refresh io))))))))
 
 (deftest inazuma
-  ;;Inazuma
-  (testing "basic jack out test"
+  ;; Inazuma
+  (testing "Cannot jack out after encounter of next ICE"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
@@ -1979,42 +1979,50 @@
         (run-continue state)
         (fire-subs state (refresh inazuma))
         (run-continue state)
+        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
         (rez state :corp cl)
         (run-continue state)
-        (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
         (fire-subs state cl)
         (run-continue state)
-        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out")))))
-;TODO: prepared test for nonbreakable subs
-;  (testing "basic unbreakable subs test"
-;    (do-game
-;      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-;                        :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
-;                        :credits 30}
-;               :runner {:hand [(qty "Sure Gamble" 5) "Bukhgalter"]
-;                        :credits 20}})
-;      (play-from-hand state :corp "Ice Wall" "HQ")
-;      (play-from-hand state :corp "Cortex Lock" "HQ")
-;      (play-from-hand state :corp "Inazuma" "HQ")
-;      (take-credits state :corp)
-;      (play-from-hand state :runner "Bukhgalter")
-;      (let [inazuma (get-ice state :hq 2)
-;            cl (get-ice state :hq 1)
-;            buk (get-program state 0)]
-;        (run-on state "HQ")
-;        (rez state :corp inazuma)
-;        (run-continue state)
-;        (fire-subs state (refresh inazuma))
-;        (run-continue state)
-;        (rez state :corp cl)
-;        (run-continue state)
-;        ;;should be blocked
-;        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh buk)})
-;        ;;Inazuma subs prevented break on next ice
-;        (is (second-last-log-contains? state "cannot break?") "Runner couldn't break sub")
-;        (changes-val-macro -3 (count (:hand (get-runner)))
-;                                  "3 net damage from Cortex Lock"
-;                                  (fire-subs state (refresh cl)))))))
+        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out"))))
+ (testing "Cannot break subroutines of next ICE"
+   (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
+                       :credits 30}
+                :runner {:hand [(qty "Sure Gamble" 5) "Bukhgalter" "Corroder"]
+                         :credits 20}})
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Cortex Lock" "HQ")
+     (play-from-hand state :corp "Inazuma" "HQ")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Bukhgalter")
+     (play-from-hand state :runner "Corroder")
+     (let [inazuma (get-ice state :hq 2)
+           cortex-lock (get-ice state :hq 1)
+           ice-wall (get-ice state :hq 0)
+           bukhgalter (get-program state 0)
+           corroder (get-program state 1)]
+       (run-on state "HQ")
+       (rez state :corp inazuma)
+       (run-continue state)
+       (fire-subs state (refresh inazuma))
+       (run-continue state)
+       (rez state :corp cortex-lock)
+       (run-continue state)
+       ;; Inazuma subs prevented break on next ICE
+       (card-ability state :runner bukhgalter "Break 1 Sentry subroutine")
+       (is (empty? (:prompt (get-runner))) "Bukhgalter can't break so no prompt")
+       (changes-val-macro -2 (count (:hand (get-runner)))
+                          "2 net damage from Cortex Lock"
+                          (fire-subs state (refresh cortex-lock)))
+       ;; Next ICE is fine to break again
+       (run-continue state)
+       (rez state :corp ice-wall)
+       (run-continue state)
+       (card-ability state :runner corroder 0)
+       (click-prompt state :runner "End the run")
+       (is (empty? (remove :broken (:subroutines (refresh ice-wall)))) "All subroutines broken")))))
 
 (deftest interrupt-0
   ;; Interrupt 0

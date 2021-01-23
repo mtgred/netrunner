@@ -1660,23 +1660,42 @@
 
 (deftest dhegdheer
   ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
-  (do-game
-    (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
-    (take-credits state :corp)
-    (core/gain state :runner :credit 5)
-    (play-from-hand state :runner "Dhegdheer")
-    (play-from-hand state :runner "Adept")
-    (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
-    (is (= 2 (core/available-mu state)) "2 MU used")
-    (let [dheg (get-program state 0)
-          adpt (get-program state 1)]
-      (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
-      (card-ability state :runner dheg 1)
-      (click-card state :runner (refresh adpt))
-      (let [hosted-adpt (first (:hosted (refresh dheg)))]
-        (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
-        (is (= 4 (core/available-mu state)) "0 MU used")
-        (is (= 6 (get-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+  (testing "with credit savings"
+    (do-game
+      (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Dhegdheer")
+      (play-from-hand state :runner "Adept")
+      (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
+      (is (= 2 (core/available-mu state)) "2 MU used")
+      (let [dheg (get-program state 0)
+            adpt (get-program state 1)]
+        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
+        (card-ability state :runner dheg 1)
+        (click-card state :runner (refresh adpt))
+        (let [hosted-adpt (first (:hosted (refresh dheg)))]
+          (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
+          (is (= 4 (core/available-mu state)) "0 MU used")
+          (is (= 6 (get-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+  (testing "without credit savings"
+    (do-game
+      (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Dhegdheer")
+      (play-from-hand state :runner "Adept")
+      (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
+      (is (= 2 (core/available-mu state)) "2 MU used")
+      (let [dheg (get-program state 0)
+            adpt (get-program state 1)]
+        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
+        (card-ability state :runner dheg 2)
+        (click-card state :runner (refresh adpt))
+        (let [hosted-adpt (first (:hosted (refresh dheg)))]
+          (is (= 3 (:credit (get-runner))) "4 credits left after hosting")
+          (is (= 4 (core/available-mu state)) "0 MU used")
+          (is (= 6 (get-strength (refresh hosted-adpt))) "Adept at 6 strength hosted"))))))
 
 (deftest disrupter
   ;; Disrupter
@@ -3481,16 +3500,17 @@
 (deftest overmind
   ;; Overmind - Start with counters equal to unused MU
   (do-game
-    (new-game {:runner {:deck ["Overmind" (qty "Akamatsu Mem Chip" 2)]}})
+    (new-game {:runner {:deck ["Overmind" "Deep Red" "Sure Gamble" "Akamatsu Mem Chip" ]}})
     (take-credits state :corp)
-    (take-credits state :runner 1)
+    (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Akamatsu Mem Chip")
-    (play-from-hand state :runner "Akamatsu Mem Chip")
-    (is (= 6 (core/available-mu state)))
-    (play-from-hand state :runner "Overmind")
     (is (= 5 (core/available-mu state)))
+    (play-from-hand state :runner "Deep Red")
+    (is (= 8 (core/available-mu state)))
+    (play-from-hand state :runner "Overmind")
+    (is (= 7 (core/available-mu state)))
     (let [ov (get-program state 0)]
-      (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
+      (is (= 7 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest paintbrush
   ;; Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run

@@ -3,7 +3,7 @@
     [cljs.core.async.macros :as asyncm :refer [go go-loop]])
   (:require
     [cljs.core.async :as async :refer [<! >! put! chan]]
-    [nr.cardbrowser :refer [non-game-toast] :as cb]
+    [nr.utils :refer [non-game-toast]]
     [nr.ajax :refer [?csrf-token]]
     [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
@@ -29,12 +29,12 @@
       (when (and (:open? old-state)
                  (not (:open? new-state))
                  (not (:first-open? new-state)))
-        (cb/non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
+        (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
       (when (and (not (:open? old-state))
                  (:open? new-state)
                  (not (:first-open? new-state)))
         (.clear js/toastr)
-        (cb/non-game-toast "Reconnected to server" "success" nil))))
+        (non-game-toast "Reconnected to server" "success" nil))))
 
   (defn handle-netrunner-msg [[event msg]]
     (let [handler (get @ws-handlers event)]

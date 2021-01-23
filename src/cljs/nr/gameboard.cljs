@@ -1892,8 +1892,9 @@
      (when (= "encounter-ice" (:phase @run))
        [cond-button
         "Pass ice and jack out"
-        (or (not= "runner" (:no-action @run))
-            (not (:jack-out-after-pass @run)))
+        (and (not (:cannot-jack-out @run))
+             (or (not= "runner" (:no-action @run))
+                 (not (:jack-out-after-pass @run))))
         #(send-command "continue" {:jack-out true})])]))
 
 (defn run-div

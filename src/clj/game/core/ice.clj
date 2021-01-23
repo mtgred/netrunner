@@ -5,7 +5,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.effects :refer [get-effects register-floating-effect sum-effects]]
+    [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [card-flag?]]
     [game.core.payment :refer [can-pay? merge-costs]]
@@ -226,12 +226,13 @@
 (defn breakable-subroutines-choice
   "Takes an ice, returns the breakable subroutines for a choices prompt"
   [state side eid card ice]
-  (for [sub (remove #(or (:broken %)
-                         (not (if (fn? (:breakable %))
-                                ((:breakable %) state side eid ice [card])
-                                (:breakable % true))))
-                    (:subroutines ice))]
-    (make-label (:sub-effect sub))))
+  (when-not (any-effects state side :cannot-break-subs-on-ice true? ice)
+    (for [sub (remove #(or (:broken %)
+                           (not (if (fn? (:breakable %))
+                                  ((:breakable %) state side eid ice [card])
+                                  (:breakable % true))))
+                      (:subroutines ice))]
+      (make-label (:sub-effect sub)))))
 
 (defn resolve-subroutine
   [ice sub]

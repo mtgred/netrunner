@@ -6,8 +6,8 @@
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span
-                              influence-dots slug->format format->slug render-icons]]
+            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
+                              influence-dots slug->format format->slug render-icons non-game-toast]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -139,13 +139,6 @@
   "Add copies of alt art cards to the list of cards. If `only-version` is nil, all alt versions will be added."
   [only-version cards]
   (reduce (partial expand-alts only-version) () (reverse cards)))
-
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
 
 (defn- post-response [response]
   (if (= 200 (:status response))
@@ -352,31 +345,38 @@
                   :onError #(-> (swap! cv assoc :show-text true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
-(defn card-list-view [state]
-  (let [selected (selected-set-name state)
-        selected-cycle (-> selected s/lower-case (s/replace " " "-"))
-        combined-cards (concat @all-cards (:previous-cards @app-state))
-        [alt-filter cards] (cond
-                             (= selected "All") [nil combined-cards]
-                             (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]
-                             (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) combined-cards)]
-                             (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected combined-cards)]
-                             :else
-                             [nil (filter #(= (:setname %) selected) combined-cards)])
-        cards (->> cards
-                   (filter-cards (:side-filter @state) :side)
-                   (filter-cards (:faction-filter @state) :faction)
-                   (filter-cards (:type-filter @state) :type)
-                   (filter-format (:format-filter @state))
-                   (filter-title (:search-query @state))
-                   (insert-alt-arts alt-filter)
-                   (sort-by (sort-field (:sort-field @state)))
-                   (take (* (:page @state) 28)))]
-    [:div.card-list {:on-scroll #(handle-scroll % state)}
-     (doall
-       (for [card cards]
-         ^{:key (str (image-url card true) "-" (:code card))}
-         [card-view card state]))]))
+(defn card-list-view [state scroll-top]
+  (r/create-class
+    {
+     :display-name "card-list-view"
+     :component-did-mount #(set-scroll-top % @scroll-top)
+     :component-will-unmount #(store-scroll-top % scroll-top)
+     :reagent-render
+     (fn [state scroll-top]
+       (let [selected (selected-set-name state)
+             selected-cycle (-> selected s/lower-case (s/replace " " "-"))
+             combined-cards (concat @all-cards (:previous-cards @app-state))
+             [alt-filter cards] (cond
+                                  (= selected "All") [nil combined-cards]
+                                  (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]
+                                  (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) combined-cards)]
+                                  (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected combined-cards)]
+                                  :else
+                                  [nil (filter #(= (:setname %) selected) combined-cards)])
+             cards (->> cards
+                        (filter-cards (:side-filter @state) :side)
+                        (filter-cards (:faction-filter @state) :faction)
+                        (filter-cards (:type-filter @state) :type)
+                        (filter-format (:format-filter @state))
+                        (filter-title (:search-query @state))
+                        (insert-alt-arts alt-filter)
+                        (sort-by (sort-field (:sort-field @state)))
+                        (take (* (:page @state) 28)))]
+         [:div.card-list {:on-scroll #(handle-scroll % state)}
+          (doall
+            (for [card cards]
+              ^{:key (str (image-url card true) "-" (:code card))}
+              [card-view card state]))]))}))
 
 (defn handle-search [e state]
   (doseq [filter [:set-filter :type-filter :faction-filter]]
@@ -472,24 +472,25 @@
        "Clear"]])
 
 (defn card-browser []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    (when (= "/cards" (first @active))
-      (let [state (r/atom {:search-query ""
-                           :sort-field "Faction"
-                           :format-filter "All"
-                           :set-filter "All"
-                           :type-filter "All"
-                           :side-filter "All"
-                           :faction-filter "All"
-                           :page 1
-                           :decorate-card true
-                           :selected-card nil})]
-        (fn []
-          (.focus (js/$ ".search"))
-          [:div.cardbrowser
-           [:div.blue-shade.panel.filters
-            [query-builder state]
-            [sort-by-builder state]
-            [dropdown-builder state]
-            [clear-filters state]]
-           [card-list-view state]])))))
+  (let [active (r/cursor app-state [:active-page])
+        state (r/atom {:search-query ""
+                       :sort-field "Faction"
+                       :format-filter "All"
+                       :set-filter "All"
+                       :type-filter "All"
+                       :side-filter "All"
+                       :faction-filter "All"
+                       :page 1
+                       :decorate-card true
+                       :selected-card nil})
+        scroll-top (atom 0)]
+
+    (fn []
+      (when (= "/cards" (first @active))
+        [:div#cardbrowser.cardbrowser
+         [:div.blue-shade.panel.filters
+          [query-builder state]
+          [sort-by-builder state]
+          [dropdown-builder state]
+          [clear-filters state]]
+         [card-list-view state scroll-top]]))))

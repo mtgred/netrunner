@@ -51,8 +51,8 @@
                               (make-run state side eid target nil card {:ignore-costs true})
                               (effect-completed state side eid)))))
    :events [{:event :run-ends
-             :req (req (:unsuccessful target))
-             :optional {:req (req (not (get-in card [:special :run-again])))
+             :optional {:req (req (and (not (get-in card [:special :run-again]))
+                                       (:unsuccessful target)))
                         :player :runner
                         :prompt "Make another run on the same server?"
                         :yes-ability
@@ -1336,7 +1336,8 @@
    :events [{:event :successful-run
              :async true
              :msg "gain 9 [Credits] and take 1 tag"
-             :req (req this-card-run)
+             :req (req (and (= :hq (target-server context))
+                            this-card-run))
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (gain-credits state :runner eid 9)))}]})
 

@@ -1687,29 +1687,40 @@
    :runner-abilities [(bioroid-break 2 2)]})
 
 (defcard "Inazuma"
-  {:subroutines [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"
-                  :effect (effect
-                            (register-events
-                              card
-                              [{:event :encounter-ice
-                                :duration :end-of-run
-                                :unregister-once-resolved true
-                                :msg (msg "prevent the runner from breaking subroutines on " (:title (:ice context)))}]))}
-                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"
-                  :effect (effect
-                            (register-events
-                              card
-                              [{:event :encounter-ice
-                                :duration :end-of-run
-                                :unregister-once-resolved true
-                                :msg "prevent the runner from jacking out"
-                                :effect (req (prevent-jack-out state side)
-                                             (register-events
-                                               state side card
-                                               [{:event :end-of-encounter
-                                                 :duration :end-of-encounter
-                                                 :unregister-once-resolved true
-                                                 :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
+  {:subroutines
+   [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"
+     :effect
+     (effect (register-events
+              card
+              [{:event :encounter-ice
+                :duration :end-of-run
+                :unregister-once-resolved true
+                :msg (msg "prevent the runner from breaking subroutines on " (:title (:ice context)))
+                :effect (effect (register-floating-effect
+                                 card
+                                 (let [encountered-ice (:ice context)]
+                                   {:type :cannot-break-subs-on-ice
+                                    :duration :end-of-encounter
+                                    :req (req (same-card? encountered-ice target))
+                                    :value true})))}]))}
+    {:msg "prevent the Runner from jacking out until after the next piece of ICE"
+     :effect
+     (req (prevent-jack-out state side)
+          (register-events
+           state side card
+           [{:event :encounter-ice
+             :duration :end-of-run
+             :unregister-once-resolved true
+             :effect
+             (req (let [encountered-ice (:ice context)]
+                    (register-events
+                     state side card
+                     [{:event :end-of-encounter
+                       :duration :end-of-encounter
+                       :unregister-once-resolved true
+                       :msg (msg "can jack out again after encountering " (:title encountered-ice))
+                       :effect (req (swap! state update :run dissoc :cannot-jack-out))
+                       :req (req (same-card? encountered-ice (:ice context)))}])))}]))}]})
 
 (defcard "Information Overload"
   {:on-encounter (tag-trace 1)

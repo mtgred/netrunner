@@ -118,10 +118,10 @@
 
 (defcard "Aeneas Informant"
   {:events [{:event :no-trash
-             :req (req (and (:trash target)
-                            (not (in-discard? target))))
              :optional
              {:autoresolve (get-autoresolve :auto-reveal-and-gain)
+              :req (req (and (:trash target)
+                             (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                            (when-not (installed? target)
@@ -685,8 +685,8 @@
 (defcard "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (= :archives (target-server context)))
              :optional {:prompt "Place a virus counter on Crypt?"
+                        :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-add)
                         :yes-ability {:effect (effect (add-counter card :virus 1)
                                                       (system-msg "places a virus counter on Crypt"))}}}]

@@ -105,19 +105,24 @@
 (defn new-game [s]
   (authenticated
     (fn [user]
-      (swap! s assoc
-             :title (str (:username user) "'s game")
-             :side "Corp"
-             :format "standard"
-             :editing true
-             :replay false
-             :save-replay (if (= "casual" (:room @s)) false true)
-             :flash-message ""
-             :protected false
-             :password ""
-             :allow-spectator true
-             :spectatorhands false)
-      (-> ".game-title" js/$ .select))))
+      (let [fmt (:format (:create-game-deck @app-state) "standard")
+            side (:side (:identity (:create-game-deck @app-state)) "Corp")]
+        (swap! s assoc
+               :title (str (:username user) "'s game")
+               :side side
+               :format fmt
+               :editing true
+               :replay false
+               :save-replay (if (= "casual" (:room @s)) false true)
+               :flash-message ""
+               :protected false
+               :password ""
+               :allow-spectator true
+               :spectatorhands false
+               :create-game-deck (:create-game-deck @app-state))
+        (swap! app-state assoc :editing-game true)
+        (swap! app-state dissoc :create-game-deck)
+        (-> ".game-title" js/$ .select)))))
 
 (defn replay-game [s]
   (authenticated
@@ -202,6 +207,7 @@
 
           :else
           (do (swap! s assoc :editing false)
+              (swap! app-state dissoc :editing-game)
               (ws/ws-send! [:lobby/create
                             (select-keys @s [:title :password :allow-spectator :save-replay
                                              :spectatorhands :side :format :room])])))))))
@@ -411,7 +417,10 @@
         [:button {:type "button"
                   :on-click #(create-game s)} "Start replay"]
         [:button {:type "button"
-                  :on-click #(swap! s assoc :editing false)} "Cancel"]]
+                  :on-click #(do
+                               (swap! s assoc :editing false)
+                               (swap! app-state dissoc :editing-game))}
+         "Cancel"]]
        (when-let [flash-message (:flash-message @s)]
          [:p.flash-message flash-message])
         [:div [:input {:field :file
@@ -500,6 +509,10 @@
   (let [game (some #(when (= @gameid (:gameid %)) %) @games)
         players (:players game)]
     (when game
+      (when-let [create-deck (:create-game-deck @s)]
+        (ws/ws-send! [:lobby/deck (:_id create-deck)])
+        (swap! app-state dissoc :create-game-deck)
+        (swap! s dissoc :create-game-deck))
       [:div
        [:div.button-bar
         (when (first-user? players @user)
@@ -585,6 +598,9 @@
                active (r/cursor app-state [:active-page])]
     (when (= "/play" (first @active))
       (authenticated (fn [_] nil))
+      (when (and (not (or @gameid (:editing @s)))
+                 (some? (:create-game-deck @app-state)))
+        (new-game s))
       [:div.container
         [:div.lobby-bg]
         [:div.lobby.panel.blue-shade

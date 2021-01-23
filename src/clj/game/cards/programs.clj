@@ -338,9 +338,9 @@
 (defcard "Algernon"
   {:events
    [{:event :runner-turn-begins
-     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
      :optional
      {:prompt (msg "Pay 2 [Credits] to gain [Click]")
+      :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
       :player :runner
       :yes-ability {:cost [:credit 2]
                     :msg "gain [Click]"
@@ -967,12 +967,10 @@
                 :prompt "Choose an installed program to host on Dhegdheer"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
-                :msg (msg (str "host " (:title target)
-                               (when (-> target :cost pos?)
-                                 ", lowering its cost by 1 [Credit]")))
+                :msg (msg (str "host " (:title target)))
                 :effect (effect (host card (get-card state target))
-                                (unregister-effects-for-card state side target #(= :used-mu (:type %)))
-                                (update-mu state)
+                                (unregister-effects-for-card target #(= :used-mu (:type %)))
+                                (update-mu)
                                 (update-breaker-strength target)
                                 (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]})
 
@@ -1756,9 +1754,9 @@
 
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
-             :req (req (not (get-in @state [:per-turn (:cid card)])))
              :optional
              {:prompt "Give ice a subtype?"
+              :req (req (not (get-in @state [:per-turn (:cid card)])))
               :yes-ability
               {:prompt "Choose an ICE subtype"
                :choices (req (->> (server-cards)

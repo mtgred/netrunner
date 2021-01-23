@@ -529,6 +529,34 @@
                            "Gained 6+5 credits from Bravado"
                            ; Cell Portal, Architect, Ice Wall, 2x Enigma
                            (run-continue state)))))
+  (testing "Trashed ice using Hippo is not counted"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]
+                        :credits 15}
+                 :runner {:hand ["Bravado", "Corroder", "Hippo"]
+                          :credits 15}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Hippo")
+      (let [ice-wall (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        ;; Rez Ice Wall
+        (rez state :corp ice-wall)
+        (run-continue state)
+        ;; Fully break Ice Wall
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        ;; Trash using Hippo
+        (click-prompt state :runner "Yes")
+        (run-continue state)
+        ;; Approach Server
+        (changes-val-macro 6 (:credit (get-runner))
+                           "Gained 6 credits from Bravado"
+                           ;; Trashed Ice Wall does not count
+                           (run-continue state)))))
   (testing "Also gaining credits on unsuccessful runs"
     (do-game
       (new-game {:corp {:hand ["Ice Wall"]}
@@ -2602,15 +2630,33 @@
 
 (deftest hot-pursuit
   ;; Hot Pursuit
-  (do-game
-    (new-game {:runner {:deck ["Hot Pursuit"]}})
-    (take-credits state :corp)
-    (play-run-event state "Hot Pursuit" :hq)
-    (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
-    (is (= 1 (count-tags state)) "Took 1 tag on successful run")
-    (is (prompt-map :runner) "Still have access prompt")
-    (click-prompt state :runner "No action")
-    (is (not (:run @state)) "Run is finished")))
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:runner {:deck ["Hot Pursuit"]}})
+      (take-credits state :corp)
+      (play-run-event state "Hot Pursuit" :hq)
+      (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
+      (is (= 1 (count-tags state)) "Took 1 tag on successful run")
+      (is (prompt-map :runner) "Still have access prompt")
+      (click-prompt state :runner "No action")
+      (is (not (:run @state)) "Run is finished")))
+  (testing "Bounce from HQ"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Hot Pursuit"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hot Pursuit")
+      (is (:run @state) "Initiated run")
+      (is (= (get-ice state :hq 0) (core/get-current-ice state)))
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "Archives")
+      (run-continue state)
+      (is (= (+ 5 -2) (:credit (get-runner))) "Gained no credits on redirected run")
+      (is (zero? (count-tags state)) "Took 0 tags on redirected run")
+      (is (not (:run @state)) "Run is finished"))))
 
 (deftest i-ve-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
