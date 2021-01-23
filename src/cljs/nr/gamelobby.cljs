@@ -168,7 +168,7 @@
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
-        file (:history s)
+        file (:replay-file s)
         onload (fn [onload-ev] (let [replay (-> onload-ev .-target .-result)
                                      replay (js->clj (.parse js/JSON replay) :keywordize-keys true)
                                      history (:history replay)
@@ -186,7 +186,7 @@
     (fn [user]
       (if (:replay @s)
         (cond
-          (not (:history @s))
+          (not (:replay-file @s))
           (swap! s assoc :flash-message "Select a valid replay file.")
 
           :else
@@ -416,7 +416,7 @@
          [:p.flash-message flash-message])
         [:div [:input {:field :file
                        :type :file
-                       :on-change #(swap! s assoc :history (aget (.. % -target -files) 0))}]]]
+                       :on-change #(swap! s assoc :replay-file (aget (.. % -target -files) 0))}]]]
       [:div
        [:div.button-bar
         [:button {:type "button"

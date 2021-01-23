@@ -155,18 +155,18 @@
                                        :deck-name (get-in runner [:deck :name])
                                        :identity (get-in runner [:deck :identity :title])}})))
 
-(defn delete-old-history [{:keys [username] :as user}]
+(defn delete-old-replay [{:keys [username] :as user}]
   (let [games (mq/with-collection db "game-logs"
                 (mq/find {$and [{$or [{:corp.player.username username}
                                       {:runner.player.username username}]}
-                                {:history {$exists true}}
+                                {:replay {$exists true}}
                                 {:replay-shared false}]})
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
     (doseq [game games]
       (mc/update db :game-logs
                  {:gameid (:gameid game)}
-                 {"$unset" {:history nil}}))))
+                 {"$unset" {:replay nil}}))))
 
 (defn generate-replay [state]
   (json/generate-string
@@ -195,11 +195,11 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :history (when (get-in @state [:options :save-replay]) (generate-replay state))
+                          :replay (when (get-in @state [:options :save-replay]) (generate-replay state))
                           :replay-shared false
                           :log (:log @state)}})
-      (delete-old-history (get-in @state [:corp :user]))
-      (delete-old-history (get-in @state [:corp :runner]))
+      (delete-old-replay (get-in @state [:corp :user]))
+      (delete-old-replay (get-in @state [:corp :runner]))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))
@@ -221,20 +221,20 @@
       (response 200 log))
     (response 401 {:message "Unauthorized"})))
 
-(defn fetch-history [{{username :username} :user
-                      {:keys [gameid]}     :params}]
-  (let [{:keys [history replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history" "replay-shared"])
-        history (or history {})]
+(defn fetch-replay [{{username :username} :user
+                     {:keys [gameid]}     :params}]
+  (let [{:keys [replay replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay" "replay-shared"])
+        replay (or replay {})]
     (if (or username
             replay-shared)
-      (json-response 200 history)
+      (json-response 200 replay)
       (response 401 {:message "Unauthorized"}))))
 
 (defn share-replay [{{username :username} :user
                      {:keys [gameid]}     :params}]
   (if username
-    (let [{:keys [history]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["history"])
-          history (or history {})]
+    (let [{:keys [replay]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay"])
+          replay (or replay {})]
       (try
         (mc/update db :game-logs
                    {$and [{:gameid (str gameid)}

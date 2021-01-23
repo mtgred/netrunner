@@ -47,10 +47,10 @@
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]
-       (when (and (:history game)
+       (when (and (:replay game)
                   (not (:replay-shared game)))
          [:button {:on-click #(share-replay state (:gameid game))} "Share replay"])
-       (if (:history game)
+       (if (:replay game)
          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} "Download replay"]
          "Replay unavailable")]
       (when (:replay-shared game)

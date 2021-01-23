@@ -18,7 +18,7 @@
     [game.utils :refer [server-card dissoc-in]]
     [clj-time.core :as t]))
 
-(defn replay-strip [state]
+(defn strip-for-replay [state]
   (-> state
     (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
     (update-in [:corp :register] select-keys [:spent-click])
@@ -142,5 +142,5 @@
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)
                             (fake-checkpoint state)))))
-    (swap! state assoc :history [(replay-strip @state)])
+    (swap! state assoc :history [(strip-for-replay @state)])
     state))

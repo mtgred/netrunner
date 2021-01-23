@@ -80,7 +80,7 @@
            (GET "/profile/history" [] stats/history)
            (GET "/profile/history/:gameid" [] stats/fetch-log)
            (GET "/profile/history/share/:gameid" [] stats/share-replay)
-           (GET "/profile/history/full/:gameid" [] stats/fetch-history)
+           (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)

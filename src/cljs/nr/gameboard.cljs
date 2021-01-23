@@ -1,7 +1,7 @@
 (ns nr.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split ends-with?]]
+            [clojure.string :as s :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?]]
