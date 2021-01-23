@@ -27,8 +27,9 @@
 (defonce sfx-state (atom {}))
 
 (defonce replay-timeline (atom []))
-(defonce replay-status (atom {}))
-(defonce replay-side (atom :spectator))
+(defonce replay-status (r/atom {}))
+(defonce replay-side (r/atom :spectator))
+(defonce show-replay-link (r/atom false))
 
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
@@ -42,6 +43,12 @@
                        (get (:alt_art alt-card) (keyword art) art)
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
+
+(defn generate-replay-link [origin]
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (str origin "/play?" (:gameid @game-state) "&n=" n "&d=" d)))
 
 (defn set-replay-side [side]
   (reset! replay-side side)
@@ -113,6 +120,10 @@
         (if (empty? (rest diffs))
           (replay-jump (inc n))
           (swap! replay-status assoc :diffs (rest diffs)))))))
+
+(defn replay-jump-to [{:keys [n d]}]
+  (replay-jump n)
+  (dotimes [i d] (replay-forward)))
 
 (defn replay-log-forward []
   (let [prev-log (:log @game-state)]
@@ -209,7 +220,7 @@
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
-    (reset! game-state (dissoc state :replay-diffs))
+    (reset! game-state (dissoc state :replay-diffs :replay-jump-to))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
     (reset! lock false)
@@ -217,7 +228,9 @@
       (.setItem js/localStorage "gameid" "replay")
       (swap! app-state assoc :gameid "replay")
       (populate-replay-timeline state)
-      (replay-jump 0))))
+      (if (:replay-jump-to state)
+        (replay-jump-to (:replay-jump-to state))
+        (replay-jump 0)))))
 
 (defn launch-game [state]
   (init-game state)
@@ -2238,4 +2251,9 @@
                        [:button.small {:on-click #(replay-log-forward) :type "button"
                                        :title "Forward to next log entry"} "⏩︎"]
                        [:button.small {:on-click #(replay-step-forward) :type "button"
-                                       :title "Forward one click"} "⏭︎"]]]])])))})))))
+                                       :title "Forward one click"} "⏭︎"]
+                       (when-not (= "replay" (:gameid @game-state)) ; when saved replay
+                         [:button {:on-click #(swap! show-replay-link not)} "Share"])
+                       (when-not (= "replay" (:gameid @game-state))
+                         [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
+                                  :type "text" :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))

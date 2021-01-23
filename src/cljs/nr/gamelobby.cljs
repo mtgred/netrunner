@@ -1,7 +1,7 @@
 (ns nr.gamelobby
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [join]]
+            [clojure.string :refer [join split]]
             [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
@@ -123,6 +123,7 @@
   (authenticated
     (fn [user]
       (swap! s assoc
+             :gameid "replay"
              :title (str (:username user) "'s game")
              :side "Corp"
              :format "standard"
@@ -134,29 +135,36 @@
              :allow-spectator true
              :spectatorhands true))))
 
-(defn start-saved-replay [s gameid]
-  (authenticated
-    (fn [user]
-      (swap! s assoc
-             :title (str (:username user) "'s game")
-             :side "Corp"
-             :format "standard"
-             :editing false
-             :replay true
-             :flash-message ""
-             :protected false
-             :password ""
-             :allow-spectator true
-             :spectatorhands true)
-      (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
-            (when (= 200 status)
-              (let [replay (js->clj json :keywordize-keys true)
-                    history (:history replay)
-                    init-state (first history)
-                    init-state (assoc-in init-state [:options :spectatorhands] true)
-                    diffs (rest history)
-                    init-state (assoc init-state :replay-diffs diffs)]
-                (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))]))))))))
+(defn start-shared-replay
+  ([s gameid]
+   (start-shared-replay s gameid nil))
+  ([s gameid {:keys [n d] :as jump-to}]
+   (authenticated
+     (fn [user]
+       (swap! s assoc
+              :title (str (:username user) "'s game")
+              :side "Corp"
+              :format "standard"
+              :editing false
+              :replay true
+              :flash-message ""
+              :protected false
+              :password ""
+              :allow-spectator true
+              :spectatorhands true)
+       (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
+             (when (= 200 status)
+               (let [replay (js->clj json :keywordize-keys true)
+                     history (:history replay)
+                     init-state (first history)
+                     init-state (assoc init-state :gameid gameid)
+                     init-state (assoc-in init-state [:options :spectatorhands] true)
+                     diffs (rest history)
+                     init-state (assoc init-state :replay-diffs diffs)]
+                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js
+                                                                                  (if jump-to
+                                                                                    (assoc init-state :replay-jump-to jump-to)
+                                                                                    init-state)))])))))))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
@@ -346,10 +354,19 @@
   [:div.games
    (let [params (.-search (.-location js/window))]
      (when (not-empty params)
-       (.replaceState (.-history js/window) {} "" "/play") ; remove GET parameters from url
-       (start-saved-replay s (subs params 1)) ; remove question mark from params
-       (resume-sound)
-       nil))
+       (let [id-match (re-find #"([0-9a-f\-]+)" params)
+             n-match (re-find #"n=(\d+)" params)
+             d-match (re-find #"d=(\d+)" params)
+             replay-id (nth id-match 1)
+             n (when n-match (js/parseInt (nth n-match 1)))
+             d (when d-match (js/parseInt (nth d-match 1)))]
+         (when replay-id
+           (.replaceState (.-history js/window) {} "" "/play") ; remove GET parameters from url
+           (if (and n d)
+             (start-shared-replay s replay-id {:n n :d d})
+             (start-shared-replay s replay-id))
+           (resume-sound)
+           nil))))
    [:div.button-bar
     [:div.rooms
      [room-tab user s games "tournament" "Tournament"]
@@ -523,7 +540,6 @@
                      "Select Deck"])]))
              players))]
         [:h3 "Options"]
-        (println game)
         [:ul.options
          (when (:allow-spectator game)
            [:li "Allow spectators"])
