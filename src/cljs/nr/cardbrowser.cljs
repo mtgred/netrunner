@@ -8,7 +8,7 @@
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
                               influence-dots slug->format format->slug render-icons non-game-toast faction-icon image-language-name]]
-            [nr.translations :refer [tr]]
+            [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -410,23 +410,24 @@
    [:h4 (tr [:card-browser.sort "Sort by"])]
    [:select {:value (:sort-field @state)
              :on-change #(swap! state assoc :sort-field (.. % -target -value))}
-    (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
-      [:option {:value field
-                :key field
-                :dangerouslySetInnerHTML #js {:__html field}}])]])
+    (doall
+      (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
+        [:option {:value field
+                  :key field
+                  :dangerouslySetInnerHTML #js {:__html (tr-sort field)}}]))]])
 
 (defn simple-filter-builder
-  [title state state-key options]
+  [title state state-key options translator]
   [:div
    [:h4 title]
    [:select {:value (get @state state-key)
              :on-change #(swap! state assoc state-key (.. % -target -value))}
-    (for [option (cons "All" options)]
-      ^{:key option}
-      [:option {:value option
-                :key option
-                :dangerouslySetInnerHTML #js {:__html option}}])]])
-
+    (doall
+      (for [option (cons "All" options)]
+        ^{:key option}
+        [:option {:value option
+                  :key option
+                  :dangerouslySetInnerHTML #js {:__html (translator option)}}]))]])
 
 (defn format-set-name [pack-name]
   (str "&nbsp;&nbsp;&nbsp;&nbsp;" pack-name))
@@ -458,14 +459,14 @@
         formats (-> format->slug keys butlast)]
     [:div
      (doall
-       (for [[title state-key options]
-             [[(tr [:card-browser.format "Format"]) :format-filter formats]
-              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display]
-              [(tr [:card-browser.side "Side"]) :side-filter ["Corp" "Runner"]]
-              [(tr [:card-browser.faction "Faction"]) :faction-filter (factions (:side-filter @state))]
-              [(tr [:card-browser.type "Type"]) :type-filter (types (:side-filter @state))]]]
+       (for [[title state-key options translator]
+             [[(tr [:card-browser.format "Format"]) :format-filter formats tr-format]
+              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display identity]
+              [(tr [:card-browser.side "Side"]) :side-filter ["Corp" "Runner"] tr-side]
+              [(tr [:card-browser.faction "Faction"]) :faction-filter (factions (:side-filter @state)) tr-faction]
+              [(tr [:card-browser.type "Type"]) :type-filter (types (:side-filter @state)) tr-type]]]
          ^{:key title}
-         [simple-filter-builder title state state-key options]))]))
+         [simple-filter-builder title state state-key options translator]))]))
 
 (defn clear-filters [state]
   [:p [:button

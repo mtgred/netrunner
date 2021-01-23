@@ -411,7 +411,7 @@
 
      [:p
       [:button "Update Profile"]
-      [:span.flash-message (:flash-message @s)]]]])}))
+      [:span.flash-message (:flash-message @s)]]])}))
 
 (defn account-wrapper [user s scroll-top]
   [:div.account

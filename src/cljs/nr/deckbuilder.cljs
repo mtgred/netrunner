@@ -14,7 +14,7 @@
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot set-scroll-top store-scroll-top
                               influence-dots make-dots restricted-span rotated-span num->percent
                               slug->format format->slug checkbox-button cond-button non-game-toast]]
-            [nr.translations :refer [tr]]
+            [nr.translations :refer [tr tr-type tr-side tr-format tr-faction]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]))
@@ -485,10 +485,10 @@
                             :selected 0})]
     (fn [s]
       [:div
-       [:h3 "Add cards"]
+       [:h3 (tr [:deck-builder.add-cards "Add cards"])]
        [:form.card-search {:on-submit #(handle-add s card-state %)}
         [:input.lookup {:type "text"
-                        :placeholder "Card name"
+                        :placeholder (tr [:deck-builder.card-name "Card name"])
                         :value (:query @card-state)
                         :on-change #(swap! card-state assoc :query (.. % -target -value))
                         :on-key-down #(handle-keydown card-state %)}]
@@ -496,7 +496,7 @@
         [:input.qty {:type "text"
                      :value (:quantity @card-state)
                      :on-change #(swap! card-state assoc :quantity (.. % -target -value))}]
-        [:button "Add to deck"]
+        [:button (tr [:deck-builder.add-to-deck "Add to deck"])]
         (let [query (:query @card-state)
               matches (match (get-in @s [:deck :identity]) query)
               exact-match (= (:title (first matches)) query)]
@@ -551,10 +551,10 @@
             wins (or (:wins stats) 0)
             losses (or (:loses stats) 0)]
         ; adding key :games to handle legacy stats before adding started vs completed
-        [:span "  Games: " (+ started games)
-         " - Completed: " (+ completed games)
-         " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
-         " - Lost: " losses]))]])
+        [:span "  " (tr [:deck-builder.games "Games"]) ": " (+ started games)
+         " - " (tr [:deck-builder.completed "Completed"]) ": " (+ completed games)
+         " - " (tr [:deck-builder.won "Won"]) ": " wins " (" (num->percent wins (+ wins losses)) "%)"
+         " - " (tr [:deck-builder.lost "Lost"]) ": " losses]))]])
 
 (def all-sides-filter "Any Side")
 (def all-factions-filter "Any Faction")
@@ -609,7 +609,7 @@
 
       (empty? @decks)
       [:div.deck-collection
-       [:h4 "No decks"]]
+       [:h4 (tr [:deck-builder.no-decks "No decks"])]]
 
       :else
       (let [filtered-decks (->> @decks
@@ -694,12 +694,12 @@
         "")]
      (let [count (validator/card-count cards)
            min-count (validator/min-deck-size id)]
-       [:div count " cards"
+       [:div count (str " " (tr [:deck-builder.cards "cards"]))
         (when (< count min-count)
-          [:span.invalid (str " (minimum " min-count ")")])])
+          [:span.invalid (str " (" (tr [:deck-builder.min "minimum"]) " " min-count ")")])])
      (let [inf (validator/influence-count deck)
            id-limit (validator/id-inf-limit id)]
-       [:div "Influence: "
+       [:div (str (tr [:deck-builder.influence "Influence"]) ": ")
         ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
         [:span {:class (if (> inf id-limit)
                          (if (> inf id-limit)
@@ -714,13 +714,13 @@
      (when (= (:side id) "Corp")
        (let [min-point (validator/min-agenda-points deck)
              points (validator/agenda-points deck)]
-         [:div "Agenda points: " points
+         [:div (str (tr [:deck-builder.agenda-points "Agenda points"]) ": " points)
           (when (< points min-point)
-            [:span.invalid " (minimum " min-point ")"])
+            [:span.invalid " (" (tr [:deck-builder.min "minimum"]) " " min-point ")"])
           (when (> points (inc min-point))
-            [:span.invalid " (maximum " (inc min-point) ")"])]))
+            [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
      [:div [deck-status-span deck true true false]]
-     (when (:hash deck) [:div "Tournament hash: " (:hash deck)])]))
+     (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]))
 
 (defn decklist-contents
   [s deck cards]
@@ -729,7 +729,7 @@
      (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
        ^{:key (or (first group) "Unknown")}
        [:div.group
-        [:h4 (str (or (first group) "Unknown") " (" (validator/card-count (last group)) ")") ]
+        [:h4 (str (tr-type (or (first group) "Unknown")) " (" (validator/card-count (last group)) ")") ]
         (doall
           (for [line (sort-by #(get-in % [:card :title]) (last group))]
             ^{:key (or (get-in line [:card :code]) line)}
@@ -755,30 +755,30 @@
 (defn edit-buttons
   [s]
   [:div.button-bar
-   [:button {:on-click #(save-deck s)} "Save"]
-   [:button {:on-click #(cancel-edit s)} "Cancel"]])
+   [:button {:on-click #(save-deck s)} (tr [:deck-builder.save "Save"])]
+   [:button {:on-click #(cancel-edit s)} (tr [:deck-builder.cancel "Cancel"])]])
 
 (defn delete-buttons
   [s]
   [:div.button-bar
-   [:button {:on-click #(handle-delete s)} "Confirm Delete"]
-   [:button {:on-click #(end-delete s)} "Cancel"]])
+   [:button {:on-click #(handle-delete s)} (tr [:deck-builder.confirm-delete "Confirm Delete"])]
+   [:button {:on-click #(end-delete s)} (tr [:deck-builder.cancel "Cancel"])]])
 
 (defn view-buttons
   [s deck]
   [:div.button-bar
-   [:button {:on-click #(edit-deck s)} "Edit"]
-   [:button {:on-click #(delete-deck s)} "Delete"]
+   [:button {:on-click #(edit-deck s)} (tr [:deck-builder.edit "Edit"])]
+   [:button {:on-click #(delete-deck s)} (tr [:deck-builder.delete "Delete"])]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
-     [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])
+     [:button {:on-click #(clear-deck-stats s)} (tr [:deck-builder.clear-stats "Clear Stats"])])
    (let [disabled (or (:editing-game @app-state false) (:gameid @app-state false))]
      [:button.float-right {:on-click #(do
                                         (swap! app-state assoc :create-game-deck (:deck @s))
                                         (.setToken history "/play"))
                            :disabled disabled
                            :class (when disabled "disabled")}
-      "Create Game"])])
+      (tr [:deck-builder.create-game "Create Game"])])])
 
 (defn selected-panel
   [s]
@@ -800,10 +800,10 @@
 (defn deck-name-editor
   [s]
   [:div
-   [:h3 "Deck name"]
+   [:h3 (tr [:deck-builder.deck-name "Deck name"])]
    [:input.deckname
     {:type "text"
-     :placeholder "Deck name"
+     :placeholder (tr [:deck-builder.deck-name "Deck name"])
      :ref #(swap! db-dom assoc :deckname %)
      :value (get-in @s [:deck :name])
      :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]])
@@ -811,12 +811,13 @@
 (defn format-editor
   [s]
   [:div
-   [:h3 "Format"]
+   [:h3 (tr [:deck-builder.format "Format"])]
    [:select.format {:value (get-in @s [:deck :format] "standard")
                     :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
-    (for [[k v] slug->format]
-      ^{:key k}
-      [:option {:value k} v])]])
+    (doall
+      (for [[k v] slug->format]
+        ^{:key k}
+        [:option {:value k} (tr-format v)]))]])
 
 (defn- identity-option-string
   [card]
@@ -833,7 +834,7 @@
 (defn identity-editor
   [s]
   [:div
-   [:h3 "Identity"]
+   [:h3 (tr [:deck-builder.identity "Identity"])]
    [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))
                       :on-change #(swap! s assoc-in [:deck :identity] (create-identity s %))}
     (let [idents (side-identities (get-in @s [:deck :identity :side]))]
@@ -865,7 +866,7 @@
 (defn notes-textbox
   [s]
   [:textarea.notes-edit
-   {:placeholder "Deck notes"
+   {:placeholder (tr [:deck-builder.deck-notes "Deck notes"])
     :ref #(swap! db-dom assoc :deck-notes %)
     :value (get-in @s [:deck :notes])
     :on-change #(swap! s assoc-in [:deck :notes] (.. % -target -value))}])
@@ -878,11 +879,11 @@
    [identity-editor s]
    [card-lookup s]
    [:div
-    [:h3 "Decklist"
-     [:span.small "(Type or paste a decklist, it will be parsed)"]]]
+    [:h3 (tr [:deck-builder.decklist "Decklist"])
+     [:span.small (tr [:deck-builder.decklist-inst "(Type or paste a decklist, it will be parsed)"])]]]
    [edit-textbox s]
    [:div
-    [:h3 "Notes"]]
+    [:h3 (tr [:deck-builder.notes "Notes"])]]
    [notes-textbox s]])
 
 (defn- reset-deck-filters [state]
@@ -906,7 +907,7 @@
                             {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
 
 (defn- simple-filter-builder
-  [state state-key options decks-loaded callback scroll-top]
+  [state state-key options decks-loaded callback scroll-top translator]
   [:select.deckfilter-select {:class (if-not @decks-loaded "disabled" state-key)
                               :value (get @state state-key)
                               :on-change #(let [old-value (get @state state-key)
@@ -915,11 +916,12 @@
                                             (reset! scroll-top 0)
                                             (when callback
                                               (callback state old-value new-value)))}
-   (for [option options]
-     ^{:key option}
-     [:option.deckfilter-option {:value option
-                                 :key option
-                                 :dangerouslySetInnerHTML #js {:__html option}}])])
+   (doall
+     (for [option options]
+       ^{:key option}
+       [:option.deckfilter-option {:value option
+                                   :key option
+                                   :dangerouslySetInnerHTML #js {:__html (translator option)}}]))])
 
 (defn- handle-side-changed [state old-value new-value]
   (swap! state assoc :faction-filter all-factions-filter))
@@ -929,12 +931,12 @@
   (let [formats (-> format->slug keys butlast)]
     [:div.deckfilter
      (doall
-       (for [[state-key options callback]
-             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed]
-              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil]
-              [:format-filter (cons all-formats-filter formats) nil]]]
+       (for [[state-key options callback translator]
+             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed tr-side]
+              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil tr-faction]
+              [:format-filter (cons all-formats-filter formats) nil tr-format]]]
          ^{:key state-key}
-         [simple-filter-builder state state-key options decks-loaded callback scroll-top]))
+         [simple-filter-builder state state-key options decks-loaded callback scroll-top translator]))
 
      [:button {:class (if-not @decks-loaded "disabled" "")
                :on-click #(reset-deck-filters state)}

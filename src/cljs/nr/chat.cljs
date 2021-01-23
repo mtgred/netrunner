@@ -180,15 +180,15 @@
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-message message)
-                                   (hide-block-menu msg-state))} "Delete Message"])
+                                   (hide-block-menu msg-state))} (tr [:chat.delete "Delete Message"])])
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-all-messages (:username message))
-                                   (hide-block-menu msg-state))} "Delete All Messages From User"])
+                                   (hide-block-menu msg-state))} (tr [:chat.delete-all "Delete All Messages From User"])])
              [:div {:on-click #(do
                                  (block-user (:username message))
-                                 (hide-block-menu msg-state))} "Block User"]
-             [:div {:on-click #(hide-block-menu msg-state)} "Cancel"]]))
+                                 (hide-block-menu msg-state))} (tr [:chat.block "Block User"])]
+             [:div {:on-click #(hide-block-menu msg-state)} (tr [:chat.cancel "Cancel"])]]))
         [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
@@ -213,7 +213,6 @@
               data (:json x)]
           (update-message-channel channel data)))))
 
-<<<<<<< HEAD
 (fetch-all-messages)
 
 (defn message-panel [s old scroll-top]
@@ -274,7 +273,7 @@
        (fn [s old scroll-top]
          [:div#chat.chat-app
           [:div.blue-shade.panel.channel-list
-           [:h4 "Channels"]
+           [:h4 (tr [:chat.channels "Channels"])]
            (doall
              (for
                [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
@@ -313,7 +312,7 @@
     (fn []
       (when (= "/" (first @active))
         [:div.container
-         [:h1 "Play Android: Netrunner in your browser"]
+         [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
          [news]
          [chat s old scroll-top]
          [:div#version [:span (str "Version " (get-data "version"))]]]))))
