@@ -137,10 +137,50 @@
      :games "Games"
      :completed "Completed"
      :won "Won"
-     :lost "Lost"
-
-     }
-    }
+     :lost "Lost"}
+   :lobby
+    {:no-games "No games"
+     :tournament "Tournament"
+     :competitive "Competitive"
+     :casual "Casual"
+     :new-game "New game"
+     :reload "Reload list"
+     :create "Create"
+     :cancel "Cancel"
+     :title "Title"
+     :side "Side"
+     :format "Format"
+     :options "Options"
+     :spectators "Allow spectators"
+     :hidden "Make players' hidden information visible to spectators"
+     :password-protected "Password protected"
+     :password "Password"
+     :start "Start"
+     :leave "Leave"
+     :swap "Swap sides"
+     :waiting "Waiting players deck selection"
+     :players "Players"
+     :deck-selected "Deck selected"
+     :select-deck "Select Deck"
+     :chat "Chat"
+     :select-title "Select your deck"
+     :spectator-count (fn [[cnt]] (str cnt " Spectator" (when (not= cnt 1) "s")))
+     :closed-msg "Game lobby closed due to inactivity"
+     :title-error "Please fill a game title."
+     :password-error "Please fill a password."
+     :too-little-data "Too little data"
+     :completion-rate "Game Completion Rate"
+     :watch "Watch"
+     :join "Join"
+     :rejoin "Rejoin"
+     :private "PRIVATE"
+     :reset "Reset Game Name"
+     :delete "Delete Game"
+     :password-for "Password for"
+     :invalid-password "Invalid password"
+     :not-allowed "Not allowed"
+     :aborted "Connection aborted"}
+   }
    
    :la-pig
    {:missing ":la-pig missing text"
@@ -274,6 +314,48 @@
      :completed "Ompletedcay"
      :won "Onway"
      :lost "Ostlay"}
+   :lobby
+    {:no-games "Onay amesgay"
+     :tournament "Ournamenttay"
+     :competitive "Ompetitivecay"
+     :casual "Asualcay"
+     :new-game "Ewnay amegay"
+     :reload "Eloadray istlay"
+     :create "Eatecray"
+     :cancel "Ancelcay"
+     :title "Itletay"
+     :side "Idesay"
+     :format "Ormatfay"
+     :options "Optionsyay"
+     :spectators "Allowyay ectatorsspay"
+     :hidden "Akemay ayersplay iddenhay informationyay isiblevay otay ectatorsspay"
+     :password-protected "Asswordpay otectedpray"
+     :password "Asswordpay"
+     :start "Artstay"
+     :leave "Eavelay"
+     :swap "Apsway idessay"
+     :waiting "Aitingway ayersplay eckday electionsay"
+     :players "Ayersplay"
+     :deck-selected "Eckday electedsay"
+     :select-deck "Electsay eckday"
+     :chat "Atchay"
+     :select-title "Electsay ouryay eckday"
+     :spectator-count (fn [[cnt]] (str cnt " Ectatorspay" (when (not= cnt 1) "s")))
+     :closed-msg "Amegay obbylay osedclay ueday otay inactivityay"
+     :title-error "Easeplay illfay ayay amegay itletay."
+     :password-error "Easepl illfay ayay asswordpay."
+     :too-little-data "Ootay ittlelay ataday"
+     :completion-rate "Amegay Ompletioncay Ateray"
+     :watch "Atchway"
+     :join "Oinjay"
+     :rejoin "Ejoinray"
+     :private "IVATEPRAY"
+     :reset "Esetray Amegay Amenay"
+     :delete "Eleteday Amegay"
+     :password-for "Asswordpay orfay"
+     :invalid-password "Nvalidiay asswordpay"
+     :not-allowed "Otnay allowedyay"
+     :aborted "Onnectioncay abortedyay"}
    }})
 
 (def opts {:dict translation-dictionary})
@@ -292,3 +374,4 @@
 (def tr-faction (partial tr-string "faction"))
 (def tr-format (partial tr-string "format"))
 (def tr-sort (partial tr-string "card-browser.sort-by"))
+(def tr-watch-join (partial tr-string "lobby"))
