@@ -1,7 +1,7 @@
 (ns nr.gamelobby
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [join split]]
+            [clojure.string :refer [join]]
             [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
