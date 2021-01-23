@@ -2353,6 +2353,10 @@ input.url
                     height: 32px
                     top:20px
 
+                    &:hover
+                        border-color: orange
+                        box-shadow(0 0 6px blue)
+
                 .active-step-label
                     font-size: 32px
                     width: 45px
@@ -2363,11 +2367,6 @@ input.url
                     border-color: orange
                     color: orange
                     box-shadow(0 0 6px orange)
-
-                    &:hover
-                        background-color: darken(rgb(255, 165, 0), 20)
-                        border-color: orange
-                        box-shadow(0 0 6px blue)
 
             .step:after
                 content: ''
