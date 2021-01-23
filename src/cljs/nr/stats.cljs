@@ -7,10 +7,9 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
-            [nr.deckbuilder :refer [num->percent]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.player-view :refer [player-view]]
-            [nr.utils :refer [faction-icon render-message notnum->zero]]
+            [nr.utils :refer [faction-icon render-message notnum->zero num->percent set-scroll-top store-scroll-top]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
