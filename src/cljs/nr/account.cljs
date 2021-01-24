@@ -8,6 +8,7 @@
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
             [nr.avatar :refer [avatar]]
+            [nr.translations :refer [tr]]
             [nr.utils :refer [non-game-toast set-scroll-top store-scroll-top]]
             [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
@@ -23,10 +24,10 @@
 
 (defn post-response [s response]
   (case (:status response)
-    401 (non-game-toast  "Invalid login or password" "error" nil)
-    404 (non-game-toast  "No account with that email address exists" "error" nil)
+    401 (non-game-toast  (tr [:settings.invalid-password "Invalid login or password"]) "error" nil)
+    404 (non-game-toast  (tr [:settings.invalid-email "No account with that email address exists"]) "error" nil)
     ;; else
-    (non-game-toast "Profile updated - Please refresh your browser" "success" nil))
+    (non-game-toast (tr [:settings.updated "Profile updated - Please refresh your browser"]) "success" nil))
   (swap! s assoc :flash-message ""))
 
 (defn post-options [url callback]
@@ -36,7 +37,7 @@
 
 (defn handle-post [event url s]
   (.preventDefault event)
-  (swap! s assoc :flash-message "Updating profile...")
+  (swap! s assoc :flash-message (tr [:settings.updating "Updating profile..."]))
   (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
   (swap! app-state assoc-in [:options :language] (:language @s))
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
@@ -123,7 +124,7 @@
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc-in [:log-width] (get-in @app-state [:options :log-width]))
                                                  (reset! log-width (get-in @app-state [:options :log-width])))}
-        "Get current log width"]])))
+        (tr [:settings.get-log-width "Get current log width"])]])))
 
 (defn log-top-option [s]
   (let [log-top (r/atom (:log-top @s))]
@@ -137,14 +138,14 @@
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
-        "Get current log top"]])))
+        (tr [:settings.get-log-top "Get current log top"])]])))
 
 (defn change-email [s]
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
     (fn [s]
       [:div
-       [:h3 "Change email address"]
+       [:h3 (tr [:settings.email-title "Change email address"])]
        [:p.flash-message (:flash-message @email-state)]
        [:form {:on-submit (fn [event]
                             (.preventDefault event)
@@ -156,29 +157,30 @@
                                         (-> js/document .-location (.reload true))
                                         (swap! email-state assoc :flash-message message)))))))}
         (when-let [email (:email @s)]
-          [:p [:label.email "Current email: "]
+          [:p [:label.email (tr [:settings.current-email "Current email"]) ": "]
            [:input.email {:type "text"
                           :value email
                           :name "current-email"
                           :read-only true}]])
-        [:p [:label.email "Desired email: "]
+        [:p [:label.email (tr [:settings.desired-email "Desired email"]) ": "]
          [:input.email {:type "text"
-                        :placeholder "Email address"
+                        :placeholder (tr [:settings.email-placeholder "Email address"])
                         :name "email"
                         :on-change #(let [value (-> % .-target .-value)]
                                       (swap! email-state assoc :email value))
                         :on-blur #(if (valid-email? (-> % .-target .-value))
                                     (swap! email-state assoc :flash-message "")
-                                    (swap! email-state assoc :flash-message "Please enter a valid email address"))}]]
+                                    (swap! email-state assoc
+                                           :flash-message (tr [:settings.enter-valid "Please enter a valid email address"])))}]]
         [:p.float-right
          (let [disabled (not (valid-email? (:email @email-state)))]
            [:button
             {:disabled disabled
              :class (when disabled "disabled")}
-            "Update"])
+            (tr [:settings.update "Update"])])
          [:button {:on-click #(do (.preventDefault %)
                                   (reagent-modals/close-modal!))}
-          "Cancel"]]]])))
+          (tr [:settings.cancel "Cancel"])]]]])))
 
 (defn account-content [user s scroll-top]
   (r/create-class
@@ -189,39 +191,39 @@
      :reagent-render
      (fn [user s scroll-top]
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
-         [:h2 "Settings"]
+         [:h2 (tr [:nav.settings "Settings"])]
          [:form {:on-submit #(handle-post % "/profile" s)}
           [:section
-           [:h3 "Email"]
+           [:h3 (tr [:settings.email "Email"])]
            [:a {:href "" :on-click #(do
                                       (.preventDefault %)
-                                      (reagent-modals/modal! [change-email s]))} "Change email"]]
+                                      (reagent-modals/modal! [change-email s]))} (tr [:settings.change-email "Change email"])]]
           [:section
-           [:h3 "Avatar"]
+           [:h3 (tr [:settings.avatar "Avatar"])]
            [avatar @user {:opts {:size 38}}]
-           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
-           [:h3 "Pronouns"]
+           [:a {:href "http://gravatar.com" :target "_blank"} (tr [:settings.change-avatar "Change on gravatar.com"])]
+           [:h3 (tr [:settings.pronouns "Pronouns"])]
            [:select {:value (:pronouns @s "none")
                      :on-change #(swap! s assoc :pronouns (.. % -target -value))}
             (doall
-              (for [option [{:name "Unspecified" :ref "none"}
-                            {:name "Any" :ref "any"}
-                            {:name "Prefer not to say" :ref "myodb"}
-                            {:name "[blank]" :ref "blank"}
-                            {:name "They/them" :ref "they"}
-                            {:name "She/her" :ref "she"}
-                            {:name "She/they" :ref "shethey"}
-                            {:name "He/him" :ref "he"}
-                            {:name "He/they" :ref "hethey"}
-                            {:name "It" :ref "it"}
-                            {:name "Ne/nem" :ref "ne"}
-                            {:name "Ve/ver" :ref "ve"}
-                            {:name "Ey/em" :ref "ey"}
-                            {:name "Ze/hir" :ref "zehir"}
-                            {:name "Ze/zir" :ref "zezir"}
-                            {:name "Xe/xem" :ref "xe"}]]
+              (for [option [{:name (tr [:pronouns.none "Unspecified"]) :ref "none"}
+                            {:name (tr [:pronouns.any "Any"]) :ref "any"}
+                            {:name (tr [:pronouns.myodb "Prefer not to say"]) :ref "myodb"}
+                            {:name (tr [:pronouns.blank "[blank]"]) :ref "blank"}
+                            {:name (tr [:pronouns.they "They/them"]) :ref "they"}
+                            {:name (tr [:pronouns.she "She/her"]) :ref "she"}
+                            {:name (tr [:pronouns.shethey "She/they"]) :ref "shethey"}
+                            {:name (tr [:pronouns.he "He/him"]) :ref "he"}
+                            {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
+                            {:name (tr [:pronouns.it "It"]) :ref "it"}
+                            {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
+                            {:name (tr [:pronouns.ve "Ve/ver"]) :ref "ve"}
+                            {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
+                            {:name (tr [:pronouns.zehir "Ze/hir"]) :ref "zehir"}
+                            {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
+                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
-          [:h3 "Language"]
+          [:h3 (tr [:settings.language "Language"])]
           [:select {:value (:language @s "en")
                     :on-change #(swap! s assoc :language (.. % -target -value))}
            (doall
@@ -236,36 +238,36 @@
                            {:name "Igpay Atinlay" :ref "la-pig"}]]
                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
           [:section
-           [:h3 "Sounds"]
+           [:h3 (tr [:settings.sounds "Sounds"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:lobby-sounds @s)
                              :on-change #(swap! s assoc-in [:lobby-sounds] (.. % -target -checked))}]
-             "Enable lobby sounds"]]
+             (tr [:settings.enable-lobby-sounds "Enable lobby sounds"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:sounds @s)
                              :on-change #(swap! s assoc-in [:sounds] (.. % -target -checked))}]
-             "Enable game sounds"]]
-           [:div "Volume"
+             (tr [:settings.enable-game-sounds "Enable game sounds"])]]
+           [:div (tr [:settings.volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
           [:section
-           [:h3 "Layout options"]
+           [:h3 (tr [:settings.layout-options "Layout options"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:stacked-servers @s)
                              :on-change #(swap! s assoc-in [:stacked-servers] (.. % -target -checked))}]
-             "Server stacking is on by default"]]
+             (tr [:settings.server-stacking "Server stacking is on by default"])]]
 
            [:br]
-           [:h4 "Runner layout from Corp perspective"]
+           [:h4 (tr [:settings.runner-layout "Runner layout from Corp perspective"])]
            [:div
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -273,7 +275,7 @@
                               :value "jnet"
                               :checked (= "jnet" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"]]
+              (tr [:settings.runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"])]]
 
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -281,13 +283,13 @@
                               :value "irl"
                               :checked (= "irl" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"]]]]
+              (tr [:settings.runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]]
 
           [log-width-option s]
           [log-top-option s]
 
           [:section
-           [:h3  "Game board background"]
+           [:h3  (tr [:settings.background "Game board background"])]
            (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
                                 {:name "Freelancer"      :ref "freelancer-bg"}
                                 {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
@@ -307,9 +309,9 @@
                       (:name option)]]))]
 
           [:section
-           [:h3  "Card backs"]
-           (doall (for [option [{:name "NISEI" :ref "nisei"}
-                                {:name "FFG" :ref "ffg"}]]
+           [:h3  (tr [:settings.card-backs "Card backs"])]
+           (doall (for [option [{:name (tr [:settings.nisei "NISEI"]) :ref "nisei"}
+                                {:name (tr [:settings.ffg "FFG"]) :ref "ffg"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-back"
@@ -331,10 +333,10 @@
                       (:name option)]]))]
 
           [:section
-           [:h3 " Game Win/Lose statistics "]
-           (doall (for [option [{:name "Always"                   :ref "always"}
-                                {:name "Competitive Lobby Only"   :ref "competitive"}
-                                {:name "None"                     :ref "none"}]]
+           [:h3 (tr [:settings.game-stats " Game Win/Lose statistics "])]
+           (doall (for [option [{:name (tr [:settings.always "Always"])                      :ref "always"}
+                                {:name (tr [:settings.comp-only "Competitive Lobby Only"])   :ref "competitive"}
+                                {:name (tr [:settings.none "None"])                          :ref "none"}]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "gamestats"
@@ -344,10 +346,10 @@
                       (:name option)]]))]
 
           [:section
-           [:h3 " Deck statistics "]
-           (doall (for [option [{:name "Always"                   :ref "always"}
-                                {:name "Competitive Lobby Only"   :ref "competitive"}
-                                {:name "None"                     :ref "none"}]]
+           [:h3 (tr [:settings.deck-stats " Deck statistics "])]
+           (doall (for [option [{:name (tr [:settings.always "Always"])                      :ref "always"}
+                                {:name (tr [:settings.comp-only "Competitive Lobby Only"])   :ref "competitive"}
+                                {:name (tr [:settings.none "None"])                          :ref "none"}]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "deckstats"
@@ -357,18 +359,18 @@
                       (:name option)]]))]
 
           [:section {:id "alt-art"}
-           [:h3 "Alt arts"]
+           [:h3 (tr [:settings.alt-art "Alt arts"])]
            [:div
             [:label [:input {:type "checkbox"
                              :name "show-alt-art"
                              :checked (:show-alt-art @s)
                              :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
-             "Show alternate card arts"]]
+             (tr [:settings.show-alt "Show alternate card arts"])]]
 
            (when (and (:special @user) (:show-alt-art @s) (:alt-info @app-state))
              [:div {:id "my-alt-art"}
               [:div {:id "set-all"}
-               "Set all cards to: "
+               (tr [:settings.set-all "Set all cards to"]) ": "
                [:select {:ref "all-art-select"
                          :value (:all-art-select @s)
                          :on-change #(swap! s assoc-in [:all-art-select] (-> % .-target .-value))}
@@ -378,7 +380,7 @@
                [:button
                 {:type "button"
                  :on-click #(reset-card-art s)}
-                "Set"]]
+                (tr [:settings.set "Set"])]]
               [:div.reset-all
                (let [disabled (empty? (:alt-arts @s))]
                  [:button
@@ -386,10 +388,10 @@
                    :disabled disabled
                    :class (if disabled "disabled" "")
                    :on-click #(clear-card-art s)}
-                  "Reset All to Official Art"])]])]
+                  (tr [:settings.reset "Reset All to Official Art"])])]])]
 
          [:section
-          [:h3 "Blocked users"]
+          [:h3 (tr [:settings.blocked "Blocked users"])]
           [:div
            [:input {:on-change #(swap! s assoc-in [:block-user-input] (-> % .-target .-value))
                     :on-key-down (fn [e]
@@ -398,11 +400,11 @@
                                      (add-user-to-block-list user s)))
                     :ref "block-user-input"
                     :value (:block-user-input @s)
-                    :type "text" :placeholder "User name"}]
+                    :type "text" :placeholder (tr [:settings.user-name "User name"])}]
            [:button.block-user-btn {:type "button"
                                     :name "block-user-button"
                                     :on-click #(add-user-to-block-list user s)}
-            "Block user"]]
+            (tr [:settings.block "Block user"])]]
           (doall (for [bu (:blocked-users @s)]
                    [:div.line {:key bu}
                     [:button.small.unblock-user {:type "button"
@@ -410,7 +412,7 @@
                     [:span.blocked-user-name (str "  " bu)]]))]
 
      [:p
-      [:button "Update Profile"]
+      [:button (tr [:settings.update-profile "Update Profile"])]
       [:span.flash-message (:flash-message @s)]]])}))
 
 (defn account-wrapper [user s scroll-top]
