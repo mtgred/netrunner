@@ -7,7 +7,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -193,65 +193,70 @@
     :banned "invalid"
     "casual"))
 
-(defn- card-as-text
+(defn card-as-text
   "Generate text html representation a card"
-  [card]
-  [:div
-   [:h4 (:title card)]
-   (when-let [memory (:memoryunits card)]
-     (if (< memory 3)
-       [:div.anr-icon {:class (str "mu" memory)} ""]
-       [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
-   (when-let [cost (:cost card)]
-     [:div.heading (str "Cost: " cost)])
-   (when-let [trash-cost (:trash card)]
-     [:div.heading (str "Trash cost: " trash-cost)])
-   (when-let [strength (:strength card)]
-     [:div.heading (str "Strength: " strength)])
-   (when-let [requirement (:advancementcost card)]
-     [:div.heading (str "Advancement requirement: " requirement)])
-   (when-let [agenda-point (:agendapoints card)]
-     [:div.heading (str "Agenda points: " agenda-point)])
-   (when-let [min-deck-size (:minimumdecksize card)]
-     [:div.heading (str "Minimum deck size: " min-deck-size)])
-   (when-let [influence-limit (:influencelimit card)]
-     [:div.heading (str "Influence limit: " influence-limit)])
-   (when-let [influence (:factioncost card)]
-     (when-let [faction (:faction card)]
-       [:div.heading "Influence "
-        [:span.influence
-         {:class (-> faction s/lower-case (s/replace " " "-"))}
-         (influence-dots influence)]]))
-   [:div.text
-    [:p [:span.type (str (:type card))]
-     (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
-    [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
+  [card show-extra-info]
+  (let [title (:title card)
+        icon (faction-icon (:faction card) title)
+        uniq (when (:uniqueness card) "◇ ")]
+    [:div
+     [:h4 uniq title icon]
+     (when-let [memory (:memoryunits card)]
+       (if (< memory 3)
+         [:div.anr-icon {:class (str "mu" memory)} ""]
+         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+     (when-let [cost (:cost card)]
+       [:div.heading (str "Cost: " cost)])
+     (when-let [trash-cost (:trash card)]
+       [:div.heading (str "Trash cost: " trash-cost)])
+     (when-let [strength (:strength card)]
+       [:div.heading (str "Strength: " strength)])
+     (when-let [requirement (:advancementcost card)]
+       [:div.heading (str "Advancement requirement: " requirement)])
+     (when-let [agenda-point (:agendapoints card)]
+       [:div.heading (str "Agenda points: " agenda-point)])
+     (when-let [min-deck-size (:minimumdecksize card)]
+       [:div.heading (str "Minimum deck size: " min-deck-size)])
+     (when-let [influence-limit (:influencelimit card)]
+       [:div.heading (str "Influence limit: " influence-limit)])
+     (when-let [influence (:factioncost card)]
+       (when-let [faction (:faction card)]
+         [:div.heading "Influence "
+          [:span.influence
+           {:class (-> faction s/lower-case (s/replace " " "-"))}
+           (influence-dots influence)]]))
+     [:div.text
+      [:p [:span.type (str (:type card))]
+       (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
+      [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
 
-    [:div.formats
-     (doall (for [[k name] (-> slug->format butlast)]
-              (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
-                    c (text-class-for-status status)]
-                ^{:key k}
-                [:div {:class c} name
-                 (case status
-                   :banned banned-span
-                   :restricted restricted-span
-                   :rotated rotated-span
-                   nil)])))]
+      (when show-extra-info
+        [:<>
+         [:div.formats
+          (doall (for [[k name] (-> slug->format butlast)]
+                   (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
+                         c (text-class-for-status status)]
+                     ^{:key k}
+                     [:div {:class c} name
+                      (case status
+                        :banned banned-span
+                        :restricted restricted-span
+                        :rotated rotated-span
+                        nil)])))]
 
-    [:div.pack
-     (when-let [pack (:setname card)]
-       (when-let [number (:number card)]
-         (str pack " " number
-              (when-let [art (:art card)]
-                (str " [" (alt-art-name art) "]")))))]
-    (when (show-alt-art?)
-      (if (selected-alt-art card)
-        [:div.selected-alt "Selected Alt Art"]
-        (when (or (:art card) (:previous-versions card) (:future-version card))
-          [:button.alt-art-selector
-           {:on-click #(select-alt-art card)}
-           "Select Art"])))]])
+         [:div.pack
+          (when-let [pack (:setname card)]
+            (when-let [number (:number card)]
+              (str pack " " number
+                   (when-let [art (:art card)]
+                     (str " [" (alt-art-name art) "]")))))]
+         (when (show-alt-art?)
+           (if (selected-alt-art card)
+             [:div.selected-alt "Selected Alt Art"]
+             (when (or (:art card) (:previous-versions card) (:future-version card))
+               [:button.alt-art-selector
+                {:on-click #(select-alt-art card)}
+                "Select Art"])))])]]))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -338,7 +343,7 @@
                  nil)}
        (if (or (= card (:selected-card @state))
                (:show-text @cv))
-         [card-as-text card]
+         [card-as-text card true]
          (when-let [url (base-image-url card)]
            [:img {:src url
                   :alt (:title card)
