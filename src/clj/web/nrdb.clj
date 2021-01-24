@@ -7,6 +7,7 @@
             [web.db :refer [db]]))
 
 (def nrdb-decklist-url "https://netrunnerdb.com/api/2.0/public/decklist/")
+(def nrdb-readable-url "https://netrunnerdb.com/en/decklist/")
 
 (defn- take-numbers [coll v]
   (if (re-matches #"^\d+$" v)
@@ -40,7 +41,7 @@
 
 (defn- parse-nrdb-deck [deck]
   (merge {:name (:name deck)
-          :notes (str "Imported from " nrdb-decklist-url (:id deck))}
+          :notes (str "Imported from " nrdb-readable-url (:id deck))}
          (parse-cards (:cards deck))))
 
 (defn- parse-response [body]
