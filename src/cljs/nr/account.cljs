@@ -236,7 +236,7 @@
                            {:name "日本語" :ref "jp"}
                            {:name "한국어" :ref "ko"}
                            {:name "Igpay Atinlay" :ref "la-pig"}]]
-               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
           [:section
            [:h3 (tr [:settings.sounds "Sounds"])]
            [:div
@@ -413,7 +413,7 @@
 
      [:p
       [:button (tr [:settings.update-profile "Update Profile"])]
-      [:span.flash-message (:flash-message @s)]]])}))
+      [:span.flash-message (:flash-message @s)]]]])}))
 
 (defn account-wrapper [user s scroll-top]
   [:div.account
