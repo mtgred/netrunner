@@ -244,6 +244,37 @@
     :update-profile "Update Profile"
     :nisei "NISEI"
     :ffg "FFG"}
+  :stats
+  {:game-stats "Game Stats"
+   :corp-stats "Corp Stats"
+   :runner-stats "Runner Stats"
+   :clear-stats "Clear Stats"
+   :no-log "No log available"
+   :view-log "View log"
+   :winner "Winner"
+   :no-games "No games"
+   :started "Started"
+   :ended "Ended"
+   :completed "Completed"
+   :not-completed "Not completed"
+   :won "Won"
+   :lost "Lost"
+   :turn-count (fn [[cnt]] (str cnt " turn" (when (not= cnt 1) "s")))
+   :lobby "Lobby"
+   :format "Format"
+   :win-method "Win method"
+   :view-games "View games"
+   :clicks-gained "Clicks Gained"
+   :credits-gained "Credits Gained"
+   :credits-spent "Credits Spent"
+   :credits-click "Credits by Click"
+   :cards-drawn "Cards Drawn"
+   :cards-click "Cards Drawn by Click"
+   :damage-done "Damage Done"
+   :cards-rezzed "Cards Rezzed"
+   :tags-gained "Tags Gained"
+   :runs-made "Runs Made"
+   :cards-accessed "Cards Accessed"}
    }
    
    :la-pig
@@ -484,6 +515,37 @@
     :update-profile "Updateyay Ofilepray"
     :nisei "ISEINAY"
     :ffg "FFGYAY"}
+  :stats
+  {:game-stats "Amegay Atsstay"
+   :corp-stats "Orpcay Atsstay"
+   :runner-stats "Unnerray Atsstay"
+   :clear-stats "Earclay Atsstay"
+   :no-log "Onay oglay availableyay"
+   :view-log "Iewvay oglay"
+   :winner "Innerway"
+   :no-games "Onay amesgay"
+   :started "Artedstay"
+   :ended "Endedyay"
+   :completed "Ompletedcay"
+   :not-completed "Otnay ompletedcay"
+   :won "Onway"
+   :lost "Ostlay"
+   :turn-count (fn [[cnt]] (str cnt " urntay" (when (not= cnt 1) "s")))
+   :lobby "Obbylay"
+   :format "Ormatfay"
+   :win-method "Inway ethodmay"
+   :view-games "Iewvay amesgay"
+   :clicks-gained "Icksclay Ainedgay"
+   :credits-gained "Editscray Ainedgay"
+   :credits-spent "Editscray Entspay"
+   :credits-click "Editscray ybay Ickclay"
+   :cards-drawn "Ardscay Awndray"
+   :cards-click "Ardscay Awndray ybay Ickclay"
+   :damage-done "Amageday Oneday"
+   :cards-rezzed "Ardscay Ezzedray"
+   :tags-gained "Agstay Ainedgay"
+   :runs-made "Unsray Ademay"
+   :cards-accessed "Ardscay Accessedyay"}
    }})
 
 (def opts {:dict translation-dictionary})
@@ -493,7 +555,7 @@
     (tempura/tr opts [lang :en] resource (vec params))))
 
 (defn tr-string [prefix s]
-  (let [side (lower-case (replace s " " "-"))
+  (let [side (lower-case (replace (or s "") " " "-"))
         kw (keyword (str prefix "." side))]
     (tr [kw "Unknown"])))
 
@@ -502,4 +564,5 @@
 (def tr-faction (partial tr-string "faction"))
 (def tr-format (partial tr-string "format"))
 (def tr-sort (partial tr-string "card-browser.sort-by"))
+(def tr-lobby (partial tr-string "lobby"))
 (def tr-watch-join (partial tr-string "lobby"))
