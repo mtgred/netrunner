@@ -275,6 +275,23 @@
    :tags-gained "Tags Gained"
    :runs-made "Runs Made"
    :cards-accessed "Cards Accessed"}
+  :game
+  {:keep "Keep"
+   :mulligan "Mulligan"
+   :close "Close"
+   :start "Start Game"
+   :remove-tag "Remove Tag"
+   :run "Run"
+   :purge "Purge"
+   :trash-resource "Trash Resource"
+   :draw "Draw"
+   :gain-credit "Gain Credit"
+   :game-start "Game start"
+   :start-turn "Start Turn"
+   :end-turn "End Turn"
+   :mandatory-draw "Mandatory Draw"
+   :take-clicks "Take Clicks"
+   }
    }
    
    :la-pig
@@ -546,6 +563,21 @@
    :tags-gained "Agstay Ainedgay"
    :runs-made "Unsray Ademay"
    :cards-accessed "Ardscay Accessedyay"}
+  :game
+  {:keep "Eepkay"
+   :mulligan "Ulliganmay"
+   :close "Oseclay"
+   :start "Artstay Amegay"
+   :remove-tag "Emoveray Agtay"
+   :run "Unray"
+   :purge "Urgepay"
+   :trash-resource "Ashtray Esourceray"
+   :draw "Awdray"
+   :gain-credit "Aingay Editcray"
+   :game-start "Amegay Artstay"
+   :start-turn "Artstay Urntay"
+   :end-turn "Endyay Urntay"
+   }
    }})
 
 (def opts {:dict translation-dictionary})
@@ -565,4 +597,5 @@
 (def tr-format (partial tr-string "format"))
 (def tr-sort (partial tr-string "card-browser.sort-by"))
 (def tr-lobby (partial tr-string "lobby"))
+(def tr-pronouns (partial tr-string "pronouns"))
 (def tr-watch-join (partial tr-string "lobby"))

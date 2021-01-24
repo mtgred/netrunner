@@ -12,6 +12,7 @@
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
+            [nr.translations :refer [tr tr-pronouns]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button image-language-name]]
@@ -1291,25 +1292,9 @@
   [:div.namearea [avatar user {:opts {:size 32}}]
    [:div.namebox
     [:div.username (:username user)]
-    (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "none" "unspecified"
-                        "any" "any"
-                        "myodb" "prefer not to say"
-                        "blank" ""
-                        "he" "he/him"
-                        "she" "she/her"
-                        "hethey" "he/they"
-                        "shethey" "she/they"
-                        "it" "it"
-                        "they" "they/them"
-                        "ne" "ne/nem"
-                        "ve" "ve/ver"
-                        "ey" "ey/em"
-                        "zehir" "ze/hir"
-                        "zezir" "ze/zir"
-                        "xe" "xe/xem"
-                        "unspecified pronouns")]
-      [:div.pronouns pronouns])]])
+    (if-let [pronouns (get-in user [:options :pronouns])]
+      (let [pro-str (if (= "blank" pronouns) "" (tr-pronouns pronouns))]
+        [:div.pronouns (lower-case pro-str)]))]])
 
 (defmulti stats-view #(get-in @% [:identity :side]))
 
@@ -1672,14 +1657,16 @@
              [:div.mulligan
               (if (or (= :spectator @my-side)
                       (and @my-keep @op-keep))
-                [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
-                (list ^{:key "keepbtn"} [cond-button "Keep"
+                [cond-button (if (= :spectator @my-side)
+                               (tr [:game.close "Close"]) (tr [:game.start "Start Game"]))
+                 true #(swap! app-state assoc :start-shown true)]
+                (list ^{:key "keepbtn"} [cond-button (tr [:game.keep "Keep"])
                                          (= "mulligan" (-> @my-prompt first :prompt-type))
                                          #(send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
                                                                                       (filter (fn [c] (= "Keep" (:value c))))
                                                                                       first
                                                                                       :uuid)}})]
-                      ^{:key "mullbtn"} [cond-button "Mulligan"
+                      ^{:key "mullbtn"} [cond-button (tr [:game.mulligan "Mulligan"])
                                          (= "mulligan" (-> @my-prompt first :prompt-type))
                                          #(do (send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
                                                                                           (filter (fn [c] (= "Mulligan" (:value c))))
@@ -2017,23 +2004,23 @@
               (when (and (not (or @runner-phase-12 @corp-phase-12))
                          (zero? (:click @me))
                          (not @end-turn))
-                [:button {:on-click #(send-command "end-turn")} "End Turn"])
+                [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
               (when @end-turn
-                [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
             (when (and (= (keyword @active-player) side)
                        (or @runner-phase-12 @corp-phase-12))
               [:button {:on-click #(send-command "end-phase-12")}
-               (if (= side :corp) "Mandatory Draw" "Take Clicks")])
+               (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
             (when (= side :runner)
               [:div
-               [cond-button "Remove Tag"
+               [cond-button (tr [:game.remove-tag "Remove Tag"])
                 (and (not (or @runner-phase-12 @corp-phase-12))
                      (pos? (:click @me))
                      (>= (:credit @me) 2)
                      (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button
-                [cond-button "Run" (and (not (or @runner-phase-12 @corp-phase-12))
+                [cond-button (tr [:game.run "Run"]) (and (not (or @runner-phase-12 @corp-phase-12))
                                         (pos? (:click @me)))
                  #(do (send-command "generate-runnable-zones")
                       (swap! s update :servers not))]
@@ -2046,23 +2033,23 @@
                                    label])
                                 servers))]]])
             (when (= side :corp)
-              [cond-button "Purge"
+              [cond-button (tr [:game.purge "Purge"])
                (and (not (or @runner-phase-12 @corp-phase-12))
                     (>= (:click @me) 3))
                #(send-command "purge")])
             (when (= side :corp)
-              [cond-button "Trash Resource"
+              [cond-button (tr [:game.trash-resource "Trash Resource"])
                (and (not (or @runner-phase-12 @corp-phase-12))
                     (pos? (:click @me))
                     (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
                     (is-tagged? game-state))
                #(send-command "trash-resource")])
-            [cond-button "Draw"
+            [cond-button (tr [:game.draw "Draw"])
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me))
                   (not-empty (:deck @me)))
              #(send-command "draw")]
-            [cond-button "Gain Credit"
+            [cond-button (tr [:game.gain-credit "Gain Credit"])
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
@@ -2070,7 +2057,7 @@
 (defn starting-timestamp []
   [:div.panel.blue-shade
    [:span.float-center
-    (str "Game start: " (.toLocaleTimeString (js/Date.)))]])
+    (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString (js/Date.)))]])
 
 (defn gameboard []
   (r/with-let [active (r/cursor app-state [:active-page])]
