@@ -43,6 +43,7 @@
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
   (swap! app-state assoc-in [:options :card-back] (:card-back @s))
+  (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
@@ -60,6 +61,7 @@
   (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
+  (.setItem js/localStorage "card-zoom" (:card-zoom @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -304,6 +306,18 @@
                       (:name option)]]))]
 
           [:section
+           [:h3  "Card preview zoom"]
+           (doall (for [option [{:name "Card Image" :ref "image"}
+                                {:name "Card Text" :ref "text"}]]
+                    [:div.radio {:key (:name option)}
+                     [:label [:input {:type "radio"
+                                      :name "card-zoom"
+                                      :value (:ref option)
+                                      :on-change #(swap! s assoc :card-zoom (.. % -target -value))
+                                      :checked (= (:card-zoom @s) (:ref option))}]
+                      (:name option)]]))]
+
+          [:section
            [:h3 " Game Win/Lose statistics "]
            (doall (for [option [{:name "Always"                   :ref "always"}
                                 {:name "Competitive Lobby Only"   :ref "competitive"}
@@ -398,6 +412,7 @@
         state (r/atom {:flash-message ""
                        :background (get-in @app-state [:options :background])
                        :card-back (get-in @app-state [:options :card-back])
+                       :card-zoom (get-in @app-state [:options :card-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
                        :sounds (get-in @app-state [:options :sounds])
                        :lobby-sounds (get-in @app-state [:options :lobby-sounds])

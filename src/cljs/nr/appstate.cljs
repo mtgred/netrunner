@@ -13,6 +13,7 @@
            :user (js->clj js/user :keywordize-keys true)
            :options (merge {:background "lobby-bg"
                             :card-back (get-local-value "card-back" "nisei")
+                            :card-zoom (get-local-value "card-zoom" "image")
                             :pronouns "none"
                             :show-alt-art true
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")

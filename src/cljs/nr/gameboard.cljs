@@ -10,6 +10,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
             [nr.avatar :refer [avatar]]
+            [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
@@ -777,47 +778,19 @@
            nil [:span.unimplemented "Unimplemented"]
            [:span.impl-msg implemented])]))))
 
-(defn card-as-text
+(defn card-zoom-display
   [card]
   [:div.card-preview.blue-shade
-   [:h4 (:title card)]
-   (when-let [memory (:memoryunits card)]
-     (if (< memory 3)
-       [:div.anr-icon {:class (str "mu" memory)} ""]
-       [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
-   (when-let [cost (:cost card)]
-     [:div.heading (str "Cost: " cost)])
-   (when-let [trash-cost (:trash card)]
-     [:div.heading (str "Trash cost: " trash-cost)])
-   (when-let [strength (:strength card)]
-     [:div.heading (str "Strength: " strength)])
-   (when-let [requirement (:advancementcost card)]
-     [:div.heading (str "Advancement requirement: " requirement)])
-   (when-let [agenda-point (:agendatpoints card)]
-     [:div.heading (str "Agenda points: " agenda-point)])
-   (when-let [min-deck-size (:minimumdecksize card)]
-     [:div.heading (str "Minimum deck size: " min-deck-size)])
-   (when-let [influence-limit (:influencelimit card)]
-     [:div.heading (str "Influence limit: " influence-limit)])
-   (when-let [influence (:factioncost card)]
-     (when-let [faction (:faction card)]
-       [:div.heading "Influence "
-        [:span.influence
-         {:class (-> faction lower-case (s/replace " " "-"))}
-         (influence-dots influence)]]))
-   [:div.heading
-    [:span.type (str (:type card))]
-    (when-let [subtypes (seq (:subtype card))]
-      (str ": " subtypes))]
-   [:div.text
-    (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
-   (when-let [url (image-url card)]
-     [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])])
+   (let [url (image-url card)
+         show-img (= "image" (get-in @app-state [:options :card-zoom] "image"))]
+     (if (and url show-img)
+       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}]
+       [card-as-text card false]))])
 
 (defn card-zoom [zoom-card]
   (if-let [card @zoom-card]
     (do (-> ".card-zoom" js/$ (.addClass "fade"))
-        [card-as-text card])
+        [card-zoom-display card])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn server-menu
