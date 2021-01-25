@@ -61,6 +61,7 @@
       "Shaper" (icon-span "shaper")
       "Sunny Lebeau" (icon-span "sunny")
       "Weyland Consortium" (icon-span "weyland")
+      "Neutral" [:span.side ""]
       [:span.side "(Unknown)"])))
 
 ;; Shared function options
