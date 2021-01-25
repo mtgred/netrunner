@@ -5,15 +5,17 @@
             [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
+            [nr.ajax :refer [GET]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [image-url] :as cb]
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.game-row :refer [game-row]]
+            [nr.history :refer [history]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
-            [nr.utils :refer [slug->format cond-button non-game-toast num->percent]]
+            [nr.utils :refer [slug->format cond-button non-game-toast]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [differ.core :as differ]
@@ -32,7 +34,6 @@
               (:started game)
               (:date game)])
            games))
-
 
 (defn process-games-update 
   [{:keys [diff notification] :as msg}]
@@ -110,6 +111,8 @@
                :side side
                :format fmt
                :editing true
+               :replay false
+               :save-replay (if (= "casual" (:room @s)) false true)
                :flash-message ""
                :protected false
                :password ""
@@ -120,23 +123,96 @@
         (swap! app-state dissoc :create-game-deck)
         (-> ".game-title" js/$ .select)))))
 
+(defn replay-game [s]
+  (authenticated
+    (fn [user]
+      (swap! s assoc
+             :gameid "replay"
+             :title (str (:username user) "'s game")
+             :side "Corp"
+             :format "standard"
+             :editing true
+             :replay true
+             :flash-message ""
+             :protected false
+             :password ""
+             :allow-spectator true
+             :spectatorhands true))))
+
+(defn start-shared-replay
+  ([s gameid]
+   (start-shared-replay s gameid nil))
+  ([s gameid {:keys [n d] :as jump-to}]
+   (authenticated
+     (fn [user]
+       (swap! s assoc
+              :title (str (:username user) "'s game")
+              :side "Corp"
+              :format "standard"
+              :editing false
+              :replay true
+              :flash-message ""
+              :protected false
+              :password ""
+              :allow-spectator true
+              :spectatorhands true)
+       (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
+             (case status
+               200
+               (let [replay (js->clj json :keywordize-keys true)
+                     history (:history replay)
+                     init-state (first history)
+                     init-state (assoc init-state :gameid gameid)
+                     init-state (assoc-in init-state [:options :spectatorhands] true)
+                     diffs (rest history)
+                     init-state (assoc init-state :replay-diffs diffs)]
+                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js
+                                                                                  (if jump-to
+                                                                                    (assoc init-state :replay-jump-to jump-to)
+                                                                                    init-state)))]))
+               404
+               (non-game-toast "Replay link invalid." "error" {:time-out 0 :close-button true}))))))))
+
+(defn start-replay [s]
+  (let [reader (js/FileReader.)
+        file (:replay-file s)
+        onload (fn [onload-ev] (let [replay (-> onload-ev .-target .-result)
+                                     replay (js->clj (.parse js/JSON replay) :keywordize-keys true)
+                                     history (:history replay)
+                                     init-state (first history)
+                                     init-state (assoc-in init-state [:options :spectatorhands] true)
+                                     init-state (assoc init-state :gameid "replay")
+                                     diffs (rest history)
+                                     init-state (assoc init-state :replay-diffs diffs)]
+                                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
+    (aset reader "onload" onload)
+    (.readAsText reader file)))
+
 (defn create-game [s]
   (authenticated
     (fn [user]
-      (cond
-        (empty? (:title @s))
-        (swap! s assoc :flash-message "Please fill a game title.")
+      (if (:replay @s)
+        (cond
+          (not (:replay-file @s))
+          (swap! s assoc :flash-message "Select a valid replay file.")
 
-        (and (:protected @s)
-             (empty? (:password @s)))
-        (swap! s assoc :flash-message "Please fill a password")
+          :else
+          (do (swap! s assoc :editing false :gameid "replay")
+              (start-replay @s)))
+        (cond
+          (empty? (:title @s))
+          (swap! s assoc :flash-message "Please fill a game title.")
 
-        :else
-        (do (swap! s assoc :editing false)
-            (swap! app-state dissoc :editing-game)
-            (ws/ws-send! [:lobby/create
-                          (select-keys @s [:title :password :allow-spectator
-                                           :spectatorhands :side :format :room])]))))))
+          (and (:protected @s)
+               (empty? (:password @s)))
+          (swap! s assoc :flash-message "Please fill a password.")
+
+          :else
+          (do (swap! s assoc :editing false)
+              (swap! app-state dissoc :editing-game)
+              (ws/ws-send! [:lobby/create
+                            (select-keys @s [:title :password :allow-spectator :save-replay
+                                             :spectatorhands :side :format :room])])))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])
@@ -285,6 +361,21 @@
 
 (defn games-list-panel [s games gameid password-gameid user]
   [:div.games
+   (let [params (.-search (.-location js/window))]
+     (when (not-empty params)
+       (let [id-match (re-find #"([0-9a-f\-]+)" params)
+             n-match (re-find #"n=(\d+)" params)
+             d-match (re-find #"d=(\d+)" params)
+             replay-id (nth id-match 1)
+             n (when n-match (js/parseInt (nth n-match 1)))
+             d (when d-match (js/parseInt (nth d-match 1)))]
+         (when replay-id
+           (.replaceState (.-history js/window) {} "" "/play") ; remove GET parameters from url
+           (if (and n d)
+             (start-shared-replay s replay-id {:n n :d d})
+             (start-shared-replay s replay-id))
+           (resume-sound)
+           nil))))
    [:div.button-bar
     [:div.rooms
      [room-tab user s games "tournament" "Tournament"]
@@ -300,6 +391,16 @@
                empty?))
      #(do (new-game s)
           (resume-sound))]
+    [cond-button "Load Replay"
+     (and (not (or @gameid
+                   (:editing @s)
+                   (= "tournament" (:room @s))))
+          (->> @games
+               (mapcat :players)
+               (filter #(= (-> % :user :_id) (:_id @user)))
+               empty?))
+     #(do (replay-game s)
+          (resume-sound))]
     [:button {:type "button"
               :on-click #(ws/ws-send! [:lobby/list])} "Reload list"]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
@@ -312,75 +413,98 @@
 (defn create-new-game
   [s]
   (when (:editing @s)
-    [:div
-     [:div.button-bar
-      [:button {:type "button"
-                :on-click #(create-game s)} "Create"]
-      [:button {:type "button"
-                :on-click #(do
-                             (swap! s assoc :editing false)
-                             (swap! app-state dissoc :editing-game))}
-       "Cancel"]]
-     (when-let [flash-message (:flash-message @s)]
-       [:p.flash-message flash-message])
-     [:section
-      [:h3 "Title"]
-      [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
-                          :value (:title @s)
-                          :placeholder "Title"
-                          :maxLength "100"}]]
-     [:section
-      [:h3 "Side"]
-      (doall
-        (for [option ["Corp" "Runner"]]
-          ^{:key option}
-          [:p
-           [:label [:input {:type "radio"
-                            :name "side"
-                            :value option
-                            :on-change #(swap! s assoc :side (.. % -target -value))
-                            :checked (= (:side @s) option)}]
-            option]]))]
+    (if (:replay @s)
+      [:div
+       [:div.button-bar
+        [:button {:type "button"
+                  :on-click #(create-game s)} "Start replay"]
+        [:button {:type "button"
+                  :on-click #(do
+                               (swap! s assoc :editing false)
+                               (swap! app-state dissoc :editing-game))}
+         "Cancel"]]
+       (when-let [flash-message (:flash-message @s)]
+         [:p.flash-message flash-message])
+        [:div [:input {:field :file
+                       :type :file
+                       :on-change #(swap! s assoc :replay-file (aget (.. % -target -files) 0))}]]]
+      [:div
+       [:div.button-bar
+        [:button {:type "button"
+                  :on-click #(create-game s)} "Create"]
+        [:button {:type "button"
+                  :on-click #(swap! s assoc :editing false)} "Cancel"]]
+       (when-let [flash-message (:flash-message @s)]
+         [:p.flash-message flash-message])
+       [:section
+        [:h3 "Title"]
+        [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
+                            :value (:title @s)
+                            :placeholder "Title"
+                            :maxLength "100"}]]
+       [:section
+        [:h3 "Side"]
+        (doall
+          (for [option ["Corp" "Runner"]]
+            ^{:key option}
+            [:p
+             [:label [:input {:type "radio"
+                              :name "side"
+                              :value option
+                              :on-change #(swap! s assoc :side (.. % -target -value))
+                              :checked (= (:side @s) option)}]
+              option]]))]
 
-     [:section
-      [:h3 "Format"]
-      [:select.format {:value (:format @s "standard")
-                       :on-change #(swap! s assoc :format (.. % -target -value))}
-       (for [[k v] slug->format]
-         ^{:key k}
-         [:option {:value k} v])]]
+       [:section
+        [:h3 "Format"]
+        [:select.format {:value (:format @s "standard")
+                         :on-change #(swap! s assoc :format (.. % -target -value))}
+         (for [[k v] slug->format]
+           ^{:key k}
+           [:option {:value k} v])]]
 
-     [:section
-      [:h3 "Options"]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:allow-spectator @s)
-                 :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
-        "Allow spectators"]]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:spectatorhands @s)
-                 :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
-                 :disabled (not (:allow-spectator @s))}]
-        "Make players' hidden information visible to spectators"]]
-      [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
-       [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-        "including hand and face-down cards."]
-       [:p "We recommend using a password to prevent strangers from spoiling the game."]]
-      [:p
-       [:label
-        [:input {:type "checkbox" :checked (:private @s)
-                 :on-change #(let [checked (.. % -target -checked)]
-                               (swap! s assoc :protected checked)
-                               (when (not checked) (swap! s assoc :password "")))}]
-        "Password protected"]]
-      (when (:protected @s)
+       [:section
+        [:h3 "Options"]
         [:p
-         [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                             :type "password"
-                             :value (:password @s)
-                             :placeholder "Password"
-                             :maxLength "30"}]])]]))
+         [:label
+          [:input {:type "checkbox" :checked (:allow-spectator @s)
+                   :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
+          "Allow spectators"]]
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:spectatorhands @s)
+                   :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
+                   :disabled (not (:allow-spectator @s))}]
+          "Make players' hidden information visible to spectators"]]
+        [:div.infobox.blue-shade {:style {:display (if (:spectatorhands @s) "block" "none")}}
+         [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+          "including hand and face-down cards."]
+         [:p "We recommend using a password to prevent strangers from spoiling the game."]]
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:private @s)
+                   :on-change #(let [checked (.. % -target -checked)]
+                                 (swap! s assoc :protected checked)
+                                 (when (not checked) (swap! s assoc :password "")))}]
+          "Password protected"]]
+        (when (:protected @s)
+          [:p
+           [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                               :type "password"
+                               :value (:password @s)
+                               :placeholder "Password"
+                               :maxLength "30"}]])
+        [:p
+         [:label
+          [:input {:type "checkbox" :checked (:save-replay @s)
+                   :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
+          "Save replay"]]
+        [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
+         [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
+          " The file is available only after the game is finished."]
+         [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
+         [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
+          " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]])))
 
 (defn pending-game
   [s decks games gameid password-gameid sets user]
@@ -431,6 +555,24 @@
                                                            :format (:format game "standard")}])}
                      "Select Deck"])]))
              players))]
+        [:h3 "Options"]
+        [:ul.options
+         (when (:allow-spectator game)
+           [:li "Allow spectators"])
+         (when (:spectatorhands game)
+           [:li "Make players' hidden information visible to spectators"])
+         (when (:password game)
+           [:li "Password protected"])
+         (when (:save-replay game)
+           [:li "Save replay"])
+         (when (:save-replay game)
+           [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
+            [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
+             " The file is available only after the game is finished."]
+            [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
+            [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
+             " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]])]
+
         (when (:allow-spectator game)
           [:div.spectators
            (let [c (:spectator-count game)]

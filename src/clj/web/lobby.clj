@@ -254,13 +254,13 @@
 (defn handle-lobby-create
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [title format allow-spectator spectatorhands password room side]} :?data :as event}]
+    {:keys [title format allow-spectator save-replay spectatorhands password room side]} :?data :as event}]
   (let [gameid (java.util.UUID/randomUUID)
-        game {
-              :date            (java.util.Date.)
+        game {:date            (java.util.Date.)
               :gameid          gameid
               :title           title
               :allow-spectator allow-spectator
+              :save-replay     save-replay
               :spectatorhands  spectatorhands
               :mute-spectators false
               :password        (when (not-empty password) (bcrypt/encrypt password))

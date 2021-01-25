@@ -26,6 +26,11 @@
 (defonce board-dom (atom {}))
 (defonce sfx-state (atom {}))
 
+(defonce replay-timeline (atom []))
+(defonce replay-status (r/atom {}))
+(defonce replay-side (r/atom :spectator))
+(defonce show-replay-link (r/atom false))
+
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
@@ -39,23 +44,197 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
+(defn generate-replay-link [origin]
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (str origin "/play?" (:gameid @game-state) "&n=" n "&d=" d)))
+
+(defn set-replay-side [side]
+  (reset! replay-side side)
+  (swap! game-state assoc :side @replay-side)
+  (reset! last-state @last-state))
+
 (defn get-side [state]
-  (let [user-id (:_id (:user @app-state))]
-    (cond
-      (= (get-in state [:runner :user :_id]) user-id) :runner
-      (= (get-in state [:corp :user :_id]) user-id) :corp
-      :else :spectator)))
+  (if (:replay state)
+    @replay-side
+    (let [user-id (:_id (:user @app-state))]
+      (cond
+        (= (get-in state [:runner :user :_id]) user-id) :runner
+        (= (get-in state [:corp :user :_id]) user-id) :corp
+        :else :spectator))))
 
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
 
+(defn scroll-timeline []
+  (when-let [timeline (-> js/document (.getElementById "timeline"))]
+    (let [new-step (-> js/document (.getElementsByClassName "step") array-seq (nth (:n @replay-status)))
+          new-step-left (+ (.-left (.getBoundingClientRect new-step))
+                           (.-scrollLeft timeline))]
+      (set! (.-scrollLeft timeline)
+            (- new-step-left
+               (/ (.-clientWidth timeline) 2))))))
+
+(defn replay-reached-end? []
+  (and (empty? (:diffs @replay-status))
+       (< (inc (:n @replay-status))
+          (count @replay-timeline))))
+
+(defn replay-prepare-state
+  [state]
+  (-> state
+    (assoc :side @replay-side
+           :replay true)
+    (assoc-in [:options :spectatorhands] true)))
+
+(defn replay-apply-patch
+  [patch]
+  (reset! game-state (replay-prepare-state (differ/patch @last-state patch)))
+  (reset! lock false)
+  (reset! last-state @game-state))
+
+(defn replay-jump [n]
+  (cond
+    (neg? n)
+    (do
+      (swap! app-state assoc :start-shown false)
+      (replay-jump 0))
+
+    (< n (count @replay-timeline))
+    (do
+      (swap! app-state assoc :start-shown true)
+      (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
+      (reset! lock false)
+      (reset! last-state @game-state)
+      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
+  (scroll-timeline))
+
+(defn replay-forward []
+  (swap! app-state assoc :start-shown true)
+  (let [{:keys [n diffs]} @replay-status]
+    (if (empty? diffs)
+      (do
+        (when (< (inc n) (count @replay-timeline))
+          (replay-jump (inc n))
+          (replay-forward)))
+      (do
+        (replay-apply-patch (first diffs))
+        (if (empty? (rest diffs))
+          (replay-jump (inc n))
+          (swap! replay-status assoc :diffs (rest diffs))))))
+  (scroll-timeline))
+
+(defn replay-jump-to [{:keys [n d]}]
+  (replay-jump n)
+  (dotimes [i d] (replay-forward)))
+
+(defn replay-log-forward []
+  (let [prev-log (:log @game-state)]
+    (while (and
+             (or (= prev-log (:log @game-state))
+                 (= "typing" (-> @game-state :log last :text)))
+             (not (replay-reached-end?)))
+      (replay-forward))))
+
+(defn replay-step-forward []
+  (replay-jump (inc (:n @replay-status))))
+
+(defn replay-step-back []
+  (replay-jump (dec (:n @replay-status))))
+
+(defn populate-replay-timeline
+  [init-state]
+  (let [state (dissoc init-state :replay-diffs)
+        diffs (:replay-diffs init-state)]
+    (reset! replay-timeline [{:type :start-of-game :state state}])
+    (dorun (loop [old-state @game-state
+                  diffs diffs
+                  inter-diffs []]
+             (if (empty? diffs)
+               (do
+                 (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                 (swap! replay-timeline conj {:type :end-of-game :state old-state}))
+               (let [new-state (differ/patch old-state (first diffs))
+                     inter-diffs (conj inter-diffs (first diffs))
+                     diffs (rest diffs)
+                     old-side (keyword (:active-player old-state))
+                     new-side (keyword (:active-player new-state))
+                     old-click (get-in old-state [old-side :click])
+                     new-click (get-in new-state [new-side :click])
+                     new-step-type (when (not= old-click new-click)
+                                     (cond
+                                       (not-empty (filter #(= "Game reset to start of turn" (:msg %)) (get-in new-state [:corp :toast])))
+                                       :undo-turn
+
+                                       (and (not= old-side new-side)
+                                            (= :corp new-side))
+                                       :start-of-turn-corp
+
+                                       (and (not= old-side new-side)
+                                            (= :runner new-side))
+                                       :start-of-turn-runner
+
+                                       (:run new-state)
+                                       :run
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to install")
+                                                       (str (:text (last (:log new-state))))))
+                                       :install
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] and pays \d+ \[Credits\] to install")
+                                                       (str (:text (last (:log new-state))))))
+                                       :install
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Corp Basic Action Card to gain 1 \[Credits\]")
+                                                       (str (:text (last (:log new-state))))))
+                                       :credit
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Runner Basic Action Card to gain 1 \[Credits\]")
+                                                       (str (:text (last (:log new-state))))))
+                                       :credit
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] and pays 1 \[Credits\] to use Corp Basic Action Card to advance")
+                                                       (str (:text (last (:log new-state))))))
+                                       :advance
+
+                                       (some? (re-find (re-pattern #"spends \[Click\]\[Click\]\[Click\] to use Corp Basic Action Card to purge all virus counters")
+                                                       (str (:text (last (:log new-state))))))
+                                       :purge
+
+                                       (some? (re-find (re-pattern #"uses a command: /undo-click")
+                                                       (str (:text (last (:log new-state))))))
+                                       :undo-click
+
+                                       :else
+                                       :click))]
+                 (when new-step-type
+                   ; add diffs to last timeline step
+                   (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
+                   ; create new timeline step
+                   (swap! replay-timeline conj {:type new-step-type :state new-state}))
+
+                 (when (:run new-state) ; If a card starts a run somewhere during the diffs, change the last step type to :run
+                   (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :type :run))))
+
+                 (if new-step-type
+                   (recur new-state diffs [])
+                   (recur new-state diffs inter-diffs))))))))
+
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
-    (reset! game-state state)
+    (reset! game-state (dissoc state :replay-diffs :replay-jump-to))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
-    (reset! lock false)))
+    (reset! lock false)
+    (when (:replay-diffs state)
+      (.setItem js/localStorage "gameid" "replay")
+      (swap! app-state assoc :gameid "replay")
+      (populate-replay-timeline state)
+      (if (:replay-jump-to state)
+        (replay-jump-to (:replay-jump-to state))
+        (replay-jump 0)))))
 
 (defn launch-game [state]
   (init-game state)
@@ -938,7 +1117,9 @@
 
 (defn- this-user?
   [user]
-  (= (:_id user) (-> @app-state :user :_id)))
+  (if (:replay @game-state)
+    (= (get-in @game-state [@replay-side :user :_id]) (:_id user))
+    (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
   [user hand prompt remotes wrapper-class]
@@ -1980,7 +2161,12 @@
 
                   [build-win-box game-state]
 
-                  [:div {:class @background}]
+                  [:div {:class (if (:replay @game-state)
+                                  (case @replay-side
+                                    :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
+                                    :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
+                                    :spectator @background)
+                                  @background)}]
 
                   [:div.rightpane
                    [:div.card-zoom
@@ -2038,4 +2224,41 @@
 
                    [:div.me
                     [hand-view me-user (if (= :corp me-side) "HQ" "Grip") me-hand me-prompt
-                     corp-remotes true "me"]]]])))})))))
+                     corp-remotes true "me"]]]
+
+                  (when (:replay @game-state)
+                    [:div.bottompane
+                     [:div.replay.panel.blue-shade
+                      [:div#timeline
+                       (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
+                                ^{:key (str "step-" n)}
+                                [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
+                                 [:div.step-label {:on-click #(replay-jump n) :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
+                                  (case step-type
+                                    :start-of-game "↠"
+                                    :start-of-turn-corp "C"
+                                    :start-of-turn-runner "R"
+                                    :end-of-game "🎉"
+                                    :undo-click "⮌"
+                                    :undo-turn "⮰"
+                                    :run "🏃"
+                                    :install "▼"
+                                    :credit (render-message "[credit]")
+                                    :advance "A"
+                                    :purge "☣️"
+                                    :click (render-message "[click]")
+                                    "?")]]))]
+                      [:div.controls.panel.blue-shade
+                       [:button.small {:on-click #(replay-step-back) :type "button"
+                                       :title "Rewind one click"} "⏮︎"]
+                       [:button.small {:on-click #(replay-forward) :type "button"
+                                       :title "Play next action"} "⏵︎"]
+                       [:button.small {:on-click #(replay-log-forward) :type "button"
+                                       :title "Forward to next log entry"} "⏩︎"]
+                       [:button.small {:on-click #(replay-step-forward) :type "button"
+                                       :title "Forward one click"} "⏭︎"]
+                       (when-not (= "replay" (:gameid @game-state)) ; when saved replay
+                         [:button {:on-click #(swap! show-replay-link not)} "Share"])
+                       (when-not (= "replay" (:gameid @game-state))
+                         [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
+                                  :type "text" :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))

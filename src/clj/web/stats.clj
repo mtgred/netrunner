@@ -3,12 +3,14 @@
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
+            [monger.query :as mq]
             [web.ws :as ws]
-            [web.utils :refer [response]]
+            [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
-            [clj-time.core :as t])
+            [clj-time.core :as t]
+            [cheshire.core :as json])
 
   (:import org.bson.types.ObjectId))
 
@@ -153,6 +155,32 @@
                                        :deck-name (get-in runner [:deck :name])
                                        :identity (get-in runner [:deck :identity :title])}})))
 
+(defn delete-old-replay [{:keys [username] :as user}]
+  (let [games (mq/with-collection db "game-logs"
+                (mq/find {$and [{$or [{:corp.player.username username}
+                                      {:runner.player.username username}]}
+                                {:replay {$exists true}}
+                                {:replay-shared false}]})
+                (mq/sort (array-map :start-date -1))
+                (mq/skip 15))]
+    (doseq [game games]
+      (mc/update db :game-logs
+                 {:gameid (:gameid game)}
+                 {"$unset" {:replay nil}}))))
+
+(defn generate-replay [state]
+  (json/generate-string
+    {:metadata {:winner (:winner @state)
+                          :reason (:reason @state)
+                          :end-date (java.util.Date.)
+                          :stats (-> (:stats @state)
+                                     (dissoc-in [:time :started])
+                                     (dissoc-in [:time :ended]))
+                          :turn (:turn @state)
+                          :corp.agenda-points (get-in @state [:corp :agenda-point])
+                          :runner.agenda-points (get-in @state [:runner :agenda-point])}
+     :history (:history @state)}))
+
 (defn game-finished [{:keys [state gameid]}]
   (when state
     (try
@@ -167,7 +195,11 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
+                          :replay (when (get-in @state [:options :save-replay]) (generate-replay state))
+                          :replay-shared false
                           :log (:log @state)}})
+      (delete-old-replay (get-in @state [:corp :user]))
+      (delete-old-replay (get-in @state [:corp :runner]))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))
@@ -187,4 +219,32 @@
     (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])
           log (or log {})]
       (response 200 log))
+    (response 401 {:message "Unauthorized"})))
+
+(defn fetch-replay [{{username :username} :user
+                     {:keys [gameid]}     :params}]
+  (let [{:keys [replay replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay" "replay-shared"])
+        replay (or replay {})]
+    (if (or username
+            replay-shared)
+      (if (empty? replay)
+        (response 404 {:message "Replay not found"})
+        (json-response 200 replay))
+      (response 401 {:message "Unauthorized"}))))
+
+(defn share-replay [{{username :username} :user
+                     {:keys [gameid]}     :params}]
+  (if username
+    (let [{:keys [replay]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay"])
+          replay (or replay {})]
+      (try
+        (mc/update db :game-logs
+                   {$and [{:gameid (str gameid)}
+                          {$or [{:corp.player.username username}
+                                {:runner.player.username username}]}]}
+                   {"$set" {:replay-shared true}})
+        (response 200 {:message "Shared"})
+        (catch Exception e
+          (println "Caught exception sharing game: " (.getMessage e))
+          (response 500 {:message "Server error"}))))
     (response 401 {:message "Unauthorized"})))

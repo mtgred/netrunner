@@ -15,8 +15,24 @@
     [game.core.state :refer [new-state]]
     [game.macros :refer [wait-for]]
     [game.quotes :as quotes]
-    [game.utils :refer [server-card]]
+    [game.utils :refer [server-card dissoc-in]]
     [clj-time.core :as t]))
+
+(defn strip-for-replay [state]
+  (-> state
+    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
+    (update-in [:corp :register] select-keys [:spent-click])
+    (update-in [:runner :register] select-keys [:spent-click])
+    (dissoc-in [:corp :register-last-turn])
+    (dissoc-in [:runner :register-last-turn])
+    (dissoc-in [:run :current-ice])
+    (dissoc-in [:run :events])
+    (dissoc-in [:runner :user :isadmin])
+    (dissoc-in [:runner :user :options :blocked-users])
+    (dissoc-in [:runner :user :stats])
+    (dissoc-in [:corp :user :isadmin])
+    (dissoc-in [:corp :user :options :blocked-users])
+    (dissoc-in [:corp :user :stats])))
 
 (defn build-card
   [card]
@@ -78,7 +94,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid spectatorhands room]}]
+  [{:keys [players gameid spectatorhands save-replay room]}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -99,6 +115,7 @@
         room
         (t/now)
         spectatorhands
+        save-replay
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
         (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
 
@@ -125,4 +142,5 @@
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)
                             (fake-checkpoint state)))))
+    (swap! state assoc :history [(strip-for-replay @state)])
     state))
