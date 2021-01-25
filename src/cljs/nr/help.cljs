@@ -8,14 +8,20 @@
      :title "General"
      :sub (list
             {:id "dostuff"
-             :title "How do I do I perform actions in a game?"
+             :title "How do I perform actions in a game?"
              :content [:ul
                         [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
-                         "Either something will happen or a menu should appear."]
-                        [:p "Cards can be moved by clicking them and dragging. Clicking and dragging excessive cards from one's "
-                         "hand to discard pile is normally done after one's turn ends and they are over their hand size limit."]
-                        [:p "A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
-                         "to their numbers in the panel on the left."]]}
+                         "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to select a target. "
+                         "You will be prompted discard down to your hand size after you choose \"End Turn\"."]
+                        [:p "Most cards in the game are now automated, but be aware that some cards' restrictions or trigger conditions are not implemented. "
+                         "If you want to spend credits from a card, but the game is not giving you the option, just click the card with credits and take some."]]}
+            {:id "manual"
+             :title "What if the card I'm playing is not implemented?"
+             :content [:ul
+                        [:p "Once in a while you may need to do something manually. A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
+                         "to their numbers in the panel on the left (which will appear when you move your mouse there)."]
+                        [:p "Cards can be moved by clicking them and dragging, but this does not work when moving a card into the play area (including from one server to another server). "
+                         "One workaround is to manually add a click and any credits needed, then click on the card to install it. This works even if it's not your turn."]]}
             {:id "undo"
              :title "How do I undo an action?"
              :content [:ul
@@ -29,17 +35,18 @@
             {:id "breakice"
              :title "How do I break ICE and fire ICE subroutines?"
              :content [:ul
-                        [:p "Breaking ICE during a run and subroutines firing is currently not automated. Runner signals using their "
-                         "icebreakers by clicking them and using their abilities. When some subroutines are left unbroken and fire, "
-                         "Corp clicks the piece of ICE with subroutines firing and uses them."]
-                        [:p "It's considered common courtesy to wait as Corp for the runner to say \"fire\" before firing the "
-                         "subroutines, since Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
+                        [:p "Once the Runner encounters a piece of ice, both the Runner and the Corp will see a menu. "
+                         "To break subroutines, the Runner should click on their icebreakers and use their abilities. "
+                         "If some subroutines are left unbroken, after the Runner chooses \"Let all subroutines fire\", "
+                         "the Corp clicks \"Fire unbroken subroutines\" to fire them."]
+                        [:p "It's considered common courtesy to wait as Corp for the Runner to indicate to fire unbroken subroutines, "
+                         "since the Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
                          "and the effects of a fired subroutine may be hard to undo."]]}
             {:id "closemenu"
              :title "How do I close a card's menu?"
              :content [:ul
                         [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
-                       "try using " [:code "/close-prompt"]]]}
+                       "try using " [:code "/close-prompt"] "."]]}
             {:id "commands"
              :title "How do I use commands during a game?"
              :content [:ul
@@ -125,9 +132,11 @@
                         [:div "Apart from the chatrooms here on Jinteki.net, here are a few links to online Netrunner communities:"
                          [:ul
                           [:li [:a {:href "http://forum.stimhack.com/"} "Stimhack forums"]]
+                          [:li [:a {:href "https://stimslackinvite.herokuapp.com/"} "Stimslack"] " (herokuapp invite link)"]
+                          [:li [:a {:href "https://discord.gg/VxgbNj5"} "Green Level Clearance Discord server"]]
                           [:li [:a {:href "http://reddit.com/r/netrunner/"} "/r/netrunner subreddit"]]
-                          [:li "multiple Facebook groups, such as "
-                           [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]]})}
+                          [:li [:a {:href "https://www.facebook.com/groups/netrunnerdorks/"} "Netrunner Dorks Facebook group"]]
+                          [:li [:a {:href "https://www.nearearthhub.net/#h.c28pw9eqowgt"} "NearEarthHub#Community Resources"]]]]]})}
     {:id "formats"
      :title "Formats"
      :sub (list
@@ -138,7 +147,7 @@
                          "frequently changing to keep the meta exciting and engaging for "
                          "players of all levels. Most official Organised Play events will "
                          "follow the Standard format. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
             {:id "eternal"
              :title "What is Eternal format?"
              :content [:ul
@@ -146,21 +155,21 @@
                          "stringent Most Wanted List. The largest and most complex format, "
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
             {:id "core-experience"
              :title "What is the Core Experience format?"
              :content [:ul
                         [:p "The \"core\" of the game experience, and an excellent "
                          "starting point for new or returning players. A single copy of "
                          "System Core 2019 is the only legal product; there is no MWL. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
            {:id "snapshot"
              :title "What is the Snapshot format?"
              :content [:ul
                         [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
                          "the culmination of FFG Organized Play. It will see minimal "
                          "changes unless strictly necessary. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
            {:id "snapshot-plus"
              :title "What is the Snapshot Plus format?"
              :content [:ul
@@ -169,7 +178,7 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
            {:id "socr"
              :title "What is the SOCR format?"
              :content [:ul
@@ -177,13 +186,13 @@
                          "cardpool tournament originally based on FFG's Cache Refresh "
                          "format but with an updated MWL and cardpool. It is currently "
                          "in it's 9th iteration. "
-                         "Refer to the " [:a {:href "https://forum.stimhack.com/t/stimhack-online-cache-refresh-9-information-thread/10419"} "Stimhack Thread"]]]}
+                         "Refer to the " [:a {:href "https://forum.stimhack.com/t/stimhack-online-cache-refresh-9-information-thread/10419"} "Stimhack Thread"] "."]]}
            {:id "classic"
              :title "What is the Classic format?"
              :content [:ul
                         [:p "An alternate Eternal format created by thebigboy. The entire "
-                         "ANR cardpool is legal, except for a Ban-list of (currently) 49 cards. "
-                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"]]]})}
+                         "ANR cardpool is legal, except for a Ban-list of (as of " [:i "Uprising" ] ") 55 cards. "
+                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list
