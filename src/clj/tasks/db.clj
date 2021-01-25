@@ -74,3 +74,22 @@
                          (println "Delete duplicate users failed" (.getMessage e))
                          (.printStackTrace e)))
     (finally (webdb/disconnect))))
+
+(defn create-indexes
+  "Create case insensitive indexes on `username` and `email` in the \"users\" collection.
+
+  `create-indexes` can safely be executed multiple times, as long as the
+  existing indexes don't conflict with the ones created here."
+  []
+  (webdb/connect)
+  (try
+    (let [case-insensitive-index-opts {:collation {:locale "en" :strength (int 2)}}]
+      (mc/create-index db "users" (array-map :username 1) case-insensitive-index-opts)
+      (mc/create-index db "users" (array-map :email 1) case-insensitive-index-opts)
+      (println "Indexes successfully created.\n")
+      (println "All current indexes on \"users\":")
+      (clojure.pprint/pprint (mc/indexes-on db "users")))
+    (catch Exception e (do
+                         (println "Create indexes failed" (.getMessage e))
+                         (.printStackTrace e)))
+    (finally (webdb/disconnect))))

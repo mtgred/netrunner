@@ -10,7 +10,7 @@
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
                  [stylefruits/gniazdo "1.1.4"]
-                 [danhut/monger "3.1.0"]
+                 [com.novemberain/monger "3.5.0"]
                  [differ "0.3.3"]
                  [com.taoensso/sente "1.16.0"]
                  [ring "1.7.1"]
@@ -59,7 +59,8 @@
             "load-test" ["run" "-m" "tasks.load-test/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
-            "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
+            "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
+            "create-indexes" ["run" "-m" "tasks.db/create-indexes"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
