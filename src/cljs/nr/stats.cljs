@@ -13,6 +13,15 @@
             [nr.ws :as ws]
             [reagent.core :as r]))
 
+(def state (r/atom {:games nil}))
+
+(defn- fetch-game-history []
+  (go (let [{:keys [status json]} (<! (GET "/profile/history"))
+            games (mapv #(assoc % :start-date (js/Date. (:start-date %))
+                               :end-date (js/Date. (:end-date %))) json)]
+        (when (= 200 status)
+          (swap! state assoc :games games)))))
+
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"
   [deck-id stats]
@@ -24,7 +33,8 @@
 (ws/register-ws-handler!
   :stats/update
   #(do (swap! app-state assoc :stats (-> % :userstats))
-       (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
+       (update-deck-stats (-> % :deck-id) (-> % :deckstats))
+       (fetch-game-history)))
 
 (defn share-replay [state gameid]
   (go (let [{:keys [status json]} (<! (GET (str "/profile/history/share/" gameid)))]
@@ -53,7 +63,7 @@
          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} "Download replay"]
          "Replay unavailable")]
       (when (:replay-shared game)
-        [:p [:input.share-link {:type "text" :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
+        [:p [:input.share-link {:type "text" :read-only true :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
 
 (defn clear-user-stats []
   (authenticated
@@ -199,15 +209,10 @@
 (defn stats []
   (let [stats (r/cursor app-state [:stats])
         active (r/cursor app-state [:active-page])
-        state (r/atom {:games nil})
         list-scroll-top (atom 0)
         log-scroll-top (atom 0)]
 
-    (go (let [{:keys [status json]} (<! (GET "/profile/history"))
-              games (map #(assoc % :start-date (js/Date. (:start-date %))
-                                 :end-date (js/Date. (:end-date %))) json)]
-          (when (= 200 status)
-            (swap! state assoc :games games))))
+    (fetch-game-history)
 
     (fn []
       (when (= "/stats" (first @active))
