@@ -79,7 +79,7 @@
 
 (defn replay-reached-end? []
   (and (empty? (:diffs @replay-status))
-       (< (inc (:n @replay-status))
+       (>= (inc (:n @replay-status))
           (count @replay-timeline))))
 
 (defn replay-prepare-state
