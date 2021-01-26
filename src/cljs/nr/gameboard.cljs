@@ -146,7 +146,7 @@
 
 (defn populate-replay-timeline
   [init-state]
-  (let [state (dissoc init-state :replay-diffs)
+  (let [state (replay-prepare-state (dissoc init-state :replay-diffs))
         diffs (:replay-diffs init-state)]
     (reset! replay-timeline [{:type :start-of-game :state state}])
     (dorun (loop [old-state @game-state
@@ -230,8 +230,8 @@
     (reset! last-state @game-state)
     (reset! lock false)
     (when (:replay-diffs state)
-      (.setItem js/localStorage "gameid" "replay")
-      (swap! app-state assoc :gameid "replay")
+      (.setItem js/localStorage "gameid" "local-replay")
+      (swap! app-state assoc :gameid "local-replay") ;set for main.cljs
       (populate-replay-timeline state)
       (if (:replay-jump-to state)
         (replay-jump-to (:replay-jump-to state))
@@ -284,7 +284,8 @@
 (defn send-command
   ([command] (send-command command nil))
   ([command {:keys [no-lock card] :as args}]
-   (when (or (not @lock) no-lock)
+   (when (and (not (:replay @game-state))
+              (or (not @lock) no-lock))
      (let [card (select-keys card [:cid :zone :side :host :type])
            args (merge args (when (seq card) {:card card}))]
        (try (js/ga "send" "event" "game" command) (catch js/Error e))
@@ -294,8 +295,9 @@
                                         :args args}])))))
 
 (defn mute-spectators [mute-state]
-  (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
-                                            :mute-state mute-state}]))
+  (when (not (:replay @game-state))
+    (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
+                                              :mute-state mute-state}])))
 
 (defn stack-servers []
   (swap! app-state update-in [:options :stacked-servers] not))
@@ -305,7 +307,8 @@
     (swap! app-state assoc-in [:options :runner-board-order] layout)))
 
 (defn concede []
-  (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
+  (when (not (:replay @game-state))
+    (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}])))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
@@ -603,7 +606,8 @@
 
 (defn send-msg [s]
   (let [text (:msg @s)]
-    (when-not (empty? text)
+    (when (and (not (:replay @game-state))
+               (not (empty? text)))
       (reset! should-scroll {:update false :send-msg true})
       (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
                                     :msg text}])
@@ -613,7 +617,8 @@
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
-    (when (not-spectator?)
+    (when (and (not (:replay @game-state))
+               (not-spectator?))
       (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
                                         :typing false}])
@@ -2230,8 +2235,8 @@
                                        :title "Forward to next log entry"} "⏩︎"]
                        [:button.small {:on-click #(replay-step-forward) :type "button"
                                        :title "Forward one click"} "⏭︎"]
-                       (when-not (= "replay" (:gameid @game-state)) ; when saved replay
+                       (when-not (= "local-replay" (:gameid @game-state)) ; when not locally uploaded replay
                          [:button {:on-click #(swap! show-replay-link not)} "Share"])
-                       (when-not (= "replay" (:gameid @game-state))
+                       (when-not (= "local-replay" (:gameid @game-state))
                          [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
                                   :type "text" :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))

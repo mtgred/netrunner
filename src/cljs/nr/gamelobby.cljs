@@ -127,7 +127,7 @@
   (authenticated
     (fn [user]
       (swap! s assoc
-             :gameid "replay"
+             :gameid "local-replay"
              :title (str (:username user) "'s game")
              :side "Corp"
              :format "standard"
@@ -181,9 +181,8 @@
                                      history (:history replay)
                                      init-state (first history)
                                      init-state (assoc-in init-state [:options :spectatorhands] true)
-                                     init-state (assoc init-state :gameid "replay")
                                      diffs (rest history)
-                                     init-state (assoc init-state :replay-diffs diffs)]
+                                     init-state (assoc init-state :replay-diffs diffs :gameid "local-replay")]
                                  (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
     (aset reader "onload" onload)
     (.readAsText reader file)))
@@ -197,7 +196,7 @@
           (swap! s assoc :flash-message "Select a valid replay file.")
 
           :else
-          (do (swap! s assoc :editing false :gameid "replay")
+          (do (swap! s assoc :editing false)
               (start-replay @s)))
         (cond
           (empty? (:title @s))

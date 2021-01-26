@@ -35,13 +35,7 @@
            [:div.float-right
             (when is-player
               [:a.concede-button {:on-click #(concede)} "Concede"])
-            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) "Leave replay" "Leave game")]
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])
+            [:a.leave-button {:on-click #(leave-game)} "Leave game"]
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
@@ -53,12 +47,12 @@
                  "Rig layout: IRL" "Rig layout: jnet")])]))
        (when (not (nil? @gameid))
          [:div.float-right 
-          [:a {:on-click #(leave-game)} (if (= "replay" @gameid) "Leave replay" "Leave game")]
-          (when (= "replay" @gameid)
+          [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) "Leave replay" "Leave game")]
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
-          (when (= "replay" @gameid)
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
-          (when (= "replay" @gameid)
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
