@@ -17,7 +17,7 @@
 
 (defn- fetch-game-history []
   (go (let [{:keys [status json]} (<! (GET "/profile/history"))
-            games (map #(assoc % :start-date (js/Date. (:start-date %))
+            games (mapv #(assoc % :start-date (js/Date. (:start-date %))
                                :end-date (js/Date. (:end-date %))) json)]
         (when (= 200 status)
           (swap! state assoc :games games)))))
