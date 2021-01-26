@@ -60,7 +60,8 @@
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
-            "create-indexes" ["run" "-m" "tasks.db/create-indexes"]}
+            "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
+            "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]

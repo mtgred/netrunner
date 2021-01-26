@@ -4,6 +4,7 @@
             [web.decks :refer [update-deck prepare-deck-for-db]]
             [web.core :refer [load-data]]
             [monger.collection :as mc]
+            [monger.db]
             [monger.operators :refer :all]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]))
@@ -91,5 +92,21 @@
       (clojure.pprint/pprint (mc/indexes-on db "users")))
     (catch Exception e (do
                          (println "Create indexes failed" (.getMessage e))
+                         (.printStackTrace e)))
+    (finally (webdb/disconnect))))
+
+(defn drop-indexes
+  "Drop all indexes except the index on the `_id` field."
+  []
+  (webdb/connect)
+  (try
+    (do
+      (doseq [coll (monger.db/get-collection-names db)]
+        (do
+          (mc/drop-indexes db coll)
+          (println "Dropped indexes on" coll)))
+      (println "\nIndexes successfully dropped."))
+    (catch Exception e (do
+                         (println "Drop indexes failed" (.getMessage e))
                          (.printStackTrace e)))
     (finally (webdb/disconnect))))
