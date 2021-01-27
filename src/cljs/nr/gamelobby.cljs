@@ -460,9 +460,9 @@
         [:h3 (tr [:lobby.format "Format"])]
         [:select.format {:value (:format @s "standard")
                          :on-change #(swap! s assoc :format (.. % -target -value))}
-         (for [[k v] slug->format]
-           ^{:key k}
-           [:option {:value k} (tr-format v)])]]
+         (doall (for [[k v] slug->format]
+                  ^{:key k}
+                  [:option {:value k} (tr-format v)]))]]
 
        [:section
         [:h3 (tr [:lobby.options "Options"])]

@@ -296,6 +296,40 @@
    :end-turn "End Turn"
    :mandatory-draw "Mandatory Draw"
    :take-clicks "Take Clicks"
+   :hq "HQ"
+   :grip "Grip"
+   :rfg "Removed from the game"
+   :play-area "Play Area"
+   :current "Current"
+   :scored-area "Scored Area"
+   :archives "Archives"
+   :max-hand "Max hand size"
+   :brain-damage "Brain Damage"
+   :tag-count (fn [[base additional total]]
+                (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
+   :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
+   :link-strength "Link Strength"
+   :credit-count (fn [[credit run-credit]] (str credit " Credit" (if (not= credit 1) "s" "")
+                                                (when (pos? run-credit)
+                                                  (str " (" run-credit " for run)"))))
+   :click-count (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
+   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
+   :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
+   :indicate-action "Indicate action"
+   :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
+   :spec-view "Spectator View"
+   :runner-view "Runner View"
+   :corp-view "Corp View"
+   :leave-replay "Leave Replay"
+   :leave "Leave Game"
+   :rig-irl "Rig layout: IRL"
+   :rig-jnet "Rig layout: jnet"
+   :unstack "Unstack servers"
+   :stack "Stack servers"
+   :unmute "Unmute spectators"
+   :mute "Mute spectators"
+   :concede "Concede"
+   
    }
    }
    
@@ -587,6 +621,41 @@
    :game-start "Amegay Artstay"
    :start-turn "Artstay Urntay"
    :end-turn "Endyay Urntay"
+   :mandatory-draw "Andatorymay Awdray"
+   :take-clicks "Aketay Icksclay"
+   :hq "HQYAY"
+   :grip "Ipgray"
+   :rfg "Emovedray omfray ethay amegay"
+   :play-area "Ayplay Areayay"
+   :current "Urrentcay"
+   :scored-area "Oredscay Areayay"
+   :archives "Archivesyay"
+   :max-hand "Axmay andhay izesay"
+   :brain-damage "Ainbray Amageday"
+   :tag-count (fn [[base additional total]]
+                (str base (when (pos? additional) (str " + " additional)) " Agtay" (if (not= total 1) "s" "")))
+   :agenda-count (fn [[agenda-point]] (str agenda-point " Agendayay Ointpay" (when (not= agenda-point 1) "s")))
+   :link-strength "Inklay Engthstray"
+   :credit-count (fn [[credit run-credit]] (str credit " Editcray" (if (not= credit 1) "s" "")
+                                                (when (pos? run-credit)
+                                                  (str " (" run-credit " orfay unray)"))))
+   :click-count (fn [[click]] (str click " Ickclay" (if (not= click 1) "s" "")))
+   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Adbay Ublicitypay"))
+   :mu-count (fn [[unused available]] (str unused " ofyay " available " UMYAY unusedyay"))
+   :indicate-action "Indicateyay actionyay"
+   :spec-count (fn [[c]] (str c " Ectatorspay" (when (> c 1) "s")))
+   :spec-view "Ectatorspay Iewvay"
+   :runner-view "Unnerray Iewvay"
+   :corp-view "Orpcay Iewvay"
+   :leave-replay "Eavelay Eplayray"
+   :leave "Eavelay Amegay"
+   :rig-irl "Igray ayoutlay: IRLYAY"
+   :rig-jnet "Igray ayoutlay: etjnay"
+   :unstack "Unstackyay erverssay"
+   :stack "Ackstay erverssay"
+   :unmute "Unmuteyay ectatorsspay"
+   :mute "Utemay ectatorsspay"
+   :concede "Oncedecay"
    }
    }})
 
