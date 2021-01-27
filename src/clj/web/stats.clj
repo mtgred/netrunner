@@ -206,8 +206,10 @@
 
 (defn history [{{username :username} :user}]
   (if username
-    (let [games (->> (mc/find-maps db :game-logs {$or [{:corp.player.username username}
-                                                       {:runner.player.username username}]})
+    (let [games (->> (mq/with-collection db "game-logs"
+                       (mq/find {$or [{:corp.player.username username}
+                                      {:runner.player.username username}]})
+                       (mq/sort (array-map :start-date 1)))
                      (map #(dissoc % :_id :log))
                      (into []))]
       (response 200 games))
