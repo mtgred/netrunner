@@ -59,10 +59,10 @@
       [:p [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "View games"])]
        (when (and (:replay game)
                   (not (:replay-shared game)))
-         [:button {:on-click #(share-replay state (:gameid game))} "Share replay"])
+         [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
        (if (:replay game)
-         [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} "Download replay"]
-         "Replay unavailable")]
+         [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]
+         (tr [:stats.unavailable "Replay unavailable"]))]
       (when (:replay-shared game)
         [:p [:input.share-link {:type "text" :read-only true :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
 
@@ -161,11 +161,7 @@
       (tr [:stats.view-log "View log"])]
      [:h4
       {:title (when replay-shared "Replay shared")}
-      title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")" (when replay-shared " ⭐")]
-;; =======
-;;       (tr [:stats.view-log "View log"])]
-;;      [:h4 title " (" (tr [:stats.turn-count] (or turn 0)) ")"]
-;; >>>>>>> b82d19022 (Stats page translations)
+      title " (" (tr [:stats.turn-count] turn) ")" (when replay-shared " ⭐")]
 
      [:div
       [:span.player
@@ -194,10 +190,10 @@
            [:div.controls
              [:button {:on-click #(swap! state update :filter-replays not)}
              (if (:filter-replays @state)
-               "Show all games"
-               "Only show shared")]]
+               (tr [:stats.all-games "Show all games"])
+               (tr [:stats.shared-games "Only show shared"]))]]
            (if (empty? games)
-             [:h4 "No games"]
+             [:h4 (tr [:stats.no-games "No games"])]
              (doall
                (for [game games]
                  (when (or (not (:filter-replays @state))
