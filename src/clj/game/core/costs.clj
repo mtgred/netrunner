@@ -101,6 +101,7 @@
                       state side (make-eid state eid)
                       (if (= side :corp) :corp-spent-credits :runner-spent-credits)
                       (value cost))
+                    (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                     (complete-with-result state side eid {:msg (str "pays " (value cost) " [Credits]")
                                                           :type :credit
                                                           :value (value cost)})))
@@ -142,6 +143,7 @@
                            state side (make-eid state eid)
                            (if (= side :corp) :corp-spent-credits :runner-spent-credits)
                            cost)
+                         (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
                          (complete-with-result state side eid {:msg (str "pays " cost " [Credits]")
                                                                :type :x-credits
                                                                :value cost})))
