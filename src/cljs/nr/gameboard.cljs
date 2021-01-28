@@ -273,7 +273,7 @@
 
 (defn handle-timeout [{:keys [gameid]}]
   (when (= gameid (:gameid @game-state))
-    (toast "Game closed due to inactivity" "error" {:time-out 0 :close-button true})))
+    (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
 (defn parse-state [state]
   (js->clj (.parse js/JSON state) :keywordize-keys true))
@@ -717,7 +717,7 @@
 
 (defn remote->name [server]
   (let [num (remote->num server)]
-    (str "Server " num)))
+    (str (tr [:game.server "Server"]) " " num)))
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
@@ -777,7 +777,7 @@
         (:full "full") nil
         [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
          (case implemented
-           nil [:span.unimplemented "Unimplemented"]
+           nil [:span.unimplemented (tr [:game.unimplemented "Unimplemented"])]
            [:span.impl-msg implemented])]))))
 
 (defn card-zoom-display
@@ -814,7 +814,7 @@
     [:div.panel.blue-shade.runner-abilities {:style {:display "inline"}}
      (when (or (seq runner-abilities)
                (seq subroutines))
-       [:span.float-center "Abilities:"])
+       [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
      (map-indexed
        (fn [i ab]
          [:div {:key i
@@ -825,9 +825,9 @@
      (when (seq subroutines)
        [:div {:on-click #(send-command "system-msg"
                                        {:msg (str "indicates to fire all unbroken subroutines on " title)})}
-        "Let all subroutines fire"])
+        (tr [:game.let-subs-fire "Let all subroutines fire"])])
      (when (seq subroutines)
-       [:span.float-center "Subroutines:"])
+       [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
      (map-indexed
        (fn [i sub]
          [:span {:style {:display "block"}
@@ -848,7 +848,7 @@
   (when (:corp-abilities @c-state)
     [:div.panel.blue-shade.corp-abilities {:style {:display "inline"}}
      (when (seq corp-abilities)
-       [:span.float-center "Abilities:"])
+       [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
      (map-indexed
        (fn [i ab]
          [:div {:on-click #(send-command "corp-ability" {:card card
@@ -907,7 +907,7 @@
                    (= type "ICE")))
       [:div.panel.blue-shade.abilities {:style {:display "inline"}}
        (when (seq actions)
-         [:span.float-center "Actions:"])
+         [:span.float-center (tr [:game.actions "Actions"]) ":"])
        (when (seq actions)
          (map-indexed
            (fn [i action]
@@ -917,7 +917,7 @@
            actions))
        (when (and (active? card)
                   (seq abilities))
-         [:span.float-center "Abilities:"])
+         [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
        (when (and (active? card)
                   (seq abilities))
          (map-indexed
@@ -934,9 +934,9 @@
            abilities))
        (when (seq (remove :fired subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
-          "Fire unbroken subroutines"])
+          (tr [:game.fire-unbroken "Fire unbroken subroutines"])])
        (when (seq subroutines)
-         [:span.float-center "Subroutines:"])
+         [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
        (when (seq subroutines)
          (map-indexed
            (fn [i sub]
@@ -1118,16 +1118,16 @@
                    [facedown-card (:side card)])])
               @hand))]))
 
-(defn hand-view [user name hand prompt remotes popup popup-direction]
+(defn hand-view [user name translated-name hand prompt remotes popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name hand prompt remotes popup popup-direction]
+    (fn [user name translated-name hand prompt remotes popup popup-direction]
       (let [size (count @hand)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
            [build-hand-card-view user hand prompt remotes "card-wrapper"]
-           [label @hand {:opts {:name name}}]]
+           [label @hand {:opts {:name translated-name}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -1135,7 +1135,7 @@
          (when popup
            [:div.panel.blue-shade.popup {:ref #(swap! s assoc :hand-popup %) :class popup-direction}
             [:div
-             [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} "Close"]
+             [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game.close "Close"])]
              [:label (str size " card" (when (not= 1 size) "s") ".")]
              [build-hand-card-view user hand prompt remotes "card-popup-wrapper"]]])]))))
 
@@ -1150,7 +1150,7 @@
 
 (defn deck-view [render-side player-side identity deck]
    (let [is-runner (= :runner render-side)
-         name (if is-runner "Stack" "R&D")
+         name (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
          ref (if is-runner "stack" "rd")
          menu-ref (keyword (str ref "-menu"))
          content-ref (keyword (str ref "-content"))]
@@ -1163,15 +1163,15 @@
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
-                                 (-> (menu-ref @board-dom) js/$ .fadeOut))} "Shuffle"]
-           [:div {:on-click #(show-deck % ref)} "Show"]])
+                                 (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
+           [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
         (when (= render-side player-side)
           [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
            [:div
             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-             "Close"]
+             (tr [:game.close "Close"])]
             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-             "Close & Shuffle"]]
+             (tr [:game.close-shuffle "Close & Shuffle"])]]
            (doall
              (for [card @deck]
                ^{:key (:cid card)}
@@ -1184,11 +1184,11 @@
        (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
        (when-not (empty? @discard)
          [:<> [card-view (last @discard)]])
-       [label @discard {:opts {:name "Heap" :classes "server-label"}}]
+       [label @discard {:opts {:name (tr [:game.heap "Heap"]) :classes "server-label"}}]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
-         [:a {:on-click #(close-popup % (:popup @s) nil false false)} "Close"]]
+         [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]]
         (doall
           (for [card @discard]
             ^{:key (:cid card)}
@@ -1205,10 +1205,10 @@
                            [:div.unseen [card-view %]]
                            [facedown-card "corp"]))]
         [:div.blue-shade.discard
-         (drop-area (tr [:game.archives "Archives"]) {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
+         (drop-area "Archives" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
          (when-not (empty? @discard) [:<> {:key "discard"} (draw-card (last @discard))])
 
-         [label @discard {:opts {:name "Archives"
+         [label @discard {:opts {:name (tr [:game.archives "Archives"])
                                  :classes "server-label"
                                  :fn (fn [cursor] (let [total (count cursor)
                                                         face-up (count (filter faceup? cursor))]
@@ -2146,8 +2146,10 @@
 
                   [:div.leftpane
                    [:div.opponent
-                    [hand-view op-user (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"])) op-hand op-prompt corp-remotes
-                     (= @side :spectator) "opponent"]]
+                    (let [srv (if (= :corp op-side) "HQ" "Grip")
+                          translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                      [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
+                       (= @side :spectator) "opponent"])]
 
                    [:div.inner-leftpane
                     [audio-component {:sfx sfx}]
@@ -2181,8 +2183,10 @@
                                      :corp corp :runner runner :me me :opponent opponent}])]]
 
                    [:div.me
-                    [hand-view me-user (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"])) me-hand me-prompt
-                     corp-remotes true "me"]]]
+                    (let [srv (if (= :corp me-side) "HQ" "Grip")
+                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                      [hand-view me-user srv translated-srv me-hand me-prompt
+                       corp-remotes true "me"])]]
 
                   (when (:replay @game-state)
                     [:div.bottompane

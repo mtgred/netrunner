@@ -47,7 +47,8 @@
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
             [:a.stack-servers-button {:on-click #(stack-servers)}
-             (if (get-in @app-state [:options :stacked-servers]) (tr [:game.unstack "Unstack servers"]) (tr [:game.stack "Stack servers"]))]
+             (if (get-in @app-state [:options :stacked-servers])
+               (tr [:game.unstack-servers "Unstack servers"]) (tr [:game.stack-servers "Stack servers"]))]
             (when (not= :runner (:side @game-state))
               [:a.stack-servers-button {:on-click #(flip-runner-board)}
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
