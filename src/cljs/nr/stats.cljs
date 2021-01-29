@@ -43,6 +43,11 @@
           (swap! state assoc :view-game
                  (assoc (:view-game @state) :replay-shared true))))))
 
+(defn- replay-link [game]
+  (str (.-origin (.-location js/window)) "/play?" (:gameid game)))
+
+(defn launch-replay [game] (set! (.-location js/window) (replay-link game)))
+
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
@@ -64,11 +69,11 @@
          [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
        (if (:replay game)
          [:span
-          [:button "Launch Replay"]
+          [:button {:on-click #(launch-replay game)} "Launch Replay"]
           [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]
           (tr [:stats.unavailable "Replay unavailable"])])]
-       (when (:replay-shared game)
-         [:p [:input.share-link {:type "text" :read-only true :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
+      (when (:replay-shared game)
+        [:p [:input.share-link {:type "text" :read-only true :value (replay-link game)}]])]]))
 
 (defn clear-user-stats []
   (authenticated
