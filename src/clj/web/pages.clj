@@ -18,6 +18,12 @@
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport" :content "width=device-width, initial-scale=0.6, minimal-ui"}]
      [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
+     [:meta {:property "og:type" :content "website"}]
+     [:meta {:property "og:url" :content "https://jinteki.net"}]
+     [:meta {:property "og:image" :content "https://www.jinteki.net/img/icons/jinteki_167.png"}]
+     [:meta {:property "og:title" :content "Play Android: Netrunner in your browser"}]
+     [:meta {:property "og:site_name" :content "jinteki.net"}]
+     [:meta {:property "og:description" :content "Build decks and test them online against other players."}]
      [:link {:rel "apple-touch-icon" :href "img/icons/jinteki_167.png"}]
      [:title "Jinteki"]
      (hiccup/include-css "/css/carousel.css")
