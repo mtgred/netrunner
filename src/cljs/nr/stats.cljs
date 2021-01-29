@@ -46,6 +46,7 @@
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
+     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} "Return to stats screen"]]
      [:h4 (:title game) (when (:replay-shared game) " ⭐")]
      [:div
       [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
@@ -56,7 +57,7 @@
       [:div (str (tr [:stats.ended "Ended"]) ": " (:end-date game))]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
-      [:p [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "View games"])]
+      [:p
        (when (and (:replay game)
                   (not (:replay-shared game)))
          [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
