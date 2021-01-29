@@ -105,14 +105,25 @@
      :type "Type"
      :clear "Clear"
      :select-art "Select Art"
+     :selected-art "Selected Alt Art"
      :update-success "Updated Art"
      :update-failure "Failed to Update Art"
+     :memory "Memory"
+     :cost "Cost"
+     :trash-cost "Trash cost"
+     :strength "Strength"
+     :advancement "Advancement requirement"
+     :agenda-points "Agenda points"
+     :min-deck "Minimum deck size"
+     :inf-limit "Influence Limit"
+     :influence "Influence"
      :sort-by {:faction "Faction"
               :name "Name"
               :type "Type"
               :influence "Influence"
               :cost "Cost"
-              :set-number "Set number"}}
+              :set-number "Set number"}
+     }
     :deck-builder
     {:loading-msg "Loading deck collection..."
      :new-corp "New Corp deck"
@@ -379,8 +390,7 @@
    :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
    :win-flatline (fn [[turn]] (str "wins by flatline on turn " turn))
    :win-concede (fn [[turn]] (str "wins by concession on turn " turn))
-   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
-   }
+   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))}
    }
    
    :la-pig
@@ -482,6 +492,16 @@
      :type "Etypay"
      :clear "Earclay"
      :select-art "Electsay Artyay"
+     :selected-art "Electedsay Altyay Artyay"
+     :memory "Emorymay"
+     :cost "Ostcay"
+     :trash-cost "Ashtray ostcay"
+     :strength "Engthstr"
+     :advancement "Advancementyay equirementray"
+     :agenda-points "Agendayay ointspay"
+     :min-deck "Inimummay eckday izesay"
+     :inf-limit "Influenceyay Imitlay"
+     :influence "Influenceyay"
      :update-success "Updatedyay Artyay"
      :update-failure "Ailedfay otay Updateyay Artyay"
      :sort-by {:faction "Actionfay"
@@ -756,8 +776,7 @@
    :win-decked (fn [[turn]] (str "insway ueday otay ethay Orpcay eingbay eckedday onyay urntay " turn))
    :win-flatline (fn [[turn]] (str "insway ybay atlineflay onyay urntay " turn))
    :win-concede (fn [[turn]] (str "insway ybay oncessionay onyay urntay " turn))
-   :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))
-   }
+   :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))}
    }})
 
 (def opts {:dict translation-dictionary})

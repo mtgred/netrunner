@@ -208,29 +208,29 @@
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
          [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+         [:div.heading (str (tr [:card-browser.memory "Memory"]) ": " memory) [:span.anr-icon.mu]]))
      (when-let [cost (:cost card)]
-       [:div.heading (str "Cost: " cost)])
+       [:div.heading (str (tr [:card-browser.cost "Cost"]) ": " cost)])
      (when-let [trash-cost (:trash card)]
-       [:div.heading (str "Trash cost: " trash-cost)])
+       [:div.heading (str (tr [:card-browser.trash-cost "Trash cost"]) ": " trash-cost)])
      (when-let [strength (:strength card)]
-       [:div.heading (str "Strength: " strength)])
+       [:div.heading (str (tr [:card-browser.strength "Strength"]) ": " strength)])
      (when-let [requirement (:advancementcost card)]
-       [:div.heading (str "Advancement requirement: " requirement)])
+       [:div.heading (str (tr [:card-browser.advancement "Advancement requirement"]) ": " requirement)])
      (when-let [agenda-point (:agendapoints card)]
-       [:div.heading (str "Agenda points: " agenda-point)])
+       [:div.heading (str (tr [:card-browser.agenda-points "Agenda points"]) ": " agenda-point)])
      (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading (str "Minimum deck size: " min-deck-size)])
+       [:div.heading (str (tr [:card-browser.min-deck "Minimum deck size"]) ": " min-deck-size)])
      (when-let [influence-limit (:influencelimit card)]
-       [:div.heading (str "Influence limit: " influence-limit)])
+       [:div.heading (str (tr [:card-browser.inf-limit "Influence limit"]) ": " influence-limit)])
      (when-let [influence (:factioncost card)]
        (when-let [faction (:faction card)]
-         [:div.heading "Influence "
+         [:div.heading (tr [:card-browser.influence "Influence"]) " "
           [:span.influence
            {:class (-> faction s/lower-case (s/replace " " "-"))}
            (influence-dots influence)]]))
-     [:div.text
-      [:p [:span.type (str (:type card))]
+     [:div.text.card-body
+      [:p [:span.type (tr-type (:type card))]
        (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
       [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
 
@@ -256,11 +256,11 @@
                      (str " [" (alt-art-name art) "]")))))]
          (when (show-alt-art?)
            (if (selected-alt-art card)
-             [:div.selected-alt "Selected Alt Art"]
+             [:div.selected-alt (tr [:card-browser.selected-art "Selected Alt Art"])]
              (when (or (:art card) (:previous-versions card) (:future-version card))
                [:button.alt-art-selector
                 {:on-click #(select-alt-art card)}
-                "Select Art"])))])]]))
+                (tr [:card-browser.select-art "Select Art"])])))])]]))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
