@@ -348,7 +348,38 @@
    :show "Show"
    :close-shuffle "Close & Shuffle"
    :heap "Heap"
-   
+   :card-count (fn [[size]] (str size " card" (when (not= 1 size) "s") "."))
+   :face-down-count (fn [[total face-up]] (str total " cards, " (- total face-up) " face-down."))
+   :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
+   :initiation "Initiation"
+   :approach-ice "Approach ice"
+   :encouter-ice "Encounter ice"
+   :pass-ice "Pass ice"
+   :approach-server "Approach server"
+   :corp-phase-43 "Corp phase 4.3"
+   :access-server "Access server"
+   :end-of-run "End of run"
+   :no-current-run "No current run"
+   :current-phase "Current phase"
+   :unknown-phase "Unknown phase"
+   :rez "Rez"
+   :action-access "Action before access"
+   :no-further "No further actions"
+   :continue-to "Continue to"
+   :stop-auto-pass "Stop auto-passing priority"
+   :auto-pass "Auto-pass priority"
+   :jack-out "Jack Out"
+   :undo-click "Undo Click"
+   :pass-continue "Pass ice and continue"
+   :pass-jack "Pass ice and jack out"
+   :trace "Trace"
+   :credits "credits"
+   :card "Card"
+   :time-taken (fn [[t]] (str "Time taken: " t " minutes"))
+   :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
+   :win-flatline (fn [[turn]] (str "wins by flatline on turn " turn))
+   :win-concede (fn [[turn]] (str "wins by concession on turn " turn))
+   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
    }
    }
    
@@ -694,6 +725,38 @@
    :show "Owshay"
    :close-shuffle "Osecla & Uffleshay"
    :heap "Eaphay"
+   :card-count (fn [[size]] (str size " ardcay" (when (not= 1 size) "s") "."))
+   :face-down-count (fn [[total face-up]] (str total " ardscay, " (- total face-up) " acefay-ownday."))
+   :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
+   :initiation "Initiationyay"
+   :approach-ice "Approachyay iceyay"
+   :encouter-ice "Encounteryay iceyay"
+   :pass-ice "Asspay iceyay"
+   :approach-server "Approachyay erversay"
+   :corp-phase-43 "Orpcay asephay 4.3"
+   :access-server "Accessyay erversay"
+   :end-of-run "Endyay ofyay unray"
+   :no-current-run "Onay urrentcay unray"
+   :current-phase "Urrentcay asephay"
+   :unknown-phase "Unknownyay asephay"
+   :rez "Ezray"
+   :action-access "Actionyay eforebay accessyay"
+   :no-further "Onay urtherfay actionsyay"
+   :continue-to "Ontinuecay otay"
+   :stop-auto-pass "Opstay autoyay-assingpay ioritypray"
+   :auto-pass "Autoyay-asspay ioritypriay"
+   :jack-out "Ackjay Outyay"
+   :undo-click "Undoyay Ickclay"
+   :pass-continue "Asspay iceyay andyay ontinuecay"
+   :pass-jack "Asspay iceyay andyay ackjay outyay"
+   :trace "Acetray"
+   :credits "editscray"
+   :card "Ardcay"
+   :time-taken (fn [[t]] (str "Imetay akentay: " t " inutesmay"))
+   :win-decked (fn [[turn]] (str "insway ueday otay ethay Orpcay eingbay eckedday onyay urntay " turn))
+   :win-flatline (fn [[turn]] (str "insway ybay atlineflay onyay urntay " turn))
+   :win-concede (fn [[turn]] (str "insway ybay oncessionay onyay urntay " turn))
+   :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))
    }
    }})
 
