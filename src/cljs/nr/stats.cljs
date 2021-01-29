@@ -49,12 +49,13 @@
      [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} "Return to stats screen"]]
      [:h4 (:title game) (when (:replay-shared game) " ⭐")]
      [:div
-      [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
-      [:div (str (tr [:stats.format "Format"]) ": " (capitalize (tr-format (:format game))))]
-      [:div (str (tr [:stats.winner "Winner"]) ": " (capitalize (tr-side (:winner game))))]
-      [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
-      [:div (str (tr [:stats.started "Started"]) ": " (:start-date game))]
-      [:div (str (tr [:stats.ended "Ended"]) ": " (:end-date game))]
+      [:div.game-details-table
+       [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
+       [:div (str (tr [:stats.format "Format"]) ": " (capitalize (tr-format (:format game))))]
+       [:div (str (tr [:stats.winner "Winner"]) ": " (capitalize (tr-side (:winner game))))]
+       [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
+       [:div (str (tr [:stats.started "Started"]) ": " (:start-date game))]
+       [:div (str (tr [:stats.ended "Ended"]) ": " (:end-date game))]]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p
@@ -62,10 +63,12 @@
                   (not (:replay-shared game)))
          [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
        (if (:replay game)
-         [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]
-         (tr [:stats.unavailable "Replay unavailable"]))]
-      (when (:replay-shared game)
-        [:p [:input.share-link {:type "text" :read-only true :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
+         [:span
+          [:button "Launch Replay"]
+          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]
+          (tr [:stats.unavailable "Replay unavailable"])])]
+       (when (:replay-shared game)
+         [:p [:input.share-link {:type "text" :read-only true :value (str (.-origin (.-location js/window)) "/play?" (:gameid game))}]])]]))
 
 (defn clear-user-stats []
   (authenticated
@@ -151,7 +154,7 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason replay-shared] :as game} log-scroll-top]
+  [state {:keys [title corp runner turn winner reason replay-shared start-date] :as game} log-scroll-top]
   (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
         runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
     [:div.gameline {:style {:min-height "auto"}}
@@ -160,9 +163,11 @@
                     (fetch-log state game)
                     (reset! log-scroll-top 0))}
       (tr [:stats.view-log "View log"])]
-     [:h4
+     [:h4.log-title
       {:title (when replay-shared "Replay shared")}
       title " (" (tr [:stats.turn-count] turn) ")" (when replay-shared " ⭐")]
+
+     [:div.log-date (-> start-date js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
 
      [:div
       [:span.player
@@ -186,21 +191,23 @@
      :component-will-unmount #(store-scroll-top % list-scroll-top)
      :reagent-render
      (fn [state list-scroll-top log-scroll-top]
-       (let [games (reverse (:games @state))]
+       (let [rev-games (reverse (:games @state))
+             games (if (:filter-replays @state) (filter #(:replay-shared %) rev-games) rev-games)
+             cnt (count games)
+             log-str (if (= cnt 1) "Log" "Logs")]
          [:div.game-list
            [:div.controls
-             [:button {:on-click #(swap! state update :filter-replays not)}
+            [:button {:on-click #(swap! state update :filter-replays not)}
              (if (:filter-replays @state)
                (tr [:stats.all-games "Show all games"])
                (tr [:stats.shared-games "Only show shared"]))]]
+           [:span.log-count (str cnt " " log-str (when (:filter-replays @state) " (filtered)"))]
            (if (empty? games)
              [:h4 (tr [:stats.no-games "No games"])]
              (doall
                (for [game games]
-                 (when (or (not (:filter-replays @state))
-                           (:replay-shared game))
-                   ^{:key (:gameid game)}
-                   [game-row state game log-scroll-top]))))]))}))
+                 ^{:key (:gameid game)}
+                 [game-row state game log-scroll-top])))]))}))
 
 (defn right-panel [state list-scroll-top log-scroll-top]
   (if (:view-game @state)
