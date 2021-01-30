@@ -4,13 +4,16 @@
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
             [monger.query :as mq]
+            [web.pages :as pages]
             [web.ws :as ws]
             [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
             [clj-time.core :as t]
-            [cheshire.core :as json])
+            [cheshire.core :as json]
+            [hiccup.page :as hiccup]
+            [ring.util.response :refer [redirect]])
 
   (:import org.bson.types.ObjectId))
 
@@ -250,3 +253,24 @@
           (println "Caught exception sharing game: " (.getMessage e))
           (response 500 {:message "Server error"}))))
     (response 401 {:message "Unauthorized"})))
+
+(defn replay-handler [{{:keys [gameid n d]} :params
+                       scheme           :scheme
+                       headers          :headers
+                       :as req}]
+  ;; gameid could have additional offsets into the replay encoded (ie. n=8&d=1)
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay"])
+        replay (or replay {})
+        gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
+    (if (empty? replay)
+      (response 404 {:message "Replay not found"})
+      (let [corp-user (get-in [:player :username] corp)
+            runner-user (get-in [:player :username] runner)
+            title (str "REPLAY: " corp-user " vs " runner-user)
+            og {:type "website"
+                :url "https://jinteki.net"
+                ;; :image nil
+                :title title
+                :site_name "jinteki.net"
+                :description "more test"}]
+        (pages/index-page req og gameid-str)))))

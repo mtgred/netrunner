@@ -290,12 +290,6 @@
               [:div
                [msg-input-view (:channel @s)]])]]])})))
 
-(defn get-data
-  [tag]
-  (-> (.getElementById js/document "server-originated-data")
-      (.getAttribute (str "data-" tag))
-      (cljs.reader/read-string)))
-
 (defn chat-page []
   (let [active (r/cursor app-state [:active-page])
         s (r/atom {:channel :general

@@ -47,6 +47,7 @@
            (GET "/ws" req ws/handshake-handler)
            (POST "/ws" req ws/post-handler)
 
+           (GET "/replay/:gameid" [] stats/replay-handler)
            (GET "/*" [] pages/index-page))
 
 (defroutes public-routes

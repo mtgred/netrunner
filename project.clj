@@ -95,7 +95,7 @@
        :compiler {:output-to "resources/public/cljs/app10.js"
                   :output-dir "resources/public/cljs"
                   :main "dev.nr"
-                  :asset-path   "cljs"
+                  :asset-path   "/cljs"
                   :optimizations :none
                   :source-map-timestamp true
                   :npm-deps false

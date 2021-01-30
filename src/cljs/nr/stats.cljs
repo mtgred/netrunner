@@ -44,7 +44,7 @@
                  (assoc (:view-game @state) :replay-shared true))))))
 
 (defn- replay-link [game]
-  (str (.-origin (.-location js/window)) "/play?" (:gameid game)))
+  (str (.-origin (.-location js/window)) "/replay/" (:gameid game)))
 
 (defn launch-replay [game] (set! (.-location js/window) (replay-link game)))
 
