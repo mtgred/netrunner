@@ -63,6 +63,23 @@
                      (update-in [:user :_id] str)))
         (handler req)))))
 
+(defn create-user
+  "Create a new user map."
+  [username password email & {:keys [isadmin]}]
+  (let [email-hash (md5 email)
+        registration-date (java.util.Date.)
+        last-connection registration-date
+        hash-pw (password/encrypt password)
+        isadmin (or isadmin false)]
+    {:username         username
+     :email            email
+     :emailhash        email-hash
+     :registrationDate registration-date
+     :lastConnection   last-connection
+     :password         hash-pw
+     :isadmin          isadmin
+     :options          {}}))
+
 (defn register-handler
   [{{:keys [username password confirm-password email]} :params
     :as request}]
@@ -81,20 +98,8 @@
 
     :else
     (let [first-user (not (mc/any? db "users"))
-          email-hash (md5 email)
-          registration-date (java.util.Date.)
-          last-connection registration-date
-          hash-pw (password/encrypt password)
           demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
-      (mc/insert db "users"
-                 {:username         username
-                  :email            email
-                  :emailhash        email-hash
-                  :registrationDate registration-date
-                  :lastConnection   last-connection
-                  :password         hash-pw
-                  :isadmin          first-user
-                  :options          {}})
+      (mc/insert db "users" (create-user username password email :isadmin first-user))
       (when (not-empty demo-decks)
         (mc/insert-batch db "decks" (map #(-> %
                                               (dissoc :_id)
