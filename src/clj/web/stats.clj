@@ -8,12 +8,13 @@
             [web.ws :as ws]
             [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
+            [jinteki.cards :refer [all-cards]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
             [clj-time.core :as t]
             [cheshire.core :as json]
             [hiccup.page :as hiccup]
-            [ring.util.response :refer [redirect]])
+            [ring.util.request :refer [request-url]])
 
   (:import org.bson.types.ObjectId))
 
@@ -254,23 +255,32 @@
           (response 500 {:message "Server error"}))))
     (response 401 {:message "Unauthorized"})))
 
+(defn- get-winner-card
+  [winner corp runner host]
+  (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
+        win-card (:code (@all-cards win-id))]
+    (if win-card
+      (str host "img/cards/" win-card ".png")
+      (str host "img/icons/jinteki_167.png"))))
+
 (defn replay-handler [{{:keys [gameid n d]} :params
                        scheme           :scheme
                        headers          :headers
                        :as req}]
-  ;; gameid could have additional offsets into the replay encoded (ie. n=8&d=1)
-  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay"])
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid gameid})
         replay (or replay {})
         gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
     (if (empty? replay)
       (response 404 {:message "Replay not found"})
-      (let [corp-user (get-in [:player :username] corp)
-            runner-user (get-in [:player :username] runner)
-            title (str "REPLAY: " corp-user " vs " runner-user)
+      (let [corp-user (get-in corp [:player :username] "Unknown")
+            corp-id (:identity corp)
+            runner-user (get-in runner [:player :username] "Unknown")
+            runner-id (:identity runner)
+            host (str (name scheme) "://" (get headers "host") "/")
             og {:type "website"
-                :url "https://jinteki.net"
-                ;; :image nil
-                :title title
+                :url (request-url req)
+                :image (get-winner-card winner corp runner host)
+                :title (str "REPLAY: " title)
                 :site_name "jinteki.net"
-                :description "more test"}]
+                :description (str corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
         (pages/index-page req og gameid-str)))))

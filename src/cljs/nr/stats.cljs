@@ -17,11 +17,11 @@
 (def state (r/atom {:games nil}))
 
 (defn- fetch-game-history []
-  (go (let [{:keys [status json]} (<! (GET "/profile/history"))
-            games (mapv #(assoc % :start-date (js/Date. (:start-date %))
-                               :end-date (js/Date. (:end-date %))) json)]
+  (go (let [{:keys [status json]} (<! (GET "/profile/history"))]
         (when (= 200 status)
-          (swap! state assoc :games games)))))
+          (let [games (mapv #(assoc % :start-date (js/Date. (:start-date %))
+                               :end-date (js/Date. (:end-date %))) json)]
+            (swap! state assoc :games games))))))
 
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"
