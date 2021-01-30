@@ -1160,18 +1160,19 @@ nav ul
           min-width: 75px
 
       .header
-        height: 106px
+        display: flex
+        flex-direction: row
         clear: both
 
         > img
-          height: 100%
+          height: 106px
           margin-right: 10px
-          float: left
 
       input.deckname
         height: 30px
 
       .cards
+        margin-top: 10px
         columns(2, 5px)
 
       .line
