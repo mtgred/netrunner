@@ -51,7 +51,7 @@
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
-     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} "Return to stats screen"]]
+     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "Return to stats screen"])]]
      [:h4 (:title game) (when (:replay-shared game) " ⭐")]
      [:div
       [:div.game-details-table
@@ -69,9 +69,9 @@
          [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
        (if (:replay game)
          [:span
-          [:button {:on-click #(launch-replay game)} "Launch Replay"]
-          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]
-          (tr [:stats.unavailable "Replay unavailable"])])]
+          [:button {:on-click #(launch-replay game)} (tr [:stats.launch "Launch Replay"])]
+          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]]
+         (tr [:stats.unavailable "Replay unavailable"]))]
       (when (:replay-shared game)
         [:p [:input.share-link {:type "text" :read-only true :value (replay-link game)}]])]]))
 
@@ -198,15 +198,15 @@
      (fn [state list-scroll-top log-scroll-top]
        (let [rev-games (reverse (:games @state))
              games (if (:filter-replays @state) (filter #(:replay-shared %) rev-games) rev-games)
-             cnt (count games)
-             log-str (if (= cnt 1) "Log" "Logs")]
+             cnt (count games)]
          [:div.game-list
            [:div.controls
             [:button {:on-click #(swap! state update :filter-replays not)}
              (if (:filter-replays @state)
                (tr [:stats.all-games "Show all games"])
-               (tr [:stats.shared-games "Only show shared"]))]]
-           [:span.log-count (str cnt " " log-str (when (:filter-replays @state) " (filtered)"))]
+               (tr [:stats.shared-games "Only show shared"]))]
+            [:span.log-count (str (tr [:stats.log-count] cnt) (when (:filter-replays @state)
+                                                                (str " " (tr [:stats.filtered "(filtered)"]))))]]
            (if (empty? games)
              [:h4 (tr [:stats.no-games "No games"])]
              (doall

@@ -309,4 +309,4 @@
          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
          [news]
          [chat s old scroll-top]
-         [:div#version [:span (str "Version " (get-data "version"))]]]))))
+         [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]]))))
