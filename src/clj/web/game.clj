@@ -65,12 +65,14 @@
   [gameid-str client-id]
   (if (nil? gameid-str)
     false
-    (let [gameid (java.util.UUID/fromString gameid-str)
-          game-from-gameid (lobby/game-for-id gameid)
-          game-from-clientid (lobby/game-for-client client-id)]
-      (and game-from-clientid
-           game-from-gameid
-           (= (:gameid game-from-clientid) (:gameid game-from-gameid))))))
+    (try
+      (let [gameid (java.util.UUID/fromString gameid-str)
+            game-from-gameid (lobby/game-for-id gameid)
+            game-from-clientid (lobby/game-for-client client-id)]
+        (and game-from-clientid
+             game-from-gameid
+             (= (:gameid game-from-clientid) (:gameid game-from-gameid))))
+      (catch Exception e false))))
 
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
