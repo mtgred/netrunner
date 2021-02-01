@@ -1,6 +1,7 @@
 (ns nr.deck-status
   (:require
     [jinteki.validator :refer [calculate-deck-status trusted-deck-status]]
+    [nr.translations :refer [tr tr-format]]
     [nr.utils :refer [slug->format]]))
 
 (defn- build-deck-status-label [deck-status violation-details?]
@@ -28,16 +29,16 @@
 (defn- format-deck-status-span
   [{:keys [format] :as deck-status} tooltip? violation-details?]
   (let [status (check-deck-status deck-status)
-        message (str (get slug->format (:format deck-status) "Standard")
+        message (str (tr-format (get slug->format (:format deck-status) "Standard"))
                      " "
-                     (if-not (= "invalid" status) "legal" "illegal"))]
+                     (if-not (= "invalid" status) (tr [:deck-builder.legal "legal"]) (tr [:deck-builder.illegal "illegal"])))]
     [:<>
      [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
         (build-deck-status-label deck-status violation-details?))]
      (when-let [reason (:reason ((keyword format) deck-status))]
        (when (and tooltip? (= "invalid" status))
-         [:span.deck-status.shift-tooltip.invalid-explanation {:class status} "Why?"
+         [:span.deck-status.shift-tooltip.invalid-explanation {:class status} (tr [:deck-builder.why "Why?"])
           [:div.status-tooltip.blue-shade [:div.invalid reason]]]))]))
 
 (defn- deck-status-span-impl [deck tooltip? violation-details? use-trusted-info]

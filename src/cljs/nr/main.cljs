@@ -14,6 +14,7 @@
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
+            [nr.translations :refer [tr]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
             [nr.features :refer [features]]
@@ -27,39 +28,40 @@
     [:div
      [:div.float-right
       (let [c (count (filter-blocked-games @user @games))]
-        (str c " Game" (when (not= c 1) "s")))]
+        (tr [:nav/game-count] c))]
      (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (let [user-id (-> @user :_id)
              is-player (some #(= user-id (-> % :user :_id)) (:players game))]
          (when (:started game)
            [:div.float-right
             (when is-player
-              [:a.concede-button {:on-click #(concede)} "Concede"])
-            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) "Leave replay" "Leave game")]
+              [:a.concede-button {:on-click #(concede)} (tr [:game.concede "Concede"])])
+            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
             (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
+              [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
             (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
+              [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
             (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])
+              [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
-               (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
+               (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
             [:a.stack-servers-button {:on-click #(stack-servers)}
-             (if (get-in @app-state [:options :stacked-servers]) "Unstack servers" "Stack servers")]
+             (if (get-in @app-state [:options :stacked-servers])
+               (tr [:game.unstack-servers "Unstack servers"]) (tr [:game.stack-servers "Stack servers"]))]
             (when (not= :runner (:side @game-state))
               [:a.stack-servers-button {:on-click #(flip-runner-board)}
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
-                 "Rig layout: IRL" "Rig layout: jnet")])]))
+                 (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
        (when (not (nil? @gameid))
          [:div.float-right 
-          [:a {:on-click #(leave-game)} (if (= "replay" @gameid) "Leave replay" "Leave game")]
+          [:a {:on-click #(leave-game)} (if (= "replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
           (when (= "replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :corp)} "Corp View"])
+            [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
           (when (= "replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :runner)} "Runner View"])
+            [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
           (when (= "replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :spectator)} "Spectator View"])]))
+            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]
