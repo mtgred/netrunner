@@ -681,46 +681,47 @@
     [:div.header
      [:img {:src (image-url id)
             :alt (:title id)}]
-     [:h4 {:class (if (= :legal (format-status (:format deck) id)) "fake-link" "casual")
-           :on-mouse-enter #(put! zoom-channel {:card id
-                                                :art (:art id)
-                                                :id (:id id)})
-           :on-mouse-leave #(put! zoom-channel false) }
-      (:title id)
-      (case (format-status (:format deck) id)
-        :banned banned-span
-        :restricted restricted-span
-        :rotated rotated-span
-        "")]
-     (let [count (validator/card-count cards)
-           min-count (validator/min-deck-size id)]
-       [:div count (str " " (tr [:deck-builder.cards "cards"]))
-        (when (< count min-count)
-          [:span.invalid (str " (" (tr [:deck-builder.min "minimum"]) " " min-count ")")])])
-     (let [inf (validator/influence-count deck)
-           id-limit (validator/id-inf-limit id)]
-       [:div (str (tr [:deck-builder.influence "Influence"]) ": ")
-        ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
-        [:span {:class (if (> inf id-limit)
-                         (if (> inf id-limit)
-                           "invalid"
-                           "casual")
-                         "legal")}
-         inf]
-        "/" (if (= INFINITY id-limit) "∞" id-limit)
-        " "
-        (if (pos? inf)
-          (deck-influence-html deck))])
-     (when (= (:side id) "Corp")
-       (let [min-point (validator/min-agenda-points deck)
-             points (validator/agenda-points deck)]
-         [:div (str (tr [:deck-builder.agenda-points "Agenda points"]) ": " points)
-          (when (< points min-point)
-            [:span.invalid " (" (tr [:deck-builder.min "minimum"]) " " min-point ")"])
-          (when (> points (inc min-point))
-            [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
-     [:div [deck-status-span deck true true false]]
-     (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]))
+     [:div.header-text
+      [:h4 {:class (if (= :legal (format-status (:format deck) id)) "fake-link" "casual")
+            :on-mouse-enter #(put! zoom-channel {:card id
+                                                 :art (:art id)
+                                                 :id (:id id)})
+            :on-mouse-leave #(put! zoom-channel false) }
+       (:title id)
+       (case (format-status (:format deck) id)
+         :banned banned-span
+         :restricted restricted-span
+         :rotated rotated-span
+         "")]
+      (let [count (validator/card-count cards)
+            min-count (validator/min-deck-size id)]
+        [:div count (str " " (tr [:deck-builder.cards "cards"]))
+         (when (< count min-count)
+           [:span.invalid (str " (" (tr [:deck-builder.min "minimum"]) " " min-count ")")])])
+      (let [inf (validator/influence-count deck)
+            id-limit (validator/id-inf-limit id)]
+        [:div (str (tr [:deck-builder.influence "Influence"]) ": ")
+         ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
+         [:span {:class (if (> inf id-limit)
+                          (if (> inf id-limit)
+                            "invalid"
+                            "casual")
+                          "legal")}
+          inf]
+         "/" (if (= INFINITY id-limit) "∞" id-limit)
+         " "
+         (if (pos? inf)
+           (deck-influence-html deck))])
+      (when (= (:side id) "Corp")
+        (let [min-point (validator/min-agenda-points deck)
+              points (validator/agenda-points deck)]
+          [:div (str (tr [:deck-builder.agenda-points "Agenda points"]) ": " points)
+           (when (< points min-point)
+             [:span.invalid " (" (tr [:deck-builder.min "minimum"]) " " min-point ")"])
+           (when (> points (inc min-point))
+             [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
+      [:div [deck-status-span deck true true false]]
+      (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]]))
 
 (defn decklist-contents
   [s deck cards]
