@@ -12,9 +12,10 @@
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
+            [nr.translations :refer [tr tr-pronouns tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
-                              checkbox-button cond-button]]
+                              checkbox-button cond-button image-language-name]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -40,10 +41,11 @@
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
         show-art (and special-user special-wants-art viewer-wants-art)
-        version-path (if (and art show-art)
+        version-name (if (and art show-art)
                        (get (:alt_art alt-card) (keyword art) art)
-                       (:code card))]
-    (str "/img/cards/" version-path ".png")))
+                       (:code card))
+        card-name (image-language-name card version-name)]
+    (str "/img/cards/" card-name ".png")))
 
 (defn generate-replay-link [origin]
   (let [n (:n @replay-status)
@@ -79,7 +81,7 @@
 
 (defn replay-reached-end? []
   (and (empty? (:diffs @replay-status))
-       (< (inc (:n @replay-status))
+       (>= (inc (:n @replay-status))
           (count @replay-timeline))))
 
 (defn replay-prepare-state
@@ -271,7 +273,7 @@
 
 (defn handle-timeout [{:keys [gameid]}]
   (when (= gameid (:gameid @game-state))
-    (toast "Game closed due to inactivity" "error" {:time-out 0 :close-button true})))
+    (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
 (defn parse-state [state]
   (js->clj (.parse js/JSON state) :keywordize-keys true))
@@ -632,7 +634,7 @@
               :on-click #(do (.preventDefault %)
                              (send-command "indicate-action"))
               :key "Indicate action"}
-     "Indicate action"]))
+     (tr [:game.indicate-action "Indicate action"])]))
 
 (defn log-input []
   (let [gameid (r/cursor game-state [:gameid])
@@ -645,7 +647,7 @@
           [:div
            [:form {:on-submit #(do (.preventDefault %)
                                    (send-msg s))}
-            [:input {:placeholder "Say something"
+            [:input {:placeholder (tr [:chat.placeholder "Say something"])
                      :type "text"
                      :value (:msg @s)
                      :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
@@ -720,7 +722,7 @@
 
 (defn remote->name [server]
   (let [num (remote->num server)]
-    (str "Server " num)))
+    (str (tr [:game.server "Server"]) " " num)))
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
@@ -780,7 +782,7 @@
         (:full "full") nil
         [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
          (case implemented
-           nil [:span.unimplemented "Unimplemented"]
+           nil [:span.unimplemented (tr [:game.unimplemented "Unimplemented"])]
            [:span.impl-msg implemented])]))))
 
 (defn card-zoom-display
@@ -817,7 +819,7 @@
     [:div.panel.blue-shade.runner-abilities {:style {:display "inline"}}
      (when (or (seq runner-abilities)
                (seq subroutines))
-       [:span.float-center "Abilities:"])
+       [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
      (map-indexed
        (fn [i ab]
          [:div {:key i
@@ -828,9 +830,9 @@
      (when (seq subroutines)
        [:div {:on-click #(send-command "system-msg"
                                        {:msg (str "indicates to fire all unbroken subroutines on " title)})}
-        "Let all subroutines fire"])
+        (tr [:game.let-subs-fire "Let all subroutines fire"])])
      (when (seq subroutines)
-       [:span.float-center "Subroutines:"])
+       [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
      (map-indexed
        (fn [i sub]
          [:span {:style {:display "block"}
@@ -851,7 +853,7 @@
   (when (:corp-abilities @c-state)
     [:div.panel.blue-shade.corp-abilities {:style {:display "inline"}}
      (when (seq corp-abilities)
-       [:span.float-center "Abilities:"])
+       [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
      (map-indexed
        (fn [i ab]
          [:div {:on-click #(send-command "corp-ability" {:card card
@@ -910,7 +912,7 @@
                    (= type "ICE")))
       [:div.panel.blue-shade.abilities {:style {:display "inline"}}
        (when (seq actions)
-         [:span.float-center "Actions:"])
+         [:span.float-center (tr [:game.actions "Actions"]) ":"])
        (when (seq actions)
          (map-indexed
            (fn [i action]
@@ -920,7 +922,7 @@
            actions))
        (when (and (active? card)
                   (seq abilities))
-         [:span.float-center "Abilities:"])
+         [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
        (when (and (active? card)
                   (seq abilities))
          (map-indexed
@@ -937,9 +939,9 @@
            abilities))
        (when (seq (remove :fired subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
-          "Fire unbroken subroutines"])
+          (tr [:game.fire-unbroken "Fire unbroken subroutines"])])
        (when (seq subroutines)
-         [:span.float-center "Subroutines:"])
+         [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
        (when (seq subroutines)
          (map-indexed
            (fn [i sub]
@@ -1121,16 +1123,16 @@
                    [facedown-card (:side card)])])
               @hand))]))
 
-(defn hand-view [user name hand prompt remotes popup popup-direction]
+(defn hand-view [user name translated-name hand prompt remotes popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name hand prompt remotes popup popup-direction]
+    (fn [user name translated-name hand prompt remotes popup popup-direction]
       (let [size (count @hand)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
            [build-hand-card-view user hand prompt remotes "card-wrapper"]
-           [label @hand {:opts {:name name}}]]
+           [label @hand {:opts {:name translated-name}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -1138,8 +1140,8 @@
          (when popup
            [:div.panel.blue-shade.popup {:ref #(swap! s assoc :hand-popup %) :class popup-direction}
             [:div
-             [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} "Close"]
-             [:label (str size " card" (when (not= 1 size) "s") ".")]
+             [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game.close "Close"])]
+             [:label (tr [:game.card-count] size)]
              [build-hand-card-view user hand prompt remotes "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
@@ -1153,7 +1155,7 @@
 
 (defn deck-view [render-side player-side identity deck]
    (let [is-runner (= :runner render-side)
-         name (if is-runner "Stack" "R&D")
+         name (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
          ref (if is-runner "stack" "rd")
          menu-ref (keyword (str ref "-menu"))
          content-ref (keyword (str ref "-content"))]
@@ -1166,15 +1168,15 @@
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
-                                 (-> (menu-ref @board-dom) js/$ .fadeOut))} "Shuffle"]
-           [:div {:on-click #(show-deck % ref)} "Show"]])
+                                 (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
+           [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
         (when (= render-side player-side)
           [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
            [:div
             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-             "Close"]
+             (tr [:game.close "Close"])]
             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-             "Close & Shuffle"]]
+             (tr [:game.close-shuffle "Close & Shuffle"])]]
            (doall
              (for [card @deck]
                ^{:key (:cid card)}
@@ -1187,11 +1189,11 @@
        (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
        (when-not (empty? @discard)
          [:<> [card-view (last @discard)]])
-       [label @discard {:opts {:name "Heap" :classes "server-label"}}]
+       [label @discard {:opts {:name (tr [:game.heap "Heap"]) :classes "server-label"}}]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
-         [:a {:on-click #(close-popup % (:popup @s) nil false false)} "Close"]]
+         [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]]
         (doall
           (for [card @discard]
             ^{:key (:cid card)}
@@ -1211,20 +1213,20 @@
          (drop-area "Archives" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
          (when-not (empty? @discard) [:<> {:key "discard"} (draw-card (last @discard))])
 
-         [label @discard {:opts {:name "Archives"
+         [label @discard {:opts {:name (tr [:game.archives "Archives"])
                                  :classes "server-label"
                                  :fn (fn [cursor] (let [total (count cursor)
                                                         face-up (count (filter faceup? cursor))]
                                                     ;; use non-breaking space to keep counts on same line.
-                                                    (str face-up "↑ " (- total face-up) "↓")))}}]
+                                                    (tr [:game.up-down-count] total face-up)))}}]
 
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                        :class (if (= (:side @game-state) :runner) "opponent" "me")}
           [:div
-           [:a {:on-click #(close-popup % (:popup @s) nil false false)} "Close"]
+           [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]
            [:label (let [total (count @discard)
                          face-up (count (filter faceup? @discard))]
-                     (str total " cards, " (- total face-up) " face-down."))]]
+                     (tr [:game.face-down-count] total face-up))]]
           (doall (for [c @discard]
                    ^{:key (:cid c)}
                    [:div (draw-card c)]))]]))))
@@ -1248,8 +1250,8 @@
              [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
                                            :class "opponent"}
               [:div
-               [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} "Close"]
-               [:label (str size " card" (when (not= 1 size) "s") ".")]]
+               [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} (tr [:game.close "Close"])]
+               [:label (tr [:game.card-count] size)]]
               (doall
                 (for [c @cards]
                   ^{:key (:cid c)}
@@ -1280,7 +1282,7 @@
                                           :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                        [:div [card-view card]]])
                     @scored))
-     [label @scored {:opts {:name "Scored Area"}}]]))
+     [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]]))
 
 (defn controls
   "Create the control buttons for the side displays."
@@ -1295,25 +1297,9 @@
   [:div.namearea [avatar user {:opts {:size 32}}]
    [:div.namebox
     [:div.username (:username user)]
-    (if-let [pronouns (case (get-in user [:options :pronouns])
-                        "none" "unspecified"
-                        "any" "any"
-                        "myodb" "prefer not to say"
-                        "blank" ""
-                        "he" "he/him"
-                        "she" "she/her"
-                        "hethey" "he/they"
-                        "shethey" "she/they"
-                        "it" "it"
-                        "they" "they/them"
-                        "ne" "ne/nem"
-                        "ve" "ve/ver"
-                        "ey" "ey/em"
-                        "zehir" "ze/hir"
-                        "zezir" "ze/zir"
-                        "xe" "xe/xem"
-                        "unspecified pronouns")]
-      [:div.pronouns pronouns])]])
+    (if-let [pronouns (get-in user [:options :pronouns])]
+      (let [pro-str (if (= "blank" pronouns) "" (tr-pronouns pronouns))]
+        [:div.pronouns (lower-case pro-str)]))]])
 
 (defmulti stats-view #(get-in @% [:identity :side]))
 
@@ -1323,7 +1309,7 @@
     (fn [memory]
       (let [{:keys [available used only-for]} memory
             unused (- available used)]
-        [:div (str unused " of " available " MU unused")
+        [:div (tr [:game.mu-count] unused available)
          (when (neg? unused) [:div.warning "!"])
          (when me? (controls :memory))]))))
 
@@ -1349,29 +1335,26 @@
                     brain-damage agenda-point hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
-         [:div (str click " Click" (if (not= click 1) "s" ""))
+         [:div (tr [:game.click-count] click)
           (when me? (controls :click))]
-         [:div (str credit " Credit" (if (not= credit 1) "s" "")
-                    (when (pos? run-credit)
-                      (str " (" run-credit " for run)")))
+         [:div (tr [:game.credit-count] credit run-credit)
           (when me? (controls :credit))]
          [display-memory memory]
          [display-special-memory memory]
-         [:div (str link " Link Strength")
+         [:div (str link " " (tr [:game.link-strength "Link Strength"]))
           (when me? (controls :link))]
-         [:div (str agenda-point " Agenda Point"
-                    (when (not= agenda-point 1) "s"))
+         [:div (tr [:game.agenda-count] agenda-point)
           (when me? (controls :agenda-point))]
          (let [{:keys [base total is-tagged]} tag
                additional (- total base)
                show-tagged (or is-tagged (pos? total))]
-           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" ""))
+           [:div (tr [:game.tag-count] base additional total)
             (when show-tagged [:div.warning "!"])
             (when me? (controls :tag))])
-         [:div (str brain-damage " Brain Damage")
+         [:div (str brain-damage " " (tr [:game.brain-damage "Brain Damage"]))
           (when me? (controls :brain-damage))]
          (let [{:keys [total]} hand-size]
-           [:div (str total " Max hand size")
+           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
             (when me? (controls :hand-size))])]))))
 
 (defmethod stats-view "Corp" [corp]
@@ -1380,17 +1363,17 @@
       (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
-         [:div (str click " Click" (if (not= click 1) "s" ""))
+         [:div (tr [:game.click-count] click)
           (when me? (controls :click))]
-         [:div (str credit " Credit" (if (not= credit 1) "s" ""))
+         [:div (tr [:game.credit-count] credit -1)
           (when me? (controls :credit))]
-         [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
+         [:div (tr [:game.agenda-count] agenda-point)
           (when me? (controls :agenda-point))]
          (let [{:keys [base additional]} bad-publicity]
-           [:div (str (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
+           [:div (tr [:game.bad-pub-count] base additional)
             (when me? (controls :bad-publicity))])
          (let [{:keys [total]} hand-size]
-           [:div (str total " Max hand size")
+           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
             (when me? (controls :hand-size))])]))))
 
 (defn run-arrow [run]
@@ -1595,21 +1578,20 @@
           [:div.win.centered.blue-shade
            [:div
             winning-user
-            " ("
-            (capitalize winner)
+            " (" (capitalize (tr-side winner)) ") "
             (cond
               (= "Decked" (capitalize reason))
-              (str ") wins due to the Corp being decked on turn " turn)
+              (tr [:game.win-decked] turn)
 
               (= "Flatline" (capitalize reason))
-              (str ") wins by flatline on turn " turn)
+              (tr [:game.win-flatlined] turn)
 
               (= "Concede" (capitalize reason))
-              (str ") wins by concession on turn " turn)
+              (tr [:game.win-concede] turn)
 
               :else
-              (str ") wins by scoring agenda points on turn " turn))]
-           [:div "Time taken: " time " minutes"]
+              (tr [:game.win-points] turn))]
+           [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
@@ -1676,14 +1658,16 @@
              [:div.mulligan
               (if (or (= :spectator @my-side)
                       (and @my-keep @op-keep))
-                [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
-                (list ^{:key "keepbtn"} [cond-button "Keep"
+                [cond-button (if (= :spectator @my-side)
+                               (tr [:game.close "Close"]) (tr [:game.start "Start Game"]))
+                 true #(swap! app-state assoc :start-shown true)]
+                (list ^{:key "keepbtn"} [cond-button (tr [:game.keep "Keep"])
                                          (= "mulligan" (-> @my-prompt first :prompt-type))
                                          #(send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
                                                                                       (filter (fn [c] (= "Keep" (:value c))))
                                                                                       first
                                                                                       :uuid)}})]
-                      ^{:key "mullbtn"} [cond-button "Mulligan"
+                      ^{:key "mullbtn"} [cond-button (tr [:game.mulligan "Mulligan"])
                                          (= "mulligan" (-> @my-prompt first :prompt-type))
                                          #(do (send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
                                                                                           (filter (fn [c] (= "Mulligan" (:value c))))
@@ -1740,65 +1724,65 @@
       (nth run-ice (dec pos)))))
 
 (def phase->title
-  {"initiation" "Initiation"
-   "approach-ice" "Approach ice"
-   "encounter-ice" "Encounter ice"
-   "pass-ice" "Pass ice"
-   "approach-server" "Approach server"
-   "corp-phase-43" "Corp phase 4.3"
-   "access-server" "Access server"})
+  {"initiation" (tr [:game.initiation "Initiation"])
+   "approach-ice" (tr [:game.approach-ice "Approach ice"])
+   "encounter-ice" (tr [:game.encouter-ice "Encounter ice"])
+   "pass-ice" (tr [:game.pass-ice "Pass ice"])
+   "approach-server" (tr [:game.approach-server "Approach server"])
+   "corp-phase-43" (tr [:game.corp-phase-43 "Corp phase 4.3"])
+   "access-server" (tr [:game.access-server "Access server"])})
 
 (defn phase->next-phase-title
   [run]
   (case (:phase @run)
-    "initiation" "Approach ice"
+    "initiation" (tr [:game.approach-ice "Approach ice"])
     "approach-ice" (if (rezzed? (get-current-ice))
-                     "Encounter ice"
+                     (tr [:game.encouter-ice "Encounter ice"])
                      (if (> (:position @run) 1)
-                       "Approach ice"
-                       "Approach server"))
-    "encounter-ice" "Pass ice"
+                       (tr [:game.approach-ice "Approach ice"])
+                       (tr [:game.approach-server "Approach server"])))
+    "encounter-ice" (tr [:game.pass-ice "Pass ice"])
     "pass-ice" (if (zero? (:position @run))
-                 "Approach server"
-                 "Approach ice")
-    "approach-server" "Access server"
-    "corp-phase-43" "Access server"
-    "access-server" "End of run"
+                 (tr [:game.approach-server "Approach server"])
+                 (tr [:game.approach-ice "Approach ice"]))
+    "approach-server" (tr [:game.access-server "Access server"])
+    "corp-phase-43" (tr [:game.access-server "Access server"])
+    "access-server" (tr [:game.end-of-run "End of run"])
     ;; Error
-    "No current run"))
+    (tr [:game.no-current-run "No current run"])))
 
 (defn corp-run-div
   [run]
   [:div.panel.blue-shade
-   [:h4 "Current phase:" [:br] (get phase->title (:phase @run) "Unknown phase")]
+   [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))]
    (cond
      (= "approach-ice" (:phase @run))
      (let [current-ice (get-current-ice)]
        [cond-button
-        (str "Rez " (:title current-ice))
+        (str (tr [:game.rez "Rez"]) " " (:title current-ice))
         (not (rezzed? current-ice))
         #(send-command "rez" {:card current-ice :press-continue true})])
 
      (= "encounter-ice" (:phase @run))
      (let [current-ice (get-current-ice)]
        [cond-button
-        "Fire unbroken subs"
+        (tr [:game.fire-unbroken "Fire unbroken subs"])
         (and (seq (remove :fired (:subroutines current-ice)))
              (not (every? :broken (:subroutines current-ice))))
         #(send-command "unbroken-subroutines" {:card current-ice})])
 
      (= "approach-server" (:phase @run))
      [checkbox-button
-      "Action before access"
-      "Action before access"
+      (tr [:game.action-access "Action before access"])
+      (tr [:game.action-access "Action before access"])
       (:corp-phase-43 @run)
       #(send-command "corp-phase-43")])
 
    [cond-button
     (let [next-phase (:next-phase @run)]
       (if (or next-phase (zero? (:position @run)))
-        "No further actions"
-        (str "Continue to " (phase->next-phase-title run))))
+        (tr [:game.no-further "No further actions"])
+        (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))))
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "access-server" (:phase @run))
@@ -1809,8 +1793,8 @@
               (not= "corp-phase-43" (:phase @run))
               (not= "access-server" (:phase @run)))
      [checkbox-button
-      "Stop auto-passing priority"
-      "Auto-pass priority"
+      (tr [:game.stop-auto-pass "Stop auto-passing priority"])
+      (tr [:game.auto-pass "Auto-pass priority"])
       (:corp-auto-no-action @run)
       #(send-command "toggle-auto-no-action")])])
 
@@ -1819,7 +1803,7 @@
   (let [phase (:phase @run)
         next-phase (:next-phase @run)]
     [:div.panel.blue-shade
-     [:h4 "Current phase:" [:br] (get phase->title phase)]
+     [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)]
      (cond
        (:next-phase @run)
        [cond-button
@@ -1832,12 +1816,12 @@
             (not (zero? (:position @run)))
             (not= "encounter-ice" (:phase @run)))
        [cond-button
-        (str "Continue to " (phase->next-phase-title run))
+        (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))
         (not= "runner" (:no-action @run))
         #(send-command "continue")]
 
        (zero? (:position @run))
-       [cond-button "Access server"
+       [cond-button (tr [:game.access-server "Access server"])
         (not= "runner" (:no-action @run))
         #(send-command "continue")])
 
@@ -1845,7 +1829,7 @@
        (let [current-ice (get-current-ice)
              title (:title current-ice)]
          [cond-button
-          "Let all subroutines fire"
+          (tr [:game.let-subs-fire "Let all subroutines fire"])
           (and (seq (:subroutines current-ice))
                (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
           #(send-command "system-msg"
@@ -1854,7 +1838,7 @@
      (when (or (= "approach-server" (:phase @run))
                (= "approach-ice" (:phase @run)))
        [cond-button
-        (if (:jack-out @run) "Jack Out" "Undo click")
+        (if (:jack-out @run) (tr [:game.jack-out "Jack Out"]) (tr [:game.undo-click "Undo click"]))
         (not (:cannot-jack-out @run))
         (if (:jack-out @run)
           #(send-command "jack-out")
@@ -1862,14 +1846,14 @@
 
      (when (= "encounter-ice" (:phase @run))
        [cond-button
-        "Pass ice and continue"
+        (tr [:game.pass-continue "Pass ice and continue"])
         (or (not= "runner" (:no-action @run))
             (:jack-out-after-pass @run))
         #(send-command "continue" {:jack-out false})])
 
      (when (= "encounter-ice" (:phase @run))
        [cond-button
-        "Pass ice and jack out"
+        (tr [:game.pass-jack "Pass ice and jack out"])
         (and (not (:cannot-jack-out @run))
              (or (not= "runner" (:no-action @run))
                  (not (:jack-out-after-pass @run))))
@@ -1889,10 +1873,10 @@
      (if (nil? (:strength prompt))
        (if (= "corp" (:player prompt))
          ;; This is a trace prompt for the corp, show runner link + credits
-         [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
+         [:div.info (tr [:side.runner "Runner"]) ": " (:link prompt) [:span {:class "anr-icon link"}]
           " + " (:runner-credits prompt) [:span {:class "anr-icon credit"}]]
          ;; Trace in which the runner pays first, showing base trace strength and corp credits
-         [:div.info "Trace: " (if (:bonus prompt) (+ base (:bonus prompt)) base)
+         [:div.info (tr [:game.trace "Trace"]) ": " (if (:bonus prompt) (+ base (:bonus prompt)) base)
           " + " (:corp-credits prompt) [:span {:class "anr-icon credit"}]])
        ;; This is a trace prompt for the responder to the trace, show strength
        (if (= "corp" (:player prompt))
@@ -1912,10 +1896,10 @@
             [:span (str strength " + ")]))))
     [:select#credit
      (doall (for [i (range (inc (:choices prompt)))]
-              [:option {:value i :key i} i]))] " credits"]
+              [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
    [:button {:on-click #(send-command "choice"
                                       {:choice (-> "#credit" js/$ .val str->int)})}
-    "OK"]])
+    (tr [:game.ok "OK"])]])
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
@@ -1947,7 +1931,7 @@
             [:div {:style {:text-align "center"}
                    :on-mouse-over #(card-highlight-mouse-over % card button-channel)
                    :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-             "Card: " (render-message (:title card))])
+             (tr [:game.card "Card"]) ": " (render-message (:title card))])
           (when (:card prompt)
             [:hr])
           [:h4 (render-message (:msg prompt))]
@@ -1962,7 +1946,7 @@
                           [:option {:key i :value i} i]))]]
                [:button {:on-click #(send-command "choice"
                                                   {:choice (-> "#credit" js/$ .val str->int)})}
-                "OK"]])
+                (tr [:game.ok "OK"])]])
             ;; trace prompts require their own logic
             (= (:prompt-type prompt) "trace")
             [trace-div prompt]
@@ -1973,10 +1957,10 @@
              [:div.credit-select
               [:select#credit
                (doall (for [i (range (inc (:credit @me)))]
-                        [:option {:value i :key i} i]))] " credits"]
+                        [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
              [:button {:on-click #(send-command "choice"
                                                 {:choice (-> "#credit" js/$ .val str->int)})}
-              "OK"]]
+              (tr [:game.ok "OK"])]]
 
             ;; auto-complete text box
             (:card-title (:choices prompt))
@@ -1987,7 +1971,7 @@
                                               (-> "#card-submit" js/$ .click)
                                               (.stopPropagation %))}]]
              [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
-              "OK"]]
+              (tr [:game.ok "OK"])]]
 
             ;; choice of specified counters on card
             (:counter (:choices prompt))
@@ -1997,10 +1981,10 @@
                [:div.credit-select
                 [:select#credit
                  (doall (for [i (range (inc num-counters))]
-                          [:option {:key i :value i} i]))] " credits"]
+                          [:option {:key i :value i} i]))] (str " " (tr [:game.credits "credits"]))]
                [:button {:on-click #(send-command "choice"
                                                   {:choice (-> "#credit" js/$ .val str->int)})}
-                "OK"]])
+                (tr [:game.ok "OK"])]])
 
             ;; otherwise choice of all present choices
             :else
@@ -2021,23 +2005,23 @@
               (when (and (not (or @runner-phase-12 @corp-phase-12))
                          (zero? (:click @me))
                          (not @end-turn))
-                [:button {:on-click #(send-command "end-turn")} "End Turn"])
+                [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
               (when @end-turn
-                [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
             (when (and (= (keyword @active-player) side)
                        (or @runner-phase-12 @corp-phase-12))
               [:button {:on-click #(send-command "end-phase-12")}
-               (if (= side :corp) "Mandatory Draw" "Take Clicks")])
+               (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
             (when (= side :runner)
               [:div
-               [cond-button "Remove Tag"
+               [cond-button (tr [:game.remove-tag "Remove Tag"])
                 (and (not (or @runner-phase-12 @corp-phase-12))
                      (pos? (:click @me))
                      (>= (:credit @me) 2)
                      (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button
-                [cond-button "Run" (and (not (or @runner-phase-12 @corp-phase-12))
+                [cond-button (tr [:game.run "Run"]) (and (not (or @runner-phase-12 @corp-phase-12))
                                         (pos? (:click @me)))
                  #(do (send-command "generate-runnable-zones")
                       (swap! s update :servers not))]
@@ -2050,23 +2034,23 @@
                                    label])
                                 servers))]]])
             (when (= side :corp)
-              [cond-button "Purge"
+              [cond-button (tr [:game.purge "Purge"])
                (and (not (or @runner-phase-12 @corp-phase-12))
                     (>= (:click @me) 3))
                #(send-command "purge")])
             (when (= side :corp)
-              [cond-button "Trash Resource"
+              [cond-button (tr [:game.trash-resource "Trash Resource"])
                (and (not (or @runner-phase-12 @corp-phase-12))
                     (pos? (:click @me))
                     (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
                     (is-tagged? game-state))
                #(send-command "trash-resource")])
-            [cond-button "Draw"
+            [cond-button (tr [:game.draw "Draw"])
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me))
                   (not-empty (:deck @me)))
              #(send-command "draw")]
-            [cond-button "Gain Credit"
+            [cond-button (tr [:game.gain-credit "Gain Credit"])
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
@@ -2074,7 +2058,7 @@
 (defn starting-timestamp []
   [:div.panel.blue-shade
    [:span.float-center
-    (str "Game start: " (.toLocaleTimeString (js/Date.)))]])
+    (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString (js/Date.)))]])
 
 (defn gameboard []
   (r/with-let [active (r/cursor app-state [:active-page])]
@@ -2166,8 +2150,10 @@
 
                   [:div.leftpane
                    [:div.opponent
-                    [hand-view op-user (if (= :corp op-side) "HQ" "Grip") op-hand op-prompt corp-remotes
-                     (= @side :spectator) "opponent"]]
+                    (let [srv (if (= :corp op-side) "HQ" "Grip")
+                          translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                      [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
+                       (= @side :spectator) "opponent"])]
 
                    [:div.inner-leftpane
                     [audio-component {:sfx sfx}]
@@ -2189,20 +2175,22 @@
                            me-play-area (r/cursor game-state [me-side :play-area])]
                        [:div
                         [starting-timestamp]
-                        [rfg-view op-rfg "Removed from the game" true]
-                        [rfg-view me-rfg "Removed from the game" true]
-                        [play-area-view op-user "Play Area" op-play-area]
-                        [play-area-view me-user "Play Area" me-play-area]
-                        [rfg-view op-current "Current" false]
-                        [rfg-view me-current "Current" false]])
+                        [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
+                        [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
+                        [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
+                        [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
+                        [rfg-view op-current (tr [:game.current "Current"]) false]
+                        [rfg-view me-current (tr [:game.current "Current"]) false]])
                      (when-not (= @side :spectator)
                        [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                      :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
                                      :corp corp :runner runner :me me :opponent opponent}])]]
 
                    [:div.me
-                    [hand-view me-user (if (= :corp me-side) "HQ" "Grip") me-hand me-prompt
-                     corp-remotes true "me"]]]
+                    (let [srv (if (= :corp me-side) "HQ" "Grip")
+                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                      [hand-view me-user srv translated-srv me-hand me-prompt
+                       corp-remotes true "me"])]]
 
                   (when (:replay @game-state)
                     [:div.bottompane

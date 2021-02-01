@@ -38,7 +38,8 @@
                  [hawk "0.2.11"]
                  [danlentz/clj-uuid "0.1.9"]
                  [potemkin "0.4.5"]
-                 [cond-plus "1.0.1"]]
+                 [cond-plus "1.0.1"]
+                 [com.taoensso/tempura "1.2.1"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
@@ -56,6 +57,7 @@
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
+            "add-language" ["run" "-m" "tasks.language/add-language"]
             "load-test" ["run" "-m" "tasks.load-test/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]

@@ -15,7 +15,8 @@
             [nr.history :refer [history]]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [play-sound resume-sound]]
-            [nr.utils :refer [slug->format cond-button non-game-toast]]
+            [nr.translations :refer [tr tr-side tr-format]]
+            [nr.utils :refer [slug->format cond-button non-game-toast num->percent]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [differ.core :as differ]
@@ -93,7 +94,7 @@
   :lobby/timeout
   (fn [{:keys [gameid] :as msg}]
     (when (= gameid (:gameid @app-state))
-      (non-game-toast "Game lobby closed due to inactivity" "error" {:time-out 0 :close-button true})
+      (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"]) "error" {:time-out 0 :close-button true})
       (swap! app-state assoc :gameid nil))))
 
 (defn send
@@ -171,7 +172,7 @@
                                                                                     (assoc init-state :replay-jump-to jump-to)
                                                                                     init-state)))]))
                404
-               (non-game-toast "Replay link invalid." "error" {:time-out 0 :close-button true}))))))))
+               (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."]) "error" {:time-out 0 :close-button true}))))))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
@@ -193,18 +194,18 @@
       (if (:replay @s)
         (cond
           (not (:replay-file @s))
-          (swap! s assoc :flash-message "Select a valid replay file.")
+          (swap! s assoc :flash-message (tr [:lobby.replay-invalid-file "Select a valid replay file."]))
 
           :else
           (do (swap! s assoc :editing false)
               (start-replay @s)))
         (cond
           (empty? (:title @s))
-          (swap! s assoc :flash-message "Please fill a game title.")
+          (swap! s assoc :flash-message (tr [:lobby.title-error "Please fill a game title."]))
 
           (and (:protected @s)
                (empty? (:password @s)))
-          (swap! s assoc :flash-message "Please fill a password.")
+          (swap! s assoc :flash-message (tr [:lobby.password-error "Please fill a password."]))
 
           :else
           (do (swap! s assoc :editing false)
@@ -230,7 +231,7 @@
 
 (defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
-    [:h3 "Select your deck"]
+    [:h3 (tr [:lobby.select-title "Select your deck"])]
     [:div.deck-collection.lobby-deck-selector
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
@@ -279,7 +280,7 @@
        :reagent-render
        (fn [game]
          [:div.chat-box
-          [:h3 "Chat"]
+          [:h3 (tr [:lobby.chat "Chat"])]
           [:div.message-list {:ref #(swap! lobby-dom assoc :message-list %)}
            (map-indexed (fn [i msg]
                           (if (= (:user msg) "__system__")
@@ -295,11 +296,11 @@
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-msg s))}
-            [:input {:placeholder "Say something"
+            [:input {:placeholder (tr [:chat.placeholder "Say something"])
                      :type "text"
                      :value (:msg @s)
                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
-            [:button "Send"]]]])})))
+            [:button (tr [:chat.send "Send"])]]]])})))
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
@@ -352,7 +353,7 @@
         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
     [:div.game-list
      (if (empty? @filtered-games)
-       [:h4 "No games"]
+       [:h4 (tr [:lobby.no-games "No games"])]
        (doall
          (for [game @filtered-games]
            ^{:key (:gameid game)}
@@ -377,10 +378,10 @@
            nil))))
    [:div.button-bar
     [:div.rooms
-     [room-tab user s games "tournament" "Tournament"]
-     [room-tab user s games "competitive" "Competitive"]
-     [room-tab user s games "casual" "Casual"]]
-    [cond-button "New game"
+     [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
+     [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
+     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]]
+    [cond-button (tr [:lobby.new-game "New game"])
      (and (not (or @gameid
                    (:editing @s)
                    (= "tournament" (:room @s))))
@@ -390,7 +391,7 @@
                empty?))
      #(do (new-game s)
           (resume-sound))]
-    [cond-button "Load Replay"
+    [cond-button (tr [:lobby.load-replay "Load Replay"])
      (and (not (or @gameid
                    (:editing @s)
                    (= "tournament" (:room @s))))
@@ -401,7 +402,7 @@
      #(do (replay-game s)
           (resume-sound))]
     [:button {:type "button"
-              :on-click #(ws/ws-send! [:lobby/list])} "Reload list"]]
+              :on-click #(ws/ws-send! [:lobby/list])} (tr [:lobby.reload "Reload list"])]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
@@ -416,12 +417,12 @@
       [:div
        [:div.button-bar
         [:button {:type "button"
-                  :on-click #(create-game s)} "Start replay"]
+                  :on-click #(create-game s)} (tr [:lobby.start-replay "Start replay"])]
         [:button {:type "button"
                   :on-click #(do
                                (swap! s assoc :editing false)
                                (swap! app-state dissoc :editing-game))}
-         "Cancel"]]
+         (tr [:lobby.cancel "Cancel"])]]
        (when-let [flash-message (:flash-message @s)]
          [:p.flash-message flash-message])
         [:div [:input {:field :file
@@ -430,19 +431,19 @@
       [:div
        [:div.button-bar
         [:button {:type "button"
-                  :on-click #(create-game s)} "Create"]
+                  :on-click #(create-game s)} (tr [:lobby.create "Create"])]
         [:button {:type "button"
-                  :on-click #(swap! s assoc :editing false)} "Cancel"]]
+                  :on-click #(swap! s assoc :editing false)} (tr [:lobby.cancel "Cancel"])]]
        (when-let [flash-message (:flash-message @s)]
          [:p.flash-message flash-message])
        [:section
-        [:h3 "Title"]
+        [:h3 (tr [:lobby.title "Title"])]
         [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
                             :value (:title @s)
-                            :placeholder "Title"
+                            :placeholder (tr [:lobby.title "Title"])
                             :maxLength "100"}]]
        [:section
-        [:h3 "Side"]
+        [:h3 (tr [:lobby.side "Side"])]
         (doall
           (for [option ["Corp" "Runner"]]
             ^{:key option}
@@ -452,29 +453,29 @@
                               :value option
                               :on-change #(swap! s assoc :side (.. % -target -value))
                               :checked (= (:side @s) option)}]
-              option]]))]
+              (tr-side option)]]))]
 
        [:section
-        [:h3 "Format"]
+        [:h3 (tr [:lobby.format "Format"])]
         [:select.format {:value (:format @s "standard")
                          :on-change #(swap! s assoc :format (.. % -target -value))}
-         (for [[k v] slug->format]
-           ^{:key k}
-           [:option {:value k} v])]]
+         (doall (for [[k v] slug->format]
+                  ^{:key k}
+                  [:option {:value k} (tr-format v)]))]]
 
        [:section
-        [:h3 "Options"]
+        [:h3 (tr [:lobby.options "Options"])]
         [:p
          [:label
           [:input {:type "checkbox" :checked (:allow-spectator @s)
                    :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
-          "Allow spectators"]]
+          (tr [:lobby.spectators "Allow spectators"])]]
         [:p
          [:label
           [:input {:type "checkbox" :checked (:spectatorhands @s)
                    :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
                    :disabled (not (:allow-spectator @s))}]
-          "Make players' hidden information visible to spectators"]]
+          (tr [:lobby.hidden "Make players' hidden information visible to spectators"])]]
         [:div.infobox.blue-shade {:style {:display (if (:spectatorhands @s) "block" "none")}}
          [:p "This will reveal both players' hidden information to ALL spectators of your game, "
           "including hand and face-down cards."]
@@ -485,19 +486,19 @@
                    :on-change #(let [checked (.. % -target -checked)]
                                  (swap! s assoc :protected checked)
                                  (when (not checked) (swap! s assoc :password "")))}]
-          "Password protected"]]
+          (tr [:lobby.password-protected "Password protected"])]]
         (when (:protected @s)
           [:p
            [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
                                :type "password"
                                :value (:password @s)
-                               :placeholder "Password"
+                               :placeholder (tr [:lobby.password "Password"])
                                :maxLength "30"}]])
         [:p
          [:label
           [:input {:type "checkbox" :checked (:save-replay @s)
                    :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
-          "Save replay"]]
+          (tr [:lobby.save-replay "Save replay"])]]
         [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
          [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
           " The file is available only after the game is finished."]
@@ -518,17 +519,17 @@
        [:div.button-bar
         (when (first-user? players @user)
           [cond-button
-           "Start"
+           (tr [:lobby.start "Start"])
            (every? :deck players)
            #(ws/ws-send! [:netrunner/start @gameid])])
-        [:button {:on-click #(leave-lobby s)} "Leave"]
+        [:button {:on-click #(leave-lobby s)} (tr [:lobby.leave "Leave"])]
         (when (first-user? players @user)
-          [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} "Swap sides"])]
+          [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} (tr [:lobby.swap "Swap sides"])])]
        [:div.content
         [:h2 (:title game)]
         (when-not (every? :deck players)
-          [:div.flash-message "Waiting players deck selection"])
-        [:h3 "Players"]
+          [:div.flash-message (tr [:lobby.waiting "Waiting players deck selection"])])
+        [:h3 (tr [:lobby.players "Players"])]
         [:div.players
          (doall
            (map-indexed
@@ -543,7 +544,7 @@
                      [:span.label
                       (if this-player
                         name
-                        "Deck selected")]])
+                        (tr [:lobby.deck-selected "Deck selected"]))]])
                   (when-let [deck (:deck player)]
                     [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
                   (when this-player
@@ -552,18 +553,18 @@
                                    [deckselect-modal user {:games games :gameid gameid
                                                            :sets sets :decks decks
                                                            :format (:format game "standard")}])}
-                     "Select Deck"])]))
+                     (tr [:lobby.select-deck "Select Deck"])])]))
              players))]
-        [:h3 "Options"]
+        [:h3 (tr [:lobby.options "Options"])]
         [:ul.options
          (when (:allow-spectator game)
-           [:li "Allow spectators"])
+           [:li (tr [:lobby.spectators "Allow spectators"])])
          (when (:spectatorhands game)
-           [:li "Make players' hidden information visible to spectators"])
+           [:li (tr [:lobby.hidden "Make players' hidden information visible to spectators"])])
          (when (:password game)
-           [:li "Password protected"])
+           [:li (tr [:lobby.password-protected "Password protected"])])
          (when (:save-replay game)
-           [:li "Save replay"])
+           [:li (tr [:lobby.save-replay "Save replay"])])
          (when (:save-replay game)
            [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
             [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
@@ -575,7 +576,7 @@
         (when (:allow-spectator game)
           [:div.spectators
            (let [c (:spectator-count game)]
-             [:h3 (str c " Spectator" (when (not= c 1) "s"))])
+             [:h3 (tr [:lobby.spectator-count "Spectators"] c)])
            (for [spectator (:spectators game)
                  :let [_id (get-in spectator [:user :_id])]]
              ^{:key _id}
