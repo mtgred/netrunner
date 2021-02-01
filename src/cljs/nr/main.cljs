@@ -37,12 +37,6 @@
             (when is-player
               [:a.concede-button {:on-click #(concede)} (tr [:game.concede "Concede"])])
             [:a.leave-button {:on-click #(leave-game)} (if (:replay game) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
-            (when (:replay game)
-              [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
@@ -55,12 +49,12 @@
                  (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
        (when (not (nil? @gameid))
          [:div.float-right 
-          [:a {:on-click #(leave-game)} (if (= "replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
-          (when (= "replay" @gameid)
+          [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
-          (when (= "replay" @gameid)
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
-          (when (= "replay" @gameid)
+          (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
