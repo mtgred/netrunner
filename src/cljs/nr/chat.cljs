@@ -290,12 +290,6 @@
               [:div
                [msg-input-view (:channel @s)]])]]])})))
 
-(defn get-data
-  [tag]
-  (-> (.getElementById js/document "server-originated-data")
-      (.getAttribute (str "data-" tag))
-      (cljs.reader/read-string)))
-
 (defn chat-page []
   (let [active (r/cursor app-state [:active-page])
         s (r/atom {:channel :general
@@ -315,4 +309,4 @@
          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
          [news]
          [chat s old scroll-top]
-         [:div#version [:span (str "Version " (get-data "version"))]]]))))
+         [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]]))))

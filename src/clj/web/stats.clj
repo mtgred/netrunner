@@ -4,13 +4,17 @@
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
             [monger.query :as mq]
+            [web.pages :as pages]
             [web.ws :as ws]
             [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
+            [jinteki.cards :refer [all-cards]]
             [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
             [clj-time.core :as t]
-            [cheshire.core :as json])
+            [cheshire.core :as json]
+            [hiccup.page :as hiccup]
+            [ring.util.request :refer [request-url]])
 
   (:import org.bson.types.ObjectId))
 
@@ -250,3 +254,33 @@
           (println "Caught exception sharing game: " (.getMessage e))
           (response 500 {:message "Server error"}))))
     (response 401 {:message "Unauthorized"})))
+
+(defn- get-winner-card
+  [winner corp runner host]
+  (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
+        win-card (:code (@all-cards win-id))]
+    (if win-card
+      (str host "img/cards/" win-card ".png")
+      (str host "img/icons/jinteki_167.png"))))
+
+(defn replay-handler [{{:keys [gameid n d]} :params
+                       scheme           :scheme
+                       headers          :headers
+                       :as req}]
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid gameid})
+        replay (or replay {})
+        gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
+    (if (empty? replay)
+      (response 404 {:message "Replay not found"})
+      (let [corp-user (get-in corp [:player :username] "Unknown")
+            corp-id (:identity corp)
+            runner-user (get-in runner [:player :username] "Unknown")
+            runner-id (:identity runner)
+            host (str (name scheme) "://" (get headers "host") "/")
+            og {:type "website"
+                :url (request-url req)
+                :image (get-winner-card winner corp runner host)
+                :title (str "REPLAY: " title)
+                :site_name "jinteki.net"
+                :description (str corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
+        (pages/index-page req og gameid-str)))))

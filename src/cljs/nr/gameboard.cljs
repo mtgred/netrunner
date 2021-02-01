@@ -51,7 +51,7 @@
   (let [n (:n @replay-status)
         d (- (count (get-in @replay-timeline [n :diffs]))
              (count (:diffs @replay-status)))]
-    (str origin "/play?" (:gameid @game-state) "&n=" n "&d=" d)))
+    (str origin "/replay/" (:gameid @game-state) "?n=" n "&d=" d)))
 
 (defn set-replay-side [side]
   (reset! replay-side side)
@@ -2227,4 +2227,4 @@
                          [:button {:on-click #(swap! show-replay-link not)} "Share"])
                        (when-not (= "local-replay" (:gameid @game-state))
                          [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
-                                  :type "text" :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))
+                                  :type "text" :read-only true :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))

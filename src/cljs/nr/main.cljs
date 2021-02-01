@@ -9,7 +9,7 @@
             [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board set-replay-side]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
-            [nr.history :refer [navigate-to-current]]
+            [nr.history :refer [navigate-to-current navigate]]
             [nr.navbar :refer [navbar]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
@@ -66,12 +66,24 @@
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
 
+(defn- get-server-data
+  [tag]
+  (-> (.getElementById js/document "server-originated-data")
+      (.getAttribute (str "data-" tag))))
+
 (defn pages []
   (r/create-class
     {:display-name "main-pages"
 
      :component-did-mount
-     (fn [] (navigate-to-current))
+     (fn []
+      (let [ver (get-server-data "version")
+            rid (get-server-data "replay-id")]
+        (swap! app-state assoc :app-version ver)
+        (swap! app-state assoc :replay-id rid)
+        (if rid
+          (navigate "/play")
+          (navigate-to-current))))
 
      :reagent-render
      (fn []

@@ -361,21 +361,21 @@
 
 (defn games-list-panel [s games gameid password-gameid user]
   [:div.games
-   (let [params (.-search (.-location js/window))]
-     (when (not-empty params)
-       (let [id-match (re-find #"([0-9a-f\-]+)" params)
-             n-match (re-find #"n=(\d+)" params)
-             d-match (re-find #"d=(\d+)" params)
-             replay-id (nth id-match 1)
-             n (when n-match (js/parseInt (nth n-match 1)))
-             d (when d-match (js/parseInt (nth d-match 1)))]
-         (when replay-id
-           (.replaceState (.-history js/window) {} "" "/play") ; remove GET parameters from url
-           (if (and n d)
-             (start-shared-replay s replay-id {:n n :d d})
-             (start-shared-replay s replay-id))
-           (resume-sound)
-           nil))))
+   (when-let [params (:replay-id @app-state)]
+     (swap! app-state dissoc :replay-id)
+     (let [id-match (re-find #"([0-9a-f\-]+)" params)
+           n-match (re-find #"n=(\d+)" params)
+           d-match (re-find #"d=(\d+)" params)
+           replay-id (nth id-match 1)
+           n (when n-match (js/parseInt (nth n-match 1)))
+           d (when d-match (js/parseInt (nth d-match 1)))]
+       (when replay-id
+         (.replaceState (.-history js/window) {} "" "/play") ; remove query parameters from url
+         (if (and n d)
+           (start-shared-replay s replay-id {:n n :d d})
+           (start-shared-replay s replay-id))
+         (resume-sound)
+         nil)))
    [:div.button-bar
     [:div.rooms
      [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
