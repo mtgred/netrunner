@@ -196,8 +196,8 @@
      :component-will-unmount #(store-scroll-top % list-scroll-top)
      :reagent-render
      (fn [state list-scroll-top log-scroll-top]
-       (let [rev-games (reverse (:games @state))
-             games (if (:filter-replays @state) (filter #(:replay-shared %) rev-games) rev-games)
+       (let [all-games (:games @state)
+             games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
              cnt (count games)]
          [:div.game-list
            [:div.controls

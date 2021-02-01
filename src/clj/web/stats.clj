@@ -213,7 +213,8 @@
     (let [games (->> (mq/with-collection db "game-logs"
                        (mq/find {$or [{:corp.player.username username}
                                       {:runner.player.username username}]})
-                       (mq/sort (array-map :start-date 1)))
+                       (mq/sort (array-map :start-date -1))
+                       (mq/limit 100))
                      (map #(dissoc % :_id :log))
                      (into []))]
       (response 200 games))
