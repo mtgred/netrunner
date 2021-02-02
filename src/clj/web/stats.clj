@@ -170,7 +170,7 @@
     (doseq [game games]
       (mc/update db :game-logs
                  {:gameid (:gameid game)}
-                 {"$unset" {:replay nil}}))))
+                 {"$unset" {:replay nil} "$set" {:has-replay false}}))))
 
 (defn generate-replay [state]
   (json/generate-string
@@ -200,6 +200,7 @@
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
                           :replay (when (get-in @state [:options :save-replay]) (generate-replay state))
+                          :has-replay (get-in @state [:options :save-replay] false)
                           :replay-shared false
                           :log (:log @state)}})
       (delete-old-replay (get-in @state [:corp :user]))
@@ -213,9 +214,9 @@
     (let [games (->> (mq/with-collection db "game-logs"
                        (mq/find {$or [{:corp.player.username username}
                                       {:runner.player.username username}]})
+                       (mq/fields {:replay 0 :log 0 :_id 0})
                        (mq/sort (array-map :start-date -1))
                        (mq/limit 100))
-                     (map #(dissoc % :_id :log))
                      (into []))]
       (response 200 games))
     (response 401 {:message "Unauthorized"})))
