@@ -83,6 +83,7 @@
      ["cards" (array-map :type 1)]
      ["decks" (array-map :username 1)]
      ["game-logs" (array-map :gameid 1)]
+     ["game-logs" (array-map :start-date -1)]
      ["game-logs" (array-map "corp.player.username" 1)]
      ["game-logs" (array-map "runner.player.username" 1)]
      ["messages" (array-map :channel 1 :date -1)]

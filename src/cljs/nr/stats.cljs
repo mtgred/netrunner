@@ -52,7 +52,7 @@
   (let [game (:view-game @state)]
     [:div.games.panel
      [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "Return to stats screen"])]]
-     [:h4 (:title game) (when (:replay-shared game) " ⭐")]
+     [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
      [:div
       [:div.game-details-table
        [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
@@ -64,10 +64,10 @@
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p
-       (when (and (:replay game)
+       (when (and (:has-replay game)
                   (not (:replay-shared game)))
          [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
-       (if (:replay game)
+       (if (:has-replay game)
          [:span
           [:button {:on-click #(launch-replay game)} (tr [:stats.launch "Launch Replay"])]
           [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]]
@@ -159,9 +159,10 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason replay-shared start-date] :as game} log-scroll-top]
+  [state {:keys [title corp runner turn winner reason replay-shared has-replay start-date] :as game} log-scroll-top]
   (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
-        runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
+        runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))
+        turn-count (if turn turn 0)]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
       {:on-click #(do
@@ -170,7 +171,7 @@
       (tr [:stats.view-log "View log"])]
      [:h4.log-title
       {:title (when replay-shared "Replay shared")}
-      title " (" (tr [:stats.turn-count] turn) ")" (when replay-shared " ⭐")]
+      title " (" (tr [:stats.turn-count] turn-count) ")" (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
      [:div.log-date (-> start-date js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
 
@@ -196,8 +197,8 @@
      :component-will-unmount #(store-scroll-top % list-scroll-top)
      :reagent-render
      (fn [state list-scroll-top log-scroll-top]
-       (let [rev-games (reverse (:games @state))
-             games (if (:filter-replays @state) (filter #(:replay-shared %) rev-games) rev-games)
+       (let [all-games (:games @state)
+             games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
              cnt (count games)]
          [:div.game-list
            [:div.controls
