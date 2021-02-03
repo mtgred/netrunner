@@ -1587,7 +1587,7 @@
               (tr [:game.win-flatlined] turn)
 
               (= "Concede" (capitalize reason))
-              (tr [:game.win-concede] turn)
+              (tr [:game.win-conceded] turn)
 
               :else
               (tr [:game.win-points] turn))]
