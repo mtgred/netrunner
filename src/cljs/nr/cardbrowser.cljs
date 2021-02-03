@@ -35,11 +35,11 @@
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
                           (sort-by :date-start)
                           last)
-            alt-cards (->> cards
-                       (map #(select-keys % [:title :code :alt_art]))
-                       (filter :alt_art)
-                       (map (juxt :code identity))
-                       (into {}))
+          alt-cards (->> cards
+                         (map #(select-keys % [:title :code :alt_art]))
+                         (filter :alt_art)
+                         (map (juxt :code identity))
+                         (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
                         (map #(select-keys % [:version :name :description :position])))]
@@ -110,10 +110,9 @@
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
   [card]
-  (let [alt-name (if (keyword? (:art card))
-                   (get-in card [:alt_art (:art card)] (:code card))
-                   (:code card))
-        image-name (image-language-name card alt-name)]
+  (let [image-name (if (keyword? (:art card))
+                     (get-in card [:alt_art (:art card)] (:code card))
+                     (image-language-name card (:code card)))]
     (str "/img/cards/" image-name ".png")))
 
 (defn- alt-version-from-string
@@ -384,7 +383,7 @@
          [:div.card-list {:on-scroll #(handle-scroll % state)}
           (doall
             (for [card cards]
-              ^{:key (str (image-url card true) "-" (:code card))}
+              ^{:key (str (base-image-url card) "-" (:code card))}
               [card-view card state]))]))}))
 
 (defn handle-search [e state]
