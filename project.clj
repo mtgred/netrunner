@@ -39,7 +39,8 @@
                  [danlentz/clj-uuid "0.1.9"]
                  [potemkin "0.4.5"]
                  [cond-plus "1.0.1"]
-                 [com.taoensso/tempura "1.2.1"]]
+                 [com.taoensso/tempura "1.2.1"]
+                 [org.clojure/data.csv "1.0.0"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
@@ -63,7 +64,8 @@
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
             "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
-            "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]}
+            "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]
+            "get-stats" ["run" "-m" "tasks.game-stats/all-games"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
