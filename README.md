@@ -85,6 +85,7 @@ For more information refer to the [development guide](https://github.com/mtgred/
 
  - [Development Tips and Tricks](https://github.com/mtgred/netrunner/wiki/Development-Tips-and-Tricks)
  - [Writing Tests](https://github.com/mtgred/netrunner/wiki/Tests)
+ - "Profiling Database Queries" in `DEVELOPMENT.md`
 
 ## License
 
