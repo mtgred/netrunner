@@ -597,8 +597,9 @@
                password-gameid (r/cursor app-state [:password-gameid])
                sets (r/cursor app-state [:sets])
                user (r/cursor app-state [:user])
+               cards-loaded (r/cursor app-state [:cards-loaded])
                active (r/cursor app-state [:active-page])]
-    (when (= "/play" (first @active))
+    (when (and (= "/play" (first @active)) @cards-loaded)
       (authenticated (fn [_] nil))
       (when (and (not (or @gameid (:editing @s)))
                  (some? (:create-game-deck @app-state)))
