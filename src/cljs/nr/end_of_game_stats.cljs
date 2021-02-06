@@ -7,7 +7,7 @@
    [(tr [:stats.credits-gained "Credits Gained"]) (get-in s [:gain :credit])]
    [(tr [:stats.credits-spent "Credits Spent"]) (get-in s [:spent :credit])]
    [(tr [:stats.credits-click "Credits by Click"]) (get-in s [:click :credit])]
-   [(tr [:stats.card-drawn "Cards Drawn"]) (get-in s [:gain :card])]
+   [(tr [:stats.cards-drawn "Cards Drawn"]) (get-in s [:gain :card])]
    [(tr [:stats.cards-click "Cards Drawn by Click"]) (get-in s [:click :draw])]
    [(tr [:stats.damage-done "Damage Done"]) (get-in s [:damage :all])]
    [(tr [:stats.cards-rezzed "Cards Rezzed"]) (get-in s [:cards :rezzed])]])
@@ -17,7 +17,7 @@
    [(tr [:stats.credits-gained "Credits Gained"]) (get-in s [:gain :credit])]
    [(tr [:stats.credits-spent "Credits Spent"]) (get-in s [:spent :credit])]
    [(tr [:stats.credits-click "Credits by Click"]) (get-in s [:click :credit])]
-   [(tr [:stats.card-drawn "Cards Drawn"]) (get-in s [:gain :card])]
+   [(tr [:stats.cards-drawn "Cards Drawn"]) (get-in s [:gain :card])]
    [(tr [:stats.cards-click "Cards Drawn by Click"]) (get-in s [:click :draw])]
    [(tr [:stats.tags-gained "Tags Gained"]) (get-in s [:gain :tag])]
    [(tr [:stats.runs-made "Runs Made"]) (get-in s [:runs :started])]
