@@ -65,7 +65,9 @@
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
             "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
             "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]
-            "get-stats" ["run" "-m" "tasks.game-stats/all-games"]}
+            "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
+            "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
+            "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
