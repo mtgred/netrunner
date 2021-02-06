@@ -31,9 +31,10 @@ You can check your setup by running
     $ lein version # Your exact version numbers below may vary, but we expect Java 1.8.X
     Leiningen 2.9.1 on Java 1.8.0_222 OpenJDK 64-Bit Server VM
 
-Populate the database using:
+Populate the database and create indexes using:
 
-    $ lein fetch
+    $ lein fetch [--no-card-images]
+    $ lein create-indexes
 
 You can optionally pass `--no-card-images` if you don't want to download images from
 [NetrunnerDB](https://netrunnerdb.com/), as this takes a while. See `lein fetch help` for further options.
@@ -84,6 +85,7 @@ For more information refer to the [development guide](https://github.com/mtgred/
 
  - [Development Tips and Tricks](https://github.com/mtgred/netrunner/wiki/Development-Tips-and-Tricks)
  - [Writing Tests](https://github.com/mtgred/netrunner/wiki/Tests)
+ - "Profiling Database Queries" in `DEVELOPMENT.md`
 
 ## License
 

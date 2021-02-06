@@ -65,6 +65,7 @@
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
             "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
             "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]
+            "create-sample-data" ["run" "-m" "tasks.db/create-sample-data"]
             "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]}
