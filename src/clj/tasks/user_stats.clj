@@ -14,7 +14,6 @@
   [ ks headers filename data]
   (io/make-parents filename)
   (with-open [writer (io/writer filename)]
-    (println data)
     (let [out-data (map #(map % ks) data)]
       (csv/write-csv writer [headers])
       (csv/write-csv writer out-data))))
