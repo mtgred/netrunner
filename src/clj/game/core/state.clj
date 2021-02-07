@@ -32,6 +32,7 @@
    sfx
    sfx-current-id
    stack
+   start-date
    stats
    trace
    trash
@@ -57,6 +58,7 @@
      :rid 0 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0
      :stats {:time {:started now}}
+     :start-date now
      :options {:spectatorhands spectatorhands
                :save-replay save-replay}
      :corp corp

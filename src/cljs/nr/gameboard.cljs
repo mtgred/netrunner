@@ -2055,176 +2055,180 @@
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
 
-(defn starting-timestamp []
-  [:div.panel.blue-shade
-   [:span.float-center
-    (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString (js/Date.)))]])
+(defn starting-timestamp [start-date]
+  (let [d (js/Date. start-date)]
+    [:div.panel.blue-shade
+     [:span.float-center
+      (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString d))]]))
 
 (defn gameboard []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    (when (= "/play" (first @active))
-      (let [run (r/cursor game-state [:run])
-            side (r/cursor game-state [:side])
-            turn (r/cursor game-state [:turn])
-            end-turn (r/cursor game-state [:end-turn])
-            corp-phase-12 (r/cursor game-state [:corp-phase-12])
-            runner-phase-12 (r/cursor game-state [:runner-phase-12])
-            corp (r/cursor game-state [:corp])
+  (let [active (r/cursor app-state [:active-page])
+        start-date (r/cursor game-state [:start-date])
+        run (r/cursor game-state [:run])
+        side (r/cursor game-state [:side])
+        turn (r/cursor game-state [:turn])
+        end-turn (r/cursor game-state [:end-turn])
+        corp-phase-12 (r/cursor game-state [:corp-phase-12])
+        runner-phase-12 (r/cursor game-state [:runner-phase-12])
+        corp (r/cursor game-state [:corp])
+        runner (r/cursor game-state [:runner])
+        active-player (r/cursor game-state [:active-player])
+        render-board? (r/track (fn [] (and corp runner side)))
+        zoom-card (r/cursor app-state [:zoom])
+        background (r/cursor app-state [:options :background])]
 
-            runner (r/cursor game-state [:runner])
-            active-player (r/cursor game-state [:active-player])
-            render-board? (r/track (fn [] (and corp runner side)))
-            zoom-card (r/cursor app-state [:zoom])
-            background (r/cursor app-state [:options :background])]
+    (go (while true
+          (let [zoom (<! zoom-channel)]
+            (swap! app-state assoc :zoom zoom))))
 
-        (go (while true
-              (let [zoom (<! zoom-channel)]
-                (swap! app-state assoc :zoom zoom))))
+    (go (while true
+          (let [button (<! button-channel)]
+            (swap! app-state assoc :button button))))
 
-        (go (while true
-              (let [button (<! button-channel)]
-                (swap! app-state assoc :button button))))
+    (r/create-class
+      {:display-name "gameboard"
 
-        (r/create-class
-          {:display-name "gameboard"
+       :reagent-render
+       (fn []
+         (when (= "/play" (first @active))
+           (when @@render-board?
+             (let [me-side (if (= :spectator @side) :corp @side)
+                   op-side (utils/other-side me-side)
+                   me (r/cursor game-state [me-side])
+                   opponent (r/cursor game-state [op-side])
+                   me-hand (r/cursor game-state [me-side :hand])
+                   op-hand (r/cursor game-state [op-side :hand])
+                   me-deck (r/cursor game-state [me-side :deck])
+                   op-deck (r/cursor game-state [op-side :deck])
+                   me-discard (r/cursor game-state [me-side :discard])
+                   op-discard (r/cursor game-state [op-side :discard])
+                   me-user (r/cursor game-state [me-side :user])
+                   op-user (r/cursor game-state [op-side :user])
+                   me-prompt (r/cursor game-state [me-side :prompt])
+                   op-prompt (r/cursor game-state [op-side :prompt])
+                   me-ident (r/cursor game-state [me-side :identity])
+                   op-ident (r/cursor game-state [op-side :identity])
+                   me-scored (r/cursor game-state [me-side :scored])
+                   op-scored (r/cursor game-state [op-side :scored])
+                   corp-servers (r/cursor game-state [:corp :servers])
+                   corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
+                   runner-rig (r/cursor game-state [:runner :rig])
+                   sfx (r/cursor game-state [:sfx])]
+               [:div.gameboard
 
-           :reagent-render
-           (fn []
-             (when @@render-board?
-               (let [me-side (if (= :spectator @side) :corp @side)
-                     op-side (utils/other-side me-side)
-                     me (r/cursor game-state [me-side])
-                     opponent (r/cursor game-state [op-side])
-                     me-hand (r/cursor game-state [me-side :hand])
-                     op-hand (r/cursor game-state [op-side :hand])
-                     me-deck (r/cursor game-state [me-side :deck])
-                     op-deck (r/cursor game-state [op-side :deck])
-                     me-discard (r/cursor game-state [me-side :discard])
-                     op-discard (r/cursor game-state [op-side :discard])
-                     me-user (r/cursor game-state [me-side :user])
-                     op-user (r/cursor game-state [op-side :user])
-                     me-prompt (r/cursor game-state [me-side :prompt])
-                     op-prompt (r/cursor game-state [op-side :prompt])
-                     me-ident (r/cursor game-state [me-side :identity])
-                     op-ident (r/cursor game-state [op-side :identity])
-                     me-scored (r/cursor game-state [me-side :scored])
-                     op-scored (r/cursor game-state [op-side :scored])
-                     corp-servers (r/cursor game-state [:corp :servers])
-                     corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
-                     runner-rig (r/cursor game-state [:runner :rig])
-                     sfx (r/cursor game-state [:sfx])]
-                 [:div.gameboard
+                (let [me-keep (r/cursor game-state [me-side :keep])
+                      op-keep (r/cursor game-state [op-side :keep])
+                      me-quote (r/cursor game-state [me-side :quote])
+                      op-quote (r/cursor game-state [op-side :quote])]
+                  [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote side])
 
-                  (let [me-keep (r/cursor game-state [me-side :keep])
-                        op-keep (r/cursor game-state [op-side :keep])
-                        me-quote (r/cursor game-state [me-side :quote])
-                        op-quote (r/cursor game-state [op-side :quote])]
-                    [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote side])
+                [build-win-box game-state]
 
-                  [build-win-box game-state]
+                [:div {:class (if (:replay @game-state)
+                                (case @replay-side
+                                  :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
+                                  :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
+                                  :spectator @background)
+                                @background)}]
 
-                  [:div {:class (if (:replay @game-state)
-                                  (case @replay-side
-                                    :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
-                                    :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
-                                    :spectator @background)
-                                  @background)}]
+                [:div.rightpane
+                 [:div.card-zoom
+                  [card-zoom zoom-card]]
+                 [card-implementation zoom-card]
+                 [:div.log
+                  [log-pane]
+                  [log-typing]
+                  [log-input]]]
+                (do (resize-card-zoom) nil)
 
-                  [:div.rightpane
-                   [:div.card-zoom
-                    [card-zoom zoom-card]]
-                   [card-implementation zoom-card]
-                   [:div.log
-                    [log-pane]
-                    [log-typing]
-                    [log-input]]]
-                  (do (resize-card-zoom) nil)
+                [:div.centralpane
+                 (if (= op-side :corp)
+                   [board-view-corp me-side op-ident op-deck op-discard corp-servers run]
+                   [board-view-runner me-side op-ident op-deck op-discard runner-rig run])
+                 (if (= me-side :corp)
+                   [board-view-corp me-side me-ident me-deck me-discard corp-servers run]
+                   [board-view-runner me-side me-ident me-deck me-discard runner-rig run])]
 
-                  [:div.centralpane
-                   (if (= op-side :corp)
-                     [board-view-corp me-side op-ident op-deck op-discard corp-servers run]
-                     [board-view-runner me-side op-ident op-deck op-discard runner-rig run])
-                   (if (= me-side :corp)
-                     [board-view-corp me-side me-ident me-deck me-discard corp-servers run]
-                     [board-view-runner me-side me-ident me-deck me-discard runner-rig run])]
+                [:div.leftpane
+                 [:div.opponent
+                  (let [srv (if (= :corp op-side) "HQ" "Grip")
+                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                    [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
+                     (= @side :spectator) "opponent"])]
 
-                  [:div.leftpane
-                   [:div.opponent
-                    (let [srv (if (= :corp op-side) "HQ" "Grip")
-                          translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                      [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
-                       (= @side :spectator) "opponent"])]
+                 [:div.inner-leftpane
+                  [audio-component {:sfx sfx}]
 
-                   [:div.inner-leftpane
-                    [audio-component {:sfx sfx}]
+                  [:div.left-inner-leftpane
+                   [:div
+                    [stats-view opponent]
+                    [scored-view op-scored]]
+                   [:div
+                    [scored-view me-scored]
+                    [stats-view me]]]
 
-                    [:div.left-inner-leftpane
+                  [:div.right-inner-leftpane
+                   (let [op-rfg (r/cursor game-state [op-side :rfg])
+                         op-current (r/cursor game-state [op-side :current])
+                         op-play-area (r/cursor game-state [op-side :play-area])
+                         me-rfg (r/cursor game-state [me-side :rfg])
+                         me-current (r/cursor game-state [me-side :current])
+                         me-play-area (r/cursor game-state [me-side :play-area])]
                      [:div
-                      [stats-view opponent]
-                      [scored-view op-scored]]
-                     [:div
-                      [scored-view me-scored]
-                      [stats-view me]]]
+                      [starting-timestamp @start-date]
+                      [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
+                      [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
+                      [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
+                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
+                      [rfg-view op-current (tr [:game.current "Current"]) false]
+                      [rfg-view me-current (tr [:game.current "Current"]) false]])
+                   (when-not (= @side :spectator)
+                     [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
+                                   :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
+                                   :corp corp :runner runner :me me :opponent opponent}])]]
 
-                    [:div.right-inner-leftpane
-                     (let [op-rfg (r/cursor game-state [op-side :rfg])
-                           op-current (r/cursor game-state [op-side :current])
-                           op-play-area (r/cursor game-state [op-side :play-area])
-                           me-rfg (r/cursor game-state [me-side :rfg])
-                           me-current (r/cursor game-state [me-side :current])
-                           me-play-area (r/cursor game-state [me-side :play-area])]
-                       [:div
-                        [starting-timestamp]
-                        [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
-                        [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
-                        [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
-                        [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
-                        [rfg-view op-current (tr [:game.current "Current"]) false]
-                        [rfg-view me-current (tr [:game.current "Current"]) false]])
-                     (when-not (= @side :spectator)
-                       [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
-                                     :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
-                                     :corp corp :runner runner :me me :opponent opponent}])]]
+                 [:div.me
+                  (let [srv (if (= :corp me-side) "HQ" "Grip")
+                        translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
+                    [hand-view me-user srv translated-srv me-hand me-prompt
+                     corp-remotes true "me"])]]
 
-                   [:div.me
-                    (let [srv (if (= :corp me-side) "HQ" "Grip")
-                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                      [hand-view me-user srv translated-srv me-hand me-prompt
-                       corp-remotes true "me"])]]
-
-                  (when (:replay @game-state)
-                    [:div.bottompane
-                     [:div.replay.panel.blue-shade
-                      [:div#timeline
-                       (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
-                                ^{:key (str "step-" n)}
-                                [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
-                                 [:div.step-label {:on-click #(replay-jump n) :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
-                                  (case step-type
-                                    :start-of-game "↠"
-                                    :start-of-turn-corp "C"
-                                    :start-of-turn-runner "R"
-                                    :end-of-game "🎉"
-                                    :undo-click "⮌"
-                                    :undo-turn "⮰"
-                                    :run "🏃"
-                                    :install "▼"
-                                    :credit (render-message "[credit]")
-                                    :advance "A"
-                                    :purge "☣️"
-                                    :click (render-message "[click]")
-                                    "?")]]))]
-                      [:div.controls.panel.blue-shade
-                       [:button.small {:on-click #(replay-step-back) :type "button"
-                                       :title "Rewind one click"} "⏮︎"]
-                       [:button.small {:on-click #(replay-forward) :type "button"
-                                       :title "Play next action"} "⏵︎"]
-                       [:button.small {:on-click #(replay-log-forward) :type "button"
-                                       :title "Forward to next log entry"} "⏩︎"]
-                       [:button.small {:on-click #(replay-step-forward) :type "button"
-                                       :title "Forward one click"} "⏭︎"]
-                       (when-not (= "local-replay" (:gameid @game-state)) ; when not locally uploaded replay
-                         [:button {:on-click #(swap! show-replay-link not)} "Share"])
-                       (when-not (= "local-replay" (:gameid @game-state))
-                         [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
-                                  :type "text" :read-only true :value (generate-replay-link (.-origin (.-location js/window)))}])]]])])))})))))
+                (when (:replay @game-state)
+                  [:div.bottompane
+                   [:div.replay.panel.blue-shade
+                    [:div#timeline
+                     (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
+                              ^{:key (str "step-" n)}
+                              [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
+                               [:div.step-label
+                                {:on-click #(replay-jump n)
+                                 :class [(when (= n (:n @replay-status)) "active-step-label")
+                                         (name step-type)]}
+                                (case step-type
+                                  :start-of-game "↠"
+                                  :start-of-turn-corp "C"
+                                  :start-of-turn-runner "R"
+                                  :end-of-game "🎉"
+                                  :undo-click "⮌"
+                                  :undo-turn "⮰"
+                                  :run "🏃"
+                                  :install "▼"
+                                  :credit (render-message "[credit]")
+                                  :advance "A"
+                                  :purge "☣️"
+                                  :click (render-message "[click]")
+                                  "?")]]))]
+                    [:div.controls.panel.blue-shade
+                     [:button.small {:on-click #(replay-step-back) :type "button"
+                                     :title "Rewind one click"} "⏮︎"]
+                     [:button.small {:on-click #(replay-forward) :type "button"
+                                     :title "Play next action"} "⏵︎"]
+                     [:button.small {:on-click #(replay-log-forward) :type "button"
+                                     :title "Forward to next log entry"} "⏩︎"]
+                     [:button.small {:on-click #(replay-step-forward) :type "button"
+                                     :title "Forward one click"} "⏭︎"]
+                     (when-not (= "local-replay" (:gameid @game-state)) ; when not locally uploaded replay
+                       [:button {:on-click #(swap! show-replay-link not)} "Share"])
+                     (when-not (= "local-replay" (:gameid @game-state))
+                       [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
+                                :type "text" :read-only true :value (generate-replay-link (.-origin (.-location js/window)))}])]]])]))))})))
