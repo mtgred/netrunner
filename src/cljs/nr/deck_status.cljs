@@ -10,7 +10,7 @@
                 :when description]
             ^{:key status-key}
             [:div {:class (if legal "legal" "invalid")
-                   :title (when violation-details? reason)}
+                   :title (when violation-details? (or reason "Unknown"))}
              [:span.tick (if legal "✔" "✘")]
              description]))])
 
@@ -28,7 +28,8 @@
 
 (defn- format-deck-status-span
   [{:keys [format] :as deck-status} tooltip? violation-details?]
-  (let [status (check-deck-status deck-status)
+  (let [format (or format :standard)
+        status (check-deck-status deck-status)
         message (str (tr-format (get slug->format (:format deck-status) "Standard"))
                      " "
                      (if-not (= "invalid" status) (tr [:deck-builder.legal "legal"]) (tr [:deck-builder.illegal "illegal"])))]
