@@ -781,8 +781,8 @@
    :card "卡牌"
    :time-taken (fn [[t]] (str "对战用时：" t "分钟"))
    :win-decked (fn [[turn]] (str "于第" turn "回合因公司无牌可抽获胜"))
-   :win-flatline (fn [[turn]] (str "于第" turn "回合通过杀死潜袭者获胜"))
-   :win-concede (fn [[turn]] (str "于第" turn "回合因对手投降而获胜"))
+   :win-flatlined (fn [[turn]] (str "于第" turn "回合通过杀死潜袭者获胜"))
+   :win-conceded (fn [[turn]] (str "于第" turn "回合因对手投降而获胜"))
    :win-points (fn [[turn]] (str "于第" turn "回合通过议案分数获胜"))}
    }
 
