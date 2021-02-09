@@ -30,6 +30,41 @@
       (is (= 5 (get-in @state [:stats :corp :spent :credit])) "Corp spent 5 credits")
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
-      (is (= 8 (get-in @state [:stats :runner :click :credit])) "Corp clicked for 8 credits")
-      (is (= 17 (get-in @state [:stats :runner :gain :credit])) "Corp gained 17 credits")
+      (is (= 8 (get-in @state [:stats :runner :click :credit])) "Runner clicked for 8 credits")
+      (is (= 17 (get-in @state [:stats :runner :gain :credit])) "Runner gained 17 credits")
       (is (= 5 (get-in @state [:stats :runner :spent :credit])) "Runner spent 5 credits"))))
+
+(deftest credits-from-cards
+  (testing "Take from Liberated Account"
+    (do-game
+      (new-game {:runner {:deck [(qty "Liberated Account" 10)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 4 (get-in @state [:stats :runner :click :credit])) "Runner clicked for 4 credits")
+      (is (= 4 (get-in @state [:stats :runner :gain :credit])) "Runner starts with 4 credits")
+      (play-from-hand state :runner "Liberated Account")
+      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 4 (get-in @state [:stats :runner :click :credit])) "Runner clicked for 4 credits")
+      (is (= 16 (get-in @state [:stats :runner :gain :credit])) "Runner gained 12 credits from LA")
+      (is (= 6 (get-in @state [:stats :runner :spent :credit])) "Runner spent 6 credits")))
+  (testing "Take from Adonis Campaign"
+    (do-game
+      (new-game {:corp {:hand ["Adonis Campaign"]}})
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (let [ac (get-content state :remote1 0)]
+        (rez state :corp ac)
+        (take-credits state :corp)
+        (is (= 2 (get-in @state [:stats :corp :click :credit])) "Corp clicked for 2 credits")
+        (is (= 2 (get-in @state [:stats :corp :gain :credit])) "Corp starts with 2 credits")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 5 (get-in @state [:stats :corp :click :credit])) "Corp clicked for 5 credits")
+        (is (= 8 (get-in @state [:stats :corp :gain :credit])) "Corp gained 3 credits from AC")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 8 (get-in @state [:stats :corp :click :credit])) "Corp clicked for 8 credits")
+        (is (= 4 (get-in @state [:stats :corp :spent :credit])) "Corp spent 4 credits")
+        (is (= 14 (get-in @state [:stats :corp :gain :credit])) "Corp gained 6 credits (total) from AC")))))
