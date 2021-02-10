@@ -1613,7 +1613,7 @@
                                card nil))}]})
 
 (defcard "Mimic"
-  {:abilities [(break-sub 1 1 "Sentry")]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")]}))
 
 (defcard "Misdirection"
   {:abilities [{:cost [:click 2 :x-credits]
@@ -2518,7 +2518,7 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Yog.0"
-  {:abilities [(break-sub 0 1 "Code Gate")]})
+  (auto-icebreaker {:abilities [(break-sub 0 1 "Code Gate")]}))
 
 (defcard "Yusuf"
   (virus-breaker "Barrier"))

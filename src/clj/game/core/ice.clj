@@ -642,16 +642,18 @@
                                    break-ability)
                             (vec (concat abs
                                          (when (and break-ability
+                                                    (or pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
-                                             :label (str (if (pos? times-pump)
+                                             :label (str (if (and pump-ability (pos? times-pump))
                                                            "Match strength and fully break "
                                                            "Fully break ")
                                                          (:title current-ice))}])
-                                         (when (and (pos? times-pump)
+                                         (when (and pump-ability
+                                                    (pos? times-pump)
                                                     (can-pay? state side eid card total-pump-cost))
                                            [{:dynamic :auto-pump
                                              :cost total-pump-cost
