@@ -88,11 +88,10 @@
          :class (when (or (:isadmin user)
                           (:ismoderator user))
                   "clickable")}
-        (str (when (:password game)
-               (str "[" (tr [:lobby.private "PRIVATE"]) "] "))
+        (str (when (:save-replay game) "🟢")
+             (when (:password game) (str "[" (tr [:lobby.private "PRIVATE"]) "] "))
              (:title game)
-             (when (pos? c)
-               (str " (" (tr [:lobby.spectator-count] c) ")")))])
+             (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
 
      (when (and (:show-mod-menu @s)
                 (or (:isadmin user) (:ismoderator user)))

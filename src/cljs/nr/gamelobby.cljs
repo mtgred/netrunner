@@ -498,7 +498,7 @@
          [:label
           [:input {:type "checkbox" :checked (:save-replay @s)
                    :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
-          (tr [:lobby.save-replay "Save replay"])]]
+          (str "🟢" (tr [:lobby.save-replay "Save replay"]))]]
         [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
          [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
           " The file is available only after the game is finished."]
@@ -564,7 +564,7 @@
          (when (:password game)
            [:li (tr [:lobby.password-protected "Password protected"])])
          (when (:save-replay game)
-           [:li (tr [:lobby.save-replay "Save replay"])])
+           [:li (str "🟢" (tr [:lobby.save-replay "Save replay"]))])
          (when (:save-replay game)
            [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
             [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
