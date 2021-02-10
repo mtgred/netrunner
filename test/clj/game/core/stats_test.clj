@@ -68,3 +68,26 @@
         (is (= 8 (get-in @state [:stats :corp :click :credit])) "Corp clicked for 8 credits")
         (is (= 4 (get-in @state [:stats :corp :spent :credit])) "Corp spent 4 credits")
         (is (= 14 (get-in @state [:stats :corp :gain :credit])) "Corp gained 6 credits (total) from AC")))))
+
+(deftest companion-credits
+  (testing "Take from Mystic Maemi"
+    (do-game
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:deck [(qty "Sure Gamble" 3) "Mystic Maemi"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mystic Maemi")
+      (let [mm (get-resource state 0)]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Steal")
+        (take-credits state :runner)
+        (is (= 1 (get-in @state [:stats :runner :spent :credit])) "Runner spent 1 credits")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sure Gamble")
+        (click-card state :runner mm)
+        (click-card state :runner mm)
+        (click-prompt state :runner "Done")
+        (is (= 6 (get-in @state [:stats :runner :click :credit])) "Runner clicked for 6 credits")
+        (is (= 6 (get-in @state [:stats :runner :spent :credit])) "Runner spent 6 credits")
+        (is (= 15 (get-in @state [:stats :runner :gain :credit])) "Runner gained HF credits")))))
