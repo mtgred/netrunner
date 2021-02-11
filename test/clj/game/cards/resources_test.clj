@@ -2316,6 +2316,36 @@
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
         (is (:run @state) "Run hasn't ended from not paying Tollbooth"))))
+  (testing "Preventing an on-encounter effect auto-fire"
+    (do-game
+      (new-game {:corp {:hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (let [credits (:credit (get-runner))]
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (is (:run @state) "Run hasn't ended from not paying Tollbooth"))))
+  (testing "Preventing an on-encounter effect auto-fire, choose not to fire"
+    (do-game
+      (new-game {:corp {:hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (let [credits (:credit (get-runner))]
+        (run-continue state)
+        (click-prompt state :runner "No")
+        (is (zero? (:credit (get-runner))) "Runner loses credits to Tollbooth")
+        (is (:run @state) "Run hasn't ended when paying Tollbooth"))))
   (testing "Prints correctly to the log"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2353,11 +2383,9 @@
         (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
   (testing "Only prevents the on-encounter effects once per turn. Issue #4807"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Tollbooth" 2)]
-                        :credits 20}
-                 :runner {:deck [(qty "Sure Gamble" 5)]
-                          :hand ["Hunting Grounds"]}})
+      (new-game {:corp {:hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Hunting Grounds"]}})
       (play-from-hand state :corp "Tollbooth" "New remote")
       (rez state :corp (get-ice state :remote1 0))
       (take-credits state :corp)
@@ -2371,7 +2399,47 @@
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
         (run-continue state)
-        (is (= (- credits 3) (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth"))))
+        (is (= (- credits 3) (:credit (get-runner))) "Runner loses credits to Tollbooth"))))
+  (testing "Only prevents the on-encounter effects once per turn, auto-fire case"
+    (do-game
+      (new-game {:corp {:hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-jack-out state))
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (run-continue state)
+        (is (empty? (:prompt (get-runner))) "No Hunting Grounds prompt")
+        (is (= (- credits 3) (:credit (get-runner))) "Runner loses credits to Tollbooth"))))
+  (testing "Only prevents the on-encounter effects once per turn, mixed-use case"
+    (do-game
+      (new-game {:corp {:hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (card-ability state :runner (get-resource state 0) 0)
+        (run-continue state)
+        (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-jack-out state))
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (run-continue state)
+        (is (empty? (:prompt (get-runner))) "No Hunting Grounds prompt")
+        (is (= (- credits 3) (:credit (get-runner))) "Runner loses credits to Tollbooth"))))
   (testing "Preventing an on-encounter effect #5037"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

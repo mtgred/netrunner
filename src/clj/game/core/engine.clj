@@ -869,7 +869,10 @@
     (effect-completed state nil eid)
     (let [handlers (when-not (and cancel-fn (cancel-fn state))
                      (filter #(let [card (card-for-ability state (:handler %))]
-                                (and card (not (:disabled card))))
+                                (and card
+                                     (not (:disabled card))
+                                     (not (apply trigger-suppress state (to-keyword (:side card))
+                                                 (get-in % [:handler :event]) card (:context %)))))
                              handlers))
           non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
                                 (not (and silent-fn
