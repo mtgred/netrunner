@@ -54,9 +54,9 @@
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
   [{:keys [gameid state] :as game}]
-  (let [old-state (get @old-states gameid)
-        diffs (public-diffs old-state state)]
-    (when (and state @state)
+  (when (and state @state)
+    (let [old-state (get @old-states gameid)
+          diffs (public-diffs old-state state)]
       (swap! state update :history conj (:hist-diff diffs))
       (swap! old-states assoc gameid @state)
       (send-state-diffs! game diffs))))
@@ -159,25 +159,31 @@
     client-id                                 :client-id
     {:keys [gameid-str command args] :as msg} :?data}]
   (when (active-game? gameid-str client-id)
-    (let [gameid (java.util.UUID/fromString gameid-str)
-          {:keys [players state] :as game} (lobby/game-for-id gameid)
-          side (some #(when (= client-id (:ws-id %)) (:side %)) players)
-          spectator (spectator? client-id game)]
-      (if (and state side)
-        (do
-          (main/handle-action user command state (side-from-str side) args)
-          (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
-          (swap-and-send-diffs! game))
-        (when-not spectator
-          (println "handle-game-action unknown state or side")
-          (println "\tGameID:" gameid)
-          (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
-          (println "\tClientID:" client-id)
-          (println "\tSide:" side)
-          (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
-          (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
-          (println "\tCommand:" command)
-          (println "\tArgs:" args "\n"))))))
+    (try
+      (let [gameid (java.util.UUID/fromString gameid-str)
+            {:keys [players state] :as game} (lobby/game-for-id gameid)
+            side (some #(when (= client-id (:ws-id %)) (:side %)) players)
+            spectator (spectator? client-id game)]
+        (if (and state side)
+          (do
+            (main/handle-action user command state (side-from-str side) args)
+            (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
+            (swap-and-send-diffs! game))
+          (when-not spectator
+            (println "handle-game-action unknown state or side")
+            (println "\tGameID:" gameid)
+            (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
+            (println "\tClientID:" client-id)
+            (println "\tSide:" side)
+            (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+            (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
+            (println "\tCommand:" command)
+            (println "\tArgs:" args "\n"))))
+      (catch clojure.lang.ExceptionInfo e
+        (println "Caught custom exception")
+        (println (str "Exception Data: " (ex-data e)))
+        (println (str "Command: " command))
+        (println (str "GameId: " gameid-str))))))
 
 (defn handle-game-watch
   "Handles a watch command when a game has started."
