@@ -533,8 +533,8 @@
                             (first-event? state :runner :pass-ice
                                           (fn [targets]
                                             (let [context (first targets)
-                                                  ice (get-card state (:ice context))]
-                                              (and (rezzed?  ice)
+                                                  ice  (:ice context)]
+                                              (and (rezzed? ice)
                                                    (installed? ice)
                                                    (has-subtype? ice "Bioroid")))))))
              :waiting-prompt "Corp to use Haas-Bioroid: Architects of Tomorrow"
