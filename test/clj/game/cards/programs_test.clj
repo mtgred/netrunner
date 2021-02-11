@@ -3215,6 +3215,63 @@
         (click-prompt state :runner "End the run")
         (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break")))))
 
+(deftest mimic
+  ;; Mimic
+  (testing "Basic auto-break test"
+    (do-game
+      (new-game {:corp {:hand ["Pup"]}
+                 :runner {:hand [(qty "Mimic" 5)]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mimic")
+      (let [mimic (get-program state 0)]
+        (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+        (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
+        (run-on state "HQ")
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
+        (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Mimic to break all 2 subroutines on Pup") "Correct log with autopump ability")
+        (run-jack-out state)
+        (is (zero? (:credit (get-runner))) "Runner spent 2 credits to break Pup")
+        (is (= 4 (count (:hand (get-runner)))) "Runner still has 4 cards in hand"))))
+  (testing "No dynamic options if below strength"
+    (do-game
+      (new-game {:corp {:hand ["Anansi"]
+                        :credits 10}
+                 :runner {:hand [(qty "Mimic" 5)]
+                          :credits 10}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mimic")
+      (let [mimic (get-program state 0)]
+        (is (= 7 (:credit (get-runner))) "Runner starts with 7 credits")
+        (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
+        (run-on state "HQ")
+        (run-continue state)
+        (is (= 1 (count (:abilities (refresh mimic)))) "Auto pump and break ability on Mimic is not available"))))
+  (testing "Dynamic options when ice weakened"
+    (do-game
+      (new-game {:corp {:hand ["Zed 2.0"]
+                        :credits 10}
+                 :runner {:hand ["Mimic" "Ice Carver" ]
+                          :credits 10}})
+      (play-from-hand state :corp "Zed 2.0" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ice Carver")
+      (play-from-hand state :runner "Mimic")
+      (let [mimic (get-program state 0)]
+        (is (= 4 (:credit (get-runner))) "Runner starts with 4 credits")
+        (run-on state "HQ")
+        (run-continue state)
+        (is (= 2 (count (:abilities (refresh mimic)))) "Auto pump and break ability on Mimic is available")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
+        (is (second-last-log-contains? state "Runner pays 3 \\[Credits\\] to use Mimic to break all 3 subroutines on Zed 2.0") "Correct log with autopump ability")
+        (run-jack-out state)
+        (is (= 1 (:credit (get-runner))) "Runner spent 3 credits to break Zed 2.0")))))
+
 (deftest misdirection
   ;; Misdirection
   (testing "Recurring credits interaction. Issue #4868"
