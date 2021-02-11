@@ -658,7 +658,7 @@
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :deck first)]
                                (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
-                                                               (:title revealed-card)))
+                                                               (:title revealed-card) " from the top of the Stack"))
                                    (reveal state side eid revealed-card))
                                (effect-completed state side eid)))}
                {:cost [:click 1]
@@ -666,7 +666,7 @@
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :hand shuffle first)]
                                (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
-                                                               (:title revealed-card)))
+                                                               (:title revealed-card) " from the Grip"))
                                    (reveal state side eid revealed-card))
                                (effect-completed state side eid)))}]})
 
