@@ -153,8 +153,8 @@
   "Strength depends on available memory units
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [abilities]
-  {:abilities abilities
-   :strength-bonus (req (available-mu state))})
+  (auto-icebreaker {:abilities abilities
+                    :strength-bonus (req (available-mu state))}))
 
 (defn- break-multiple-types
   "Single ability to break multiple types of ice
@@ -286,9 +286,9 @@
   "No MU with 2+ link, strength based on installed Icebreakers, trash to break 3 subs
   (Breaking and Entering suite: Crowbar, Shiv, Spike)"
   [ice-type]
-  (cloud-icebreaker {:abilities [(break-sub [:trash] 3 ice-type)]
-                     :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                         (all-active-installed state :runner))))}))
+  (auto-icebreaker (cloud-icebreaker {:abilities [(break-sub [:trash] 3 ice-type)]
+                                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                                          (all-active-installed state :runner))))})))
 
 (defn- global-sec-breaker
   "No MU with 2+ link, break any number of subs for 2, pump 2 for 3
@@ -484,11 +484,11 @@
                                 (strength-pump 1 1 :end-of-run)]}))
 
 (defcard "Berserker"
-  {:events [{:event :encounter-ice
-             :req (req (has-subtype? (:ice context) "Barrier"))
-             :msg (msg "gain " (count (:subroutines (:ice context))) " strength")
-             :effect (effect (pump card (count (:subroutines (:ice context)))))}]
-   :abilities [(break-sub 2 2 "Barrier")]})
+  (auto-icebreaker {:events [{:event :encounter-ice
+                              :req (req (has-subtype? (:ice context) "Barrier"))
+                              :msg (msg "gain " (count (:subroutines (:ice context))) " strength")
+                              :effect (effect (pump card (count (:subroutines (:ice context)))))}]
+                    :abilities [(break-sub 2 2 "Barrier")]}))
 
 (defcard "Bishop"
   {:abilities [{:cost [:click 1]
@@ -533,15 +533,15 @@
      (assoc cdef :events (apply conj events (:events cdef)))))
 
 (defcard "BlacKat"
-  {:implementation "Stealth credit restriction not enforced"
-   :abilities [(break-sub 1 1 "Barrier")
-               (break-sub 1 3 "Barrier" {:label "break up to 3 Barrier subroutines (using a stealth [Credits])"})
-               (strength-pump 2 1)
-               (strength-pump 2 2 :end-of-encounter {:label "add 2 strength (using at least 1 stealth [Credits])"})]})
+  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
+                    :abilities [(break-sub 1 1 "Barrier")
+                                (break-sub 1 3 "Barrier" {:label "break up to 3 Barrier subroutines (using a stealth [Credits])"})
+                                (strength-pump 2 1)
+                                (strength-pump 2 2 :end-of-encounter {:label "add 2 strength (using at least 1 stealth [Credits])"})]}))
 
 (defcard "Blackstone"
-  {:abilities [(break-sub 1 1 "Barrier")
-               (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
+                                (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}))
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -607,17 +607,17 @@
              :effect (effect (add-counter card :virus 1))}]})
 
 (defcard "Chameleon"
-  {:prompt "Choose one subtype"
-   :choices ["Barrier" "Code Gate" "Sentry"]
-   :msg (msg "choose " target)
-   :effect (effect (update! (assoc card :subtype-target target)))
-   :events [{:event :runner-turn-ends
-             :msg "add itself to Grip"
-             :interactive (req true)
-             :effect (effect (move card :hand))}]
-   :abilities [(break-sub 1 1 "All" {:req (req (if-let [subtype (:subtype-target card)]
-                                                 (has-subtype? current-ice subtype)
-                                                 true))})]})
+  (auto-icebreaker {:prompt "Choose one subtype"
+                    :choices ["Barrier" "Code Gate" "Sentry"]
+                    :msg (msg "choose " target)
+                    :effect (effect (update! (assoc card :subtype-target target)))
+                    :events [{:event :runner-turn-ends
+                              :msg "add itself to Grip"
+                              :interactive (req true)
+                              :effect (effect (move card :hand))}]
+                    :abilities [(break-sub 1 1 "All" {:req (req (if-let [subtype (:subtype-target card)]
+                                                                  (has-subtype? current-ice subtype)
+                                                                  true))})]}))
 
 (defcard "Chisel"
   {:hosting {:card #(and (ice? %)
@@ -749,8 +749,8 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Cradle"
-  {:abilities [(break-sub 2 0 "Code Gate")]
-   :strength-bonus (req (- (count (:hand runner))))})
+  (auto-icebreaker {:abilities [(break-sub 2 0 "Code Gate")]
+                    :strength-bonus (req (- (count (:hand runner))))}))
 
 (defcard "Creeper"
   (cloud-icebreaker
@@ -847,15 +847,15 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Darwin"
-  {:flags {:runner-phase-12 (req true)}
-   :abilities [(break-sub 2 1)
-               {:label "Place 1 virus counter (start of turn)"
-                :once :per-turn
-                :cost [:credit 1]
-                :msg "place 1 virus counter"
-                :req (req (:runner-phase-12 @state))
-                :effect (effect (add-counter card :virus 1))}]
-   :strength-bonus (req (get-virus-counters state card))})
+  (auto-icebreaker {:flags {:runner-phase-12 (req true)}
+                    :abilities [(break-sub 2 1)
+                                {:label "Place 1 virus counter (start of turn)"
+                                 :once :per-turn
+                                 :cost [:credit 1]
+                                 :msg "place 1 virus counter"
+                                 :req (req (:runner-phase-12 @state))
+                                 :effect (effect (add-counter card :virus 1))}]
+                    :strength-bonus (req (get-virus-counters state card))}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -1342,8 +1342,8 @@
                                 (add-counter :runner card :virus -1))}]})
 
 (defcard "Houdini"
-  {:abilities [(break-sub 1 1 "Code Gate")
-               (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
+                                (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}))
 
 (defcard "Hyperdriver"
   {:flags {:runner-phase-12 (req true)}
@@ -1593,8 +1593,8 @@
                                                      (dont-resolve-subroutine! state (get-card state (:ice context)) sub)))}])))}]}))
 
 (defcard "Maven"
-  {:abilities [(break-sub 2 1)]
-   :strength-bonus (req (count (filter program? (all-active-installed state :runner))))})
+  (auto-icebreaker {:abilities [(break-sub 2 1)]
+                    :strength-bonus (req (count (filter program? (all-active-installed state :runner))))}))
 
 (defcard "Medium"
   {:events [{:event :successful-run
@@ -1637,7 +1637,7 @@
                                 (strength-pump 2 2)]}))
 
 (defcard "Morning Star"
-  {:abilities [(break-sub 1 0 "Barrier")]})
+  (auto-icebreaker {:abilities [(break-sub 1 0 "Barrier")]}))
 
 (defcard "Multithreader"
   {:recurring 2
@@ -1676,12 +1676,12 @@
                 :effect (effect (damage-prevent :net 1))}]})
 
 (defcard "Nfr"
-  {:abilities [(break-sub 1 1 "Barrier")]
-   :strength-bonus (req (get-counters card :power))
-   :events [{:event :end-of-encounter
-             :req (req (all-subs-broken-by-card? (:ice context) card))
-             :msg "place 1 power counter on it"
-             :effect (effect (add-counter card :power 1))}]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]
+                    :strength-bonus (req (get-counters card :power))
+                    :events [{:event :end-of-encounter
+                              :req (req (all-subs-broken-by-card? (:ice context) card))
+                              :msg "place 1 power counter on it"
+                              :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Ninja"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2286,19 +2286,19 @@
                                  card nil)))}})]})
 
 (defcard "Study Guide"
-  {:abilities [(break-sub 1 1 "Code Gate")
-               {:cost [:credit 2]
-                :msg "place 1 power counter"
-                :effect (effect (add-counter card :power 1))}]
-   :strength-bonus (req (get-counters card :power))})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
+                                {:cost [:credit 2]
+                                 :msg "place 1 power counter"
+                                 :effect (effect (add-counter card :power 1))}]
+                    :strength-bonus (req (get-counters card :power))}))
 
 (defcard "Sūnya"
-  {:abilities [(break-sub 2 1 "Sentry")]
-   :strength-bonus (req (get-counters card :power))
-   :events [{:event :end-of-encounter
-             :req (req (all-subs-broken-by-card? (:ice context) card))
-             :msg "place 1 power counter on it"
-             :effect (effect (add-counter card :power 1))}]})
+  (auto-icebreaker {:abilities [(break-sub 2 1 "Sentry")]
+                    :strength-bonus (req (get-counters card :power))
+                    :events [{:event :end-of-encounter
+                              :req (req (all-subs-broken-by-card? (:ice context) card))
+                              :msg "place 1 power counter on it"
+                              :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Surfer"
   (letfn [(surf [state cice]
