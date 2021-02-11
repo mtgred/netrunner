@@ -291,9 +291,9 @@
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
-    (queue-event state :pass-ice {:ice ice})
+    (queue-event state :pass-ice {:ice (get-card state ice)})
     (when passed-all-ice
-      (queue-event state :pass-all-ice {:ice ice}))
+      (queue-event state :pass-all-ice {:ice (get-card state ice)}))
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           ;; Immediately end pass ice step if:

@@ -532,9 +532,11 @@
                             (has-subtype? (:ice context) "Bioroid")
                             (first-event? state :runner :pass-ice
                                           (fn [targets]
-                                            (let [context (first targets)]
-                                              (and (rezzed? (:ice context))
-                                                   (has-subtype? (:ice context) "Bioroid")))))))
+                                            (let [context (first targets)
+                                                  ice  (:ice context)]
+                                              (and (rezzed? ice)
+                                                   (installed? ice)
+                                                   (has-subtype? ice "Bioroid")))))))
              :waiting-prompt "Corp to use Haas-Bioroid: Architects of Tomorrow"
              :prompt "Select a Bioroid to rez"
              :player :corp

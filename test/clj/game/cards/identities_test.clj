@@ -1407,7 +1407,29 @@
     (run-continue state)
     (click-card state :corp (get-ice state :hq 0))
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")
-    (is (rezzed? (get-ice state :hq 0)) "Eli 1.0 is rezzed")))
+    (is (rezzed? (get-ice state :hq 0)) "Eli 1.0 is rezzed"))
+  (testing "Ice Destruction in HB Architects of Tomorrow #5514"
+    (do-game
+      (new-game {:corp {:id "Haas-Bioroid: Architects of Tomorrow"
+                        :deck [(qty "Eli 1.0" 3)]
+                        :credits 10}
+                 :runner {:deck ["Chisel" "Devil Charm"]}})
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (play-from-hand state :corp "Eli 1.0" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Devil Charm")
+      (play-from-hand state :runner "Chisel")
+      (click-card state :runner (get-ice state :hq 1))
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (click-prompt state :runner "Devil Charm")
+      (click-prompt state :runner "Yes")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (is (not (empty? (:prompt (get-runner)))) "Architects of Tomorrow is still available"))))
 
 (deftest haas-bioroid-engineering-the-future
   ;; Engineering the Future
