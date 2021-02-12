@@ -72,7 +72,7 @@
 
 (defn scroll-timeline []
   (when-let [timeline (-> js/document (.getElementById "timeline"))]
-    (let [new-step (-> js/document (.getElementsByClassName "active-step-label") array-seq first)
+    (let [new-step (-> js/document (.getElementsByClassName "active-step") array-seq first)
           new-step-left (+ (.-left (.getBoundingClientRect new-step))
                            (/ (.-width (.getBoundingClientRect new-step)) 2))
           mid (+ (.-left (.getBoundingClientRect timeline))
@@ -218,7 +218,7 @@
                    ; add diffs to last timeline step
                    (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :diffs inter-diffs)))
                    ; create new timeline step
-                   (swap! replay-timeline conj {:type new-step-type :state new-state}))
+                   (swap! replay-timeline conj {:type new-step-type :turn (:turn new-state) :state new-state}))
 
                  (when (:run new-state) ; If a card starts a run somewhere during the diffs, change the last step type to :run
                    (reset! replay-timeline (conj (pop @replay-timeline) (assoc (last @replay-timeline) :type :run))))
@@ -239,10 +239,10 @@
      (fn []
        [:div.replay.panel.blue-shade
         [:div#timeline
-         (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
+         (doall (for [[n {step-type :type turn :turn state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
                   ^{:key (str "step-" n)}
                   [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
-                   [:div.step-label {:on-click #(replay-jump n) :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
+                   [:div.step-label {:on-click #(replay-jump n) :data-turn turn :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
                     (case step-type
                       :start-of-game "↠"
                       :start-of-turn-corp "C"

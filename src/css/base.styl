@@ -2395,6 +2395,22 @@ input.url
                         border-color: orange
                         box-shadow(0 0 6px blue)
 
+                .start-of-turn-corp:before
+                    text-align: center;
+                    font-size: 10px
+                    line-height: 13px
+                    background-color: transparent-blue
+                    position: absolute
+                    width: 15px
+                    height: 15px
+                    border-radius: 50%
+                    border: 1px solid white
+                    left: -6px
+                    top: -2px
+
+                .start-of-turn-corp:before
+                    content: attr(data-turn);
+
                 .active-step-label
                     font-size: 32px
                     width: 45px
