@@ -33,6 +33,8 @@
 (defonce replay-side (r/atom :spectator))
 (defonce show-replay-link (r/atom false))
 
+(defonce log-mode (r/atom :log))
+
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
@@ -613,6 +615,13 @@
 (defn log-stop-resize [event ui]
   (put! zoom-channel false))
 
+(defn log-selector []
+  (fn []
+    [:div.panel.panel-top.blue-shade.selector
+     [:a {:on-click #(reset! log-mode :log)} "Game Log"]
+     " | "
+     [:a {:on-click #(reset! log-mode :notes)} "Notes"]]))
+
 (defn log-pane []
   (r/create-class
     (let [log (r/cursor game-state [:log])]
@@ -640,19 +649,24 @@
 
        :reagent-render
        (fn []
-         [:div.panel.blue-shade.messages {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                                          :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-          (doall (map-indexed
-                   (fn [i msg]
-                     (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                       (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (render-message (:text msg))]
-                         [:div.message {:key i}
-                          [avatar (:user msg) {:opts {:size 38}}]
-                          [:div.content
-                           [:div.username (get-in msg [:user :username])]
-                           [:div (render-message (:text msg))]]])))
-                   @log))])})))
+         [:div.panel.panel-bottom.blue-shade.messages {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                                       :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+          (case @log-mode
+            :log
+            (doall (map-indexed
+                     (fn [i msg]
+                       (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                         (if (= (:user msg) "__system__")
+                           [:div.system {:key i} (render-message (:text msg))]
+                           [:div.message {:key i}
+                            [avatar (:user msg) {:opts {:size 38}}]
+                            [:div.content
+                             [:div.username (get-in msg [:user :username])]
+                             [:div (render-message (:text msg))]]])))
+                     @log))
+
+            :notes
+            "hello")])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
@@ -2195,6 +2209,7 @@
                    [card-zoom zoom-card]]
                   [card-implementation zoom-card]
                   [:div.log
+                   [log-selector]
                    [log-pane]
                    [log-typing]
                    [log-input]]]

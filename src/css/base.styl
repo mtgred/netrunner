@@ -570,6 +570,15 @@ nav ul
   border: 1px solid rgba(39, 56, 76, 0.9)
   margin: 5px
 
+.panel-top
+  border-radius: 4px 4px 0px 0px
+
+.panel-mid
+  border-radius: 0px
+
+.panel-bottom
+  border-radius: 0px 0px 4px 4px
+
 .container
   width: 1000px
   margin: 0 auto
@@ -2323,12 +2332,21 @@ input.url
        font-size: 12px
        line-height: 15px
 
+      .selector
+        position: absolute
+        height:24px
+        top: 0px
+        left: 0
+        right: 4px
+        margin: 0
+        padding-top: 2px
+
       .messages
         flex(1)
         overflow: auto
         -webkit-overflow-scrolling: touch
         position: absolute
-        top: 0
+        top: 24px
         bottom: 70px
         left: 0
         right: 4px
