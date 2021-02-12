@@ -2422,6 +2422,35 @@ input.url
                     color: orange
                     box-shadow(0 0 6px orange)
 
+                .draw .symbol, .draw .symbol:after
+                    box-sizing: content-box;
+                    position:relative
+                    content: ''
+                    display: block
+                    margin: auto
+
+                    height: .35*3.5ex
+                    width: .35*2.5ex
+                    border: 1px solid white
+                    background: transparent-blue
+                    color: rgba(255, 255, 255, 0) // transparent
+
+                .draw .symbol
+                    margin: auto
+                    transform: translate(-5%, -5%)
+
+                .draw .symbol:after
+                    transform: translate(10%, 10%)
+
+                .step-label.draw
+                    padding-top: 7px
+
+                .active-step-label.draw
+                    padding-top: 10px
+
+                .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
+                    border-color: orange
+
             .step:after
                 content: ''
                 display: block

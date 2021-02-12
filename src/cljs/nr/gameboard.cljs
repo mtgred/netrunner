@@ -192,6 +192,14 @@
                                                        new-logs))
                                        :install
 
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Corp Basic Action Card to draw 1 card")
+                                                       new-logs))
+                                       :draw
+
+                                       (some? (re-find (re-pattern #"spends \[Click\] to use Runner Basic Action Card to draw 1 card")
+                                                       new-logs))
+                                       :draw
+
                                        (some? (re-find (re-pattern #"spends \[Click\] to use Corp Basic Action Card to gain 1 \[Credits\]")
                                                        new-logs))
                                        :credit
@@ -252,6 +260,7 @@
                       :undo-turn "⮰"
                       :run "🏃"
                       :install "▼"
+                      :draw [:div.symbol]
                       :credit (render-message "[credit]")
                       :advance "A"
                       :purge "☣️"
