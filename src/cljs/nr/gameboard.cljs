@@ -163,6 +163,8 @@
                      new-side (keyword (:active-player new-state))
                      old-click (get-in old-state [old-side :click])
                      new-click (get-in new-state [new-side :click])
+                     diff-log-entries (- (count (:log new-state)) (count (:log old-state)))
+                     new-logs (join "\n" (map :text (take-last diff-log-entries (:log new-state))))
                      new-step-type (when (not= old-click new-click)
                                      (cond
                                        (not-empty (filter #(= "Game reset to start of turn" (:msg %)) (get-in new-state [:corp :toast])))
@@ -180,31 +182,31 @@
                                        :run
 
                                        (some? (re-find (re-pattern #"spends \[Click\] to install")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :install
 
                                        (some? (re-find (re-pattern #"spends \[Click\] and pays \d+ \[Credits\] to install")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :install
 
                                        (some? (re-find (re-pattern #"spends \[Click\] to use Corp Basic Action Card to gain 1 \[Credits\]")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :credit
 
                                        (some? (re-find (re-pattern #"spends \[Click\] to use Runner Basic Action Card to gain 1 \[Credits\]")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :credit
 
                                        (some? (re-find (re-pattern #"spends \[Click\] and pays 1 \[Credits\] to use Corp Basic Action Card to advance")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :advance
 
                                        (some? (re-find (re-pattern #"spends \[Click\]\[Click\]\[Click\] to use Corp Basic Action Card to purge all virus counters")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :purge
 
                                        (some? (re-find (re-pattern #"uses a command: /undo-click")
-                                                       (str (:text (last (:log new-state))))))
+                                                       new-logs))
                                        :undo-click
 
                                        :else
