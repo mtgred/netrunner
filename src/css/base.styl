@@ -1364,16 +1364,25 @@ input.url
   .button-bar
     padding-bottom: 15px
 
+    .reload-button
+      margin-right: 50px
+
   .games .button-bar
     box-sizing: initial
     padding: 0 15px 15px
+
+    .rooms
+      overflow-y: auto
+      margin-bottom: 10px
+
+    .roomtab
+      float: right
 
     .rooms .roomtab
       display: block
       color: white
       margin: 0 10px
       line-height: 24px
-      float: right
       transition(all 0.2s ease-in-out)
 
       &:hover
@@ -1434,6 +1443,9 @@ input.url
   .game-panel
     position: relative
 
+    .content
+      overflow: auto
+
     > div
       position: absolute
       top: 0
@@ -1481,6 +1493,8 @@ input.url
 
     .chat-box .message-list
       height: 298px
+      min-height: 200px
+      max-height: 200px
       width: 100%
       border: 1px solid white
       border-radius: 4px

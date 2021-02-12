@@ -523,10 +523,11 @@
                          (:title (nth matches i))]))])))]])))
 
 (defn deck-name
-  [deck]
-  (let [deck-name (:name deck)]
-  (str (s/trim (subs deck-name 0 40))
-       (when (< 40 (count deck-name)) "..."))))
+  ([deck] (deck-name deck 40))
+  ([deck limit]
+   (let [deck-name (:name deck)]
+     (str (s/trim (subs deck-name 0 limit))
+          (when (< limit (count deck-name)) "...")))))
 
 (defn deck-date
   [deck]
