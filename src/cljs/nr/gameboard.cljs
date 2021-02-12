@@ -72,7 +72,7 @@
 
 (defn scroll-timeline []
   (when-let [timeline (-> js/document (.getElementById "timeline"))]
-    (let [new-step (-> js/document (.getElementsByClassName "step") array-seq (nth (:n @replay-status)))
+    (let [new-step (-> js/document (.getElementsByClassName "active-step-label") array-seq first)
           new-step-left (+ (.-left (.getBoundingClientRect new-step))
                            (.-scrollLeft timeline))]
       (set! (.-scrollLeft timeline)
@@ -110,8 +110,7 @@
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
       (reset! lock false)
       (reset! last-state @game-state)
-      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})))
-  (scroll-timeline))
+      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])}))))
 
 (defn replay-forward []
   (swap! app-state assoc :start-shown true)
@@ -125,8 +124,7 @@
         (replay-apply-patch (first diffs))
         (if (empty? (rest diffs))
           (replay-jump (inc n))
-          (swap! replay-status assoc :diffs (rest diffs))))))
-  (scroll-timeline))
+          (swap! replay-status assoc :diffs (rest diffs)))))))
 
 (defn replay-jump-to [{:keys [n d]}]
   (replay-jump n)
@@ -223,6 +221,51 @@
                  (if new-step-type
                    (recur new-state diffs [])
                    (recur new-state diffs inter-diffs))))))))
+
+(defn replay-panel []
+  (r/create-class
+    {:display-name "replay-panel"
+
+     :component-did-update
+     (fn [this]
+       (scroll-timeline))
+
+     :reagent-render
+     (fn []
+       [:div.replay.panel.blue-shade
+        [:div#timeline
+         (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
+                  ^{:key (str "step-" n)}
+                  [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
+                   [:div.step-label {:on-click #(replay-jump n) :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
+                    (case step-type
+                      :start-of-game "↠"
+                      :start-of-turn-corp "C"
+                      :start-of-turn-runner "R"
+                      :end-of-game "🎉"
+                      :undo-click "⮌"
+                      :undo-turn "⮰"
+                      :run "🏃"
+                      :install "▼"
+                      :credit (render-message "[credit]")
+                      :advance "A"
+                      :purge "☣️"
+                      :click (render-message "[click]")
+                      "?")]]))]
+        [:div.controls.panel.blue-shade
+         [:button.small {:on-click #(replay-step-back) :type "button"
+                         :title "Rewind one click"} "⏮︎"]
+         [:button.small {:on-click #(replay-forward) :type "button"
+                         :title "Play next action"} "⏵︎"]
+         [:button.small {:on-click #(replay-log-forward) :type "button"
+                         :title "Forward to next log entry"} "⏩︎"]
+         [:button.small {:on-click #(replay-step-forward) :type "button"
+                         :title "Forward one click"} "⏭︎"]
+         (when-not (= "replay" (:gameid @game-state)) ; when saved replay
+           [:button {:on-click #(swap! show-replay-link not)} "Share"])
+         (when-not (= "replay" (:gameid @game-state))
+           [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
+                    :type "text" :value (generate-replay-link (.-origin (.-location js/window)))}])]])}))
 
 (defn init-game [state]
   (let [side (get-side state)]
@@ -2195,40 +2238,4 @@
 
                 (when (:replay @game-state)
                   [:div.bottompane
-                   [:div.replay.panel.blue-shade
-                    [:div#timeline
-                     (doall (for [[n {step-type :type state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
-                              ^{:key (str "step-" n)}
-                              [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
-                               [:div.step-label
-                                {:on-click #(replay-jump n)
-                                 :class [(when (= n (:n @replay-status)) "active-step-label")
-                                         (name step-type)]}
-                                (case step-type
-                                  :start-of-game "↠"
-                                  :start-of-turn-corp "C"
-                                  :start-of-turn-runner "R"
-                                  :end-of-game "🎉"
-                                  :undo-click "⮌"
-                                  :undo-turn "⮰"
-                                  :run "🏃"
-                                  :install "▼"
-                                  :credit (render-message "[credit]")
-                                  :advance "A"
-                                  :purge "☣️"
-                                  :click (render-message "[click]")
-                                  "?")]]))]
-                    [:div.controls.panel.blue-shade
-                     [:button.small {:on-click #(replay-step-back) :type "button"
-                                     :title "Rewind one click"} "⏮︎"]
-                     [:button.small {:on-click #(replay-forward) :type "button"
-                                     :title "Play next action"} "⏵︎"]
-                     [:button.small {:on-click #(replay-log-forward) :type "button"
-                                     :title "Forward to next log entry"} "⏩︎"]
-                     [:button.small {:on-click #(replay-step-forward) :type "button"
-                                     :title "Forward one click"} "⏭︎"]
-                     (when-not (= "local-replay" (:gameid @game-state)) ; when not locally uploaded replay
-                       [:button {:on-click #(swap! show-replay-link not)} "Share"])
-                     (when-not (= "local-replay" (:gameid @game-state))
-                       [:input {:style (if @show-replay-link {:display "block"} {:display "none"})
-                                :type "text" :read-only true :value (generate-replay-link (.-origin (.-location js/window)))}])]]])]))))})))
+                   [replay-panel]])]))))})))
