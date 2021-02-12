@@ -964,6 +964,12 @@
             updated-card (add-params-to-card (:card line) id art)]
         [zoom-card-view updated-card s]))]])
 
+(defn- class-for-state [s]
+  (cond
+    (:edit @s) "edit"
+    (:delete @s) "delete"
+    :else ""))
+
 (defn deck-builder
   "Make the deckbuilder view"
   []
@@ -991,7 +997,8 @@
       (when (= "/deckbuilder" (first @active))
         [:div.container
          [:div.deckbuilder.blue-shade.panel
-          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
+          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
+                          :class (class-for-state s)}
            [list-panel s user decks decks-loaded scroll-top]
            [selected-panel s]
            [edit-panel s]]]]))))
