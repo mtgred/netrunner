@@ -266,7 +266,7 @@
                          :title "Forward to next log entry"} "⏩︎"]
          [:button.small {:on-click #(replay-step-forward) :type "button"
                          :title "Forward one click"} "⏭︎"]]
-        (when-not (= "replay" (:gameid @game-state)) ; when saved replay
+        (when-not (= "local-replay" (:gameid @game-state)) ; when saved replay
           [:div.sharing
            [:input {:style (if @show-replay-link {:display "inline"} {:display "none"})
                     :type "text" :read-only true
