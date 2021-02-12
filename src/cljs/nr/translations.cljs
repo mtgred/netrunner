@@ -67,6 +67,8 @@
      :zehir "Ze/hir"
      :zezir "Ze/zir"
      :xe "Xe/xem"}
+    :news
+    {:title "Play Android: Netrunner in your browser"}
     :chat
     {:title "Play Android: Netrunner in your browser"
      :channels "Channels"

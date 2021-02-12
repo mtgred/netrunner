@@ -14,6 +14,7 @@
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
+            [nr.news :refer [news-page]]
             [nr.translations :refer [tr]]
             [nr.admin :refer [admin]]
             [nr.users :refer [users]]
@@ -90,6 +91,9 @@
        [:div#main.carousel.slide {:data-interval "false"}
         [:div.carousel-inner
          [:div.item.active
+          [:div.home-bg]
+          [news-page]]
+         [:div.item
           [:div.home-bg]
           [chat-page]]
          [:div.item

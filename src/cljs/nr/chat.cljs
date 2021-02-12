@@ -304,7 +304,7 @@
             (swap! s assoc :zoom card))))
 
     (fn []
-      (when (= "/" (first @active))
+      (when (= "/chat" (first @active))
         [:div.container
          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
          [news]

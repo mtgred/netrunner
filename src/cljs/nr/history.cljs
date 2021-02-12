@@ -4,7 +4,7 @@
             [nr.appstate :refer [app-state]])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament" "/admin" "/users" "/features"])
+(def tokens #js ["/" "/chat" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament" "/admin" "/users" "/features"])
 
 (def history (Html5History.))
 
