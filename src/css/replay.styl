@@ -67,6 +67,9 @@
                     right: -6px
                     top: -6px
 
+                .annotated-after.none:after
+                    display: none!important
+
                 .start-of-turn-corp:before
                     content: attr(data-turn);
                     color: white
@@ -253,6 +256,12 @@
     border: 1px solid white
     color: white
     box-shadow(0 0 3px white)
+
+.notes-icon.none:after
+    content: ''
+    color: black
+    background-color: transparent-blue
+    box-shadow(0 0 6px transparent-blue)
 
 .notes-icon.blunder:after
     content: '??'
