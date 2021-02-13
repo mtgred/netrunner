@@ -252,7 +252,12 @@
          (doall (for [[n {step-type :type turn :turn state :state :as step}] (map-indexed #(vector %1 %2) @replay-timeline)]
                   ^{:key (str "step-" n)}
                   [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
-                   [:div.step-label {:on-click #(replay-jump n) :data-turn turn :class [(when (= n (:n @replay-status)) "active-step-label") (name step-type)]}
+                   [:div.step-label {:on-click #(replay-jump n) :data-turn turn :class [(when (= n (:n @replay-status)) "active-step-label")
+                                                                                        (when (= :start-of-turn-corp step-type) :annotated-before)
+                                                                                        :annotated-after
+                                                                                        step-type
+                                                                                        :notes-icon
+                                                                                        (nth [:blunder :mistake :inaccuracy :good :brilliant :a :b :c :d :none :none ] (rand-int 11))]}
                     (case step-type
                       :start-of-game "↠"
                       :start-of-turn-corp "C"
@@ -624,7 +629,8 @@
 
 (defn log-pane []
   (r/create-class
-    (let [log (r/cursor game-state [:log])]
+    (let [log (r/cursor game-state [:log])
+          selected-note-type (r/atom nil)]
       {:display-name "log-pane"
 
        :component-did-mount
@@ -664,9 +670,18 @@
                              [:div.username (get-in msg [:user :username])]
                              [:div (render-message (:text msg))]]])))
                      @log))
-
             :notes
-            "hello")])})))
+            [:div.notes
+             [:div.turn [:textarea {:placeholder (tr [:log.notes.turn-placeholder "Notes for this turn"])}]]
+             [:div.notes-icons
+              (doall (for [icon [:blunder :mistake :inaccuracy :good :brilliant]]
+                       [:div {:class ["notes-icon" icon (when (= icon @selected-note-type) "selected")]
+                              :on-click #(reset! selected-note-type icon)}]))
+              [:div.notes-separator]
+              (doall (for [icon [:a :b :c :d]]
+                       [:div {:class ["notes-icon" icon (when (= icon @selected-note-type) "selected")]
+                              :on-click #(reset! selected-note-type icon)}]))]
+             [:div.click [:textarea {:placeholder (tr [:log.notes.click-placeholder "Notes for this click"])}]]])])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
@@ -702,9 +717,8 @@
 
 (defn indicate-action []
   (when (not-spectator?)
-    [:button {:style {:width "98%"}
-              :on-click #(do (.preventDefault %)
-                             (send-command "indicate-action"))
+    [:button.indicate-action {:on-click #(do (.preventDefault %)
+                                             (send-command "indicate-action"))
               :key "Indicate action"}
      (tr [:game.indicate-action "Indicate action"])]))
 
@@ -716,7 +730,7 @@
       (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
         (when (or (not-spectator?)
                   (not (:mutespectators game)))
-          [:div
+          [:div.log-input
            [:form {:on-submit #(do (.preventDefault %)
                                    (send-msg s))}
             [:input {:placeholder (tr [:chat.placeholder "Say something"])
