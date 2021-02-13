@@ -1,7 +1,7 @@
 (ns nr.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split]]
+            [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?]]
@@ -32,8 +32,6 @@
 (defonce replay-status (r/atom {}))
 (defonce replay-side (r/atom :spectator))
 (defonce show-replay-link (r/atom false))
-(defonce replay-annotations (r/atom {:turns {} :clicks {}}))
-(defonce replay-selected-note-type (r/atom :none))
 
 (defonce log-mode (r/atom :log))
 
@@ -118,7 +116,7 @@
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
       (reset! lock false)
       (reset! last-state @game-state)
-      (reset! replay-status {:n n :diffs (get-in @replay-timeline [n :diffs])})
+      (swap! replay-status merge {:n n :diffs (get-in @replay-timeline [n :diffs])})
       (load-annotations))))
 
 (defn replay-forward []
@@ -158,7 +156,7 @@
   (let [state (replay-prepare-state (dissoc init-state :replay-diffs))
         diffs (:replay-diffs init-state)]
     (reset! replay-timeline [{:type :start-of-game :state state}])
-    (reset! replay-annotations {:turns {} :clicks {}})
+    (swap! replay-status assoc :annotations {:turns {:corp {} :runner {}} :clicks {}})
     (dorun (loop [old-state @game-state
                   diffs diffs
                   inter-diffs []]
@@ -259,7 +257,7 @@
                   [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
                    [:div.step-label {:on-click #(replay-jump n)
                                      :data-turn turn
-                                     :class (let [annotation (get-in @replay-annotations [:clicks (keyword (str n))] nil)]
+                                     :class (let [annotation (get-in @replay-status [:annotations :clicks n] nil)]
                                               [(when (= n (:n @replay-status)) "active-step-label")
                                                (when (= :start-of-turn-corp step-type) :annotated-before)
                                                step-type
@@ -298,32 +296,41 @@
            [:button {:on-click #(swap! show-replay-link not)} "Share timestamp"]])])}))
 
 (defn load-annotations []
-  (set! (-> js/document
-            (.getElementById "notes-turn")
-            .-value)
-        (get-in @replay-annotations [:turns (keyword (str (:turn @game-state))) :notes] ""))
-  (set! (-> js/document
-            (.getElementById "notes-click")
-            .-value)
-        (get-in @replay-annotations [:clicks (keyword (str (:n @replay-status))) :notes] ""))
-  (reset! replay-selected-note-type
-          (get-in @replay-annotations [:clicks (keyword (str (:n @replay-status))) :type] :none)))
+  (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
+        click-notes-elem (-> js/document (.getElementById "notes-click"))
+        side (keyword (:active-player @game-state))
+        turn (:turn @game-state)
+        click (:n @replay-status)]
+    (when turn-notes-elem
+      (set! (.-value turn-notes-elem)
+            (get-in @replay-status [:annotations :turns side turn :notes] "")))
+    (when click-notes-elem
+      (set! (.-value click-notes-elem)
+            (get-in @replay-status [:annotations :clicks click :notes] "")))
+    (swap! replay-status
+          assoc :selected-note-type
+          (get-in @replay-status [:annotations :clicks click :type] :none))))
 
 
 (defn update-annotations []
-  (let [turn-notes (-> js/document
-                       (.getElementById "notes-turn")
-                       .-value)
-        click-notes (-> js/document
-                        (.getElementById "notes-click")
-                        .-value)
+  (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
+        click-notes-elem (-> js/document (.getElementById "notes-click"))
+        turn-notes (.-value turn-notes-elem)
+        click-notes (.-value click-notes-elem)
         turn (:turn @game-state)
-        step (:n @replay-status)]
-    (when turn-notes
-      (swap! replay-annotations assoc-in [:turns (keyword (str turn))] {:notes turn-notes}))
-    (when (or click-notes
-              @replay-selected-note-type)
-      (swap! replay-annotations assoc-in [:clicks (keyword (str step))] {:notes click-notes :type @replay-selected-note-type}))))
+        click (:n @replay-status)
+        side (keyword (:active-player @game-state))]
+    (if (blank? turn-notes)
+      (let [new-turns (dissoc (get-in @replay-status [:annotations :turns side]) turn)]
+        (swap! replay-status assoc-in [:annotations :turns side] new-turns))
+      (swap! replay-status assoc-in [:annotations :turns side turn] {:notes turn-notes}))
+    (if (and (blank? click-notes)
+             (= :none (:selected-note-type @replay-status)))
+      (let [new-annotations (assoc (:annotations @replay-status)
+                                   :clicks
+                                   (dissoc (:clicks (:annotations @replay-status)) click))]
+        (swap! replay-status assoc :annotations new-annotations))
+      (swap! replay-status assoc-in [:annotations :clicks click] {:notes click-notes :type (:selected-note-type @replay-status)}))))
 
 (defn init-game [state]
   (let [side (get-side state)]
@@ -661,7 +668,9 @@
     [:div.panel.panel-top.blue-shade.selector
      [:a {:on-click #(reset! log-mode :log)} "Game Log"]
      " | "
-     [:a {:on-click #(reset! log-mode :notes)} "Notes"]]))
+     [:a {:on-click #(reset! log-mode :notes)} "Annotations"]
+     " | "
+     [:a {:on-click #(reset! log-mode :notes-import)} "Import"]]))
 
 (defn log-pane []
   (r/create-class
@@ -713,8 +722,8 @@
                [(create-buttons [types]
                   (doall (for [icon types]
                            ^{:key (str "notes-icon-" icon)}
-                           [:div {:class ["notes-icon" icon (when (= icon @replay-selected-note-type) "selected")]
-                                  :on-click #(do (reset! replay-selected-note-type icon)
+                           [:div {:class ["notes-icon" icon (when (= icon (:selected-note-type @replay-status)) "selected")]
+                                  :on-click #(do (swap! replay-status assoc :selected-note-type icon)
                                                  (update-annotations))}])))]
                [:div.notes-icons
                 (create-buttons [:none])
@@ -723,7 +732,15 @@
                 [:div.notes-separator]
                 (create-buttons [:a :b :c :d])])
              [:div.click [:textarea#notes-click {:placeholder (tr [:log.notes.click-placeholder "Notes for this click"])
-                                                 :on-change #(update-annotations)}]]])])})))
+                                                 :on-change #(update-annotations)}]]]
+            :notes-import
+            [:div.notes-import
+             [:input {:field :file
+                      :type :file
+                      :on-change #(swap! replay-status assoc :replay-file (aget (.. % -target -files) 0))}]
+
+             ]
+            )])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
