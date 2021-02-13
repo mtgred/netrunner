@@ -607,7 +607,6 @@
                :req (req (let [target (nth targets 1)]
                            (and (operation? target)
                                 (has-subtype? target "Transaction")
-                                (faceup? target)
                                 (or (in-discard? target)
                                     (= :discard (first (:previous-zone target)))))))
                :effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}]

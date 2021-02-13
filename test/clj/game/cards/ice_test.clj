@@ -449,7 +449,32 @@
         (play-from-hand state :corp "Beanstalk Royalties")
         (is (= 3 (count (:subroutines (refresh bc))))
             "1 subroutine gained because 2 face up Transactions are in Archives")
-        (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile")))))
+        (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile"))))
+  (testing "Preemptive Action interaction"
+    (do-game
+      (new-game {:corp {:hand ["Blockchain" "Preemptive Action" (qty "Beanstalk Royalties" 4)]
+                        :credits 7}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Blockchain" "HQ")
+      (let [bc (get-ice state :hq 0)]
+        (rez state :corp bc)
+        (is (= 2 (count (:subroutines (refresh bc)))) "No subroutines gained because no Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (is (= 2 (count (:subroutines (refresh bc)))) "No subroutines gained because only 1 Transaction is in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (is (= 3 (count (:subroutines (refresh bc)))) "1 subroutine gained because 2 Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (is (= 3 (count (:subroutines (refresh bc)))) "1 subroutine gained because 3 Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (is (= 4 (count (:subroutines (refresh bc)))) "2 subroutines gained because 4 Transactions are in Archives")
+        (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
+        (play-from-hand state :corp "Preemptive Action")
+        (click-card state :corp (first (:discard (get-corp))))
+        (click-card state :corp (second (:discard (get-corp))))
+        (click-card state :corp (last (:discard (get-corp))))
+        (is (= 1 (count (:discard (get-corp)))))
+        (is (= 1 (count (:rfg (get-corp)))))
+        (is (= 2 (count (:subroutines (refresh bc)))) "No subroutines gained because only 1 Transaction is in Archives")))))
 
 (deftest bloom
   ;; Bloom
