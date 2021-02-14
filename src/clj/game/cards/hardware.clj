@@ -1242,8 +1242,8 @@
 (defcard "Paragon"
   {:constant-effects [(mu+ 1)]
    :events [{:event :successful-run
-             :interactive (get-autoresolve :autofire (complement never?))
-             :silent (get-autoresolve :autofire never?)
+             :interactive (get-autoresolve :auto-fire (complement never?))
+             :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (first-event? state side :successful-run))
               :player :runner
@@ -1772,8 +1772,8 @@
   {:constant-effects [(mu+ 2)
                       (runner-hand-size+ 1)]
    :events [{:event :runner-turn-ends
-             :interactive (get-autoresolve :autofire (complement never?))
-             :silent (get-autoresolve :autofire never?)
+             :interactive (get-autoresolve :auto-fire (complement never?))
+             :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (= (:credit runner) (:credit corp)))
               :waiting-prompt "Runner to decide if they will gain credits from Supercorridor"
