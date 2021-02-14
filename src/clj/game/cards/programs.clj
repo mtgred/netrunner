@@ -425,20 +425,20 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Aumakua"
-  {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
-   ; We would need a :once :per-access key to make this work for Gang Sign etc.
-   :abilities [(break-sub 1 1)
-               {:label "Add a virus counter"
-                :effect (effect (system-msg "manually adds a virus counter to Aumakua")
-                                (add-counter card :virus 1))}]
-   :strength-bonus (req (get-virus-counters state card))
-   :events [{:event :run-ends
-             :req (req (and (not (or (:did-trash target)
-                                     (:did-steal target)))
-                            (:did-access target)))
-             :effect (effect (add-counter card :virus 1))}
-            {:event :expose
-             :effect (effect (add-counter card :virus 1))}]})
+  (auto-icebreaker {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
+                    ; We would need a :once :per-access key to make this work for Gang Sign etc.
+                    :abilities [(break-sub 1 1)
+                                {:label "Add a virus counter"
+                                 :effect (effect (system-msg "manually adds a virus counter to Aumakua")
+                                                 (add-counter card :virus 1))}]
+                    :strength-bonus (req (get-virus-counters state card))
+                    :events [{:event :run-ends
+                              :req (req (and (not (or (:did-trash target)
+                                                      (:did-steal target)))
+                                             (:did-access target)))
+                              :effect (effect (add-counter card :virus 1))}
+                             {:event :expose
+                              :effect (effect (add-counter card :virus 1))}]}))
 
 (defcard "Aurora"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
