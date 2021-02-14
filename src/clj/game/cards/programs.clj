@@ -180,42 +180,43 @@
   "Make currently encountered ice gain chosen type until end of encounter
   (Wrestling suite: Laamb, Engolo)"
   [cost ice-type abilities]
-  {:abilities abilities
-   :events [{:event :encounter-ice
-             :req (req (and (not-used-once? state {:once :per-turn} card)
-                            (not (has-subtype? (:ice context) ice-type))
-                            (can-pay? state :runner eid card nil [:credit 2])))
-             :async true
-             :effect
-             (effect
-               (continue-ability
-                 {:eid (assoc eid :source-type :ability)
-                  :optional
-                  {:prompt (str "Pay 2 [Credits] to make " (:title (:ice context))
-                                " gain " ice-type "?")
-                   :yes-ability
-                   {:cost [:credit cost]
-                    :msg (msg "make " (:title current-ice) " gain " ice-type)
-                    :effect (req (let [ice current-ice
-                                       stargets (:subtype-target ice)
-                                       stypes (:subtype ice)]
-                                   (register-once state side {:once :per-turn} card)
-                                   (update! state side
-                                            (assoc ice
-                                                   :subtype-target (combine-subtypes false stargets ice-type)
-                                                   :subtype (combine-subtypes false stypes ice-type)))
-                                   (register-events
-                                     state side card
-                                     [{:event :end-of-encounter
-                                       :duration :end-of-encounter
-                                       :effect (effect (update!
-                                                         (let [ice (get-card state ice)
-                                                               stargets (:subtype-target ice)
-                                                               stypes (:subtype ice)]
-                                                           (assoc ice
-                                                                  :subtype-target (remove-subtypes-once stargets ice-type)
-                                                                  :subtype (remove-subtypes-once stypes ice-type)))))}])))}}}
-                 card nil))}]})
+  (auto-icebreaker
+    {:abilities abilities
+     :events [{:event :encounter-ice
+               :req (req (and (not-used-once? state {:once :per-turn} card)
+                              (not (has-subtype? (:ice context) ice-type))
+                              (can-pay? state :runner eid card nil [:credit 2])))
+               :async true
+               :effect
+               (effect
+                 (continue-ability
+                   {:eid (assoc eid :source-type :ability)
+                    :optional
+                    {:prompt (str "Pay 2 [Credits] to make " (:title (:ice context))
+                                  " gain " ice-type "?")
+                     :yes-ability
+                     {:cost [:credit cost]
+                      :msg (msg "make " (:title current-ice) " gain " ice-type)
+                      :effect (req (let [ice current-ice
+                                         stargets (:subtype-target ice)
+                                         stypes (:subtype ice)]
+                                     (register-once state side {:once :per-turn} card)
+                                     (update! state side
+                                              (assoc ice
+                                                     :subtype-target (combine-subtypes false stargets ice-type)
+                                                     :subtype (combine-subtypes false stypes ice-type)))
+                                     (register-events
+                                       state side card
+                                       [{:event :end-of-encounter
+                                         :duration :end-of-encounter
+                                         :effect (effect (update!
+                                                           (let [ice (get-card state ice)
+                                                                 stargets (:subtype-target ice)
+                                                                 stypes (:subtype ice)]
+                                                             (assoc ice
+                                                                    :subtype-target (remove-subtypes-once stargets ice-type)
+                                                                    :subtype (remove-subtypes-once stypes ice-type)))))}])))}}}
+                   card nil))}]}))
 
 (defn- virus-breaker
   "Spends virus counters from any card to pump/break, gains virus counters for successful runs
