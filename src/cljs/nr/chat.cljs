@@ -136,19 +136,17 @@
        (and max-len
             (>= msg-len max-len)))))
 
-(defn msg-input-view [channel]
-  (let [s (r/atom {})]
-    (fn [channel]
-      [:form.msg-box {:on-submit #(do (.preventDefault %)
-                                      (when-not (illegal-message s)
-                                        (send-msg s channel)))}
-       [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
-                :placeholder (tr [:chat/placeholder "Say something...."]) :accessKey "l" :value (:msg @s)
-                :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
-       (let [disabled (illegal-message s)]
-         [:button {:disabled disabled
-                   :class (if disabled "disabled" "")}
-          (tr [:chat/send "Send"])])])))
+(defn msg-input-view [channel s]
+  [:form.msg-box {:on-submit #(do (.preventDefault %)
+                                  (when-not (illegal-message s)
+                                    (send-msg s channel)))}
+   [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
+            :placeholder (tr [:chat/placeholder "Say something...."]) :accessKey "l" :value (:msg @s)
+            :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
+   (let [disabled (illegal-message s)]
+     [:button {:disabled disabled
+               :class (if disabled "disabled" "")}
+      (tr [:chat/send "Send"])])])
 
 (defn channel-view [{:keys [channel active-channel]} s]
   [:div.block-link {:class (if (= active-channel channel) "active" "")
@@ -263,14 +261,14 @@
                          [:div {:key i}
                           [message-view message s]]) message-list))))])})))
 
-(defn chat [s old scroll-top]
+(defn chat [s curr-msg old scroll-top]
   (let [user (r/cursor app-state [:user])]
 
     (r/create-class
       {:display-name "chat"
 
        :reagent-render
-       (fn [s old scroll-top]
+       (fn [s curr-msg old scroll-top]
          [:div#chat.chat-app
           [:div.blue-shade.panel.channel-list
            [:h4 (tr [:chat.channels "Channels"])]
@@ -288,7 +286,7 @@
             [message-panel s old scroll-top]
             (when @user
               [:div
-               [msg-input-view (:channel @s)]])]]])})))
+               [msg-input-view (:channel @s) curr-msg]])]]])})))
 
 (defn chat-page []
   (let [active (r/cursor app-state [:active-page])
@@ -296,6 +294,7 @@
                    :zoom false
                    :zoom-ch (chan)
                    :scrolling false})
+        curr-msg (r/atom{})
         scroll-top (atom 0)
         old (atom {:prev-msg-count 0})] ; old is not a r/atom so we don't render when this is updated
 
@@ -308,5 +307,5 @@
         [:div.container
          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
          [news]
-         [chat s old scroll-top]
+         [chat s curr-msg old scroll-top]
          [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]]))))

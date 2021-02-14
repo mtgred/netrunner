@@ -10,6 +10,7 @@
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [image-url] :as cb]
             [nr.deck-status :refer [deck-format-status-span]]
+            [nr.deckbuilder :refer [deck-name]]
             [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.game-row :refer [game-row]]
             [nr.history :refer [history]]
@@ -381,28 +382,29 @@
      [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
      [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
      [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]]
-    [cond-button (tr [:lobby.new-game "New game"])
-     (and (not (or @gameid
-                   (:editing @s)
-                   (= "tournament" (:room @s))))
-          (->> @games
-               (mapcat :players)
-               (filter #(= (-> % :user :_id) (:_id @user)))
-               empty?))
-     #(do (new-game s)
-          (resume-sound))]
-    [cond-button (tr [:lobby.load-replay "Load Replay"])
-     (and (not (or @gameid
-                   (:editing @s)
-                   (= "tournament" (:room @s))))
-          (->> @games
-               (mapcat :players)
-               (filter #(= (-> % :user :_id) (:_id @user)))
-               empty?))
-     #(do (replay-game s)
-          (resume-sound))]
-    [:button {:type "button"
-              :on-click #(ws/ws-send! [:lobby/list])} (tr [:lobby.reload "Reload list"])]]
+    [:div.lobby-buttons
+     [cond-button (tr [:lobby.new-game "New game"])
+      (and (not (or @gameid
+                    (:editing @s)
+                    (= "tournament" (:room @s))))
+           (->> @games
+                (mapcat :players)
+                (filter #(= (-> % :user :_id) (:_id @user)))
+                empty?))
+      #(do (new-game s)
+           (resume-sound))]
+     [:button.reload-button {:type "button"
+                             :on-click #(ws/ws-send! [:lobby/list])} (tr [:lobby.reload "Reload list"])]
+     [cond-button (tr [:lobby.load-replay "Load replay"])
+      (and (not (or @gameid
+                    (:editing @s)
+                    (= "tournament" (:room @s))))
+           (->> @games
+                (mapcat :players)
+                (filter #(= (-> % :user :_id) (:_id @user)))
+                empty?))
+      #(do (replay-game s)
+           (resume-sound))]]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
@@ -436,75 +438,76 @@
                   :on-click #(swap! s assoc :editing false)} (tr [:lobby.cancel "Cancel"])]]
        (when-let [flash-message (:flash-message @s)]
          [:p.flash-message flash-message])
-       [:section
-        [:h3 (tr [:lobby.title "Title"])]
-        [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
-                            :value (:title @s)
-                            :placeholder (tr [:lobby.title "Title"])
-                            :maxLength "100"}]]
-       [:section
-        [:h3 (tr [:lobby.side "Side"])]
-        (doall
-          (for [option ["Corp" "Runner"]]
-            ^{:key option}
-            [:p
-             [:label [:input {:type "radio"
-                              :name "side"
-                              :value option
-                              :on-change #(swap! s assoc :side (.. % -target -value))
-                              :checked (= (:side @s) option)}]
-              (tr-side option)]]))]
+       [:div.content
+        [:section
+         [:h3 (tr [:lobby.title "Title"])]
+         [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
+                             :value (:title @s)
+                             :placeholder (tr [:lobby.title "Title"])
+                             :maxLength "100"}]]
+        [:section
+         [:h3 (tr [:lobby.side "Side"])]
+         (doall
+           (for [option ["Corp" "Runner"]]
+             ^{:key option}
+             [:p
+              [:label [:input {:type "radio"
+                               :name "side"
+                               :value option
+                               :on-change #(swap! s assoc :side (.. % -target -value))
+                               :checked (= (:side @s) option)}]
+               (tr-side option)]]))]
 
-       [:section
-        [:h3 (tr [:lobby.format "Format"])]
-        [:select.format {:value (:format @s "standard")
-                         :on-change #(swap! s assoc :format (.. % -target -value))}
-         (doall (for [[k v] slug->format]
-                  ^{:key k}
-                  [:option {:value k} (tr-format v)]))]]
+        [:section
+         [:h3 (tr [:lobby.format "Format"])]
+         [:select.format {:value (:format @s "standard")
+                          :on-change #(swap! s assoc :format (.. % -target -value))}
+          (doall (for [[k v] slug->format]
+                   ^{:key k}
+                   [:option {:value k} (tr-format v)]))]]
 
-       [:section
-        [:h3 (tr [:lobby.options "Options"])]
-        [:p
-         [:label
-          [:input {:type "checkbox" :checked (:allow-spectator @s)
-                   :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
-          (tr [:lobby.spectators "Allow spectators"])]]
-        [:p
-         [:label
-          [:input {:type "checkbox" :checked (:spectatorhands @s)
-                   :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
-                   :disabled (not (:allow-spectator @s))}]
-          (tr [:lobby.hidden "Make players' hidden information visible to spectators"])]]
-        [:div.infobox.blue-shade {:style {:display (if (:spectatorhands @s) "block" "none")}}
-         [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-          "including hand and face-down cards."]
-         [:p "We recommend using a password to prevent strangers from spoiling the game."]]
-        [:p
-         [:label
-          [:input {:type "checkbox" :checked (:private @s)
-                   :on-change #(let [checked (.. % -target -checked)]
-                                 (swap! s assoc :protected checked)
-                                 (when (not checked) (swap! s assoc :password "")))}]
-          (tr [:lobby.password-protected "Password protected"])]]
-        (when (:protected @s)
-          [:p
-           [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                               :type "password"
-                               :value (:password @s)
-                               :placeholder (tr [:lobby.password "Password"])
-                               :maxLength "30"}]])
-        [:p
-         [:label
-          [:input {:type "checkbox" :checked (:save-replay @s)
-                   :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
-          (str "🟢" (tr [:lobby.save-replay "Save replay"]))]]
-        [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
-         [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
-          " The file is available only after the game is finished."]
-         [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
-         [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
-          " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]])))
+        [:section
+         [:h3 (tr [:lobby.options "Options"])]
+         [:p
+          [:label
+           [:input {:type "checkbox" :checked (:allow-spectator @s)
+                    :on-change #(swap! s assoc :allow-spectator (.. % -target -checked))}]
+           (tr [:lobby.spectators "Allow spectators"])]]
+         [:p
+          [:label
+           [:input {:type "checkbox" :checked (:spectatorhands @s)
+                    :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
+                    :disabled (not (:allow-spectator @s))}]
+           (tr [:lobby.hidden "Make players' hidden information visible to spectators"])]]
+         [:div.infobox.blue-shade {:style {:display (if (:spectatorhands @s) "block" "none")}}
+          [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+           "including hand and face-down cards."]
+          [:p "We recommend using a password to prevent strangers from spoiling the game."]]
+         [:p
+          [:label
+           [:input {:type "checkbox" :checked (:private @s)
+                    :on-change #(let [checked (.. % -target -checked)]
+                                  (swap! s assoc :protected checked)
+                                  (when (not checked) (swap! s assoc :password "")))}]
+           (tr [:lobby.password-protected "Password protected"])]]
+         (when (:protected @s)
+           [:p
+            [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                                :type "password"
+                                :value (:password @s)
+                                :placeholder (tr [:lobby.password "Password"])
+                                :maxLength "30"}]])
+         [:p
+          [:label
+           [:input {:type "checkbox" :checked (:save-replay @s)
+                    :on-change #(swap! s assoc :save-replay (.. % -target -checked))}]
+           (str "🟢" (tr [:lobby.save-replay "Save replay"]))]]
+         [:div.infobox.blue-shade {:style {:display (if (:save-replay @s) "block" "none")}}
+          [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
+           " The file is available only after the game is finished."]
+          [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
+          [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
+           " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]]])))
 
 (defn pending-game
   [s decks games gameid password-gameid sets user]
@@ -543,7 +546,7 @@
                     [:span {:class (:status status)}
                      [:span.label
                       (if this-player
-                        name
+                        (deck-name (:deck player) 25)
                         (tr [:lobby.deck-selected "Deck selected"]))]])
                   (when-let [deck (:deck player)]
                     [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
@@ -580,8 +583,8 @@
            (for [spectator (:spectators game)
                  :let [_id (get-in spectator [:user :_id])]]
              ^{:key _id}
-             [player-view spectator])])]
-       [chat-view game]])))
+             [player-view spectator])])
+        [chat-view game]]])))
 
 (defn right-panel
   [decks s games gameid password-gameid sets user]
