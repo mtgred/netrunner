@@ -310,9 +310,12 @@
    :available-annotations "Available annotations"
    :annotations-no-published-annotations "No published annotations."
    :annotations.available-annotations "Available annotations"
-   :clear "Clear local annotations"
    :notes.publish "Publish"
-   :notes.clear-annotations "Clear local annotations"}
+   :notes.clear-annotations "Clear local annotations"
+   :import-local "Import local annotation file"
+   :load-local "Load"
+   :save-local "Save"
+   :clear "Clear"}
   :game
   {:keep "Keep"
    :mulligan "Mulligan"

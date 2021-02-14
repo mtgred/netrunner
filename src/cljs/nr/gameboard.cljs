@@ -339,6 +339,29 @@
         (if (= 200 status)
           (get-remote-annotations (:gameid @game-state))))))
 
+(defn load-annotations-file []
+  (let [reader (js/FileReader.)
+        file (:annotations-file @replay-status)
+        onload (fn [onload-ev] (let [annotations (-> onload-ev .-target .-result)
+                                     annotations (js->clj (.parse js/JSON annotations) :keywordize-keys true)
+                                     annotations (merge {:turns {:corp {} :runner {}}
+                                                         :clicks {}}
+                                                        (select-keys annotations [:turns :clicks]))]
+                                 (swap! replay-status assoc :annotations annotations)))]
+    (when file
+      (aset reader "onload" onload)
+      (.readAsText reader file))))
+
+(defn save-annotations-file []
+  (let [annotations (:annotations @replay-status)
+        data-blob (js/Blob. #js [(.stringify js/JSON (clj->js annotations))] #js {:type "application/json"})
+        link (.createElement js/document "a")]
+    (set! (.-href link) (.createObjectURL js/URL data-blob))
+    (.setAttribute link "download" "Annotations.json")
+    (.appendChild (.-body js/document) link)
+    (.click link)
+    (.removeChild (.-body js/document) link)))
+
 (defn load-notes []
   (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
         click-notes-elem (-> js/document (.getElementById "notes-click"))
@@ -802,12 +825,19 @@
                    [:div.button-row
                     [:button {:type "button"
                               :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
-                   [:hr]
-                   [:button {:type "button"
-                             :on-click #(swap! replay-status assoc :annotations
-                                               {:turns {:corp {} :runner {}}
-                                                :clicks {}})}
-                    (tr [:annotations.clear "Clear local annotations"])]])]))])})))
+                   [:hr]])
+                [:h4 (tr [:annotations.import-local "Import local annotation file"])]
+                [:input {:field :file
+                         :type :file
+                         :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
+                [:button {:type "button" :on-click #(load-annotations-file)}
+                 (tr [:annotations.load-local "Load"])]
+                [:button {:type "button" :on-click #(save-annotations-file)}
+                 (tr [:annotations.save-local "Save"])]
+                [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
+                                                           {:turns {:corp {} :runner {}}
+                                                            :clicks {}})}
+                 (tr [:annotations.clear "Clear"])]]))])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
