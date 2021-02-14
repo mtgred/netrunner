@@ -241,6 +241,14 @@
         (response 401 {:message "Unauthorized"})))
     (response 401 {:message "Unauthorized"})))
 
+(defn check-annotations-size [replay annotations]
+  (let [num-diffs (count (:history replay))]
+    ; Not more than 200k characters text
+    (>= 200000
+        (+ (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :corp]))))
+           (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :runner]))))
+           (reduce + (map #(count (:notes %)) (vals (:clicks annotations))))))))
+
 (defn publish-annotations [{{username :username} :user
                             {:keys [gameid]}     :params
                             body                 :body}]
@@ -251,11 +259,13 @@
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})
-        (do
-          (mc/update db :game-logs
-                     {:gameid (str gameid)}
-                     {"$set" {:annotations (conj annotations (assoc body :username username))}})
-          (response 200 {:message "Annotations published"})))
+        (if (check-annotations-size replay body)
+          (do
+            (mc/update db :game-logs
+                       {:gameid (str gameid)}
+                       {"$set" {:annotations (conj annotations (assoc body :username username))}})
+            (response 200 {:message "Annotations published"}))
+          (response 413 {:message "File too large"})))
       (response 401 {:message "Unauthorized"}))))
 
 (defn delete-annotations [{{username :username}  :user
