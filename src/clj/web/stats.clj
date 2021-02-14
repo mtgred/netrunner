@@ -243,8 +243,8 @@
 
 (defn check-annotations-size [replay annotations]
   (let [num-diffs (count (:history replay))]
-    ; Not more than 200k characters text
-    (>= 200000
+    ; Not more than 50k characters text
+    (>= 50000
         (+ (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :corp]))))
            (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :runner]))))
            (reduce + (map #(count (:notes %)) (vals (:clicks annotations))))))))
@@ -263,7 +263,11 @@
           (do
             (mc/update db :game-logs
                        {:gameid (str gameid)}
-                       {"$set" {:annotations (conj annotations (assoc body :username username))}})
+                       {"$set" {:annotations (conj annotations {:username username
+                                                                :date (:date body)
+                                                                :turns {:corp (get-in body [:turns :corp])
+                                                                        :runner (get-in body [:turns :runner])}
+                                                                :clicks (:clicks body)})}})
             (response 200 {:message "Annotations published"}))
           (response 413 {:message "File too large"})))
       (response 401 {:message "Unauthorized"}))))
