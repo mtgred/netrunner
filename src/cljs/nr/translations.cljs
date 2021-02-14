@@ -299,6 +299,23 @@
    :tags-gained "Tags Gained"
    :runs-made "Runs Made"
    :cards-accessed "Cards Accessed"}
+  :log
+  {:game-log "Game Log"
+   :annotating "Annotating"
+   :shared "Shared Annotations"}
+  :annotations
+  {:remote-annotations-fail "Could not get remote annotations."
+   :turn-placeholder "Notes for this turn"
+   :click-placeholder "Notes for this click"
+   :available-annotations "Available annotations"
+   :annotations-no-published-annotations "No published annotations."
+   :annotations.available-annotations "Available annotations"
+   :notes.publish "Publish"
+   :notes.clear-annotations "Clear local annotations"
+   :import-local "Import local annotation file"
+   :load-local "Load"
+   :save-local "Save"
+   :clear "Clear"}
   :game
   {:keep "Keep"
    :mulligan "Mulligan"

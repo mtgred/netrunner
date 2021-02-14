@@ -1,0 +1,335 @@
+.bottompane
+    width: 100%
+    height: 117px
+
+    .replay
+        width: 100%
+        height: 100%
+        margin: auto;
+
+        #timeline
+            width: 100%
+            height: 70px
+            margin: auto;
+            display-flex()
+            flex-direction(row)
+            overflow-x: hidden;
+            overflow-y: hidden;
+            position: relative;
+            scroll-behavior: smooth;
+
+            &:hover
+                overflow-x: visible;
+
+            .step
+                text-align: center
+                width:50px
+                height:50px
+
+                .step-label .anr-icon
+                    font-size: inherit
+
+                .step-label
+                    text-align: center
+                    font-size: 20px
+                    position: relative
+                    background-color: rgb(39, 56, 76)
+                    border-radius: 50%
+                    border: 1px solid white
+                    margin: auto
+                    padding-top: 5px
+                    z-index: 2
+                    width: 32px
+                    height: 32px
+                    top:10px
+
+                    &:hover
+                        border-color: orange
+                        box-shadow(0 0 6px blue)
+
+                .annotated-before:before, .annotated-after:after
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 10px
+                    line-height: 13px
+                    position: absolute
+                    width: 15px
+                    height: 15px
+                    border-radius: 50%
+                    border: 1px solid white
+                    box-shadow(0 0 3px white)
+
+                .annotated-before:before
+                    left: -6px
+                    top: -6px
+
+                .annotated-after:after
+                    right: -6px
+                    top: -6px
+
+                .annotated-after.none:after
+                    display: none!important
+
+                .start-of-turn-corp:before
+                    content: attr(data-turn);
+                    color: white
+                    background-color: transparent-blue
+
+                .active-step-label
+                    font-size: 32px
+                    width: 45px
+                    height: 45px
+                    padding-top: 11px
+                    top:5px
+                    border-color: orange
+                    color: orange
+                    box-shadow(0 0 6px orange)
+
+                .draw .symbol, .draw .symbol:after
+                    box-sizing: content-box;
+                    position:relative
+                    content: ''
+                    display: block
+                    margin: auto
+
+                    height: .35*3.5ex
+                    width: .35*2.5ex
+                    border: 1px solid white
+                    background: transparent-blue
+                    color: rgba(255, 255, 255, 0) // transparent
+
+                .draw .symbol
+                    margin: auto
+                    transform: translate(-5%, -5%)
+
+                .draw .symbol:after
+                    transform: translate(10%, 10%)
+
+                .step-label.draw
+                    padding-top: 7px
+
+                .active-step-label.draw
+                    padding-top: 10px
+
+                .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
+                    border-color: orange
+
+            .step:after
+                content: ''
+                display: block
+                position: relative
+                z-index: 1
+                left: 25px
+                top: -8px
+                width: 40px
+                height: 5px
+
+            .step.corp:after
+                background-color: blue
+
+            .step.runner:after
+                background-color: red
+
+            .active-step:after
+                top:-21px
+                width: 50px
+
+            .start-of-turn-corp,.start-of-turn-runner
+                margin-left: 8px
+
+
+        .controls
+            position:relative
+            top: -15px
+            margin: 10px auto
+            text-align: center
+
+            button.small
+              margin: 0 4px 0 4px
+              font-size: 24px
+              height: 30px
+              width: 30px
+              background-color: transparent
+              border-color: white
+
+              &:hover
+                background-color: transparent-orange
+                border-color: orange
+
+            button.on
+                background-color: transparent-gold
+                border: 1px solid gold
+
+            button.off
+                background-color: transparent-orange
+
+        .sharing
+            position: absolute
+            text-align: right
+            bottom: 0px
+            right: 0px
+            margin: 10px
+
+            button
+                margin: 5px
+            input
+                width: 400px
+                margin: 5px
+
+.rightpane .log
+    .selector
+        position: absolute
+        height:24px
+        top: 0px
+        left: 0
+        right: 4px
+        margin: 0
+        padding-top: 2px
+
+    .notes, .notes-shared
+        height: 100%
+        display-flex()
+        flex-direction(column)
+
+        .turn, .click
+            position: relative
+            flex-grow: 1
+
+        hr
+            margin: 15px auto
+            width: 95%
+
+        input
+            min-height: 28px
+            margin: 2px 0
+
+        .button-row
+            margin: 4px 0
+
+        textarea
+            background: rgba(255, 255, 255, 0)
+            color: white
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+            width: 100%
+            height: 100%
+
+        .click:after
+            position: absolute
+            top: 50%
+            left: 0
+            width: 100%
+            color: rgba(255, 255, 255, 0.1)
+
+        .click:after
+            text-align: center
+            font-family: "anr-icon" !important
+            font-size: 140px
+            speak: none
+            content: "\e611"
+
+        .turn
+            content: "";
+            background: url('/img/turn.png') no-repeat 0 0;
+            background-size: 200px
+            background-position: center
+
+        .notes-icons
+            display-flex()
+            flex-direction(row)
+            justify-content: center
+
+            .notes-icon:after
+                width: 15px
+                height: 15px
+
+            .notes-icon:after
+                margin:5px
+
+            .notes-icon:hover:after
+                border-color: orange!important
+
+            .notes-icon.selected:after
+                border-color: orange!important
+                box-shadow(0 0 6px orange)
+
+            .notes-separator
+                width: 10px
+
+.notes-icon:after
+    display:inline-block
+    width: 15px
+    height: 15px
+    text-align: center;
+    font-weight: bold;
+    font-size: 10px
+    line-height: 13px
+    border-radius: 50%
+    border: 1px solid white
+    color: white
+    box-shadow(0 0 3px white)
+
+.notes-icon.none:after
+    content: ''
+    color: black
+    background-color: transparent-blue
+    box-shadow(0 0 6px transparent-blue)
+
+.notes-icon.blunder:after
+    content: '??'
+    color: black
+    background-color: blunder
+    box-shadow(0 0 6px blunder)
+
+.notes-icon.mistake:after
+    content: '?'
+    color: black
+    background-color: mistake
+    box-shadow(0 0 6px mistake)
+
+.notes-icon.inaccuracy:after
+    content: '?!'
+    color: black
+    background-color: inaccuracy
+    box-shadow(0 0 6px inaccuracy)
+
+.notes-icon.good:after
+    content: '!'
+    color: black
+    background-color: good
+    box-shadow(0 0 6px good)
+
+.notes-icon.brilliant:after
+    content: '!!'
+    color: black
+    background-color: brilliant
+    box-shadow(0 0 6px brilliant)
+
+.notes-icon.a:after
+    content: '⯀'
+    color: white
+    border-radius: 25%!important
+    line-height: 12px!important
+    background-color: note-a
+    box-shadow(0 0 6px note-a)
+
+.notes-icon.b:after
+    content: '⬥'
+    color: white
+    border-radius: 25%!important
+    line-height: 12px!important
+    background-color: note-b
+    box-shadow(0 0 6px note-b)
+
+.notes-icon.c:after
+    content: '☀'
+    color: black
+    border-radius: 25%!important
+    background-color: note-c
+    box-shadow(0 0 6px note-c)
+
+.notes-icon.d:after
+    content: '★'
+    color: white
+    border-radius: 25%!important
+    background-color: note-d
+    box-shadow(0 0 6px note-d)
