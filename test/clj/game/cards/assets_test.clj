@@ -2706,7 +2706,28 @@
         (is (= 8 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should start with 8 credits")
         (derez state :corp (refresh marilyn))
         (rez state :corp (refresh marilyn))
-        (is (= 16 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should now have 16 credits")))))
+        (is (= 16 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should now have 16 credits"))))
+  (testing "Interactive prompt only on last trigger"
+    (do-game
+      (new-game {:corp {:deck ["PAD Campaign" "Marilyn Campaign"]}})
+      (play-from-hand state :corp "Marilyn Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (let [marilyn (get-content state :remote1 0)
+            pad (get-content state :remote2 0)]
+        (core/rez state :corp marilyn)
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (not-empty (:prompt (get-corp))) "Interactive prompt")))))
 
 (deftest mark-yale
   ;; Mark Yale
