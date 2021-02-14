@@ -831,14 +831,15 @@
                 [:input {:field :file
                          :type :file
                          :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
-                [:button {:type "button" :on-click #(load-annotations-file)}
-                 (tr [:annotations.load-local "Load"])]
-                [:button {:type "button" :on-click #(save-annotations-file)}
-                 (tr [:annotations.save-local "Save"])]
-                [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
-                                                           {:turns {:corp {} :runner {}}
-                                                            :clicks {}})}
-                 (tr [:annotations.clear "Clear"])]]))])})))
+                [:div.button-row
+                 [:button {:type "button" :on-click #(load-annotations-file)}
+                  (tr [:annotations.load-local "Load"])]
+                 [:button {:type "button" :on-click #(save-annotations-file)}
+                  (tr [:annotations.save-local "Save"])]
+                 [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
+                                                            {:turns {:corp {} :runner {}}
+                                                             :clicks {}})}
+                  (tr [:annotations.clear "Clear"])]]]))])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
