@@ -243,8 +243,8 @@
 
 (defn check-annotations-size [replay annotations]
   (let [num-diffs (count (:history replay))]
-    ; Not more than 200k characters text
-    (>= 200000
+    ; Not more than 50k characters text
+    (>= 50000
         (+ (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :corp]))))
            (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :runner]))))
            (reduce + (map #(count (:notes %)) (vals (:clicks annotations))))))))
