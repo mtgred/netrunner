@@ -82,6 +82,9 @@
 
            (GET "/profile/history" [] stats/history)
            (GET "/profile/history/:gameid" [] stats/fetch-log)
+           (GET "/profile/history/annotations/:gameid" [] stats/fetch-annotations)
+           (PUT "/profile/history/annotations/publish/:gameid" [] stats/publish-annotations)
+           (DELETE "/profile/history/annotations/delete/:gameid" [date] stats/delete-annotations)
            (GET "/profile/history/share/:gameid" [] stats/share-replay)
            (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
 

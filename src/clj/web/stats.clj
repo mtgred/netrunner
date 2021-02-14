@@ -229,12 +229,62 @@
       (response 200 log))
     (response 401 {:message "Unauthorized"})))
 
+(defn fetch-annotations [{{username :username} :user
+                          {:keys [gameid]}     :params}]
+  (if username
+    (let [{:keys [corp runner replay-shared annotations]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])
+          annotations (or annotations [])]
+      (if (or replay-shared
+              (= username (get-in corp [:player :username]))
+              (= username (get-in runner [:player :username])))
+        (json-response 200 annotations)
+        (response 401 {:message "Unauthorized"})))
+    (response 401 {:message "Unauthorized"})))
+
+(defn publish-annotations [{{username :username} :user
+                            {:keys [gameid]}     :params
+                            body                 :body}]
+  (let [{:keys [corp runner replay replay-shared annotations]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
+        replay (or replay {})]
+    (if (or replay-shared
+            (or (= username (get-in corp [:player :username]))
+                (= username (get-in runner [:player :username]))))
+      (if (empty? replay)
+        (response 404 {:message "Replay not found"})
+        (do
+          (mc/update db :game-logs
+                     {:gameid (str gameid)}
+                     {"$set" {:annotations (conj annotations (assoc body :username username))}})
+          (response 200 {:message "Annotations published"})))
+      (response 401 {:message "Unauthorized"}))))
+
+(defn delete-annotations [{{username :username}  :user
+                           {:keys [gameid date]} :params}]
+  (let [{:keys [corp runner replay replay-shared annotations]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
+        replay (or replay {})
+        annotations (or annotations [])
+        [ind anno] (first (filter #(= date (str (:date (second %)))) (map-indexed vector annotations)))]
+    (if (or (= username (:username anno))
+            (= username (get-in runner [:player :username]))
+            (= username (get-in corp [:player :username])))
+      (if (empty? replay)
+        (response 404 {:message "Replay not found"})
+        (if (and ind anno)
+          (do
+            (mc/update db :game-logs
+                       {:gameid (str gameid)}
+                       {"$set" {:annotations (vec (concat (subvec annotations 0 ind) (subvec annotations (inc ind))))}})
+            (response 200 {:message "Annotations deleted"}))
+          (response 404 {:message "Annotations not found"})))
+      (response 401 {:message "Unauthorized"}))))
+
 (defn fetch-replay [{{username :username} :user
                      {:keys [gameid]}     :params}]
-  (let [{:keys [replay replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay" "replay-shared"])
+  (let [{:keys [corp runner replay replay-shared]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
         replay (or replay {})]
-    (if (or username
-            replay-shared)
+    (if (or replay-shared
+            (or (= username (get-in corp [:player :username]))
+                (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})
         (json-response 200 replay))

@@ -7,6 +7,7 @@
                                     faceup? installed? same-card? in-scored?]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
             [jinteki.cards :refer [all-cards]]
+            [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
             [nr.avatar :refer [avatar]]
@@ -15,7 +16,8 @@
             [nr.translations :refer [tr tr-pronouns tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
-                              checkbox-button cond-button image-language-name]]
+                              checkbox-button cond-button image-language-name
+                              non-game-toast]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -151,12 +153,17 @@
 (defn replay-step-back []
   (replay-jump (dec (:n @replay-status))))
 
+(declare get-remote-annotations)
 (defn populate-replay-timeline
   [init-state]
   (let [state (replay-prepare-state (dissoc init-state :replay-diffs))
         diffs (:replay-diffs init-state)]
     (reset! replay-timeline [{:type :start-of-game :state state}])
-    (swap! replay-status assoc :annotations {:turns {:corp {} :runner {}} :clicks {}})
+    (swap! replay-status assoc :annotations {:turns {:corp {} :runner {}}
+                                             :clicks {}})
+    (swap! replay-status assoc :remote-annotations [])
+    (when (not= "local-replay" (:gameid state))
+      (get-remote-annotations (:gameid state)))
     (dorun (loop [old-state @game-state
                   diffs diffs
                   inter-diffs []]
@@ -257,7 +264,7 @@
                   [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
                    [:div.step-label {:on-click #(replay-jump n)
                                      :data-turn turn
-                                     :class (let [annotation (get-in @replay-status [:annotations :clicks n] nil)]
+                                     :class (let [annotation (get-in @replay-status [:annotations :clicks (keyword (str n))] nil)]
                                               [(when (= n (:n @replay-status)) "active-step-label")
                                                (when (= :start-of-turn-corp step-type) :annotated-before)
                                                step-type
@@ -295,12 +302,50 @@
                     :value (generate-replay-link (.-origin (.-location js/window)))}]
            [:button {:on-click #(swap! show-replay-link not)} "Share timestamp"]])])}))
 
+(defn get-remote-annotations [gameid]
+  (go (let [{:keys [status json]} (<! (GET (str "/profile/history/annotations/" gameid)))]
+        (if (= 200 status)
+          (swap! replay-status assoc :remote-annotations
+                 (for [anno json]
+                   (assoc anno :deletable
+                          (or
+                            ; Author of annotations
+                            (= (get-in @app-state [:user :username])
+                               (:username anno))
+                            ; Player in replay
+                            (or (= (get-in @app-state [:user :username])
+                                   (get-in @game-state [:corp :user :username]))
+                                (= (get-in @app-state [:user :username])
+                                   (get-in @game-state [:runner :user :username])))))))
+          ; Error handling does not work, as GET tries to parse something despite the connection
+          ; timing out -- lostgeek (2021/02/14)
+          (non-game-toast (tr [:log.notes.remote-annotations-fail "Could not get remote annotations."])
+                          "error" {:time-out 3 :close-button true})))))
+
+(defn load-remote-annotations [pos]
+  (let [anno (nth (:remote-annotations @replay-status) pos)]
+    (swap! replay-status assoc :annotations anno)))
+
+(defn delete-remote-annotations [pos]
+  (let [anno (nth (:remote-annotations @replay-status) pos)]
+    (go (let [{:keys [status json]} (<! (DELETE (str "/profile/history/annotations/delete/" (:gameid @game-state) "?date=" (:date anno))))]
+          (if (= 200 status)
+            (get-remote-annotations (:gameid @game-state)))))))
+
+(defn publish-annotations []
+  (go (let [{:keys [status json]} (<! (PUT (str "/profile/history/annotations/publish/" (:gameid @game-state))
+                                           (assoc (:annotations @replay-status) :date (.getTime (js/Date.)))
+                                           :json))]
+        (if (= 200 status)
+          (get-remote-annotations (:gameid @game-state))))))
+
 (defn load-annotations []
   (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
         click-notes-elem (-> js/document (.getElementById "notes-click"))
         side (keyword (:active-player @game-state))
-        turn (:turn @game-state)
-        click (:n @replay-status)]
+        ; We have to use keywords instead of numbers as mongo automatically converts them
+        turn (keyword (str (:turn @game-state)))
+        click (keyword (str (:n @replay-status)))]
     (when turn-notes-elem
       (set! (.-value turn-notes-elem)
             (get-in @replay-status [:annotations :turns side turn :notes] "")))
@@ -311,14 +356,13 @@
           assoc :selected-note-type
           (get-in @replay-status [:annotations :clicks click :type] :none))))
 
-
 (defn update-annotations []
   (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
         click-notes-elem (-> js/document (.getElementById "notes-click"))
         turn-notes (.-value turn-notes-elem)
         click-notes (.-value click-notes-elem)
-        turn (:turn @game-state)
-        click (:n @replay-status)
+        turn (keyword (str (:turn @game-state)))
+        click (keyword (str (:n @replay-status)))
         side (keyword (:active-player @game-state))]
     (if (blank? turn-notes)
       (let [new-turns (dissoc (get-in @replay-status [:annotations :turns side]) turn)]
@@ -670,7 +714,7 @@
      " | "
      [:a {:on-click #(reset! log-mode :notes)} "Annotations"]
      " | "
-     [:a {:on-click #(reset! log-mode :notes-import)} "Import"]]))
+     [:a {:on-click #(reset! log-mode :notes-options)} "Options"]]))
 
 (defn log-pane []
   (r/create-class
@@ -733,14 +777,42 @@
                 (create-buttons [:a :b :c :d])])
              [:div.click [:textarea#notes-click {:placeholder (tr [:log.notes.click-placeholder "Notes for this click"])
                                                  :on-change #(update-annotations)}]]]
-            :notes-import
-            [:div.notes-import
-             [:input {:field :file
-                      :type :file
-                      :on-change #(swap! replay-status assoc :replay-file (aget (.. % -target -files) 0))}]
-
-             ]
-            )])})))
+            :notes-options
+             (let [annotation-options (r/atom {:file ""})]
+               [:div.notes-options
+                [:h4 "Import local annotations"]
+                [:input {:field :file
+                         :type :file
+                         :on-change #(swap! replay-status assoc :replay-file (aget (.. % -target -files) 0))}]
+                [:div.button-row
+                 [:button {:type "button"
+                          :on-click #(println "now work!")} (tr [:log.notes.load-annotations "Import"])]]
+                (when (not= "local-replay" (:gameid @game-state))
+                  [:div.remote-annotations
+                   [:hr]
+                   [:h4 "Available annotations"]
+                   (if (empty? (:remote-annotations @replay-status))
+                     "No published annotations."
+                     [:ul
+                      (doall
+                        (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
+                          ^{:key (str "annotation-" n)}
+                          [:li
+                           [:a {:on-click #(load-remote-annotations n)} (:username anno)]
+                           " - " (.toLocaleDateString (js/Date. (:date anno))) " "
+                           (when (:deletable anno)
+                             [:button.small {:type "button"
+                                             :on-click #(delete-remote-annotations n)} "X"])]))])
+                   [:div.button-row
+                    [:button {:type "button"
+                              :on-click #(swap! replay-status assoc :annotations
+                                                {:turns {:corp {} :runner {}}
+                                                 :clicks {}})}
+                     (tr [:log.notes.create-new "Clear"])]
+                    [:button {:type "button"
+                              :on-click #(get-remote-annotations (:gameid @game-state))} (tr [:log.notes.publish "Update"])]
+                    [:button {:type "button"
+                              :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]])]))])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
