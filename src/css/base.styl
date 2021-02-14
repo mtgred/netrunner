@@ -505,6 +505,7 @@ nav ul
   right: 0
   color: grey
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
+  height: 32px
 
   #left-menu, #right-menu
     margin: 0 10px
@@ -713,6 +714,7 @@ nav ul
     margin-bottom: 10px
     font-size: 15px
     border-color: orange
+    height:auto
 
   button
     margin-right: 5px
@@ -1502,6 +1504,11 @@ input.url
 
 // Gameboard
 
+.gameview
+  height: 100%
+  display-flex();
+  flex-direction(column);
+
 #gameboard
   width: 100%
   height: 100%
@@ -1509,7 +1516,7 @@ input.url
 
 .gameboard
   width: 100%
-  height: 100%
+  flex-grow: 1
   overflow: auto
   display-flex()
   flex-direction(row-reverse)
@@ -1777,7 +1784,7 @@ input.url
     padding: 0
 
   .hand
-    width: 383px
+    width: 384px
     margin-right: 0
     float: left
 
@@ -2341,20 +2348,27 @@ input.url
             width: 100%
 
 .bottompane
-    width:100%
-    display-flex()
-    flex-direction(row)
+    width: 100%
+    height: 117px
 
     .replay
         width: 100%
+        height: 100%
+        margin: auto;
 
         #timeline
-            width:100%
-            height: 80px
+            width: 100%
+            height: 70px
+            margin: auto;
             display-flex()
             flex-direction(row)
-            overflow: auto
-            position: relative
+            overflow-x: hidden;
+            overflow-y: hidden;
+            position: relative;
+            scroll-behavior: smooth;
+
+            &:hover
+                overflow-x: visible;
 
             .step
                 text-align: center
@@ -2371,27 +2385,72 @@ input.url
                     background-color: rgb(39, 56, 76)
                     border-radius: 50%
                     border: 1px solid white
-                    margin: 0 4px
+                    margin: auto
                     padding-top: 5px
                     z-index: 2
                     width: 32px
                     height: 32px
-                    top:20px
+                    top:10px
 
                     &:hover
                         border-color: orange
                         box-shadow(0 0 6px blue)
+
+                .start-of-turn-corp:before
+                    text-align: center;
+                    font-size: 10px
+                    line-height: 13px
+                    background-color: transparent-blue
+                    position: absolute
+                    width: 15px
+                    height: 15px
+                    border-radius: 50%
+                    border: 1px solid white
+                    color: white
+                    left: -6px
+                    top: -2px
+
+                .start-of-turn-corp:before
+                    content: attr(data-turn);
 
                 .active-step-label
                     font-size: 32px
                     width: 45px
                     height: 45px
                     padding-top: 11px
-                    margin: 0 15px
-                    top:15px
+                    top:5px
                     border-color: orange
                     color: orange
                     box-shadow(0 0 6px orange)
+
+                .draw .symbol, .draw .symbol:after
+                    box-sizing: content-box;
+                    position:relative
+                    content: ''
+                    display: block
+                    margin: auto
+
+                    height: .35*3.5ex
+                    width: .35*2.5ex
+                    border: 1px solid white
+                    background: transparent-blue
+                    color: rgba(255, 255, 255, 0) // transparent
+
+                .draw .symbol
+                    margin: auto
+                    transform: translate(-5%, -5%)
+
+                .draw .symbol:after
+                    transform: translate(10%, 10%)
+
+                .step-label.draw
+                    padding-top: 7px
+
+                .active-step-label.draw
+                    padding-top: 10px
+
+                .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
+                    border-color: orange
 
             .step:after
                 content: ''
@@ -2399,7 +2458,7 @@ input.url
                 position: relative
                 z-index: 1
                 left: 25px
-                top: 2px
+                top: -8px
                 width: 40px
                 height: 5px
 
@@ -2409,16 +2468,8 @@ input.url
             .step.runner:after
                 background-color: red
 
-            .active-step
-                text-align: center
-                width: 54px
-                height: 50px
-                position: relative
-                top: -2px
-                left: -10px
-
             .active-step:after
-                top:-10px
+                top:-21px
                 width: 50px
 
             .start-of-turn-corp,.start-of-turn-runner
@@ -2426,20 +2477,14 @@ input.url
 
 
         .controls
-            width: 180px
-            margin: 0 auto
-            position: relative
-            bottom: -10px
+            position:relative
+            top: -15px
+            margin: 10px auto
             text-align: center
 
-            button
-              margin-top: 5px
-
             button.small
-              padding: 0
               margin: 0 4px 0 4px
               font-size: 24px
-              line-height: 30px
               height: 30px
               width: 30px
               background-color: transparent
@@ -2455,6 +2500,19 @@ input.url
 
             button.off
                 background-color: transparent-orange
+
+        .sharing
+            position: absolute
+            text-align: right
+            bottom: 0px
+            right: 0px
+            margin: 10px
+
+            button
+                margin: 5px
+            input
+                width: 400px
+                margin: 5px
 
 
 .help nav li
