@@ -263,7 +263,11 @@
           (do
             (mc/update db :game-logs
                        {:gameid (str gameid)}
-                       {"$set" {:annotations (conj annotations (assoc body :username username))}})
+                       {"$set" {:annotations (conj annotations {:username username
+                                                                :date (:date body)
+                                                                :turns {:corp (get-in body [:turns :corp])
+                                                                        :runner (get-in body [:turns :runner])}
+                                                                :clicks (:clicks body)})}})
             (response 200 {:message "Annotations published"}))
           (response 413 {:message "File too large"})))
       (response 401 {:message "Unauthorized"}))))
