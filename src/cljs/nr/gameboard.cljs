@@ -768,6 +768,7 @@
        (fn []
          [:div.panel.blue-shade.messages {:class [(when (:replay @game-state)
                                                     "panel-bottom")]
+                                          :style (when (not (:replay @game-state)) {:top 0})
                                           :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                           :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
           (case @log-mode
