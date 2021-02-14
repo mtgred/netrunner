@@ -104,7 +104,7 @@
   (reset! lock false)
   (reset! last-state @game-state))
 
-(declare load-annotations)
+(declare load-notes)
 (defn replay-jump [n]
   (cond
     (neg? n)
@@ -119,7 +119,7 @@
       (reset! lock false)
       (reset! last-state @game-state)
       (swap! replay-status merge {:n n :diffs (get-in @replay-timeline [n :diffs])})
-      (load-annotations))))
+      (load-notes))))
 
 (defn replay-forward []
   (swap! app-state assoc :start-shown true)
@@ -319,7 +319,7 @@
                                    (get-in @game-state [:runner :user :username])))))))
           ; Error handling does not work, as GET tries to parse something despite the connection
           ; timing out -- lostgeek (2021/02/14)
-          (non-game-toast (tr [:log.notes.remote-annotations-fail "Could not get remote annotations."])
+          (non-game-toast (tr [:log.remote-annotations-fail "Could not get remote annotations."])
                           "error" {:time-out 3 :close-button true})))))
 
 (defn load-remote-annotations [pos]
@@ -339,7 +339,7 @@
         (if (= 200 status)
           (get-remote-annotations (:gameid @game-state))))))
 
-(defn load-annotations []
+(defn load-notes []
   (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
         click-notes-elem (-> js/document (.getElementById "notes-click"))
         side (keyword (:active-player @game-state))
@@ -356,7 +356,7 @@
           assoc :selected-note-type
           (get-in @replay-status [:annotations :clicks click :type] :none))))
 
-(defn update-annotations []
+(defn update-notes []
   (let [turn-notes-elem (-> js/document (.getElementById "notes-turn"))
         click-notes-elem (-> js/document (.getElementById "notes-click"))
         turn-notes (.-value turn-notes-elem)
@@ -710,11 +710,11 @@
 (defn log-selector []
   (fn []
     [:div.panel.panel-top.blue-shade.selector
-     [:a {:on-click #(reset! log-mode :log)} "Game Log"]
+     [:a {:on-click #(reset! log-mode :log)} (tr [:log.game-log "Game Log"])]
      " | "
-     [:a {:on-click #(reset! log-mode :notes)} "Annotations"]
+     [:a {:on-click #(reset! log-mode :notes)} (tr [:log.annotating "Annotating"])]
      " | "
-     [:a {:on-click #(reset! log-mode :notes-options)} "Options"]]))
+     [:a {:on-click #(reset! log-mode :notes-shared)} (tr [:log.shared "Shared Annotations"])]]))
 
 (defn log-pane []
   (r/create-class
@@ -743,8 +743,10 @@
 
        :reagent-render
        (fn []
-         [:div.panel.panel-bottom.blue-shade.messages {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                                                       :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+         [:div.panel.blue-shade.messages {:class [(when (:replay @game-state)
+                                                    "panel-bottom")]
+                                          :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                          :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
           (case @log-mode
             :log
             (doall (map-indexed
@@ -760,39 +762,33 @@
                      @log))
             :notes
             [:div.notes
-             [:div.turn [:textarea#notes-turn {:placeholder (tr [:log.notes.turn-placeholder "Notes for this turn"])
-                                               :on-change #(update-annotations)}]]
+             [:div.turn [:textarea#notes-turn {:placeholder (tr [:annotations.turn-placeholder "Notes for this turn"])
+                                               :on-change #(update-notes)}]]
              (letfn
                [(create-buttons [types]
                   (doall (for [icon types]
                            ^{:key (str "notes-icon-" icon)}
                            [:div {:class ["notes-icon" icon (when (= icon (:selected-note-type @replay-status)) "selected")]
                                   :on-click #(do (swap! replay-status assoc :selected-note-type icon)
-                                                 (update-annotations))}])))]
+                                                 (update-notes))}])))]
                [:div.notes-icons
                 (create-buttons [:none])
                 [:div.notes-separator]
                 (create-buttons [:blunder :mistake :inaccuracy :good :brilliant])
                 [:div.notes-separator]
                 (create-buttons [:a :b :c :d])])
-             [:div.click [:textarea#notes-click {:placeholder (tr [:log.notes.click-placeholder "Notes for this click"])
-                                                 :on-change #(update-annotations)}]]]
-            :notes-options
+             [:div.click [:textarea#notes-click {:placeholder (tr [:annotations.click-placeholder "Notes for this click"])
+                                                 :on-change #(update-notes)}]]]
+            :notes-shared
              (let [annotation-options (r/atom {:file ""})]
-               [:div.notes-options
-                [:h4 "Import local annotations"]
-                [:input {:field :file
-                         :type :file
-                         :on-change #(swap! replay-status assoc :replay-file (aget (.. % -target -files) 0))}]
-                [:div.button-row
-                 [:button {:type "button"
-                          :on-click #(println "now work!")} (tr [:log.notes.load-annotations "Import"])]]
+               [:div.notes-shared
                 (when (not= "local-replay" (:gameid @game-state))
                   [:div.remote-annotations
-                   [:hr]
-                   [:h4 "Available annotations"]
+                   [:h4 (tr [:annotations.available-annotations "Available annotations"]) " "
+                    [:button.small {:type "button"
+                                    :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
                    (if (empty? (:remote-annotations @replay-status))
-                     "No published annotations."
+                     (tr [:annotations-no-published-annotations "No published annotations."])
                      [:ul
                       (doall
                         (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
@@ -805,14 +801,13 @@
                                              :on-click #(delete-remote-annotations n)} "X"])]))])
                    [:div.button-row
                     [:button {:type "button"
-                              :on-click #(swap! replay-status assoc :annotations
-                                                {:turns {:corp {} :runner {}}
-                                                 :clicks {}})}
-                     (tr [:log.notes.create-new "Clear"])]
-                    [:button {:type "button"
-                              :on-click #(get-remote-annotations (:gameid @game-state))} (tr [:log.notes.publish "Update"])]
-                    [:button {:type "button"
-                              :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]])]))])})))
+                              :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
+                   [:hr]
+                   [:button {:type "button"
+                             :on-click #(swap! replay-status assoc :annotations
+                                               {:turns {:corp {} :runner {}}
+                                                :clicks {}})}
+                    (tr [:annotations.clear "Clear local annotations"])]])]))])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
@@ -2354,7 +2349,8 @@
                    [card-zoom zoom-card]]
                   [card-implementation zoom-card]
                   [:div.log
-                   [log-selector]
+                   (when (:replay @game-state)
+                     [log-selector])
                    [log-pane]
                    [log-typing]
                    [log-input]]]
