@@ -2204,7 +2204,7 @@
    :leave-play (req (gain state :runner :click-per-turn 1))
    :on-trash executive-trash-effect})
 
-(defcard "Wall To Wall"
+(defcard "Wall to Wall"
   (let [all [{:msg "gain 1 [Credits]"
               :async true
               :effect (effect (gain-credits eid 1))}
