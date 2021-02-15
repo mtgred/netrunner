@@ -2455,10 +2455,10 @@
     (testing "Installing different cards"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
-                          :hand ["PAD Campaign" "NASX" "Wall To Wall"]}})
+                          :hand ["PAD Campaign" "NASX" "Wall to Wall"]}})
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (play-from-hand state :corp "NASX" "New remote")
-        (play-from-hand state :corp "Wall To Wall" "New remote")
+        (play-from-hand state :corp "Wall to Wall" "New remote")
         (is (empty? (:prompt (get-corp))) "No MM trigger")))))
 
 (deftest mti-mwekundu-life-improved

@@ -5089,9 +5089,9 @@
 (deftest wall-to-wall
   (testing "Basic functionality"
     (do-game
-      (new-game {:corp {:deck ["Wall To Wall" (qty "Hedge Fund" 3)
+      (new-game {:corp {:deck ["Wall to Wall" (qty "Hedge Fund" 3)
                                "PAD Campaign" "Ice Wall"]}})
-      (play-from-hand state :corp "Wall To Wall" "New remote")
+      (play-from-hand state :corp "Wall to Wall" "New remote")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [w2w (get-content state :remote1 0)
