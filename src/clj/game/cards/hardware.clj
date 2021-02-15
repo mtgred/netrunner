@@ -529,7 +529,7 @@
                                 :type :recurring}}})
 
 (defcard "Dyson Mem Chip"
-  {:constant-effects [(mu+ 2)
+  {:constant-effects [(mu+ 1)
                       (link+ 1)]})
 
 (defcard "e3 Feedback Implants"
