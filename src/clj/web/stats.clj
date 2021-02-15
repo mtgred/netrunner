@@ -323,11 +323,14 @@
 
 (defn- get-winner-card
   [winner corp runner host]
-  (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
-        win-card (:code (@all-cards win-id))]
-    (if win-card
-      (str host "img/cards/" win-card ".png")
-      (str host "img/icons/jinteki_167.png"))))
+  (let [default-img (str host "img/icons/jinteki_167.png")]
+    (if winner
+      (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
+            win-card (:code (@all-cards win-id))]
+        (if win-card
+          (str host "img/cards/" win-card ".png")
+          default-img))
+      default-img)))
 
 (defn replay-handler [{{:keys [gameid n d]} :params
                        scheme           :scheme
