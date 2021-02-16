@@ -1305,7 +1305,7 @@
                                                 (effect-completed state side (make-result eid 2))))
                          ; provide 0 credits
                          :cancel-effect (effect (effect-completed (make-result eid 0)))}
-                        nil nil)))
+                        card nil)))
        :type :custom}}}))
 
 (defcard "Plascrete Carapace"
