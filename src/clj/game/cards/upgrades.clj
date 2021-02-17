@@ -858,7 +858,7 @@
 
 (defcard "Mumbad City Grid"
   {:events [{:event :pass-ice
-             :req (req this-server (<= 2 (count run-ices)))
+             :req (req (and this-server (<= 2 (count run-ices))))
              :async true
              :effect
              (effect
