@@ -1442,6 +1442,7 @@
 
 (defcard "Lewi Guilherme"
   (let [ability {:label "lose 1 [Credits] or trash"
+                 :interactive (req true)
                  :optional
                  {:prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                   :once :per-turn
