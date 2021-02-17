@@ -771,13 +771,14 @@
      :choices {:card #(and (agenda? %)
                            (is-scored? state side %)
                            (pos? (get-counters % :agenda)))}
-     :effect (req (let [target (update! state side (update-in target [:counter :agenda] - (value cost)))]
+     :effect (req (let [title (:title target)
+                        target (update! state side (update-in target [:counter :agenda] - (value cost)))]
                     (wait-for (trigger-event-sync state side :agenda-counter-spent target)
                               (complete-with-result
                                 state side eid
                                 {:msg (str "spends "
                                            (quantify (value cost) (str "hosted agenda counter"))
-                                           " from on " (:title target))
+                                           " from on " title)
                                  :type :any-agenda-counter
                                  :value (value cost)
                                  :targets [target]}))))}
@@ -813,13 +814,14 @@
   (<= 0 (- (get-counters card :advancement) (value cost))))
 (defmethod handler :advancement
   [cost state side eid card actions]
-  (let [card (update! state side (update card :advance-counter - (value cost)))]
+  (let [title (:title card)
+        card (update! state side (update card :advance-counter - (value cost)))]
     (wait-for (trigger-event-sync state side :counter-added card)
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
                            (quantify (value cost) (str "hosted advancement counter"))
-                           " from on " (:title card))
+                           " from on " title)
                  :type :advancement
                  :value (value cost)}))))
 
@@ -835,13 +837,14 @@
   (<= 0 (- (get-counters card :agenda) (value cost))))
 (defmethod handler :agenda
   [cost state side eid card actions]
-  (let [card (update! state side (update-in card [:counter :agenda] - (value cost)))]
+  (let [title (:title card)
+        card (update! state side (update-in card [:counter :agenda] - (value cost)))]
     (wait-for (trigger-event-sync state side :agenda-counter-spent card)
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
                            (quantify (value cost) (str "hosted agenda counter"))
-                           " from on " (:title card))
+                           " from on " title)
                  :type :agenda
                  :value (value cost)}))))
 
@@ -857,13 +860,14 @@
   (<= 0 (- (get-counters card :power) (value cost))))
 (defmethod handler :power
   [cost state side eid card actions]
-  (let [card (update! state side (update-in card [:counter :power] - (value cost)))]
+  (let [title (:title card)
+        card (update! state side (update-in card [:counter :power] - (value cost)))]
     (wait-for (trigger-event-sync state side :counter-added card)
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
                            (quantify (value cost) (str "hosted power counter"))
-                           " from on " (:title card))
+                           " from on " title)
                  :type :power
                  :value (value cost)}))))
 
@@ -883,13 +887,14 @@
      :choices {:number (req (get-counters card :power))}
      :effect
      (req (let [cost target
+                title (:title card)
                 card (update! state side (update-in card [:counter :power] - cost))]
             (wait-for (trigger-event-sync state side :counter-added card)
                       (complete-with-result
                         state side eid
                         {:msg (str "spends "
                                    (quantify cost "hosted power counter")
-                                   " from on " (:title card))
+                                   " from on " title)
                          :type :x-power
                          :value cost}))))}
     card nil))
@@ -922,12 +927,13 @@
                  :type :virus
                  :value (:number async-result)
                  :targets (:targets async-result)}))
-    (let [card (update! state side (update-in card [:counter :virus] - (value cost)))]
+    (let [title (:title card)
+          card (update! state side (update-in card [:counter :virus] - (value cost)))]
         (wait-for (trigger-event-sync state side :counter-added card)
                   (complete-with-result
                     state side eid
                     {:msg (str "spends "
                                (quantify (value cost) (str "hosted virus counter"))
-                               " from on " (:title card))
+                               " from on " title)
                      :type :virus
                      :value (value cost)})))))
