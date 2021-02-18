@@ -205,7 +205,12 @@
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")]
     [:div
-     [:h4 uniq title icon]
+     [:h4 uniq title icon
+      (when-let [influence (:factioncost card)]
+        (when-let [faction (:faction card)]
+           [:span.influence
+            {:class (-> faction s/lower-case (s/replace " " "-"))}
+            (influence-dots influence)]))]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
          [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -224,12 +229,7 @@
        [:div.heading (str (tr [:card-browser.min-deck "Minimum deck size"]) ": " min-deck-size)])
      (when-let [influence-limit (:influencelimit card)]
        [:div.heading (str (tr [:card-browser.inf-limit "Influence limit"]) ": " influence-limit)])
-     (when-let [influence (:factioncost card)]
-       (when-let [faction (:faction card)]
-         [:div.heading (tr [:card-browser.influence "Influence"]) " "
-          [:span.influence
-           {:class (-> faction s/lower-case (s/replace " " "-"))}
-           (influence-dots influence)]]))
+
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
        (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
@@ -242,7 +242,7 @@
                    (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
                          c (text-class-for-status status)]
                      ^{:key k}
-                     [:div {:class c} name
+                     [:div.format-item {:class c} name
                       (case status
                         :banned banned-span
                         :restricted restricted-span
