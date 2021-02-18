@@ -40,7 +40,7 @@
                          (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
-                        (map #(select-keys % [:version :name :description :position])))]
+                        (map #(select-keys % [:version :name :description :position :artist-blurb :artist-link :artist-about])))]
       (reset! cards/mwl latest-mwl)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
@@ -482,6 +482,21 @@
                           :faction-filter "All")}
        (tr [:card-browser.clear "Clear"])]])
 
+(defn art-info [state]
+  (let [selected (r/cursor state [:selected-card])]
+    (when (and @selected (:art @selected))
+      (let [art (name (:art @selected))
+            alts (:alt-info @app-state)
+            info (first (filter #(= (:version %) art) alts))
+            blurb (:artist-blurb info)
+            link (:artist-link info)]
+        (when blurb
+          [:div.panel.green-shade.filters.artist-blurb
+           [:h4 "Artist Info"]
+           [:div blurb]
+           (when link
+             [:a {:href link} "More Info"])])))))
+
 (defn card-browser []
   (let [active (r/cursor app-state [:active-page])
         state (r/atom {:search-query ""
@@ -499,9 +514,11 @@
     (fn []
       (when (= "/cards" (first @active))
         [:div#cardbrowser.cardbrowser
-         [:div.blue-shade.panel.filters
-          [query-builder state]
-          [sort-by-builder state]
-          [dropdown-builder state]
-          [clear-filters state]]
+         [:div.card-info
+          [:div.blue-shade.panel.filters
+           [query-builder state]
+           [sort-by-builder state]
+           [dropdown-builder state]
+           [clear-filters state]]
+          [art-info state]]
          [card-list-view state scroll-top]]))))
