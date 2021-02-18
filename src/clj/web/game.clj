@@ -4,7 +4,7 @@
             [web.utils :refer [response]]
             [web.stats :as stats]
             [game.main :as main]
-            [game.diffs :refer [public-diffs public-states]]
+            [game.core.diffs :refer [public-diffs public-states]]
             [game.core :as core]
             [web.db :refer [db object-id]]
             [monger.collection :as mc]

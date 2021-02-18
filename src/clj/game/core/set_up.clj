@@ -3,6 +3,7 @@
     [game.core.card :refer [corp? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.checkpoint :refer [fake-checkpoint]]
+    [game.core.diffs :refer [public-states]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-sync]]
@@ -17,22 +18,6 @@
     [game.quotes :as quotes]
     [game.utils :refer [server-card dissoc-in]]
     [clj-time.core :as t]))
-
-(defn strip-for-replay [state]
-  (-> state
-    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
-    (update-in [:corp :register] select-keys [:spent-click])
-    (update-in [:runner :register] select-keys [:spent-click])
-    (dissoc-in [:corp :register-last-turn])
-    (dissoc-in [:runner :register-last-turn])
-    (dissoc-in [:run :current-ice])
-    (dissoc-in [:run :events])
-    (dissoc-in [:runner :user :isadmin])
-    (dissoc-in [:runner :user :options :blocked-users])
-    (dissoc-in [:runner :user :stats])
-    (dissoc-in [:corp :user :isadmin])
-    (dissoc-in [:corp :user :options :blocked-users])
-    (dissoc-in [:corp :user :stats])))
 
 (defn build-card
   [card]
@@ -142,5 +127,5 @@
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)
                             (fake-checkpoint state)))))
-    (swap! state assoc :history [(strip-for-replay @state)])
+    (swap! state assoc :history [(:hist-state (public-states state))])
     state))

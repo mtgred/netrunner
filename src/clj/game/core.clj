@@ -14,6 +14,7 @@
     [game.core.costs]
     [game.core.damage]
     [game.core.def-helpers]
+    [game.core.diffs]
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]
@@ -264,6 +265,10 @@
    make-recurring-ability
    reorder-choice
    trash-on-empty]
+
+  [game.core.diffs
+   public-states
+   public-diffs]
 
   [game.core.drawing
    draw
