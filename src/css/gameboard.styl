@@ -1,0 +1,847 @@
+// Gameboard
+
+.gameview
+    height: 100%
+    display-flex();
+    flex-direction(column);
+
+#gameboard
+    width: 100%
+    height: 100%
+    display: none
+
+.gameboard
+    width: 100%
+    flex-grow: 1
+    overflow: auto
+    display-flex()
+    flex-direction(row-reverse)
+    justify-content(space-between)
+    flex-wrap(wrap)
+
+    .panel
+        position: relative
+        padding: 3px 6px
+        overflow: visible
+
+    .header
+        position: absolute
+        top: 0
+        left: 0
+        z-index: 1
+        padding: 1px 4px
+        font-size: 10px
+        line-height: 14px
+
+    .darkbg
+        background: rgba(0, 0, 0, 0.6)
+        text-shadow 1px 1px 2px black
+        border-radius: 4px
+
+    .server-label
+        color: white
+        text-align: center
+        position: absolute
+        font-size: 105%
+        width: 100%
+        top: 100%
+        transform: translate(0, -100%)
+
+    .card
+        position: relative
+        height: 84px
+        width: 60px
+        border-radius: 4px
+        display-flex()
+
+        .cardname
+            float: left
+            font-size: 10px
+            line-height: 14px
+
+    .card.new
+        box-shadow(0 0 1px 2px orange)
+
+    .card.selected
+        box-shadow(0 0 1px 2px limegreen)
+
+    .card.hovered
+        box-shadow(0 0 1px 2px blue)
+        border-color: blue
+
+    .counters
+        position: absolute
+        top: 0
+        bottom: 0
+        left: 0
+        right: 0
+        z-index: 10
+        display-flex()
+        flex-direction(column)
+        justify-content(center)
+        align-items(center)
+
+    .counter
+        padding: 0
+        font-size: 12px
+        width: 24px
+        height: 24px
+        line-height: 24px
+        text-align: center
+        margin: 2px
+
+    .advance-counter
+        background-color: transparent-lightblue
+
+    .recurring-counter
+        background-color: transparent-green
+
+    .virus-counter
+        background-color: transparent-red
+
+    .power-counter
+        background-color: transparent-purple
+
+    .agenda-counter
+        background-color: transparent-darkblue
+
+    .credit-counter
+        background-color: transparent-black
+
+    .strength
+        position: absolute
+        z-index: 10
+        padding: 0
+        text-align: center
+        background-color: transparent-orange-bright
+        line-height: 24px
+        font-size: 12px
+        bottom: 3px
+        left: 3px
+        height: 24px
+        width: 24px
+
+    .extra-subs
+        position: absolute
+        z-index: 10
+        padding: 0
+        text-align: center
+        background-color: transparent-dark-green
+        line-height: 24px
+        font-size: 12px
+        top: 3px
+        left: 3px
+        height: 24px
+        width: 24px
+
+    .icon
+        position: absolute
+        z-index: 10
+        padding: 0
+        text-align: center
+        line-height: 24px
+        font-size: 12px
+        top: 3px
+        left: 3px
+        height: 24px
+        width: 24px
+
+        &.blue
+            background-color: blue
+
+        &.red
+            background-color: red
+
+        &.green
+            background-color: green
+
+    .server-target, .subtype-target
+        position: absolute
+        z-index: 10
+        padding: 0
+        text-align: center
+        line-height: 16px
+        font-size: 10px
+        top: 3px
+        right: 3px
+        padding-left: 3px
+        padding-right: 3px
+        // white-space: nowrap
+
+    .server-target
+        background-color: sienna
+
+    .subtype-target
+        background-color: dark-grey
+
+        &.barrier
+            background-color: anarch-orange
+
+        &.code-gate
+            background-color: shaper-green
+
+        &.sentry
+            background-color: criminal-blue
+
+    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
+        left: 0
+        bottom: 100%
+        margin: 6px -1px
+
+    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities
+        display: none
+        position: absolute
+        z-index: 30
+        width: 200px
+        font-size: 12px
+        line-height: 16px
+
+        > span
+            margin: 2px
+            &:last-child
+                margin-bottom: 0
+
+        > div
+            border: 1px solid white
+            padding: 3px 6px
+            border-radius: 4px
+            margin-bottom: 4px
+            cursor: pointer
+
+            &:last-child
+                margin-bottom: 0
+
+            &:hover
+                border-color: orange
+
+    .popup
+        display: none
+        position: absolute
+        width: 590px
+        min-height: 92px
+        z-index: 20
+
+        &.opponent
+            top: 100%
+            bottom: auto
+
+        .card
+            float: left
+            margin: 2px
+
+        a
+            display: inline-block
+            margin: 0 10px 8px 4px
+
+    .playable
+        cursor: pointer
+        border-radius: 4px
+
+        .card
+            box-shadow(0 0 1px 2px orange)
+
+    .bg
+        position: absolute
+        top: 0
+        left: 0
+
+    .deck, .discard, .identity
+        position: relative
+        height: 84px
+        width: 60px
+        border-radius: 4px
+
+    .server-card
+        position: relative
+        min-height: 84px
+        min-width: 60px
+
+        &.central
+            margin-top: 12px
+
+        &.shift
+            margin-left: -36px
+
+    .rfg
+        margin-left: 16px
+        margin-right: 16px
+
+    .discard
+        position: relative
+
+    .hand-container
+        position: relative
+
+    .hand-controls
+        display: inline-block
+
+    .hand, .scored, .rfg
+        height: 86px
+        padding: 0
+
+    .hand
+        width: 384px
+        margin-right: 0
+        float: left
+
+    .hand-expand
+        float: right
+        margin-left: 2px
+
+    .card-wrapper
+        display: inline-block
+        margin-right: 4px
+        transition(all 0.3s ease-in-out)
+
+        &:last-child
+            margin-right: 0
+
+    .disable-transition
+        transition: none
+
+    .squeeze .card-wrapper
+        position: absolute
+
+    .stats > div
+        height: 20px
+        font-size: 12px
+
+        .controls
+            float: right
+            display: none
+            margin-top: -1px
+
+        &:hover .controls
+            display: block
+
+    .start-game
+        width: 750px
+        animation: fadein 1.2s
+
+        .ident img
+            margin-top: 2px
+            width: 214px
+            height: 298px
+
+        .ident img.selected
+            box-shadow(0 0 3px 3px limegreen)
+            border-radius: 9px
+
+        .mulligan-me:after, .mulligan-op:after, .keep-me:after, .keep-op:after
+            transition(all 0.2s ease-in-out)
+            position: absolute
+            z-index:1
+            font-family:Arial,sans-serif
+            font-size:40px
+            color:#c00
+            background: rgb(255, 255, 255, 0.5)
+            border:solid 4px #c00
+            padding: 12px
+            border-radius:5px
+            zoom:1
+            opacity:0.9
+            text-shadow: 0 0 2px #c00
+            box-shadow: 0 0 2px #c00
+
+        .keep-me:after, .keep-op:after
+            content: "KEEP"
+            transform: rotate(-54deg)
+
+        .mulligan-me:after, .mulligan-op:after
+            content: "MULLIGAN"
+            transform: rotate(-54deg)
+
+        .mulligan-me:after
+            top:156px
+            left:10px
+
+        .mulligan-op:after
+            top:156px
+            right:20px
+
+        .keep-me:after
+            top:156px
+            left:66px
+
+        .keep-op:after
+            top:156px
+            right:66px
+
+        .vs
+            font-weight: bold
+            font-size: large
+            font-style: italic
+            margin: 1em
+
+        .contestants
+            font-size: xx-large
+            margin: 0
+            flex: 1
+
+        .intro-blurb
+            font-size: medium
+            font-style: italic
+            margin-top: 3ex
+
+        .start-hand
+            margin: 2ex 0 0 0
+            height: 150px
+            overflow: hidden
+            position: relative
+            width: auto
+
+            .card-back, .card-front
+                backface-visibility: hidden
+                position: absolute
+                top: 0
+                left: 0
+
+            .card-back
+                z-index: 2
+                transform: rotateY(0deg)
+
+            .card-front
+                transform: rotateY(180deg)
+
+            img.start-card
+                height: 140px
+                width: 100px
+
+            .start-card-frame
+                margin: 0 2px
+                display: inline-block
+                perspective: 1000px
+                width: 100px
+                height: 140px
+
+            .start-card-frame.flip .flipper
+                transform: rotateY(180deg)
+
+            .flipper
+                transition: 0.6s
+                transform-style : preserve-3d
+                position: relative
+
+    .box
+        display: flex
+        overflow: hidden
+
+        .column
+            flex-direction: column
+            align-content: stretch
+            align-self: center
+            flex: 1
+
+    .stacked
+        margin: 0px
+        display-flex()
+
+        .card-wrapper:not(:first-child)
+            margin-left: -40px
+
+    .hosted
+        margin-left: 24px
+        margin-top: -65px
+        display-flex()
+
+        .card-wrapper
+            margin-top: 0px
+            margin-bottom: 3px
+
+        .card-wrapper:not(:first-child)
+            margin-left: -20px
+
+        .card-wrapper:last-child
+            margin-right: 0px
+
+        .stacked
+            margin-top: 0px
+            margin-bottom: 3px
+
+            .card-wrapper:not(:first-child)
+                margin-left: -40px
+
+        .stacked:not(:first-child)
+            margin-left: -20px
+
+    .leftpane
+        display-flex()
+        flex-direction(column)
+        justify-content(space-between)
+
+        .inner-leftpane
+            flex(1)
+            display-flex()
+
+            .left-inner-leftpane
+                width: 201px
+                margin-top: -5px
+                margin-bottom: -5px
+                display-flex()
+                flex-direction(column)
+                justify-content(space-between)
+
+                > div
+                    width: 100%
+
+            .right-inner-leftpane
+                width: 186px
+                justify-content(space-between)
+                display-flex()
+                flex-direction(column)
+
+                > div
+                    width: 100%
+                    display-flex()
+                    flex-direction(column)
+
+                .panel
+                    margin: 0
+
+                .button-pane
+                    .panel
+                        padding: 8px
+                        z-index: 20
+
+                    .run-button
+                        position: relative
+
+                        .servers-menu
+                            left: 100%
+                            bottom: 0
+                            width: 120px
+                            margin: 3px
+                            z-index: 40
+
+                    h4
+                        text-align: center
+                        margin-bottom: 10px
+
+                    .info
+                        text-align: center
+                        margin: 0 0 5px 0
+                        font-size: 10pt
+                        font-style: italic
+
+                    button
+                        width: 100%
+                        font-size: 11px
+                        margin: 0 0 5px 0
+                        padding: 0 8px 1px
+
+                        &:last-child
+                            margin-bottom: 0
+
+                    .credit-select
+                        text-align: center
+                        margin-bottom: 10px
+
+                        select
+                            margin-right: 5px
+
+    .centralpane
+        flex(1)
+        display-flex()
+        flex-direction(column)
+        min-width: 90px
+        overflow: visible
+
+        .card-wrapper
+            margin: 3px 6px
+
+        .runner-board
+            flex(1)
+            display-flex()
+            flex-direction(column)
+
+            > div
+                display-flex()
+
+                &:first-child
+                    margin-top: auto
+
+            .runner-centrals
+                padding: 5px 0
+                display-flex()
+
+                .deck, .discard, .identity
+                    margin-left: 16px
+                    margin-right: 16px
+
+        .runner-board.opponent
+            opacity: 0.99
+
+            > div:first-child
+                margin-top: 0
+
+            > div:last-child
+                margin-bottom: auto
+
+        .corp-board
+            flex(1)
+            display-flex()
+            flex-direction(row-reverse)
+            justify-content(flex-end)
+
+            .server
+                position: relative
+                min-width: 84px
+                margin: 0 4px
+                transform(rotate(180deg))
+                display-flex()
+                flex-direction(column-reverse)
+                justify-content(flex-end)
+                align-items(center)
+
+                .ices
+                    position: relative
+                    display-flex()
+                    flex-direction(column-reverse)
+                    justify-content(flex-end)
+                    align-items(center)
+
+                    .run-card
+                        transform(rotate(180deg))
+
+                        &:first-child
+                            margin-top: 100px
+
+                        &:not(:first-child)
+                            margin-top: -42px
+                            margin-left: 12px
+
+                    .run-arrow
+                        position: relative
+                        top: 20px
+                        animation: fadein 0.5s
+
+                        > div
+                            position: absolute
+                            left: 50%
+                            top: 0
+                            bottom: -70px
+                            width: 16px
+                            background-color: run-arrow
+                            transform(translateX(-50%))
+                            border-radius: 0 0 4px 4px
+                            -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                            filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+
+                            &:before
+                                content: ""
+                                display: block
+                                position: absolute
+                                right: 8px
+                                width: 0
+                                height: 0
+                                border-left: 16px solid transparent
+                                border-right: 16px solid transparent
+                                bottom: 100%
+                                left: 50%
+                                transform(translateX(-50%))
+                                border-bottom: 22px solid run-arrow
+                                -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                                filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+
+                        > div.approach
+                            background-color: approach
+
+                            &:before
+                                border-bottom: 22px solid approach
+
+                        > div.encounter
+                            background-color: encounter
+
+                            &:before
+                                border-bottom: 22px solid encounter
+
+                    .ice
+                        margin: -7px 0
+                        transform(rotate(90deg))
+                        cursor: pointer
+
+                        &.host
+                            margin-bottom: 5px
+
+                        .run-arrow
+                            top: auto
+                            bottom: 42px
+                            left: 57px
+                            transform: rotate(-90deg)
+
+                    .hosted
+                        margin-top: -69px
+                        flex-direction(column)
+
+                        .card-frame
+                            margin-left: 0
+                            transform(rotate(90deg))
+
+                            &:not(:first-child)
+                                margin-top: -42px
+
+                            .counters
+                                transform(rotate(-90deg))
+
+                            .abilities, .runner-abilities, .corp-abilities
+                                top: auto
+                                bottom: 100%
+                                left: 0
+                                margin: 6px -1px
+                                transform(initial)
+
+                    .strength
+                        transform(rotate(90deg))
+
+                    .subtype-target
+                        transform(rotate(90deg), translateX(100%))
+                        transform-origin(100% 0)
+
+                    .icon
+                        transform(rotate(90deg))
+
+                    .counter
+                        transform(rotate(90deg))
+
+                    .abilities, .runner-abilities, .corp-abilities
+                        left: 100%
+                        margin: -1px 6px
+
+                    .abilities
+                        top: 0
+                        bottom: auto
+                        transform(rotate(90deg) translateY(-100%))
+                        transform-origin(0 0)
+
+                    .runner-abilities, .corp-abilities
+                        bottom: 0
+                        transform(rotate(-90deg) translateY(100%))
+                        transform-origin(0 100%)
+
+                .content
+                    position: relative
+                    min-height: 84px
+                    margin: 5px
+                    transform(rotate(180deg))
+                    display-flex()
+
+        .corp-board.opponent .server
+            transform(initial)
+
+            .content
+                transform(initial)
+
+            .strength
+                transform(rotate(-90deg))
+
+            .icon
+                transform(rotate(-90deg))
+
+            .ices
+                opacity: 0.99
+
+                .subtype-target
+                    transform(rotate(-90deg), translateY(-100%))
+
+                .hosted
+
+                    .card-frame
+                        transform(rotate(-90deg))
+
+                    .counters
+                        transform(rotate(90deg))
+
+                    .abilities, .runner-abilities, .corp-abilities
+                        top: 100%
+                        bottom: auto
+
+                .counter
+                    transform(rotate(-90deg))
+
+                .run-card
+                    transform(initial)
+
+    .rightpane
+        position: relative
+        display-flex()
+        flex-direction(column)
+        z-index:10
+
+        .card-zoom
+            width: 220px
+            height: 307px
+            margin-top: 5px
+            margin-right: 5px
+            position: relative
+            transition(opacity 0.2s ease-in-out)
+            opacity: 0
+
+            .card-preview
+                width: 100%
+                height: 100%
+
+                .text
+                    height: 195px
+
+        .card-zoom.fade
+            opacity: 1
+
+        // Card implementation div
+        .implementation
+            width: 150px
+            position: absolute
+            top: 0
+            right: 224px
+            text-align: right
+            font-size: 12px
+            line-height: 12px
+
+            .unimplemented
+                color: red
+                font-style: italic
+
+            .impl-msg
+                color: orange
+
+        .log
+            width: 225px
+            position: absolute
+            top: 317px
+            bottom: 0
+
+            .username
+                font-size: 12px
+                margin-top: -2px
+
+            .avatar
+                width: 28px
+                height: 28px
+
+            > .panel
+                margin-left: 0
+                font-size: 12px
+                line-height: 15px
+
+            .messages
+                flex(1)
+                overflow: auto
+                -webkit-overflow-scrolling: touch
+                position: absolute
+                top: 24px
+                bottom: 70px
+                left: 0
+                right: 4px
+                margin: 0
+
+                div
+                    animation: fadein 0.5s
+
+            > div
+                position: absolute
+                bottom: 12px
+                left: 0
+                right: 4px
+
+            .log-input form input, .indicate-action
+                width: 100%
+
