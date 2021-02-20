@@ -1,7 +1,7 @@
 (ns nr.chat
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :as s]
+            [clojure.string :refer [lower-case] :as s]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET PUT]]
             [nr.appstate :refer [app-state]]
@@ -11,7 +11,7 @@
             [nr.news :refer [news]]
             [nr.cardbrowser :refer [image-url]]
             [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
-            [nr.translations :refer [tr]]
+            [nr.translations :refer [tr tr-pronouns]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -171,6 +171,11 @@
          {:on-click #(-> (:msg-buttons @msg-state) js/$ .toggle)
           :class (if my-msg "" "clickable")}
          (:username message)]
+
+        (when-let [pronouns (:pronouns message)]
+          (let [pro-str (if (= "blank" pronouns) "" (str "(" (tr-pronouns pronouns) ")"))]
+            [:span.pronouns (lower-case pro-str)]))
+
         (when user
           (when (not my-msg)
             [:div.panel.blue-shade.block-menu

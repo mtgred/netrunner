@@ -35,7 +35,7 @@
         msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
-(defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
+(defn- insert-msg [{{{:keys [username emailhash options]} :user} :ring-req
                     client-id :client-id
                     {:keys [:channel :msg]} :?data :as event}]
   (let [len-valid (<= (count msg) (chat-max-length))
@@ -46,6 +46,7 @@
       (if (and len-valid rate-valid)
         (let [message {:emailhash emailhash
                        :username  username
+                       :pronouns  (:pronouns options)
                        :msg       msg
                        :channel   channel
                        :date      (java.util.Date.)}
