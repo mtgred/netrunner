@@ -1780,7 +1780,8 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server")))
   (testing "fire before pass"
     (do-game
-      (new-game {:corp {:deck ["Mumbad City Grid" "Quandary" "Ice Wall"]}})
+      (new-game {:corp {:deck ["Mumbad City Grid" "Enigma" "Quandary" "Wall of Static" "Ice Wall"]
+                        :credits 10}})
       (play-from-hand state :corp "Mumbad City Grid" "New remote")
       (play-from-hand state :corp "Quandary" "Server 1")
       (play-from-hand state :corp "Ice Wall" "Server 1")
@@ -1796,7 +1797,16 @@
       (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
       (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
       (run-jack-out state)
-      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server"))))
+      (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Wall of Static" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (is (empty? (:prompt (get-corp))) "Mumbad doesn't trigger on other servers"))))
 
 (deftest mumbad-virtual-tour
   ;; Tests that Mumbad Virtual Tour forces trash
