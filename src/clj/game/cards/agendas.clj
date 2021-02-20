@@ -387,6 +387,64 @@
    :stolen {:msg "force the Corp to take 1 bad publicity"
             :effect (effect (gain-bad-publicity :corp 1))}})
 
+(defcard "Corporate Oversight A"
+  {:interactive (req true)
+   :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+              :yes-ability
+              {:async true
+               :effect (effect
+                         (continue-ability
+                           (if (not-empty (filter ice? (:deck corp)))
+                             {:async true
+                              :prompt "Choose a piece of ice"
+                              :choices (req (filter ice? (:deck corp)))
+                              :effect (effect
+                                        (continue-ability
+                                          (let [chosen-ice target]
+                                            {:async true
+                                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                              (corp-install-list state chosen-ice))
+                                             :effect (effect (shuffle! :deck)
+                                                             (corp-install eid chosen-ice target
+                                                                           {:ignore-all-cost true
+                                                                            :install-state :rezzed-no-rez-cost}))})
+                                          card nil))}
+                             {:prompt "You have no ice in R&D"
+                              :choices ["Carry on!"]
+                              :prompt-type :bogus
+                              :effect (effect (shuffle! :deck))})
+                           card nil))}}})
+
+(defcard "Corporate Oversight B"
+  {:interactive (req true)
+   :optional {:prompt "Search R&D for a piece of ice to install protecting a central server?"
+              :yes-ability
+              {:async true
+               :effect (effect
+                         (continue-ability
+                           (if (not-empty (filter ice? (:deck corp)))
+                             {:async true
+                              :prompt "Choose a piece of ice"
+                              :choices (req (filter ice? (:deck corp)))
+                              :effect (effect
+                                        (continue-ability
+                                          (let [chosen-ice target]
+                                            {:async true
+                                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
+                                                              (corp-install-list state chosen-ice))
+                                             :effect (effect (shuffle! :deck)
+                                                             (corp-install eid chosen-ice target
+                                                                           {:ignore-all-cost true
+                                                                            :install-state :rezzed-no-rez-cost}))})
+                                          card nil))}
+                             {:prompt "You have no ice in R&D"
+                              :choices ["Carry on!"]
+                              :prompt-type :bogus
+                              :effect (effect (shuffle! :deck))})
+                           card nil))}}})
+
 (defcard "Corporate Sales Team"
   (let [e {:req (req (pos? (get-counters card :credit)))
            :msg "gain 1 [Credits]"
