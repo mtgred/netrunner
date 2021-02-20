@@ -1,19 +1,28 @@
-(ns game.diffs
-  (:require [game.core :refer [card-is-public?]]
+(ns game.core.diffs
+  (:require [game.core.flags :refer [card-is-public?]]
             [game.core.card :refer [private-card]]
-            [game.core.set-up :refer [strip-for-replay]]
             [game.utils :refer [dissoc-in]]
             [differ.core :as differ]))
 
 (defn- strip [state]
   (-> state
-    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
-    (update-in [:corp :register] select-keys [:spent-click])
-    (update-in [:runner :register] select-keys [:spent-click])
-    (dissoc-in [:corp :register-last-turn])
-    (dissoc-in [:runner :register-last-turn])
-    (dissoc-in [:run :current-ice])
-    (dissoc-in [:run :events])))
+      (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
+      (update-in [:corp :register] select-keys [:spent-click])
+      (update-in [:runner :register] select-keys [:spent-click])
+      (dissoc-in [:corp :register-last-turn])
+      (dissoc-in [:runner :register-last-turn])
+      (dissoc-in [:run :current-ice])
+      (dissoc-in [:run :events])))
+
+(defn strip-for-replay [state]
+  (-> state
+      (strip)
+      (dissoc-in [:runner :user :isadmin])
+      (dissoc-in [:runner :user :options :blocked-users])
+      (dissoc-in [:runner :user :stats])
+      (dissoc-in [:corp :user :isadmin])
+      (dissoc-in [:corp :user :options :blocked-users])
+      (dissoc-in [:corp :user :stats])))
 
 (defn- private-card-vector [state side cards]
   (mapv (fn [card]
@@ -65,7 +74,7 @@
      (if (get-in @state [:options :spectatorhands])
        (assoc @state :corp corp-deck :runner runner-deck)
        (assoc @state :corp corp-private :runner runner-private))
-     (assoc @state :corp corp-deck :runner runner-deck)]))
+     @state]))
 
 (defn public-states [state]
   (let [[new-corp new-runner new-spect new-hist] (private-states state)]
