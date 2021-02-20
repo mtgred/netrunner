@@ -1,0 +1,49 @@
+// Modal
+.modal-open
+    overflow: hidden
+
+.modal
+    position: fixed
+    top: 0
+    right: 0
+    bottom: 0
+    left: 0
+    z-index: 10001
+    display: none
+    overflow: auto
+    overflow-y: scroll
+    -webkit-overflow-scrolling: touch
+    outline: 0
+
+.modal-dialog
+    position: absolute
+    top: 50%
+    left: 50%
+    background-clip: padding-box
+    border: 1px solid orange
+    background-color: rgba(0, 0, 0, 0.6)
+    border-radius: 10px
+    outline: none
+    padding: 15px 20px
+    color: white
+    transform(translate(-50%, -50%))
+    transition(all 0.2s ease-in-out)
+
+.modal-backdrop
+    position: fixed
+    top: 0
+    right: 0
+    bottom: 0
+    left: 0
+    z-index: 10000
+    background-color: black
+    transition(all 0.2s ease-in-out)
+
+.modal-backdrop.fade
+    opacity: 0
+
+.modal-backdrop.in
+    opacity: 0.7
+
+.unseen
+    opacity: 0.5

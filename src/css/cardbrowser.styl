@@ -1,0 +1,132 @@
+// Card Browser
+.cardbrowser
+    display-flex()
+    justify-content(space-between)
+    height: 100vh
+
+    .heading, .type
+        font-weight: bold
+
+    .pack
+        font-style: italic
+        margin-top: 8px
+
+    .selected-alt
+        font-style: italic
+        color: orange
+
+    .alt-art-selector
+        margin-top: 10px
+
+    ul
+        padding-left: revert
+        padding-top: 8px
+
+.filters
+    flex(0 0 250px)
+    margin: 10px
+    padding: 10px
+    align-self: flex-start
+    min-height: 348px
+
+    input, select
+        width: 100%
+        font-size: 13px
+
+    input.hide-rotated
+        width: auto
+
+    .hide-rotated-div
+        margin-top: 10px
+        margin-bottom: 20px
+
+    h4
+        margin-top: 5px
+
+.search-box
+    position: relative
+    margin-bottom: 10px
+
+    .search
+        border-radius: 14px
+        padding: 0 22px
+
+    .search-icon
+        position: absolute
+        color: dark-grey
+        top: 0
+        left: 5px
+
+    .search-clear
+        position: absolute
+        color: grey
+        top: 0
+        right: 2px
+        width: 26px
+        height: 26px
+        cursor: pointer
+        transition(all 0.2s ease-in-out)
+
+        &:hover
+            color: dark-grey
+
+.set-list > div
+    cursor: pointer
+    border: 1px solid transparent
+    padding: 0 4px
+    margin: 0 -4px
+    border-radius: 4px
+
+    &:hover
+        background-color: transparent-orange
+        border: 1px solid orange
+
+.card-list
+    overflow: auto
+    padding: 10px
+    -webkit-overflow-scrolling: touch
+    transform: translateZ(0)
+    flex(1)
+    display-flex()
+    flex-direction(row)
+    flex-wrap(wrap)
+    justify-content(space-around)
+
+.card-preview
+    float: left
+    position: relative
+    height: 348px
+    width: 250px
+    margin: 0 10px 10px 2px
+    border-radius: 8px
+    padding: 10px
+
+    &.selected
+        box-shadow(0 0 1px 2px limegreen)
+        z-index: 10
+
+    &.selected-alt
+        box-shadow(0 0 1px 2px orange)
+
+    > h4
+        margin-bottom: 5px
+
+    > h4, .type
+        text-transform: uppercase
+
+    .heading, .type
+        font-weight: bold
+
+    .text
+        position: absolute
+        left: 10px
+        right: 10px
+        height: 245px
+
+    > img
+        position: absolute
+        top: 0px
+        left: 0px
+        height: 100%
+        width: 100%
+        border-radius: 12px
