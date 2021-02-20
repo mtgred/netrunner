@@ -95,11 +95,15 @@
               can-pump (fn [ability]
                          (when (:heap-breaker-pump ability)
                            ((:req ability (req true)) state side eid card nil)))
-              breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
-              pump-strength-at-once (when breaker-ability
-                                      (:heap-breaker-pump breaker-ability))
-              subs-broken-at-once (when breaker-ability
-                                    (:heap-breaker-break breaker-ability))
+              pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              can-break (fn [ability]
+                          (when (:break-req ability)
+                            ((:break-req ability) state side eid card nil)))
+              break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+              pump-strength-at-once (when pump-ability
+                                      (:heap-breaker-pump pump-ability))
+              subs-broken-at-once (when pump-ability
+                                    (:heap-breaker-break pump-ability))
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
                                        (get-strength card))
@@ -127,19 +131,21 @@
                                       (+ pumps-needed
                                          breaks-needed
                                          (if (pos? pumps-needed) -1 0)))) ;already broken once with last pump
-              total-cost (when (and breaker-ability
+              total-cost (when (and pump-ability
                                     ability-uses-needed)
                            (if x-breaker
                              [:credit x-number]
-                             (repeat ability-uses-needed (:cost breaker-ability))))]
+                             (repeat ability-uses-needed (:cost pump-ability))))]
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
                                    (= :encounter-ice (:phase run))
-                                   breaker-ability)
+                                   pump-ability
+                                   break-ability)
                             (vec (concat abs
-                                         (when (and breaker-ability
+                                         (when (and pump-ability
+                                                    break-ability
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
@@ -1794,6 +1800,10 @@
                     :cost [:x-credits]
                     :heap-breaker-pump :x ; strength gained
                     :heap-breaker-break :x ; number of subs broken
+                    :break-req (req (and current-ice
+                                         (rezzed? current-ice)
+                                         (= :encounter-ice (:phase run))
+                                         (has-subtype? current-ice "Barrier")))
                     :effect (effect (pump card (cost-value eid :x-credits))
                                     (continue-ability
                                       (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
