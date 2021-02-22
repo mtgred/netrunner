@@ -1290,6 +1290,24 @@
                 :msg "give the Corp 1 bad publicity"
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
+(defcard "Investigator Inez Delgado"
+  {:abilities [{:msg "add it to their score area as an agenda worth 0 agenda points"
+                :label "Add to score area and reveal cards in server"
+                :async true
+                :prompt "Choose a server"
+                :choices (req remotes)
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (wait-for
+                               (as-agenda state :runner (make-eid state eid) card 0)
+                               (let [zone (server->zone state target)
+                                     path (conj (into [:corp] zone) :content)
+                                     cards (string/join ", " (map :title (get-in @state path)))]
+                                 (wait-for
+                                   (reveal state :corp (make-eid state eid) targets)
+                                   (system-msg state side
+                                               (str "uses Investigator Inez Delgado to reveal " cards " from " target))
+                                   (effect-completed state side eid)))))}]})
+
 (defcard "Jackpot!"
   (let [jackpot {:interactive (req true)
                  :optional
