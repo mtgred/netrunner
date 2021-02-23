@@ -2984,7 +2984,8 @@
     (do-game
       (new-game {:corp {:deck ["Tollbooth" "Ice Wall"]}
                  :runner {:id "Reina Roja: Freedom Fighter"
-                          :deck [(qty "Hedge Fund" 3) "Muertos Gang Member"]}})
+                          :deck [(qty "Sure Gamble" 3)]
+                          :hand ["Muertos Gang Member"]}})
       (play-from-hand state :corp "Tollbooth" "HQ")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (let [toll (get-ice state :hq 0)
@@ -2996,10 +2997,10 @@
         (play-from-hand state :runner "Muertos Gang Member")
         (click-card state :corp (refresh iw))
         (is (not (rezzed? (refresh iw))) "Ice Wall derezzed")
-        (is (= 2 (count (:hand (get-runner)))) "2 cards in Runner's hand")
+        (is (zero? (count (:hand (get-runner)))) "0 cards in Runner's hand")
         (let [muer (get-resource state 0)]
           (card-ability state :runner muer 0)
-          (is (= 3 (count (:hand (get-runner)))) "Runner drew a card from Muertos")
+          (is (= 1 (count (:hand (get-runner)))) "Runner drew a card from Muertos")
           (click-card state :corp toll)
           (is (rezzed? (refresh toll)) "Tollbooth was rezzed")
           (is (zero? (:credit (get-corp))) "Corp has 0 credits"))))))
@@ -4817,7 +4818,7 @@
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Sure Gamble" 5)]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Vanity Project" "Degree Mill"]}
                  :runner {:deck ["The Black File"]}})
       (play-and-score state "Degree Mill")
@@ -5100,7 +5101,7 @@
       (new-game {:runner {:deck ["The Supplier"
                                  "Plascrete Carapace"
                                  "Utopia Shard"
-                                 "Hedge Fund"]}})
+                                 "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Supplier")
       (let [ts (get-resource state 0)]
@@ -5125,7 +5126,7 @@
                           :deck ["The Supplier"
                                  "Plascrete Carapace"
                                  "Kati Jones"
-                                 "Hedge Fund"]}})
+                                 "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Supplier")
       (let [ts (get-resource state 0)]

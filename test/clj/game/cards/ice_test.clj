@@ -2252,8 +2252,7 @@
       (play-from-hand state :runner "Engolo")
       (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
       (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card before run")
-      (let [kakugo (get-ice state :rd 0)
-            engolo (get-program state 0)]
+      (let [kakugo (get-ice state :rd 0)]
         (run-on state "R&D")
         (rez state :corp kakugo)
         (run-continue state)
@@ -2266,8 +2265,7 @@
   ;; Kamali 1.0
   (do-game
     (new-game {:corp {:deck ["Kamali 1.0"]}
-               :runner {:deck ["Astrolabe" "Decoy"
-                               "Cache" "Hedge Fund"]}})
+               :runner {:deck ["Astrolabe" "Decoy" "Cache"]}})
     (play-from-hand state :corp "Kamali 1.0" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
@@ -3555,7 +3553,7 @@
 (deftest rime
   ;; Rime
   (do-game
-    (new-game {:corp {:deck [(qty "Sure Gamble" 10)]
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                       :hand [(qty "Rime" 2) (qty "Ice Wall" 2)]}})
     (core/gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "HQ")

@@ -7,6 +7,7 @@
     [game.core.initializing :refer [update-all-card-labels]]
     [game.core.link :refer [update-link]]
     [game.core.memory :refer [update-mu]]
+    [game.core.subtypes :refer [update-all-subtypes]]
     [game.core.tags :refer [update-tag-status]]
     [game.utils :refer [dissoc-in]]))
 
@@ -30,6 +31,7 @@
                    (update-mu state)
                    (update-hand-size state :corp)
                    (update-hand-size state :runner)
+                   (update-all-subtypes state)
                    (update-tag-status state)]]
       (when (and (some true? changed)
                  (< i 10))

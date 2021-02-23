@@ -86,28 +86,30 @@
     (repeat amt card)))
 
 (defn card-vec->card-map
-  [[card amt]]
+  [side [card amt]]
   (let [loaded-card (if (string? card) (server-card card) card)]
     (when-not loaded-card
       (throw (Exception. (str card " not found in @all-cards"))))
+    (when (not= side (:side loaded-card))
+      (throw (Exception. (str (:title loaded-card) " is not a " side " card"))))
     {:card loaded-card
      :qty amt}))
 
 (defn transform
-  [cards]
+  [side cards]
   (->> cards
        flatten
        (filter string?)
        frequencies
-       (map card-vec->card-map)
+       (map #(card-vec->card-map side %))
        seq))
 
 (defn make-decks
   [{:keys [corp runner options]}]
-  {:corp {:deck (or (transform (conj (:deck corp)
-                                     (:hand corp)
-                                     (:discard corp)))
-                    (transform (qty "Hedge Fund" 3)))
+  {:corp {:deck (or (transform "Corp" (conj (:deck corp)
+                                            (:hand corp)
+                                            (:discard corp)))
+                    (transform "Corp" (qty "Hedge Fund" 3)))
           :hand (when-let [hand (:hand corp)]
                   (flatten hand))
           :discard (when-let [discard (:discard corp)]
@@ -116,10 +118,10 @@
                       (server-card id))
           :credits (:credits corp)
           :bad-pub (:bad-pub corp)}
-   :runner {:deck (or (transform (conj (:deck runner)
-                                       (:hand runner)
-                                       (:discard runner)))
-                      (transform (qty "Sure Gamble" 3)))
+   :runner {:deck (or (transform "Runner" (conj (:deck runner)
+                                                (:hand runner)
+                                                (:discard runner)))
+                      (transform "Runner" (qty "Sure Gamble" 3)))
             :hand (when-let [hand (:hand runner)]
                     (flatten hand))
             :discard (when-let [discard (:discard runner)]

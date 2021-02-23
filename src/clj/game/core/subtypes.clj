@@ -15,8 +15,9 @@
 (defn add-subtype
   [card subtype]
   (assert (or (string? subtype) (keyword? subtype)) "Given subtype must be a string")
-  (let [subtype (capitalize (if (keyword? subtype) (name subtype) subtype))]
-    (update card :subtypes #(into [] (conj % subtype)))))
+  (let [subtype (if (keyword? subtype) (name subtype) subtype)
+        new-subtypes (into [] (conj (:subtypes card) subtype))]
+    (assoc card :subtypes new-subtypes)))
 
 (defn add-subtype!
   [state side card subtype]
@@ -25,8 +26,9 @@
 (defn remove-subtype
   [card subtype]
   (assert (or (string? subtype) (keyword? subtype)) "Given subtype must be a string")
-  (let [subtype (if (keyword? subtype) (name subtype) subtype)]
-    (update card :subtypes #(remove-once (fn [s] (= s subtype)) %))))
+  (let [subtype (if (keyword? subtype) (name subtype) subtype)
+        new-subtypes (remove-once (fn [s] (= s subtype)) (:subtypes card))]
+    (assoc card :subtypes new-subtypes)))
 
 (defn remove-subtype!
   [state side card subtype]
@@ -36,7 +38,6 @@
   [state card]
   (let [printed-subtypes (:subtypes (server-card (:title card)))
         subtype-effects (get-effects state nil card :subtypes)]
-    (println subtype-effects)
     (into [] (concat printed-subtypes subtype-effects))))
 
 (defn update-subtypes-for-card
@@ -53,7 +54,7 @@
   ([state _]
    (reduce
      (fn [changed? card]
-       (or (update-subtypes-for-card state card)
+       (or (update-subtypes-for-card state nil card)
            changed?))
      false
      (get-all-cards state))))
