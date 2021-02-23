@@ -5115,3 +5115,40 @@
       (play-from-hand state :runner "Corroder")
       (is (zero? (get-strength (refresh wrap)))
           "Wraparound 0 strength after Corroder installed"))))
+
+(deftest eli-1-0
+  ;; Eli 1.0
+  (testing "Runner with 1 click left, uses it to break first subroutine but run ends when second 'End the run' is triggered"
+    (do-game
+      (new-game
+        {:corp   {:hand ["Eli 1.0"]}})
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (take-credits state :corp)
+      (let [eli (get-ice state :hq 0)]
+        (take-credits state :runner 2)
+        (run-on state :hq)
+        (rez state :corp eli)
+        (run-continue state)
+        (is (= 1 (:click (get-runner))) "Runner starts with 1 click")
+        (card-side-ability state :runner eli 0)
+        (click-prompt state :runner "End the run")
+        (is (= 0 (:click (get-runner))) "Runner has no clicks left")
+        (card-subroutine state :corp eli 0)
+        (is (not (:run @state)) "Run has ended"))))
+  (testing "Runner uses 2 clicks to break all subroutines so Runner passes the rezzed Eli 1.0 ice"
+    (do-game
+      (new-game
+        {:corp   {:hand ["Accelerated Beta Test", "Eli 1.0"]}})
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (take-credits state :corp)
+      (let [eli (get-ice state :hq 0)]
+        (run-on state :hq)
+        (rez state :corp eli)
+        (run-continue state)
+        (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+        (card-side-ability state :runner eli 0)
+        (click-prompt state :runner "End the run")
+        (card-side-ability state :runner eli 0)
+        (click-prompt state :runner "End the run")
+        (is (= 1 (:click (get-runner))) "Runner has one click left")
+        (is (:run @state)) "Run has not ended"))))
