@@ -306,31 +306,19 @@
     (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
 
 ;;; For Morph ICE
-(defn morph [state side card new old]
-  (update! state side (assoc card
-                             :subtype-target new
-                             :subtype (combine-subtypes true
-                                                        (remove-subtypes (:subtype card) old)
-                                                        new)))
-  (update-ice-strength state side card))
-
-(defn morph-effect
-  "Creates morph effect for ICE. Morphs from base type to other type"
-  [base other]
-  (req (if (odd? (get-counters (get-card state card) :advancement))
-         (morph state side card other base)
-         (morph state side card base other))))
-
 (defn morph-ice
   "Creates the data for morph ICE with specified types and ability."
   [base other ability]
-  (let [ab {:req (req (same-card? card target))
-            :effect (morph-effect base other)}]
-    {:advanceable :always
-     :effect (morph-effect base other)
-     :subroutines [ability]
-     :events [(assoc ab :event :advance)
-              (assoc ab :event :advancement-placed)]}))
+  {:advanceable :always
+   :constant-effects [{:type :lose-subtype
+                       :req (req (and (same-card? card target)
+                                      (odd? (get-counters (get-card state card) :advancement))))
+                       :value base}
+                      {:type :gain-subtype
+                       :req (req (and (same-card? card target)
+                                      (odd? (get-counters (get-card state card) :advancement))))
+                       :value other}]
+   :subroutines [ability]})
 
 ;;; For Constellation ICE
 (defn constellation-ice
@@ -765,18 +753,20 @@
                           :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))})]})
 
 (defcard "Chimera"
-  (let [turn-end-ability {:effect (effect (derez :corp card)
-                                          (update! (assoc (get-card state card) :subtype "Mythic")))}]
-    {:prompt "Choose one subtype"
-     :choices ["Barrier" "Code Gate" "Sentry"]
-     :msg (msg "make it gain " target " until the end of the turn")
-     :effect (effect (update! (assoc card
-                                     :subtype-target target
-                                     :subtype (combine-subtypes true (:subtype card) target)))
-                     (update-ice-strength card))
-     :events [(assoc turn-end-ability :event :runner-turn-ends)
-              (assoc turn-end-ability :event :corp-turn-ends)]
-     :subroutines [end-the-run]}))
+  {:prompt "Choose one subtype"
+   :choices ["Barrier" "Code Gate" "Sentry"]
+   :msg (msg "make it gain " target)
+   :constant-effects [{:type :gain-subtype
+                       :req (req (and (same-card? card target) (:subtype-target card)))
+                       :value (req (:subtype-target card))}]
+   :effect (effect (update! (assoc card :subtype-target target)))
+   :events [{:event :runner-turn-ends
+             :req (req (rezzed? card))
+             :effect (effect (derez :corp card))}
+            {:event :corp-turn-ends
+             :req (req (rezzed? card))
+             :effect (effect (derez :corp card))}]
+   :subroutines [end-the-run]})
 
 (defcard "Chiyashi"
   {:implementation "Trash effect when using an AI to break is activated manually"
@@ -1532,7 +1522,8 @@
 
 (defcard "Hive"
   (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
-        ability {:effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
+        ability {:silent (req true)
+                 :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
     {:events [(assoc ability
                      :event :rez
                      :req (req (same-card? card target)))
@@ -1917,22 +1908,22 @@
     :choices {:card #(and (ice? %)
                           (active? %))
               :not-self true}
-    :effect (req (let [target-subtypes (:subtype target)
-                       new-subtypes (combine-subtypes false (:subtype card) target-subtypes)
-                       card (update! state side (assoc card :subtype new-subtypes))]
+    :effect (req (let [target-subtypes (:subtype target)]
+                   (register-floating-effect
+                     state :corp card
+                     {:type :gain-subtype
+                      :duration :end-of-run
+                      :req (req (same-card? card target))
+                      :value (:subtypes target)})
                    (doseq [sub (:subroutines target)]
                      (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events
                      state side card
-                     (let [new-card (get-card state card)
-                           cid (:cid target)]
+                     (let [cid (:cid target)]
                        [{:event :run-ends
                          :unregister-once-resolved true
-                         :req (req (get-card state new-card))
-                         :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %)))
-                                         (update! (assoc (get-card state new-card)
-                                                         :subtype (remove-subtypes-once (:subtype new-card)
-                                                                                        (string/split target-subtypes #" - ")))))}]))))}
+                         :req (req (get-card state card))
+                         :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
                   :async true
                   :effect (req (if (zero? (count (:hand runner)))
@@ -2249,19 +2240,15 @@
                    (net-or-trash 3 4)]}))
 
 (defcard "Mother Goddess"
-  (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
-                                               (filter #(and (rezzed? %)
-                                                             (not (same-card? card %))))
-                                               (mapcat #(string/split (:subtype %) #" - "))
-                                               (cons "Mythic")
-                                               distinct
-                                               (string/join " - "))]
-                              (assoc card
-                                     :subtype-target (remove-subtypes subtype "Mythic")
-                                     :subtype subtype))))
-        mg {:req (req (ice? target))
-            :effect ab}]
-    {:effect ab
+  (let [mg {:req (req (ice? target))
+            :effect (effect (update-all-subtypes))}]
+    {:constant-effects [{:type :gain-subtype
+                         :req (req (same-card? card target))
+                         :value (req (->> (vals (:servers corp))
+                                          (mapcat :ices)
+                                          (filter #(and (rezzed? %)
+                                                        (not (same-card? card %))))
+                                          (mapcat :subtypes)))}]
      :subroutines [end-the-run]
      :events [(assoc mg :event :rez)
               (assoc mg :event :card-moved)

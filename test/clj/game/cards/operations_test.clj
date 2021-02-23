@@ -4111,7 +4111,7 @@
   (do-game
     (new-game {:corp {:deck ["Transparency Initiative" "Oaktown Renovation"
                              "Project Atlas" "Hostile Takeover" "Casting Call"]}})
-    (core/gain state :corp :click 5)
+    (core/gain state :corp :click 10)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (play-from-hand state :corp "Casting Call")
     (click-card state :corp (find-card "Project Atlas" (:hand (get-corp))))
@@ -4133,12 +4133,12 @@
       (is (has-subtype? (refresh hostile) "Public"))
       ;; gain 1 credit when advancing
       (is (= 5 (:credit (get-corp))))
-      (core/advance state :corp {:card (refresh hostile)})
+      (click-advance state :corp (refresh hostile))
       (is (= 5 (:credit (get-corp))))
       ;; make sure advancing other agendas doesn't gain 1
-      (core/advance state :corp {:card (refresh oaktown)})
+      (click-advance state :corp (refresh oaktown))
       (is (= 6 (:credit (get-corp))) "Transparency initiative didn't fire")
-      (core/advance state :corp {:card (refresh atlas)})
+      (click-advance state :corp (refresh atlas))
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
 
 (deftest trick-of-light

@@ -32,12 +32,11 @@
                          (has-subtype? % "Icebreaker")
                          (installed? %))}
    :msg (msg "host it on " (card-str state target))
-   :effect (effect (update! (assoc target :subtype (combine-subtypes false (-> target :subtype) "AI")))
-                   (host (get-card state target) (get-card state card)))
-   :abilities [(break-sub [:click 1] 1 "All" {:req (req true)})]
-   :events [{:event :pre-card-moved
-             :req (req (same-card? target card))
-             :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}]})
+   :effect (effect (host (get-card state target) (get-card state card)))
+   :constant-effects [{:type :gain-subtype
+                       :req (req (same-card? target (:host card)))
+                       :value "AI"}]
+   :abilities [(break-sub [:click 1] 1 "All" {:req (req true)})]})
 
 (defcard "Akamatsu Mem Chip"
   {:constant-effects [(mu+ 1)]})

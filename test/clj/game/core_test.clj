@@ -529,3 +529,8 @@
 (defmacro damage
   [state side dmg-type qty]
   `(core/damage ~state ~side (core/make-eid ~state) ~dmg-type ~qty nil))
+
+(defmacro move
+  [state side card location]
+  `(do (core/move ~state ~side ~card ~location)
+       (core/fake-checkpoint ~state)))

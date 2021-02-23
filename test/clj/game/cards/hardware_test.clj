@@ -46,6 +46,42 @@
                            (click-prompt state :runner "Done"))
         (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed")))))
 
+(deftest adjusted-matrix
+  ;; Adjusted Matrix
+  (before-each [state (new-game {:corp {:hand ["Hive"]
+                                        :credits 10}
+                                 :runner {:hand ["Corroder" "Adjusted Matrix"]
+                                          :credits 15}})
+                _ (do (play-from-hand state :corp "Hive" "HQ")
+                      (rez state :corp (get-ice state :hq 0))
+                      (take-credits state :corp)
+                      (play-from-hand state :runner "Corroder")
+                      (play-from-hand state :runner "Adjusted Matrix")
+                      (click-card state :runner "Corroder"))
+                hive (get-ice state :hq 0)
+                corroder (get-program state 0)]
+    (testing "Adds AI to icebreaker subtype"
+      (do-game state
+        (is (has-subtype? (refresh corroder) "AI"))))
+    (testing "Break ability spends a click"
+      (do-game state
+        (run-on state :hq)
+        (run-continue state)
+        (let [clicks (:click (get-runner))
+              credits (:credit (get-runner))]
+          (card-ability state :runner (first (:hosted (refresh corroder))) 0)
+          (click-prompt state :runner "End the run")
+          (is (= -1 (- (:click (get-runner)) clicks)) "Ability costs a click")
+          (is (zero? (- credits (:credit (get-runner)))) "Ability costs no credits"))))
+    (testing "break ability breaks 1 subroutine"
+      (do-game state
+        (run-on state :hq)
+        (run-continue state)
+        (card-ability state :runner (first (:hosted (refresh corroder))) 0)
+        (click-prompt state :runner "End the run")
+        (is (:broken (first (:subroutines (refresh hive)))) "The break ability worked")
+        (is (empty? (:prompt (get-runner))) "Break ability is one at a time")))))
+
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
   (do-game

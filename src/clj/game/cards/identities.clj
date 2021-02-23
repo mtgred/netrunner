@@ -611,11 +611,13 @@
                                                (assoc card
                                                       :flipped false
                                                       :code (subs (:code card) 0 5)
-                                                      :subtype "Natural")
+                                                      :subtype "Natural"
+                                                      :subtypes ["Natural"])
                                                (assoc card
                                                       :flipped true
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital")))
+                                                      :subtype "Digital"
+                                                      :subtypes ["Digital"])))
                          (update-link state))]
     {:constant-effects [(link+ (req (:flipped card)) 1)]
      :events [{:event :pre-first-turn
@@ -1241,22 +1243,13 @@
              :once :per-turn
              :msg (msg "make " (:title (:ice context))
                        " gain Code Gate until the end of the run")
-             :effect (req (let [ice (:ice context)
-                                stypes (:subtype ice)]
-                            (update! state side (assoc ice :subtype (combine-subtypes false stypes "Code Gate")))
-                            (register-events
-                              state side card
-                              [{:event :run-ends
-                                :duration :end-of-run
-                                :req (req (and (get-card state ice)
-                                               (rezzed? (get-card state ice))))
-                                :effect (req (let [ice (get-card state ice)
-                                                   stypes (remove-subtypes-once (:subtype ice) "Code Gate")]
-                                               (update! state side (assoc ice :subtype stypes))
-                                               (update-all-ice state side)
-                                               (trigger-event state side :ice-subtype-changed ice)))}])
-                            (update-all-ice state side)
-                            (trigger-event state side :ice-subtype-changed ice)))}]})
+             :effect (effect (register-floating-effect
+                               card
+                               (let [ice (:ice context)]
+                                 {:type :gain-subtype
+                                  :duration :end-of-run
+                                  :req (req (same-card? ice target))
+                                  :value "Code Gate"})))}]})
 
 (defcard "Saraswati Mnemonics: Endless Exploration"
   (letfn [(install-card [chosen]

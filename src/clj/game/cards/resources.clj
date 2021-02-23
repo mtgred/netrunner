@@ -847,7 +847,7 @@
   (let [is-draft-id? #(string/starts-with? (:code %) "00")
         sorted-id-list (fn [runner] (->> (server-cards)
                                          (filter #(and (identity? %)
-                                                       (has-subtype? % "g-mod")
+                                                       (has-subtype? % "G-mod")
                                                        (not= (-> runner :identity :faction)
                                                              (:faction %))
                                                        (not (is-draft-id? %))))
@@ -863,7 +863,7 @@
                                           c (make-card c)
                                           c (assoc c
                                                    :host (dissoc card :hosted)
-                                                   :zone '(:onhost)
+                                                   :zone [:onhost]
                                                    ;; semi hack to get deactivate to work
                                                    :installed true)]
                                       ;; Manually host id on card

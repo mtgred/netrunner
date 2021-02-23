@@ -1,5 +1,6 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case includes?]]))
+  (:require [clojure.string :refer [lower-case includes?]]
+            [medley.core :refer [find-first]]))
 
 (defrecord Card
   [advancementcost
@@ -33,8 +34,7 @@
   [card]
   (-> card
       (select-keys [:cid :side :title :zone :counter :advance-counter :new])
-      (assoc :hosted (mapv card-summary (:hosted card)))
-      ))
+      (assoc :hosted (mapv card-summary (:hosted card)))))
 
 (defn private-card
   "Returns only the public information of a given card when it's in a private state,
@@ -219,11 +219,7 @@
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
   [card subtype]
-  (letfn [(contains-sub? [card]
-            (when-let [sub (:subtype card)]
-              (includes? (lower-case sub) (lower-case subtype))))]
-    (or (contains-sub? card)
-        (contains-sub? (:persistent card)))))
+  (find-first #(= % subtype) (:subtypes card)))
 
 (defn virus-program?
   [card]
