@@ -1254,7 +1254,7 @@
           [:div.darkbg.strength (or current-strength strength)])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when server-target [:div.darkbg.server-target server-target])
-        (let [server-card (some #(when (= (:code %) code) %) @all-cards)]
+        (let [server-card (get @all-cards title)]
           (when (not= subtypes (sort (:subtypes server-card)))
             [:div.darkbg.additional-subtypes
              (join " - " (remove (into #{} (:subtypes server-card)) subtypes))]))
