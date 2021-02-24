@@ -1107,6 +1107,13 @@
              :effect (effect (add-counter card :credit 2)
                              (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}]})
 
+(defcard "Lt. Todachine"
+  {:events [{:event :rez
+             :req (req (ice? target))
+             :async true
+             :msg "to give the Runner 1 tag"
+             :effect (req (gain-tags state :runner eid 1))}]})
+
 (defcard "Malia Z0L0K4"
   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
                                 (when (:disabled (get-card state malia-target))

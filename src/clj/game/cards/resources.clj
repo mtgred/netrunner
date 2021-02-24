@@ -1290,6 +1290,24 @@
                 :msg "give the Corp 1 bad publicity"
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
+(defcard "Investigator Inez Delgado"
+  {:abilities [{:msg "add it to their score area as an agenda worth 0 agenda points"
+                :label "Add to score area and reveal cards in server"
+                :async true
+                :prompt "Choose a server"
+                :choices (req remotes)
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (wait-for
+                               (as-agenda state :runner (make-eid state eid) card 0)
+                               (let [zone (server->zone state target)
+                                     path (conj (into [:corp] zone) :content)
+                                     cards (string/join ", " (map :title (get-in @state path)))]
+                                 (wait-for
+                                   (reveal state :corp (make-eid state eid) targets)
+                                   (system-msg state side
+                                               (str "uses Investigator Inez Delgado to reveal " cards " from " target))
+                                   (effect-completed state side eid)))))}]})
+
 (defcard "Jackpot!"
   (let [jackpot {:interactive (req true)
                  :optional
@@ -2606,6 +2624,37 @@
                                       (installed? %))}
                 :cost [:trash]
                 :effect (effect (pump target 2 :end-of-turn))}]})
+
+(defcard "The Masque A"
+  {:abilities [{:cost [:click 1, :trash]
+                :label "Make a run and gain [click]. If successful, draw 1 card."
+                :prompt "Choose a server"
+                :choices (req runnable-servers)
+                :msg (msg "make a run on " target " and gain [click]")
+                :async true
+                :effect (effect
+                          (gain :runner :click 1)
+                          (register-events
+                            card
+                            [{:event :successful-run
+                              :unregister-once-resolved true
+                              :duration :end-of-run
+                              :async true
+                              :effect (effect (system-msg :runner "uses The Masque A to draw 1 card")
+                                              (draw :runner eid 1 nil))}])
+                          (make-run eid target nil card))}]})
+
+(defcard "The Masque B"
+  {:implementation "Successful run condition not implemented"
+   :abilities [{:cost [:click 1, :trash]
+                :label "Make a run and gain [click]. If successful, make another run on another server."
+                :prompt "Choose a server"
+                :choices (req runnable-servers)
+                :msg (msg "make a run on " target " and gain [click]")
+                :async true
+                :effect (req
+                          (gain state :runner :click 1)
+                          (make-run state side target nil card))}]})
 
 (defcard "The Nihilist"
   (let [corp-choice {:optional

@@ -2301,6 +2301,11 @@
                   :async true
                   :effect (effect (continue-ability (surf state current-ice) card nil))}]}))
 
+(defcard "Surveillance Network Key"
+  {:implementation "Only implemented for click to draw"
+   :events [{:event :corp-click-draw
+             :msg (msg "reveal the card just drawn: " (:title target))}]})
+
 (defcard "Switchblade"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 0 "Sentry" {:label "break any number of Sentry subroutines (using 1 stealth [Credits])"})
