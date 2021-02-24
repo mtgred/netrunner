@@ -3578,7 +3578,29 @@
       (click-prompt state :runner "Yes")
       (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
       (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended")
-      (is (= 1 (count (:discard (get-runner))))))))
+      (is (= 1 (count (:discard (get-runner)))))))
+  (testing "doesn't trigger if ID was blank during first end of encounter #5594"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand [(qty "Direct Access" 5)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (advance state (get-ice state :hq 0) 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Direct Access")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (is (zero? (count (:discard (get-runner)))) "Runner takes no damage")
+      (run-jack-out state)
+      (click-prompt state :runner "Yes")
+      (run-on state "HQ")
+      (run-continue state)
+      (run-continue state)
+      (is (zero? (count (:discard (get-runner)))) "Runner takes no damage at the second encounter")
+      (is (empty? (:prompt (get-corp)))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard

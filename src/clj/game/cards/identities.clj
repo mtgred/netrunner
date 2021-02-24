@@ -1539,9 +1539,13 @@
   {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
    :events [{:event :end-of-encounter
              :async true
-             :once :per-turn
              :req (req (and (rezzed? (:ice context))
-                            (pos? (get-counters (:ice context) :advancement))))
+                            (pos? (get-counters (:ice context) :advancement))
+                            (first-event? state :runner :end-of-encounter
+                                          (fn [targets]
+                                            (let [context (first targets)]
+                                              (and (rezzed? (:ice context))
+                                                   (pos? (get-counters (:ice context) :advancement))))))))
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
