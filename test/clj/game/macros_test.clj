@@ -4,8 +4,7 @@
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
-            [game.utils-test :refer :all]
-            [jinteki.utils :as jutils]))
+            [game.utils-test :refer :all]))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -70,3 +69,9 @@
         change-amt (nth form 2)
         body-form (nth form 3)]
     `(changes-val-macro ~change-amt (:credit ~side) ~msg ~body-form)))
+
+(defmacro before-each
+  [let-bindings & testing-blocks]
+  (assert (every? #(= 'testing (first %)) testing-blocks))
+  (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
+    `(do ~@bundles)))

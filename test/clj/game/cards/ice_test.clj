@@ -628,17 +628,32 @@
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
-  (letfn [(chimera-test [ice-type]
-    (do-game
-      (new-game {:corp {:deck ["Chimera"]}})
-      (play-from-hand state :corp "Chimera" "HQ")
-      (let [ch (get-ice state :hq 0)]
-        (rez state :corp ch)
-        (click-prompt state :corp ice-type)
-        (is (has-subtype? (refresh ch) ice-type) (str "Chimera has " ice-type))
+  (before-each [state (new-game {:corp {:deck ["Chimera"]
+                                        :credits 10}})
+                _ (play-from-hand state :corp "Chimera" "HQ")
+                ch (get-ice state :hq 0)]
+    (testing "Gains a subtype when rezzed"
+      (letfn [(chimera-test [ice-type]
+                (do-game state
+                  (is (not (has-subtype? (refresh ch) ice-type)) (str "Chimera does not have " ice-type))
+                  (rez state :corp ch)
+                  (click-prompt state :corp ice-type)
+                  (is (has-subtype? (refresh ch) ice-type) (str "Chimera has " ice-type))
+                  (take-credits state :corp)
+                  (is (not (has-subtype? (refresh ch) ice-type)) (str "Chimera does not have " ice-type))))]
+        (doall (map chimera-test ["Barrier" "Code Gate" "Sentry"]))))
+    (testing "Can only choose Barrier, Code Gate, or Sentry"
+      (do-game state
+        (rez state :corp (refresh ch))
+        (is (= ["Barrier" "Code Gate" "Sentry"] (prompt-buttons :corp)))))
+    (testing "derezzes at the end of the turn"
+      (do-game state
+        (rez state :corp (refresh ch))
         (take-credits state :corp)
-        (is (not (has-subtype? (refresh ch) ice-type)) (str "Chimera does not have " ice-type)))))]
-    (doall (map chimera-test ["Barrier" "Code Gate" "Sentry"]))))
+        (is (not (rezzed? (refresh ch))))
+        (rez state :corp (refresh ch))
+        (take-credits state :runner)
+        (is (not (rezzed? (refresh ch))))))))
 
 (deftest chum
   ;; Chum
@@ -1875,11 +1890,9 @@
       (rez state :corp hive)
       (is (= 5 (count (:subroutines (refresh hive)))) "Starts with 5 subs")
       (score-agenda state :corp ht)
-      (click-prompt state :corp "Hive")
       (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored for 1 agenda point")
       (is (= 4 (count (:subroutines (refresh hive)))) "Loses one sub for scoring Hostile Takeover")
       (score-agenda state :corp rt)
-      (click-prompt state :corp "Hive")
       (is (= 3 (:agenda-point (get-corp))) "Rebranding Team scored for 2 agenda points")
       (is (= 2 (count (:subroutines (refresh hive)))) "Loses two more subs")
       (score-agenda state :corp gt)
@@ -2252,8 +2265,7 @@
       (play-from-hand state :runner "Engolo")
       (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
       (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card before run")
-      (let [kakugo (get-ice state :rd 0)
-            engolo (get-program state 0)]
+      (let [kakugo (get-ice state :rd 0)]
         (run-on state "R&D")
         (rez state :corp kakugo)
         (run-continue state)
@@ -2266,8 +2278,7 @@
   ;; Kamali 1.0
   (do-game
     (new-game {:corp {:deck ["Kamali 1.0"]}
-               :runner {:deck ["Astrolabe" "Decoy"
-                               "Cache" "Hedge Fund"]}})
+               :runner {:deck ["Astrolabe" "Decoy" "Cache"]}})
     (play-from-hand state :corp "Kamali 1.0" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
@@ -2422,12 +2433,12 @@
             "End the run unless the Runner shuffles their Grip into the Stack"]
            (map :label (:subroutines (get-ice state :rd 0))))
         "Loki gains all of Archer's subroutines")
-    (is (= "Sentry - Destroyer - Bioroid" (:subtype (get-ice state :rd 0))))
+    (is (= #{"Sentry" "Destroyer" "Bioroid"} (into #{} (:subtypes (get-ice state :rd 0)))))
     (run-jack-out state)
     (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
            (map :label (:subroutines (get-ice state :rd 0))))
         "Loki's subroutines revert to printed after the run ends")
-    (is (= "Bioroid" (:subtype (get-ice state :rd 0))))))
+    (is (= ["Bioroid"] (:subtypes (get-ice state :rd 0))))))
 
 (deftest loot-box
   ;; Loot Box
@@ -3555,7 +3566,7 @@
 (deftest rime
   ;; Rime
   (do-game
-    (new-game {:corp {:deck [(qty "Sure Gamble" 10)]
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                       :hand [(qty "Rime" 2) (qty "Ice Wall" 2)]}})
     (core/gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -4899,8 +4910,8 @@
 (deftest wendigo
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
   (do-game
-    (new-game {:corp {:deck ["Wendigo" "Shipment from SanSan"
-                             "Superior Cyberwalls"]}})
+    (new-game {:corp {:deck ["Wendigo" "Shipment from SanSan" "Superior Cyberwalls"]
+                      :credits 100}})
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Superior Cyberwalls" "New remote")
     (let [sc (get-content state :remote1 0)]
@@ -4909,7 +4920,7 @@
       (let [wend (get-ice state :hq 0)]
         (rez state :corp wend)
         (is (= 4 (get-strength (refresh wend))) "Wendigo at normal 4 strength")
-        (core/advance state :corp {:card (refresh wend)})
+        (advance state (refresh wend) 1)
         (is (has-subtype? (refresh wend) "Barrier") "Wendigo gained Barrier")
         (is (not (has-subtype? (refresh wend) "Code Gate")) "Wendigo lost Code Gate")
         (is (= 5 (get-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")

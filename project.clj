@@ -40,7 +40,8 @@
                  [potemkin "0.4.5"]
                  [cond-plus "1.0.1"]
                  [com.taoensso/tempura "1.2.1"]
-                 [org.clojure/data.csv "1.0.0"]]
+                 [org.clojure/data.csv "1.0.0"]
+                 [medley "1.3.0"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]

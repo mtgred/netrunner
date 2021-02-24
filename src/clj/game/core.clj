@@ -50,6 +50,7 @@
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
+    [game.core.subtypes]
     [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
@@ -694,6 +695,9 @@
    make-rid
    map->State
    new-state]
+
+  [game.core.subtypes
+   update-all-subtypes]
 
   [game.core.tags
    gain-tags

@@ -1209,7 +1209,7 @@
   [card filpped]
   (let [c-state (r/atom {})]
     (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-                 subtype advanceable rezzed strength current-strength title remotes selected hosted
+                 subtype subtypes advanceable rezzed strength current-strength title remotes selected hosted
                  side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
                  corp-abilities]
           :as card}
@@ -1256,17 +1256,10 @@
           [:div.darkbg.strength (or current-strength strength)])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when server-target [:div.darkbg.server-target server-target])
-        (when subtype-target
-          (let [colour-type (case subtype-target
-                              ("Barrier" "Sentry") (lower-case subtype-target)
-                              "Code Gate" "code-gate"
-                              nil)
-                label (if (includes? subtype-target " - ")
-                        (->> (split subtype-target #" - ")
-                             (map first)
-                             (join " - "))
-                        subtype-target)]
-            [:div.darkbg.subtype-target {:class colour-type} label]))
+        (let [server-card (some #(when (= (:code %) code) %) @all-cards)]
+          (when (not= subtypes (sort (:subtypes server-card)))
+            [:div.darkbg.additional-subtypes
+             (join " - " (remove (into #{} (:subtypes server-card)) subtypes))]))
 
       (when (and (= zone ["hand"])
                  (#{"Agenda" "Asset" "ICE" "Upgrade"} type))

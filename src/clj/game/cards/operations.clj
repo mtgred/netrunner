@@ -2028,13 +2028,16 @@
   (let [new-sub {:label "[Sub Boost]: End the run"}]
     {:sub-effect {:label "End the run"
                   :msg "end the run"
+                  :async true
                   :effect (effect (end-run eid card))}
      :choices {:card #(and (ice? %)
                            (rezzed? %))}
      :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-     :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
-                  (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
-                  (update-ice-strength state side target)
+     :constant-effects [{:type :gain-subtype
+                         :req (req (and (same-card? target (:host card))
+                                        (rezzed? target)))
+                         :value "Barrier"}]
+     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                   (host state side (get-card state target) (assoc card :seen true :condition true)))
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
@@ -2233,19 +2236,22 @@
   {:choices {:card #(and (agenda? %)
                          (installed? %)
                          (not (faceup? %)))}
-   :effect (effect (update! (assoc target
-                                   :seen true
-                                   :rezzed true
-                                   :subtype (combine-subtypes false (:subtype target) "Public")))
-                   (host (get-card state target) (assoc card :seen true :condition true))
-                   (register-events
-                     target
-                     [{:event :advance
-                       :req (req (= (:hosted card) (:hosted target)))
-                       :async true
-                       :effect (effect (system-msg
-                                         (str "uses Transparency Initiative to gain 1 [Credit]"))
-                                       (gain-credits eid 1))}]))})
+   :constant-effects [{:type :gain-subtype
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value "Public"}]
+   :effect (req (let [target (update! state side (assoc target
+                                                        :seen true
+                                                        :rezzed true))
+                      card (host state side target (assoc card :seen true :condition true))]
+                  (register-events
+                    state side card
+                    [{:event :advance
+                      :location :hosted
+                      :req (req (same-card? (:host card) target))
+                      :async true
+                      :msg "gain 1 [Credit]"
+                      :effect (effect (gain-credits eid 1))}])))})
 
 (defcard "Trick of Light"
   {:async true

@@ -198,30 +198,20 @@
                  (continue-ability
                    {:eid (assoc eid :source-type :ability)
                     :optional
-                    {:prompt (str "Pay 2 [Credits] to make " (:title (:ice context))
+                    {:prompt (str "Pay " cost
+                                  " [Credits] to make " (:title (:ice context))
                                   " gain " ice-type "?")
                      :yes-ability
                      {:cost [:credit cost]
                       :msg (msg "make " (:title current-ice) " gain " ice-type)
-                      :effect (req (let [ice current-ice
-                                         stargets (:subtype-target ice)
-                                         stypes (:subtype ice)]
-                                     (register-once state side {:once :per-turn} card)
-                                     (update! state side
-                                              (assoc ice
-                                                     :subtype-target (combine-subtypes false stargets ice-type)
-                                                     :subtype (combine-subtypes false stypes ice-type)))
-                                     (register-events
-                                       state side card
-                                       [{:event :end-of-encounter
-                                         :duration :end-of-encounter
-                                         :effect (effect (update!
-                                                           (let [ice (get-card state ice)
-                                                                 stargets (:subtype-target ice)
-                                                                 stypes (:subtype ice)]
-                                                             (assoc ice
-                                                                    :subtype-target (remove-subtypes-once stargets ice-type)
-                                                                    :subtype (remove-subtypes-once stypes ice-type)))))}])))}}}
+                      :effect (effect (register-once {:once :per-turn} card)
+                                      (register-floating-effect
+                                        card
+                                        (let [ice current-ice]
+                                          {:type :gain-subtype
+                                           :duration :end-of-encounter
+                                           :req (req (same-card? ice target))
+                                           :value ice-type})))}}}
                    card nil))}]}))
 
 (defn- virus-breaker
@@ -1045,22 +1035,13 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Egret"
-  {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
-   :hosting {:card #(and (ice? %)
+  {:hosting {:card #(and (ice? %)
                          (can-host? %)
                          (rezzed? %))}
    :msg (msg "make " (card-str state (:host card)) " gain Barrier, Code Gate and Sentry subtypes")
-   :effect (req (when-let [h (:host card)]
-                  (update! state side (assoc-in card [:special :installing] true))
-                  (update-ice-strength state side h)
-                  (when-let [card (get-card state card)]
-                    (update! state side (update-in card [:special] dissoc :installing)))))
-   :events [{:event :ice-strength-changed
-             :effect (req (unregister-events state side card)
-                          (when (get-in card [:special :installing])
-                            (update! state side (assoc (:host (get-card state card)) :subtype (combine-subtypes false (-> card :host :subtype) "Barrier" "Code Gate" "Sentry")))
-                            (update! state side (update-in card [:special] dissoc :installing))
-                            (trigger-event state side :runner-install card)))}]})
+   :constant-effects [{:type :gain-subtype
+                       :req (req (same-card? target (:host card)))
+                       :value ["Barrier" "Code Gate" "Sentry"]}]})
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
@@ -1739,25 +1720,22 @@
                 :choices {:card #(and (installed? %)
                                       (ice? %)
                                       (rezzed? %))}
-                :effect (req (let [ice target
-                                   stypes (:subtype ice)]
-                               (continue-ability
-                                 state :runner
-                                 {:prompt (msg "Choose a subtype")
-                                  :choices ["Sentry" "Code Gate" "Barrier"]
-                                  :msg (msg "spend [Click] and make " (card-str state ice)
-                                            " gain " (string/lower-case target)
-                                            " until the end of the next run this turn")
-                                  :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
-                                                  (register-events
-                                                    card
-                                                    (let [chosen-type target]
-                                                      [{:event :run-ends
-                                                        :duration :end-of-run
-                                                        :effect (effect (update! (assoc (get-card state ice) :subtype (remove-subtypes-once (:subtype (get-card state ice)) chosen-type)))
-                                                                        (system-say :runner (str (card-str state (get-card state ice))
-                                                                                                 " loses " chosen-type ".")))}])))}
-                                 card nil)))}]})
+                :async true
+                :effect (effect
+                          (continue-ability
+                            (let [ice target]
+                              {:prompt "Choose a subtype"
+                               :choices ["Sentry" "Code Gate" "Barrier"]
+                               :msg (msg "spend [Click] and make " (card-str state ice)
+                                         " gain " target
+                                         " until the end of the next run this turn")
+                               :effect (effect (register-floating-effect
+                                                 card
+                                                 {:type :gain-subtype
+                                                  :duration :end-of-next-run
+                                                  :req (req (same-card? ice target))
+                                                  :value target}))})
+                            card nil))}]})
 
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
@@ -1769,26 +1747,20 @@
                :choices (req (->> (server-cards)
                                   (reduce (fn [acc card]
                                             (if (ice? card)
-                                              (apply conj acc (string/split (:subtype card) #" - "))
+                                              (apply conj acc (:subtypes card))
                                               acc))
                                           #{})
                                   (#(disj % "Barrier" "Code Gate" "Sentry"))
                                   sort))
                :msg (msg "make " (card-str state current-ice) " gain " target)
-               :effect (req (let [ice current-ice
-                                  chosen-type target
-                                  stypes (combine-subtypes false (:subtype ice) chosen-type)]
-                              (register-once state side {:once :per-turn} card)
-                              (update! state side (assoc ice :subtype stypes))
-                              (register-events
-                                state side card
-                                [{:event :run-ends
-                                  :duration :end-of-run
-                                  :effect
-                                  (req (let [ice (get-card state ice)
-                                             stypes (remove-subtypes-once (:subtype ice) chosen-type)]
-                                         (update! state :runner (assoc ice :subtype stypes))
-                                         (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))))}])))}}}]})
+               :effect (effect (register-once {:once :per-turn} card)
+                               (register-floating-effect
+                                 card
+                                 (let [ice current-ice]
+                                   {:type :gain-subtype
+                                    :duration :end-of-run
+                                    :req (req (same-card? ice target))
+                                    :value target})))}}}]})
 
 (defcard "Paperclip"
   (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
@@ -1932,24 +1904,20 @@
                 :choices (req (->> (server-cards)
                                    (reduce (fn [acc card]
                                              (if (ice? card)
-                                               (apply conj acc (string/split (:subtype card) #" - "))
+                                               (into acc (:subtypes card))
                                                acc))
                                            #{})
                                    sort))
-                :msg (msg "make " (card-str state current-ice) " gain " target)
-                :effect (req (let [ice current-ice
-                                   chosen-type target
-                                   stypes (combine-subtypes false (:subtype ice) chosen-type)]
-                               (update! state side (assoc ice :subtype stypes))
-                               (register-events
-                                 state side card
-                                 [{:event :run-ends
-                                   :duration :end-of-run
-                                   :effect
-                                   (req (let [ice (get-card state ice)
-                                              stypes (remove-subtypes-once (:subtype ice) chosen-type)]
-                                          (update! state :runner (assoc ice :subtype stypes))
-                                          (system-say state :runner (str (card-str state ice) " loses " chosen-type "."))))}])))}]})
+                :msg (msg "make " (card-str state current-ice)
+                          " gain " target
+                          " until end of the run")
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [ice current-ice]
+                                    {:type :gain-subtype
+                                     :duration :end-of-run
+                                     :req (req (same-card? target ice))
+                                     :value target})))}]})
 
 (defcard "Pheromones"
   {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
@@ -2124,7 +2092,7 @@
 
 (defcard "Sadyojata"
   (swap-with-in-hand "Sadyojata"
-                     {:req (req (and (<= 3 (count (string/split (:subtype current-ice "") #" - ")))
+                     {:req (req (and (<= 3 (count (:subtypes current-ice)))
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
 (defcard "Sage"

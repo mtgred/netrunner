@@ -115,8 +115,7 @@
       (is (= "You accessed Manhunt." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (nil? (get-run)) "Run has ended normally")))
-  )
+      (is (nil? (get-run)) "Run has ended normally"))))
 
 (deftest hq-access
   (testing "Nothing in HQ, no upgrades"

@@ -673,6 +673,8 @@
                 (unregister-floating-events state side :end-of-encounter)
                 (unregister-floating-effects state side :end-of-run)
                 (unregister-floating-events state side :end-of-run)
+                (unregister-floating-effects state side :end-of-next-run)
+                (unregister-floating-events state side :end-of-next-run)
                 (reset-all-ice state side)
                 (clear-run-register! state)
                 (run-end-fx state side run)))))

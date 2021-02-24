@@ -1,6 +1,7 @@
 (ns game.cards.programs-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.macros :refer [req]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -1847,7 +1848,11 @@
       (click-card state :runner mg)
       (is (has-subtype? (refresh mg) "Barrier"))
       (is (has-subtype? (refresh mg) "Code Gate"))
-      (is (has-subtype? (refresh mg) "Sentry")))))
+      (is (has-subtype? (refresh mg) "Sentry"))
+      (trash state :runner (first (:hosted (refresh mg))))
+      (is (not (has-subtype? (refresh mg) "Barrier")))
+      (is (not (has-subtype? (refresh mg) "Code Gate")))
+      (is (not (has-subtype? (refresh mg) "Sentry"))))))
 
 (deftest engolo
   ;; Engolo
@@ -1872,7 +1877,7 @@
         (run-continue state)
         (is (nil? (refresh engolo)) "Engolo is trashed")
         (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed"))))
- (testing "Marks eid as :ability #4962"
+  (testing "Marks eid as :ability #4962"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Rototurret"]}
@@ -2680,7 +2685,12 @@
       (play-from-hand state :runner "Inversificator")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 1))
-      (core/update! state :corp (assoc (get-ice state :hq 1) :subtype "Code Gate"))
+      (core/register-floating-effect
+        state :corp nil
+        (let [ice (get-ice state :hq 1)]
+          {:type :gain-subtype
+           :req (req (utils/same-card? ice target))
+           :value "Code Gate"}))
       (run-continue state)
       (let [inv (get-program state 0)]
         (card-ability state :runner (refresh inv) 1)
@@ -3592,6 +3602,35 @@
       (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
       (run-empty-server state "Archives")
       (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+
+(deftest panchatantra
+  ;; Panchatantra
+  (before-each [state (new-game {:corp {:hand ["Ice Wall"]}
+                                 :runner {:hand ["Panchatantra"]}})
+                _ (do (play-from-hand state :corp "Ice Wall" "HQ")
+                      (rez state :corp (get-ice state :hq 0))
+                      (take-credits state :corp)
+                      (play-from-hand state :runner "Panchatantra")
+                      (run-on state :hq)
+                      (run-continue state))
+                iw (get-ice state :hq 0)]
+    (testing "Choices do not include Barrier, Code Gate, or Sentry"
+      (do-game state
+        (click-prompt state :runner "Yes")
+        (is (not (some #{"Barrier" "Code Gate" "Sentry"} (prompt-buttons :runner))))))
+    (testing "Encountered ice gains the subtype"
+      (do-game state
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "AP")
+        (is (has-subtype? (refresh iw) "AP"))))
+    (testing "Encountered ice loses subtype at the end of the run"
+      (do-game state
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "AP")
+        (run-continue state)
+        (is (has-subtype? (refresh iw) "AP"))
+        (run-jack-out state)
+        (is (not (has-subtype? (refresh iw) "AP")))))))
 
 (deftest paperclip
   ;; Paperclip - prompt to install on encounter, but not if another is installed

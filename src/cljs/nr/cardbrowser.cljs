@@ -50,6 +50,7 @@
       (when need-update?
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
+      ; (reset! all-cards (into {} (map (juxt :title identity) cards)))
       (swap! app-state assoc
              :cards-loaded true :previous-cards (generate-previous-cards cards)
              :alt-info alt-info :alt-cards alt-cards)

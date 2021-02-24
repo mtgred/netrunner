@@ -78,14 +78,13 @@
       (play-from-hand state :runner "Self-modifying Code")
       (run-on state :remote1)
       (is (= :approach-ice (:phase (:run @state))))
-      (let [credits (:credit (get-runner))]
-        (rez state :corp (get-ice state :remote1 0))
-        (card-ability state :runner (get-program state 0) 0)
-        (click-prompt state :runner "Corroder")
-        (is (zero? (:credit (get-runner))) "Can't afford Tollbooth")
-        (is (= :approach-ice (:phase (:run @state))) "Haven't left the approach window yet")
-        (run-continue state)
-        (is (nil? (:run @state)) "Can't afford Tollbooth, so run ends"))))
+      (rez state :corp (get-ice state :remote1 0))
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Corroder")
+      (is (zero? (:credit (get-runner))) "Can't afford Tollbooth")
+      (is (= :approach-ice (:phase (:run @state))) "Haven't left the approach window yet")
+      (run-continue state)
+      (is (nil? (:run @state)) "Can't afford Tollbooth, so run ends")))
   (testing "with bypass"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

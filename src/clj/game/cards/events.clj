@@ -2804,21 +2804,14 @@
    :choices {:card #(and (installed? %)
                          (ice? %))}
    :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
-   :effect (effect (update! (assoc target :subtype (combine-subtypes true (:subtype target) "Sentry" "Code Gate" "Barrier")))
-                   (update! (assoc-in (get-card state target) [:special :tinkering] true))
-                   (update-all-ice)
-                   (add-icon card (get-card state target) "T" "green")
-                   (register-events
+   :effect (effect (register-floating-effect
                      card
-                     (let [ice (get-card state target)
-                           stypes (:subtype target)]
-                       [{:event :runner-turn-ends
-                         :duration :end-of-turn
-                         :req (req (get-in (get-card state ice) [:special :tinkering]))
-                         :effect (effect (remove-icon card (get-card state ice))
-                                         (update! (assoc (get-card state ice) :subtype stypes))
-                                         (update! (dissoc-in (get-card state ice) [:special :tinkering]))
-                                         (update-all-ice))}])))})
+                     (let [ice target]
+                       {:type :gain-subtype
+                        :duration :end-of-turn
+                        :req (req (same-card? ice target))
+                        :value ["Sentry" "Code Gate" "Barrier"]}))
+                   (add-icon card (get-card state target) "T" "green"))})
 
 (defcard "Trade-In"
   ;; Basically a hack. Ideally the additional cost cause the cost trash to be passed in as targets

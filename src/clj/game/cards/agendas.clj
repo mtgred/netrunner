@@ -1229,23 +1229,11 @@
             :effect (effect (as-agenda :corp eid card 1))}})
 
 (defcard "Rebranding Team"
-  (letfn [(get-assets [state corp]
-            (filter asset? (concat (all-installed state :corp)
-                                   (:deck corp)
-                                   (:hand corp)
-                                   (:discard corp))))
-          (add-ad [state side c]
-            (update! state side (assoc-in c [:persistent :subtype] "Advertisement")))]
-    {:interactive (req true)
-     :msg "make all assets gain Advertisement"
-     :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))
-     :swapped {:msg "make all assets gain Advertisement"
-               :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))}
-     :leave-play (req (doseq [c (get-assets state corp)]
-                        (update! state side (assoc-in c [:persistent :subtype]
-                                                      (->> (string/split (or (-> c :persistent :subtype) "") #" - ")
-                                                           (drop 1) ;so that all actual ads remain ads if agenda leaves play
-                                                           (string/join " - "))))))}))
+  {:msg "make all assets gain Advertisement"
+   :swapped {:msg "make all assets gain Advertisement"}
+   :constant-effects [{:type :gain-subtype
+                       :req (req (asset? target))
+                       :value "Advertisement"}]})
 
 (defcard "Reeducation"
   (letfn [(corp-final [chosen original]

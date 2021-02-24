@@ -711,7 +711,7 @@
   (testing "Runner has 1+ credit and chooses to pay 1 credit"
     (do-game
       (new-game {:corp {:deck ["Clyde Van Rite"]}
-                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Restructure" 2) (qty "John Masanori" 2)]}})
+                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Easy Mark" 2) (qty "John Masanori" 2)]}})
       (play-from-hand state :corp "Clyde Van Rite" "New remote")
       (let [clyde (get-content state :remote1 0)]
         (rez state :corp clyde)

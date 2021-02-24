@@ -321,8 +321,8 @@
         changed? (not= old-strength new-strength)]
     (when (rezzed? ice)
       (update! state side (assoc ice :current-strength new-strength))
-      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength))
-    changed?))
+      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
+      changed?)))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."

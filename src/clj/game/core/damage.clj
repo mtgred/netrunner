@@ -141,7 +141,7 @@
                            damage-prevented (if prevent (- prevent already-prevented) false)]
                        (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
                        (system-msg state player
-                                   (if damage-prevented (str "prevents " 
+                                   (if damage-prevented (str "prevents "
                                                              (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
                                                              " " (name type) " damage") "will not prevent damage"))
                        (clear-wait-prompt state other-player)

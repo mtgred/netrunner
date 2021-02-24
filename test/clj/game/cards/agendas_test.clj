@@ -2693,7 +2693,7 @@
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))
-    (core/move state :corp (find-card "Rebranding Team" (:scored (get-corp))) :deck)
+    (move state :corp (find-card "Rebranding Team" (:scored (get-corp))) :deck)
     (is (has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
     (is (not (has-subtype? (find-card "Advanced Assembly Lines" (:discard (get-corp))) "Advertisement")))
     (is (not (has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement")))

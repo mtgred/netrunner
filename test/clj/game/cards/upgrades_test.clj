@@ -3199,7 +3199,7 @@
     (do-game
       (new-game {:corp {:id "Industrial Genomics: Growing Solutions"
                         :deck [(qty "Hedge Fund" 3)]
-                        :hand ["Warroid Tracker" "Launch Campaign" (qty "Sure Gamble" 2)]
+                        :hand ["Warroid Tracker" "Launch Campaign" (qty "Hedge Fund" 2)]
                         :credits 100}
                  :runner {:deck [(qty "Sure Gamble" 10)]
                           :hand ["Corroder" "Dyson Mem Chip"]
