@@ -1330,16 +1330,74 @@
 
 (deftest glenn-station
   ;; Glenn Station
-  (do-game
-    (new-game {:corp {:deck ["Glenn Station" "Ice Wall"]}})
-    (play-and-score state "Glenn Station")
-    (let [gs-scored (get-scored state :corp 0)]
-      (card-ability state :corp gs-scored 0)
-      (click-prompt state :corp (find-card "Ice Wall" (:hand (get-corp))))
-      (is (= 1 (count (:hosted (refresh gs-scored)))))
-      (card-ability state :corp gs-scored 1)
-      (click-prompt state :corp (find-card "Ice Wall" (:hosted (refresh gs-scored))))
-      (is (zero? (count (:hosted (refresh gs-scored))))))))
+  (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                                        :hand ["Glenn Station" "Ice Wall" "Enigma"]}
+                                 :runner {:hand ["Political Graffiti"]}})
+                _ (play-and-score state "Glenn Station")
+                gs-scored (get-scored state :corp 0)]
+    (testing "Can host a card"
+      (do-game state
+        (card-ability state :corp gs-scored 0)
+        (click-card state :corp "Ice Wall")
+        (is (find-card "Ice Wall" (:hosted (refresh gs-scored))))
+        (is (= 1 (count (:hosted (refresh gs-scored)))))))
+    (testing "Can't host more than 1 card"
+      (do-game state
+        (card-ability state :corp gs-scored 0)
+        (click-card state :corp "Ice Wall")
+        (card-ability state :corp gs-scored 0)
+        (is (empty? (:prompt (get-corp))))))
+    (testing "Requires at least 1 card in hand to host"
+      (do-game state
+        (starting-hand state :corp [])
+        (card-ability state :corp gs-scored 0)
+        (is (empty? (:prompt (get-corp))))))
+    (testing "Can take a hosted card"
+      (do-game state
+        (card-ability state :corp gs-scored 0)
+        (click-card state :corp "Ice Wall")
+        (card-ability state :corp gs-scored 1)
+        (click-card state :corp "Ice Wall")
+        (is (find-card "Ice Wall" (:hand (get-corp))))
+        (is (zero? (count (:hosted (refresh gs-scored)))))))
+    (testing "Can't take a hosted card if none exist"
+      (do-game state
+        (card-ability state :corp gs-scored 1)
+        (is (empty? (:prompt (get-corp))))))
+    (testing "Can host a single corp card even if a runner card is hosted"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Political Graffiti")
+        (run-continue state)
+        (click-card state :runner "Glenn Station")
+        (is (= 1 (count (:hosted (refresh gs-scored)))))
+        (take-credits state :runner)
+        (card-ability state :corp (refresh gs-scored) 0)
+        (is (not-empty (:prompt (get-corp))))
+        (click-card state :corp "Enigma")
+        (is (find-card "Enigma" (:hosted (refresh gs-scored))))))
+    (testing "Can't take a card if only a runner card is hosted"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Political Graffiti")
+        (run-continue state)
+        (click-card state :runner "Glenn Station")
+        (take-credits state :runner)
+        (card-ability state :corp (refresh gs-scored) 1)
+        (is (empty? (:prompt (get-corp))))))
+    (testing "Can take a hosted card even if a runner card is hosted"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Political Graffiti")
+        (run-continue state)
+        (click-card state :runner "Glenn Station")
+        (take-credits state :runner)
+        (card-ability state :corp (refresh gs-scored) 0)
+        (click-card state :corp "Enigma")
+        (card-ability state :corp (refresh gs-scored) 1)
+        (is (not-empty (:prompt (get-corp))))
+        (click-card state :corp "Enigma")
+        (is (find-card "Enigma" (:hand (get-corp))))))))
 
 (deftest global-food-initiative
   ;; Global Food Initiative

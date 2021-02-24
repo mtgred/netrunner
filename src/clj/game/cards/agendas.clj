@@ -723,18 +723,26 @@
                 :effect (effect (gain-credits eid 3))}]})
 
 (defcard "Glenn Station"
-  {:implementation "Doesn't prohibit hosting multiple cards"
-   :abilities [{:label "Host a card from HQ on Glenn Station"
+  {:abilities [{:label "Host a card from HQ on Glenn Station"
+                :req (req (and (not-empty (:hand corp))
+                               (empty? (filter corp? (:hosted card)))))
                 :cost [:click 1]
                 :msg "host a card from HQ"
                 :prompt "Choose a card to host on Glenn Station"
-                :choices (req (:hand corp))
+                :choices {:card #(and (corp? %) (in-hand? %))}
                 :effect (effect (host card target {:facedown true}))}
                {:label "Add a card on Glenn Station to HQ"
+                :req (req (not-empty (filter corp? (:hosted card))))
                 :cost [:click 1]
                 :msg "add a hosted card to HQ"
                 :prompt "Choose a card on Glenn Station"
-                :choices (req (:hosted card))
+                :choices {:all true
+                          :req (req (let [hosted-corp-cards
+                                          (->> (:hosted card)
+                                               (filter corp?)
+                                               (map :cid)
+                                               (into #{}))]
+                                      (hosted-corp-cards (:cid target))))}
                 :effect (effect (move target :hand))}]})
 
 (defcard "Global Food Initiative"
