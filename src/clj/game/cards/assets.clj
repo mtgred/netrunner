@@ -925,25 +925,6 @@
     {:events [(assoc iuse :event :play-operation)
               (assoc iuse :event :rez)]}))
 
-;; (defcard "Investigator Inez Delgado A"
-;;   {:events [{:event :agenda-scored
-;;              :effect
-;;              (req (let [scored target]
-;;                     (continue-ability state side
-;;                                       {:prompt (msg "Select a stolen agenda to swap for " (:title scored))
-;;                                        :async true
-;;                                        :choices {:req (req (and (in-runner-scored? state side target)
-;;                                                                 (>= (:agendapoints target) 1)))}
-;;                                        :msg (msg "swap " (:title target)
-;;                                                  " for " (:title scored))
-;;                                        :effect (req (wait-for (swap-agendas state side target scored)
-;;                                                               ;; (wait-for (continue-ability state side (card-def target) target nil)
-;;                                                               ;;           (unregister-events state side target
-;;                                                               ;;                              {:events [{:event :corp-turn-ends}
-;;                                                               ;;                                        {:event :runner-turn-ends}]})
-;;                                                                         (effect-completed state side eid)))}
-;;                                       card nil)))}]})
-
 (defcard "Isabel McGuire"
   {:abilities [{:label "Add an installed card to HQ"
                 :cost [:click 1]
