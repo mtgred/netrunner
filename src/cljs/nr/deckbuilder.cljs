@@ -57,7 +57,7 @@
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
   (let [id (:id card)
-        cards (filter #(= (:side %) side) @all-cards)
+        cards (filter #(= (:side %) side) (vals @all-cards))
         first-id (first (filter #(= id (:code %)) cards))]
     (if (and id first-id)
       first-id
@@ -268,13 +268,9 @@
                 (end-delete s))))))))
 
 (defn side-identities [side]
-  (let [cards (->> @all-cards
+  (let [cards (->> (vals @all-cards)
                    (filter #(and (= (:side %) side)
-                                 (= (:type %) "Identity")))
-                   (sort-by :code)
-                   (group-by :title)
-                   vals
-                   (map last))
+                                 (= (:type %) "Identity"))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (map add-deck cards)))
@@ -407,7 +403,7 @@
     (step coll #{})))
 
 (defn match [identity query]
-  (->> @all-cards
+  (->> (vals @all-cards)
        (filter #(validator/allowed? % identity))
        (distinct-by :title)
        (filter-title query)
@@ -620,7 +616,7 @@
             n (count filtered-decks)
             deck-str (tr [:deck-builder.deck-count] n)]
         [:<>
-         [:div.deck-count 
+         [:div.deck-count
           [:h4 (str deck-str (when (filter-selected s) (str "  " (tr [:deck-builder.filtered "(filtered)"]))))]]
          [decks-list filtered-decks s scroll-top]]))))
 
