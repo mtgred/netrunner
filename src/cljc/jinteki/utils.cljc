@@ -7,7 +7,7 @@
 (defn str->int
   [string]
   #?(:clj (java.lang.Integer/parseInt (re-find #"^\d+" string))
-     :cljs (js/parseInt string)))
+     :cljs (js/parseInt string 10)))
 
 (defn side-from-str [side-str]
   (keyword (s/lower-case side-str)))

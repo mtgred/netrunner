@@ -429,9 +429,9 @@
   (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
   (toast text severity nil))
 
-(def zoom-channel (chan))
+(defonce zoom-channel (chan))
 
-(def button-channel (chan))
+(defonce button-channel (chan))
 
 (defn check-lock?
   "Check if we can clear client lock based on action-id"
@@ -656,28 +656,26 @@
   (and (get-in @game-state [:options :spectatorhands])
        (not (not-spectator?))))
 
-(defn get-card-code [e]
-  (let [code (str (.. e -target -id))]
-    (when (pos? (count code))
-      code)))
+(defn get-card-title [e]
+  (not-empty (.. e -target -id)))
 
 (defn card-preview-mouse-over [e channel]
   (.preventDefault e)
-  (when-let [code (get-card-code e)]
-    (when-let [card (some #(when (= (:code %) code) %) @all-cards)]
+  (when-let [title (get-card-title e)]
+    (when-let [card (get @all-cards title)]
       (put! channel (assoc card :implementation :full))))
   nil)
 
 (defn card-preview-mouse-out [e channel]
   (.preventDefault e)
-  (when-let [code (get-card-code e)]
+  (when-let [title (get-card-title e)]
     (put! channel false))
   nil)
 
 (defn card-highlight-mouse-over [e value channel]
   (.preventDefault e)
   (when (:cid value)
-    (put! channel value))
+    (put! channel (select-keys value [:cid])))
   nil)
 
 (defn card-highlight-mouse-out [e value channel]
@@ -2234,7 +2232,7 @@
                                  #(card-highlight-mouse-over % value button-channel)
                                  :on-mouse-out
                                  #(card-highlight-mouse-out % value button-channel)
-                                 :id {:code value}}
+                                 :id (:title value)}
                         (render-message (or (not-empty (:title value)) value))]))))]
          (if @run
            [run-div side run]

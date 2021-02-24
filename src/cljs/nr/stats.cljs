@@ -160,8 +160,8 @@
 
 (defn game-row
   [state {:keys [title corp runner turn winner reason replay-shared has-replay start-date] :as game} log-scroll-top]
-  (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
-        runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))
+  (let [corp-id (get @all-cards (:identity corp))
+        runner-id (get @all-cards (:identity runner))
         turn-count (if turn turn 0)]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right

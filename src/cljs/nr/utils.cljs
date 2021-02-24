@@ -169,11 +169,12 @@
       (map (fn [[k v]] [(regex-of k) (span-of v)]))
       (sort-by (comp count str first) >))))
 
-(defn card-patterns-impl []
+(defn card-patterns-impl
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
+  []
   (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])]
-    (->> @all-cards
+    (->> (vals @all-cards)
          (filter #(not (:replaced_by %)))
          (map (juxt :title :code))
          (map (fn [[k v]] [k (span-of k v)]))
@@ -186,10 +187,10 @@
   of the text should be tested as one pass is far faster than 1500 passes"
   []
   (re-pattern
-    (->> @all-cards
-      (filter #(not (:replaced_by %)))
-      (map (fn [k] (regex-escape (:title k))))
-      (join "|"))))
+    (->> (vals @all-cards)
+         (filter #(not (:replaced_by %)))
+         (map (fn [k] (regex-escape (:title k))))
+         (join "|"))))
 
 (def contains-card-pattern (memoize contains-card-pattern-impl))
 

@@ -3,19 +3,17 @@
   (:require [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [clojure.string :as s]
             [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.utils :refer [str->int]]
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
                               influence-dots slug->format format->slug render-icons non-game-toast faction-icon image-language-name]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [medley.core :refer [find-first]]))
 
-(def cards-channel (chan))
-(def pub-chan (chan))
-(def notif-chan (pub pub-chan :topic))
-
-(def browser-state (atom {}))
+(defonce cards-channel (chan))
 
 (declare generate-previous-cards)
 
@@ -49,8 +47,7 @@
       (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
-      (reset! all-cards cards)
-      ; (reset! all-cards (into {} (map (juxt :title identity) cards)))
+      (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true :previous-cards (generate-previous-cards cards)
              :alt-info alt-info :alt-cards alt-cards)
@@ -59,9 +56,9 @@
 (defn- expand-one
   "Reducer function to create a previous card from a newer card definition."
   [acc version c]
-  (let [number (js/parseInt (subs version 3))
-        cycle-pos (js/parseInt (subs version 0 2))
-        prev-set (first (filter #(= cycle-pos (:cycle_position %1)) @cards/sets))
+  (let [number (str->int (subs version 3))
+        cycle-pos (str->int (subs version 0 2))
+        prev-set (find-first #(= cycle-pos (:cycle_position %)) @cards/sets)
         prev (assoc c
                     :code version
                     :rotated true
@@ -81,8 +78,8 @@
 (defn generate-previous-cards
   "The cards database only has the latest version of a card. Create stubs for previous versions of a card for display purposes."
   [cards]
-  (let [c (filter #(contains? % :previous-versions) cards)]
-    (reduce expand-previous `() c)))
+  (let [c (filter :previous-versions cards)]
+    (reduce expand-previous [] c)))
 
 (defn make-span [text sym icon-class]
   (s/replace text (js/RegExp. sym "gi") (str "<span class='anr-icon " icon-class "'></span>")))
@@ -119,7 +116,7 @@
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
   [setname]
-  (when-let [alt (some #(when (= setname (:name %)) %) (:alt-info @app-state))]
+  (when-let [alt (find-first #(= setname (:name %)) (:alt-info @app-state))]
     (keyword (:version alt))))
 
 (defn- expand-alts
@@ -232,7 +229,7 @@
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
        (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
-      [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]
+      [:pre (render-icons (:text (get @all-cards (:title card))))]
 
       (when show-extra-info
         [:<>
@@ -364,7 +361,7 @@
      (fn [state scroll-top]
        (let [selected (selected-set-name state)
              selected-cycle (-> selected s/lower-case (s/replace " " "-"))
-             combined-cards (concat @all-cards (:previous-cards @app-state))
+             combined-cards (concat (sort-by :code (vals @all-cards)) (:previous-cards @app-state))
              [alt-filter cards] (cond
                                   (= selected "All") [nil combined-cards]
                                   (= selected "Alt Art") [nil (filter-alt-art-cards combined-cards)]

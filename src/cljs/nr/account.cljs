@@ -3,7 +3,6 @@
   (:require [cljs.core.async :refer [chan put!] :as async]
             [clojure.string :as s]
             [goog.dom :as gdom]
-            [jinteki.cards :refer [all-cards]]
             [nr.auth :refer [valid-email?] :as auth]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
