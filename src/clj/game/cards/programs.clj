@@ -2304,7 +2304,7 @@
 (defcard "Surveillance Network Key"
   {:implementation "Only implemented for click to draw"
    :events [{:event :corp-click-draw
-             :msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))}]})
+             :msg (msg "reveal the card just drawn: " (:title target))}]})
 
 (defcard "Switchblade"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
