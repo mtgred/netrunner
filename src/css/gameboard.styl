@@ -155,7 +155,7 @@
         &.green
             background-color: green
 
-    .server-target, .subtype-target
+    .server-target, .additional-subtypes
         position: absolute
         z-index: 10
         padding: 0
@@ -171,17 +171,8 @@
     .server-target
         background-color: sienna
 
-    .subtype-target
+    .additional-subtypes
         background-color: dark-grey
-
-        &.barrier
-            background-color: anarch-orange
-
-        &.code-gate
-            background-color: shaper-green
-
-        &.sentry
-            background-color: criminal-blue
 
     .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
         left: 0
@@ -693,7 +684,7 @@
                     .strength
                         transform(rotate(90deg))
 
-                    .subtype-target
+                    .additional-subtypes
                         transform(rotate(90deg), translateX(100%))
                         transform-origin(100% 0)
 
@@ -740,7 +731,7 @@
             .ices
                 opacity: 0.99
 
-                .subtype-target
+                .additional-subtypes
                     transform(rotate(-90deg), translateY(-100%))
 
                 .hosted
