@@ -10,18 +10,16 @@
   {:req (req (pos? (count (:scored corp))))
    :async true
    :additional-cost [:forfeit]
-   :effect (req (continue-ability
-                  state side
-                  {:prompt "Select an agenda in your score area to trigger its \"when scored\" ability"
-                   :choices {:card #(and (agenda? %)
-                                         (when-scored? %)
-                                         (is-scored? state :corp %))}
-                   :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                   :async true
-                   :effect (effect (continue-ability (card-def target) target nil)
-                                   (unregister-events target {:events [{:event :corp-turn-ends}
-                                                                       {:event :runner-turn-ends}]}))}
-                  card nil))})
+   :effect (effect
+             (continue-ability
+               {:prompt "Select an agenda in your score area to trigger its \"when scored\" ability"
+                :choices {:card #(and (agenda? %)
+                                      (when-scored? %)
+                                      (is-scored? state :corp %))}
+                :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                :async true
+                :effect (effect (continue-ability (:on-score (card-def target)) target nil))}
+               card nil))})
 
 (defcard "Accelerated Diagnostics"
   (letfn [(ad [st si e c cards]

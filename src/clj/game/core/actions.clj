@@ -584,7 +584,9 @@
                        _ (update-all-advancement-requirements state)
                        _ (update-all-agenda-points state)
                        c (get-card state c)
-                       points (get-agenda-points c)]
+                       points (get-agenda-points c)
+                       card-ability (when-let [ability (:on-score (card-def card))]
+                                      (ability-as-handler c ability))]
                    (system-msg state :corp (str "scores " (:title c)
                                                 " and gains " (quantify points "agenda point")))
                    (trigger-event-simult
@@ -595,7 +597,7 @@
                                                      (when (:disable-id (card-def current))
                                                        (swap! state assoc-in [:corp :disable-id] true)))
                                                    (remove-old-current state side eid :runner))}
-                      :card-abilities (card-as-handler c)
+                      :card-abilities card-ability
                       :after-active-player
                       {:effect (req (let [c (get-card state c)]
                                       (set-prop state :corp (get-card state moved-card) :advance-counter 0)
