@@ -363,7 +363,7 @@
 (defn when-scored?
   "Checks if the specified card is able to be used for a when-scored text ability"
   [card]
-  (not (:not-when-scored (card-def card))))
+  (:on-score (card-def card)))
 
 (defn ab-can-prevent?
   "Checks if the specified ability definition should prevent.

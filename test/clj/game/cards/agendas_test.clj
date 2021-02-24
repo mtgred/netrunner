@@ -55,9 +55,9 @@
     (is (empty? (:prompt (get-runner))))
     (is (some? (get-ice state :hq 0)))
     (is (= 2 (count (:discard (get-corp)))))
-    (core/move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
-    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
-    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
+    (move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
+    (move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
+    (move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (play-and-score state "Accelerated Beta Test")
     (is (= "Look at the top 3 cards of R&D?" (:msg (prompt-map :corp))))
     (click-prompt state :corp "Yes")
@@ -861,10 +861,16 @@
                              "Adonis Campaign"]
                       :discard ["Eli 1.0"]}})
     (play-and-score state "Director Haas' Pet Project")
-    (click-prompt state :corp "Yes")
-    (click-card state :corp "Adonis Campaign")
-    (click-card state :corp "Strongbox")
-    (click-card state :corp "Eli 1.0")))
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Corp spends no credits to install"
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Adonis Campaign")
+      (click-card state :corp "Strongbox")
+      (click-card state :corp "Eli 1.0")
+      (is (= "Adonis Campaign" (:title (get-content state :remote2 0))))
+      (is (= "Strongbox" (:title (get-content state :remote2 1))))
+      (is (= "Eli 1.0" (:title (get-ice state :remote2 0)))))))
 
 (deftest divested-trust
   ;; Divested Trust
