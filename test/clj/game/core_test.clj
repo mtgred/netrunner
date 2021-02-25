@@ -39,23 +39,6 @@
              '[game.cards.upgrades])))
 (load-all-cards)
 
-(let [nspaces {"agendas" 'game.cards.agendas
-               "assets" 'game.cards.assets
-               "basic" 'game.cards.basic
-               "events" 'game.cards.events
-               "hardware" 'game.cards.hardware
-               "ice" 'game.cards.ice
-               "identities" 'game.cards.identities
-               "operations" 'game.cards.operations
-               "programs" 'game.cards.programs
-               "resources" 'game.cards.resources
-               "upgrades" 'game.cards.upgrades}]
-  (hawk/watch! [{:paths ["src/clj/game/cards"]
-                 :filter hawk/file?
-                 :handler (fn [ctx e]
-                            (let [filename (-> e :file io/file .getName (string/split #"\.") first)]
-                              (require [(get nspaces filename) :reload true])))}]))
-
 ;; General utilities necessary for starting a new game
 (def find-card core/find-card)
 
@@ -68,16 +51,16 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
-(defmacro take-credits
+(defn take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
   If all clicks are used up, end turn and start the opponent's turn."
   [state side & n]
-  `(let [other# (if (= ~side :corp) :runner :corp)]
-     (dotimes [_# (or ~(first n) (get-in @~state [~side :click]))]
-       (core/process-action "credit" ~state ~side nil))
-     (when (zero? (get-in @~state [~side :click]))
-       (core/process-action "end-turn" ~state ~side nil)
-       (core/process-action "start-turn" ~state other# nil))))
+  (let [other (if (= side :corp) :runner :corp)]
+    (dotimes [_ (or (first n) (get-in @state [side :click]))]
+      (core/process-action "credit" state side nil))
+    (when (zero? (get-in @state [side :click]))
+      (core/process-action "end-turn" state side nil)
+      (core/process-action "start-turn" state other nil))))
 
 
 ;; Deck construction helpers
@@ -184,55 +167,55 @@
      state)))
 
 ;;; Card related functions
-(defmacro card-ability
+(defn card-ability
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
   [state side card ability & targets]
-  `(let [card# (get-card ~state ~card)
-         ability# (cond
-                    (number? ~ability) ~ability
-                    (string? ~ability) (some #(when (= (:label (second %)) ~ability) (first %)) (map-indexed vector (:abilities card#)))
-                    :else -1)]
-     (is (active? card#) (str (:title card#) " is active"))
-     (is (and (number? ability#)
-              (nth (:abilities card#) ability# nil)) (str (:title card#) " has ability #" ability#))
-     (when (and (number? ability#)
-                (nth (:abilities card#) ability# nil))
-       (core/process-action "ability" ~state ~side {:card card#
-                                                    :ability ability#
-                                                    :targets (first ~targets)}))))
+  (let [card (get-card state card)
+        ability (cond
+                  (number? ability) ability
+                  (string? ability) (some #(when (= (:label (second %)) ability) (first %)) (map-indexed vector (:abilities card)))
+                  :else -1)]
+    (is (active? card) (str (:title card) " is active"))
+    (is (and (number? ability)
+             (nth (:abilities card) ability nil)) (str (:title card) " has ability #" ability))
+    (when (and (number? ability)
+               (nth (:abilities card) ability nil))
+      (core/process-action "ability" state side {:card card
+                                                 :ability ability
+                                                 :targets (first targets)}))))
 
-(defmacro card-subroutine
+(defn card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
   [state _ card ability]
-  `(let [ice# (get-card ~state ~card)
-         run# (:run @~state)]
-     (is (rezzed? ice#) (str (:title ice#) " is active"))
-     (is (some? run#) "There is a run happening")
-     (is (= :encounter-ice (:phase run#)) "Subroutines can be resolved")
-     (when (and (some? run#)
-                (not (:no-action run#))
-                (= :encounter-ice (:phase run#)))
-       (core/process-action "subroutine" ~state :corp {:card ice#
-                                                       :subroutine ~ability})
-       true)))
+  (let [ice (get-card state card)
+        run (:run @state)]
+    (is (rezzed? ice) (str (:title ice) " is active"))
+    (is (some? run) "There is a run happening")
+    (is (= :encounter-ice (:phase run)) "Subroutines can be resolved")
+    (when (and (some? run)
+               (not (:no-action run))
+               (= :encounter-ice (:phase run)))
+      (core/process-action "subroutine" state :corp {:card ice
+                                                     :subroutine ability})
+      true)))
 
-(defmacro card-side-ability
+(defn card-side-ability
   [state side card ability & targets]
-  `(let [ab# {:card (get-card ~state ~card)
-              :ability ~ability
-              :targets ~(first targets)}]
-     (if (= :corp ~side)
-       (core/process-action "corp-ability" ~state ~side ab#)
-       (core/process-action "runner-ability" ~state ~side ab#))))
+  (let [ab {:card (get-card state card)
+            :ability ability
+            :targets (first targets)}]
+    (if (= :corp side)
+      (core/process-action "corp-ability" state side ab)
+      (core/process-action "runner-ability" state side ab))))
 
-(defmacro change
+(defn change
   [state side value-key delta]
-  `(let [target# {:key ~value-key
-                  :delta ~delta}]
-     (is (and (keyword? ~value-key) (number? ~delta)) "Passed in value-key and delta")
-     (when (and ~value-key ~delta)
-       (core/process-action "change" ~state ~side target#))))
+  (let [target {:key value-key
+                :delta delta}]
+    (is (and (keyword? value-key) (number? delta)) "Passed in value-key and delta")
+    (when (and value-key delta)
+      (core/process-action "change" state side target))))
 
 (def count-tags jutils/count-tags)
 (def count-real-tags jutils/count-real-tags)
@@ -246,9 +229,9 @@
   (wait-for (core/gain-tags state side n)
             (core/fake-checkpoint state)))
 
-(defmacro remove-tag
+(defn remove-tag
   [state side]
-  `(core/process-action "remove-tag" ~state ~side nil))
+  (core/process-action "remove-tag" state side nil))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -311,226 +294,226 @@
   ([state side pos]
    (get-in @state [side :rfg pos])))
 
-(defmacro play-from-hand
+(defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."
   [state side title & server]
-  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
-     (is (some? card#) (str ~title " is in the hand"))
-     (when (some? card#)
-       (core/process-action "play" ~state ~side {:card card#
-                                                 :server ~(first server)})
-       true)))
+  (let [card (find-card title (get-in @state [side :hand]))]
+    (is (some? card) (str title " is in the hand"))
+    (when (some? card)
+      (core/process-action "play" state side {:card card
+                                              :server (first server)})
+      true)))
 
 
 ;;; Run functions
-(defmacro run-on
+(defn run-on
   "Start run on specified server."
   [state server]
-  `(let [run# (:run @~state)]
-     (is (not run#) "There is no existing run")
-     (is (pos? (get-in @~state [:runner :click])) "Runner can make a run")
-     (when (and (not run#)
-                (get-in @~state [:runner :click]))
-       (core/process-action "run" ~state :runner {:server ~server})
-       true)))
+  (let [run (:run @state)]
+    (is (not run) "There is no existing run")
+    (is (pos? (get-in @state [:runner :click])) "Runner can make a run")
+    (when (and (not run)
+               (get-in @state [:runner :click]))
+      (core/process-action "run" state :runner {:server server})
+      true)))
 
-(defmacro run-next-phase
+(defn run-next-phase
   [state]
-  `(let [run# (:run @~state)]
-     (is (some? run#) "There is a run happening")
-     (is (:next-phase run#) "The next phase has been set")
-     (when (and (some? run#)
-                (:next-phase run#))
-       (core/process-action "start-next-phase" ~state :runner nil)
-       true)))
+  (let [run (:run @state)]
+    (is (some? run) "There is a run happening")
+    (is (:next-phase run) "The next phase has been set")
+    (when (and (some? run)
+               (:next-phase run))
+      (core/process-action "start-next-phase" state :runner nil)
+      true)))
 
-(defmacro run-continue
+(defn run-continue
   "No action from corp and continue for runner to proceed in current run."
-  ([state] `(run-continue ~state :any))
+  ([state] (run-continue state :any))
   ([state phase]
-   `(let [run# (:run @~state)]
-      (is (some? run#) "There is a run happening")
-      (is (empty? (get-in @~state [:runner :prompt])) "No open prompts for the runner")
-      (is (empty? (get-in @~state [:corp :prompt])) "No open prompts for the corp")
-      (is (not (:no-action run#)) "No player has pressed continue yet")
-      (is (not= :access-server (:phase run#))
-          "The run has not reached the server yet")
-      (when (and (some? run#)
-                 (not (:no-action run#))
-                 (empty? (get-in @~state [:runner :prompt]))
-                 (empty? (get-in @~state [:corp :prompt]))
-                 (not (:no-action run#))
-                 (not= :access-server (:phase run#)))
-        (core/process-action "continue" ~state :corp nil)
-        (core/process-action "continue" ~state :runner nil))
-      (when-not (= :any ~phase)
-        (is (= ~phase (get-in @~state [:run :phase])) "Run is in the correct phase")))))
+   (let [run (:run @state)]
+     (is (some? run) "There is a run happening")
+     (is (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
+     (is (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
+     (is (not (:no-action run)) "No player has pressed continue yet")
+     (is (not= :access-server (:phase run))
+         "The run has not reached the server yet")
+     (when (and (some? run)
+                (not (:no-action run))
+                (empty? (get-in @state [:runner :prompt]))
+                (empty? (get-in @state [:corp :prompt]))
+                (not (:no-action run))
+                (not= :access-server (:phase run)))
+       (core/process-action "continue" state :corp nil)
+       (core/process-action "continue" state :runner nil))
+     (when-not (= :any phase)
+       (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase")))))
 
-(defmacro run-phase-43
+(defn run-phase-43
   "Ask for triggered abilities phase 4.3"
   [state]
-  `(let [run# (:run @~state)]
-     (is (some? run#) "There is a run happening")
-     (is (zero? (:position run#)) "Runner has passed all ice")
-     (is (not (:no-action run#)) "No player has pressed continue yet")
-     (is (= :approach-server (:phase run#)) "Runner is approaching the server")
-     (when (and (some? run#)
-                (zero? (:position run#))
-                (not (:no-action run#))
-                (= :approach-server (:phase run#)))
-       (core/process-action "corp-phase-43" ~state :corp nil)
-       (core/process-action "continue" ~state :runner nil)
-       true)))
+  (let [run (:run @state)]
+    (is (some? run) "There is a run happening")
+    (is (zero? (:position run)) "Runner has passed all ice")
+    (is (not (:no-action run)) "No player has pressed continue yet")
+    (is (= :approach-server (:phase run)) "Runner is approaching the server")
+    (when (and (some? run)
+               (zero? (:position run))
+               (not (:no-action run))
+               (= :approach-server (:phase run)))
+      (core/process-action "corp-phase-43" state :corp nil)
+      (core/process-action "continue" state :runner nil)
+      true)))
 
-(defmacro run-jack-out
+(defn run-jack-out
   "Jacks out in run."
   [state]
-  `(let [run# (:run @~state)]
-     (is (some? run#) "There is a run happening")
-     (is (:jack-out run#) "Runner is allowed to jack out")
-     (core/process-action "jack-out" ~state :runner nil)
-     true))
+  (let [run (:run @state)]
+    (is (some? run) "There is a run happening")
+    (is (:jack-out run) "Runner is allowed to jack out")
+    (core/process-action "jack-out" state :runner nil)
+    true))
 
-(defmacro run-empty-server
+(defn run-empty-server
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
-  `(when (run-on ~state ~server)
-     (run-continue ~state)))
+  (when (run-on state server)
+    (run-continue state)))
 
-(defmacro fire-subs
+(defn fire-subs
   [state card]
-  `(let [ice# (get-card ~state ~card)
-         run# (:run @~state)]
-     (is (rezzed? ice#) (str (:title ice#) " is active"))
-     (is (some? run#) "There is a run happening")
-     (is (= :encounter-ice (:phase run#)) "Subroutines can be resolved")
-     (when (and (rezzed? ice#)
-                (some? run#)
-                (= :encounter-ice (:phase run#)))
-       (core/process-action "unbroken-subroutines" ~state :corp {:card ice#}))))
+  (let [ice (get-card state card)
+        run (:run @state)]
+    (is (rezzed? ice) (str (:title ice) " is active"))
+    (is (some? run) "There is a run happening")
+    (is (= :encounter-ice (:phase run)) "Subroutines can be resolved")
+    (when (and (rezzed? ice)
+               (some? run)
+               (= :encounter-ice (:phase run)))
+      (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
 
-(defmacro play-run-event
+(defn play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
   Advances the run timings to the point where replace-access occurs."
   [state card server & show-prompt]
-  `(when (play-from-hand ~state :runner ~card)
-     (is (:run @~state) "There is a run happening")
-     (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
-     (when (run-continue ~state)
-       (is (get-in @~state [:runner :prompt]) "A prompt is shown")
-       (is (get-in @~state [:run :successful]) "Run is marked successful"))))
+  (when (play-from-hand state :runner card)
+    (is (:run @state) "There is a run happening")
+    (is (= [server] (get-in @state [:run :server])) "Correct server is run")
+    (when (run-continue state)
+      (is (get-in @state [:runner :prompt]) "A prompt is shown")
+      (is (get-in @state [:run :successful]) "Run is marked successful"))))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))
   ([state pos]
    (get-in @state [:runner :play-area pos])))
 
-(defmacro rez
+(defn rez
   [state _ card & args]
-  `(let [card# (get-card ~state ~card)]
-     (is (installed? card#) (str (:title card#) " is installed"))
-     (is (not (rezzed? card#)) (str (:title card#) " is unrezzed"))
-     (when (and (installed? card#)
-                (not (rezzed? card#)))
-       (core/process-action "rez" ~state :corp (merge {:card card#} ~(first args))))))
+  (let [card (get-card state card)]
+    (is (installed? card) (str (:title card) " is installed"))
+    (is (not (rezzed? card)) (str (:title card) " is unrezzed"))
+    (when (and (installed? card)
+               (not (rezzed? card)))
+      (core/process-action "rez" state :corp (merge {:card card} (first args))))))
 
-(defmacro derez
+(defn derez
   [state side card]
-  `(let [card# (get-card ~state ~card)]
-     (is (installed? card#) (str (:title card#) " is installed"))
-     (is (rezzed? card#) (str (:title card#) " is rezzed"))
-     (when (and (installed? card#)
-                (rezzed? card#))
-       (core/process-action "derez" ~state ~side {:card card#}))))
+  (let [card (get-card state card)]
+    (is (installed? card) (str (:title card) " is installed"))
+    (is (rezzed? card) (str (:title card) " is rezzed"))
+    (when (and (installed? card)
+               (rezzed? card))
+      (core/process-action "derez" state side {:card card}))))
 
-(defmacro end-phase-12
+(defn end-phase-12
   [state side]
-  `(let [phase# (keyword (str (name ~side) "-phase-12"))]
-     (is (phase# @~state) (str (jutils/capitalize (name ~side)) " in Step 1.2"))
-     (when (phase# @~state)
-       (core/process-action "end-phase-12" ~state ~side nil))))
+  (let [phase (keyword (str (name side) "-phase-12"))]
+    (is (phase @state) (str (jutils/capitalize (name side)) " in Step 1.2"))
+    (when (phase @state)
+      (core/process-action "end-phase-12" state side nil))))
 
-(defmacro click-draw
+(defn click-draw
   [state side]
-  `(core/process-action "draw" ~state ~side nil))
+  (core/process-action "draw" state side nil))
 
-(defmacro click-credit
+(defn click-credit
   [state side]
-  `(core/process-action "credit" ~state ~side nil))
+  (core/process-action "credit" state side nil))
 
-(defmacro click-advance
+(defn click-advance
   [state side card]
-  `(let [card# (get-card ~state ~card)]
-     (is (some? card#) (str (:title card#) " exists"))
-     (is (installed? card#) (str (:title card#) " is installed"))
-     (when (and (some? card#)
-                (installed? card#))
-       (core/process-action "advance" ~state ~side {:card card#}))))
+  (let [card (get-card state card)]
+    (is (some? card) (str (:title card) " exists"))
+    (is (installed? card) (str (:title card) " is installed"))
+    (when (and (some? card)
+               (installed? card))
+      (core/process-action "advance" state side {:card card}))))
 
-(defmacro trash
+(defn trash
   [state side card]
-  `(let [card# (get-card ~state ~card)]
-     (is (some? card#) (str (:title card#) " exists"))
-     (when (some? card#)
-       (core/process-action "trash" ~state ~side {:card card#}))))
+  (let [card (get-card state card)]
+    (is (some? card) (str (:title card) " exists"))
+    (when (some? card)
+      (core/process-action "trash" state side {:card card}))))
 
-(defmacro score-agenda
+(defn score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
   [state _ card]
-  `(let [card# (get-card ~state ~card)
-         advancementcost# (:advancementcost ~card)]
-     (is (some? card#) (str (:title card#) " exists"))
-     (when (some? card#)
-       (core/gain ~state :corp :click advancementcost# :credit advancementcost#)
-       (core/fake-checkpoint ~state)
-       (dotimes [_# advancementcost#]
-         (core/process-action "advance" ~state :corp {:card ~card}))
-       (is (= advancementcost# (get-counters (get-card ~state ~card) :advancement)))
-       (when (= advancementcost# (get-counters (get-card ~state ~card) :advancement))
-         (core/process-action "score" ~state :corp {:card ~card})
-         (is (find-card (:title card#) (get-scored ~state :corp)))))))
+  (let [card (get-card state card)
+        advancementcost (:advancementcost card)]
+    (is (some? card) (str (:title card) " exists"))
+    (when (some? card)
+      (core/gain state :corp :click advancementcost :credit advancementcost)
+      (core/fake-checkpoint state)
+      (dotimes [_ advancementcost]
+        (core/process-action "advance" state :corp {:card card}))
+      (is (= advancementcost (get-counters (get-card state card) :advancement)))
+      (when (= advancementcost (get-counters (get-card state card) :advancement))
+        (core/process-action "score" state :corp {:card card})
+        (is (find-card (:title card) (get-scored state :corp)))))))
 
-(defmacro advance
+(defn advance
   "Advance the given card."
   [state card & n]
-  `(dotimes [_# (or ~(first n) 1)]
-     (click-advance ~state :corp ~card)))
+  (dotimes [_ (or (first n) 1)]
+    (click-advance state :corp card)))
 
-(defmacro trash-from-hand
+(defn trash-from-hand
   "Trash specified card from hand of specified side"
   [state side title]
-  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
-     (trash ~state ~side card#)))
+  (let [card (find-card title (get-in @state [side :hand]))]
+    (trash state side card)))
 
-(defmacro trash-card
+(defn trash-card
   [state side card]
-  `(let [card# (get-card ~state ~card)]
-     (is (some? card#) (str (:title card#) " exists"))
-     (when (some? card#)
-       (trash ~state ~side card#))))
+  (let [card (get-card state card)]
+    (is (some? card) (str (:title card) " exists"))
+    (when (some? card)
+      (trash state side card))))
 
-(defmacro trash-resource
+(defn trash-resource
   "Click-trash a resource as the corp"
   [state]
-  `(core/process-action "trash-resource" ~state :corp nil))
+  (core/process-action "trash-resource" state :corp nil))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
 
-(defmacro play-and-score
+(defn play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
-  `(when (play-from-hand ~state :corp ~title "New remote")
-     (score-agenda ~state :corp (get-content ~state (keyword (str "remote" (:rid @~state))) 0))))
+  (when (play-from-hand state :corp title "New remote")
+    (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
 
-(defmacro damage
+(defn damage
   [state side dmg-type qty]
-  `(core/damage ~state ~side (core/make-eid ~state) ~dmg-type ~qty nil))
+  (core/damage state side (core/make-eid state) dmg-type qty nil))
 
-(defmacro move
+(defn move
   [state side card location]
-  `(do (core/move ~state ~side ~card ~location)
-       (core/fake-checkpoint ~state)))
+  (do (core/move state side card location)
+      (core/fake-checkpoint state)))
