@@ -17,7 +17,7 @@
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button image-language-name
-                              non-game-toast]]
+                              non-game-toast card-by-id]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -41,12 +41,16 @@
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
         alt-card (get (:alt-cards @app-state) (:code card))
+        alt-selection (get (:alt_art alt-card) (keyword art) art)
+        fixed-alt-selection (if (and alt-selection
+                                     (nil? alt-card))
+                              (when (re-matches #"^\d{5}$" alt-selection) alt-selection) alt-selection)
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
         show-art (and special-user special-wants-art viewer-wants-art)
-        version-name (if (and art show-art)
-                       (get (:alt_art alt-card) (keyword art) art)
+        version-name (if (and art show-art fixed-alt-selection)
+                       fixed-alt-selection
                        (:code card))
         card-name (image-language-name card version-name)]
     (str "/img/cards/" card-name ".png")))
@@ -656,19 +660,19 @@
   (and (get-in @game-state [:options :spectatorhands])
        (not (not-spectator?))))
 
-(defn get-card-title [e]
+(defn- get-card-id [e]
   (not-empty (.. e -target -id)))
 
 (defn card-preview-mouse-over [e channel]
   (.preventDefault e)
-  (when-let [title (get-card-title e)]
-    (when-let [card (get @all-cards title)]
+  (when-let [id (get-card-id e)]
+    (when-let [card (card-by-id id)]
       (put! channel (assoc card :implementation :full))))
   nil)
 
 (defn card-preview-mouse-out [e channel]
   (.preventDefault e)
-  (when-let [title (get-card-title e)]
+  (when-let [title (get-card-id e)]
     (put! channel false))
   nil)
 
