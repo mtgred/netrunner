@@ -63,7 +63,7 @@
             "load-test" ["run" "-m" "tasks.load-test/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
-            "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]
+            "card-coverage" ["run" "-m" "tasks.card-coverage/test-coverage"]
             "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
             "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]
             "create-sample-data" ["run" "-m" "tasks.db/create-sample-data"]
