@@ -3,6 +3,7 @@
             [reagent.dom :as rd]
             [goog.string :as gstring]
             [goog.string.format]
+            [medley.core :refer [find-first]]
             [nr.appstate :refer [app-state]]
             [jinteki.cards :refer [all-cards]]))
 
@@ -308,6 +309,9 @@
   [this scroll-top-atom]
   (let [h (.-scrollTop (rd/dom-node this))]
     (reset! scroll-top-atom h)))
+
+(defn card-by-id [code]
+  (find-first #(= code (:code %)) (vals @all-cards)))
 
 (defn image-language-name
   "Generates a card name based on the user's language settings. Returns default if language is unavailable."

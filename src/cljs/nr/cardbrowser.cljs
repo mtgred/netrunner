@@ -98,9 +98,13 @@
    (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                  (get-in @app-state [:options :alt-arts (keyword (:code card))]))
          alt-card (get (:alt-cards @app-state) (:code card))
+         alt-selection (get (:alt_art alt-card) (keyword art) art)
+         fixed-alt-selection (if (and alt-selection
+                                      (nil? alt-card))
+                               (when (re-matches #"^\d{5}$" alt-selection) alt-selection) alt-selection)
          has-art (and (show-alt-art? allow-all-users) art)
-         alt-name (if has-art
-                    (get (:alt_art alt-card) (keyword art) art)
+         alt-name (if (and has-art fixed-alt-selection)
+                    fixed-alt-selection
                     (:code card))
          card-name (image-language-name card alt-name)]
      (str "/img/cards/" card-name ".png"))))
