@@ -1,6 +1,6 @@
 (ns nr.gameboard
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
+(:require-macros [cljs.core.async.macros :refer [go ]])
+(:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
@@ -247,13 +247,39 @@
                    (recur new-state diffs [])
                    (recur new-state diffs inter-diffs))))))))
 
+(defn toggle-autoplay
+  []
+  (swap! replay-status assoc :autoplay (not (:autoplay @replay-status))))
+
+(defn handle-keydown
+  [e]
+  (when-not (= "textarea" (.-type (.-activeElement js/document)))
+    (case (.-key e)
+      " " (toggle-autoplay)
+      "ArrowLeft" (replay-step-back)
+      "ArrowRight" (cond (.-ctrlKey e) (replay-step-forward)
+                         (.-shiftKey e) (replay-log-forward)
+                         :else (replay-forward))
+      nil)))
+
+
 (defn replay-panel []
+  (swap! replay-status assoc :autoplay true)
+  (go (while true
+        (<! (timeout 1500))
+        (if (:autoplay @replay-status)
+          (replay-forward)
+          nil)))
   (r/create-class
     {:display-name "replay-panel"
 
      :component-did-update
      (fn [this]
        (scroll-timeline))
+
+     :component-did-mount
+     (fn [this]
+       (-> js/document (.addEventListener "keydown" handle-keydown)))
 
      :reagent-render
      (fn []
@@ -2313,6 +2339,12 @@
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])]
 
+;;    (go (while true
+;;          
+;;          (<! (timeout 1000))
+;;          (replay-forward)
+;;          ))
+;;
     (go (while true
           (let [zoom (<! zoom-channel)]
             (swap! app-state assoc :zoom zoom))))
