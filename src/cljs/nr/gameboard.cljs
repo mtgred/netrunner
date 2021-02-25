@@ -2339,12 +2339,6 @@
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])]
 
-;;    (go (while true
-;;          
-;;          (<! (timeout 1000))
-;;          (replay-forward)
-;;          ))
-;;
     (go (while true
           (let [zoom (<! zoom-channel)]
             (swap! app-state assoc :zoom zoom))))
