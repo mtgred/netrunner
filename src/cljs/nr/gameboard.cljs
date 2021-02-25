@@ -1,6 +1,6 @@
 (ns nr.gameboard
-(:require-macros [cljs.core.async.macros :refer [go ]])
-(:require [cljs.core.async :refer [chan put! <! timeout] :as async]
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
@@ -150,8 +150,31 @@
 (defn replay-step-forward []
   (replay-jump (inc (:n @replay-status))))
 
-(defn replay-step-back []
+(defn replay-step-backward []
   (replay-jump (dec (:n @replay-status))))
+
+(defn replay-backward []
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (if (zero? d)
+      (when (pos? n)
+        (replay-jump-to {:n (dec n) :d 0}))
+      (replay-jump-to {:n n :d (dec d)}))))
+
+(defn replay-reached-start? []
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (and (zero? n) (zero? d))))
+
+(defn replay-log-backward []
+  (let [prev-log (:log @game-state)]
+    (while (and
+             (or (= prev-log (:log @game-state))
+                 (= "typing" (-> @game-state :log last :text)))
+             (not (replay-reached-start?)))
+      (replay-backward))))
 
 (declare get-remote-annotations)
 (defn populate-replay-timeline
@@ -247,8 +270,7 @@
                    (recur new-state diffs [])
                    (recur new-state diffs inter-diffs))))))))
 
-(defn toggle-autoplay
-  []
+(defn toggle-autoplay []
   (swap! replay-status assoc :autoplay (not (:autoplay @replay-status))))
 
 (defn handle-keydown
@@ -256,20 +278,21 @@
   (when-not (= "textarea" (.-type (.-activeElement js/document)))
     (case (.-key e)
       " " (toggle-autoplay)
-      "ArrowLeft" (replay-step-back)
+      "ArrowLeft" (cond (.-ctrlKey e) (replay-step-backward)
+                         (.-shiftKey e) (replay-log-backward)
+                         :else (replay-backward))
       "ArrowRight" (cond (.-ctrlKey e) (replay-step-forward)
                          (.-shiftKey e) (replay-log-forward)
                          :else (replay-forward))
       nil)))
 
-
 (defn replay-panel []
   (swap! replay-status assoc :autoplay true)
   (go (while true
         (<! (timeout 1500))
-        (if (:autoplay @replay-status)
-          (replay-forward)
-          nil)))
+        (when (:autoplay @replay-status)
+          (replay-forward))))
+
   (r/create-class
     {:display-name "replay-panel"
 
@@ -313,7 +336,7 @@
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls
-         [:button.small {:on-click #(replay-step-back) :type "button"
+         [:button.small {:on-click #(replay-step-backward) :type "button"
                          :title "Rewind one click"} "⏮︎"]
          [:button.small {:on-click #(replay-forward) :type "button"
                          :title "Play next action"} "⏵︎"]
