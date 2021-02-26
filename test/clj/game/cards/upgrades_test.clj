@@ -3408,3 +3408,28 @@
     (click-prompt state :runner "0")
     (is (= 1 (:credit (get-corp))) "After using all credits to boost trace, Corp gains 1c thanks to Traffic Analyzer")
     ))
+
+(deftest defense-construct
+  (do-game
+    (new-game {:corp {:hand ["Defense Construct" (qty "PAD Campaign" 3)]}})
+    ;; Play 3 PAD Campaigns on the same server so 2 of them are trashed facedown
+    (play-from-hand state :corp "Defense Construct" "Archives")
+    (play-from-hand state :corp "PAD Campaign" "HQ")
+    (play-from-hand state :corp "PAD Campaign" "HQ")
+    (click-prompt state :corp "OK")
+    (take-credits state :runner)
+    (play-from-hand state :corp "PAD Campaign" "HQ")
+    (click-prompt state :corp "OK")
+    ;; Advance Defense Construct twice to recover both PAD Campaigns from discard
+    (let [dc (get-content state :archives 0)
+          advance-tokens 2]
+      (rez state :corp dc)
+      (advance state dc advance-tokens)
+      (take-credits state :corp)
+      (run-on state :archives)
+      (card-ability state :corp dc 0)
+      (click-card state :corp (get (:discard (get-corp)) 0))
+      (click-card state :corp (get (:discard (get-corp)) 1))
+      (is (= advance-tokens (count (filter #(= (:title %) "PAD Campaign") (:hand (get-corp))))) "2 advance tokens of DC so 2 PAD Campaign back to corp")
+      (is (= "Defense Construct" (:title (first (:discard (get-corp)))))))) "Defense Construct is trashed after using it")
+
