@@ -3551,3 +3551,28 @@
       (card-ability state :corp (refresh hg) 0)
       (is (= 2 (:click (get-runner))) "Runner spent 1 click on the run and 1 more to break 1st sub")
       (is (zero? (:credit (get-runner) "Heinlein Grid did the runner loose all credits"))))))
+
+(deftest mason-bellamy
+  (do-game
+    (new-game {:corp {:hand ["Mason Bellamy" "Cobra"]
+                      :deck [(qty "Hedge Fund" 5)]}
+               :runner {:credits 10 :hand [(qty "Garrote" 5)]}})
+    (play-from-hand state :corp "Mason Bellamy" "HQ")
+    (play-from-hand state :corp "Cobra" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Garrote")
+    (let [mb (get-content state :hq 0)
+          cobra (get-ice state :hq 0)
+          garrote (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp mb)
+      (rez state :corp cobra)
+      (run-continue state)
+      (card-ability state :runner (refresh garrote) 0)
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Done")
+      (fire-subs state cobra)
+      (run-continue state)
+      (is (:run @state) "Run is not over")
+      ;; 1 click to play program, 1 for run, 1 of Mason
+      (is (= 1 (:click (get-runner)))))))
