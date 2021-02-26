@@ -3462,4 +3462,19 @@
       (is (zero? (count (:deck (get-runner)))))
       (is (= 2 (count (:discard (get-runner)))))
       )))
->>>>>>> 6937396a1 (Add tests to fractal-threat-matrix)
+
+(deftest shell-corporation
+  (do-game
+    (new-game {:corp {:hand ["Shell Corporation"]}})
+    (play-from-hand state :corp "Shell Corporation" "New remote")
+    (let [sc (get-content state :remote1 0)]
+      (rez state :corp sc)
+      (card-ability state :corp (refresh sc) 0)
+      (card-ability state :corp (refresh sc) 0)             ;;Retrigger ability, no extra credits are given
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp (refresh sc) 0)             ;;Store another 3c. Total 6c
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp (refresh sc) 1)             ;;Now take those 6c
+      (is (= 12 (:credit (get-corp)))))))
