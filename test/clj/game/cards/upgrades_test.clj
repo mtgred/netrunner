@@ -3478,3 +3478,15 @@
       (take-credits state :runner)
       (card-ability state :corp (refresh sc) 1)             ;;Now take those 6c
       (is (= 12 (:credit (get-corp)))))))
+
+(deftest panic-button
+  (do-game
+    (new-game {:corp {:hand ["Panic Button"] :deck ["Enigma"]}})
+    (play-from-hand state :corp "Panic Button" "HQ")
+    (let [panic-btn (get-content state :hq 0)]
+      (rez state :corp panic-btn)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh panic-btn) 0)
+      (is (= 1 (count (:hand (get-corp)))))
+      (is (zero? (:deck (get-corp)))))))
