@@ -3531,3 +3531,23 @@
       (trash state :corp ed)
       (is (= 1 (core/ice-strength state :corp iw)) "Strength of Ice Wall after trashing Experiential Data is back to 1")
       (is (= 2 (core/ice-strength state :corp enigma)) "Strength of Enigma after trashing Experiential Data is back to 2"))))
+
+(deftest heinlein-grid
+  (do-game
+    (new-game {:corp {:credits 10 :hand ["Heinlein Grid" "Najja 1.0"]}})
+    (play-from-hand state :corp "Heinlein Grid" "New remote")
+    (play-from-hand state :corp "Najja 1.0" "Remote 1")
+    (let [hg (get-content state :remote1 0)
+          najja (get-ice state :remote1 0)]
+      (rez state :corp hg)
+      (take-credits state :corp)
+      (println "Runner credits 1: " (:credit (get-runner)))
+      (run-on state "Remote 1")
+      (rez state :corp najja)
+      (run-continue state)
+      (card-side-ability state :runner najja 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Done")
+      (card-ability state :corp (refresh hg) 0)
+      (is (= 2 (:click (get-runner))) "Runner spent 1 click on the run and 1 more to break 1st sub")
+      (is (zero? (:credit (get-runner) "Heinlein Grid did the runner loose all credits"))))))
