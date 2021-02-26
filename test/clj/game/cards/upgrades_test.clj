@@ -3433,3 +3433,9 @@
       (is (= advance-tokens (count (filter #(= (:title %) "PAD Campaign") (:hand (get-corp))))) "2 advance tokens of DC so 2 PAD Campaign back to corp")
       (is (= "Defense Construct" (:title (first (:discard (get-corp)))))))) "Defense Construct is trashed after using it")
 
+(deftest k-p-lynn
+  (do-game
+    (new-game {:corp {:hand ["K. P. Lynn"]}})
+    (play-from-hand state :corp "K. P. Lynn" "New remote")
+    ))
+
