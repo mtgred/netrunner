@@ -3510,3 +3510,24 @@
         (take-credits state :corp)                          ;;+2c
         (take-credits state :runner)
         (is (= (+ 3 total-corp-credits) (:credit (get-corp))) "Corp does not gain any extra c with agenda")))))
+
+(deftest experiential-data
+  (do-game
+    (new-game {:corp {:credits 7 :hand ["Experiential Data" "Ice Wall" "Enigma"]}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Experiential Data" "Remote 1")
+    (play-from-hand state :corp "Enigma" "Remote 1")
+    (take-credits state :runner)
+    (let [iw (get-ice state :remote1 0)
+          ed (get-content state :remote1 0)
+          enigma (get-ice state :remote1 1)]
+      (rez state :corp iw)
+      (rez state :corp enigma)
+      (is (= 1 (core/ice-strength state :corp iw)) "Initial strength of Ice Wall is 1")
+      (is (= 2 (core/ice-strength state :corp enigma)) "Initial strength of Enigma is 2")
+      (rez state :corp ed)
+      (is (= 2 (core/ice-strength state :corp iw)) "Strength of Ice Wall after playing Experiential Data on the same server is now 2")
+      (is (= 3 (core/ice-strength state :corp enigma)) "Strength of Enigma after playing Experiential Data on the same server is now 3")
+      (trash state :corp ed)
+      (is (= 1 (core/ice-strength state :corp iw)) "Strength of Ice Wall after trashing Experiential Data is back to 1")
+      (is (= 2 (core/ice-strength state :corp enigma)) "Strength of Enigma after trashing Experiential Data is back to 2"))))
