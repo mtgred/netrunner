@@ -31,7 +31,7 @@
 (defonce sfx-state (atom {}))
 
 (defonce replay-timeline (atom []))
-(defonce replay-status (r/atom {}))
+(defonce replay-status (r/atom {:autoplay false :speed 1600}))
 (defonce replay-side (r/atom :spectator))
 (defonce show-replay-link (r/atom false))
 
@@ -274,16 +274,16 @@
   (swap! replay-status assoc :autoplay (not (:autoplay @replay-status))))
 
 (defn change-replay-speed [v]
-   (let [new-step-intervall (min 10000 (max 100 (- (:speed @replay-status) v)))]
-        (swap! replay-status assoc :speed new-step-intervall)))
+  (let [new-step-intervall (min 10000 (max 100 (- (:speed @replay-status) v)))]
+    (swap! replay-status assoc :speed new-step-intervall)))
 
 (defn handle-keydown
   [e]
   (when-not (= "textarea" (.-type (.-activeElement js/document)))
     (case (.-key e)
       " " (toggle-play-pause)
-      "+" (change-replay-speed 300)
-      "-" (change-replay-speed -300)
+      "+" (change-replay-speed 200)
+      "-" (change-replay-speed -200)
       "ArrowLeft" (cond (.-ctrlKey e) (replay-step-backward)
                          (.-shiftKey e) (replay-log-backward)
                          :else (replay-backward))
@@ -292,15 +292,22 @@
                          :else (replay-forward))
       nil)))
 
+(defn ignore-diff? []
+  (let [log (-> @game-state :log last :text)]
+    (or (s/includes? log "typing")
+        (s/includes? log "joined the game"))))
 
 (defn replay-panel []
-  (swap! replay-status assoc :autoplay false)
-  (swap! replay-status assoc :speed 1600)
+
   (go (while true
         (while (not (:autoplay @replay-status))
           (<! (timeout 100)))
+        (while (and (ignore-diff?) (not (replay-reached-end?)))
+          (replay-forward))
         (replay-forward)
-        (<! (timeout (:speed @replay-status)))))
+        (if  (s/includes? (-> @game-state :log last :text ) "ending their turn")
+          (<! (timeout (* 2 (:speed @replay-status))))
+          (<! (timeout (:speed @replay-status))))))
 
   (r/create-class
     {:display-name "replay-panel"
