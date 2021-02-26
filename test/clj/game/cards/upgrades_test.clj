@@ -3439,3 +3439,27 @@
     (play-from-hand state :corp "K. P. Lynn" "New remote")
     ))
 
+(deftest fractal-threat-matrix
+  (do-game
+    (new-game {:corp {:hand ["Fractal Threat Matrix" "Najja 1.0"]}
+               :runner {:deck [(qty "Acacia" 7)]}})
+    (play-from-hand state :corp "Fractal Threat Matrix" "New remote")
+    (play-from-hand state :corp "Najja 1.0" "Remote 1")
+    (take-credits state :corp)
+    (is (= 2 (count (:deck (get-runner)))))
+    (run-on state :remote1)
+    (let [najja (get-ice state :remote1 0)
+          ftm (get-content state :remote1 0)]
+      (rez state :corp najja)
+      (rez state :corp ftm)
+      (run-continue state)
+      (card-side-ability state :runner najja 0)
+      (click-prompt state :runner "End the run")
+      (card-side-ability state :runner najja 0)
+      (click-prompt state :runner "End the run")
+      ;; All subroutines broken. Manually trigger Fractal Thread Matrix
+      (card-ability state :corp ftm 0)
+      (is (zero? (count (:deck (get-runner)))))
+      (is (= 2 (count (:discard (get-runner)))))
+      )))
+>>>>>>> 6937396a1 (Add tests to fractal-threat-matrix)
