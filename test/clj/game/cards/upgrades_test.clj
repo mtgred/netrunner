@@ -3354,7 +3354,7 @@
     (click-prompt state :runner "Pay 7 [Credits] to trash")
     (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid"))))
 
-(deftest rutherfold-grid
+(deftest rutherford-grid
   (do-game
     (new-game {:corp {:hand ["Rutherford Grid" "Caduceus"]}})
     (play-from-hand state :corp "Rutherford Grid" "New remote")
@@ -3367,5 +3367,6 @@
       (run-on state "Server 1")
       (run-continue state)
       (fire-subs state caduceus)
-      (println (get-prompt state :corp)))))
+      (click-prompt state :corp "3")                        ;;Boost trace by 3
+      (is (= 8 (:strength (get-prompt state :runner))) "3 base, +2 of upgrade +3 boost"))))
 
