@@ -3370,3 +3370,16 @@
       (click-prompt state :corp "3")                        ;;Boost trace by 3
       (is (= 8 (:strength (get-prompt state :runner))) "3 base, +2 of upgrade +3 boost"))))
 
+(deftest akitaro-watanabe
+  (do-game
+    (new-game {:corp {:hand ["Akitaro Watanabe" "Ice Wall" "Enigma"]}})
+    (play-from-hand state :corp "Akitaro Watanabe" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")              ;;-1c
+    (let [akitaro (get-content state :hq 0)
+          iw (get-ice state :hq 0)
+          enigma (get-ice state :hq 1)]
+      (rez state :corp akitaro)
+      (rez state :corp iw)
+      (rez state :corp enigma)
+      (is (= 2 (:credit (get-corp))) "2c left after installing and rezzing with AW bonus"))))
