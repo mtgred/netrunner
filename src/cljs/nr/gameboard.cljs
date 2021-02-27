@@ -1,6 +1,6 @@
 (ns nr.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
+  (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
@@ -31,7 +31,7 @@
 (defonce sfx-state (atom {}))
 
 (defonce replay-timeline (atom []))
-(defonce replay-status (r/atom {}))
+(defonce replay-status (r/atom {:autoplay false :speed 1600}))
 (defonce replay-side (r/atom :spectator))
 (defonce show-replay-link (r/atom false))
 
@@ -154,8 +154,31 @@
 (defn replay-step-forward []
   (replay-jump (inc (:n @replay-status))))
 
-(defn replay-step-back []
+(defn replay-step-backward []
   (replay-jump (dec (:n @replay-status))))
+
+(defn replay-backward []
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (if (zero? d)
+      (when (pos? n)
+        (replay-jump-to {:n (dec n) :d 0}))
+      (replay-jump-to {:n n :d (dec d)}))))
+
+(defn replay-reached-start? []
+  (let [n (:n @replay-status)
+        d (- (count (get-in @replay-timeline [n :diffs]))
+             (count (:diffs @replay-status)))]
+    (and (zero? n) (zero? d))))
+
+(defn replay-log-backward []
+  (let [prev-log (:log @game-state)]
+    (while (and
+             (or (= prev-log (:log @game-state))
+                 (= "typing" (-> @game-state :log last :text)))
+             (not (replay-reached-start?)))
+      (replay-backward))))
 
 (declare get-remote-annotations)
 (defn populate-replay-timeline
@@ -251,13 +274,54 @@
                    (recur new-state diffs [])
                    (recur new-state diffs inter-diffs))))))))
 
+(defn toggle-play-pause []
+  (swap! replay-status assoc :autoplay (not (:autoplay @replay-status))))
+
+(defn change-replay-speed [v]
+  (let [new-step-intervall (min 10000 (max 100 (- (:speed @replay-status) v)))]
+    (swap! replay-status assoc :speed new-step-intervall)))
+
+(defn handle-keydown [e]
+  (when-not (= "textarea" (.-type (.-activeElement js/document)))
+    (case (.-key e)
+      " " (toggle-play-pause)
+      "+" (change-replay-speed 200)
+      "-" (change-replay-speed -200)
+      "ArrowLeft" (cond (.-ctrlKey e) (replay-step-backward)
+                        (.-shiftKey e) (replay-log-backward)
+                        :else (replay-backward))
+      "ArrowRight" (cond (.-ctrlKey e) (replay-step-forward)
+                         (.-shiftKey e) (replay-log-forward)
+                         :else (replay-forward))
+      nil)))
+
+(defn ignore-diff? []
+  (let [log (-> @game-state :log last :text)]
+    (or (= log "typing")
+        (s/includes? log "joined the game"))))
+
 (defn replay-panel []
+
+  (go (while true
+        (while (not (:autoplay @replay-status))
+          (<! (timeout 100)))
+        (while (and (ignore-diff?) (not (replay-reached-end?)))
+          (replay-forward))
+        (replay-forward)
+        (if (s/includes? (-> @game-state :log last :text ) "ending their turn")
+          (<! (timeout (* 2 (:speed @replay-status))))
+          (<! (timeout (:speed @replay-status))))))
+
   (r/create-class
     {:display-name "replay-panel"
 
      :component-did-update
      (fn [this]
        (scroll-timeline))
+
+     :component-did-mount
+     (fn [this]
+       (-> js/document (.addEventListener "keydown" handle-keydown)))
 
      :reagent-render
      (fn []
@@ -291,14 +355,20 @@
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls
-         [:button.small {:on-click #(replay-step-back) :type "button"
-                         :title "Rewind one click"} "⏮︎"]
-         [:button.small {:on-click #(replay-forward) :type "button"
-                         :title "Play next action"} "⏵︎"]
+         [:button.small {:on-click #(change-replay-speed -200) :type "button"
+                         :title "Decrease Playback speed (-)"} "-"]
+         [:button.small {:on-click #(change-replay-speed 200) :type "button"
+                         :title "Increase Playback speed (+)"} "+"]
+         [:button.small {:on-click #(replay-step-backward) :type "button"
+                         :title "Rewind one click (Ctrl + ← )"} "⏮︎"]
+         [:button.small {:on-click #(replay-log-backward) :type "button"
+                         :title "Rewind one log entry (Shift + ← )"} "⏪︎"]
+         [:button.small {:on-click #(toggle-play-pause) :type "button"
+                         :title (if (:autoplay @replay-status) "Pause (Space)" "Play (Space)")} (if (:autoplay @replay-status) "⏸ " "▶ ")]
          [:button.small {:on-click #(replay-log-forward) :type "button"
-                         :title "Forward to next log entry"} "⏩︎"]
+                         :title "Forward to next log entry (Shift + → )"} "⏩︎"]
          [:button.small {:on-click #(replay-step-forward) :type "button"
-                         :title "Forward one click"} "⏭︎"]]
+                         :title "Forward one click (Ctrl + → )"} "⏭︎"]]
         (when-not (= "local-replay" (:gameid @game-state)) ; when saved replay
           [:div.sharing
            [:input {:style (if @show-replay-link {:display "inline"} {:display "none"})
