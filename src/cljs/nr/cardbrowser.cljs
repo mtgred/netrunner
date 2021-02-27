@@ -491,7 +491,7 @@
             blurb (:artist-blurb info)
             link (:artist-link info)]
         (when blurb
-          [:div.panel.green-shade.filters.artist-blurb
+          [:div.panel.green-shade.artist-blurb
            [:h4 "Artist Info"]
            [:div blurb]
            (when link
