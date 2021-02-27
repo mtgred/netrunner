@@ -3395,3 +3395,16 @@
     (is (= nil (get-prompt state :corp)) "No prompt asking to discard cards from hand")
     (take-credits state :runner)
     (is (= 9 (count (:hand (get-corp)))) "Double check that you start next turn with 8 cards")))
+
+(deftest traffic-analyzer
+  (do-game
+    (new-game {:corp   {:hand ["Traffic Analyzer" "Ice Wall"]}
+               :runner {:tag 2 :hand [(qty "Corroder" 2)]}})
+    (play-from-hand state :corp "Traffic Analyzer" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "4")
+    (click-prompt state :runner "0")
+    (is (= 1 (:credit (get-corp))) "After using all credits to boost trace, Corp gains 1c thanks to Traffic Analyzer")
+    ))
