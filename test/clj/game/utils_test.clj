@@ -4,115 +4,147 @@
             [clojure.test :refer :all]
             [clojure.string :refer [lower-case split]]))
 
+(defmacro error-wrapper [form]
+  `(try ~form
+        (catch Exception ex#
+          (let [msg# (.getMessage ^Throwable ex#)
+                form# (:cause (ex-data ex#))
+                result# (:result (ex-data ex#))]
+            (do-report {:type :fail :message msg#
+                        :expected form# :actual (list '~'not result#)})
+            result#))))
+
+(defmacro is'
+  ([form] `(is' ~form nil))
+  ([form msg]
+   `(let [result# ~form]
+      (when-not result#
+        (throw (ex-info ~msg {:cause '~form :result result#}))))))
+
 ;;; helper functions for prompt interaction
-(defmacro get-prompt
+(defn get-prompt
   [state side]
-  `(-> @~state ~side :prompt seq first))
+  (-> @state side :prompt seq first))
 
-(defmacro prompt-is-type?
+(defn prompt-is-type?
   [state side prompt-type]
-  `(let [prompt# (get-prompt ~state ~side)]
-     (= ~prompt-type (:prompt-type prompt#))))
+  (let [prompt (get-prompt state side)]
+    (= prompt-type (:prompt-type prompt))))
 
-(defmacro prompt-is-card?
+(defn prompt-is-card?
   [state side card]
-  `(let [prompt# (get-prompt ~state ~side)]
-     (and (:cid ~card)
-          (get-in prompt# [:card :cid])
-          (= (:cid ~card) (get-in prompt# [:card :cid])))))
+  (let [prompt (get-prompt state side)]
+    (and (:cid card)
+         (get-in prompt [:card :cid])
+         (= (:cid card) (get-in prompt [:card :cid])))))
 
-(defmacro expect-type
+(defn expect-type
   [type-name choice]
-  `(str "Expected a " ~type-name ", received [ " ~choice
-        " ] of type " (type ~choice) "."))
+  (str "Expected a " type-name ", received [ " choice
+       " ] of type " (type choice) "."))
+
+(defn click-card-impl
+  [state side card]
+  (let [prompt (get-prompt state side)]
+    (cond
+      ;; Card and prompt types are correct
+      (and (prompt-is-type? state side :select)
+           (or (map? card)
+               (string? card)))
+      (if (map? card)
+        (core/process-action "select" state side {:card card})
+        (let [all-cards (core/get-all-cards state)
+              matching-cards (filter #(= card (:title %)) all-cards)]
+          (if (= (count matching-cards) 1)
+            (core/process-action "select" state side {:card (first matching-cards)})
+            (is' (= 1 (count matching-cards))
+                 (str "Expected to click card [ " card
+                      " ] but found " (count matching-cards)
+                      " matching cards. Current prompt is: n" prompt)))))
+      ;; Prompt isn't a select so click-card shouldn't be used
+      (not (prompt-is-type? state side :select))
+      (let [prompt (prompt-is-type? state side :select)]
+        (is' (prompt-is-type? state side :select)
+             (str "click-card should only be used with prompts "
+                  "requiring the user to click on cards on table")))
+      ;; Prompt is a select, but card isn't correct type
+      (not (or (map? card)
+               (string? card)))
+      (is' (or (map? card)
+               (string? card))
+           (expect-type "card string or map" card)))))
 
 (defmacro click-card
   "Resolves a 'select prompt' by clicking a card. Takes a card map or a card name."
   [state side card]
-  `(let [prompt# (get-prompt ~state ~side)]
-     (cond
-       ;; Card and prompt types are correct
-       (and (prompt-is-type? ~state ~side :select)
-            (or (map? ~card)
-                (string? ~card)))
-       (if (map? ~card)
-         (core/process-action "select" ~state ~side {:card ~card})
-         (let [all-cards# (core/get-all-cards ~state)
-               matching-cards# (filter #(= ~card (:title %)) all-cards#)]
-           (if (= (count matching-cards#) 1)
-             (core/process-action "select" ~state ~side {:card (first matching-cards#)})
-             (is (= (count matching-cards#) 1)
-                 (str "Expected to click card [ " ~card
-                      " ] but found " (count matching-cards#)
-                      " matching cards. Current prompt is: \n" prompt#)))))
-       ;; Prompt isn't a select so click-card shouldn't be used
-       (not (prompt-is-type? ~state ~side :select))
-       (let [prompt# (prompt-is-type? ~state ~side :select)]
-         (is prompt# (str "click-card should only be used with prompts "
-                          "requiring the user to click on cards on table")))
-       ;; Prompt is a select, but card isn't correct type
-       (not (or (map? ~card)
-                (string? ~card)))
-       (is (or (map? ~card)
-               (string? ~card))
-           (expect-type "card string or map" ~card)))))
+  `(error-wrapper (click-card-impl ~state ~side ~card)))
+
+(defn click-prompt-impl
+  [state side choice & args]
+  (let [prompt (get-prompt state side)
+        choices (:choices prompt)]
+    (cond
+      ;; Integer prompts
+      (or (= choices :credit)
+          (:counter choices)
+          (:number choices))
+      (try
+        (let [parsed-number (Integer/parseInt choice)]
+          (when-not (core/process-action "choice" state side {:choice parsed-number})
+            (is' false (str "Parsed number " parsed-number " is incorrect somehow"))))
+        (catch Exception e
+          (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
+
+      (= :trace (:prompt-type prompt))
+      (try
+        (let [int-choice (Integer/parseInt choice)
+              under (<= int-choice (:choices prompt))]
+          (when-not (and under
+                         (core/process-action "choice" state side {:choice int-choice}))
+            (is' (<= int-choice (:choices prompt))
+                 (str (side-str side) " expected to pay [ "
+                      int-choice " ] to trace but couldn't afford it."))))
+        (catch Exception e
+          (is' (number? (Integer/parseInt choice))
+               (expect-type "number string" choice))))
+
+      ;; List of card titles for auto-completion
+      (:card-title choices)
+      (when-not (core/process-action "choice" state side {:choice choice})
+        (is' (or (map? choice) (string? choice)) (expect-type "card string or map" choice)))
+
+      ;; Default text prompt
+      :else
+      (let [choice-fn #(or (= choice (:value %))
+                           (= choice (get-in % [:value :title]))
+                           (same-card? choice (:value %)))
+            idx (or (:idx (first args)) 0)
+            chosen (nth (filter choice-fn choices) idx nil)]
+        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
+          (is' (= choice (first choices))
+               (str (side-str side) " expected to click [ "
+                    (if (string? choice) choice (:title choice ""))
+                    " ] but couldn't find it. Current prompt is: " prompt)))))))
 
 (defmacro click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
   [state side choice & args]
-  `(let [prompt# (get-prompt ~state ~side)
-         choices# (:choices prompt#)]
-     (cond
-       ;; Integer prompts
-       (or (= choices# :credit)
-           (:counter choices#)
-           (:number choices#))
-       (when-not (core/process-action "choice" ~state ~side {:choice (Integer/parseInt ~choice)})
-         (is (number? (Integer/parseInt ~choice))
-             (expect-type "number string" ~choice)))
+  `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
 
-       (= :trace (:prompt-type prompt#))
-       (let [int-choice# (Integer/parseInt ~choice)
-             under# (<= int-choice# (:choices prompt#))]
-         (when-not (and under#
-                        (when under# (core/process-action "choice" ~state ~side {:choice int-choice#})))
-           (is under# (str (side-str ~side) " expected to click [ "
-                           int-choice# " ] but couldn't find it. Current prompt is: \n" prompt#))))
-
-       ;; List of card titles for auto-completion
-       (:card-title choices#)
-       (when-not (core/process-action "choice" ~state ~side {:choice ~choice})
-         (is (or (map? ~choice)
-                 (string? ~choice))
-             (expect-type "card string or map" ~choice)))
-
-       ;; Default text prompt
-       :else
-       (let [choice-fn# #(or (= ~choice (:value %))
-                             (= ~choice (get-in % [:value :title]))
-                             (same-card? ~choice (:value %)))
-             idx# (or (:idx ~(first args)) 0)
-             chosen# (nth (filter choice-fn# choices#) idx# nil)]
-         (when-not (and chosen# (core/process-action "choice" ~state ~side {:choice {:uuid (:uuid chosen#)}}))
-           (is (= ~choice (first choices#))
-               (str (side-str ~side) " expected to click [ "
-                    (if (string? ~choice) ~choice (:title ~choice ""))
-                    " ] but couldn't find it. Current prompt is: \n" prompt#)))))))
-
-(defmacro last-log-contains?
+(defn last-log-contains?
   [state content]
-  `(some? (re-find (re-pattern ~content)
-                   (-> @~state :log last :text))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log last :text))))
 
-(defmacro second-last-log-contains?
+(defn second-last-log-contains?
   [state content]
-  `(some? (re-find (re-pattern ~content)
-                   (-> @~state :log butlast last :text))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log butlast last :text))))
 
-(defmacro last-n-log-contains?
+(defn last-n-log-contains?
   [state n content]
-  `(some? (re-find (re-pattern ~content)
-                   (:text (nth (-> @~state :log reverse) ~n)))))
+  (some? (re-find (re-pattern content)
+                  (:text (nth (-> @state :log reverse) n)))))
 
 (defmethod assert-expr 'last-log-contains?
   [msg form]
