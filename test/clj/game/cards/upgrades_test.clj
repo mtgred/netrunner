@@ -3383,3 +3383,15 @@
       (rez state :corp iw)
       (rez state :corp enigma)
       (is (= 2 (:credit (get-corp))) "2c left after installing and rezzing with AW bonus"))))
+
+(deftest research-station
+  (do-game
+    (new-game {:corp {:id "NBN: The World is Yours*"
+                      :hand [(qty "Research Station" 9)] :deck ["Research Station"]}})
+    (play-from-hand state :corp "Research Station" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (is (= 8 (count (:hand (get-corp)))) "+3 cards, 2 of Research Station and +1 of ID")
+    (is (= nil (get-prompt state :corp)) "No prompt asking to discard cards from hand")
+    (take-credits state :runner)
+    (is (= 9 (count (:hand (get-corp)))) "Double check that you start next turn with 8 cards")))
