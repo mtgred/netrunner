@@ -3336,3 +3336,21 @@
        (click-card state :corp (refresh cor))
        (is (empty? (get-program state)) "Corroder uninstalled")
        (is (= "Corroder" (:title (last (:deck (get-runner))))) "GoCorroderrdian on bottom of Stack")))))
+
+(deftest oaktown-grid
+  (do-game
+    (new-game {:corp {:hand ["Oaktown Grid" "PAD Campaign"]}
+               :runner {:credits 15}})
+    (play-from-hand state :corp "Oaktown Grid" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "Remote 1")
+    (let [og (get-content state :remote1 0)
+          pad (get-content state :remote1 1)]
+      (rez state :corp og)
+      (rez state :corp pad)
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (run-continue state)
+    (click-card state :runner pad)
+    (click-prompt state :runner "Pay 7 [Credits] to trash")
+    (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid")
+    )))
