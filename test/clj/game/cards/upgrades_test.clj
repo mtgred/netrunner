@@ -3352,5 +3352,20 @@
     (run-continue state)
     (click-card state :runner pad)
     (click-prompt state :runner "Pay 7 [Credits] to trash")
-    (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid")
-    )))
+    (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid"))))
+
+(deftest rutherfold-grid
+  (do-game
+    (new-game {:corp {:hand ["Rutherford Grid" "Caduceus"]}})
+    (play-from-hand state :corp "Rutherford Grid" "New remote")
+    (play-from-hand state :corp "Caduceus" "Remote 1")
+    (let [rg (get-content state :remote1 0)
+          caduceus (get-ice state :remote1 0)]
+      (rez state :corp rg)
+      (rez state :corp caduceus)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-continue state)
+      (fire-subs state caduceus)
+      (println (get-prompt state :corp)))))
+
