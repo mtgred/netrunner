@@ -277,16 +277,15 @@
   (let [new-step-intervall (min 10000 (max 100 (- (:speed @replay-status) v)))]
     (swap! replay-status assoc :speed new-step-intervall)))
 
-(defn handle-keydown
-  [e]
+(defn handle-keydown [e]
   (when-not (= "textarea" (.-type (.-activeElement js/document)))
     (case (.-key e)
       " " (toggle-play-pause)
       "+" (change-replay-speed 200)
       "-" (change-replay-speed -200)
       "ArrowLeft" (cond (.-ctrlKey e) (replay-step-backward)
-                         (.-shiftKey e) (replay-log-backward)
-                         :else (replay-backward))
+                        (.-shiftKey e) (replay-log-backward)
+                        :else (replay-backward))
       "ArrowRight" (cond (.-ctrlKey e) (replay-step-forward)
                          (.-shiftKey e) (replay-log-forward)
                          :else (replay-forward))
@@ -294,7 +293,7 @@
 
 (defn ignore-diff? []
   (let [log (-> @game-state :log last :text)]
-    (or (s/includes? log "typing")
+    (or (= log "typing")
         (s/includes? log "joined the game"))))
 
 (defn replay-panel []
@@ -305,7 +304,7 @@
         (while (and (ignore-diff?) (not (replay-reached-end?)))
           (replay-forward))
         (replay-forward)
-        (if  (s/includes? (-> @game-state :log last :text ) "ending their turn")
+        (if (s/includes? (-> @game-state :log last :text ) "ending their turn")
           (<! (timeout (* 2 (:speed @replay-status))))
           (<! (timeout (:speed @replay-status))))))
 
@@ -352,12 +351,14 @@
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls
-         [:button.small {:on-click #(change-replay-speed -300) :type "button"
+         [:button.small {:on-click #(change-replay-speed -200) :type "button"
                          :title "Decrease Playback speed (-)"} "-"]
-         [:button.small {:on-click #(change-replay-speed 300) :type "button"
+         [:button.small {:on-click #(change-replay-speed 200) :type "button"
                          :title "Increase Playback speed (+)"} "+"]
          [:button.small {:on-click #(replay-step-backward) :type "button"
                          :title "Rewind one click (Ctrl + ← )"} "⏮︎"]
+         [:button.small {:on-click #(replay-log-backward) :type "button"
+                         :title "Rewind one log entry (Shift + ← )"} "⏪︎"]
          [:button.small {:on-click #(toggle-play-pause) :type "button"
                          :title (if (:autoplay @replay-status) "Pause (Space)" "Play (Space)")} (if (:autoplay @replay-status) "⏸ " "▶ ")]
          [:button.small {:on-click #(replay-log-forward) :type "button"
