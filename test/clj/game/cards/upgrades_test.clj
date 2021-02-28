@@ -3490,3 +3490,23 @@
       (card-ability state :corp (refresh panic-btn) 0)
       (is (= 1 (count (:hand (get-corp)))))
       (is (zero? (:deck (get-corp)))))))
+
+(deftest expo-grid
+  (do-game
+    (new-game {:corp {:hand ["Expo Grid" "Dedicated Response Team" "Breaking News"]}})
+    (play-from-hand state :corp "Dedicated Response Team" "New remote") ;;-2c
+    (play-from-hand state :corp "Expo Grid" "Remote 1")
+    (let [drt (get-content state :remote1 0)
+          expo (get-content state :remote1 1)]
+      (rez state :corp drt)
+      (rez state :corp expo)
+      (take-credits state :corp)                            ;;+1c
+      (let [total-corp-credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 1 total-corp-credits) (:credit (get-corp))) "Corp gains 1c") ;;+1c
+        ;;Replace asset with agenda
+        (play-from-hand state :corp "Breaking News" "Remote 1")
+        (click-prompt state :corp "OK")
+        (take-credits state :corp)                          ;;+2c
+        (take-credits state :runner)
+        (is (= (+ 3 total-corp-credits) (:credit (get-corp))) "Corp does not gain any extra c with agenda")))))
