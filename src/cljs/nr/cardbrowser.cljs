@@ -40,7 +40,7 @@
                          (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
-                        (map #(select-keys % [:version :name :description :position])))]
+                        (map #(select-keys % [:version :name :description :position :artist-blurb :artist-link :artist-about])))]
       (reset! cards/mwl latest-mwl)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
@@ -205,7 +205,12 @@
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")]
     [:div
-     [:h4 uniq title icon]
+     [:h4 uniq title icon
+      (when-let [influence (:factioncost card)]
+        (when-let [faction (:faction card)]
+           [:span.influence
+            {:class (-> faction s/lower-case (s/replace " " "-"))}
+            (influence-dots influence)]))]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
          [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -224,12 +229,7 @@
        [:div.heading (str (tr [:card-browser.min-deck "Minimum deck size"]) ": " min-deck-size)])
      (when-let [influence-limit (:influencelimit card)]
        [:div.heading (str (tr [:card-browser.inf-limit "Influence limit"]) ": " influence-limit)])
-     (when-let [influence (:factioncost card)]
-       (when-let [faction (:faction card)]
-         [:div.heading (tr [:card-browser.influence "Influence"]) " "
-          [:span.influence
-           {:class (-> faction s/lower-case (s/replace " " "-"))}
-           (influence-dots influence)]]))
+
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
        (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
@@ -242,7 +242,7 @@
                    (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
                          c (text-class-for-status status)]
                      ^{:key k}
-                     [:div {:class c} name
+                     [:div.format-item {:class c} name
                       (case status
                         :banned banned-span
                         :restricted restricted-span
@@ -482,6 +482,21 @@
                           :faction-filter "All")}
        (tr [:card-browser.clear "Clear"])]])
 
+(defn art-info [state]
+  (let [selected (r/cursor state [:selected-card])]
+    (when (and @selected (:art @selected))
+      (let [art (name (:art @selected))
+            alts (:alt-info @app-state)
+            info (first (filter #(= (:version %) art) alts))
+            blurb (:artist-blurb info)
+            link (:artist-link info)]
+        (when blurb
+          [:div.panel.green-shade.artist-blurb
+           [:h4 "Artist Info"]
+           [:div blurb]
+           (when link
+             [:a {:href link} "More Info"])])))))
+
 (defn card-browser []
   (let [active (r/cursor app-state [:active-page])
         state (r/atom {:search-query ""
@@ -499,9 +514,11 @@
     (fn []
       (when (= "/cards" (first @active))
         [:div#cardbrowser.cardbrowser
-         [:div.blue-shade.panel.filters
-          [query-builder state]
-          [sort-by-builder state]
-          [dropdown-builder state]
-          [clear-filters state]]
+         [:div.card-info
+          [:div.blue-shade.panel.filters
+           [query-builder state]
+           [sort-by-builder state]
+           [dropdown-builder state]
+           [clear-filters state]]
+          [art-info state]]
          [card-list-view state scroll-top]]))))

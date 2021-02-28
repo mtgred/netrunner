@@ -5,6 +5,15 @@
             [nr.utils :refer [set-scroll-top store-scroll-top]]
             [reagent.core :as r]))
 
+(defn- single-artist [info]
+  ^{:key (:name info)}
+  [:li [:a {:href (:artist-link info "#")} (:name info)] ": " (:artist-about info)])
+
+(defn- make-artists []
+  (->> (:alt-info @app-state)
+       (filter #(contains? % :artist-about))
+       (map single-artist)))
+
 (defn about-content [state scroll-top]
   (let [donors (r/cursor state [:donors])]
     (r/create-class
@@ -20,15 +29,21 @@
            ", an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
 
           [:h3 "Development"]
-          [:h4 "The Team"]
+          [:h4 "Software Development Team"]
           [:ul.list.compact
            [:li "mtgred: Founder, original sole developer. Retired."]
-           [:li "nealterrell: Project maintainer, lead developer."]
-           [:li "Saintis, danhut, jwarwick, NoahTheDuke, nicohasa, presheaf, Msbeck: Primary contributors."]
-           [:li "JoelCFC25, domtancredi, Zaroth, queueseven, erbridge, and "
+           [:li "NoahTheDuke: Project maintainer, lead developer."]
+           [:li "lostgeek, pinsel, jwarwick, dkellner, Kubik161: Primary contributors."]
+           [:li "nealterrell, JoelCFC25, domtancredi, Zaroth, queueseven, erbridge, danhut, Saintis, presheaf, Msbeck, nicohasa and "
             [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} "many more"]
             ": Past contributors."]
-           [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]]
+           ]
+
+          [:h4 "Content Creators"]
+          [:ul.list.compact
+           [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]
+           (make-artists)
+           ]
 
           [:h4 "Tech Stack"]
           [:ul.list.compact
