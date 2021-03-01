@@ -46,6 +46,7 @@
   (swap! app-state assoc-in [:options :card-back] (:card-back @s))
   (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
+  (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
@@ -357,6 +358,15 @@
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
+          [:section {:id "high-res"}
+           [:h3 (tr [:settings.card-images "Card images"])]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "use-high-res"
+                             :checked (= "high" (:card-resolution @s))
+                             :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
+             (tr [:settings.high-res "Enable high resolution card images"])]]]
+
           [:section {:id "alt-art"}
            [:h3 (tr [:settings.alt-art "Alt arts"])]
            [:div
@@ -435,6 +445,7 @@
                        :show-alt-art (get-in @app-state [:options :show-alt-art])
                        :alt-arts (get-in @app-state [:options :alt-arts])
                        :all-art-select "wc2015"
+                       :card-resolution (get-in @app-state [:options :card-resolution])
                        :stacked-servers (get-in @app-state [:options :stacked-servers])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
                        :log-width (get-in @app-state [:options :log-width])
