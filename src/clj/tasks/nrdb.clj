@@ -35,7 +35,7 @@
 (defn- card-image-file
   "Returns the path to a card's image as a File"
   [code]
-  (io/file "resources" "public" "img" "cards" (str code ".png")))
+  (io/file "resources" "public" "img" "cards" "en" "default" (str code ".png")))
 
 (defn- download-card-image
   "Download a single card image from NRDB"
@@ -67,7 +67,7 @@
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
   [cards]
-  (let [img-dir (io/file "resources" "public" "img" "cards")]
+  (let [img-dir (io/file "resources" "public" "img" "cards" "en" "default")]
     (io/make-parents img-dir)
     (let [previous-cards (generate-previous-card-stubs cards)
           total-cards (concat cards previous-cards)
