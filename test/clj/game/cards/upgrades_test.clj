@@ -3489,7 +3489,7 @@
       (run-on state :hq)
       (card-ability state :corp (refresh panic-btn) 0)
       (is (= 1 (count (:hand (get-corp)))))
-      (is (zero? (:deck (get-corp)))))))
+      (is (zero? (count(:deck (get-corp))))))))
 
 (deftest expo-grid
   (do-game
