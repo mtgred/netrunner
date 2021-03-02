@@ -3,7 +3,7 @@
   (:require [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [tasks.nrdb :refer [update-config]]
+            [tasks.nrdb :refer [update-config replace-collection]]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
@@ -35,18 +35,6 @@
     slurp
     edn/read-string))
 
-(defn add-cards
-  "Add alt cards to the alt sets map"
-  [alt-sets alt-cards]
-  (reduce (fn [acc v]
-            (let [suffix (:version v)
-                  cards (->> suffix
-                          alt-cards
-                          (map first)
-                          sort)]
-            (conj acc (assoc v :cards cards))))
-             nil alt-sets))
-
 (defn remove-old-images
   "Remove images attached to cards in the db"
   []
@@ -60,7 +48,8 @@
    (let [filename (.getName f)
          code (first (string/split filename #"\."))
          k (string/join "." ["images" (name lang) (name resolution) (name art-set)])
-         prev-k (string/join "." ["images" (name lang) (name resolution) "prev" code])
+         prev-k-root (if (= :stock art-set) code (name art-set))
+         prev-k (string/join "." ["images" (name lang) (name resolution) prev-k-root])
          path (string/join "/" ["/img/cards" (name lang) (name resolution) (name art-set) filename])]
      (mc/update db card-collection {:code code} {$set {k path}})
      (mc/update db card-collection {:previous-versions code} {$set {prev-k path}}))))
@@ -71,7 +60,6 @@
   (let [alt (keyword (.getName alt-dir))
         images (find-files alt-dir)]
     (doall (map #(add-card-image lang resolution alt %) images))
-    ;; XXX - need to add these cards to the alt_arts collection in the db
     (println "Added" (count images) "images to" lang resolution alt)))
 
 (defn- add-resolution-images
@@ -80,8 +68,6 @@
   (let [resolution (keyword (.getName res-dir))
         alts (find-dirs res-dir)
         images (find-files res-dir)]
-    (doall (map #(add-card-image lang resolution %) images))
-    (println "Added" (count images) "images to" lang resolution)
     (doall (map #(add-alt-images lang resolution %) alts))))
 
 (defn- add-language-images
@@ -101,9 +87,8 @@
      (let [alt-sets (read-alt-sets)
            card-dir (apply io/file img-directory)
            langs (find-dirs card-dir)]
+       (replace-collection alt-collection alt-sets)
        (remove-old-images)
-       ;; XXX
-       ;; (remove-old-altarts)
        (doall (map add-language-images langs))
      (when standalone?
        (update-config)))

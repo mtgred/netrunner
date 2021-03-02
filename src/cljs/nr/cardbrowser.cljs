@@ -53,21 +53,50 @@
              :alt-info alt-info :alt-cards alt-cards)
       (put! cards-channel cards)))
 
+(defn- update-nested-images
+  [code images acc nested-key]
+  (if (= (keyword code) (last nested-key))
+    (let [value (get-in images nested-key)
+          new-key (conj (pop nested-key) :stock)]
+      (assoc-in acc new-key value))
+    acc))
+
+(defn- keys-in [m]
+  (if (map? m)
+    (vec
+      (mapcat (fn [[k v]]
+                (let [sub (keys-in v)
+                      nested (map #(into [k] %) (filter (comp not empty?) sub))]
+                  (if (seq nested)
+                    nested
+                    [[k]])))
+              m))
+    []))
+
+(defn- update-previous-image-paths
+  [prev]
+  (let [code (:code prev)
+        images (:images prev)
+        nested-keys (keys-in images)]
+    (reduce (partial update-nested-images code images) {} nested-keys)))
+
 (defn- expand-one
   "Reducer function to create a previous card from a newer card definition."
   [acc version c]
   (let [number (str->int (subs version 3))
         cycle-pos (str->int (subs version 0 2))
         prev-set (find-first #(= cycle-pos (:cycle_position %)) @cards/sets)
-        prev (assoc c
-                    :code version
-                    :rotated true
-                    :cycle_code (:cycle_code prev-set)
-                    :setname (:name prev-set)
-                    :set_code (:id prev-set)
-                    :number number
-                    :future-version (:code c))
-        prev (dissoc prev :previous-versions :alt_art)]
+        prev (-> c
+                 (assoc
+                   :code version
+                   :rotated true
+                   :cycle_code (:cycle_code prev-set)
+                   :setname (:name prev-set)
+                   :set_code (:id prev-set)
+                   :number number
+                   :future-version (:code c))
+                 (dissoc :previous-versions))
+        prev (assoc prev :images (update-previous-image-paths prev))]
     (conj acc prev)))
 
 (defn- expand-previous
@@ -92,30 +121,33 @@
         (or allow-all-users
             (get-in @app-state [:user :special] false)))))
 
+(defn- get-image-path
+  [images lang res art]
+  (let [path (get-in images [lang res art])]
+    (cond
+      path path
+      (not= art :stock) (get-image-path images lang res :stock)
+      (not= res :default) (get-image-path images lang :default art)
+      (not= lang :en) (get-image-path images :en res art)
+      :else "/img/missing.png")))
+
 (defn image-url
   ([card] (image-url card false))
   ([card allow-all-users]
-   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
-                 (get-in @app-state [:options :alt-arts (keyword (:code card))]))
-         alt-card (get (:alt-cards @app-state) (:code card))
-         alt-selection (get (:alt_art alt-card) (keyword art) art)
-         fixed-alt-selection (if (and alt-selection
-                                      (nil? alt-card))
-                               (when (re-matches #"^\d{5}$" alt-selection) alt-selection) alt-selection)
-         has-art (and (show-alt-art? allow-all-users) art)
-         alt-name (if (and has-art fixed-alt-selection)
-                    fixed-alt-selection
-                    (:code card))
-         card-name (image-language-name card alt-name)]
-     (str "/img/cards/" card-name ".png"))))
+   (let [lang (get-in @app-state [:options :language] "en")
+         res (get-in @app-state [:options :card-resolution] "default")
+         art (if (show-alt-art? allow-all-users)
+               (get-in @app-state [:options :alt-arts (keyword (:code card))] "stock")
+               "stock")]
+     (get-image-path (:images card) (keyword lang) (keyword res) (keyword art)))))
 
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
   [card]
-  (let [image-name (if (keyword? (:art card))
-                     (get-in card [:alt_art (:art card)] (:code card))
-                     (image-language-name card (:code card)))]
-    (str "/img/cards/" image-name ".png")))
+   (let [lang (get-in @app-state [:options :language] "en")
+         res (get-in @app-state [:options :card-resolution] "default")
+         art (if (keyword? (:art card)) (:art card) :stock)]
+     (get-image-path (:images card) (keyword lang) (keyword res) art)))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
@@ -125,20 +157,23 @@
 
 (defn- expand-alts
   [only-version acc card]
-  (let [alt-card (get (:alt-cards @app-state) (:code card))
-        alt-only (alt-version-from-string only-version)
-        alt-keys (keys (:alt_art alt-card))
-        alt-arts (if alt-only
-                   (filter #(= alt-only %) alt-keys)
-                   alt-keys)]
-    (if (and alt-arts
-             (show-alt-art? true))
-      (->> alt-arts
-           (concat [""])
-           (map #(if % (assoc card :art %) card))
-           (map #(if (not= "" (:art %)) (dissoc % :previous-versions) %))
-           (concat acc))
-      (conj acc card))))
+   (let [lang (get-in @app-state [:options :language] "en")
+         res (get-in @app-state [:options :card-resolution] "default")
+         alt-versions (remove #{:prev} (map keyword (map :version (:alt-info @app-state))))
+         images (select-keys (get-in (:images card) [(keyword lang) (keyword res)]) alt-versions)
+         alt-only (alt-version-from-string only-version)
+         filtered-images (cond
+                           (= :prev alt-only) nil
+                           alt-only (list alt-only)
+                           :else (keys images))]
+     (if (and filtered-images
+              (show-alt-art? true))
+       (->> filtered-images
+            (concat [""])
+            (map #(if % (assoc card :art %) card))
+            (map #(if (not= "" (:art %)) (dissoc % :previous-versions) %))
+            (concat acc))
+       (conj acc card))))
 
 (defn- insert-alt-arts
   "Add copies of alt art cards to the list of cards. If `only-version` is nil, all alt versions will be added."
@@ -168,12 +203,11 @@
         (contains? card :previous-versions) (previous-selected-alt-art card)
         :else
         (let [code (keyword (:code card))
-              alt-card (get (:alt-cards @app-state) (:code card))
               selected-alts (:alt-arts (:options @app-state))
               selected-art (keyword (get selected-alts code))
               card-art (:art card)]
           (or (and card-art (nil? selected-art) (= "" card-art))
-              (and alt-card selected-art (= card-art selected-art))))))
+              (and selected-art (= card-art selected-art))))))
 
 ;; Alts can only be set on th most recent version of a card
 ;; So if the card has a :future-version key, we apply the alt to
@@ -281,8 +315,9 @@
       "Corp" corp-factions)))
 
 (defn- filter-alt-art-cards [cards]
-  (let [alt-arts (:alt-cards @app-state)]
-    (filter #(or (contains? alt-arts (:code %))
+  (let [lang (get-in @app-state [:options :language] "en")
+        res (get-in @app-state [:options :card-resolution] "default")]
+    (filter #(or (not-empty (dissoc (get-in (:images %) [(keyword lang) (keyword res)]) :stock))
                  (contains? % :future-version)
                  (contains? % :previous-versions))
             cards)))
@@ -291,9 +326,9 @@
   (when-let [alt-key (alt-version-from-string setname)]
     (if (= alt-key :prev)
       (filter #(or (contains? % :future-version) (contains? % :previous-versions)) cards)
-      (let [sa (map first
-                    (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-cards @app-state)))]
-        (filter (fn [c] (some #(= (:code c) %) sa)) cards)))))
+      (let [lang (get-in @app-state [:options :language] "en")
+            res (get-in @app-state [:options :card-resolution] "default")]
+        (filter #(get-in (:images %) [(keyword lang) (keyword res) alt-key]) cards)))))
 
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
