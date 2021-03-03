@@ -237,7 +237,7 @@
     :enable-lobby-sounds "Enable lobby sounds"
     :enable-game-sounds "Enable game sounds"
     :volume "Volume"
-    :layout-options "Layout Options"
+    :layout-options "Layout options"
     :server-stacking "Server stacking is on by default"
     :runner-layout "Runner layout from Corp perspective"
     :runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"

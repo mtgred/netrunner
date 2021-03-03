@@ -8,7 +8,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon image-language-name]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
             [reagent.core :as r]
             [medley.core :refer [find-first]]))
@@ -33,11 +33,6 @@
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
                           (sort-by :date-start)
                           last)
-          alt-cards (->> cards
-                         (map #(select-keys % [:title :code :alt_art]))
-                         (filter :alt_art)
-                         (map (juxt :code identity))
-                         (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
                         (map #(select-keys % [:version :name :description :position :artist-blurb :artist-link :artist-about])))]
@@ -49,8 +44,9 @@
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
-             :cards-loaded true :previous-cards (generate-previous-cards cards)
-             :alt-info alt-info :alt-cards alt-cards)
+             :cards-loaded true
+             :previous-cards (generate-previous-cards cards)
+             :alt-info alt-info)
       (put! cards-channel cards)))
 
 (defn- update-nested-images
