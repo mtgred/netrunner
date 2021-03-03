@@ -37,7 +37,7 @@
 
 (defonce log-mode (r/atom :log))
 
-(defn- image-url [{:keys [side code] :as card}]
+(defn- image-url [{:keys [side code title] :as card}]
   (let [lang (get-in @app-state [:options :language] "en")
         res (get-in @app-state [:options :card-resolution] "default")
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
@@ -47,7 +47,7 @@
         art (if show-art
               (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
               "stock")
-        images (if (:images card) (:images card) (:images (card-by-id code)))]
+        images (if (:images card) (:images card) (:images (get @all-cards title)))]
     (get-image-path images (keyword lang) (keyword res) (keyword art))))
 
 (defn generate-replay-link [origin]
