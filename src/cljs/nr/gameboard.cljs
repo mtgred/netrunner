@@ -16,7 +16,7 @@
             [nr.translations :refer [tr tr-pronouns tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
-                              checkbox-button cond-button image-language-name
+                              checkbox-button cond-button get-image-path
                               non-game-toast card-by-id]]
             [nr.ws :as ws]
             [reagent.core :as r]))
@@ -37,23 +37,18 @@
 
 (defonce log-mode (r/atom :log))
 
-(defn image-url [{:keys [side code] :as card}]
-  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
-                (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
-        alt-card (get (:alt-cards @app-state) (:code card))
-        alt-selection (get (:alt_art alt-card) (keyword art) art)
-        fixed-alt-selection (if (and alt-selection
-                                     (nil? alt-card))
-                              (when (re-matches #"^\d{5}$" alt-selection) alt-selection) alt-selection)
+(defn- image-url [{:keys [side code] :as card}]
+  (let [lang (get-in @app-state [:options :language] "en")
+        res (get-in @app-state [:options :card-resolution] "default")
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
         show-art (and special-user special-wants-art viewer-wants-art)
-        version-name (if (and art show-art fixed-alt-selection)
-                       fixed-alt-selection
-                       (:code card))
-        card-name (image-language-name card version-name)]
-    (str "/img/cards/" card-name ".png")))
+        art (if show-art
+              (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
+              "stock")
+        images (if (:images card) (:images card) (:images (card-by-id code)))]
+    (get-image-path images (keyword lang) (keyword res) (keyword art))))
 
 (defn generate-replay-link [origin]
   (let [n (:n @replay-status)
@@ -1302,13 +1297,13 @@
                                                  (put! zoom-channel card))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click card c-state)}
-        (when-let [url (image-url card)]
-          (if (or (not code) flipped facedown)
-            (let [facedown-but-known (or (not (or (not code) flipped facedown))
-                                         (spectator-view-hidden?)
-                                         (= (:side @game-state) (keyword (lower-case side))))
-                  alt-str (if facedown-but-known (str "Facedown " title) nil)]
-              [facedown-card side ["bg"] alt-str])
+        (if (or (not code) flipped facedown)
+          (let [facedown-but-known (or (not (or (not code) flipped facedown))
+                                       (spectator-view-hidden?)
+                                       (= (:side @game-state) (keyword (lower-case side))))
+                alt-str (if facedown-but-known (str "Facedown " title) nil)]
+            [facedown-card side ["bg"] alt-str])
+          (when-let [url (image-url card)]
             [:div
              [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
         [:span.cardname title]

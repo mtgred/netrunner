@@ -8,7 +8,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon get-image-path]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
             [reagent.core :as r]
             [medley.core :refer [find-first]]))
@@ -116,16 +116,6 @@
    (and (get-in @app-state [:options :show-alt-art] true)
         (or allow-all-users
             (get-in @app-state [:user :special] false)))))
-
-(defn- get-image-path
-  [images lang res art]
-  (let [path (get-in images [lang res art])]
-    (cond
-      path path
-      (not= art :stock) (get-image-path images lang res :stock)
-      (not= res :default) (get-image-path images lang :default art)
-      (not= lang :en) (get-image-path images :en res art)
-      :else "/img/missing.png")))
 
 (defn image-url
   ([card] (image-url card false))
