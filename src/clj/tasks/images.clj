@@ -41,18 +41,33 @@
   (println "Removing old images from db cards")
   (mc/update db card-collection {} {$unset {:images 1}} {:multi true}))
 
+(defn- add-flip-card-image
+  [lang resolution art-set filename]
+  (let [code-face (first (string/split filename #"\."))
+        code-face-split (string/split code-face #"-")
+        code (first code-face-split)
+        face (second code-face-split)
+        k (string/join "." ["faces" face "images" (name lang) (name resolution) (name art-set)])
+        prev-k-root (if (= :stock art-set) code (name art-set))
+        prev-k (string/join "." ["faces" face "images" (name lang) (name resolution) prev-k-root])
+        path (string/join "/" ["/img/cards" (name lang) (name resolution) (name art-set) filename])]
+    (mc/update db card-collection {:code code} {$set {k path}})
+    (mc/update db card-collection {:previous-versions code} {$set {prev-k path}})))
+
 (defn- add-card-image
   "Add an image to a card in the db"
   ([lang resolution f] (add-card-image lang resolution :stock f))
   ([lang resolution art-set f]
-   (let [filename (.getName f)
-         code (first (string/split filename #"\."))
-         k (string/join "." ["images" (name lang) (name resolution) (name art-set)])
-         prev-k-root (if (= :stock art-set) code (name art-set))
-         prev-k (string/join "." ["images" (name lang) (name resolution) prev-k-root])
-         path (string/join "/" ["/img/cards" (name lang) (name resolution) (name art-set) filename])]
-     (mc/update db card-collection {:code code} {$set {k path}})
-     (mc/update db card-collection {:previous-versions code} {$set {prev-k path}}))))
+   (let [filename (.getName f)]
+     (if (string/includes? filename "-")
+       (add-flip-card-image lang resolution art-set filename)
+       (let [code (first (string/split filename #"\."))
+             k (string/join "." ["images" (name lang) (name resolution) (name art-set)])
+             prev-k-root (if (= :stock art-set) code (name art-set))
+             prev-k (string/join "." ["images" (name lang) (name resolution) prev-k-root])
+             path (string/join "/" ["/img/cards" (name lang) (name resolution) (name art-set) filename])]
+         (mc/update db card-collection {:code code} {$set {k path}})
+         (mc/update db card-collection {:previous-versions code} {$set {prev-k path}}))))))
 
 (defn- add-alt-images
   "All all images in the specified alt directory"

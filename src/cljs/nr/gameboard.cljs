@@ -17,7 +17,7 @@
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button get-image-path
-                              non-game-toast card-by-id]]
+                              non-game-toast card-by-id image-or-face]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -47,7 +47,7 @@
         art (if show-art
               (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
               "stock")
-        images (if (:images card) (:images card) (:images (get @all-cards title)))]
+        images (image-or-face card)]
     (get-image-path images (keyword lang) (keyword res) (keyword art))))
 
 (defn generate-replay-link [origin]

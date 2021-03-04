@@ -61,6 +61,9 @@
   (let [c (filter #(contains? % :previous-versions) cards)]
     (reduce expand-card `() c)))
 
+;; these are cards with multiple faces, so we can't download them directly
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
   [cards]
@@ -68,6 +71,7 @@
     (io/make-parents img-dir)
     (let [previous-cards (generate-previous-card-stubs cards)
           total-cards (concat cards previous-cards)
+          total-cards (remove #(get cards-to-skip (:code %)) total-cards)
           missing-cards (remove #(.exists (card-image-file (:code %))) total-cards)
           total (count total-cards)
           missing (count missing-cards)]
@@ -81,7 +85,7 @@
           (println "Finished downloading card art"))
         (println "All" total "card images exist, skipping download")))))
 
-(defn update-config
+(defn- update-config
   "Store import meta info in the db"
   []
   (mc/update webdb/db "config"

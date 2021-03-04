@@ -8,7 +8,7 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon get-image-path]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon get-image-path image-or-face]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
             [reagent.core :as r]
             [medley.core :refer [find-first]]))
@@ -124,8 +124,9 @@
          res (get-in @app-state [:options :card-resolution] "default")
          art (if (show-alt-art? allow-all-users)
                (get-in @app-state [:options :alt-arts (keyword (:code card))] "stock")
-               "stock")]
-     (get-image-path (:images card) (keyword lang) (keyword res) (keyword art)))))
+               "stock")
+         images (image-or-face card)]
+     (get-image-path images (keyword lang) (keyword res) (keyword art)))))
 
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
@@ -165,6 +166,20 @@
   "Add copies of alt art cards to the list of cards. If `only-version` is nil, all alt versions will be added."
   [only-version cards]
   (reduce (partial expand-alts only-version) () (reverse cards)))
+
+(defn- expand-flips
+  [acc card]
+  (if-let [faces (:faces card)]
+    (->> (keys faces)
+         (map #(assoc card :images (get-in card [:faces % :images])))
+         (map #(dissoc % :faces))
+         (concat acc))
+    (conj acc card)))
+
+(defn- insert-flip-arts
+  "Add copies of cards that have multiple faces (eg. Hoshiko Shiro: Untold Protagonist)"
+  [cards]
+  (reduce expand-flips () (reverse cards)))
 
 (defn- post-response [response]
   (if (= 200 (:status response))
@@ -400,6 +415,7 @@
                         (filter-cards (:type-filter @state) :type)
                         (filter-format (:format-filter @state))
                         (filter-title (:search-query @state))
+                        (insert-flip-arts)
                         (insert-alt-arts alt-filter)
                         (sort-by (sort-field (:sort-field @state)))
                         (take (* (:page @state) 28)))]

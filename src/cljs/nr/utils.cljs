@@ -322,3 +322,9 @@
       (not= res :default) (get-image-path images lang :default art)
       (not= lang :en) (get-image-path images :en res art)
       :else "/img/missing.png")))
+
+(defn image-or-face [card]
+  (cond
+    (:images card) (:images card)
+    (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
+    :else (get-in card [:faces :1 :images])))
