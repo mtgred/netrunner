@@ -3,7 +3,7 @@
   (:require [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [tasks.nrdb :refer [update-config replace-collection]]
+            [tasks.utils :refer [replace-collection]]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
@@ -38,7 +38,7 @@
 (defn remove-old-images
   "Remove images attached to cards in the db"
   []
-  (println "Removing old images")
+  (println "Removing old images from db cards")
   (mc/update db card-collection {} {$unset {:images 1}} {:multi true}))
 
 (defn- add-card-image
@@ -79,19 +79,14 @@
 
 (defn add-images
   "Add alt art, alternate language, and high-res card images to the database"
-  ([] (add-images true))
-  ([standalone?]
-   (when standalone?
-     (webdb/connect))
-   (try
-     (let [alt-sets (read-alt-sets)
-           card-dir (apply io/file img-directory)
-           langs (find-dirs card-dir)]
-       (replace-collection alt-collection alt-sets)
-       (remove-old-images)
-       (doall (map add-language-images langs))
-     (when standalone?
-       (update-config)))
-     (catch Exception e (do
-                          (println "Image import failed:" (.getMessage e))
-                          (.printStackTrace e))))))
+  []
+  (try
+    (let [alt-sets (read-alt-sets)
+          card-dir (apply io/file img-directory)
+          langs (find-dirs card-dir)]
+      (replace-collection alt-collection alt-sets)
+      (remove-old-images)
+      (doall (map add-language-images langs)))
+    (catch Exception e (do
+                         (println "Image import failed:" (.getMessage e))
+                         (.printStackTrace e)))))

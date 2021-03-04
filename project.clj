@@ -58,7 +58,6 @@
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
-            "add-images" ["run" "-m" "tasks.images/add-images"]
             "load-test" ["run" "-m" "tasks.load-test/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]

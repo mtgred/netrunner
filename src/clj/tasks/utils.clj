@@ -1,6 +1,8 @@
 (ns tasks.utils
   "utilities for the tasks"
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [monger.collection :as mc]
+            [web.db :as webdb]))
 
 (defn type->dir
   [card]
@@ -26,3 +28,8 @@
     (if (some identity vs)
       (reduce #(rec-merge %1 %2) v vs)
       v)))
+
+(defn replace-collection
+  [col data]
+  (mc/remove webdb/db col)
+  (mc/insert-batch webdb/db col data))

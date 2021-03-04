@@ -2,6 +2,8 @@
   "NetrunnerDB import tasks"
   (:require [org.httpkit.client :as http]
             [web.db :as webdb]
+            [tasks.utils :refer [replace-collection]]
+            [tasks.images :refer [add-images]]
             [monger.collection :as mc]
             [monger.operators :refer [$exists $inc $currentDate]]
             [throttler.core :refer [throttle-fn]]
@@ -26,11 +28,6 @@
   [filename data]
   (io/make-parents filename)
   (spit filename data))
-
-(defn replace-collection
-  [col data]
-  (mc/remove webdb/db col)
-  (mc/insert-batch webdb/db col data))
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
@@ -95,7 +92,7 @@
 
 (defn fetch-data
   [{:keys [card-images db local]}]
-  (let [edn (download-edn-data local)]
+  (let [edn (dissoc (download-edn-data local) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
@@ -108,10 +105,11 @@
           (replace-collection col data)
           (println (str "Imported " col " into database")))
         (update-config)
+        (when card-images
+          (download-card-images (:cards edn)))
+        (add-images)
         (finally (webdb/disconnect))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")
-    (println (count (:cards edn)) "cards imported")
-    (when card-images
-      (download-card-images (:cards edn)))))
+    (println (count (:cards edn)) "cards imported")))
