@@ -39,6 +39,7 @@
   "Remove images attached to cards in the db"
   []
   (println "Removing old images from db cards")
+  (mc/update db card-collection {} {$unset {:faces 1}} {:multi true})
   (mc/update db card-collection {} {$unset {:images 1}} {:multi true}))
 
 (defn- add-flip-card-image
