@@ -9,17 +9,9 @@
             [nr.avatar :refer [avatar]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [non-game-toast set-scroll-top store-scroll-top]]
+            [jinteki.cards :refer [all-cards]]
             [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
-
-(defn- all-alt-art-types
-  []
-  (map :version (:alt-info @app-state)))
-
-(defn- alt-art-name
-  [version]
-  (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
-    (get alt :name "Official")))
 
 (defn post-response [s response]
   (case (:status response)
@@ -46,6 +38,7 @@
   (swap! app-state assoc-in [:options :card-back] (:card-back @s))
   (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
+  (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
@@ -85,6 +78,15 @@
     (when user-name
       (swap! s assoc-in [:blocked-users] (vec (remove #(= % user-name) current-blocked-list))))))
 
+(defn- all-alt-art-types
+  []
+  (map :version (:alt-info @app-state)))
+
+(defn- alt-art-name
+  [version]
+  (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
+    (get alt :name "Official")))
+
 (defn- remove-card-art
   [card s]
   (swap! s update :alt-arts dissoc (keyword (:code card))))
@@ -93,23 +95,29 @@
   [card art s]
   (swap! s update :alt-arts assoc (keyword (:code card)) art))
 
+(defn- art-available
+  "Is the given art type available for the player's language and resolution settings?"
+  [card art lang res]
+  (get-in card [:images lang res (keyword art)]))
+
 (defn- update-card-art
   "Set the alt art for a card"
-  [card art s]
+  [card art lang res s]
   (when (and card (string? art))
     (if (= "default" art)
       (remove-card-art card s)
-      (let [versions (keys (:alt_art card))]
-        (when (some #(= % (keyword art)) versions)
-          (add-card-art card art s))))))
+      (when (art-available card art lang res)
+        (add-card-art card art s)))))
 
 (defn- clear-card-art [s]
   (swap! s assoc-in [:alt-arts] {}))
 
 (defn- reset-card-art [s]
-  (let [art (:all-art-select @s)]
-    (doseq [card (vals (:alt-cards @app-state))]
-      (update-card-art card art s))))
+  (let [art (:all-art-select @s)
+        lang (keyword (get-in @app-state [:options :language] "en"))
+        res (keyword (get-in @app-state [:options :card-resolution] "default"))]
+    (doseq [card (vals @all-cards)]
+      (update-card-art card art lang res s))))
 
 (defn log-width-option [s]
   (let [log-width (r/atom (:log-width @s))]
@@ -200,7 +208,8 @@
           [:section
            [:h3 (tr [:settings.avatar "Avatar"])]
            [avatar @user {:opts {:size 38}}]
-           [:a {:href "http://gravatar.com" :target "_blank"} (tr [:settings.change-avatar "Change on gravatar.com"])]
+           [:a {:href "http://gravatar.com" :target "_blank"} (tr [:settings.change-avatar "Change on gravatar.com"])]]
+          [:section
            [:h3 (tr [:settings.pronouns "Pronouns"])]
            [:select {:value (:pronouns @s "none")
                      :on-change #(swap! s assoc :pronouns (.. % -target -value))}
@@ -222,20 +231,21 @@
                             {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
                             {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
-          [:h3 (tr [:settings.language "Language"])]
-          [:select {:value (:language @s "en")
-                    :on-change #(swap! s assoc :language (.. % -target -value))}
-           (doall
-             (for [option [{:name "English" :ref "en"}
-                           {:name "中文 (Simplified)" :ref "zh-simp"}
-                           {:name "中文 (Traditional)" :ref "zh-trad"}
-                           {:name "Français" :ref "fr"}
-                           {:name "Deutsch" :ref "de"}
-                           {:name "Italiano" :ref "it"}
-                           {:name "日本語" :ref "jp"}
-                           {:name "한국어" :ref "ko"}
-                           {:name "Igpay Atinlay" :ref "la-pig"}]]
-               [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+          [:section
+           [:h3 (tr [:settings.language "Language"])]
+           [:select {:value (:language @s "en")
+                     :on-change #(swap! s assoc :language (.. % -target -value))}
+            (doall
+              (for [option [{:name "English" :ref "en"}
+                            {:name "中文 (Simplified)" :ref "zh-simp"}
+                            {:name "中文 (Traditional)" :ref "zh-trad"}
+                            {:name "Français" :ref "fr"}
+                            {:name "Deutsch" :ref "de"}
+                            {:name "Italiano" :ref "it"}
+                            {:name "日本語" :ref "jp"}
+                            {:name "한국어" :ref "ko"}
+                            {:name "Igpay Atinlay" :ref "la-pig"}]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
           [:section
            [:h3 (tr [:settings.sounds "Sounds"])]
            [:div
@@ -282,10 +292,12 @@
                               :value "irl"
                               :checked (= "irl" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              (tr [:settings.runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]]
+              (tr [:settings.runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
 
-          [log-width-option s]
-          [log-top-option s]
+           [:br]
+           [:div
+            [log-width-option s]
+            [log-top-option s]]]
 
           [:section
            [:h3  (tr [:settings.background "Game board background"])]
@@ -357,6 +369,15 @@
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
+          [:section {:id "high-res"}
+           [:h3 (tr [:settings.card-images "Card images"])]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "use-high-res"
+                             :checked (= "high" (:card-resolution @s))
+                             :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
+             (tr [:settings.high-res "Enable high resolution card images"])]]]
+
           [:section {:id "alt-art"}
            [:h3 (tr [:settings.alt-art "Alt arts"])]
            [:div
@@ -365,6 +386,7 @@
                              :checked (:show-alt-art @s)
                              :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
              (tr [:settings.show-alt "Show alternate card arts"])]]
+           [:br]
 
            (when (and (:special @user) (:show-alt-art @s) (:alt-info @app-state))
              [:div {:id "my-alt-art"}
@@ -410,8 +432,8 @@
                                                  :on-click #(remove-user-from-block-list % s)} "X" ]
                     [:span.blocked-user-name (str "  " bu)]]))]
 
-     [:p
-      [:button (tr [:settings.update-profile "Update Profile"])]
+     [:section
+      [:button.float-right (tr [:settings.update-profile "Update Profile"])]
       [:span.flash-message (:flash-message @s)]]]])}))
 
 (defn account-wrapper [user s scroll-top]
@@ -435,6 +457,7 @@
                        :show-alt-art (get-in @app-state [:options :show-alt-art])
                        :alt-arts (get-in @app-state [:options :alt-arts])
                        :all-art-select "wc2015"
+                       :card-resolution (get-in @app-state [:options :card-resolution])
                        :stacked-servers (get-in @app-state [:options :stacked-servers])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
                        :log-width (get-in @app-state [:options :log-width])

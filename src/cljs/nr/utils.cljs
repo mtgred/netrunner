@@ -313,11 +313,18 @@
 (defn card-by-id [code]
   (find-first #(= code (:code %)) (vals @all-cards)))
 
-(defn image-language-name
-  "Generates a card name based on the user's language settings. Returns default if language is unavailable."
-  [card default]
-  (let [lang-pref (get-in @app-state [:options :language] "en")
-        lang-avail (:languages card)]
-    (if (some #(= % lang-pref) lang-avail)
-      (str (:code card) "[" lang-pref "]")
-      default)))
+(defn get-image-path
+  [images lang res art]
+  (let [path (get-in images [lang res art])]
+    (cond
+      path path
+      (not= art :stock) (get-image-path images lang res :stock)
+      (not= res :default) (get-image-path images lang :default art)
+      (not= lang :en) (get-image-path images :en res art)
+      :else "/img/missing.png")))
+
+(defn image-or-face [card]
+  (cond
+    (:images card) (:images card)
+    (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
+    :else (get-in card [:faces :1 :images])))

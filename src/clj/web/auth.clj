@@ -168,7 +168,7 @@
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
                                   {"$set" {:options (select-keys body [:background :pronouns :language :show-alt-art :blocked-users
-                                                                       :alt-arts :deckstats :gamestats :card-zoom :card-back])}}))
+                                                                       :alt-arts :card-resolution :deckstats :gamestats :card-zoom :card-back])}}))
       (response 200 {:message "Refresh your browser"})
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))

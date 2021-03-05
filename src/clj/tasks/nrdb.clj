@@ -2,6 +2,8 @@
   "NetrunnerDB import tasks"
   (:require [org.httpkit.client :as http]
             [web.db :as webdb]
+            [tasks.utils :refer [replace-collection]]
+            [tasks.images :refer [add-images]]
             [monger.collection :as mc]
             [monger.operators :refer [$exists $inc $currentDate]]
             [throttler.core :refer [throttle-fn]]
@@ -27,15 +29,10 @@
   (io/make-parents filename)
   (spit filename data))
 
-(defn replace-collection
-  [col data]
-  (mc/remove webdb/db col)
-  (mc/insert-batch webdb/db col data))
-
 (defn- card-image-file
   "Returns the path to a card's image as a File"
   [code]
-  (io/file "resources" "public" "img" "cards" (str code ".png")))
+  (io/file "resources" "public" "img" "cards" "en" "default" "stock" (str code ".png")))
 
 (defn- download-card-image
   "Download a single card image from NRDB"
@@ -64,13 +61,17 @@
   (let [c (filter #(contains? % :previous-versions) cards)]
     (reduce expand-card `() c)))
 
+;; these are cards with multiple faces, so we can't download them directly
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
   [cards]
-  (let [img-dir (io/file "resources" "public" "img" "cards")]
+  (let [img-dir (io/file "resources" "public" "img" "cards" "en" "default" "stock")]
     (io/make-parents img-dir)
     (let [previous-cards (generate-previous-card-stubs cards)
           total-cards (concat cards previous-cards)
+          total-cards (remove #(get cards-to-skip (:code %)) total-cards)
           missing-cards (remove #(.exists (card-image-file (:code %))) total-cards)
           total (count total-cards)
           missing (count missing-cards)]
@@ -84,7 +85,7 @@
           (println "Finished downloading card art"))
         (println "All" total "card images exist, skipping download")))))
 
-(defn update-config
+(defn- update-config
   "Store import meta info in the db"
   []
   (mc/update webdb/db "config"
@@ -95,7 +96,7 @@
 
 (defn fetch-data
   [{:keys [card-images db local]}]
-  (let [edn (download-edn-data local)]
+  (let [edn (dissoc (download-edn-data local) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
@@ -108,10 +109,11 @@
           (replace-collection col data)
           (println (str "Imported " col " into database")))
         (update-config)
+        (when card-images
+          (download-card-images (:cards edn)))
+        (add-images)
         (finally (webdb/disconnect))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")
-    (println (count (:cards edn)) "cards imported")
-    (when card-images
-      (download-card-images (:cards edn)))))
+    (println (count (:cards edn)) "cards imported")))
