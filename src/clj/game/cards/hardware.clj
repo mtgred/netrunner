@@ -485,7 +485,7 @@
              :interactive (req true)
              :optional
              {:req (req (and (:successful target)
-                             (:dopp-active card)))
+                             (:dopp-active (get-card state card))))
               :player :runner
               :prompt "Use Doppelgänger to run again?"
               :yes-ability {:prompt "Choose a server"
@@ -500,7 +500,7 @@
                                             (update-all-ice)
                                             (reset-all-ice)
                                             (clear-wait-prompt :corp)
-                                            (make-run eid target))}}}]})
+                                            (make-run eid target (get-card state card)))}}}]})
 
 (defcard "Dorm Computer"
   {:data {:counter {:power 4}}
@@ -518,7 +518,7 @@
                                     :async true
                                     :msg "avoid all tags during the run"
                                     :effect (effect (tag-prevent :runner eid Integer/MAX_VALUE))}])
-                                (make-run eid target nil card))}]})
+                                (make-run eid target card))}]})
 
 (defcard "Dyson Fractal Generator"
   {:recurring 1
@@ -1629,7 +1629,7 @@
                                           :duration :end-of-run
                                           :silent (req true)
                                           :effect (effect (access-bonus kw bonus))}])
-                                      (make-run state side eid srv nil card))))})]
+                                      (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"
                   :prompt "Choose a server to run with Severnius Stim Implant"

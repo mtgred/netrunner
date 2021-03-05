@@ -1509,16 +1509,18 @@
      (take-credits state :corp)
      (play-from-hand state :runner "Doppelgänger")
      (play-from-hand state :runner "Dirty Laundry")
-     (is (changes-credits (get-runner) 5
-                          (do (click-prompt state :runner "Archives")
-                              (run-continue state)
-                              (is (not (:run @state)))
-                              (click-prompt state :runner "Doppelgänger")
-                              (click-prompt state :runner "Yes")
-                              (click-prompt state :runner "Archives")
-                              (is (:run @state) "New run started")
-                              (run-continue state)))
-         "Dirty Laundry pays out 5 creds when comboed with Doppelganger"))))
+     (let [credits (:credit (get-runner))]
+       (click-prompt state :runner "Archives")
+       (run-continue state)
+       (is (not (:run @state)))
+       (is (= credits (:credit (get-runner))) "Runner hasn't gained DL credits yet")
+       (click-prompt state :runner "Doppelgänger")
+       (click-prompt state :runner "Yes")
+       (click-prompt state :runner "Archives")
+       (is (:run @state) "New run started")
+       (run-continue state)
+       (is (not (:run @state)))
+       (is (= (+ 5 credits) (:credit (get-runner))) "Runner hasn't gained DL credits yet")))))
 
 (deftest diversion-of-funds
   ;; Diversion of Funds

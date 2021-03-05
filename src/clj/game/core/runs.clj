@@ -62,11 +62,9 @@
 
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
-  ([state side server] (make-run state side (make-eid state) server nil nil nil))
-  ([state side eid server] (make-run state side eid server nil nil nil))
-  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
-  ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
-  ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+  ([state side eid server] (make-run state side eid server nil nil))
+  ([state side eid server card] (make-run state side eid server card nil))
+  ([state side eid server card {:keys [click-run ignore-costs] :as args}]
    (let [cost-args (assoc args :server (unknown->kw server))
          costs (total-run-cost state side card cost-args)]
      (if-not (and (can-run? state :runner)

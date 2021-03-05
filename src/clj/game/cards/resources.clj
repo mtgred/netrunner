@@ -452,7 +452,7 @@
                                                    (do (system-msg state :runner
                                                                    (str "can't afford to pay to bypass " (:title ice)))
                                                        (effect-completed state side eid))))))}}}])
-                  (make-run eid target nil card))}]})
+                  (make-run eid target card))}]})
 
 (defcard "Chatterjee University"
   {:abilities [{:cost [:click 1]
@@ -627,7 +627,7 @@
                   :choices (req runnable-servers)
                   :async true
                   :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
-                                  (make-run eid target nil card))}]}))
+                                  (make-run eid target card))}]}))
 
 (defcard "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
@@ -1335,7 +1335,13 @@
                  :choices (req runnable-servers)
                  :msg (msg "make a run on " target " during which no programs can be used")
                  :makes-run true
-                 :effect (effect (make-run target nil card))}]
+                 :async true
+                 ;; TODO: This is a hack to avoid failures in tests
+                 :effect (req (swap! state update-in [:corp :prompt]
+                                     (fn [pr] (remove #(= "Waiting for Runner to resolve runner-turn-begins triggers" (:msg %)) pr)))
+                              (wait-for (make-run state :runner (make-eid state eid) target card)
+                                        (show-wait-prompt state :corp "Runner to resolve runner-turn-begins triggers")
+                                        (effect-completed state side eid)))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
      :install-cost-bonus (req (- (get-link state)))
@@ -2642,19 +2648,18 @@
                               :async true
                               :effect (effect (system-msg :runner "uses The Masque A to draw 1 card")
                                               (draw :runner eid 1 nil))}])
-                          (make-run eid target nil card))}]})
+                          (make-run eid target card))}]})
 
 (defcard "The Masque B"
   {:implementation "Successful run condition not implemented"
-   :abilities [{:cost [:click 1, :trash]
+   :abilities [{:cost [:click 1 :trash]
                 :label "Make a run and gain [click]. If successful, make another run on another server."
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
                 :msg (msg "make a run on " target " and gain [click]")
                 :async true
-                :effect (req
-                          (gain state :runner :click 1)
-                          (make-run state side target nil card))}]})
+                :effect (effect (gain :click 1)
+                                (make-run eid target card))}]})
 
 (defcard "The Nihilist"
   (let [corp-choice {:optional

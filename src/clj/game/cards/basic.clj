@@ -95,7 +95,7 @@
                                              target-card {:base-cost [:click 1]})))}
                {:label "Run any server"
                 :async true
-                :effect (effect (make-run eid target nil nil {:click-run true}))}
+                :effect (effect (make-run eid target nil {:click-run true}))}
                {:label "Remove 1 tag"
                 :cost [:click 1 :credit 2]
                 :msg "remove 1 tag"
