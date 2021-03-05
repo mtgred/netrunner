@@ -2604,7 +2604,32 @@
         (run-continue state)
         (run-continue state)
         (end-phase-12 state :runner)
-        (is (= 3 (:click (get-runner))) "Enigma took a click")))))
+        (is (= 3 (:click (get-runner))) "Enigma took a click"))))
+  (testing "Calls make-run async #5612"
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 3)]}
+                 :runner {:id "Sunny Lebeau: Security Specialist"
+                          :hand ["Jak Sinclair" (qty "Data Folding" 3) "DreamNet" "The Archivist"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Jak Sinclair")
+      (play-from-hand state :runner "Data Folding")
+      (play-from-hand state :runner "Data Folding")
+      (play-from-hand state :runner "Data Folding")
+      (play-from-hand state :runner "DreamNet")
+      (play-from-hand state :runner "The Archivist")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (end-phase-12 state :runner)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "R&D")
+      (run-continue state :access-server)
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+      (click-prompt state :runner "No action")
+      (is (not (get-run)) "Run has ended"))))
 
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run

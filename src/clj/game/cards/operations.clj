@@ -85,7 +85,7 @@
                  :yes-ability {:msg (str "let the Runner make a run on " serv)
                                :async true
                                :effect (effect (clear-wait-prompt :corp)
-                                               (make-run eid serv nil card)
+                                               (make-run eid serv card)
                                                (prevent-jack-out))}
                  :no-ability {:async true
                               :msg "add it to their score area as an agenda worth 1 agenda point"

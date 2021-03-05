@@ -18,7 +18,9 @@
   ([form] `(is' ~form nil))
   ([form msg]
    `(let [result# ~form]
-      (when-not result#
+      (if result#
+        (do-report {:type :pass, :message ~msg,
+                    :expected '~form, :actual (list result#)})
         (throw (ex-info ~msg {:cause '~form :result result#}))))))
 
 ;;; helper functions for prompt interaction

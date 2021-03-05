@@ -1198,8 +1198,9 @@
                 :msg "make a run on Archives"
                 :once :per-turn
                 :makes-run true
+                :async true
                 :effect (effect (update! (assoc-in card [:special :omar-run] true))
-                                (make-run :archives nil (get-card state card)))}]
+                                (make-run eid :archives (get-card state card)))}]
    :events [{:event :pre-successful-run
              :interactive (req true)
              :req (req (and (get-in card [:special :omar-run])
