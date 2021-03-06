@@ -1577,7 +1577,7 @@
    :choices ["HQ" "R&D"]
    :makes-run true
    :async true
-   :effect (req (make-run state side eid target nil card nil))
+   :effect (req (make-run state side eid target card))
    :events [{:event :successful-run
              :silent (req true)
              :req (req (and (or (= :hq (target-server context))
