@@ -2662,6 +2662,48 @@
                                (card-ability state :runner inti 1)
                                (click-card state :runner omni)))))))
 
+(deftest pantograph
+  ;; Pantograph - Gain 1 credit and may look at and move top card of Stack to bottom
+  (testing "Basic test - triggered on steal"
+    (do-game
+      (new-game {:corp {:hand ["House of Knives"]}
+                 :runner {:hand ["Pantograph" "Bankroll"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pantograph")
+      (is (= 5 (core/available-mu state)) "Gain 1 memory")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        1 (:credit (get-runner))
+        "Gain 1 credit from Pantograph"
+        (click-prompt state :runner "Yes"))
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Gain 1 credit from Pantograph"
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (find-card "Bankroll" (:hand (get-runner)))))
+      (is (get-program state 0) "Bankroll is installed")))
+  (testing "Basic test - trigger on score"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["House of Knives"]}
+                 :runner {:hand ["Pantograph" "Bankroll"]}})
+      (play-from-hand state :corp "House of Knives" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pantograph")
+      (take-credits state :runner)
+      (score-agenda state :corp (get-content state :remote1 0))
+      (changes-val-macro
+        1 (:credit (get-runner))
+        "Gain 1 credit from Pantograph"
+        (click-prompt state :runner "Yes"))
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Gain 1 credit from Pantograph"
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (find-card "Bankroll" (:hand (get-runner)))))
+      (is (get-program state 0) "Bankroll is installed"))))
+
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
   (testing "Vanilla test"
