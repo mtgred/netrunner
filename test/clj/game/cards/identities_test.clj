@@ -1787,6 +1787,28 @@
           (click-card state :corp pad)
           (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign"))))))
 
+(deftest jean-loup-arcemont-party-animal
+  ;; "Jean \"Loup\" Arcemont: Party Animal"
+  (do-game
+   (new-game {:corp {:hand [(qty "NGO Front" 2)]}
+              :runner {:id "Jean \"Loup\" Arcemont: Party Animal"
+                       :hand ["Sure Gamble"]
+                       :deck [(qty "Sure Gamble" 3)]}})
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (take-credits state :corp)
+   (run-empty-server state "Server 1")
+   (click-prompt state :runner "Pay 1 [Credits] to trash")
+   (let [credits (:credit (get-runner))]
+     (changes-val-macro
+      1 (count (:hand (get-runner)))
+      "Jean draws one card"
+      (click-prompt state :runner "Yes"))
+     (is (= (+ credits 1) (:credit (get-runner))) "Gain 1 credit from trashing accessed card")
+     (run-empty-server state "Server 2")
+     (click-prompt state :runner "Pay 1 [Credits] to trash")
+     (is (empty? (:prompt (get-runner))) "No prompt on second trash"))))
+
 (deftest jemison-astronautics-sacrifice-audacity-success
   ;; Jemison Astronautics - Place advancements when forfeiting agendas
   (testing "Basic test"
@@ -3412,6 +3434,29 @@
                        (trash-resource state)
                        (click-card state :corp (get-resource state 0)))
     (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
+
+(deftest tao-salonga-telepresence-magician
+  ;;Tāo Salonga: Telepresence Magician
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Ice Wall" "Enigma" "House of Knives"]}
+                :runner {:id "Tāo Salonga: Telepresence Magician"}})
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Enigma" "HQ")
+     (play-from-hand state :corp "House of Knives" "New remote")
+     (take-credits state :corp)
+     (run-empty-server state "Server 1")
+     (let [iw (get-ice state :hq 0)
+           enig (get-ice state :hq 1)]
+       (click-prompt state :runner "Steal")
+       (click-prompt state :runner "Yes")
+       (click-card state :runner (refresh enig))
+       (click-card state :runner (refresh iw)))
+     (let [iw (get-ice state :hq 1)
+           enig (get-ice state :hq 0)]
+       (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
+       (is (= "Enigma" (:title enig)) "Enigma now outermost ice")))))
 
 (deftest the-foundry-refining-the-process
   ;; The Foundry

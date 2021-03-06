@@ -714,6 +714,24 @@
              :async true
              :effect (effect (draw eid 1 nil))}]})
 
+(defcard "Jean \"Loup\" Arcemont: Party Animal"
+  {:events [{:event :runner-trash
+             :req (req (and (:accessed context)
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(:accessed %) targets)))))
+             :effect (effect (continue-ability
+                               {:optional
+                                {:prompt "Gain 1 [Credits] and draw 1 card?"
+                                 :autoresolve (get-autoresolve :auto-jean)
+                                 :yes-ability
+                                 {:async true
+                                  :msg "gain 1 [Credits] and draw 1 card"
+                                  :effect (req (wait-for (draw state :runner 1 nil)
+                                                         (gain-credits state :runner eid 1)))}}}
+                               card nil))}]
+   :abilities [(set-autoresolve :auto-jean "Jean")]})
+
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
              :async true
@@ -1478,6 +1496,24 @@
                 :effect (req (apply swap-ice state side targets))
                 :msg (msg "swap the positions of " (card-str state (first targets))
                           " and " (card-str state (second targets)))}]})
+
+(defcard "Tāo Salonga: Telepresence Magician"
+  (let [swap-ability
+        {:interactive (req true)
+         :optional
+         {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
+          :prompt "Swap ice with Tāo Salonga ability?"
+          :yes-ability
+          {:prompt "Select 2 ice"
+           :choices {:req (req (and (installed? target)
+                                    (ice? target)))
+                     :max 2
+                     :all true}
+           :msg (msg "swap the positions of " (card-str state (first targets))
+                     " and " (card-str state (second targets)))
+           :effect (req (swap-ice state side (first targets) (second targets)))}}}]
+    {:events [(assoc swap-ability :event :agenda-scored)
+              (assoc swap-ability :event :agenda-stolen)]}))
 
 (defcard "Tennin Institute: The Secrets Within"
   {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
