@@ -2012,6 +2012,21 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 5 (count (:discard (get-runner)))))))
 
+(deftest jinteki-restoring-humanity
+  ;; Jinteki: Restoring Humanity
+  (do-game
+   (new-game {:corp {:id "Jinteki: Restoring Humanity"
+                     :discard ["Neural EMP"]}})
+   (take-credits state :corp)
+   (changes-val-macro
+     1 (:credit (get-corp))
+     "Gain 1 credit from ability"
+     (click-prompt state :corp "Yes"))
+   (run-empty-server state "Archives")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (empty? (:prompt (get-corp))) "Not prompted when no facedown card in archives")))
+
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
   (testing "Basic test"
@@ -3646,6 +3661,30 @@
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))) "Runner takes no damage at the second encounter")
       (is (empty? (:prompt (get-corp)))))))
+
+(deftest weyland-consortium-built-to-last
+  ;; Weyland Consortium: Built to Last
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Built to Last"
+                        :hand [(qty "NGO Front" 2)]}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo1 (get-content state :remote1 0)
+            ngo2 (get-content state :remote2 0)]
+        (advance state (refresh ngo1) 1)
+        (changes-val-macro
+          2 (:credit (get-corp))
+          "Gain 2 credits from Weyland Built to Last ability"
+          (click-prompt state :corp "Yes"))
+        (advance state (refresh ngo1) 1)
+        (is (empty? (:prompt (get-corp))) "No prompt for second advance counter")
+        (advance state (refresh ngo2) 1)
+        (changes-val-macro
+          2 (:credit (get-corp))
+          "Gain 2 credits from Weyland Built to Last ability"
+          (click-prompt state :corp "Yes"))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard
