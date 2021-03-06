@@ -1274,7 +1274,7 @@
                                      :effect (req (gain-credits state :runner eid 1))}}}
                                   card nil)
                                 (continue-ability state side install-ability card nil)))}]
-    {:in-play [:memory 1]
+    {:constant-effects [(mu+ 1)]
      :events [(assoc gain-credit-ability :event :agenda-scored)
               (assoc gain-credit-ability :event :agenda-stolen)]}))
 
