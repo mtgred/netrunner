@@ -557,6 +557,17 @@
              :async true
              :effect (effect (gain-credits eid 1))}]})
 
+(defcard "Haas-Bioroid: Precision Design"
+  {:constant-effects [(corp-hand-size+ 1)]
+   :events [{:event :agenda-scored
+             :label "add card from Archives to HQ"
+             :prompt "Select a card to add to HQ"
+             :show-discard true
+             :choices {:card #(and (corp? %)
+                                   (in-discard? %))}
+             :msg (msg "add " (card-str state target) " to HQ")
+             :effect (effect (move :corp target :hand))}]})
+
 (defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength
                        :req (req (has-subtype? target "Bioroid"))
