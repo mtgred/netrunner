@@ -1787,11 +1787,11 @@
           (click-card state :corp pad)
           (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign"))))))
 
-(deftest jean-loup-arcemont-party-animal
-  ;; "Jean \"Loup\" Arcemont: Party Animal"
+(deftest rene-loup-arcemont-party-animal
+  ;; "René \"Loup\" Arcemont: Party Animal"
   (do-game
    (new-game {:corp {:hand [(qty "NGO Front" 2)]}
-              :runner {:id "Jean \"Loup\" Arcemont: Party Animal"
+              :runner {:id "René \"Loup\" Arcemont: Party Animal"
                        :hand ["Sure Gamble"]
                        :deck [(qty "Sure Gamble" 3)]}})
    (play-from-hand state :corp "NGO Front" "New remote")
@@ -1802,7 +1802,7 @@
    (let [credits (:credit (get-runner))]
      (changes-val-macro
       1 (count (:hand (get-runner)))
-      "Jean draws one card"
+      "René draws one card"
       (click-prompt state :runner "Yes"))
      (is (= (+ credits 1) (:credit (get-runner))) "Gain 1 credit from trashing accessed card")
      (run-empty-server state "Server 2")

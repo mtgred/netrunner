@@ -714,7 +714,7 @@
              :async true
              :effect (effect (draw eid 1 nil))}]})
 
-(defcard "Jean \"Loup\" Arcemont: Party Animal"
+(defcard "René \"Loup\" Arcemont: Party Animal"
   {:events [{:event :runner-trash
              :optional
              {:req (req (and (:accessed context)
@@ -722,13 +722,13 @@
                                            (fn [targets]
                                              (some #(:accessed %) targets)))))
               :prompt "Gain 1 [Credits] and draw 1 card?"
-              :autoresolve (get-autoresolve :auto-jean)
+              :autoresolve (get-autoresolve :auto-rene)
               :yes-ability
               {:async true
                :msg "gain 1 [Credits] and draw 1 card"
                :effect (req (wait-for (draw state :runner 1 nil)
                                       (gain-credits state :runner eid 1)))}}}]
-   :abilities [(set-autoresolve :auto-jean "Jean")]})
+   :abilities [(set-autoresolve :auto-rene "René")]})
 
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
