@@ -1241,26 +1241,24 @@
 (defcard "Pantograph"
   (let [install-ability
         {:optional
-         {:prompt "Install card with Pantograph ability?"
+         {:waiting-prompt "Runner to decide if they will use Pantograph"
+          :prompt "Install card with Pantograph ability?"
+          :player :runner
           :yes-ability
           {:async true
-           :msg "wants to install card with Pantgraph"
-           :effect (effect (continue-ability
-                             {:async true
-                              :prompt "Select a card to install with Pantograph"
-                              :choices
-                              {:req (req (and (runner? target)
-                                              (in-hand? target)
-                                              (not (event? target))
-                                              (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                        target nil
-                                                        [:credit (install-cost state side target nil)])))}
-                              :msg (msg "install " (:title target))
-                              :effect (effect (runner-install
-                                                (assoc eid :source card :source-type :runner-install)
-                                                target nil))
-                              :cancel-effect (effect (effect-completed eid))}
-                             card nil))}}}
+           :prompt "Select a card to install with Pantograph"
+           :choices
+           {:req (req (and (runner? target)
+                           (in-hand? target)
+                           (not (event? target))
+                           (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                     target nil
+                                     [:credit (install-cost state side target nil)])))}
+           :msg (msg "install " (:title target))
+           :effect (effect (runner-install
+                             (assoc eid :source card :source-type :runner-install)
+                             target nil))
+           :cancel-effect (effect (effect-completed eid))}}}
         gain-credit-ability
         {:interactive (req true)
          :async true

@@ -1580,6 +1580,7 @@
    :effect (req (make-run state side eid target card))
    :events [{:event :successful-run
              :silent (req true)
+             :async true
              :req (req (and (or (= :hq (target-server context))
                                 (= :rd (target-server context)))
                             this-card-run))
