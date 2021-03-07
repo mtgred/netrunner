@@ -22,9 +22,9 @@
                       (rezzed? updated-card))
              (update-ice-strength state side updated-card))
            (if-not placed
-             (trigger-event-sync state side eid :advance (get-card state updated-card))
-             (trigger-event-sync state side eid :advancement-placed (get-card state updated-card))))
-       (trigger-event-sync state side eid :counter-added (get-card state updated-card))))))
+             (trigger-event-sync state side eid :advance (get-card state updated-card) {:counter-type key :amount n :placed placed})
+             (trigger-event-sync state side eid :advancement-placed (get-card state updated-card) {:counter-type key :amount n :placed placed})))
+       (trigger-event-sync state side eid :counter-added (get-card state updated-card) {:counter-type key :amount n :placed placed})))))
 
 (defn set-prop
   "Like add-prop, but sets multiple keys to corresponding values without triggering events.
@@ -36,7 +36,7 @@
   "Adds n counters of the specified type to a card"
   ([state side card type n] (add-counter state side (make-eid state) card type n nil))
   ([state side card type n args] (add-counter state side (make-eid state) card type n args))
-  ([state side eid card type n args]
+  ([state side eid card type n {:keys [placed] :as args}]
    (let [updated-card (if (= type :virus)
                         (assoc card :added-virus-counter true)
                         card)]
@@ -44,7 +44,7 @@
      (if (= type :advancement)
        ;; if advancement counter use existing system
        (add-prop state side eid card :advance-counter n args)
-       (trigger-event-sync state side eid :counter-added (get-card state updated-card))))))
+       (trigger-event-sync state side eid :counter-added (get-card state updated-card) {:counter-type key :amount n :placed placed})))))
 
 (defn add-icon
   "Adds an icon to a card. E.g. a Femme Fatale token.
