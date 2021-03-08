@@ -1452,6 +1452,19 @@
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (is (= 9 (:credit (get-corp))) "Corp gained 1cr from EtF"))))
 
+(deftest haas-bioroid-precision-design
+  ;; Haas-Bioroid: Precision Design
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:id "Haas-Bioroid: Precision Design"
+                       :hand ["Project Vitruvius"]
+                       :discard ["Hedge Fund"]}})
+     (is (= 6 (hand-size :corp)) "Max hand size is 6")
+     (play-and-score state "Project Vitruvius")
+     (is (= 1 (count (:discard (get-corp)))) "1 card in archives")
+     (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp)))) ; Ability target
+     (is (= 0 (count (:discard (get-corp)))) "0 card in archives"))))
+
 (deftest haas-bioroid-stronger-together
   ;; Stronger Together - +1 strength for Bioroid ice
   (do-game
@@ -1787,6 +1800,28 @@
           (click-card state :corp pad)
           (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign"))))))
 
+(deftest rene-loup-arcemont-party-animal
+  ;; "René \"Loup\" Arcemont: Party Animal"
+  (do-game
+   (new-game {:corp {:hand [(qty "NGO Front" 2)]}
+              :runner {:id "René \"Loup\" Arcemont: Party Animal"
+                       :hand ["Sure Gamble"]
+                       :deck [(qty "Sure Gamble" 3)]}})
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (take-credits state :corp)
+   (run-empty-server state "Server 1")
+   (click-prompt state :runner "Pay 1 [Credits] to trash")
+   (let [credits (:credit (get-runner))]
+     (changes-val-macro
+      1 (count (:hand (get-runner)))
+      "René draws one card"
+      (click-prompt state :runner "Yes"))
+     (is (= (+ credits 1) (:credit (get-runner))) "Gain 1 credit from trashing accessed card")
+     (run-empty-server state "Server 2")
+     (click-prompt state :runner "Pay 1 [Credits] to trash")
+     (is (empty? (:prompt (get-runner))) "No prompt on second trash"))))
+
 (deftest jemison-astronautics-sacrifice-audacity-success
   ;; Jemison Astronautics - Place advancements when forfeiting agendas
   (testing "Basic test"
@@ -1989,6 +2024,21 @@
     (is (= 3 (count (:discard (get-runner)))))
     (play-from-hand state :corp "Neural EMP")
     (is (= 5 (count (:discard (get-runner)))))))
+
+(deftest jinteki-restoring-humanity
+  ;; Jinteki: Restoring Humanity
+  (do-game
+   (new-game {:corp {:id "Jinteki: Restoring Humanity"
+                     :discard ["Neural EMP"]}})
+   (take-credits state :corp)
+   (changes-val-macro
+     1 (:credit (get-corp))
+     "Gain 1 credit from ability"
+     (click-prompt state :corp "Yes"))
+   (run-empty-server state "Archives")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (empty? (:prompt (get-corp))) "Not prompted when no facedown card in archives")))
 
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
@@ -3413,6 +3463,29 @@
                        (click-card state :corp (get-resource state 0)))
     (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
 
+(deftest tao-salonga-telepresence-magician
+  ;;Tāo Salonga: Telepresence Magician
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Ice Wall" "Enigma" "House of Knives"]}
+                :runner {:id "Tāo Salonga: Telepresence Magician"}})
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Enigma" "HQ")
+     (play-from-hand state :corp "House of Knives" "New remote")
+     (take-credits state :corp)
+     (run-empty-server state "Server 1")
+     (let [iw (get-ice state :hq 0)
+           enig (get-ice state :hq 1)]
+       (click-prompt state :runner "Steal")
+       (click-prompt state :runner "Yes")
+       (click-card state :runner (refresh enig))
+       (click-card state :runner (refresh iw)))
+     (let [iw (get-ice state :hq 1)
+           enig (get-ice state :hq 0)]
+       (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
+       (is (= "Enigma" (:title enig)) "Enigma now outermost ice")))))
+
 (deftest the-foundry-refining-the-process
   ;; The Foundry
   (testing "interaction with Accelerated Beta Test"
@@ -3601,6 +3674,30 @@
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))) "Runner takes no damage at the second encounter")
       (is (empty? (:prompt (get-corp)))))))
+
+(deftest weyland-consortium-built-to-last
+  ;; Weyland Consortium: Built to Last
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Built to Last"
+                        :hand [(qty "NGO Front" 2)]}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo1 (get-content state :remote1 0)
+            ngo2 (get-content state :remote2 0)]
+        (advance state (refresh ngo1) 1)
+        (changes-val-macro
+          2 (:credit (get-corp))
+          "Gain 2 credits from Weyland Built to Last ability"
+          (click-prompt state :corp "Yes"))
+        (advance state (refresh ngo1) 1)
+        (is (empty? (:prompt (get-corp))) "No prompt for second advance counter")
+        (advance state (refresh ngo2) 1)
+        (changes-val-macro
+          2 (:credit (get-corp))
+          "Gain 2 credits from Weyland Built to Last ability"
+          (click-prompt state :corp "Yes"))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard

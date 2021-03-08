@@ -3010,6 +3010,29 @@
     (change state :corp :bad-publicity 3)
     (is (= 1 (hand-size :corp)))))
 
+(deftest jailbreak
+  ;; Jailbreak
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Vanilla" 2)]}
+               :runner {:deck [(qty "Sure Gamble" 2)]
+                        :hand [(qty "Jailbreak" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "R&D")
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")
+    (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")
+    (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
+
 (deftest khusyuk
   ;; Khusyuk
   (testing "Basic functionality"
