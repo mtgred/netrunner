@@ -1351,6 +1351,7 @@
   {:async true
    :effect (effect (draw eid 3 nil))
    :on-trash {:when-inactive true
+              :interactive (req true)
               :async true
               :req (req (#{:meat :net} (:cause target)))
               :msg "draw 3 cards"

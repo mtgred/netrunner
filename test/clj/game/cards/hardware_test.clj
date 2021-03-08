@@ -867,7 +867,45 @@
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner has no open prompt")
       (is (not (prompt-is-card? state :runner (get-hardware state 0)))
-          "Buffer Drive doesn't open a prompt"))))
+          "Buffer Drive doesn't open a prompt")))
+  (testing "The effect triggers on nested interactions"
+    (before-each
+      [state (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                                 :hand ["Buffer Drive" "I've Had Worse"]}})
+       _ (do (take-credits state :corp)
+             (play-from-hand state :runner "Buffer Drive")
+             (damage state :runner :meat 1))]
+      (testing "Buttons are displayed correctly"
+        (do-game state
+          (is (= ["Buffer Drive" "I've Had Worse"] (sort (prompt-titles :runner))))))
+      (testing "Choosing I've Had Worse"
+        (do-game state
+          (changes-val-macro
+            3 (count (:hand (get-runner)))
+            "Runner draws 3 cards"
+            (click-prompt state :runner "I've Had Worse"))
+          (is (find-card "I've Had Worse" (:discard (get-runner))))
+          (is (= "Add a trashed card to the bottom of the stack" (:msg (prompt-map :runner))))
+          (changes-val-macro
+            1 (count (:deck (get-runner)))
+            "Runner draws 2 cards, adds 1 card to deck"
+            (click-prompt state :runner "I've Had Worse"))
+          (is (find-card "I've Had Worse" (:deck (get-runner))))
+          (is (find-card "Buffer Drive" (get-hardware state)))))
+      (testing "Choosing Buffer Drive"
+        (do-game state
+          (changes-val-macro
+            0 (count (:hand (get-runner)))
+            "Runner draws 0 cards"
+            (click-prompt state :runner "Buffer Drive"))
+          (is (find-card "I've Had Worse" (:discard (get-runner))))
+          (is (= "Add a trashed card to the bottom of the stack" (:msg (prompt-map :runner))))
+          (changes-val-macro
+            1 (count (:deck (get-runner)))
+            "Runner draws 2 cards, adds 1 card to deck"
+            (click-prompt state :runner "I've Had Worse"))
+          (is (find-card "I've Had Worse" (:deck (get-runner))))
+          (is (find-card "Buffer Drive" (get-hardware state))))))))
 
 (deftest capstone
   ;; Capstone

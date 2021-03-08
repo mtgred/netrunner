@@ -216,10 +216,7 @@
                 targets))
         triggered-ability
         {:once-per-instance true
-         :req (req (and (some #(and (runner? (:card %))
-                                    (or (in-hand? (:card %))
-                                        (in-deck? (:card %))))
-                              targets)
+         :req (req (and (grip-or-stack-trash? targets)
                         (first-trash? state grip-or-stack-trash?)))
          :prompt "Add a trashed card to the bottom of the stack"
          :choices (req (conj (sort (map :title (map :card targets))) "No action"))
