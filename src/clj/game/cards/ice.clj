@@ -1302,7 +1302,7 @@
       :yes-ability
       {:msg "rez and move Formicary. The Runner is now approaching Formicary"
        :async true
-       :effect (req (wait-for (rez state side card nil)
+       :effect (req (wait-for (rez state side card)
                               (move state side (get-card state card)
                                     [:servers (target-server run) :ices]
                                     {:front true})
@@ -2041,7 +2041,8 @@
                                                        (not (same-card? (:host %) magnet)))}
                                  :effect (effect (host card target))}
                                 card nil)
-                              (disable-hosted state side card))))
+                              (disable-hosted state side card)
+                              (effect-completed state side eid))))
      :derez-effect {:req (req (not-empty (:hosted card)))
                     :effect (req (doseq [c (get-in card [:hosted])]
                                    (card-init state side c {:resolve-effect false})))}

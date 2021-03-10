@@ -641,7 +641,7 @@
     (let [handlers (gather-events state side event targets)]
       (doseq [to-resolve handlers]
         (when-let [card (card-for-ability state to-resolve)]
-          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+          (resolve-ability state side (dissoc-req (:ability to-resolve)) card targets)
           (when (:unregister-once-resolved to-resolve)
             (unregister-event-by-uuid state side (:uuid to-resolve))))))))
 
@@ -649,7 +649,7 @@
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
-      (wait-for (resolve-ability state side (make-eid state eid) (dissoc (:ability to-resolve) :req) card targets)
+      (wait-for (resolve-ability state side (make-eid state eid) (dissoc-req (:ability to-resolve)) card targets)
                 (when (:unregister-once-resolved to-resolve)
                   (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
@@ -700,7 +700,7 @@
                   (let [to-resolve (if (= 1 (count non-silent))
                                      (first non-silent)
                                      (first handlers))
-                        ability-to-resolve (dissoc (:ability to-resolve) :req)
+                        ability-to-resolve (dissoc-req (:ability to-resolve))
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (rest handlers))]
@@ -723,7 +723,7 @@
                    :choices titles
                    :async true
                    :effect (req (let [to-resolve (some #(when (same-card? target (:card %)) %) handlers)
-                                      ability-to-resolve (dissoc (:ability to-resolve) :req)
+                                      ability-to-resolve (dissoc-req (:ability to-resolve))
                                       the-card (card-for-ability state to-resolve)]
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
@@ -902,7 +902,7 @@
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
                                        (make-eid state eid)
-                                       (dissoc ability :req)
+                                       (dissoc-req ability)
                                        ability-card
                                        context)
                       (when (:unregister-once-resolved to-resolve)
@@ -923,7 +923,7 @@
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
                                                (make-eid state eid)
-                                               (dissoc ability :req)
+                                               (dissoc-req ability)
                                                ability-card
                                                context)
                               (when (:unregister-once-resolved to-resolve)

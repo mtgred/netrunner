@@ -2583,8 +2583,7 @@
         (is (= 1 (:base (prompt-map :corp))) "Trace is base 1")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (nil? (:run @state))))))
-  )
+        (is (nil? (:run @state)))))))
 
 (deftest magnet
   ;; Magnet - host program when rezzed

@@ -548,6 +548,7 @@
                              (can-pay? state side (assoc eid :source card :source-type :rez) target nil
                                        [:credit (rez-cost state side target {:cost-bonus -4})])))}
              :msg (msg "rez " (:title target))
+             :async true
              :effect (effect (rez eid target {:cost-bonus -4}))}]})
 
 (defcard "Haas-Bioroid: Engineering the Future"

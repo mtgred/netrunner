@@ -62,7 +62,7 @@
 (defcard "Advanced Assembly Lines"
   {:async true
    :effect (effect (gain-credits eid 3))
-   :msg (msg "gain 3 [Credits]")
+   :msg "gain 3 [Credits]"
    :abilities [{:label "Install a non-agenda card from HQ"
                 :async true
                 :prompt "Select a non-agenda card to install from HQ"
@@ -668,7 +668,8 @@
   {:abilities [{:cost [:click 3]
                 :choices {:card #(not (:rezzed %))}
                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
-                :effect (effect (rez target {:ignore-cost :all-costs}))}]})
+                :async true
+                :effect (effect (rez eid target {:ignore-cost :all-costs}))}]})
 
 (defcard "Elizabeth Mills"
   {:effect (effect (lose-bad-publicity 1))
@@ -720,7 +721,8 @@
                 :label "Rez a card, lowering the cost by 1 [Credits]"
                 :msg (msg "rez " (:title target))
                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
-                                       (update! state side (assoc card :ebc-rezzed (:cid target)))))}
+                                       (update! state side (assoc card :ebc-rezzed (:cid target)))
+                                       (effect-completed state side eid)))}
                {:prompt "Choose an asset to reveal and add to HQ"
                 :msg (msg "reveal " (:title target) " and add it to HQ")
                 :activatemsg "searches R&D for an asset"
@@ -1617,10 +1619,10 @@
                           :msg (msg "rez " (:title target))
                           :effect (req (let [agenda (last (:rfg corp))
                                              ap (:agendapoints agenda 0)]
-                                         (rez state side target {:no-warning true :cost-bonus (* ap -2)})
-                                         (if (< cnt 3)
-                                           (continue-ability state side (rez-ice (inc cnt)) card nil)
-                                           (effect-completed state side eid))))})]
+                                         (wait-for (rez state side target {:no-warning true :cost-bonus (* ap -2)})
+                                                   (if (< cnt 3)
+                                                     (continue-ability state side (rez-ice (inc cnt)) card nil)
+                                                     (effect-completed state side eid)))))})]
     {:abilities [{:label "Forfeit agenda to rez up to 3 ICE with a 2 [Credit] discount per agenda point"
                   :req (req (pos? (count (:scored corp))))
                   :cost [:forfeit]
@@ -2320,8 +2322,7 @@
                 :msg (msg "host " (:title target))
                 :async true
                 :effect (req (wait-for (corp-install state side target card nil) ;; install target onto card
-                                       (rez state side eid (last (:hosted (get-card state card)))
-                                            {:cost-bonus -2})))}]})
+                                       (rez state side eid (last (:hosted (get-card state card))) {:cost-bonus -2})))}]})
 
 (defcard "Zaibatsu Loyalty"
   {:interactions {:prevent [{:type #{:expose}
@@ -2335,7 +2336,8 @@
                                         {:req (req (not (rezzed? card)))
                                          :player :corp
                                          :prompt (msg "The Runner is about to expose " (:title etarget) ". Rez Zaibatsu Loyalty?")
-                                         :yes-ability {:effect (effect (rez card))}}}
+                                         :yes-ability {:async true
+                                                       :effect (effect (rez eid card))}}}
                                        card nil)))}]
    :abilities [{:msg "prevent 1 card from being exposed"
                 :cost [:credit 1]

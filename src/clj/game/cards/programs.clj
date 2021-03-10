@@ -67,7 +67,7 @@
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [cost strength subtype]
   (merge
-    (dissoc (break-sub cost strength subtype) :req)
+    (dissoc-req (break-sub cost strength subtype))
     {:label (str "add " strength " strength and "
                  " break up to " strength
                  " " subtype
@@ -1133,9 +1133,9 @@
                                            ["Rez" "Add to HQ"]
                                            ["Add to HQ"]))
                            :effect (req (if (= target "Rez")
-                                          (rez state side eid ice nil)
+                                          (rez state side eid ice)
                                           (do (system-msg state :corp "chooses to add the passed ICE to HQ")
-                                              (move state :corp ice :hand nil)
+                                              (move state :corp ice :hand)
                                               (effect-completed state side eid))))})
                         card target)))}}}]})
 

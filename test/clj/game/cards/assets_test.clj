@@ -2714,8 +2714,8 @@
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (let [marilyn (get-content state :remote1 0)
             pad (get-content state :remote2 0)]
-        (core/rez state :corp marilyn)
-        (core/rez state :corp pad)
+        (rez state :corp marilyn)
+        (rez state :corp pad)
         (take-credits state :corp)
         (take-credits state :runner)
         (is (empty? (:prompt (get-corp))) "No interactive prompt")

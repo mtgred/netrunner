@@ -25,7 +25,7 @@
     [game.core.toasts :refer [show-error-toast toast]]
     [game.core.trace :refer [init-trace]]
     [game.core.winning :refer [clear-win]]
-    [game.macros :refer [continue-ability effect msg req]]
+    [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [dissoc-in quantify safe-split same-card? same-side? server-card string->num]]
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
@@ -112,15 +112,21 @@
                           :choices {:card (fn [t] (same-side? (:side t) side))}}
                          (map->Card {:title "/counter command"}) nil)))))
 
+(defn rez-all
+  [state side eid cards]
+  (let [c (first cards)]
+    (wait-for (rez state side c {:ignore-cost :all-costs :force true})
+              (rez-all state side eid (next cards)))))
+
 (defn command-rezall
   [state side]
-  (resolve-ability state side
-    {:optional {:prompt "Rez all cards and turn cards in archives faceup?"
-                :yes-ability {:effect (req
-                                        (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                                        (doseq [c (all-installed state side)]
-                                          (when-not (rezzed? c)
-                                            (rez state side c {:ignore-cost :all-costs :force true}))))}}}
+  (resolve-ability
+    state side
+    {:optional
+     {:prompt "Rez all cards and turn cards in archives faceup?"
+      :yes-ability {:async true
+                    :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                                 (rez-all state side eid (remove rezzed? (all-installed state side))))}}}
     (map->Card {:title "/rez-all command"}) nil))
 
 (defn command-roll [state side value]
@@ -340,15 +346,16 @@
         "/replace-id" #(command-replace-id %1 %2 args)
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
-                                          {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
-                                            :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                          {:choices {:card (fn [t] (same-side? (:side t) %2))}
+                                           :async true
+                                           :effect (effect (rez eid target {:ignore-cost :all-costs :force true}))}
                                           (map->Card {:title "/rez command"}) nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2))
         "/rfg"        #(resolve-ability %1 %2
                                         {:prompt "Select a card to remove from the game"
-                                          :effect (req (let [c (deactivate %1 %2 target)]
+                                         :effect (req (let [c (deactivate %1 %2 target)]
                                                         (move %1 %2 c :rfg)))
-                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                         :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
         "/summon"     #(command-summon %1 %2 args)

@@ -1611,17 +1611,17 @@
                                          card nil)))}]})
 
 (defcard "Muertos Gang Member"
-  {:effect
-   (effect
-     (continue-ability
-       {:player :corp
-        :waiting-prompt "Corp to select a card to derez"
-        :prompt "Select a card to derez"
-        :choices {:card #(and (corp? %)
-                              (not (agenda? %))
-                              (rezzed? %))}
-        :effect (effect (derez target))}
-       card nil))
+  {:async true
+   :effect (effect
+             (continue-ability
+               {:player :corp
+                :waiting-prompt "Corp to select a card to derez"
+                :prompt "Select a card to derez"
+                :choices {:card #(and (corp? %)
+                                      (not (agenda? %))
+                                      (rezzed? %))}
+                :effect (effect (derez target))}
+               card nil))
    :uninstall
    (effect
      (continue-ability
@@ -1629,9 +1629,10 @@
         :waiting-prompt "Corp to select a card to rez"
         :prompt "Select a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
-        :effect (effect (rez target {:ignore-cost :rez-cost :no-msg true})
-                        (system-say (str (:title card) " allows the Corp to rez "
-                                         (:title target) " at no cost")))}
+        :async true
+        :effect (effect (system-say (str (:title card) " allows the Corp to rez "
+                                         (:title target) " at no cost"))
+                        (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
        card nil))
    :abilities [{:cost [:trash]
                 :msg "draw 1 card"
