@@ -1,18 +1,20 @@
 (ns game.core.rezzing
   (:require
-    [game.core.card :refer [asset? get-card ice? upgrade?]]
+    [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [ability-as-handler card-as-handler pay register-events resolve-ability trigger-event trigger-event-simult unregister-events]]
-    [game.core.flags :refer [can-rez?]]
+    [game.core.flags :refer [can-host? can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
+    [game.core.moving :refer [trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.toasts :refer [toast]]
+    [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [to-keyword]]))
@@ -30,6 +32,16 @@
                   [:credit cost])
                 (when (not (:disabled card))
                   additional-costs))))))
+
+(defn trash-hosted-cards
+  [state side eid card]
+  (if-let [hosted-card (get-card state (first (remove condition-counter? (:hosted card))))]
+    (wait-for (trash state side hosted-card)
+              (system-msg state side (str "trashes " (card-str state hosted-card)
+                                          " because " (:title card)
+                                          " cannot host cards"))
+              (trash-hosted-cards state side eid (get-card state card)))
+    (complete-with-result state side eid {:card (get-card state card)})))
 
 (defn- complete-rez
   [state side eid
@@ -70,7 +82,9 @@
                   (wait-for (trigger-event-simult state :corp (make-eid state eid) :rez {:card-abilities card-ability} (get-card state card))
                             (when press-continue
                               (continue state side nil))
-                            (complete-with-result state side eid {:card (get-card state card)})))
+                            (if (can-host? card)
+                              (complete-with-result state side eid {:card (get-card state card)})
+                              (trash-hosted-cards state side eid (get-card state card)))))
                 (effect-completed state side eid)))))
 
 (defn rez

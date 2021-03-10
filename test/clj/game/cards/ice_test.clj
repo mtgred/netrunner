@@ -3140,27 +3140,38 @@
 
 (deftest news-hound
   ;; News Hound
-  (do-game
-    (new-game {:corp {:deck [(qty "Project Atlas" 5)]
-                      :hand [(qty "Scarcity of Resources" 2) "News Hound"]}
-               :runner {:hand ["Employee Strike"]}})
-    (play-from-hand state :corp "News Hound" "HQ")
-    (let [news (get-ice state :hq 0)]
-      (rez state :corp news)
-      (is (= 1 (count (:subroutines (refresh news)))) "News Hound starts with 1 sub")
+  (testing "Rezzes with the ETR sub"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Atlas" 5)]
+                        :hand [(qty "Scarcity of Resources" 2) "News Hound"]}
+                 :runner {:hand ["Employee Strike"]}})
       (play-from-hand state :corp "Scarcity of Resources")
-      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on corp current")
-      (play-from-hand state :corp "Scarcity of Resources")
-      (is (= 2 (count (:subroutines (refresh news)))) "News Hound doesn't gain 2 subs on second current played")
-      (take-credits state :corp)
-      (run-empty-server state :rd)
-      (click-prompt state :runner "Steal")
-      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on steal")
-      (play-from-hand state :runner "Employee Strike")
-      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on runner current")
-      (take-credits state :runner)
-      (play-and-score state "Project Atlas")
-      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on score"))))
+      (play-from-hand state :corp "News Hound" "HQ")
+      (let [news (get-ice state :hq 0)]
+        (rez state :corp news)
+        (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on corp current"))))
+  (testing "Loses and gains ETR sub properly"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Atlas" 5)]
+                        :hand [(qty "Scarcity of Resources" 2) "News Hound"]}
+                 :runner {:hand ["Employee Strike"]}})
+      (play-from-hand state :corp "News Hound" "HQ")
+      (let [news (get-ice state :hq 0)]
+        (rez state :corp news)
+        (is (= 1 (count (:subroutines (refresh news)))) "News Hound starts with 1 sub")
+        (play-from-hand state :corp "Scarcity of Resources")
+        (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on corp current")
+        (play-from-hand state :corp "Scarcity of Resources")
+        (is (= 2 (count (:subroutines (refresh news)))) "News Hound doesn't gain 2 subs on second current played")
+        (take-credits state :corp)
+        (run-empty-server state :rd)
+        (click-prompt state :runner "Steal")
+        (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on steal")
+        (play-from-hand state :runner "Employee Strike")
+        (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on runner current")
+        (take-credits state :runner)
+        (play-and-score state "Project Atlas")
+        (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on score")))))
 
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
@@ -4605,7 +4616,22 @@
         (click-card state :corp ti)
         (is (rezzed? (refresh ti)))
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
-            "Tithonium hosting OAI as a condition")))))
+            "Tithonium hosting OAI as a condition"))))
+  (testing "Hosted Pawn is trashed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Tithonium"]
+                        :credits 100}
+                 :runner {:hand ["Pawn"]}})
+      (play-from-hand state :corp "Tithonium" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pawn")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-card state :runner "Tithonium")
+      (let [ti (get-ice state :rd 0)]
+        (rez state :corp ti)
+        (is (last-log-contains? state "Corp trashes Pawn hosted on Tithonium"))
+        (is (empty? (:hosted (refresh ti))))))))
 
 (deftest tl-dr
   ;; TL;DR
