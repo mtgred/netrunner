@@ -3050,10 +3050,10 @@
                                 :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %))))}]))))}]))}]})
 
 (defcard "TMI"
-  {:trace {:base 2
-           :msg "keep TMI rezzed"
-           :label "Keep TMI rezzed"
-           :unsuccessful {:effect (effect (derez card))}}
+  {:on-rez {:trace {:base 2
+                    :msg "keep TMI rezzed"
+                    :label "Keep TMI rezzed"
+                    :unsuccessful {:effect (effect (derez card))}}}
    :subroutines [end-the-run]})
 
 (defcard "Tollbooth"

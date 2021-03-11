@@ -1550,7 +1550,7 @@
                                 :type :recurring}}})
 
 (defcard "Private Contracts"
-  {:effect (effect (add-counter card :credit 14))
+  {:on-rez {:effect (effect (add-counter card :credit 14))}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
                 :label "gain credits"
@@ -2169,7 +2169,7 @@
              :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Urban Renewal"
-  {:effect (effect (add-counter card :power 3))
+  {:on-rez {:effect (effect (add-counter card :power 3))}
    :derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
              :async true

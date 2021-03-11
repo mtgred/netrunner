@@ -56,9 +56,8 @@
                       card (if-not disabled
                              (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true})
                              (update! state side (assoc card :rezzed :this-turn)))
-                      card-ability (if-let [ability (:on-rez cdef)]
-                                     (ability-as-handler card ability)
-                                     (card-as-handler card))]
+                      card-ability (when-let [ability (:on-rez cdef)]
+                                     (ability-as-handler card ability))]
                   (doseq [h (:hosted card)]
                     (update! state side (-> h
                                             (update-in [:zone] #(map to-keyword %))

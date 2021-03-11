@@ -93,7 +93,7 @@
       (try
         (let [parsed-number (Integer/parseInt choice)]
           (when-not (core/process-action "choice" state side {:choice parsed-number})
-            (is' false (str "Parsed number " parsed-number " is incorrect somehow"))))
+            (is' (not true) (str "Parsed number " parsed-number " is incorrect somehow"))))
         (catch Exception e
           (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
 
