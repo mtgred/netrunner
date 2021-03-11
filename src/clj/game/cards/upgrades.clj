@@ -790,7 +790,7 @@
 
 (defcard "Khondi Plaza"
   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-   :effect (effect (set-prop card :rec-counter (count (get-remotes state))))
+   :on-rez {:effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))
@@ -977,7 +977,7 @@
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :effect (req (prevent-run-on-server state card (second (get-zone card))))
+   :on-rez {:effect (req (prevent-run-on-server state card (second (get-zone card))))}
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
@@ -1065,7 +1065,7 @@
                 :effect (effect (draw))}]})
 
 (defcard "Port Anson Grid"
-  {:msg "prevent the Runner from jacking out unless they trash an installed program"
+  {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
    :constant-effects [{:type :jack-out-additional-cost
                        :duration :end-of-run
                        :req (req this-server)
@@ -1119,14 +1119,15 @@
                             (is-central? (:server context))))
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
-   :waiting-prompt "Corp to place credits on Reduced Service"
-   :prompt "How many credits to spend?"
-   :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
-   :async true
-   :effect (req (let [spent (str->int target)]
-                  (add-counter state :corp card :power spent)
-                  (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
-                  (lose-credits state :corp eid spent)))})
+   :on-rez {:waiting-prompt "Corp to place credits on Reduced Service"
+            :prompt "How many credits to spend?"
+            :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
+            :async true
+            :effect (req (let [spent (str->int target)]
+                           (add-counter state :corp card :power spent)
+                           (system-msg state :corp (str "places " (quantify spent "power counter")
+                                                        " on Reduced Service"))
+                           (lose-credits state :corp eid spent)))}})
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
@@ -1156,9 +1157,9 @@
                        :value -1}]})
 
 (defcard "Satellite Grid"
-  {:effect (req (doseq [c (:ices (card->server state card))]
-                  (set-prop state side c :extra-advance-counter 1))
-                (update-all-ice state side))
+  {:on-rez {:effect (req (doseq [c (:ices (card->server state card))]
+                           (set-prop state side c :extra-advance-counter 1))
+                         (update-all-ice state side))}
    :events [{:event :corp-install
              :req (req (and (ice? target)
                             (protecting-same-server? card target)))
