@@ -42,6 +42,8 @@
           [:h4 "Content Creators"]
           [:ul.list.compact
            [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]
+           [:li "bbbbbbbbba: Language translations."]
+           [:li "PopTartNZ: High-resolution card images."]
            (make-artists)
            ]
 

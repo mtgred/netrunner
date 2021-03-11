@@ -1500,8 +1500,9 @@
                                :req (req (:access @state))}]}
      :abilities [{:cost [:x-credits :trash]
                   :label "prevent damage"
-                  :req (req (= (:cid (second (:pre-damage (eventmap @state))))
-                               (:cid (first (:pre-access-card (eventmap @state))))))
+                  :req (req (and (:access @state)
+                                 (= (:cid (second (:pre-damage (eventmap @state))))
+                                    (:cid (first (:pre-access-card (eventmap @state)))))))
                   :msg (msg "prevent " (cost-value eid :x-credits) " damage")
                   :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
 
