@@ -3542,7 +3542,6 @@
           najja (get-ice state :remote1 0)]
       (rez state :corp hg)
       (take-credits state :corp)
-      (println "Runner credits 1: " (:credit (get-runner)))
       (run-on state "Remote 1")
       (rez state :corp najja)
       (run-continue state)
