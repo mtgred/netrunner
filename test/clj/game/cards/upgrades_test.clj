@@ -3340,7 +3340,7 @@
 (deftest oaktown-grid
   (do-game
     (new-game {:corp {:hand ["Oaktown Grid" "PAD Campaign"]}
-               :runner {:credits 15}})
+               :runner {:credits 7}})
     (play-from-hand state :corp "Oaktown Grid" "New remote")
     (play-from-hand state :corp "PAD Campaign" "Remote 1")
     (let [og (get-content state :remote1 0)
@@ -3352,7 +3352,8 @@
     (run-continue state)
     (click-card state :runner pad)
     (click-prompt state :runner "Pay 7 [Credits] to trash")
-    (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid"))))
+    (is (= "PAD Campaign" (:title (first (:discard (get-corp))))) "PAD Campaign trashed for 7c (3 more than normal cost thanks to Oaktown Grid")
+    (is (= 0 (:credit (get-runner)))))))
 
 (deftest rutherford-grid
   (do-game
