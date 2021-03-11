@@ -2041,8 +2041,8 @@
                   (host state side (get-card state target) (assoc card :seen true :condition true)))
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
-               :req (req (same-card? target (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}]}))
+               :req (req (same-card? (:card context) (:host card)))
+               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
 
 (defcard "Subcontract"
   (letfn [(sc [i sccard]
@@ -2382,8 +2382,8 @@
                   (host state side (get-card state target) (assoc card :seen true :condition true)))
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
-               :req (req (same-card? target (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}]}))
+               :req (req (same-card? (:card context) (:host card)))
+               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
 
 (defcard "Witness Tampering"
   {:msg "remove 2 bad publicity"

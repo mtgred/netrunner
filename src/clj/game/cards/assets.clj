@@ -195,10 +195,10 @@
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)
               {:event :rez
-               :req (req (and (ice? target)
+               :req (req (and (ice? (:card context))
                               (pos? (get-counters card :advancement))))
                :async true
-               :effect (req (let [ice (get-card state target)
+               :effect (req (let [ice (get-card state (:card context))
                                   icename (:title ice)]
                               (continue-ability
                                 state side
@@ -920,12 +920,16 @@
                 :effect (effect (gain-bad-publicity :corp 1))}}))
 
 (defcard "Indian Union Stock Exchange"
-  (let [iuse {:req (req (not= (:faction target) (:faction (:identity corp))))
-              :msg "gain 1 [Credits]"
-              :async true
-              :effect (effect (gain-credits eid 1))}]
-    {:events [(assoc iuse :event :play-operation)
-              (assoc iuse :event :rez)]}))
+  {:events [{:event :play-operation
+             :req (req (not= (:faction target) (:faction (:identity corp))))
+             :msg "gain 1 [Credits]"
+             :async true
+             :effect (effect (gain-credits eid 1))}
+            {:event :rez
+             :req (req (not= (:faction (:card context)) (:faction (:identity corp))))
+             :msg "gain 1 [Credits]"
+             :async true
+             :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Isabel McGuire"
   {:abilities [{:label "Add an installed card to HQ"
@@ -1111,7 +1115,7 @@
 
 (defcard "Lt. Todachine"
   {:events [{:event :rez
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :async true
              :msg "to give the Runner 1 tag"
              :effect (req (gain-tags state :runner eid 1))}]})
@@ -2276,20 +2280,22 @@
        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
                     :effect (req (lose state :runner :click 1))}
        :events [{:event :rez
-                 :req (req (and (ice? target)
-                                (has-subtype? target "Bioroid")))
-                 :effect (req (add-one (:cid card) state (get-card state target)))}]})))
+                 :req (req (and (ice? (:card context))
+                                (has-subtype? (:card context) "Bioroid")))
+                 :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
 
 (defcard "Watchdog"
-  (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
+  (letfn [(not-triggered? [state card]
+            (no-event? state :runner :rez #(ice? (:card (first %)))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
                                         (not-triggered? state card)))
                          :value (req (- (count-tags state)))}]
      :events [{:event :rez
-               :req (req (and (ice? target)
+               :req (req (and (ice? (:card context))
                               (not-triggered? state card)))
-               :msg (msg "reduce the rez cost of " (:title target) " by " (count-tags state) " [Credits]")}]}))
+               :msg (msg "reduce the rez cost of " (:title (:card context))
+                      " by " (count-tags state) " [Credits]")}]}))
 
 (defcard "Whampoa Reclamation"
   {:abilities [{:label "Add 1 card from Archives to the bottom of R&D"

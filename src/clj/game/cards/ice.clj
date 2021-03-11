@@ -334,7 +334,9 @@
     {:advanceable :while-rezzed
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+              {:event :rez
+               :req (req (same-card? card (:card context)))
+               :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
 
 ;; For 7 Wonders ICE
 (defn wonder-sub
@@ -1523,7 +1525,7 @@
                  :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
     {:events [(assoc ability
                      :event :rez
-                     :req (req (same-card? card target)))
+                     :req (req (same-card? card (:card context))))
               (assoc ability :event :agenda-scored)
               (assoc ability
                      :event :as-agenda
@@ -1749,7 +1751,7 @@
         ability {:effect (effect (reset-variable-subs card (count-bad-pub state) sub))}]
     {:events [(assoc ability
                      :event :rez
-                     :req (req (same-card? card target)))
+                     :req (req (same-card? card (:card context))))
               (assoc ability :event :corp-gain-bad-publicity)
               (assoc ability :event :corp-lose-bad-publicity)]}))
 
@@ -2077,7 +2079,9 @@
      :on-rez {:effect (effect (add-prop card :advance-counter 1))}
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+              {:event :rez
+               :req (req (same-card? card (:card context)))
+               :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]}))
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [:credit 1]
@@ -2262,7 +2266,9 @@
                                                         (not (same-card? card %))))
                                           (mapcat :subtypes)))}]
      :subroutines [end-the-run]
-     :events [(assoc mg :event :rez)
+     :events [{:event :rez
+               :req (req (ice? (:card context)))
+               :effect (effect (update-all-subtypes))}
               (assoc mg :event :card-moved)
               (assoc mg :event :derez)
               (assoc mg :event :ice-subtype-changed)]}))
@@ -2357,8 +2363,14 @@
         ability {:req (req (and (ice? target)
                                 (has-subtype? target "NEXT")))
                  :effect (effect (reset-variable-subs card (next-ice-count corp) sub))}]
-    {:events [(assoc ability :event :rez)
-              (assoc ability :event :derez)]}))
+    {:events [{:event :rez
+               :req (req (and (ice? (:card context))
+                              (has-subtype? (:card context) "NEXT")))
+               :effect (effect (reset-variable-subs card (next-ice-count corp) sub))}
+              {:event :derez
+               :req (req (and (ice? target)
+                              (has-subtype? target "NEXT")))
+               :effect (effect (reset-variable-subs card (next-ice-count corp) sub))}]}))
 
 (defcard "NEXT Sapphire"
   {:subroutines [{:label "Draw up to X cards"
@@ -2396,11 +2408,14 @@
                   :msg (msg "shuffle " (count targets) " cards from HQ into R&D")}]})
 
 (defcard "NEXT Silver"
-  (let [ability {:req (req (and (ice? target)
-                                (has-subtype? target "NEXT")))
-                 :effect (effect (reset-variable-subs card (next-ice-count corp) end-the-run))}]
-    {:events [(assoc ability :event :rez)
-              (assoc ability :event :derez)]}))
+  {:events [{:event :rez
+             :req (req (and (ice? (:card context))
+                            (has-subtype? (:card context) "NEXT")))
+             :effect (effect (reset-variable-subs card (next-ice-count corp) end-the-run))}
+            {:event :derez
+             :req (req (and (ice? target)
+                            (has-subtype? target "NEXT")))
+             :effect (effect (reset-variable-subs card (next-ice-count corp) end-the-run))}]})
 
 (defcard "Nightdancer"
   (let [sub {:label (str "The Runner loses [Click], if able. "
@@ -2930,7 +2945,9 @@
      :on-rez take-bad-pub
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+              {:event :rez
+               :req (req (same-card? card (:card context)))
+               :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
 
 (defcard "Swordsman"
   (let [breakable-fn (req (when-not (has-subtype? target "AI") :unrestricted))]
@@ -3076,7 +3093,11 @@
                             (installed? (:card target))
                             (rezzed? (:card target))))]
     {:on-rez {:effect ef}
-     :events [(assoc ability :event :rez)
+     :events [{:event :rez
+               :label "Reset number of subs"
+               :silent (req true)
+               :req (req (asset? (:card context)))
+               :effect ef}
               (assoc ability :event :derez)
               (assoc ability :event :game-trash :req trash-req)
               (assoc ability :event :corp-trash :req trash-req)

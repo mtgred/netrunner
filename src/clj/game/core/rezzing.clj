@@ -1,15 +1,16 @@
 (ns game.core.rezzing
   (:require
+    [clojure.string :as string]
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler card-as-handler pay register-events resolve-ability trigger-event trigger-event-simult unregister-events]]
+    [game.core.engine :refer [ability-as-handler card-as-handler make-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event trigger-event-simult unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
-    [game.core.moving :refer [trash]]
+    [game.core.moving :refer [trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -35,12 +36,12 @@
 
 (defn trash-hosted-cards
   [state side eid card]
-  (if-let [hosted-card (get-card state (first (remove condition-counter? (:hosted card))))]
-    (wait-for (trash state side hosted-card)
-              (system-msg state side (str "trashes " (card-str state hosted-card)
+  (if-let [hosted-cards (seq (remove condition-counter? (:hosted card)))]
+    (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
+              (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
                                           " because " (:title card)
                                           " cannot host cards"))
-              (trash-hosted-cards state side eid (get-card state card)))
+              (complete-with-result state side eid {:card (get-card state card)}))
     (complete-with-result state side eid {:card (get-card state card)})))
 
 (defn- complete-rez
@@ -50,41 +51,46 @@
   (let [cdef (card-def card)
         costs (get-rez-cost state side card args)]
     (wait-for (pay state side (make-eid state eid) card costs)
-              (if-let [payment-str (:msg async-result)]
-                (let [_ (when (:derezzed-events cdef)
-                          (unregister-events state side card))
-                      card (if-not disabled
-                             (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true})
-                             (update! state side (assoc card :rezzed :this-turn)))
-                      card-ability (when-let [ability (:on-rez cdef)]
-                                     (ability-as-handler card ability))]
-                  (doseq [h (:hosted card)]
-                    (update! state side (-> h
-                                            (update-in [:zone] #(map to-keyword %))
-                                            (update-in [:host :zone] #(map to-keyword %)))))
-                  (when-not no-msg
-                    (system-msg state side
-                                (str (build-spend-msg payment-str "rez" "rezzes")
-                                     (:title card)
-                                     (cond
-                                       alternative-cost " by paying its alternative cost"
-                                       ignore-cost " at no cost"))))
-                  (when (and (not no-warning) (:corp-phase-12 @state))
-                    (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
-                                       Please rez prior to clicking Start Turn in the future." "warning"
-                           {:time-out 0 :close-button true}))
-                  (if (ice? card)
-                    (do (update-ice-strength state side card)
-                        (play-sfx state side "rez-ice"))
-                    (play-sfx state side "rez-other"))
-                  (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                  (wait-for (trigger-event-simult state :corp (make-eid state eid) :rez {:card-abilities card-ability} (get-card state card))
-                            (when press-continue
-                              (continue state side nil))
-                            (if (can-host? card)
-                              (complete-with-result state side eid {:card (get-card state card)})
-                              (trash-hosted-cards state side eid (get-card state card)))))
-                (effect-completed state side eid)))))
+              (let [{:keys [msg cost-paid]} async-result]
+                (if-not msg
+                  (effect-completed state side eid)
+                  (let [_ (when (:derezzed-events cdef)
+                            (unregister-events state side card))
+                        card (if-not disabled
+                               (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true})
+                               (update! state side (assoc card :rezzed :this-turn)))
+                        card-ability (when-let [ability (:on-rez cdef)]
+                                       (ability-as-handler card ability))]
+                    (doseq [h (:hosted card)]
+                      (update! state side (-> h
+                                              (update-in [:zone] #(map to-keyword %))
+                                              (update-in [:host :zone] #(map to-keyword %)))))
+                    (when-not no-msg
+                      (system-msg state side
+                                  (str (build-spend-msg msg "rez" "rezzes")
+                                       (:title card)
+                                       (cond
+                                         alternative-cost " by paying its alternative cost"
+                                         ignore-cost " at no cost"))))
+                    (when (and (not no-warning) (:corp-phase-12 @state))
+                      (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+                                         Please rez prior to clicking Start Turn in the future." "warning"
+                             {:time-out 0 :close-button true}))
+                    (if (ice? card)
+                      (do (update-ice-strength state side card)
+                          (play-sfx state side "rez-ice"))
+                      (play-sfx state side "rez-other"))
+                    (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
+                    (when-let [card-ability (:on-rez cdef)]
+                      (make-pending-event state :rez card card-ability))
+                    (queue-event state :rez {:card (get-card state card)
+                                             :cost (:cost-paid async-result)})
+                    (wait-for (checkpoint state :corp (make-eid state eid))
+                              (when press-continue
+                                (continue state side nil))
+                              (if (can-host? card)
+                                (complete-with-result state side eid {:card (get-card state card)})
+                                (trash-hosted-cards state side eid (get-card state card))))))))))
 
 (defn rez
   "Rez a corp card."

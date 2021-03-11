@@ -1238,15 +1238,16 @@
   {:events [{:event :rez
              :interactive (req true)
              :optional
-             {:req (req (and (same-server? card target)
-                             (not (and (upgrade? target)
-                                       (is-central? (second (get-zone target)))))
-                             (not (same-card? target card))
-                             (some #(and (not (rezzed? %))
-                                         (not (agenda? %))
-                                         (can-pay? state side (assoc eid :source card :source-type :rez) % nil
-                                                   [:credit (install-cost state side % {:cost-bonus -2})]))
-                                   (all-installed state :corp))))
+             {:req (req (let [target (:card context)]
+                          (and (same-server? card target)
+                               (not (and (upgrade? target)
+                                         (is-central? (second (get-zone target)))))
+                               (not (same-card? target card))
+                               (some #(and (not (rezzed? %))
+                                           (not (agenda? %))
+                                           (can-pay? state side (assoc eid :source card :source-type :rez) % nil
+                                                     [:credit (install-cost state side % {:cost-bonus -2})]))
+                                     (all-installed state :corp)))))
               :prompt "Rez another card with Surat City Grid?"
               :yes-ability {:prompt "Select a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
@@ -1343,8 +1344,8 @@
   {:events [{:event :rez
              :interactive (req true)
              :trace {:base 2
-                     :req (req (and (protecting-same-server? card target)
-                                    (ice? target)))
+                     :req (req (and (protecting-same-server? card (:card context))
+                                    (ice? (:card context))))
                      :successful {:msg "gain 1 [Credits]"
                                   :async true
                                   :effect (effect (gain-credits eid 1))}}}]})

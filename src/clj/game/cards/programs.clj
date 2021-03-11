@@ -653,7 +653,7 @@
 
 (defcard "Collective Consciousness"
   {:events [{:event :rez
-             :req (req (ice? target))
+             :req (req (ice? (:card target)))
              :msg "draw 1 card"
              :async true
              :effect (effect (draw :runner eid 1 nil))}]})

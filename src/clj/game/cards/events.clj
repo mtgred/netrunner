@@ -2606,10 +2606,10 @@
                (let [ice target]
                  [{:event :rez
                    :duration :end-of-turn
-                   :req (req (same-card? target ice))
-                   :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")
+                   :req (req (same-card? (:card context) ice))
+                   :msg (msg "gain " (rez-cost state side (get-card state (:card context))) " [Credits]")
                    :async true
-                   :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state target))))}])))})
+                   :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state (:card context)))))}])))})
 
 (defcard "Spear Phishing"
   {:async true

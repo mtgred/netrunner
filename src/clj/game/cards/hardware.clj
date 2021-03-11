@@ -553,7 +553,7 @@
                             [{:event :rez
                               :duration :end-of-run
                               :unregister-once-resolved true
-                              :req (req (ice? target))
+                              :req (req (ice? (:card context)))
                               :effect (effect (register-run-flag!
                                                 card :can-rez
                                                 (fn [state side card]
