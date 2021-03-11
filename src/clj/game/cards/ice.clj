@@ -2353,10 +2353,19 @@
                   :effect (effect (trash eid target {:cause :subroutine}))}]})
 
 (defcard "NEXT Gold"
-  {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
-                  :msg (msg "do " (next-ice-count corp) " net damage")
-                  :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
-                 trash-program-sub]})
+  (letfn [(trash-programs [cnt state side card eid]
+            (if (> cnt 0)
+              (wait-for (resolve-ability state side trash-program-sub card nil)
+                        (trash-programs (dec cnt) state side card eid))
+              (effect-completed state side eid)))]
+    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
+                    :msg (msg "do " (next-ice-count corp) " net damage")
+                    :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
+                   {:label "Trash 1 program for each rezzed NEXT ice"
+                    :async true
+                    :effect (req (trash-programs (min (count (filter program? (all-active-installed state :runner)))
+                                                      (next-ice-count corp))
+                                                 state side card eid))}]}))
 
 (defcard "NEXT Opal"
   (let [sub {:label "Install a card from HQ, paying all costs"
