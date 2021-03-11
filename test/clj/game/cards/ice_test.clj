@@ -3212,6 +3212,35 @@
       (rez state :corp (get-ice state :hq 0))
       (is (zero? (:credit (get-corp))) "Corp spends 9 credits to rez"))))
 
+(deftest next-gold
+  ;; NEXT Gold
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["NEXT Gold" "NEXT Bronze"]
+                      :credits 100}
+               :runner {:hand [(qty "Paperclip" 4) "Clot"]
+                        :credits 100}})
+    (play-from-hand state :corp "NEXT Gold" "HQ")
+    (play-from-hand state :corp "NEXT Bronze" "New remote")
+    (let [gold (get-ice state :hq 0)
+          bro (get-ice state :remote1 0)]
+      (rez state :corp gold)
+      (rez state :corp bro)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paperclip")
+      (play-from-hand state :runner "Clot")
+      (is (= 3 (count (:hand (get-runner)))) "Runner starts with 3 cards in hand")
+      (is (zero? (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
+      (run-on state :hq)
+      (run-continue state)
+      (card-subroutine state :corp gold 0)
+      (is (= 1 (count (:hand (get-runner)))) "Runner ends with 1 card in hand")
+      (is (= 2 (count (:discard (get-runner)))) "Runner ends with 2 cards in discard")
+      (card-subroutine state :corp gold 1)
+      (click-card state :corp (get-program state 0))
+      (click-card state :corp (get-program state 0))
+      (is (= 4 (count (:discard (get-runner)))) "Runner ends with 4 cards in discard"))))
+
 (deftest next-opal
   ;; NEXT Opal
   (do-game
