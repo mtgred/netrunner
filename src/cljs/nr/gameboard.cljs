@@ -47,7 +47,7 @@
         art (if show-art
               (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
               "stock")
-        card (if (:images card) card (get @all-cards title))
+        card (if (or (:face card) (:images card)) card (get @all-cards title))
         images (image-or-face card)]
     (get-image-path images (keyword lang) (keyword res) (keyword art))))
 
