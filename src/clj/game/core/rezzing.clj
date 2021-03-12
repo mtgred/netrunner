@@ -36,13 +36,14 @@
 
 (defn trash-hosted-cards
   [state side eid card]
-  (if-let [hosted-cards (seq (remove condition-counter? (:hosted card)))]
-    (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
-              (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
-                                          " because " (:title card)
-                                          " cannot host cards"))
-              (complete-with-result state side eid {:card (get-card state card)}))
-    (complete-with-result state side eid {:card (get-card state card)})))
+  (let [hosted-cards (seq (remove condition-counter? (:hosted card)))]
+    (if (can-host? card)
+      (effect-completed state side eid)
+      (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
+                (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
+                                            " because " (:title card)
+                                            " cannot host cards"))
+                (effect-completed state side eid)))))
 
 (defn- complete-rez
   [state side eid
@@ -85,12 +86,13 @@
                       (make-pending-event state :rez card card-ability))
                     (queue-event state :rez {:card (get-card state card)
                                              :cost (:cost-paid async-result)})
-                    (wait-for (checkpoint state :corp (make-eid state eid))
-                              (when press-continue
-                                (continue state side nil))
-                              (if (can-host? card)
-                                (complete-with-result state side eid {:card (get-card state card)})
-                                (trash-hosted-cards state side eid (get-card state card))))))))))
+                    (wait-for
+                      (trash-hosted-cards state side (make-eid state eid) (get-card state card))
+                      (wait-for
+                        (checkpoint state nil (make-eid state eid))
+                        (when press-continue
+                          (continue state side nil))
+                        (complete-with-result state side eid {:card (get-card state card)})))))))))
 
 (defn rez
   "Rez a corp card."
