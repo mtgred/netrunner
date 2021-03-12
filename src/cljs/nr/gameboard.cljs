@@ -17,7 +17,7 @@
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button get-image-path
-                              non-game-toast card-by-id image-or-face]]
+                              non-game-toast image-or-face]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -726,19 +726,22 @@
   (and (get-in @game-state [:options :spectatorhands])
        (not (not-spectator?))))
 
-(defn- get-card-id [e]
-  (not-empty (.. e -target -id)))
+(defn- get-card-data-title [e]
+  (let [target (.. e -target)
+        title (.getAttribute target "data-card-title")]
+    (not-empty title)))
 
-(defn card-preview-mouse-over [e channel]
+(defn card-preview-mouse-over
+  [e channel]
   (.preventDefault e)
-  (when-let [id (get-card-id e)]
-    (when-let [card (card-by-id id)]
-      (put! channel (assoc card :implementation :full))))
+  (when-let [title (get-card-data-title e)]
+    (when-let [card (get (:all-cards-and-flips @app-state) title)]
+      (put! channel card)))
   nil)
 
 (defn card-preview-mouse-out [e channel]
   (.preventDefault e)
-  (when-let [title (get-card-id e)]
+  (when (get-card-data-title e)
     (put! channel false))
   nil)
 

@@ -658,10 +658,11 @@
                               (effect-completed state side eid)))}
               {:event :runner-turn-begins
                :req (req (:flipped card))
-               :msg "draw 1 card and lose 1 [Credits]"
                :async true
                :effect (req (wait-for (draw state :runner 1 nil)
-                                      (lose-credits state :runner eid 1)))}]
+                                      (wait-for (lose-credits state :runner 1)
+                                                (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
+                                                (effect-completed state side eid))))}]
      :abilities [{:label "flip ID"
                   :msg "flip their ID manually"
                   :effect flip-effect}]}))
