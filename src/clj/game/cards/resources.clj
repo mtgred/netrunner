@@ -553,7 +553,7 @@
 (defcard "Compromised Employee"
   {:recurring 1
    :events [{:event :rez
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]
@@ -568,31 +568,31 @@
 
 (defcard "Councilman"
   {:events [{:event :rez
-             :req (req (and (or (asset? target)
-                                (upgrade? target))
+             :req (req (and (or (asset? (:card context))
+                                (upgrade? (:card context)))
                             (can-pay? state :runner (assoc eid :source card :source-type :ability)
                                       card nil
-                                      [:credit (rez-cost state :corp target)])))
+                                      [:credit (rez-cost state :corp (:card context))])))
              :effect
              (effect
                (continue-ability
                  {:optional
                   {:player :runner
                    :waiting-prompt "Runner to use Councilman"
-                   :prompt (msg "Trash Councilman and pay " (rez-cost state :corp target)
-                                " [Credits] to derez " (:title target) "?")
+                   :prompt (msg "Trash Councilman and pay " (rez-cost state :corp (:card context))
+                                " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
                    {:async true
-                    :cost [:credit (rez-cost state :corp target)]
-                    :msg (msg "derez " (:title target)
+                    :cost [:credit (rez-cost state :corp (:card context))]
+                    :msg (msg "derez " (:title (:card context))
                               " and prevent it from being rezzed this turn")
                     :effect (req (wait-for (trash state side card nil)
                                            (when-not (get-card state card)
-                                             (derez state :runner target)
+                                             (derez state :runner (:card context))
                                              (register-turn-flag!
                                                state side card :can-rez
                                                (fn [state side card]
-                                                 (if (same-card? card target)
+                                                 (if (same-card? card (:card context))
                                                    ((constantly false)
                                                     (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                    true))))
@@ -1261,7 +1261,7 @@
 (defcard "Ice Analyzer"
   {:implementation "Credit use restriction is not enforced"
    :events [{:event :rez
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :msg "place 1 [Credits] on Ice Analyzer"
              :effect (effect (add-counter :runner card :credit 1))}]
    :abilities [{:async true
@@ -1611,17 +1611,17 @@
                                          card nil)))}]})
 
 (defcard "Muertos Gang Member"
-  {:effect
-   (effect
-     (continue-ability
-       {:player :corp
-        :waiting-prompt "Corp to select a card to derez"
-        :prompt "Select a card to derez"
-        :choices {:card #(and (corp? %)
-                              (not (agenda? %))
-                              (rezzed? %))}
-        :effect (effect (derez target))}
-       card nil))
+  {:async true
+   :effect (effect
+             (continue-ability
+               {:player :corp
+                :waiting-prompt "Corp to select a card to derez"
+                :prompt "Select a card to derez"
+                :choices {:card #(and (corp? %)
+                                      (not (agenda? %))
+                                      (rezzed? %))}
+                :effect (effect (derez target))}
+               card nil))
    :uninstall
    (effect
      (continue-ability
@@ -1629,9 +1629,10 @@
         :waiting-prompt "Corp to select a card to rez"
         :prompt "Select a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
-        :effect (effect (rez target {:ignore-cost :rez-cost :no-msg true})
-                        (system-say (str (:title card) " allows the Corp to rez "
-                                         (:title target) " at no cost")))}
+        :async true
+        :effect (effect (system-say (str (:title card) " allows the Corp to rez "
+                                         (:title target) " at no cost"))
+                        (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
        card nil))
    :abilities [{:cost [:trash]
                 :msg "draw 1 card"

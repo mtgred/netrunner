@@ -548,6 +548,7 @@
                              (can-pay? state side (assoc eid :source card :source-type :rez) target nil
                                        [:credit (rez-cost state side target {:cost-bonus -4})])))}
              :msg (msg "rez " (:title target))
+             :async true
              :effect (effect (rez eid target {:cost-bonus -4}))}]})
 
 (defcard "Haas-Bioroid: Engineering the Future"
@@ -988,7 +989,7 @@
 (defcard "Los: Data Hijacker"
   {:events [{:event :rez
              :once :per-turn
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :msg "gain 2 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 2))}]})
@@ -1273,16 +1274,17 @@
   {:abilities [(assoc (break-sub nil 1 "Barrier") :once :per-turn)]})
 
 (defcard "Reina Roja: Freedom Fighter"
-  (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
+  (letfn [(not-triggered? [state]
+            (no-event? state :runner :rez #(ice? (:card (first %)))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
                                         (not (rezzed? target))
-                                        (not-triggered? state card)))
+                                        (not-triggered? state)))
                          :value 1}]
      :events [{:event :rez
-               :req (req (and (ice? target)
-                              (not-triggered? state card)))
-               :msg (msg "increased the rez cost of " (:title target) " by 1 [Credits]")}]}))
+               :req (req (and (ice? (:card context))
+                              (not-triggered? state)))
+               :msg (msg "increased the rez cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
@@ -1368,8 +1370,8 @@
 
 (defcard "Spark Agency: Worldswide Reach"
   {:events [{:event :rez
-             :req (req (and (has-subtype? target "Advertisement")
-                            (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
+             :req (req (and (has-subtype? (:card context) "Advertisement")
+                            (first-event? state :corp :rez #(has-subtype? (:card (first %)) "Advertisement"))))
              :async true
              :effect (effect (lose-credits :runner eid 1))
              :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
@@ -1553,10 +1555,10 @@
   {:events [{:event :rez
              :optional
              {:prompt "Add another copy to HQ?"
-              :req (req (and (ice? target) ;; Did you rez and ice just now
-                             (first-event? state :runner :rez #(ice? (first %)))))
+              :req (req (and (ice? (:card context))
+                             (first-event? state :runner :rez #(ice? (:card (first %))))))
               :yes-ability
-              {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]
+              {:effect (req (if-let [found-card (some #(when (= (:title %) (:title (:card context))) %) (concat (:deck corp) (:play-area corp)))]
                               (do (move state side found-card :hand)
                                   (system-msg state side (str "uses The Foundry to add a copy of "
                                                               (:title found-card) " to HQ, and shuffles their deck"))

@@ -5,7 +5,7 @@
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid make-result]]
-    [game.core.engine :refer [merge-costs-paid pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
+    [game.core.engine :refer [dissoc-req merge-costs-paid pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
@@ -44,16 +44,17 @@
       (current-handler state side card)
       ;; Select the "on the table" version of the card
       (let [card async-result
-            cdef (card-def card)]
-        (when card
-          (card-init state side (if (:rfg-instead-of-trashing cdef)
-                                  (assoc card :rfg-instead-of-trashing true)
-                                  card)
-                     {:resolve-effect false :init-data true}))
-        (let [card (get-card state card)]
+            cdef (-> (card-def card)
+                     (dissoc :cost :additional-cost)
+                     (dissoc-req))]
+        (let [card (card-init state side
+                              (if (:rfg-instead-of-trashing cdef)
+                                (assoc card :rfg-instead-of-trashing true)
+                                card)
+                              {:resolve-effect false :init-data true})]
           (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :play-operation :play-event) card)
                     ;; Resolve ability, removing :req as that has already been checked
-                    (wait-for (resolve-ability state side (make-eid state eid) (dissoc cdef :req :cost :additional-cost) card nil)
+                    (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
                               (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
                                     trash-after-resolving (:trash-after-resolving cdef true)
                                     zone (if (:rfg-instead-of-trashing c) :rfg :discard)]

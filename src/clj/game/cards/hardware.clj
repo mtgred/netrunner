@@ -119,11 +119,11 @@
                                                " as an additional cost to rez " cname "?")
                                   :player :corp
                                   :yes-ability {:async true
-                                                :effect (effect (rez :corp eid c nil))}
+                                                :effect (effect (rez :corp eid c))}
                                   :no-ability {:msg (msg "declines to pay additional costs"
                                                          " and is not forced to rez " cname)}}}
                                 card nil)
-                              (rez state :corp eid target nil))))}]})
+                              (rez state :corp eid target))))}]})
 
 (defcard "Bookmark"
   {:abilities [{:label "Host up to 3 cards from your Grip facedown"
@@ -550,7 +550,7 @@
                             [{:event :rez
                               :duration :end-of-run
                               :unregister-once-resolved true
-                              :req (req (ice? target))
+                              :req (req (ice? (:card context)))
                               :effect (effect (register-run-flag!
                                                 card :can-rez
                                                 (fn [state side card]

@@ -550,7 +550,7 @@
                                                             (ice? %)
                                                             (can-pay? state side eid card nil
                                                                       [:credit (rez-cost state side %)]))}
-                                      :effect (effect (rez :corp eid target nil))
+                                      :effect (effect (rez :corp eid target))
                                       :cancel-effect
                                       (effect (register-run-flag!
                                                 card
@@ -1124,10 +1124,10 @@
                                                     (:credit corp)))
                                          {:msg (msg "force the rez of " (:title ice))
                                           :async true
-                                          :effect (effect (rez :corp eid ice nil))}
+                                          :effect (effect (rez :corp eid ice))}
                                          {:msg (msg "trash the ICE at position " icepos " of " serv)
                                           :async true
-                                          :effect (effect (trash :corp eid ice nil))})
+                                          :effect (effect (trash :corp eid ice))})
                                        card nil))}
                     card nil)))})
 
@@ -2607,10 +2607,10 @@
                (let [ice target]
                  [{:event :rez
                    :duration :end-of-turn
-                   :req (req (same-card? target ice))
-                   :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")
+                   :req (req (same-card? (:card context) ice))
+                   :msg (msg "gain " (rez-cost state side (get-card state (:card context))) " [Credits]")
                    :async true
-                   :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state target))))}])))})
+                   :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state (:card context)))))}])))})
 
 (defcard "Spear Phishing"
   {:async true

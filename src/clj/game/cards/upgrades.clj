@@ -21,6 +21,7 @@
                                        [:credit (rez-cost state side target {:cost-bonus -3})])))
               :prompt "Rez ICE with rez cost lowered by 3?"
               :yes-ability {:msg (msg "lower the rez cost of " (:title target) " by 3 [Credits]")
+                            :async true
                             :effect (effect (rez eid target {:cost-bonus -3}))}}}]})
 
 (defcard "Arella Salvatore"
@@ -77,16 +78,17 @@
                 :prompt "Choose a piece of Bioroid ICE to rez"
                 :choices (req (:hosted card))
                 :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
-                :effect (effect (rez eid target {:cost-bonus -7})
-                                (update! (dissoc (get-card state target) :facedown))
-                                (register-events
-                                  card
-                                  (let [ice target]
-                                    [{:event :run-ends
-                                      :duration :end-of-run
-                                      :async true
-                                      :req (req (get-card state ice))
-                                      :effect (effect (trash eid (get-card state ice) nil))}])))}]})
+                :async true
+                :effect (req (wait-for (rez state side target {:cost-bonus -7})
+                                       (register-events
+                                         state side card
+                                         (let [ice (:card async-result)]
+                                           [{:event :run-ends
+                                             :duration :end-of-run
+                                             :async true
+                                             :req (req (get-card state ice))
+                                             :effect (effect (trash eid (get-card state ice) nil))}]))
+                                       (effect-completed state side eid)))}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -788,7 +790,7 @@
 
 (defcard "Khondi Plaza"
   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-   :effect (effect (set-prop card :rec-counter (count (get-remotes state))))
+   :on-rez {:effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))
@@ -975,7 +977,7 @@
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :effect (req (prevent-run-on-server state card (second (get-zone card))))
+   :on-rez {:effect (req (prevent-run-on-server state card (second (get-zone card))))}
    :events [{:event :runner-turn-begins
              :effect (req (prevent-run-on-server state card (second (get-zone card))))}
             {:event :successful-run
@@ -1052,7 +1054,7 @@
                      (register-events
                        state side card
                        [(assoc ability :duration :end-of-run)]))
-                   (continue-ability state side (dissoc ability :req) card targets))}
+                   (continue-ability state side (dissoc-req ability) card targets))}
      :events [ability]}))
 
 (defcard "Panic Button"
@@ -1063,7 +1065,7 @@
                 :effect (effect (draw))}]})
 
 (defcard "Port Anson Grid"
-  {:msg "prevent the Runner from jacking out unless they trash an installed program"
+  {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
    :constant-effects [{:type :jack-out-additional-cost
                        :duration :end-of-run
                        :req (req this-server)
@@ -1117,14 +1119,15 @@
                             (is-central? (:server context))))
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
-   :waiting-prompt "Corp to place credits on Reduced Service"
-   :prompt "How many credits to spend?"
-   :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
-   :async true
-   :effect (req (let [spent (str->int target)]
-                  (add-counter state :corp card :power spent)
-                  (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
-                  (lose-credits state :corp eid spent)))})
+   :on-rez {:waiting-prompt "Corp to place credits on Reduced Service"
+            :prompt "How many credits to spend?"
+            :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
+            :async true
+            :effect (req (let [spent (str->int target)]
+                           (add-counter state :corp card :power spent)
+                           (system-msg state :corp (str "places " (quantify spent "power counter")
+                                                        " on Reduced Service"))
+                           (lose-credits state :corp eid spent)))}})
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
@@ -1154,9 +1157,9 @@
                        :value -1}]})
 
 (defcard "Satellite Grid"
-  {:effect (req (doseq [c (:ices (card->server state card))]
-                  (set-prop state side c :extra-advance-counter 1))
-                (update-all-ice state side))
+  {:on-rez {:effect (req (doseq [c (:ices (card->server state card))]
+                           (set-prop state side c :extra-advance-counter 1))
+                         (update-all-ice state side))}
    :events [{:event :corp-install
              :req (req (and (ice? target)
                             (protecting-same-server? card target)))
@@ -1233,26 +1236,27 @@
 
 (defcard "Surat City Grid"
   {:events [{:event :rez
-             :req (req (and (same-server? card target)
-                            (not (and (upgrade? target)
-                                      (is-central? (second (get-zone target)))))
-                            (not (same-card? target card))
-                            (some #(and (not (rezzed? %))
-                                        (not (agenda? %))
-                                        (can-pay? state side (assoc eid :source card :source-type :rez) % nil
-                                                  [:credit (install-cost state side % {:cost-bonus -2})]))
-                                  (all-installed state :corp))))
-             :effect (effect (continue-ability
-                               {:optional
-                                {:prompt (msg "Rez another card with Surat City Grid?")
-                                 :yes-ability {:prompt "Select a card to rez"
-                                               :choices {:card #(and (not (rezzed? %))
-                                                                     (not (agenda? %))
-                                                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                                               [:credit (rez-cost state side % {:cost-bonus -2})]))}
-                                               :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
-                                               :effect (effect (rez eid target {:cost-bonus -2}))}}}
-                               card nil))}]})
+             :interactive (req true)
+             :optional
+             {:req (req (let [target (:card context)]
+                          (and (same-server? card target)
+                               (not (and (upgrade? target)
+                                         (is-central? (second (get-zone target)))))
+                               (not (same-card? target card))
+                               (some #(and (not (rezzed? %))
+                                           (not (agenda? %))
+                                           (can-pay? state side (assoc eid :source card :source-type :rez) % nil
+                                                     [:credit (install-cost state side % {:cost-bonus -2})]))
+                                     (all-installed state :corp)))))
+              :prompt "Rez another card with Surat City Grid?"
+              :yes-ability {:prompt "Select a card to rez"
+                            :choices {:req (req (and (not (rezzed? target))
+                                                     (not (agenda? target))
+                                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                               [:credit (rez-cost state side target {:cost-bonus -2})])))}
+                            :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
+                            :async true
+                            :effect (effect (rez eid target {:cost-bonus -2}))}}}]})
 
 (defcard "Tempus"
   {:flags {:rd-reveal (req true)}
@@ -1340,8 +1344,8 @@
   {:events [{:event :rez
              :interactive (req true)
              :trace {:base 2
-                     :req (req (and (protecting-same-server? card target)
-                                    (ice? target)))
+                     :req (req (and (protecting-same-server? card (:card context))
+                                    (ice? (:card context))))
                      :successful {:msg "gain 1 [Credits]"
                                   :async true
                                   :effect (effect (gain-credits eid 1))}}}]})

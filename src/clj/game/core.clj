@@ -303,6 +303,7 @@
    can-trigger?
    card-as-handler
    checkpoint
+   dissoc-req
    effect-as-handler
    gather-events
    is-ability?

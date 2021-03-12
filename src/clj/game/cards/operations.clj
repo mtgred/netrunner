@@ -273,7 +273,7 @@
                          (not (rezzed? %)))}
    :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
    :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
-                          (host state side (get-card state target) (assoc card :seen true :condition true))
+                          (host state side (:card async-result) (assoc card :seen true :condition true))
                           (effect-completed state side eid)))
    :events [{:event :end-of-encounter
              :condition :hosted
@@ -1376,9 +1376,10 @@
                          (not (rezzed? %))
                          (= (last (get-zone %)) :ices))}
    :msg (msg "rez " (card-str state target) " at no cost")
-   :effect (effect (rez target {:ignore-cost :all-costs
-                                :no-msg true})
-                   (host (get-card state target) (assoc card :seen true :condition true)))
+   :async true
+   :effect (req (wait-for (rez state side target {:ignore-cost :all-costs :no-msg true})
+                          (host state side (:card async-result) (assoc card :seen true :condition true))
+                          (effect-completed state side eid)))
    :events [{:event :subroutines-broken
              :condition :hosted
              :async true
@@ -1964,6 +1965,7 @@
                               (reduce (fn [c server]
                                         (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
                                       0 (flatten (seq (:servers corp))))))}
+     :async true
      :effect (effect (continue-ability (rez-helper targets) card nil))}))
 
 (defcard "Snatch and Grab"
@@ -2039,8 +2041,8 @@
                   (host state side (get-card state target) (assoc card :seen true :condition true)))
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
-               :req (req (same-card? target (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}]}))
+               :req (req (same-card? (:card context) (:host card)))
+               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
 
 (defcard "Subcontract"
   (letfn [(sc [i sccard]
@@ -2380,8 +2382,8 @@
                   (host state side (get-card state target) (assoc card :seen true :condition true)))
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
-               :req (req (same-card? target (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}]}))
+               :req (req (same-card? (:card context) (:host card)))
+               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
 
 (defcard "Witness Tampering"
   {:msg "remove 2 bad publicity"

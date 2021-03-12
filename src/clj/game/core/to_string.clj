@@ -1,5 +1,5 @@
 (ns game.core.to-string
-  (:require [game.core.card :refer [rezzed? ice? corp? card-index]]
+  (:require [game.core.card :refer [get-card rezzed? ice? corp? card-index]]
             [game.core.servers :refer [is-root? zone->name]]))
 
 (defn card-str
@@ -27,4 +27,4 @@
          (if (or facedown visible)
            "a facedown card"
            title))
-       (when host (str " hosted on " (card-str state host))))))
+       (when host (str " hosted on " (card-str state (get-card state host)))))))

@@ -380,7 +380,8 @@
                  (checkpoint state nil eid nil))))))
 
 (defn trash
-  [state side eid card args] (trash-cards state side eid [card] args))
+  ([state side eid card] (trash-cards state side eid [card] nil))
+  ([state side eid card args] (trash-cards state side eid [card] args)))
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"

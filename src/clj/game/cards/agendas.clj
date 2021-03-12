@@ -1122,7 +1122,8 @@
               :choices {:card #(and (ice? %)
                                     (not (rezzed? %))
                                     (installed? %))}
-              :effect (effect (rez target {:ignore-cost :all-costs}))}})
+              :async true
+              :effect (effect (rez eid target {:ignore-cost :all-costs}))}})
 
 (defcard "Private Security Force"
   {:abilities [{:req (req tagged)
@@ -1470,14 +1471,16 @@
                 :choices {:card #(and (has-subtype? % "Bioroid")
                                       (not (rezzed? %)))}
                 :msg (msg "rez " (card-str state target) ", ignoring all costs")
-                :effect (req (let [c target]
-                               (rez state side c {:ignore-cost :all-costs})
-                               (register-events
-                                 state side card
-                                 [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
-                                   :unregister-once-resolved true
-                                   :duration :end-of-turn
-                                   :effect (effect (derez c))}])))}]})
+                :async true
+                :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
+                                       (let [c (:card async-result)]
+                                         (register-events
+                                           state side card
+                                           [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
+                                             :unregister-once-resolved true
+                                             :duration :end-of-turn
+                                             :effect (effect (derez c))}])
+                                         (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
   {:events [{:event :pre-resolve-damage

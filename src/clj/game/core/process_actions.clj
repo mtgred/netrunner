@@ -65,7 +65,7 @@
    "play" play
    "purge" do-purge
    "remove-tag" remove-tag
-   "rez" #(rez %1 %2 (:card %3) (dissoc %3 :card))
+   "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))
    "run" click-run
    "runner-ability" play-runner-ability
    "score" #(score %1 %2 (get-card %1 (:card %3)))
@@ -76,7 +76,7 @@
    "system-msg" #(system-msg %1 %2 (:msg %3))
    "toast" toast
    "toggle-auto-no-action" toggle-auto-no-action
-   "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
+   "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" trash-resource
    "unbroken-subroutines" play-unbroken-subroutines
    "view-deck" view-deck})

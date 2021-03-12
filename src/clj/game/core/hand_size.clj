@@ -1,7 +1,6 @@
 (ns game.core.hand-size
   (:require
-    [game.core.effects :refer [get-effects sum-effects]]
-    [game.core.engine :refer [trigger-event]]))
+    [game.core.effects :refer [get-effects sum-effects]]))
 
 (defn hand-size
   [state side]

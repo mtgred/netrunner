@@ -2342,6 +2342,27 @@
         (run-empty-server state "R&D"))
       (is (zero? (count-tags state)) "Took no tags for ability being blocked"))))
 
+(deftest los-data-hijacker
+  ;; Los: Data Hijacker
+  (before-each [state (new-game {:corp {:hand [(qty "Ice Wall" 2)]}
+                                 :runner {:id "Los: Data Hijacker"}})]
+    (testing "Ability works"
+      (do-game state
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (changes-val-macro
+          2 (:credit (get-runner))
+          "Gains 2 from ice rez"
+          (rez state :corp (get-ice state :hq 0)))))
+    (testing "Only works on first rez per turn"
+      (do-game state
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "R&D")
+        (rez state :corp (get-ice state :hq 0))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Does not gain"
+          (rez state :corp (get-ice state :rd 0)))))))
+
 (deftest maxx-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"

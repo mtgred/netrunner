@@ -53,13 +53,13 @@
          {:type (if (= actual-change# ~change-amt) :pass :fail)
           :actual actual-change#
           :expected ~change-amt
-          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " '~body-form)}))))
+          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " (cons 'do '~body-form))}))))
 
 (defmethod clojure.test/assert-expr 'changes-val [msg form]
   (let [change-amt (nth form 1)
         val-form (nth form 2)
-        body-form (nth form 3)]
-    `(changes-val-macro ~change-amt ~val-form ~msg ~body-form)))
+        body-form (drop 3 form)]
+    `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form)))
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5
@@ -67,8 +67,8 @@
 (defmethod clojure.test/assert-expr 'changes-credits [msg form]
   (let [side (nth form 1)
         change-amt (nth form 2)
-        body-form (nth form 3)]
-    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~body-form)))
+        body-form (drop 3 form)]
+    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~@body-form)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]

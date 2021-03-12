@@ -3079,7 +3079,7 @@
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
-      (core/rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0))
       (play-from-hand state :corp "Rover Algorithm")
       (click-card state :corp "Ice Wall")
       (play-from-hand state :corp "Sunset")
