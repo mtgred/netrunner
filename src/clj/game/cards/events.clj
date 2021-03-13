@@ -2036,6 +2036,15 @@
                        (register-events state side card ashes-flag)
                        (unregister-events state side card {:events [{:event :runner-phase-12}]})))}))
 
+(defcard "Overclock"
+  {:async true
+   :makes-run true
+   :data {:counter {:credit 5}}
+   :interactions {:pay-credits {:type :credit}}
+   :prompt "Choose a server"
+   :choices (req runnable-servers)
+   :effect (effect (make-run eid target nil card))})
+
 (defcard "Paper Tripping"
   {:async true
    :req (req (pos? (count-real-tags state)))
