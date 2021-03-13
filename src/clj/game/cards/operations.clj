@@ -1549,6 +1549,21 @@
                          (choose-card state top-5))
                        card nil))}))
 
+(defcard "Public Trail"
+  {:req (req (last-turn? state :runner :successful-run))
+   :player :runner
+   :async true
+   :msg (msg "force the Runner to " (decapitalize target))
+   :prompt "Pick one"
+   :choices (req ["Take 1 tag"
+                  (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
+                    "Pay 8 [Credits]")])
+   :effect (req (if (= target "Pay 8 [Credits]")
+                  (wait-for (pay state :runner card :credit 8)
+                            (system-msg state :runner (:msg async-result))
+                            (effect-completed state side eid))
+                  (gain-tags state :corp eid 1 nil)))})
+
 (defcard "Punitive Counterstrike"
   {:trace {:base 5
            :successful {:async true

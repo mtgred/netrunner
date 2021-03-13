@@ -2810,6 +2810,28 @@
     (is (nil? (:title (get-content state :remote4 0)))
         "Nothing is installed by Psychokinesis")))
 
+(deftest public-trail
+  ;; Public Trail
+  (testing "Basic Test"
+  (do-game
+    (new-game {:corp {:hand [(qty "Public Trail" 2)]}})
+    (play-from-hand state :corp "Public Trail")
+    (is (nil? (get-prompt state :corp)))
+    (is (not (is-tagged? state)))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Public Trail")
+    (is (= 8 (:credit (get-runner))))
+    (is (= ["Take 1 tag" "Pay 8 [Credits]"] (prompt-buttons :runner)))
+    (click-prompt state :runner "Pay 8 [Credits]")
+    (is (zero? (:credit (get-runner))))
+    (is (not (is-tagged? state)))
+    (play-from-hand state :corp "Public Trail")
+    (click-prompt state :runner "Take 1 tag")
+    (is (is-tagged? state)))))
+
 (deftest punitive-counterstrike
   ;; Punitive Counterstrike - deal meat damage equal to printed agenda points
   (do-game
