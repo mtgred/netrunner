@@ -17,6 +17,5 @@
           result (mc/update db "decks" {"cards.card" from}
                             {$set {"cards.$.card" to}}
                             {:multi true})]
-      (println "Updated" (.getN result) "decks")
-      )
+      (println "Updated" (.getN result) "decks"))
     (finally (webdb/disconnect))))
