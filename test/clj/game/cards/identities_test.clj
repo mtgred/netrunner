@@ -2737,6 +2737,58 @@
         (take-credits state :runner)
         (is (= 2 (get-counters (refresh nbn-mn) :recurring)) "Recurring credits refill once MN isn't disabled anymore")))))
 
+(deftest nbn-reality-plus
+  ;; NBN: Reality Plus
+  (testing "Basic test - gain credits"
+    (do-game
+     (new-game {:corp {:id "NBN: Reality Plus"
+                       :credits 40
+                       :hand [(qty "Data Raven" 3)]}})
+     (play-from-hand state :corp "Data Raven" "HQ")
+     (play-from-hand state :corp "Data Raven" "HQ")
+     (take-credits state :corp)
+     (let [dr (get-ice state :hq 0)
+           dr2 (get-ice state :hq 1)]
+       (run-on state :hq)
+       (rez state :corp (refresh dr2))
+       (run-continue state)
+       (click-prompt state :runner "Take 1 tag")
+       (click-prompt state :corp "Yes")
+       (changes-val-macro
+         2 (:credit (get-corp))
+         "Gain 2 credit from NBN: Reality Plus"
+         (click-prompt state :corp "Gain 2 [Credits]"))
+       (run-continue state)
+       (rez state :corp (refresh dr))
+       (run-continue state)
+       (click-prompt state :runner "Take 1 tag")
+       (is (empty? (:prompt (get-corp))) "No prompt for the Corp for second tag"))))
+  (testing "Basic test - gain credits"
+    (do-game
+     (new-game {:corp {:id "NBN: Reality Plus"
+                       :credits 40
+                       :deck [(qty "Hedge Fund" 10)]
+                       :hand [(qty "Data Raven" 3)]}})
+     (play-from-hand state :corp "Data Raven" "HQ")
+     (play-from-hand state :corp "Data Raven" "HQ")
+     (take-credits state :corp)
+     (let [dr (get-ice state :hq 0)
+           dr2 (get-ice state :hq 1)]
+       (run-on state :hq)
+       (rez state :corp (refresh dr2))
+       (run-continue state)
+       (click-prompt state :runner "Take 1 tag")
+       (click-prompt state :corp "Yes")
+       (changes-val-macro
+         2 (count (:hand (get-corp)))
+         "Draw 2 cards from NBN: Reality Plus"
+         (click-prompt state :corp "Draw 2 cards"))
+       (run-continue state)
+       (rez state :corp (refresh dr))
+       (run-continue state)
+       (click-prompt state :runner "Take 1 tag")
+       (is (empty? (:prompt (get-corp))) "No prompt for the Corp for second tag")))))
+
 (deftest nero-severn-information-broker
   ;; Nero Severn: Information Broker
   (testing "Basic test"
@@ -3760,3 +3812,22 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash") ;; trash Launch Campaign, should trigger wyvern
       (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
           "Sure Gamble still in Wyvern's discard"))))
+
+(deftest zahya-sadeghi-versatile-smuggler
+  ;; "Zahya Sadeghi: Versatile Smuggler"
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp   {:hand [(qty "Hedge Fund" 3)]}
+                :runner {:id   "Zahya Sadeghi: Versatile Smuggler"
+                         :hand [(qty "HQ Interface" 2)]
+                         :credits 20}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "HQ Interface")
+     (play-from-hand state :runner "HQ Interface")
+     (run-empty-server state :hq)
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro 3 (:credit (get-runner))
+                        "Gain 3 credits from ID ability"
+                        (click-prompt state :runner "Yes")))))
