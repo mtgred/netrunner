@@ -23,6 +23,21 @@
         (is (rezzed? (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest anoetic-void
+  ;; Anoetic Void
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:hand ["Anoetic Void" "Ice Wall" "Fire Wall"]}})
+     (play-from-hand state :corp "Anoetic Void" "New remote")
+     (let [av (get-content state :remote1 0)]
+     (rez state :corp av)
+     (take-credits state :corp)
+     (run-empty-server state "Server 1")
+       (click-prompt state :corp "Yes")
+       (click-card state :corp "Ice Wall")
+       (click-card state :corp "Fire Wall")
+       (is (not (:run @state)) "Run ended by Anoetic Void")))))
+
 (deftest arella-salvatore
   ;; Arella Salvatore - when an agenda is scored from this server, install a card from hq w/ advancement token
   (testing "Install to server"
