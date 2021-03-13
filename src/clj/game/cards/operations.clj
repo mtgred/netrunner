@@ -1328,6 +1328,11 @@
    :msg "do 1 net damage"
    :effect (effect (damage eid :net 1 {:card card}))})
 
+(defcard "Neurospike"
+  {:async true
+   :msg (msg "do " (:scored-agenda corp-reg 0) " net damage")
+   :effect (effect (damage eid :net (:scored-agenda corp-reg 0) {:card card}))})
+
 (defcard "NEXT Activation Command"
   {:trash-after-resolving false
    :constant-effects [{:type :ice-strength

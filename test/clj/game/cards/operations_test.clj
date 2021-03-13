@@ -2398,6 +2398,24 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
+(deftest neurospike
+  ;; Neurospike
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 5)]}
+               :corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Neurospike" 2) "Obokata Protocol"]
+                      :credits 50
+                      :click 8}})
+    (play-and-score state "Obokata Protocol")
+    (changes-val-macro
+      -3 (count (:hand (get-runner)))
+      "Runner took 3 net damage"
+      (play-from-hand state :corp "Neurospike"))
+    (play-from-hand state :corp "Neurospike")
+    (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+    (is (= :corp (:winner @state)) "Corp wins")
+    (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
 (deftest next-activation-command
   ;; NEXT Activation Command
   (testing "Get trashed at start of next Corp turn"
