@@ -31,9 +31,9 @@
                              this-server))
               :yes-ability
               {:async true
-               :msg "pay 2 [Credits] and trash 2 cards from HQ to end the run"
-               :effect (req (wait-for (pay state :corp card [:credit 2 :trash-from-hand 2])
-                                      (end-run state side eid card)))}}}]})
+               :msg "end the run"
+               :cost [:credit 2 :trash-from-hand 2]
+               :effect (req (end-run state side eid card))}}}]})
 
 (defcard "Arella Salvatore"
   (let [select-ability

@@ -1675,15 +1675,12 @@
              :req (req (and (or (= :hq (target-server context))
                                 (= :rd (target-server context)))
                             (pos? (total-cards-accessed context))))
-             :effect (effect (continue-ability
-                               (let [cards-accessed (total-cards-accessed context)]
-                                 {:optional
-                                  {:prompt "Gain 1 [Credits] for each card you accessed?"
-                                   :async true
-                                   :once :per-turn
-                                   :yes-ability
-                                   {:msg (msg "gain " cards-accessed " [Credits]")
-                                    :once :per-turn
-                                    :async true
-                                    :effect (req (gain-credits state :runner eid cards-accessed))}}})
-                               card nil))}]})
+             :optional
+             {:prompt "Gain 1 [Credits] for each card you accessed?"
+              :async true
+              :once :per-turn
+              :yes-ability
+              {:msg (msg "gain " (total-cards-accessed context) "[Credits]")
+               :once :per-turn
+               :async true
+               :effect (req (gain-credits state :runner eid (total-cards-accessed context)))}}}]})

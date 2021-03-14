@@ -1562,7 +1562,7 @@
                   (wait-for (pay state :runner card :credit 8)
                             (system-msg state :runner (:msg async-result))
                             (effect-completed state side eid))
-                  (gain-tags state :corp eid 1 nil)))})
+                  (gain-tags state :corp eid 1)))})
 
 (defcard "Punitive Counterstrike"
   {:trace {:base 5

@@ -2043,7 +2043,7 @@
    :interactions {:pay-credits {:type :credit}}
    :prompt "Choose a server"
    :choices (req runnable-servers)
-   :effect (effect (make-run eid target nil card))})
+   :effect (effect (make-run eid target card))})
 
 (defcard "Paper Tripping"
   {:async true
