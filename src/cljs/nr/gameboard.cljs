@@ -1455,9 +1455,12 @@
   (-> ((keyword (str ref "-menu")) @board-dom) js/$ .fadeOut)
   (send-command "view-deck"))
 
-(defn identity-view [identity]
-  [:div.blue-shade.identity
-   [card-view @identity]])
+(defn identity-view [render-side identity hand]
+  (let [is-runner (= :runner render-side)
+        name (if is-runner (tr [:game.grip "Grip"]) (tr [:game.hq "HQ"]))]
+    [:div.blue-shade.identity
+     [card-view @identity]
+     [label @hand {:opts {:name name :classes "server-label"}}]]))
 
 (defn deck-view [render-side player-side identity deck]
    (let [is-runner (= :runner render-side)
@@ -1784,7 +1787,7 @@
            (-> ss1 :content first :hosted empty?)
            (-> ss2 :content first :hosted empty?)))))
 
-(defn board-view-corp [player-side identity deck discard servers run]
+(defn board-view-corp [player-side identity deck hand discard servers run]
   (let [rs (:server @run)
         server-type (first rs)]
     [:div.corp-board {:class (if (= player-side :runner) "opponent" "me")}
@@ -1812,7 +1815,7 @@
             {:opts {:name (remote->name (first server))}}])))
      [server-view {:key "hq"
                    :server (:hq @servers)
-                   :central-view [identity-view identity]
+                   :central-view [identity-view :corp identity hand]
                    :run (when (= server-type "hq") @run)}]
      [server-view {:key "rd"
                    :server (:rd @servers)
@@ -1823,12 +1826,12 @@
                    :central-view [discard-view-corp player-side discard]
                    :run (when (= server-type "archives") @run)}]]))
 
-(defn board-view-runner [player-side identity deck discard rig run]
+(defn board-view-runner [player-side identity deck hand discard rig run]
   (let [is-me (= player-side :runner)
         centrals [:div.runner-centrals
                   [discard-view-runner player-side discard]
                   [deck-view :runner player-side identity deck]
-                  [identity-view identity]]
+                  [identity-view :runner identity hand]]
         runner-f (if (and (not is-me)
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
@@ -2452,11 +2455,11 @@
 
                  [:div.centralpane
                   (if (= op-side :corp)
-                    [board-view-corp me-side op-ident op-deck op-discard corp-servers run]
-                    [board-view-runner me-side op-ident op-deck op-discard runner-rig run])
+                    [board-view-corp me-side op-ident op-deck op-hand op-discard corp-servers run]
+                    [board-view-runner me-side op-ident op-deck op-hand op-discard runner-rig run])
                   (if (= me-side :corp)
-                    [board-view-corp me-side me-ident me-deck me-discard corp-servers run]
-                    [board-view-runner me-side me-ident me-deck me-discard runner-rig run])]
+                    [board-view-corp me-side me-ident me-deck me-hand me-discard corp-servers run]
+                    [board-view-runner me-side me-ident me-deck me-hand me-discard runner-rig run])]
 
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
