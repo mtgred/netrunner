@@ -1,10 +1,11 @@
 (ns game.core.play-instants
   (:require
+    [game.core.board :refer [all-active]]
     [game.core.card :refer [get-card has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
-    [game.core.eid :refer [effect-completed eid-set-defaults make-eid make-result]]
+    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid make-result]]
     [game.core.engine :refer [dissoc-req merge-costs-paid pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
@@ -13,22 +14,19 @@
     [game.core.payment :refer [build-spend-msg merge-costs]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [same-card?]]))
+    [game.utils :refer [same-card? to-keyword]]))
 
-(defn- fake-move
-  [state side eid c _]
-  (move state side c :rfg)
-  (effect-completed state side eid))
+(defn async-rfg
+  ([state side eid card] (async-rfg state side eid card nil))
+  ([state side eid card _]
+   (let [card (move state (to-keyword (:side card)) card :rfg)]
+     (complete-with-result state side eid card))))
 
 (defn- current-handler
-  [state side eid card]
+  [state side card]
   (if (has-subtype? card "Current")
-    (wait-for (remove-old-current state side :corp)
-              (wait-for (remove-old-current state side :runner)
-                        (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))
-                              c (move state side c :current)]
-                          (effect-completed state side (make-result eid c)))))
-    (effect-completed state side (make-result eid card))))
+    (move state (to-keyword (:side card)) card :current)
+    card))
 
 ;;; Playing cards.
 (defn- complete-play-instant
@@ -39,41 +37,37 @@
                    (build-spend-msg payment-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    ;; Need to await trashing the existing current
-    (wait-for
-      (current-handler state side card)
-      ;; Select the "on the table" version of the card
-      (let [card async-result
-            cdef (-> (card-def card)
-                     (dissoc :cost :additional-cost)
-                     (dissoc-req))]
-        (let [card (card-init state side
-                              (if (:rfg-instead-of-trashing cdef)
-                                (assoc card :rfg-instead-of-trashing true)
-                                card)
-                              {:resolve-effect false :init-data true})]
-          (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :play-operation :play-event) card)
-                    ;; Resolve ability, removing :req as that has already been checked
-                    (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
-                              (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
-                                    trash-after-resolving (:trash-after-resolving cdef true)
-                                    zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
-                                (if (and c trash-after-resolving)
-                                  (let [trash-or-move (if (= zone :rfg) fake-move trash)]
-                                    (wait-for (trash-or-move state side c {:unpreventable true})
-                                              (unregister-events state side card)
-                                              (unregister-constant-effects state side card)
-                                              (when (= zone :rfg)
-                                                (system-msg state side
-                                                            (str "removes " (:title c) " from the game instead of trashing it")))
-                                              (when (has-subtype? card "Terminal")
-                                                (lose state side :click (-> @state side :click))
-                                                (swap! state assoc-in [:corp :register :terminal] true))
-                                              (effect-completed state side eid)))
-                                  (do (when (has-subtype? card "Terminal")
-                                        (lose state side :click (-> @state side :click))
-                                        (swap! state assoc-in [:corp :register :terminal] true))
-                                      (effect-completed state side eid)))))))))))
+    ;; Select the "on the table" version of the card
+    (let [card (current-handler state side card)
+          cdef (-> (card-def card)
+                   (dissoc :cost :additional-cost)
+                   (dissoc-req))
+          card (card-init state side
+                          (if (:rfg-instead-of-trashing cdef)
+                            (assoc card :rfg-instead-of-trashing true)
+                            card)
+                          {:resolve-effect false :init-data true})]
+      (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :play-operation :play-event) card)
+                (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
+                          (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
+                                trash-after-resolving (:trash-after-resolving cdef true)
+                                zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
+                            (if (and c trash-after-resolving)
+                              (let [trash-or-move (if (= zone :rfg) async-rfg trash)]
+                                (wait-for (trash-or-move state side c {:unpreventable true})
+                                          (unregister-events state side card)
+                                          (unregister-constant-effects state side card)
+                                          (when (= zone :rfg)
+                                            (system-msg state side
+                                                        (str "removes " (:title c) " from the game instead of trashing it")))
+                                          (when (has-subtype? card "Terminal")
+                                            (lose state side :click (-> @state side :click))
+                                            (swap! state assoc-in [:corp :register :terminal] true))
+                                          (effect-completed state side eid)))
+                              (do (when (has-subtype? card "Terminal")
+                                    (lose state side :click (-> @state side :click))
+                                    (swap! state assoc-in [:corp :register :terminal] true))
+                                  (effect-completed state side eid)))))))))
 
 (defn play-instant
   "Plays an Event or Operation."

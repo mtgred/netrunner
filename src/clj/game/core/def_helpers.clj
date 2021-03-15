@@ -1,11 +1,12 @@
 (ns game.core.def-helpers
   (:require
-    [game.core.card :refer [get-counters]]
+    [game.core.card :refer [corp? get-card get-counters has-subtype?]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [trash]]
+    [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-prop]]
     [game.core.say :refer [system-msg]]
@@ -143,13 +144,43 @@
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
+(defn make-current-event-handler
+  [title ability]
+  (let [card (server-card title)]
+    (if (has-subtype? card "Current")
+      (let [trash-self {:unregister-once-resolved true
+                        :silent (req true)
+                        :async true
+                        :effect (req
+                                  (let [card (get-card state card)]
+                                    (if (:rfg-instead-of-trashing card)
+                                      (async-rfg state side eid card)
+                                      (trash state side eid card {:unpreventable true :game-trash true}))))}
+            agenda (assoc trash-self :event (if (corp? card) :agenda-stolen :agenda-scored))
+            play-event (assoc trash-self
+                              :event :play-event
+                              :req (req (and (not (same-card? card target))
+                                             (has-subtype? target "Current"))))
+            play-operation (assoc trash-self
+                                  :event :play-operation
+                                  :req (req (and (not (same-card? card target))
+                                                 (has-subtype? target "Current"))))]
+        (update ability :events #(conj (into [] %) agenda play-event play-operation)))
+      ability)))
+
+(defn add-default-abilities
+  [title ability]
+  (->> ability
+       (make-current-event-handler title)
+       (make-recurring-ability)))
+
 (def card-defs-cache (atom {}))
 
 (defmacro defcard
   [title ability]
   `(defmethod ~'defcard-impl ~title [~'_]
-     (if-let [cached-ability# (get card-defs-cache ~title)]
+     (if-let [cached-ability# (get @card-defs-cache ~title)]
        cached-ability#
-       (let [ability# (make-recurring-ability ~ability)]
+       (let [ability# (add-default-abilities ~title ~ability)]
          (swap! card-defs-cache assoc ~title ability#)
          ability#))))

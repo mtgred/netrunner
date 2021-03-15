@@ -203,7 +203,8 @@
     (do-game
       (new-game {:runner {:hand ["Aniccam" "Hacktivist Meeting"]
                           :deck ["Corroder"]}
-                 :corp {:hand ["Scarcity of Resources"]}})
+                 :corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Scarcity of Resources"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
       (play-from-hand state :runner "Hacktivist Meeting")

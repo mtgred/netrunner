@@ -26,7 +26,7 @@
 ;; Helpers for move
 (defn- remove-old-card
   "Removes the old pre-move card from the game state, for use in move"
-  [state side {:keys [zone host] :as card}]
+  [state side {:keys [zone host title] :as card}]
   (doseq [s [:runner :corp]]
     (if host
       (remove-from-host state side card)

@@ -985,7 +985,6 @@
     (unregister-floating-events state nil duration)))
 
 (defn checkpoint
-  "This only does one thing right now, but soon it will hold everything else too"
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
   ([state _ eid {:keys [duration] :as args}]

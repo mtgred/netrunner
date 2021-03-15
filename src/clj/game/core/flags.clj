@@ -5,6 +5,7 @@
             [game.core.card :refer [agenda? condition-counter? corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.effects :refer [any-effects]]
             [game.core.servers :refer [zone->name]]
             [game.core.to-string :refer [card-str]]
             [game.core.toasts :refer [toast]]
@@ -258,7 +259,8 @@
 (defn can-steal?
   "Checks if the runner can steal agendas"
   [state side card]
-  (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
+  (and (not (any-effects state side :cannot-steal true? card))
+       (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
 (defn can-trash?

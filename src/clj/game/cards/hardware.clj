@@ -52,7 +52,8 @@
                  :effect (effect (draw :runner eid 1 nil))}]
     {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
-              (assoc ability :event :runner-trash)]}))
+              (assoc ability :event :runner-trash)
+              (assoc ability :event :game-trash)]}))
 
 (defcard "Archives Interface"
   {:events

@@ -1384,6 +1384,7 @@
       (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
       (play-from-hand state :runner "Scrubbed")
       (run-empty-server state "HQ")
+      (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (= 2 (:agenda-point (get-runner))) "Third steal prevented"))))
 

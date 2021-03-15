@@ -517,16 +517,12 @@
                                       (effect-completed state side eid))))}]})
 
 (defcard "Haarpsichord Studios: Entertainment Unleashed"
-  (let [haarp (fn [state side card]
-                (if (agenda? card)
-                  ((constantly false)
-                   (toast state :runner "Cannot steal due to Haarpsichord Studios." "warning"))
-                  true))]
-    {:events [{:event :agenda-stolen
-               :effect (effect (register-turn-flag! card :can-steal haarp))}]
-     :effect (req (when-not (first-event? state side :agenda-stolen)
-                    (register-turn-flag! state side card :can-steal haarp)))
-     :leave-play (effect (clear-turn-flag! card :can-steal))}))
+  {:constant-effects [{:type :cannot-steal
+                       :value (req (pos? (event-count state side :agenda-stolen)))}]
+   :events [{:event :access
+             :req (req (and (agenda? target)
+                            (pos? (event-count state side :agenda-stolen))))
+             :effect (effect (toast :runner "Cannot steal due to Haarpsichord Studios." "warning"))}]})
 
 (defcard "Haas-Bioroid: Architects of Tomorrow"
   {:events [{:event :pass-ice
