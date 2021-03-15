@@ -1328,6 +1328,11 @@
    :msg "do 1 net damage"
    :effect (effect (damage eid :net 1 {:card card}))})
 
+(defcard "Neurospike"
+  {:async true
+   :msg (msg "do " (:scored-agenda corp-reg 0) " net damage")
+   :effect (effect (damage eid :net (:scored-agenda corp-reg 0) {:card card}))})
+
 (defcard "NEXT Activation Command"
   {:trash-after-resolving false
    :constant-effects [{:type :ice-strength
@@ -1544,6 +1549,21 @@
                        (let [top-5 (take 5 (:deck corp))]
                          (choose-card state top-5))
                        card nil))}))
+
+(defcard "Public Trail"
+  {:req (req (last-turn? state :runner :successful-run))
+   :player :runner
+   :async true
+   :msg (msg "force the Runner to " (decapitalize target))
+   :prompt "Pick one"
+   :choices (req ["Take 1 tag"
+                  (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
+                    "Pay 8 [Credits]")])
+   :effect (req (if (= target "Pay 8 [Credits]")
+                  (wait-for (pay state :runner card :credit 8)
+                            (system-msg state :runner (:msg async-result))
+                            (effect-completed state side eid))
+                  (gain-tags state :corp eid 1)))})
 
 (defcard "Punitive Counterstrike"
   {:trace {:base 5

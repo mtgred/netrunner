@@ -24,6 +24,18 @@
                             :async true
                             :effect (effect (rez eid target {:cost-bonus -3}))}}}]})
 
+(defcard "Anoetic Void"
+  {:events [{:event :successful-run
+             :optional
+             {:prompt "Pay 2 [Credits] and trash 2 cards from HQ to end the run?"
+              :req (req (and (can-pay? state side eid card nil [:credit 2 :trash-from-hand 2])
+                             this-server))
+              :yes-ability
+              {:async true
+               :msg "end the run"
+               :cost [:credit 2 :trash-from-hand 2]
+               :effect (req (end-run state side eid card))}}}]})
+
 (defcard "Arella Salvatore"
   (let [select-ability
         {:prompt "Select a card to install with Arella Salvatore"

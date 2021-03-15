@@ -3987,6 +3987,25 @@
       (take-credits state :corp)
       (is (empty? (:prompt (get-runner))) "OOTA prompt did not come up"))))
 
+(deftest overclock
+  ;; Overclock - Gain 5 temporary credits
+  (do-game
+    (new-game {:corp {:deck ["Eve Campaign"]}
+               :runner {:deck ["Overclock"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Overclock")
+    (click-prompt state :runner "HQ")
+    (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+    (run-continue state)
+    (is (= 4 (:credit (get-runner))))
+    (click-prompt state :runner "Pay 5 [Credits] to trash") ; choose to trash Eve
+    (dotimes [_ 5]
+      (click-card state :runner "Overclock"))
+    (is (and (zero? (count (:hand (get-corp))))
+             (= 1 (count (:discard (get-corp)))))
+        "Corp hand empty and Eve in Archives")
+    (is (= 4 (:credit (get-runner))))))
+
 (deftest paper-tripping
   ;; Paper Tripping
   (do-game

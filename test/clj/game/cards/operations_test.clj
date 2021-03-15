@@ -2398,6 +2398,24 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
+(deftest neurospike
+  ;; Neurospike
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 5)]}
+               :corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Neurospike" 2) "Obokata Protocol"]
+                      :credits 50
+                      :click 8}})
+    (play-and-score state "Obokata Protocol")
+    (changes-val-macro
+      -3 (count (:hand (get-runner)))
+      "Runner took 3 net damage"
+      (play-from-hand state :corp "Neurospike"))
+    (play-from-hand state :corp "Neurospike")
+    (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+    (is (= :corp (:winner @state)) "Corp wins")
+    (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
 (deftest next-activation-command
   ;; NEXT Activation Command
   (testing "Get trashed at start of next Corp turn"
@@ -2791,6 +2809,28 @@
     (click-prompt state :corp "None")
     (is (nil? (:title (get-content state :remote4 0)))
         "Nothing is installed by Psychokinesis")))
+
+(deftest public-trail
+  ;; Public Trail
+  (testing "Basic Test"
+  (do-game
+    (new-game {:corp {:hand [(qty "Public Trail" 2)]}})
+    (play-from-hand state :corp "Public Trail")
+    (is (nil? (get-prompt state :corp)))
+    (is (not (is-tagged? state)))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Public Trail")
+    (is (= 8 (:credit (get-runner))))
+    (is (= ["Take 1 tag" "Pay 8 [Credits]"] (prompt-buttons :runner)))
+    (click-prompt state :runner "Pay 8 [Credits]")
+    (is (zero? (:credit (get-runner))))
+    (is (not (is-tagged? state)))
+    (play-from-hand state :corp "Public Trail")
+    (click-prompt state :runner "Take 1 tag")
+    (is (is-tagged? state)))))
 
 (deftest punitive-counterstrike
   ;; Punitive Counterstrike - deal meat damage equal to printed agenda points

@@ -1142,6 +1142,24 @@
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 
+(defcard "NBN: Reality Plus"
+  {:events [{:event :runner-gain-tag
+             :optional
+             {:req (req (first-event? state :runner :runner-gain-tag))
+              :player :corp
+              :prompt "Do you want to gain 2 [Credits] or draw 2 cards"
+              :autoresolve (get-autoresolve :auto-virtual-frontiers)
+              :yes-ability
+              {:async true
+               :waiting-prompt "Corp to use NBN: Reality Plus"
+               :prompt "Select option"
+               :player :corp
+               :choices ["Gain 2 [Credits]" "Draw 2 cards"]
+               :effect (req (if (= target "Gain 2 [Credits]")
+                              (gain-credits state :corp eid 2)
+                              (draw state :corp eid 2 nil)))}}}]
+   :abilities [(set-autoresolve :auto-virtual-frontiers "Reality Plus")]})
+
 (defcard "NBN: The World is Yours*"
   {:constant-effects [(corp-hand-size+ 1)]})
 
@@ -1653,3 +1671,18 @@
              :effect (effect (move :runner (last (:discard runner)) :deck)
                              (shuffle! :runner :deck)
                              (trigger-event :searched-stack nil))}]})
+
+(defcard "Zahya Sadeghi: Versatile Smuggler"
+  {:events [{:event :run-ends
+             :req (req (and (or (= :hq (target-server context))
+                                (= :rd (target-server context)))
+                            (pos? (total-cards-accessed context))))
+             :optional
+             {:prompt "Gain 1 [Credits] for each card you accessed?"
+              :async true
+              :once :per-turn
+              :yes-ability
+              {:msg (msg "gain " (total-cards-accessed context) "[Credits]")
+               :once :per-turn
+               :async true
+               :effect (req (gain-credits state :runner eid (total-cards-accessed context)))}}}]})
