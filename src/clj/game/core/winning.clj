@@ -1,9 +1,10 @@
 (ns game.core.winning
   (:require
     [game.core.effects :refer [any-effects]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg system-say]]
     [game.utils :refer [dissoc-in]]
     [jinteki.utils :refer [other-side]]
+    [cond-plus.core :refer [cond+]]
     [clj-time.core :as t]))
 
 (defn win
@@ -24,7 +25,21 @@
              :reason reason
              :end-time (java.util.Date.)
              :winning-deck-id (get-in @state [side :deck-id])
-             :losing-deck-id (get-in @state [(other-side side) :deck-id])))))
+             :losing-deck-id (get-in @state [(other-side side) :deck-id]))
+      true)))
+
+(defn tie
+  "Records a tie reason for statistics."
+  [state reason]
+  (when-not (:winner @state)
+    (let [started (get-in @state [:stats :time :started])
+          now (t/now)]
+      (system-say state nil "The game is a tie!")
+      (play-sfx state nil "game-end")
+      (swap! state assoc-in [:stats :time :ended] now)
+      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
+      (swap! state assoc :reason reason :end-time (java.util.Date.))
+      true)))
 
 (defn win-decked
   "Records a win via decking the corp."
@@ -56,9 +71,22 @@
     (swap! state dissoc-in [:corp :clear-win])
     (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
 
-(defn check-winner
-  [state _]
-  (doseq [side [:corp :runner]]
-    (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-               (not (any-effects state side :cannot-win-on-points)))
-      (win state side "Agenda"))))
+(defn side-win
+  [state side]
+  (<= (get-in @state [side :agenda-point-req]) (get-in @state [side :agenda-point])))
+
+(defn check-win-by-agenda
+  ([state] (check-win-by-agenda state nil))
+  ([state _]
+   (let [corp-win (side-win state :corp)
+         blocked-corp (any-effects state :corp :cannot-win-on-points)
+         runner-win (side-win state :runner)
+         blocked-runner (any-effects state :runner :cannot-win-on-points)]
+     (cond+
+       [(and corp-win (not blocked-corp)
+             runner-win (not blocked-runner))
+        (tie state "Tie")]
+       [(and corp-win (not blocked-corp))
+        (win state :corp "Agenda")]
+       [(and runner-win (not blocked-runner))
+        (win state :runner "Agenda")]))))

@@ -5,7 +5,7 @@
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [is-remote? zones->sorted-names]]
             [game.core.state :refer [make-rid]]
-            [game.utils :refer [to-keyword]]))
+            [game.utils :refer [dissoc-in to-keyword]]))
 
 (defn get-all-cards
   "Every single card in the game. All cards in the hand, deck, discard, play-area,
@@ -164,3 +164,11 @@
   [state card]
   (let [z (:zone card)]
     (get-in @state [:corp :servers (second z)])))
+
+(defn clear-empty-remotes
+  [state]
+  (doseq [remote (get-remotes state)]
+    (let [zone [:corp :servers (first remote)]]
+      (when (and (empty? (get-in @state (conj zone :content)))
+                 (empty? (get-in @state (conj zone :ices))))
+        (swap! state dissoc-in zone)))))

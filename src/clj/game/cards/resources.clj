@@ -2588,10 +2588,10 @@
              :effect (req (if (<= 2 (get-counters card :power))
                             (do (move state side card :rfg)
                                 (system-msg state side "removes The Black File from the game")
-                                (check-winner state side))
+                                (check-win-by-agenda state side))
                             (add-counter state side card :power 1)))}]
-   :on-trash {:effect (effect (check-winner))}
-   :leave-play (effect (check-winner))})
+   :on-trash {:effect (effect (check-win-by-agenda))}
+   :leave-play (effect (check-win-by-agenda))})
 
 (defcard "The Class Act"
   (let [draw-ability {:req (req (= :this-turn (installed? card)))

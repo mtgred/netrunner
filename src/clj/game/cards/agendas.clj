@@ -579,7 +579,7 @@
                 :msg "place 1 agenda counter on Domestic Sleepers"
                 :effect (effect (add-counter card :agenda 1)
                                 (update-all-agenda-points)
-                                (check-winner))}]})
+                                (check-win-by-agenda))}]})
 
 (defcard "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
@@ -963,7 +963,7 @@
               :req (req tagged)
               :effect (effect (add-counter card :agenda 1)
                               (update-all-agenda-points)
-                              (check-winner))}
+                              (check-win-by-agenda))}
    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 2 3))})
 
 (defcard "Medical Breakthrough"
@@ -1183,7 +1183,7 @@
               :effect (req (let [n (quot (- (get-counters card :advancement) 3) 2)]
                              (add-counter state side card :agenda n)
                              (update-all-agenda-points state side)
-                             (check-winner state side)))}})
+                             (check-win-by-agenda state side)))}})
 
 (defcard "Project Kusanagi"
   {:on-score {:silent (req true)
@@ -1231,7 +1231,7 @@
                                 (system-msg state :runner
                                             (str "gains " (quantify points "agenda point")
                                                  " from " (:title card)))))
-                            (check-winner state side))}]
+                            (check-win-by-agenda state side))}]
      :flags {:has-events-when-stolen true}}))
 
 (defcard "Project Vitruvius"

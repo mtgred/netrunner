@@ -21,7 +21,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -604,7 +604,7 @@
                                       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                       (swap! state dissoc-in [:corp :disable-id])
                                       (update-all-agenda-points state)
-                                      (check-winner state side)
+                                      (check-win-by-agenda state side)
                                       (play-sfx state side "agenda-score")))}}
                      c))
                  (effect-completed state side eid))))))

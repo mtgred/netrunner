@@ -17,7 +17,7 @@
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.utils :refer [quantify same-card?]]
     [game.macros :refer [continue-ability req wait-for]]
     [jinteki.utils :refer [add-cost-to-label]]
@@ -186,7 +186,7 @@
                                       (swap! state update-in [:runner :register :stole-agenda]
                                              #(+ (or % 0) (:agendapoints c 0)))
                                       (update-all-agenda-points state side)
-                                      (check-winner state side)
+                                      (check-win-by-agenda state side)
                                       (play-sfx state side "agenda-steal")
                                       (when (:run @state)
                                         (swap! state assoc-in [:run :did-steal] true))

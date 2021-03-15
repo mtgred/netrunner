@@ -17,7 +17,7 @@
     [game.core.say :refer [enforce-msg system-msg system-say]]
     [game.core.servers :refer [is-remote? type->rig-zone]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -497,7 +497,7 @@
         (deactivate state :corp new-stolen)))
     ;; Update agenda points
     (update-all-agenda-points state side)
-    (check-winner state side)))
+    (check-win-by-agenda state side)))
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
@@ -511,11 +511,11 @@
                  (wait-for (resolve-ability state side (make-eid state eid) (:swapped (card-def card)) card nil)
                            (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
                                      (update-all-agenda-points state side)
-                                     (check-winner state side)
+                                     (check-win-by-agenda state side)
                                      (effect-completed state side eid))))
        (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
                  (update-all-agenda-points state side)
-                 (check-winner state side)
+                 (check-win-by-agenda state side)
                  (effect-completed state side eid))))))
 
 (defn forfeit
@@ -534,7 +534,7 @@
        (system-msg state side (str "forfeits " (:title card))))
      (move state (to-keyword (:side card)) card :rfg)
      (update-all-agenda-points state side)
-     (check-winner state side)
+     (check-win-by-agenda state side)
      (trigger-event-sync state side eid (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) card))))
 
 (defn flip-facedown

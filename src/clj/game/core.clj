@@ -731,7 +731,7 @@
    number-of-virus-counters]
 
   [game.core.winning
-   check-winner
+   check-win-by-agenda
    clear-win
    concede
    flatline

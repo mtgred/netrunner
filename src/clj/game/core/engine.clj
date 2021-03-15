@@ -4,14 +4,16 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
     [clj-uuid :as uuid]
+    [game.core.board :refer [clear-empty-remotes]]
     [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [unregister-floating-effects]]
+    [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
     [game.core.prompts :refer [add-to-prompt-queue clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
     [jinteki.utils :refer [other-side]]))
@@ -941,13 +943,12 @@
   [handlers player-side]
   (filterv #(is-player player-side %) handlers))
 
-(defn trigger-queued-events
-  [state _ eid args]
+(defn- mark-pending-abilities
+  [state eid args]
   (let [event-maps (:queued-events @state)]
     (doseq [[event context-map] event-maps]
       (log-event state event context-map))
-    (if (empty? event-maps)
-      (effect-completed state nil eid)
+    (when-not (empty? event-maps)
       (let [queued-events (gather-queued-event-handlers state event-maps)
             handlers (create-handlers state eid queued-events)
             active-player (:active-player @state)
@@ -959,13 +960,64 @@
                :events (->> (:events @state)
                             (remove #(= :pending (:duration %)))
                             (into [])))
-        (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
-        (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
-                  (clear-wait-prompt state opponent)
-                  (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
-                  (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
-                            (clear-wait-prompt state active-player)
-                            (effect-completed state nil eid)))))))
+        [active-player-handlers opponent-handlers]))))
+
+(defn- trigger-pending-abilities
+  [state eid active-player-handlers opponent-handlers args]
+  (if (or (seq active-player-handlers)
+          (seq opponent-handlers))
+    (let [active-player (:active-player @state)
+          opponent (other-side active-player)]
+      (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
+      (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
+                (clear-wait-prompt state opponent)
+                (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
+                (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
+                          (clear-wait-prompt state active-player)
+                          (effect-completed state nil eid))))
+    (effect-completed state nil eid)))
+
+;; CHECKPOINT
+(defn unregister-expired-durations
+  [state duration]
+  (when duration
+    (unregister-floating-effects state nil duration)
+    (unregister-floating-events state nil duration)))
+
+(defn checkpoint
+  "This only does one thing right now, but soon it will hold everything else too"
+  ([state eid] (checkpoint state nil eid nil))
+  ([state _ eid] (checkpoint state nil eid nil))
+  ([state _ eid {:keys [duration] :as args}]
+   ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
+   (let [[active-player-handlers opponent-handlers] (mark-pending-abilities state eid args)]
+     ;; b: Any ability with a duration that has passed is removed from the game state
+     (unregister-expired-durations state duration)
+     ;; c: Check winning or tying by agenda points
+     (check-win-by-agenda state)
+     ;; d: uniqueness check
+     ;; unimplemented
+     ;; e: restrictions on card abilities or game rules, MU
+     ;; unimplemented
+     ;; f: stuff on agendas moved from score zone
+     ;; unimplemented
+     ;; g: stuff on installed cards that were trashed
+     ;; unimplemented
+     ;; h: empty servers
+     (clear-empty-remotes state)
+     ;; i: card counters/agendas become cards again
+     ;; unimplemented
+     ;; j: counters in discard are returned to the bank
+     ;; unimplemented
+     ;; 10.3.2: reaction window
+     (trigger-pending-abilities state eid active-player-handlers opponent-handlers args))))
+
+(defn end-of-phase-checkpoint
+  ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
+  ([state _ eid event context]
+   (when event
+     (queue-event state event context))
+   (checkpoint state nil eid {:duration event})))
 
 ;; PAYMENT
 
@@ -1004,26 +1056,3 @@
                                                    (assoc acc (:type cost) cost))
                                                  {}))}))))
       (complete-with-result state side eid nil))))
-
-;; CHECKPOINT
-(defn unregister-expired-durations
-  [state duration]
-  (when duration
-    (unregister-floating-effects state nil duration)
-    (unregister-floating-events state nil duration)))
-
-(defn checkpoint
-  "This only does one thing right now, but soon it will hold everything else too"
-  ([state eid] (checkpoint state nil eid nil))
-  ([state _ eid] (checkpoint state nil eid nil))
-  ([state _ eid {:keys [duration] :as args}]
-   (wait-for (trigger-queued-events state nil (make-eid state eid) args)
-             (unregister-expired-durations state duration)
-             (effect-completed state nil eid))))
-
-(defn end-of-phase-checkpoint
-  ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
-  ([state _ eid event context]
-   (when event
-     (queue-event state event context))
-   (checkpoint state nil eid {:duration event})))
