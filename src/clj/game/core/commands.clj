@@ -114,9 +114,10 @@
 
 (defn rez-all
   [state side eid cards]
-  (when-let [c (first cards)]
+  (if-let [c (first cards)]
     (wait-for (rez state side c {:ignore-cost :all-costs :force true})
-              (rez-all state side eid (next cards)))))
+              (rez-all state side eid (next cards)))
+    (effect-completed state side eid)))
 
 (defn command-rezall
   [state side]
@@ -126,8 +127,7 @@
      {:prompt "Rez all cards and turn cards in archives faceup?"
       :yes-ability {:async true
                     :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                                 (rez-all state side eid (remove rezzed? (all-installed state side)))
-                                 (effect-completed state side eid))}}}
+                                 (rez-all state side eid (remove rezzed? (all-installed state side))))}}}
     (map->Card {:title "/rez-all command"}) nil))
 
 (defn command-roll [state side value]
