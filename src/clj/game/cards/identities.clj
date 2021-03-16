@@ -362,15 +362,15 @@
                                        (do (system-msg state :corp "flipped their identity to Earth Station: SEA Headquarters")
                                            (assoc card
                                                   :flipped false
-                                                  :face :1
+                                                  :face :front
                                                   :code (subs (:code card) 0 5)))
                                        (assoc card
                                               :flipped true
-                                              :face :2
+                                              :face :back
                                               :code (str (subs (:code card) 0 5) "flip")))))]
     {:events [{:event :pre-first-turn
                :req (req (= side :corp))
-               :effect (effect (update! (assoc card :flipped false :face :1)))}
+               :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :successful-run
                :req (req (and (= :hq (target-server context))
                               (:flipped card)))
@@ -624,13 +624,13 @@
   (let [flip-effect (req (update! state side (if (:flipped card)
                                                (assoc card
                                                       :flipped false
-                                                      :face :1
+                                                      :face :front
                                                       :code (subs (:code card) 0 5)
                                                       :subtype "Natural"
                                                       :subtypes ["Natural"])
                                                (assoc card
                                                       :flipped true
-                                                      :face :2
+                                                      :face :back
                                                       :code (str (subs (:code card) 0 5) "flip")
                                                       :subtype "Digital"
                                                       :subtypes ["Digital"])))
@@ -638,7 +638,7 @@
     {:constant-effects [(link+ (req (:flipped card)) 1)]
      :events [{:event :pre-first-turn
                :req (req (= side :runner))
-               :effect (effect (update! (assoc card :flipped false :face :1)))}
+               :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :runner-turn-ends
                :interactive (req true)
                :async true
@@ -772,7 +772,7 @@
              :req (req (= side :corp))
              :prompt "Choose a copy of Jinteki Biotech to use this game"
              :choices ["The Brewery" "The Tank" "The Greenhouse"]
-             :effect (effect (update! (assoc card :biotech-target target :face :1))
+             :effect (effect (update! (assoc card :biotech-target target :face :front))
                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}]
    :abilities [{:label "Check chosen flip identity"
                 :effect (req (case (:biotech-target card)
@@ -793,17 +793,17 @@
                                (case flip
                                  "The Brewery"
                                  (do (system-msg state side "uses The Brewery to do 2 net damage")
-                                     (update! state side (assoc card :code "brewery" :face :2))
+                                     (update! state side (assoc card :code "brewery" :face :brewery))
                                      (damage state side eid :net 2 {:card card}))
                                  "The Tank"
                                  (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
                                      (shuffle-into-deck state side :discard)
-                                     (update! state side (assoc card :code "tank" :face :3))
+                                     (update! state side (assoc card :code "tank" :face :tank))
                                      (effect-completed state side eid))
                                  "The Greenhouse"
                                  (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
                                                                  "on a card that can be advanced"))
-                                     (update! state side (assoc card :code "greenhouse" :face :4))
+                                     (update! state side (assoc card :code "greenhouse" :face :greenhouse))
                                      (continue-ability
                                        state side
                                        {:prompt "Select a card that can be advanced"
@@ -1519,8 +1519,8 @@
                        :value [:credit -2]}]
    :abilities [{:cost [:click 1]
                 :effect (req (if (:sync-flipped card)
-                               (update! state side (-> card (assoc :sync-flipped false :face :1 :code "09001")))
-                               (update! state side (-> card (assoc :sync-flipped true :face :2 :code "sync")))))
+                               (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
+                               (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
                 :msg (msg "flip their ID")}]})
 

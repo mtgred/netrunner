@@ -325,4 +325,4 @@
   (cond
     (:images card) (:images card)
     (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
-    :else (get-in card [:faces :1 :images])))
+    :else (get-in card [:faces :front :images])))
