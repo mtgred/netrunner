@@ -1856,7 +1856,7 @@
       (play-from-hand state :runner "Employee Strike")
       (take-credits state :runner)
       (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
-  (testing "vs PU/Philotic - test for #2688"
+  (testing "vs PU/Philotic"
     (do-game
       (new-game {:corp {:id "Jinteki: Potential Unleashed"
                         :deck ["Philotic Entanglement" (qty "Braintrust" 2)]}
@@ -1871,9 +1871,12 @@
       (play-from-hand state :runner "Employee Strike")
       (take-credits state :runner)
       (play-from-hand state :corp "Philotic Entanglement" "New remote")
-      (score-agenda state :corp (get-content state :remote3 0))
-      (is (= 3 (count (:discard (get-runner))))
-          "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill"))))
+      (changes-val-macro
+        -1 (count (:deck (get-runner)))
+        "PU trashes top card of the stack"
+        (score-agenda state :corp (get-content state :remote3 0)))
+      (is (= 4 (count (:discard (get-runner))))
+          "Discard is 4 cards - 2 from Philotic, 1 EStrike, 1 from PU mill"))))
 
 (deftest en-passant
   ;; En Passant
@@ -4016,14 +4019,11 @@
     (do-game
       (new-game {:runner {:deck ["Peace in Our Time"]}
                  :corp {:hand ["Hostile Takeover"]}})
-      (play-from-hand state :corp "Hostile Takeover" "New remote")
-      (let [hostile (get-content state :remote1 0)]
-        (advance state hostile 2)
-        (core/score state :corp {:card (refresh hostile)})
-        (take-credits state :corp)
-        (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
-        (play-from-hand state :runner "Peace in Our Time")
-        (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits")))))
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+      (play-from-hand state :runner "Peace in Our Time")
+      (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits"))))
 
 (deftest planned-assault
   ;; Planned Assault
@@ -5514,16 +5514,16 @@
       (take-credits state :runner)
       (core/gain state :corp :click 2)
       (advance state tg 3)
-      (core/score state :corp {:card (refresh tg)})
+      (score state :corp (refresh tg))
       (is (= 2 (:agenda-point (get-corp))) "Last TGTBT not scored")
       (is (= 1 (count (get-content state :remote3))))
       (advance state (refresh tg) 1)
       (is (= 4 (get-counters (refresh tg) :advancement)))
-      (core/score state :corp {:card (refresh tg)})
+      (score state :corp (refresh tg))
       (is (= 2 (:agenda-point (get-corp))) "Not scored with 4 advancements")
       (advance state (refresh tg) 1)
       (is (= 5 (get-counters (refresh tg) :advancement)))
-      (core/score state :corp {:card (refresh tg)})
+      (score state :corp (refresh tg))
       (is (= 3 (:agenda-point (get-corp))) "Took 5 advancements to score"))))
 
 (deftest uninstall

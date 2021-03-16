@@ -190,7 +190,8 @@
   {:events [{:event :agenda-stolen
              :prompt "Take 1 tag or suffer 2 meat damage?"
              :async true
-             :choices ["1 tag" "2 meat damage"] :player :runner
+             :choices ["1 tag" "2 meat damage"]
+             :player :runner
              :msg "make the Runner take 1 tag or suffer 2 meat damage"
              :effect (req (if (= target "1 tag")
                             (do (system-msg state side "chooses to take 1 tag")
@@ -259,21 +260,24 @@
                             card nil))}]})
 
 (defcard "Azmari EdTech: Shaping the Future"
-  (let [check-type {:req (req (is-type? target (:az-target card)))
-                    :async true
-                    :effect (effect (gain-credits :corp eid 2))
-                    :once :per-turn
-                    :msg (msg "gain 2 [Credits] from " (:az-target card))}]
-    {:events [{:event :corp-turn-ends
-               :prompt "Name a Runner card type"
-               :choices ["Event" "Resource" "Program" "Hardware"]
-               :effect (effect (update! (assoc card :az-target target))
-                               (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
-              (assoc check-type
-                     :event :runner-install
-                     :req (req (and (is-type? target (:az-target card))
-                                    (not (facedown? target)))))
-              (assoc check-type :event :play-event)]}))
+  {:events [{:event :corp-turn-ends
+             :prompt "Name a Runner card type"
+             :choices ["Event" "Resource" "Program" "Hardware"]
+             :effect (effect (update! (assoc card :az-target target))
+                             (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
+            {:event :runner-install
+             :req (req (and (is-type? target (:az-target card))
+                            (not (facedown? target))))
+             :async true
+             :effect (effect (gain-credits :corp eid 2))
+             :once :per-turn
+             :msg (msg "gain 2 [Credits] from " (:az-target card))}
+            {:event :play-event
+             :req (req (is-type? (:card context) (:az-target card)))
+             :async true
+             :effect (effect (gain-credits :corp eid 2))
+             :once :per-turn
+             :msg (msg "gain 2 [Credits] from " (:az-target card))}]})
 
 (defcard "Az McCaffrey: Mechanical Prodigy"
   ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
@@ -900,8 +904,8 @@
 
 (defcard "Ken \"Express\" Tenma: Disappeared Clone"
   {:events [{:event :play-event
-             :req (req (and (has-subtype? target "Run")
-                            (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
+             :req (req (and (has-subtype? (:card context) "Run")
+                            (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
@@ -1171,7 +1175,7 @@
                                                     (or (in-hand? %)
                                                         (in-discard? %)))}
                               :msg (msg "play a current from " (name-zone "Corp" (get-zone target)))
-                              :effect (effect (play-instant eid target nil))}}}]
+                              :effect (effect (play-instant eid target))}}}]
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)]}))
 
@@ -1582,8 +1586,8 @@
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
-             :msg (msg "add 1 agenda counter to " (:title target))
-             :effect (effect (add-counter (get-card state target) :agenda 1))}]})
+             :msg (msg "add 1 agenda counter to " (:title (:card context)))
+             :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"
   {:events [{:event :pre-start-game
@@ -1613,7 +1617,7 @@
 
 (defcard "Weyland Consortium: Building a Better World"
   {:events [{:event :play-operation
-             :req (req (has-subtype? target "Transaction"))
+             :req (req (has-subtype? (:card context) "Transaction"))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})

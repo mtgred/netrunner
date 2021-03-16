@@ -530,7 +530,6 @@
    mill
    move
    move-zone
-   remove-old-current
    swap-agendas
    swap-cards
    swap-ice

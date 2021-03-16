@@ -79,7 +79,7 @@
 
 (defcard "Aaron Marrón"
   (let [am {:effect (effect (add-counter card :power 2)
-                            (system-msg :runner (str "places 2 power counters on Aaron Marrón")))}]
+                            (system-msg :runner "places 2 power counters on Aaron Marrón"))}]
     {:abilities [{:cost [:power 1]
                   :msg "remove 1 tag and draw 1 card"
                   :async true
@@ -1201,13 +1201,13 @@
 
 (defcard "Human First"
   {:events [{:event :agenda-scored
-             :msg (msg "gain " (get-agenda-points target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points (:card context)) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points target)))}
+             :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}
             {:event :agenda-stolen
-             :msg (msg "gain " (get-agenda-points target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points (:card context)) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points target)))}]})
+             :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}]})
 
 (defcard "Hunting Grounds"
   (let [ability
@@ -2445,8 +2445,8 @@
                 :msg (msg "draw " (count-bad-pub state) " cards")}]
    :events [{:event :play-operation
              :optional
-             {:req (req (or (has-subtype? target "Black Ops")
-                            (has-subtype? target "Gray Ops")))
+             {:req (req (or (has-subtype? (:card context) "Black Ops")
+                            (has-subtype? (:card context) "Gray Ops")))
               :waiting-prompt "Runner to use Tallie Perrault"
               :prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
               :player :runner
@@ -2508,12 +2508,9 @@
   {:constant-effects [(link+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
-             :async true
-             :msg "force the Corp to initiate a trace"
-             :label "Trace 1 - If unsuccessful, take 1 bad publicity"
              :trace {:base 1
-                     :req (req (or (has-subtype? target "Initiative")
-                                   (has-subtype? target "Security")))
+                     :req (req (or (has-subtype? (:card context) "Initiative")
+                                   (has-subtype? (:card context) "Security")))
                      :unsuccessful
                      {:effect (effect (gain-bad-publicity :corp 1)
                                       (system-msg :corp (str "takes 1 bad publicity")))}}}]})

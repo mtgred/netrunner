@@ -40,7 +40,7 @@
                                                    (card-str state inst-target) ", ignoring all costs"))
                                   (effect-completed state side eid))))}]
     {:events [{:event :agenda-scored
-               :req (req (= (:previous-zone target) (get-zone card)))
+               :req (req (= (:previous-zone (:card context)) (get-zone card)))
                :interactive (req (some corp-installable-type? (:hand corp)))
                :silent (req (not-any? corp-installable-type? (:hand corp)))
                :async true

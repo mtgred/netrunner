@@ -2741,7 +2741,7 @@
           atlas (get-content state :remote2 0)]
       (rez state :corp mark)
       (advance state atlas 5)
-      (core/score state :corp {:card (refresh atlas)}))
+      (score state :corp (refresh atlas)))
     (let [mark (get-content state :remote1 0)
           scored-atlas (get-scored state :corp 0)
           credits (:credit (get-corp))]
@@ -3226,11 +3226,11 @@
       (click-card state :corp (refresh fif))
       (is (zero? (:click (get-corp))) "Spent 2 clicks using PAD Factory twice")
       (is (= 2 (get-counters (refresh fif) :advancement)) "Agenda has 2 advancements")
-      (core/score state :corp {:card (refresh fif)})
+      (score state :corp (refresh fif))
       (is (empty? (:scored (get-corp))) "Prevented from scoring this turn")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/score state :corp {:card (refresh fif)})
+      (score state :corp (refresh fif))
       (is (= 1 (count (:scored (get-corp)))) "Scored agenda"))))
 
 (deftest palana-agroplex
@@ -4614,12 +4614,12 @@
       (click-card state :corp (get-content state :remote1 1))
       (card-ability state :corp (second (:scored (get-corp))) 0)
       (click-card state :corp (get-content state :remote1 1))
-      (core/score state :corp {:card (get-content state :remote1 1)})
+      (score state :corp (get-content state :remote1 1))
       (click-card state :corp (find-card "Breaking News" (:hand (get-corp))))
       (click-prompt state :corp "Server 1")
       (card-ability state :corp (second (next (:scored (get-corp)))) 0)
       (click-card state :corp (get-content state :remote1 1))
-      (core/score state :corp {:card (get-content state :remote1 1)})
+      (score state :corp (get-content state :remote1 1))
       (click-prompt state :corp "Done")
       (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn"))))
 

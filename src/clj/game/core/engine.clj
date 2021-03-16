@@ -5,9 +5,9 @@
     [clojure.string :as string]
     [clj-uuid :as uuid]
     [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
+    [game.core.card :refer [active? facedown? get-card get-cid has-subtype? installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects unregister-floating-effects]]
+    [game.core.effects :refer [any-effects effect-pred get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
     [game.core.prompts :refer [add-to-prompt-queue clear-wait-prompt show-prompt show-select show-wait-prompt]]
@@ -826,7 +826,7 @@
   ([state event] (queue-event state event nil))
   ([state event context-map]
    (when (keyword? event)
-     (swap! state update-in [:queued-events event] conj context-map))))
+     (swap! state update-in [:queued-events event] conj (assoc context-map :event event)))))
 
 (defn make-pending-event
   [state event card ability]
@@ -857,15 +857,16 @@
                 :context [context]})))))
 
 (defn- create-handlers
-  [state eid queued-events]
-  (->> queued-events
+  [state eid event-maps]
+  (->> (gather-queued-event-handlers state event-maps)
        (mapcat create-instances)
        (filter (fn [{:keys [handler context]}]
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
-       (sort-by (complement #(is-active-player state (:handler %))))))
+       (sort-by (complement #(is-active-player state (:handler %))))
+       (seq)))
 
 (defn- trigger-queued-event-player
   [state side eid handlers {:keys [cancel-fn] :as args}]
@@ -949,25 +950,22 @@
     (doseq [[event context-map] event-maps]
       (log-event state event context-map))
     (when-not (empty? event-maps)
-      (let [queued-events (gather-queued-event-handlers state event-maps)
-            handlers (create-handlers state eid queued-events)
-            active-player (:active-player @state)
-            opponent (other-side active-player)
-            active-player-handlers (filter-handlers handlers active-player)
-            opponent-handlers (filter-handlers handlers opponent)]
+      (let [handlers (create-handlers state eid event-maps)]
         (swap! state assoc
                :queued-events {}
                :events (->> (:events @state)
                             (remove #(= :pending (:duration %)))
                             (into [])))
-        [active-player-handlers opponent-handlers]))))
+        {:handlers handlers
+         :context-maps (apply concat (vals event-maps))}))))
 
 (defn- trigger-pending-abilities
-  [state eid active-player-handlers opponent-handlers args]
-  (if (or (seq active-player-handlers)
-          (seq opponent-handlers))
+  [state eid handlers args]
+  (if handlers
     (let [active-player (:active-player @state)
-          opponent (other-side active-player)]
+          opponent (other-side active-player)
+          active-player-handlers (filter-handlers handlers active-player)
+          opponent-handlers (filter-handlers handlers opponent)]
       (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
       (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
                 (clear-wait-prompt state opponent)
@@ -978,38 +976,54 @@
     (effect-completed state nil eid)))
 
 ;; CHECKPOINT
+
+(defn trash-when-expired
+  [state _ eid context-maps]
+  (letfn [(internal-trash-cards
+            [state _ eid maps]
+            (if (seq maps)
+              (let [{:keys [card value]} (first maps)]
+                (wait-for (value state nil (make-eid state eid) card)
+                          (internal-trash-cards state nil eid (next maps))))
+              (effect-completed state nil eid)))]
+    (->> (get-effect-maps state nil eid :trash-when-expired context-maps)
+         (internal-trash-cards state nil eid))))
+
 (defn unregister-expired-durations
-  [state duration]
-  (when duration
-    (unregister-floating-effects state nil duration)
-    (unregister-floating-events state nil duration)))
+  [state _ eid duration context-maps]
+  (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
+            (if duration
+              (unregister-floating-effects state nil duration)
+              (unregister-floating-events state nil duration))
+            (effect-completed state nil eid)))
 
 (defn checkpoint
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
   ([state _ eid {:keys [duration] :as args}]
    ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
-   (let [[active-player-handlers opponent-handlers] (mark-pending-abilities state eid args)]
+   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
      ;; b: Any ability with a duration that has passed is removed from the game state
-     (unregister-expired-durations state duration)
-     ;; c: Check winning or tying by agenda points
-     (check-win-by-agenda state)
-     ;; d: uniqueness check
-     ;; unimplemented
-     ;; e: restrictions on card abilities or game rules, MU
-     ;; unimplemented
-     ;; f: stuff on agendas moved from score zone
-     ;; unimplemented
-     ;; g: stuff on installed cards that were trashed
-     ;; unimplemented
-     ;; h: empty servers
-     (clear-empty-remotes state)
-     ;; i: card counters/agendas become cards again
-     ;; unimplemented
-     ;; j: counters in discard are returned to the bank
-     ;; unimplemented
-     ;; 10.3.2: reaction window
-     (trigger-pending-abilities state eid active-player-handlers opponent-handlers args))))
+     (wait-for
+       (unregister-expired-durations state nil (make-eid state eid) duration context-maps)
+       ;; c: Check winning or tying by agenda points
+       (check-win-by-agenda state)
+       ;; d: uniqueness check
+       ;; unimplemented
+       ;; e: restrictions on card abilities or game rules, MU
+       ;; unimplemented
+       ;; f: stuff on agendas moved from score zone
+       ;; unimplemented
+       ;; g: stuff on installed cards that were trashed
+       ;; unimplemented
+       ;; h: empty servers
+       (clear-empty-remotes state)
+       ;; i: card counters/agendas become cards again
+       ;; unimplemented
+       ;; j: counters in discard are returned to the bank
+       ;; unimplemented
+       ;; 10.3.2: reaction window
+       (trigger-pending-abilities state eid handlers args)))))
 
 (defn end-of-phase-checkpoint
   ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))

@@ -355,7 +355,7 @@
                  (swap! state assoc-in [side :register :trashed-card] true))
                ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                (swap! state assoc-in [:corp :discard]
-                      (vec (sort-by #(if (:seen %) -1 (rand-int 30)) (get-in @state [:corp :discard]))))
+                      (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
                (let [;; The trash event will be determined by who is performing the
                      ;; trash. `:game-trash` in this case refers to when a checkpoint
                      ;; sees a card has been trashed and it has hosted cards, so it
@@ -394,21 +394,6 @@
   [state from-side eid to-side n]
   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
     (trash-cards state from-side eid cards {:unpreventable true})))
-
-(defn remove-old-current
-  "Trashes or RFG the existing current when a new current is played, or an agenda is stolen / scored"
-  [state side eid current-side]
-  (if-let [current (first (get-in @state [current-side :current]))]
-    (do (trigger-event state side :trash-current current)
-        (unregister-constant-effects state side current)
-        (let [current (get-card state current)]
-          (if (get-in current [:special :rfg-when-trashed])
-            (do (system-say state side (str (:title current) " is removed from the game."))
-                (move state (other-side side) current :rfg)
-                (effect-completed state side eid))
-            (do (system-say state side (str (:title current) " is trashed."))
-                (trash state (to-keyword (:side current)) eid current nil)))))
-    (effect-completed state side eid)))
 
 (defn swap-installed
   "Swaps two installed corp cards"

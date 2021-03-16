@@ -170,7 +170,7 @@
       (is (not (find-card "Ancestral Imager" (:scored (get-corp)))) "AI not scored")
       (is (not (nil? (get-content state :remote1 0))))
       (core/advance state :corp {:card (refresh ai)})
-      (core/score state :corp {:card (refresh ai)})
+      (score state :corp (refresh ai))
       (is (not (nil? (get-content state :remote1 0)))))))
 
 (deftest trash-corp-hosted
@@ -657,11 +657,11 @@
       (let [credits (:credit (get-corp))]
         (play-from-hand state :corp "IPO")
         (is (= (+ 5 credits) (:credit (get-corp))) "Corp gains 5 credits from IPO"))
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (refresh ht) "Hostile Takeover isn't scored because a terminal Operation was played")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (nil? (refresh ht)) "Hostile Takeover is scored because it's the Corp's turn again")
       (is (= "Hostile Takeover" (:title (get-scored state :corp 0)))))))
 

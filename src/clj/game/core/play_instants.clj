@@ -6,11 +6,11 @@
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid make-result]]
-    [game.core.engine :refer [dissoc-req merge-costs-paid pay resolve-ability should-trigger? trigger-event-sync unregister-events]]
+    [game.core.engine :refer [dissoc-req checkpoint queue-event merge-costs-paid pay resolve-ability should-trigger? unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
-    [game.core.moving :refer [move remove-old-current trash]]
+    [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg merge-costs]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.macros :refer [wait-for]]
@@ -46,8 +46,10 @@
                           (if (:rfg-instead-of-trashing cdef)
                             (assoc card :rfg-instead-of-trashing true)
                             card)
-                          {:resolve-effect false :init-data true})]
-      (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :play-operation :play-event) card)
+                          {:resolve-effect false :init-data true})
+          play-event (if (= side :corp) :play-operation :play-event)]
+      (queue-event state play-event {:card card :event play-event})
+      (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
                 (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
                           (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
                                 trash-after-resolving (:trash-after-resolving cdef true)
@@ -71,6 +73,7 @@
 
 (defn play-instant
   "Plays an Event or Operation."
+  ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
          cdef (card-def card)

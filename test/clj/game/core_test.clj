@@ -540,6 +540,11 @@
   [state _ card]
   `(error-wrapper (score-agenda-impl ~state ~card)))
 
+(defn score
+  "Needed for calling the internal function directly"
+  ([state _ card] (core/process-action "score" state :corp {:card card}))
+  ([state _ card args] (core/process-action "score" state :corp (merge args {:card card}))))
+
 (defn advance
   "Advance the given card."
   ([state card] (advance state card 1))
