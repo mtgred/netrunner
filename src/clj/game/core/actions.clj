@@ -572,7 +572,7 @@
        (effect-completed state side eid)))))
 
 (defn score
-  "Score an agenda. It trusts the card data passed to it."
+  "Score an agenda."
   ([state side eid card] (score state side eid card nil))
   ([state side eid card {:keys [no-req]}]
    (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
@@ -589,7 +589,6 @@
                                               " and gains " (quantify points "agenda point")))
                  (set-prop state :corp (get-card state c) :advance-counter 0)
                  (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                 (update-all-agenda-points state)
                  (play-sfx state side "agenda-score")
                  (when-let [on-score (:on-score (card-def c))]
                    (make-pending-event state :agenda-scored c on-score))

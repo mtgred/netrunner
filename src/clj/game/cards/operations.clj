@@ -1239,10 +1239,7 @@
         :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
                      (card-init state side (get-card state card) {:resolve-effect false :init-data true})
                      (update! state side (assoc (get-card state card) :title "Media Blitz")))}
-       card nil))
-   :events [{:event :trash-current
-             :req (req (same-card? card target))
-             :effect (effect (update! (assoc card :title "Media Blitz")))}]})
+       card nil))})
 
 (defcard "Medical Research Fundraiser"
   {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"

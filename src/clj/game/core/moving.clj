@@ -182,12 +182,6 @@
            (when (seq zone)
              (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
-           (let [z (vec (cons :corp (butlast zone)))]
-             (when (and (not keep-server-alive)
-                        (is-remote? z)
-                        (empty? (get-in @state (conj z :content)))
-                        (empty? (get-in @state (conj z :ices))))
-               (swap! state dissoc-in z)))
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (when-not suppress-event
