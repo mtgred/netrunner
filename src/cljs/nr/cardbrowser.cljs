@@ -16,6 +16,7 @@
 (defonce cards-channel (chan))
 
 (declare generate-previous-cards)
+(declare generate-flip-cards)
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
@@ -45,17 +46,28 @@
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true
+             :all-cards-and-flips (merge @all-cards (generate-flip-cards cards))
              :previous-cards (generate-previous-cards cards)
              :alt-info alt-info)
       (put! cards-channel cards)))
 
-(defn- update-nested-images
-  [code images acc nested-key]
-  (if (= (keyword code) (last nested-key))
-    (let [value (get-in images nested-key)
-          new-key (conj (pop nested-key) :stock)]
-      (assoc-in acc new-key value))
-    acc))
+(defn- expand-face [card acc f]
+  (let [flip (f (:flips card))
+        updated (-> card
+                    (assoc :title (:title flip)
+                           :text (:text flip)
+                           :images (:images (f (:faces card))))
+                    (dissoc :faces :flips))]
+    (conj acc updated)))
+
+(defn- expand-one-flip [acc card]
+  (let [faces (keys (:flips card))]
+    (reduce (partial expand-face card) acc faces)))
+
+(defn- generate-flip-cards [cards]
+  (let [flips (filter :flips cards)
+        modified (reduce expand-one-flip [] flips)]
+    (into {} (map (juxt :title identity) (sort-by :code modified)))))
 
 (defn- keys-in [m]
   (if (map? m)
@@ -68,6 +80,14 @@
                     [[k]])))
               m))
     []))
+
+(defn- update-nested-images
+  [code images acc nested-key]
+  (if (= (keyword code) (last nested-key))
+    (let [value (get-in images nested-key)
+          new-key (conj (pop nested-key) :stock)]
+      (assoc-in acc new-key value))
+    acc))
 
 (defn- update-previous-image-paths
   [prev]

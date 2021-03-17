@@ -4,8 +4,7 @@
             [goog.string :as gstring]
             [goog.string.format]
             [medley.core :refer [find-first]]
-            [nr.appstate :refer [app-state]]
-            [jinteki.cards :refer [all-cards]]))
+            [nr.appstate :refer [app-state]]))
 
 ;; Dot definitions
 (def zws "\u200B")                  ; zero-width space for wrapping dots
@@ -174,12 +173,13 @@
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
   []
-  (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])]
-    (->> (vals @all-cards)
-         (filter #(not (:replaced_by %)))
-         (map (juxt :title :code))
-         (map (fn [[k v]] [k (span-of k v)]))
-         (sort-by (comp count str first) >))))
+  (letfn [(span-of [title code] [:span {:class "fake-link" :data-card-title title} title])]
+    (->> (:all-cards-and-flips @app-state)
+      (vals)
+      (filter #(not (:replaced_by %)))
+      (map (juxt :title :code))
+      (map (fn [[k v]] [k (span-of k v)]))
+      (sort-by (comp count str first) >))))
 
 (def card-patterns (memoize card-patterns-impl))
 
@@ -188,7 +188,8 @@
   of the text should be tested as one pass is far faster than 1500 passes"
   []
   (re-pattern
-    (->> (vals @all-cards)
+    (->> (:all-cards-and-flips @app-state)
+         (vals)
          (filter #(not (:replaced_by %)))
          (map (fn [k] (regex-escape (:title k))))
          (join "|"))))
@@ -310,9 +311,6 @@
   (let [h (.-scrollTop (rd/dom-node this))]
     (reset! scroll-top-atom h)))
 
-(defn card-by-id [code]
-  (find-first #(= code (:code %)) (vals @all-cards)))
-
 (defn get-image-path
   [images lang res art]
   (let [path (get-in images [lang res art])]
@@ -327,4 +325,4 @@
   (cond
     (:images card) (:images card)
     (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
-    :else (get-in card [:faces :1 :images])))
+    :else (get-in card [:faces :front :images])))
