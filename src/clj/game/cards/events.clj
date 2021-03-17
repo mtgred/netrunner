@@ -1386,7 +1386,12 @@
   {:events [{:event :runner-install
              :duration :end-of-turn
              :req (req (<= 1 (:cost target)))
-             :interactive (req (has-subtype? target "Cybernetic"))
+             :interactive (req (or
+                                 (has-subtype? target "Cybernetic")
+                                 (and
+                                   (= "Hayley Kaplan: Universal Scholar"
+                                     (get-in @state [:runner :identity :title]))
+                                   (first-event? state side :runner-install))))
              :async true
              :prompt "What to get from In the Groove?"
              :choices ["Draw 1 card" "Gain 1 [Credits]"]

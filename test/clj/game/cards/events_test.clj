@@ -2769,7 +2769,21 @@
      (click-prompt state :runner "Brain Cage")
      (is (= 1 (:brain-damage (get-runner))) "Brain damage taken")
      (is (changes-credits (get-runner) 1
-                             (click-prompt state :runner "Gain 1 [Credits]"))))))
+                             (click-prompt state :runner "Gain 1 [Credits]")))))
+  (testing "Hayley Kaplan interaction"
+    (do-game
+      (new-game {:runner {:deck [(qty "In the Groove" 3) "Pelangi" "Imp" "Sure Gamble"]
+                          :id "Hayley Kaplan: Universal Scholar"}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "In the Groove")
+      (play-from-hand state :runner "Pelangi")
+      (click-prompt state :runner "In the Groove")
+      (click-prompt state :runner "Gain 1 [Credits]")
+      (click-prompt state :runner "Yes")
+      (changes-val-macro 0 (count (:hand (get-runner)))
+                         "Drew card from In the Groove trigger off Hayley install" ; play 1, draw 1 for net 0
+                         (click-card state :runner (find-card "Imp" (:hand (get-runner))))
+                         (click-prompt state :runner "Draw 1 card")))))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
