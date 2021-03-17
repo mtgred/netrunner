@@ -114,9 +114,10 @@
 
 (defn rez-all
   [state side eid cards]
-  (let [c (first cards)]
+  (if-let [c (first cards)]
     (wait-for (rez state side c {:ignore-cost :all-costs :force true})
-              (rez-all state side eid (next cards)))))
+              (rez-all state side eid (next cards)))
+    (effect-completed state side eid)))
 
 (defn command-rezall
   [state side]
