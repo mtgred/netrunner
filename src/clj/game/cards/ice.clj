@@ -902,15 +902,14 @@
                  end-the-run]
    :strength-bonus (req (let [ices (:ices (card->server state card))]
                           (if (same-card? card (last ices)) 4 0)))
-   :events (let [cw {:req (req (and (not (same-card? card target))
-                                    (= (card->server state card) (card->server state target))))
-                     :effect (effect (update-ice-strength card))}]
-             [(assoc cw :event :corp-install)
-              (assoc cw :event :trash)
-              {:req (req (let [target (nth targets 1)]
-                           (and (not (same-card? card target))
-                                (= (card->server state card) (card->server state target)))))
-               :effect (effect (update-ice-strength card))}])})
+   :events [{:event :trash
+             :req (req (and (not (same-card? card target))
+                            (= (card->server state card) (card->server state target))))
+             :effect (effect (update-ice-strength card))}
+            {:event :corp-install
+             :req (req (and (not (same-card? card (:card context)))
+                            (= (card->server state card) (card->server state (:card context)))))
+             :effect (effect (update-ice-strength card))}]})
 
 (defcard "Data Hound"
   (letfn [(dh-trash [cards]
@@ -1596,33 +1595,30 @@
 (defcard "Howler"
   {:subroutines
    [{:label "Install a piece of Bioroid ICE from HQ or Archives"
+     :req (req (some #(and (corp? %)
+                           (or (in-hand? %)
+                               (in-discard? %))
+                           (has-subtype? % "Bioroid"))
+                     (concat (:hand corp) (:discard corp))))
      :async true
      :prompt "Install ICE from HQ or Archives?"
-     :choices ["HQ" "Archives"]
-     :effect (effect
-               (continue-ability
-                 (let [fr target]
-                   {:prompt "Choose a Bioroid ICE to install"
-                    :choices (req (filter #(and (ice? %)
-                                                (has-subtype? % "Bioroid"))
-                                          ((if (= fr "HQ") :hand :discard) corp)))
-                    :effect (req (let [newice (assoc target :zone (get-zone card) :rezzed true)
-                                       hndx (card-index state card)
-                                       ices (get-in @state (cons :corp (get-zone card)))
-                                       newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
-                                   (swap! state assoc-in (cons :corp (get-zone card)) newices)
-                                   (swap! state update-in (cons :corp (get-zone target))
-                                          (fn [coll] (remove-once #(same-card? % target) coll)))
-                                   (update! state side (assoc card :howler-target newice))
-                                   (card-init state side newice {:resolve-effect false
-                                                                 :init-data true})
-                                   (trigger-event state side :corp-install newice)))})
-                 card nil))}]
-   :events [{:event :run-ends
-             :req (req (:howler-target card))
-             :async true
-             :effect (effect (derez (get-card state (:howler-target card)))
-                             (trash eid card {:cause :subroutine}))}]})
+     :show-discard true
+     :choices {:card #(and (corp? %)
+                           (or (in-hand? %)
+                               (in-discard? %))
+                           (has-subtype? % "Bioroid"))}
+     :effect (req (wait-for (corp-install state side (make-eid state eid)
+                                          target (zone->name (target-server run))
+                                          {:ignore-all-cost true
+                                           :index (card-index state card)})
+                            (let [new-ice async-result]
+                              (register-events
+                                state side card
+                                [{:event :run-ends
+                                  :duration :end-of-run
+                                  :async true
+                                  :effect (effect (derez new-ice)
+                                                  (trash eid card {:cause :subroutine}))}]))))}]})
 
 (defcard "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
@@ -2596,13 +2592,7 @@
                   :effect (effect (lose-credits :runner eid 1))}]
    :constant-effects [{:type :ice-strength
                        :req (req (protecting-same-server? card target))
-                       :value 1}]
-   :events [{:event :corp-moved
-             :req (req (ice? target))
-             :effect (effect (update-ice-strength target))}
-            {:event :corp-install
-             :req (req (ice? target))
-             :effect (effect (update-ice-strength target))}]})
+                       :value 1}]})
 
 (defcard "Rototurret"
   {:subroutines [trash-program-sub

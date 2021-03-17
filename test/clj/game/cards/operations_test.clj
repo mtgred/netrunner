@@ -1354,11 +1354,10 @@
 (deftest fast-break
   ;; Fast Break
   (do-game
-    (new-game {:corp {:deck ["Fast Break" "Hostile Takeover" "Keegan Lane" "Haas Arcology AI"
-                             "Research Station" (qty "Ice Wall" 10)]}
+    (new-game {:corp {:deck ["Ice Wall" "Enigma" "Rime" "Hedge Fund"]
+                      :hand ["Fast Break" "Hostile Takeover" "Keegan Lane"
+                             "Haas Arcology AI" "Research Station"]}
                :runner {:deck [(qty "Fan Site" 3)]}})
-    (starting-hand state :corp ["Fast Break" "Hostile Takeover" "Keegan Lane"
-                                "Haas Arcology AI" "Research Station"])
     (take-credits state :corp)
     (dotimes [_ 3]
       (play-from-hand state :runner "Fan Site"))
@@ -1373,7 +1372,7 @@
       (click-prompt state :corp "New remote")
       (click-card state :corp (find-card "Keegan Lane" (:hand (get-corp))))
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
-      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= (dec credits) (:credit (get-corp))) "Corp should pay 1 credit to install second Ice Wall"))
     (core/move state :corp (find-card "Fast Break" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Fast Break")
@@ -1386,7 +1385,7 @@
       (click-card state :corp (find-card "Haas Arcology AI" (:hand (get-corp))))
       (click-card state :corp (find-card "Research Station" (:hand (get-corp))))
       (is (= 2 (count (get-content state :remote2))) "Corp can't choose Research Station to install in a remote")
-      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-card state :corp (find-card "Rime" (:hand (get-corp))))
       (click-prompt state :corp "Done")
       (is (= (- credits 2) (:credit (get-corp))) "Corp should pay 2 credits to install third Ice Wall")
       (is (empty? (:prompt (get-corp))) "Corp should be able to stop installing early"))))

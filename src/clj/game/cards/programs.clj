@@ -639,16 +639,17 @@
                                 :type :recurring}}})
 
 (defcard "Clot"
-  {:effect (req (let [agendas (map first (filter #(agenda? (first %))
-                                                 (turn-events state :corp :corp-install)))]
+  {:effect (req (let [agendas (->> (turn-events state :corp :corp-install)
+                                   (filter #(agenda? (:card (first %))))
+                                   (map first))]
                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))
    :events [{:event :purge
              :async true
              :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                           (trash state side eid card {:cause :purge}))}
             {:event :corp-install
-             :req (req (agenda? target))
-             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}]
+             :req (req (agenda? (:card context)))
+             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
    :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))})
 
 (defcard "Collective Consciousness"

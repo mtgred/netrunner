@@ -689,10 +689,12 @@
 
 (defcard "Estelle Moon"
   {:events [{:event :corp-install
-             :req (req (and (or (asset? target) (agenda? target) (upgrade? target))
-                            (is-remote? (second (get-zone target)))))
+             :req (req (and (or (asset? (:card context))
+                                (agenda? (:card context))
+                                (upgrade? (:card context)))
+                            (is-remote? (second (get-zone (:card context))))))
              :effect (effect (add-counter card :power 1)
-                             (system-msg (str "places 1 power counter on Estelle Moon")))}]
+                             (system-msg "places 1 power counter on Estelle Moon"))}]
    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
                 :cost [:trash]
                 :async true
@@ -1863,10 +1865,10 @@
      :abilities [ability]
      :events [(assoc ability :event :corp-turn-begins)
               {:event :corp-install
-               :req (req (ice? target))
+               :req (req (ice? (:card context)))
                :async true
-               :effect (req (system-msg state :runner "trashes Server Diagnostics")
-                            (trash state side eid card nil))}]}))
+               :effect (effect (system-msg :runner "trashes Server Diagnostics")
+                               (trash eid card))}]}))
 
 (defcard "Shannon Claire"
   {:abilities [{:cost [:click 1]

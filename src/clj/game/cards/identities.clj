@@ -36,45 +36,44 @@
              :async true
              :req (req (and (first-event? state :corp :corp-install)
                             (pos? (:turn @state))
-                            (not (rezzed? target))
-                            (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :faceup} (second targets)))))
+                            (not (rezzed? (:card context)))
+                            (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :face-up} (:install-state context)))))
              :waiting-prompt "Runner to use 419: Amoral Scammer"
              :effect
              (effect
                (continue-ability
-                 (let [itarget target]
-                   {:optional
-                    {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
-                     :player :runner
-                     :autoresolve (get-autoresolve :auto-419)
-                     :no-ability {:effect (req (clear-wait-prompt state :corp))}
-                     :yes-ability
-                     {:async true
-                      :effect (req (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
-                                     (do
-                                       (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
-                                       (expose state :runner eid itarget))
-                                     (continue-ability
-                                       state side
-                                       {:optional
-                                        {:waiting-prompt "Corp to decide about 419: Amoral Scammer"
-                                         :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
-                                         :player :corp
-                                         :no-ability
-                                         {:async true
-                                          :effect (effect (expose :runner eid itarget))}
-                                         :yes-ability
-                                         {:async true
-                                          :effect
-                                          (req (wait-for
-                                                 (pay state :corp card [:credit 1])
-                                                 (system-msg state :corp
-                                                             (str (:msg async-result)
-                                                                  " to prevent "
-                                                                  " card from being exposed"))
-                                                 (effect-completed state side eid)))}}}
-                                       card nil)))}}})
-                 card nil))}]
+                 {:optional
+                  {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                   :player :runner
+                   :autoresolve (get-autoresolve :auto-419)
+                   :no-ability {:effect (req (clear-wait-prompt state :corp))}
+                   :yes-ability
+                   {:async true
+                    :effect (req (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
+                                   (do
+                                     (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
+                                     (expose state :runner eid (:card context)))
+                                   (continue-ability
+                                     state side
+                                     {:optional
+                                      {:waiting-prompt "Corp to decide about 419: Amoral Scammer"
+                                       :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
+                                       :player :corp
+                                       :no-ability
+                                       {:async true
+                                        :effect (effect (expose :runner eid (:card context)))}
+                                       :yes-ability
+                                       {:async true
+                                        :effect
+                                        (req (wait-for
+                                               (pay state :corp card [:credit 1])
+                                               (system-msg state :corp
+                                                           (str (:msg async-result)
+                                                                " to prevent "
+                                                                " card from being exposed"))
+                                               (effect-completed state side eid)))}}}
+                                     card targets)))}}}
+                 card targets))}]
    :abilities [(set-autoresolve :auto-419 "419")]})
 
 (defcard "Acme Consulting: The Truth You Need"
@@ -211,7 +210,7 @@
   {:events [{:event :corp-install
              :async true
              :req (req (first-event? state :corp :corp-install))
-             :effect (req (let [installed-card target
+             :effect (req (let [installed-card (:card context)
                                 z (butlast (get-zone installed-card))]
                             (continue-ability
                               state side

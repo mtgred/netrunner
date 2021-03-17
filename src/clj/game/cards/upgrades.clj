@@ -15,14 +15,14 @@
 (defcard "Amazon Industrial Zone"
   {:events [{:event :corp-install
              :optional
-             {:req (req (and (ice? target)
-                             (protecting-same-server? card target)
-                             (can-pay? state side (assoc eid :source card :source-type :rez) target nil
-                                       [:credit (rez-cost state side target {:cost-bonus -3})])))
+             {:req (req (and (ice? (:card context))
+                             (protecting-same-server? card (:card context))
+                             (can-pay? state side (assoc eid :source card :source-type :rez) (:card context) nil
+                                       [:credit (rez-cost state side (:card context) {:cost-bonus -3})])))
               :prompt "Rez ICE with rez cost lowered by 3?"
-              :yes-ability {:msg (msg "lower the rez cost of " (:title target) " by 3 [Credits]")
+              :yes-ability {:msg (msg "lower the rez cost of " (:title (:card context)) " by 3 [Credits]")
                             :async true
-                            :effect (effect (rez eid target {:cost-bonus -3}))}}}]})
+                            :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
 
 (defcard "Anoetic Void"
   {:events [{:event :successful-run
@@ -1173,9 +1173,9 @@
                            (set-prop state side c :extra-advance-counter 1))
                          (update-all-ice state side))}
    :events [{:event :corp-install
-             :req (req (and (ice? target)
-                            (protecting-same-server? card target)))
-             :effect (effect (set-prop target :extra-advance-counter 1))}]
+             :req (req (and (ice? (:card context))
+                            (protecting-same-server? card (:card context))))
+             :effect (effect (set-prop (:card context) :extra-advance-counter 1))}]
    :leave-play (req (doseq [c (:ices (card->server state card))]
                       (update! state side (dissoc c :extra-advance-counter)))
                     (update-all-ice state side))})
@@ -1365,11 +1365,11 @@
 (defcard "Tranquility Home Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :events [{:event :corp-install
-             :req (req (and (or (asset? target)
-                                (agenda? target)
-                                (upgrade? target))
-                            (in-same-server? card target)
-                            (first-event? state :corp :corp-install #(in-same-server? card (first %)))))
+             :req (req (and (or (asset? (:card context))
+                                (agenda? (:card context))
+                                (upgrade? (:card context)))
+                            (in-same-server? card (:card context))
+                            (first-event? state :corp :corp-install #(in-same-server? card (:card (first %))))))
              :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
              :choices ["Gain 2 [Credits]" "Draw 1 card"]
              :msg (msg (decapitalize target))

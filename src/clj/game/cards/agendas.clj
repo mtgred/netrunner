@@ -585,15 +585,17 @@
   {:constant-effects [{:type :ignore-install-cost
                        :req (req (and (ice? target)
                                       (->> (turn-events state side :corp-install)
-                                           (map first)
+                                           (map #(:card (first %)))
                                            (filter ice?)
                                            empty?)))
                        :value true}]
    :events [{:event :corp-install
              :req (req (and (ice? target)
-                            (empty? (let [cards (map first (turn-events state side :corp-install))]
-                                      (filter ice? cards)))))
-             :msg (msg "ignore the install cost of the first ICE this turn")}]})
+                            (->> (turn-events state side :corp-install)
+                                 (map #(:card (first %)))
+                                 (filter ice?)
+                                 empty?)))
+             :msg "ignore the install cost of the first ICE this turn"}]})
 
 (defcard "Efficiency Committee"
   {:on-score {:silent (req true)

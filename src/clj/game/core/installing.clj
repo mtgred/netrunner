@@ -6,7 +6,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [card-as-handler pay register-events trigger-event-simult]]
+    [game.core.engine :refer [card-as-handler checkpoint pay queue-event register-events trigger-event-simult]]
     [game.core.finding :refer [find-latest]]
     [game.core.flags :refer [turn-flag?]]
     [game.core.hosting :refer [host]]
@@ -137,56 +137,47 @@
     (when-not host-card
       (corp-install-message state side c server install-state cost-str args))
     (play-sfx state side "install-corp")
-
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
                        (move state side c slot {:front front
                                                 :index index}))
           _ (when (agenda? c)
               (update-advancement-requirement state moved-card))
-
           moved-card (get-card state moved-card)]
-
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
-                (letfn [(event [state side eid _]
-                          (let [new-eid (make-eid state eid)]
-                            (wait-for (trigger-event-simult state side new-eid :corp-install nil (get-card state moved-card) install-state)
-                                      (complete-with-result state side eid (get-card state moved-card)))))]
+                (let [eid (assoc eid :source moved-card :source-type :rez)]
+                  (queue-event state :corp-install {:card (get-card state moved-card)
+                                                    :install-state install-state})
                   (case install-state
-                    ;; Ignore all costs. Pass eid to rez.
+                    ;; Ignore all costs
                     :rezzed-no-cost
-                    (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :all-costs
-                                                                                                           :no-msg no-msg}))
-
-                    ;; Ignore rez cost only. Pass eid to rez.
+                    (rez state side eid moved-card {:ignore-cost :all-costs
+                                                    :no-msg no-msg})
+                    ;; Ignore rez cost only
                     :rezzed-no-rez-cost
-                    (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :rez-costs
-                                                                                                           :no-msg no-msg}))
-
-                    ;; Pay costs. Pass eid to rez.
+                    (rez state side eid moved-card {:ignore-cost :rez-costs
+                                                    :no-msg no-msg})
+                    ;; Pay costs
                     :rezzed
-                    (wait-for (event state side nil)
-                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:no-msg no-msg}))
-
-                    ;; "Face-up" cards. Trigger effect-completed manually.
+                    (rez state side eid moved-card {:no-msg no-msg})
+                    ;; "Face-up" cards
                     :face-up
                     (if (:install-state cdef)
-                      (wait-for (card-init state side
-                                           (assoc (get-card state moved-card) :rezzed true :seen true)
-                                           {:resolve-effect false
-                                            :init-data true})
-                                (event state side eid nil))
+                      (do (card-init state side
+                                     (assoc (get-card state moved-card) :rezzed true :seen true)
+                                     {:resolve-effect false
+                                      :init-data true})
+                          (wait-for (checkpoint state nil (make-eid state eid))
+                                    (complete-with-result state side eid (get-card state moved-card))))
                       (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
-                          (event state side eid nil)))
-
-                    ;; All other cards. Trigger events, which will trigger effect-completed
-                    (event state side eid nil))
-                  (when-let [dre (:derezzed-events cdef)]
-                    (when-not (:rezzed (get-card state moved-card))
-                      (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))))))))
+                          (wait-for (checkpoint state nil (make-eid state eid))
+                                    (complete-with-result state side eid (get-card state moved-card)))))
+                    ;; All other cards
+                    (wait-for (checkpoint state nil (make-eid state eid))
+                              (when-let [dre (:derezzed-events cdef)]
+                                (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
+                              (complete-with-result state side eid (get-card state moved-card)))))))))
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
@@ -214,14 +205,6 @@
                   (effect-completed state side eid)))
       (effect-completed state side eid))))
 
-; 8.3 Steps of Installing a Card
-; 8.3.1. Place the card into the play area with the same faceup or facedown status it will have when the installation is complete. It is not yet installed or active.
-; 8.3.2. Choose and declare the install destination appropriate to the card that will be installed, including any host relationships, if applicable.
-; 8.3.3. Trash like cards as described in section 8.2.5.
-; 8.3.4. Pay the appropriate install cost. (The cost-paid checkpoint then occurs.)
-; 8.3.5. If the card is to be the first card in or protecting a new remote server, that server is created. Move the card to the chosen install location. It becomes installed. If the card is faceup, it becomes active.
-; 8.3.6. Any “When installed...” abilities that apply to the installation meet their trigger conditions, including those on the installed card, and the install effect is complete
-
 (defn corp-install
   "Installs a card in the chosen server. If server is nil, asks for server to install in.
   The args input takes the following values:
@@ -230,7 +213,8 @@
   :ignore-all-cost - true if install costs should be ignored
   :action - What type of action installed the card
   :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :face-up
-  :display-message - Print descriptive text to the log window [default=true]"
+  :display-message - Print descriptive text to the log window [default=true]
+  :index - which position for an installed piece of ice"
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
   ([state side eid card server {:keys [host-card] :as args}]
