@@ -575,23 +575,22 @@
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
   ([state side eid card {:keys [no-req]}]
-   (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
-             (if-not (can-score? state side card {:no-req no-req})
-               (effect-completed state side eid)
-               (let [moved-card (move state :corp card :scored)
-                     c (card-init state :corp moved-card {:resolve-effect false
-                                                          :init-data true})
-                     _ (update-all-advancement-requirements state)
-                     _ (update-all-agenda-points state)
-                     c (get-card state c)
-                     points (get-agenda-points c)]
-                 (system-msg state :corp (str "scores " (:title c)
-                                              " and gains " (quantify points "agenda point")))
-                 (set-prop state :corp (get-card state c) :advance-counter 0)
-                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                 (play-sfx state side "agenda-score")
-                 (when-let [on-score (:on-score (card-def c))]
-                   (make-pending-event state :agenda-scored c on-score))
-                 (queue-event state :agenda-scored {:card c
-                                                    :points points})
-                 (checkpoint state nil eid {:duration :agenda-scored}))))))
+   (if-not (can-score? state side card {:no-req no-req})
+     (effect-completed state side eid)
+     (let [moved-card (move state :corp card :scored)
+           c (card-init state :corp moved-card {:resolve-effect false
+                                                :init-data true})
+           _ (update-all-advancement-requirements state)
+           _ (update-all-agenda-points state)
+           c (get-card state c)
+           points (get-agenda-points c)]
+       (system-msg state :corp (str "scores " (:title c)
+                                    " and gains " (quantify points "agenda point")))
+       (set-prop state :corp (get-card state c) :advance-counter 0)
+       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+       (play-sfx state side "agenda-score")
+       (when-let [on-score (:on-score (card-def c))]
+         (make-pending-event state :agenda-scored c on-score))
+       (queue-event state :agenda-scored {:card c
+                                          :points points})
+       (checkpoint state nil eid {:duration :agenda-scored})))))
