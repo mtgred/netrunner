@@ -252,8 +252,8 @@
   {:events [{:event :play-event
              :optional
              {:player :corp
-              :req (req (and (has-subtype? target "Run")
-                             (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))
+              :req (req (and (has-subtype? (:card context) "Run")
+                             (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
                              (no-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))))
               :waiting-prompt "Corp to use Better Citizen Program"
               :prompt "Give the runner 1 tag?"
@@ -268,7 +268,7 @@
               :req (req (and (not (facedown? target))
                              (has-subtype? target "Icebreaker")
                              (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
-                             (no-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
+                             (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
               :waiting-prompt "Corp to use Better Citizen Program"
               :prompt "Give the runner 1 tag?"
               :yes-ability
@@ -316,7 +316,7 @@
                      (effect-completed state side eid)))}}}})
 
 (defcard "Braintrust"
-  {:on-score {:effect (effect (add-counter card :agenda (quot (- (get-counters card :advancement) 3) 2)))
+  {:on-score {:effect (effect (add-counter card :agenda (quot (- (get-counters (:card context) :advancement) 3) 2)))
               :silent (req true)}
    :constant-effects [{:type :rez-cost
                        :req (req (ice? target))
@@ -328,7 +328,7 @@
               :msg "give the Runner 2 tags"
               :effect (effect (gain-tags :corp eid 2))}
    :events (let [event {:unregister-once-resolved true
-                        :req (effect (first-event? :agenda-scored #(same-card? card (first %))))
+                        :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2))}]
              [(assoc event :event :corp-turn-ends)
@@ -550,7 +550,7 @@
      :effect (req (if (:winner @state)
                     (effect-completed state side eid)
                     (let [card (find-latest state card)
-                          stolen-agenda (find-latest state target)
+                          stolen-agenda (find-latest state (:card context))
                           title (:title stolen-agenda)
                           prompt (str "Forfeit Divested Trust to add " title
                                       " to HQ and gain 5[Credits]?")
@@ -579,7 +579,7 @@
                 :msg "place 1 agenda counter on Domestic Sleepers"
                 :effect (effect (add-counter card :agenda 1)
                                 (update-all-agenda-points)
-                                (check-winner))}]})
+                                (check-win-by-agenda))}]})
 
 (defcard "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
@@ -963,7 +963,7 @@
               :req (req tagged)
               :effect (effect (add-counter card :agenda 1)
                               (update-all-agenda-points)
-                              (check-winner))}
+                              (check-win-by-agenda))}
    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 2 3))})
 
 (defcard "Medical Breakthrough"
@@ -1148,15 +1148,15 @@
             (quantify (- (get-counters card :advancement) 4) "installed card"))]
     {:on-score {:player :runner
                 :silent (req true)
-                :req (req (and (> (get-counters card :advancement) 4)
+                :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
                 :waiting-prompt "Runner to trash installed cards"
-                :prompt (msg "Select " (trash-count-str card) " installed cards to trash")
-                :choices {:max (req (min (- (get-counters card :advancement) 4)
+                :prompt (msg "Select " (trash-count-str (:card context)) " installed cards to trash")
+                :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
                           :card #(and (runner? %)
-                                   (installed? %))}
-                :msg (msg "force the Runner to trash " (trash-count-str card) " and take 1 bad publicity")
+                                      (installed? %))}
+                :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
                 :effect (req (wait-for (trash-cards state side targets)
                                        (system-msg state side (str "trashes " (string/join ", " (map :title targets))))
@@ -1164,7 +1164,7 @@
 
 (defcard "Project Atlas"
   {:on-score {:silent (req true)
-              :effect (effect (add-counter card :agenda (max 0 (- (get-counters card :advancement) 3))))}
+              :effect (effect (add-counter card :agenda (max 0 (- (get-counters (:card context) :advancement) 3))))}
    :abilities [{:cost [:agenda 1]
                 :prompt "Choose a card"
                 :label "Search R&D and add 1 card to HQ"
@@ -1180,14 +1180,13 @@
   {:agendapoints-runner (req 2)
    :agendapoints-corp (req (+ 2 (get-counters card :agenda)))
    :on-score {:interactive (req true)
-              :effect (req (let [n (quot (- (get-counters card :advancement) 3) 2)]
-                             (add-counter state side card :agenda n)
-                             (update-all-agenda-points state side)
-                             (check-winner state side)))}})
+              :effect (effect (add-counter card :agenda (quot (- (get-counters (:card context) :advancement) 3) 2))
+                              (update-all-agenda-points)
+                              (check-win-by-agenda))}})
 
 (defcard "Project Kusanagi"
   {:on-score {:silent (req true)
-              :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 2)))}
+              :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 2)))}
    :events [{:event :run-ends
              :effect (req (let [cid (:cid card)
                                 ices (get-in card [:special :kusanagi])]
@@ -1211,7 +1210,7 @@
   (let [vacheron-ability
         {:req (req (and (in-scored? card)
                         (not= (first (:previous-zone card)) :discard)
-                        (same-card? card target)))
+                        (same-card? card (or (:card context) target))))
          :msg (msg "add 4 agenda counters on " (:title card))
          :effect (effect (add-counter (get-card state card) :agenda 4)
                          (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
@@ -1231,12 +1230,12 @@
                                 (system-msg state :runner
                                             (str "gains " (quantify points "agenda point")
                                                  " from " (:title card)))))
-                            (check-winner state side))}]
+                            (check-win-by-agenda state side))}]
      :flags {:has-events-when-stolen true}}))
 
 (defcard "Project Vitruvius"
   {:on-score {:silent (req true)
-              :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))}
+              :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 3)))}
    :abilities [{:cost [:agenda 1]
                 :label "Add 1 card from Archives to HQ"
                 :prompt "Choose a card in Archives to add to HQ"
@@ -1301,7 +1300,7 @@
              :effect (effect (continue-ability (choose-swap target) card nil))
              :cancel-effect (effect (put-back-counter card))})]
     {:on-score {:silent (req true)
-                :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))}
+                :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 3)))}
      :abilities [{:cost [:agenda 1]
                   :label "swap card in HQ with installed card"
                   :req (req run)
@@ -1429,8 +1428,7 @@
                                  :interactive (req true)
                                  :async true
                                  :req (req (seq (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
-                                 :effect (effect (set-prop target :advance-counter (:advancementcost target))
-                                                 (score eid (get-card state target)))
+                                 :effect (effect (score eid (get-card state target) {:no-req true}))
                                  :msg "score another installed copy of Research Grant"}
                                 card nil))}})
 
@@ -1452,7 +1450,7 @@
                         :all true}
               :msg (msg "trash " (:title target))
               :async true
-              :effect (effect (trash eid target nil))}})
+              :effect (effect (trash eid target))}})
 
 (defcard "Self-Destruct Chips"
   {:on-score {:silent (req true)

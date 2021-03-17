@@ -68,7 +68,7 @@
    "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))
    "run" click-run
    "runner-ability" play-runner-ability
-   "score" #(score %1 %2 (get-card %1 (:card %3)))
+   "score" #(score %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
    "select" select
    "shuffle" shuffle-deck
    "start-turn" start-turn

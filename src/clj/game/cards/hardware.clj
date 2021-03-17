@@ -52,7 +52,8 @@
                  :effect (effect (draw :runner eid 1 nil))}]
     {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
-              (assoc ability :event :runner-trash)]}))
+              (assoc ability :event :runner-trash)
+              (assoc ability :event :game-trash)]}))
 
 (defcard "Archives Interface"
   {:events
@@ -959,7 +960,9 @@
   {:constant-effects [(mu+ 1)
                       (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
-             :player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
+             :player :runner
+             :prompt "Choose a card"
+             :msg "add 1 card to their Grip from their Stack"
              :choices (req (cancellable (:deck runner)))
              :effect (effect (trigger-event :searched-stack nil)
                              (shuffle! :deck)
@@ -1824,8 +1827,8 @@
 (defcard "Swift"
   {:constant-effects [(mu+ 1)]
    :events [{:event :play-event
-             :req (req (and (has-subtype? target "Run")
-                            (first-event? state side :play-event #(has-subtype? (first %) "Run"))))
+             :req (req (and (has-subtype? (:card context) "Run")
+                            (first-event? state side :play-event #(has-subtype? (:card (first %)) "Run"))))
              :msg "gain a [click]"
              :effect (effect (gain :click 1))}]})
 
@@ -1913,7 +1916,7 @@
              :async true
              :effect (effect
                        (continue-ability
-                         (let [stolen target]
+                         (let [stolen (:card context)]
                            {:optional
                             {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                              :yes-ability

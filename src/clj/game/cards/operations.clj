@@ -1107,9 +1107,10 @@
                          (continue-ability state side install-abi card nil))}))
 
 (defcard "Kill Switch"
-  (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
+  (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) target)))
                                 :trace {:base 3
-                                        :req (req (agenda? target))
+                                        :req (req (or (agenda? (:card context))
+                                                      (agenda? target)))
                                         :successful {:msg "do 1 brain damage"
                                                      :async true
                                                      :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
@@ -1238,10 +1239,7 @@
         :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
                      (card-init state side (get-card state card) {:resolve-effect false :init-data true})
                      (update! state side (assoc (get-card state card) :title "Media Blitz")))}
-       card nil))
-   :events [{:event :trash-current
-             :req (req (same-card? card target))
-             :effect (effect (update! (assoc card :title "Media Blitz")))}]})
+       card nil))})
 
 (defcard "Medical Research Fundraiser"
   {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
@@ -2171,8 +2169,7 @@
              :effect (effect (trash eid card nil))}]})
 
 (defcard "Targeted Marketing"
-  (let [gaincr {:req (req (= (:title target) (get-in card [:special :marketing-target])))
-                :async true
+  (let [gaincr {:async true
                 :effect (effect (gain-credits :corp eid 10))
                 :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
     {:prompt "Name a Runner card"
@@ -2180,8 +2177,12 @@
                                      (not (identity? target))))}
      :effect (effect (update! (assoc-in card [:special :marketing-target] target))
                      (system-msg (str "uses Targeted Marketing to name " target)))
-     :events [(assoc gaincr :event :runner-install)
-              (assoc gaincr :event :play-event)]}))
+     :events [(assoc gaincr
+                     :event :runner-install
+                     :req (req (= (:title target) (get-in card [:special :marketing-target]))))
+              (assoc gaincr
+                     :event :play-event
+                     :req (req (= (:title (:card context)) (get-in card [:special :marketing-target]))))]}))
 
 (defcard "The All-Seeing I"
   (let [trash-all-resources

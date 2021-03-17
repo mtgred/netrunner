@@ -530,7 +530,6 @@
    mill
    move
    move-zone
-   remove-old-current
    swap-agendas
    swap-cards
    swap-ice
@@ -731,7 +730,7 @@
    number-of-virus-counters]
 
   [game.core.winning
-   check-winner
+   check-win-by-agenda
    clear-win
    concede
    flatline

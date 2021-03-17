@@ -179,11 +179,11 @@
     {:events [{:event :agenda-scored
                :interactive (req true)
                :async true
-               :effect (effect (continue-ability (senai-ability target) card nil))}
+               :effect (effect (continue-ability (senai-ability (:card context)) card nil))}
               {:event :agenda-stolen
                :interactive (req true)
                :async true
-               :effect (effect (continue-ability (senai-ability target) card nil))}]
+               :effect (effect (continue-ability (senai-ability (:card context)) card nil))}]
      :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]}))
 
 (defcard "Anson Rose"
@@ -921,7 +921,7 @@
 
 (defcard "Indian Union Stock Exchange"
   {:events [{:event :play-operation
-             :req (req (not= (:faction target) (:faction (:identity corp))))
+             :req (req (not= (:faction (:card context)) (:faction (:identity corp))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}
@@ -1499,7 +1499,7 @@
                               (in-hand? target)))}
      :msg (msg "score " (:title target))
      :async true
-     :effect (effect (score eid (assoc target :advance-counter (get-advancement-requirement target))))}
+     :effect (effect (score eid target {:no-req true}))}
     "Score an Agenda from HQ?"))
 
 (defcard "Political Dealings"
@@ -2030,7 +2030,6 @@
 
 (defcard "Team Sponsorship"
   {:events [{:event :agenda-scored
-             :label "Install a card from Archives or HQ"
              :prompt "Select a card from Archives or HQ to install"
              :show-discard true
              :interactive (req true)

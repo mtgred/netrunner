@@ -789,13 +789,13 @@
     (click-card state :corp "Underway Renovation")
     (let [under (get-content state :remote1 0)]
       (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on it")
-      (core/score state :corp {:card (refresh under)})
+      (score state :corp (refresh under))
       (is (refresh under) "Underway Renovation isn't scored because of Dedication Ceremony")
       (play-and-score state "Hostile Takeover")
       (is (= "Hostile Takeover" (:title (get-scored state :corp 0))) "Other agendas can be scored")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/score state :corp {:card (refresh under)})
+      (score state :corp (refresh under))
       (is (nil? (refresh under)) "Underway Renovation is scored")
       (is (= "Underway Renovation" (:title (get-scored state :corp 1)))))))
 
@@ -840,11 +840,11 @@
       (core/gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
   (testing "DRM only installs on remotes"
     (do-game
@@ -870,11 +870,11 @@
       (core/gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
   (testing "Cannot score Agenda installed before playing DRM"
     (do-game
@@ -889,7 +889,7 @@
         (play-from-hand state :corp "Digital Rights Management")
         (click-prompt state :corp "None")
         (click-prompt state :corp "Done")
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 0 (count (get-scored state :corp))) "Beale was not scored"))))
   ;; ToDo: Activate test once implementation is complete
   ; (testing "Cannot score Agenda installed after playing DRM"
@@ -2250,15 +2250,15 @@
   ;; Hostile Takeover
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Media Blitz" "Government Takeover" "Hostile Takeover"]}})
-    (play-from-hand state :corp "Government Takeover" "New remote")
+                      :hand ["Media Blitz" "Gila Hands Arcology" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Gila Hands Arcology" "New remote")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (click-prompt state :runner "Steal")
     (take-credits state :runner)
     (play-from-hand state :corp "Media Blitz")
-    (click-card state :corp "Government Takeover")
+    (click-card state :corp "Gila Hands Arcology")
     (let [credits (:credit (get-corp))]
       (card-ability state :corp (first (:current (get-corp))) 0)
       (is (= (+ credits 3) (:credit (get-corp))) "Corp should gain 3 from Media Blitz' GT ability"))
@@ -2313,12 +2313,12 @@
       (play-from-hand state :corp "Mushin No Shin")
       (click-card state :corp (find-card "Profiteering" (:hand (get-corp))))
       (let [prof (get-content state :remote2 0)]
-        (core/score state :corp (refresh prof))
+        (score state :corp (refresh prof))
         (is (empty? (:scored (get-corp))) "Profiteering not scored")
         (is (zero? (:agenda-point (get-corp))))
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/score state :corp (refresh prof))
+        (score state :corp (refresh prof))
         (click-prompt state :corp "0")
         (is (= 1 (:agenda-point (get-corp))) "Profiteering was able to be scored")))))
 
@@ -3759,14 +3759,14 @@
             beale (get-content state :remote2 0)]
         (dotimes [_ 13] (core/advance state :corp {:card (refresh napd)}))
         (is (= 13 (get-counters (refresh napd) :advancement)))
-        (core/score state :corp {:card (refresh napd)})
+        (score state :corp (refresh napd))
         (is (= 2 (:agenda-point (get-corp))))
         (play-from-hand state :corp "Success")
         (click-card state :corp (get-scored state :corp 0))
         (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
         (click-card state :corp (refresh beale))
         (is (= 13 (get-counters (refresh beale) :advancement)))
-        (core/score state :corp {:card (refresh beale)})
+        (score state :corp (refresh beale))
         (is (= 7 (:agenda-point (get-corp)))))))
   (testing "Works with public agendas"
     (do-game
@@ -3783,7 +3783,7 @@
         (click-card state :corp (refresh oaktown))
         (is (= 6 (get-counters (refresh oaktown) :advancement)))
         (is (= 19 (:credit (get-corp))) "Gain 2 + 2 + 2 + 2 + 3 + 3 = 14 credits for advancing Oaktown")
-        (core/score state :corp {:card (refresh oaktown)})
+        (score state :corp (refresh oaktown))
         (is (= 2 (:agenda-point (get-corp)))))))
   (testing "interaction with Jemison, regression test for issue #2704"
     (do-game
@@ -3820,7 +3820,7 @@
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
 (deftest sunset
-  ;; Hunter
+  ;; Sunset
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Sunset" "Ice Wall" "Enigma" "Hunter"]}})

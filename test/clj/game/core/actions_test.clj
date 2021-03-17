@@ -93,14 +93,14 @@
         (core/command-adv-counter state :corp 2)
         (click-card state :corp (refresh oaktown))
         ;; score should fail, shouldn't be able to score with 2 advancement tokens
-        (core/score state :corp (refresh oaktown))
+        (score state :corp (refresh oaktown))
         (is (zero? (:agenda-point (get-corp))))
         (core/command-adv-counter state :corp 4)
         (click-card state :corp (refresh oaktown))
         (is (= 4 (get-counters (refresh oaktown) :advancement)))
         (is (= 3 (:credit (get-corp))))
         (is (= 3 (:click (get-corp))))
-        (core/score state :corp (refresh oaktown)) ; now the score should go through
+        (score state :corp (refresh oaktown)) ; now the score should go through
         (is (= 2 (:agenda-point (get-corp))))
         (take-credits state :corp))
       (testing "Modifying publics1 and adonis for brevity"
@@ -137,7 +137,7 @@
       (core/command-counter state :corp [3])
       (click-card state :corp (refresh hok))
       (is (= 3 (get-counters (refresh hok) :advancement)))
-      (core/score state :corp (refresh hok)))
+      (score state :corp (refresh hok)))
     (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (core/command-counter state :corp ["virus" 2])

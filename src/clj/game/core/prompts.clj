@@ -113,13 +113,13 @@
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
-  ([state side card ability update! resolve-ability] (show-select state side card ability update! resolve-ability nil))
   ([state side card ability update! resolve-ability args]
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
-     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
+     (let [targets (:targets args)
+           ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card targets) %))
            all (get-in ability [:choices :all])
            m (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]

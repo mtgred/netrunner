@@ -301,7 +301,7 @@
         (should-not-place scored-astro hand-astro " in hand")
         (should-place scored-astro installed-astro " that is installed")
         (advance state installed-astro 2)
-        (core/score state :corp {:card (refresh installed-astro)}))
+        (score state :corp (refresh installed-astro)))
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [no-token-astro (get-scored state :corp 0)
             token-astro (get-scored state :corp 1)
@@ -385,7 +385,7 @@
         (advance state bell 3)
         (changes-val-macro 5 (:credit (get-corp))
                            "Got 5 credits from Bellona"
-                           (core/score state :corp {:card (refresh bell)}))
+                           (score state :corp (refresh bell)))
         (is (= 3 (:agenda-point (get-corp))) "Scored Bellona for 3 points")))))
 
 (deftest better-citizen-program
@@ -469,7 +469,7 @@
     (play-from-hand state :corp "Braintrust" "New remote")
     (let [bt (get-content state :remote1 0)]
       (core/add-prop state :corp bt :advance-counter 7)
-      (core/score state :corp {:card (refresh bt)})
+      (score state :corp (refresh bt))
       (let [scored-bt (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh scored-bt) :agenda))
             "Scored w/ 4 over-advancements; 2 agenda counters")
@@ -1014,7 +1014,7 @@
         (click-prompt state :corp "2")
         (click-card state :corp ec2)
         (is (= 4 (get-counters (refresh ec2) :advancement)))
-        (core/score state :corp {:card (refresh ec2)})
+        (score state :corp (refresh ec2))
         (is (= 4 (:agenda-point (get-corp))))
         (take-credits state :corp)
         (take-credits state :runner)
@@ -1892,14 +1892,14 @@
     (take-credits state :runner)
     (let [mb2 (get-content state :remote2 0)]
       (advance state mb2 3)
-      (core/score state :corp {:card (refresh mb2)})
+      (score state :corp (refresh mb2))
       (is (= 2 (:agenda-point (get-corp))) "Only needed 3 advancements to score"))
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Medical Breakthrough" "New remote")
     (let [mb3 (get-content state :remote3 0)]
       (advance state mb3 2)
-      (core/score state :corp {:card (refresh mb3)})
+      (score state :corp (refresh mb3))
       (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
 (deftest megaprix-qualifier
@@ -2012,11 +2012,11 @@
         (take-credits state :runner)
         (core/gain state :corp :bad-publicity 1)
         (advance state napd 2)
-        (core/score state :corp {:card (refresh napd)})
+        (score state :corp (refresh napd))
         (is (some? (get-content state :remote1 0))
             "Corp can't score with 4 advancements because of BP")
         (advance state napd)
-        (core/score state :corp {:card (refresh napd)})
+        (score state :corp (refresh napd))
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
   (testing "scoring requirement increases with bad publicity from Corporate Scandal"
     (do-game
@@ -2029,11 +2029,11 @@
         (play-from-hand state :runner "Corporate Scandal")
         (take-credits state :runner)
         (advance state napd 2)
-        (core/score state :corp {:card (refresh napd)})
+        (score state :corp (refresh napd))
         (is (some? (get-content state :remote1 0))
             "Corp can't score with 4 advancements because of BP")
         (advance state napd)
-        (core/score state :corp {:card (refresh napd)})
+        (score state :corp (refresh napd))
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements")))))
 
 (deftest net-quarantine
@@ -2332,7 +2332,7 @@
     (let [ares (get-content state :remote2 0)]
       (advance state ares 6)
       (is (= 6 (get-counters (refresh ares) :advancement)))
-      (core/score state :corp {:card (refresh ares)})
+      (score state :corp (refresh ares))
       (is (= "Select 2 installed cards installed cards to trash" (:msg (prompt-map :runner)))
           "Runner has Ares prompt to trash installed cards"))
     (click-card state :runner "Clone Chip")
@@ -2355,7 +2355,7 @@
       (let [atlas (get-content state :remote1 0)]
         (advance state atlas 4)
         (is (= 4 (get-counters (refresh atlas) :advancement)) "Atlas should have 4 advancement tokens")
-        (core/score state :corp {:card (refresh atlas)}))
+        (score state :corp (refresh atlas)))
       (let [atlas-scored (get-scored state :corp 0)]
         (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
         (card-ability state :corp atlas-scored 0)
@@ -2375,7 +2375,7 @@
       (let [atlas (get-content state :remote1 0)]
         (advance state atlas 3)
         (is (= 3 (get-counters (refresh atlas) :advancement)) "Atlas should have 3 advancement tokens")
-        (core/score state :corp {:card (refresh atlas)}))
+        (score state :corp (refresh atlas)))
       (let [atlas-scored (get-scored state :corp 0)]
         (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
         (card-ability state :corp atlas-scored 0)
@@ -2387,7 +2387,7 @@
       (let [atlas (get-content state :remote2 0)]
         (advance state atlas 4)
         (is (= 4 (get-counters (refresh atlas) :advancement)) "Atlas should have 4 advancement tokens")
-        (core/score state :corp {:card (refresh atlas)}))
+        (score state :corp (refresh atlas)))
       (let [atlas-scored (get-scored state :corp 1)]
         (is (= 2 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 2 agenda counter")
         (card-ability state :corp atlas-scored 0)
@@ -2403,12 +2403,12 @@
     (play-from-hand state :corp "Project Beale" "New remote")
     (let [pb1 (get-content state :remote1 0)]
       (advance state pb1 4)
-      (core/score state :corp {:card (refresh pb1)})
+      (score state :corp (refresh pb1))
       (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
       (play-from-hand state :corp "Project Beale" "New remote"))
     (let [pb2 (get-content state :remote2 0)]
       (advance state pb2 5)
-      (core/score state :corp {:card (refresh pb2)})
+      (score state :corp (refresh pb2))
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
 (deftest project-kusanagi
@@ -2425,7 +2425,7 @@
     (let [pk (get-content state :remote2 0)]
       (advance state pk 3)
       (is (= 3 (get-counters (refresh pk) :advancement)) "Kusanagi should have 3 advancement tokens")
-      (core/score state :corp {:card (refresh pk)}))
+      (score state :corp (refresh pk)))
     (let [pk-scored (get-scored state :corp 1)]
       (is (= 1 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 1 agenda counter")
       (take-credits state :corp)
@@ -2552,7 +2552,7 @@
     (let [vit (get-content state :remote1 0)]
       (advance state vit 4)
       (is (= 4 (get-counters (refresh vit) :advancement)) "Vitruvius should have 4 advancement tokens")
-      (core/score state :corp {:card (refresh vit)}))
+      (score state :corp (refresh vit)))
     (let [vit-scored (get-scored state :corp 0)]
       (is (= 1 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 1 agenda counter")
       (card-ability state :corp vit-scored 0)
@@ -2598,7 +2598,7 @@
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (let [pyu (get-content state :remote1 0)]
         (advance state pyu 4)
-        (core/score state :corp {:card (refresh pyu)}))
+        (score state :corp (refresh pyu)))
       (take-credits state :corp)
       (let [pyu-scored (get-scored state :corp 0)
             eli1 (get-ice state :remote2 0)]
@@ -2629,7 +2629,7 @@
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (let [pyu (get-content state :remote1 0)]
         (advance state pyu 6)
-        (core/score state :corp {:card (refresh pyu)}))
+        (score state :corp (refresh pyu)))
       (take-credits state :corp)
       (let [pyu-scored (get-scored state :corp 0)
             pyu2 (get-content state :remote2 0)]
@@ -2665,7 +2665,7 @@
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (let [pyu (get-content state :remote1 0)]
         (advance state pyu 4)
-        (core/score state :corp {:card (refresh pyu)}))
+        (score state :corp (refresh pyu)))
       (take-credits state :corp)
       (let [pyu-scored (get-scored state :corp 0)
             eli1 (get-ice state :remote2 0)]
@@ -2688,7 +2688,7 @@
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (let [pyu (get-content state :remote1 0)]
         (advance state pyu 4)
-        (core/score state :corp {:card (refresh pyu)}))
+        (score state :corp (refresh pyu)))
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
@@ -2832,7 +2832,7 @@
             installed-agenda (get-content state :remote2 0)]
         (place-counter scored-agenda installed-agenda)
         (advance state installed-agenda 3)
-        (core/score state :corp {:card (refresh installed-agenda)}))
+        (score state :corp (refresh installed-agenda)))
       (play-from-hand state :corp "Enigma" "HQ")
       (let [strikeforce (get-scored state :corp 1)
             enigma (get-ice state :hq 0)]
@@ -3000,7 +3000,7 @@
       (take-credits state :runner)
       (play-and-score state "SDS Drone Deployment")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-      (is (= ["SDS Drone Deployment" "Amani Senai" "Team Sponsorship"] (map :title (prompt-buttons :corp))))
+      (is (= #{"SDS Drone Deployment" "Amani Senai" "Team Sponsorship"} (into #{} (map :title (prompt-buttons :corp)))))
       (click-prompt state :corp "SDS Drone Deployment")
       (click-card state :corp "Cache")
       (click-prompt state :corp "Amani Senai")
@@ -3723,14 +3723,14 @@
    (play-from-hand state :corp "Vulnerability Audit" "New remote")
    (play-from-hand state :corp "Project Atlas" "New remote")
    (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
-   (core/score state :corp {:card (get-content state :remote1 0)})
+   (score state :corp (get-content state :remote1 0))
    (is (= 0 (count (:scored (get-corp)))) "Cannot be scored on installed turn")
    (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
-   (core/score state :corp {:card (get-content state :remote2 0)})
+   (score state :corp (get-content state :remote2 0))
    (is (= 1 (count (:scored (get-corp)))) "Can score other agendas just fine")
    (take-credits state :corp)
    (take-credits state :runner)
-   (core/score state :corp {:card (get-content state :remote1 0)})
+   (score state :corp (get-content state :remote1 0))
    (is (= 2 (count (:scored (get-corp)))) "Can be scored turn after install")))
 
 (deftest water-monopoly

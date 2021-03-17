@@ -1384,6 +1384,7 @@
       (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
       (play-from-hand state :runner "Scrubbed")
       (run-empty-server state "HQ")
+      (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (= 2 (:agenda-point (get-runner))) "Third steal prevented"))))
 
@@ -3229,12 +3230,12 @@
       (let [house (get-content state :remote2 0)]
         (advance state house)
         (advance state house)
-        (core/score state :corp (refresh house))
+        (score state :corp (refresh house))
         (is (empty? (:scored (get-corp))) "House of Knives not scored")
         (is (zero? (:agenda-point (get-corp))))
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/score state :corp (refresh house))
+        (score state :corp (refresh house))
         (is (= 1 (:agenda-point (get-corp))) "House of Knives was able to be scored")))))
 
 (deftest seidr-laboratories-destiny-defined
@@ -3624,7 +3625,7 @@
         (core/advance state :corp {:card (refresh atl)})
         (core/advance state :corp {:card (refresh atl)})
         (core/advance state :corp {:card (refresh atl)})
-        (core/score state :corp {:card (refresh atl)})
+        (score state :corp (refresh atl))
         (let [scored (get-scored state :corp 0)]
           (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
   (testing "only use one counter of Corporate Sales Team"
@@ -3640,7 +3641,7 @@
         (core/advance state :corp {:card (refresh cst)})
         (core/advance state :corp {:card (refresh cst)})
         (core/advance state :corp {:card (refresh cst)})
-        (core/score state :corp {:card (refresh cst)})
+        (score state :corp (refresh cst))
         (let [scored (get-scored state :corp 0)]
           (is (= 1 (get-counters (refresh scored) :agenda)) "1 counter added by Titan")
           (is (= 10 (get-counters (refresh scored) :credit)) "10 credits from Titan")

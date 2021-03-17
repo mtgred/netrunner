@@ -7,11 +7,11 @@
     [game.core.cost-fns :refer [card-ability-cost]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler card-as-handler pay resolve-ability trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler card-as-handler checkpoint make-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
     [game.core.ice :refer [break-subroutine! get-current-ice get-run-ices get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
-    [game.core.moving :refer [move remove-old-current trash]]
+    [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
@@ -21,7 +21,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -572,39 +572,26 @@
        (effect-completed state side eid)))))
 
 (defn score
-  "Score an agenda. It trusts the card data passed to it."
-  ([state side args] (score state side (make-eid state) args))
-  ([state side eid args]
-   (let [card (or (:card args) args)]
-     (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
-               (if (can-score? state side card)
-                 (let [moved-card (move state :corp card :scored)
-                       c (card-init state :corp moved-card {:resolve-effect false
-                                                            :init-data true})
-                       _ (update-all-advancement-requirements state)
-                       _ (update-all-agenda-points state)
-                       c (get-card state c)
-                       points (get-agenda-points c)
-                       card-ability (when-let [ability (:on-score (card-def card))]
-                                      (ability-as-handler c ability))]
-                   (system-msg state :corp (str "scores " (:title c)
-                                                " and gains " (quantify points "agenda point")))
-                   (trigger-event-simult
-                     state :corp eid :agenda-scored
-                     {:first-ability {:async true
-                                      :effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                                     ;; This is to handle Employee Strike with damage IDs #2688
-                                                     (when (:disable-id (card-def current))
-                                                       (swap! state assoc-in [:corp :disable-id] true)))
-                                                   (remove-old-current state side eid :runner))}
-                      :card-abilities card-ability
-                      :after-active-player
-                      {:effect (req (let [c (get-card state c)]
-                                      (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                                      (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                      (swap! state dissoc-in [:corp :disable-id])
-                                      (update-all-agenda-points state)
-                                      (check-winner state side)
-                                      (play-sfx state side "agenda-score")))}}
-                     c))
-                 (effect-completed state side eid))))))
+  "Score an agenda."
+  ([state side eid card] (score state side eid card nil))
+  ([state side eid card {:keys [no-req]}]
+   (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
+             (if-not (can-score? state side card {:no-req no-req})
+               (effect-completed state side eid)
+               (let [moved-card (move state :corp card :scored)
+                     c (card-init state :corp moved-card {:resolve-effect false
+                                                          :init-data true})
+                     _ (update-all-advancement-requirements state)
+                     _ (update-all-agenda-points state)
+                     c (get-card state c)
+                     points (get-agenda-points c)]
+                 (system-msg state :corp (str "scores " (:title c)
+                                              " and gains " (quantify points "agenda point")))
+                 (set-prop state :corp (get-card state c) :advance-counter 0)
+                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                 (play-sfx state side "agenda-score")
+                 (when-let [on-score (:on-score (card-def c))]
+                   (make-pending-event state :agenda-scored c on-score))
+                 (queue-event state :agenda-scored {:card c
+                                                    :points points})
+                 (checkpoint state nil eid {:duration :agenda-scored}))))))

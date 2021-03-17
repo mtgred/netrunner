@@ -5111,11 +5111,11 @@
     (let [ht (get-content state :remote2 0)]
       (core/advance state :corp {:card (refresh ht)})
       (core/advance state :corp {:card (refresh ht)})
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (empty? (:scored (get-corp))) "Hostile Takeover can't be scored with 2 adv")
       (core/gain state :corp :click 1)
       (core/advance state :corp {:card (refresh ht)})
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored with 3 adv")
       (is (= 3 (count (:discard (get-runner)))) "The Source is trashed"))))
 

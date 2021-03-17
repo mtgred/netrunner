@@ -151,7 +151,7 @@
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
   prevention/boosting process and eventually resolves the damage."
-  ([state side eid type n] (damage state side eid type n nil)) 
+  ([state side eid type n] (damage state side eid type n nil))
   ([state side eid type n {:keys [unpreventable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)

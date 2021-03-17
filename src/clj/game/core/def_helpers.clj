@@ -1,17 +1,18 @@
 (ns game.core.def-helpers
   (:require
-    [game.core.card :refer [get-counters]]
+    [game.core.card :refer [corp? get-card get-counters has-subtype?]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [trash]]
+    [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-prop]]
-    [game.core.say :refer [system-msg]]
+    [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [remove-once same-card? server-card]]
+    [game.utils :refer [remove-once same-card? server-card to-keyword]]
     [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 
@@ -143,13 +144,48 @@
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
+(defn trash-or-rfg
+  [state _ eid card]
+  (let [side (to-keyword (:side card))
+        title (:title card)]
+    (if (:rfg-instead-of-trashing card)
+      (do (system-say state side (str title " is removed from the game."))
+          (async-rfg state side eid card))
+      (do (system-say state side (str title " is trashed."))
+          (trash state side eid card {:unpreventable true :game-trash true})))))
+
+(defn make-current-event-handler
+  [title ability]
+  (let [card (server-card title)]
+    (if (has-subtype? card "Current")
+      (let [event-keyword (if (corp? card) :agenda-stolen :agenda-scored)
+            constant-ab {:type :trash-when-expired
+                         :req (req (some #(let [event (:event %)
+                                                context-card (:card %)]
+                                            (or (= event event-keyword)
+                                                (and (or (= :play-event event)
+                                                         (= :play-operation event))
+                                                     (and (not (same-card? card context-card))
+                                                          (has-subtype? context-card "Current")
+                                                          true))))
+                                         targets))
+                         :value trash-or-rfg}]
+        (update ability :constant-effects #(conj (into [] %) constant-ab)))
+      ability)))
+
+(defn add-default-abilities
+  [title ability]
+  (->> ability
+       (make-current-event-handler title)
+       (make-recurring-ability)))
+
 (def card-defs-cache (atom {}))
 
 (defmacro defcard
   [title ability]
   `(defmethod ~'defcard-impl ~title [~'_]
-     (if-let [cached-ability# (get card-defs-cache ~title)]
+     (if-let [cached-ability# (get @card-defs-cache ~title)]
        cached-ability#
-       (let [ability# (make-recurring-ability ~ability)]
+       (let [ability# (add-default-abilities ~title ~ability)]
          (swap! card-defs-cache assoc ~title ability#)
          ability#))))

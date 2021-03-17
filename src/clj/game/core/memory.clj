@@ -90,9 +90,9 @@
    (let [old-mu (select-keys (get-in @state [:runner :memory]) [:available :used :only-for])
          new-mu (build-new-mu state)
          changed? (not= old-mu new-mu)]
-     (when (neg? (:used new-mu))
-       (toast state :runner "You have exceeded your memory units!"))
      (when changed?
+       (when (neg? (:used new-mu))
+         (toast state :runner "You have exceeded your memory units!"))
        (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
 

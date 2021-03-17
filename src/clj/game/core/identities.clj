@@ -11,8 +11,7 @@
 (defn- actual-disable-identity
   "Actually disables the side's identity"
   [state side]
-  (let [id (assoc (get-in @state [side :identity]) :disabled true)]
-    (update! state side id)
+  (let [id (update! state side (assoc (get-in @state [side :identity]) :disabled true))]
     (unregister-events state side id)
     (unregister-constant-effects state side id)
     (when-let [leave-play (:leave-play (card-def id))]
@@ -22,9 +21,9 @@
   "Disables the side's identity"
   [state side]
   (let [disable-count (get-in @state [side :identity :num-disables])
-        id (assoc (get-in @state [side :identity])
-                  :num-disables ((fnil inc 0) disable-count))]
-    (update! state side id)
+        id (update! state side
+                    (assoc (get-in @state [side :identity])
+                           :num-disables ((fnil inc 0) disable-count)))]
     (when (= 1 (:num-disables id))
       (actual-disable-identity state side))))
 
@@ -32,17 +31,15 @@
   "Disables a card"
   [state side card]
   (deactivate state side card)
-  (let [c (assoc card :disabled true)]
-    (update! state side c))
-  (when-let [disable-effect (:disable (card-def card))]
-    (resolve-ability state side disable-effect (get-card state card) nil)))
+  (let [c (update! state side (assoc card :disabled true))]
+    (when-let [disable-effect (:disable (card-def c))]
+      (resolve-ability state side disable-effect c nil))))
 
 (defn- actual-enable-identity
   "Actually enables the side's identity"
   [state side]
-  (let [id (assoc (get-in @state [side :identity]) :disabled false)
+  (let [id (update! state side (assoc (get-in @state [side :identity]) :disabled false))
         {:keys [effect]} (card-def id)]
-    (update! state side id)
     (when effect
       (effect state side (make-eid state) id nil))
     (register-events state side id)
@@ -52,9 +49,9 @@
   "Enables the side's identity"
   [state side]
   (let [disable-count (get-in @state [side :identity :num-disables])
-        id (assoc (get-in @state [side :identity])
-                  :num-disables ((fnil dec 1) disable-count))]
-    (update! state side id)
+        id (update! state side
+                    (assoc (get-in @state [side :identity])
+                           :num-disables ((fnil dec 1) disable-count)))]
     (when (= 0 (:num-disables id))
       (actual-enable-identity state side))))
 
@@ -62,7 +59,6 @@
   "Enables a disabled card"
   [state side {:keys [disabled] :as card}]
   (when disabled
-    (let [c (dissoc card :disabled)]
-      (update! state side c)
+    (let [c (update! state side (dissoc card :disabled))]
       (when (active? card)
         (card-init state side c {:resolve-effect false})))))

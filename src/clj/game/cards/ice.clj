@@ -2313,19 +2313,23 @@
   {:subroutines [(do-net-damage 3)]})
 
 (defcard "News Hound"
-  (let [ab {:req (req (has-subtype? target "Current"))
-            :msg "make News Hound gain \"[subroutine] End the run\""
-            :effect (effect (reset-variable-subs card 1 end-the-run {:back true}))}]
+  (let [gain-sub {:req (req (and (= 1 (count (concat (:current corp) (:current runner))))
+                                 (has-subtype? (:card context) "Current")))
+                  :msg "make News Hound gain \"[subroutine] End the run\""
+                  :effect (effect (reset-variable-subs card 1 end-the-run {:back true}))}
+        lose-sub {:req (req (and (zero? (count (concat (:current corp) (:current runner))))
+                                 (has-subtype? (:card context) "Current")
+                                 (active? (:card context))))
+                  :msg "make News Hound lose \"[subroutine] End the run\""
+                  :effect (effect (reset-variable-subs card 0 nil))}]
     {:on-rez {:effect (req (when (pos? (count (concat (get-in @state [:corp :current])
                                                       (get-in @state [:runner :current]))))
                              (reset-variable-subs state side card 1 end-the-run {:back true})))}
-     :events [(assoc ab :event :play-event)
-              (assoc ab :event :play-operation)
-              {:event :trash-current
-               :msg "make News Hound lose \"[subroutine] End the run\""
-               :effect (effect (continue-ability
-                                 (reset-variable-subs state side card 0 nil)
-                                 card nil))}]
+     :events [(assoc gain-sub :event :play-event)
+              (assoc gain-sub :event :play-operation)
+              (assoc lose-sub :event :corp-trash)
+              (assoc lose-sub :event :runner-trash)
+              (assoc lose-sub :event :game-trash)]
      :subroutines [(tag-trace 3)]}))
 
 (defcard "NEXT Bronze"
