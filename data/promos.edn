@@ -3,25 +3,25 @@
   :artist-link "https://www.makeplayingcards.com/sell/kysra"
   :artist-about "Kysra has done lots of cool art since they were first born. An avid Netrunner fan, they decided to parlay their love of art into custom cards."
   :name "Kysra Alt Arts"
-  :position 0
   :version "kysra"}
+{:description "Ntscape Navigator alts"
+  :artist-blurb "Ntscape Navigator alts - Nisei member and streamer"
+  :artist-link "https://www.makeplayingcards.com/sell/akij"
+  :artist-about "Nisei member and streamer, Akira started making alt arts in ONR style to practice and develop her skills using the deep dream and AI tools."
+  :name "Ntscape Navigator Alt Arts"
+  :version "ntscape"}
  {:description "Alternate art from a variety of sources."
   :name "Alternate"
-  :position 1
   :version "alt"}
  {:description "Card art from the 2015 World Champion decks."
   :name "World Champion 2015"
-  :position 2
   :version "wc2015"}
  {:description "Card art from the 2016 World Champion decks."
   :name "World Champion 2016"
-  :position 3
   :version "wc2016"}
  {:description "Card art from the 2017 World Champion decks."
   :name "World Champion 2017"
-  :position 4
   :version "wc2017"}
  {:description "Original Art from updated cards."
   :name "Previous Versions"
-  :position 5
   :version "prev"}]

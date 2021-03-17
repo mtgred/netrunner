@@ -36,7 +36,7 @@
                           last)
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
-                        (map #(select-keys % [:version :name :description :position :artist-blurb :artist-link :artist-about])))]
+                        (map #(select-keys % [:version :name :description :artist-blurb :artist-link :artist-about])))]
       (reset! cards/mwl latest-mwl)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
