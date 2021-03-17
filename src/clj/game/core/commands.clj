@@ -18,7 +18,7 @@
     [game.core.psi :refer [psi-game]]
     [game.core.rezzing :refer [rez]]
     [game.core.runs :refer [end-run jack-out]]
-    [game.core.say :refer [system-msg]]
+    [game.core.say :refer [system-msg system-say]]
     [game.core.servers :refer [zones->sorted-names]]
     [game.core.set-up :refer [build-card]]
     [game.core.to-string :refer [card-str]]
@@ -140,6 +140,7 @@
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
       (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil :history (:history @state)))
+      (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 

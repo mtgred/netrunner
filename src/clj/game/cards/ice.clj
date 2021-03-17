@@ -51,7 +51,7 @@
 (defn bioroid-break
   ([cost qty] (bioroid-break cost qty nil))
   ([cost qty args]
-   (break-sub [:click cost {:action :bioroid-cost}] qty nil args)))
+   (break-sub [:lose-click cost] qty nil args)))
 
 ;;; General subroutines
 (def end-the-run

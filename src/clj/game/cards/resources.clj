@@ -175,8 +175,7 @@
   {:implementation "Run requirement not enforced"
    :events [{:event :runner-turn-begins
              :effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}]
-   :abilities [(assoc (break-sub [:click 2 {:action :bioroid-cost}] 1 "All" {:req (req true)})
-                      :once :per-turn)]})
+   :abilities [(assoc (break-sub [:lose-click 2] 1 "All" {:req (req true)}) :once :per-turn)]})
 
 (defcard "Angel Arena"
   {:prompt "How many power counters?"
