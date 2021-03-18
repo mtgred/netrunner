@@ -1102,19 +1102,38 @@
            [:span.impl-msg implemented])]))))
 
 (defn card-zoom-display
-  [card]
-  [:div.card-preview.blue-shade
-   (let [url (image-url card)
-         show-img (= "image" (get-in @app-state [:options :card-zoom] "image"))]
-     (if (and url show-img)
-       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}]
-       [card-as-text card false]))])
+  [zoom-card img-side]
+  (when-let [card @zoom-card]
+    [:<>
+     [:div.card-preview.blue-shade
+      {:on-click #(reset! img-side (not @img-side))}
+      (let [url (image-url card)
+            show-img (= "image" (get-in @app-state [:options :card-zoom] "image"))]
+        (if (and @img-side url show-img)
+          [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}]
+          [card-as-text card false]))]
+     (when (get-in @app-state [:options :pin-zoom] false)
+       [:button.win-right {:on-click #(reset! zoom-card false) :type "button"} "✘"])]))
 
-(defn card-zoom [zoom-card]
-  (if-let [card @zoom-card]
+(defn card-zoom [zoom-card img-side]
+  (if @zoom-card
     (do (-> ".card-zoom" js/$ (.addClass "fade"))
-        [card-zoom-display card])
+        [card-zoom-display zoom-card img-side])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
+
+(defn card-zoom-view [zoom-card]
+  (let [zoomed-card (r/atom nil)
+        img-side (r/atom true)]
+    (fn [zoom-card]
+      (let [pin (get-in @app-state [:options :pin-zoom] false)]
+        (when (or @zoom-card
+                  (and (not @zoom-card) (not pin)))
+          (reset! zoomed-card @zoom-card)
+          (reset! img-side true))
+        [:<>
+         [:div.card-zoom
+          [card-zoom zoomed-card img-side]]
+         [card-implementation zoomed-card]]))))
 
 (defn server-menu
   "The pop-up on a card in hand when clicked"
@@ -1277,7 +1296,7 @@
            subroutines))])))
 
 (defn card-view
-  [card filpped]
+  [card flipped]
   (let [c-state (r/atom {})]
     (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
                  subtype subtypes advanceable rezzed strength current-strength title remotes selected hosted
@@ -2445,9 +2464,7 @@
                                  @background)}]
 
                  [:div.rightpane
-                  [:div.card-zoom
-                   [card-zoom zoom-card]]
-                  [card-implementation zoom-card]
+                  [card-zoom-view zoom-card]
                   [:div.log
                    (when (:replay @game-state)
                      [log-selector])

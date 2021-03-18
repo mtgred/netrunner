@@ -14,6 +14,7 @@
            :options (merge {:background "lobby-bg"
                             :card-back (get-local-value "card-back" "nisei")
                             :card-zoom (get-local-value "card-zoom" "image")
+                            :pin-zoom (get-local-value "pin-zoom" false)
                             :pronouns "none"
                             :language "en"
                             :show-alt-art true

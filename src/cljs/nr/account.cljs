@@ -37,6 +37,7 @@
   (swap! app-state assoc-in [:options :background] (:background @s))
   (swap! app-state assoc-in [:options :card-back] (:card-back @s))
   (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
+  (swap! app-state assoc-in [:options :pin-zoom] (:pin-zoom @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
@@ -56,6 +57,7 @@
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
   (.setItem js/localStorage "card-zoom" (:card-zoom @s))
+  (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -341,7 +343,14 @@
                                       :value (:ref option)
                                       :on-change #(swap! s assoc :card-zoom (.. % -target -value))
                                       :checked (= (:card-zoom @s) (:ref option))}]
-                      (:name option)]]))]
+                      (:name option)]]))
+           [:br]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "pin-zoom"
+                             :checked (:pin-zoom @s)
+                             :on-change #(swap! s assoc-in [:pin-zoom] (.. % -target -checked))}]
+             (tr [:settings.pin-zoom "Keep zoomed cards on screen"])]]]
 
           [:section
            [:h3 (tr [:settings.game-stats " Game Win/Lose statistics "])]
@@ -449,6 +458,7 @@
                        :background (get-in @app-state [:options :background])
                        :card-back (get-in @app-state [:options :card-back])
                        :card-zoom (get-in @app-state [:options :card-zoom])
+                       :pin-zoom (get-in @app-state [:options :pin-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
                        :language (get-in @app-state [:options :language])
                        :sounds (get-in @app-state [:options :sounds])
