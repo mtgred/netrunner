@@ -961,7 +961,7 @@
 
 (defn- trigger-pending-abilities
   [state eid handlers args]
-  (if handlers
+  (if (seq handlers)
     (let [active-player (:active-player @state)
           opponent (other-side active-player)
           active-player-handlers (filter-handlers handlers active-player)
@@ -976,18 +976,21 @@
     (effect-completed state nil eid)))
 
 ;; CHECKPOINT
+(defn internal-trash-cards
+  [state _ eid maps]
+  (if (seq maps)
+    (let [{:keys [card value]} (first maps)]
+      (wait-for (value state nil (make-eid state eid) card)
+                (internal-trash-cards state nil eid (next maps))))
+    (effect-completed state nil eid)))
 
 (defn trash-when-expired
   [state _ eid context-maps]
-  (letfn [(internal-trash-cards
-            [state _ eid maps]
-            (if (seq maps)
-              (let [{:keys [card value]} (first maps)]
-                (wait-for (value state nil (make-eid state eid) card)
-                          (internal-trash-cards state nil eid (next maps))))
-              (effect-completed state nil eid)))]
-    (->> (get-effect-maps state nil eid :trash-when-expired context-maps)
-         (internal-trash-cards state nil eid))))
+  (if (seq context-maps)
+    (->> context-maps
+         (get-effect-maps state nil eid :trash-when-expired)
+         (internal-trash-cards state nil eid))
+    (effect-completed state nil eid)))
 
 (defn unregister-expired-durations
   [state _ eid duration context-maps]

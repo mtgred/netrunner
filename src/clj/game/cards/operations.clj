@@ -657,17 +657,10 @@
                                                      (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
                                :effect (req (wait-for
                                               (corp-install state side target server nil)
-                                              (let [server (if (= "New remote" server)
-                                                             (-> (turn-events state side :corp-install)
-                                                                 ffirst
-                                                                 get-zone
-                                                                 second
-                                                                 zone->name)
-                                                             server)]
+                                              (let [server (remote->name (second (:zone async-result)))]
                                                 (if (< n X)
                                                   (continue-ability state side (install-cards server (inc n)) card nil)
-                                                  (effect-completed state side eid)))))
-                               :cancel-effect (effect (effect-completed eid))})
+                                                  (effect-completed state side eid)))))})
               select-server {:async true
                              :prompt "Install cards in which server?"
                              :choices (req (conj (vec (get-remote-names state)) "New remote"))

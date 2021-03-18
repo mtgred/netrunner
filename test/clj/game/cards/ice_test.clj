@@ -1927,6 +1927,42 @@
       (click-prompt state :runner "OK")
       (is (not (accessing state "Hostile Takeover"))))))
 
+(deftest howler
+  ;; Howler
+  (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                                        :hand ["Howler" "Eli 1.0" "Hedge Fund"]
+                                        :discard ["Ichi 1.0"]}})
+                _ (do (play-from-hand state :corp "Howler" "HQ")
+                      (take-credits state :corp))]
+    (testing "Choosing from HQ"
+      (do-game state
+        (run-on state :hq)
+        (let [howler (get-ice state :hq 0)]
+          (rez state :corp howler)
+          (run-continue state)
+          (fire-subs state (refresh howler))
+          (click-card state :corp "Eli 1.0")
+          (is (find-card "Eli 1.0" (get-ice state :hq))))
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (not (rezzed? (get-ice state :hq 0))))
+        (is (find-card "Howler" (:discard (get-corp))))))
+    (testing "Choosing from Archives"
+      (do-game state
+        (run-on state :hq)
+        (let [howler (get-ice state :hq 0)]
+          (rez state :corp howler)
+          (run-continue state)
+          (fire-subs state (refresh howler))
+          (click-card state :corp "Ichi 1.0")
+          (is (find-card "Ichi 1.0" (get-ice state :hq))))
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (not (rezzed? (get-ice state :hq 0))))
+        (is (find-card "Howler" (:discard (get-corp))))))))
+
 (deftest hydra
   ;; Hydra - do an effect Runner is tagged, otherwise give Runner 1 tag
   (do-game

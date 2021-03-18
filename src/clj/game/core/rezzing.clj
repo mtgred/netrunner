@@ -89,7 +89,7 @@
                     (wait-for
                       (trash-hosted-cards state side (make-eid state eid) (get-card state card))
                       (wait-for
-                        (checkpoint state nil (make-eid state eid))
+                        (checkpoint state nil (make-eid state eid) {:duration :rez})
                         (when press-continue
                           (continue state side nil))
                         (complete-with-result state side eid {:card (get-card state card)})))))))))

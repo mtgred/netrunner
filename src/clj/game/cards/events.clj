@@ -2467,8 +2467,8 @@
      :effect (req (doseq [c (rumor state)]
                     (disable-card state :corp c)))
      :events [{:event :corp-install
-               :req (req (eligible? target))
-               :effect (effect (disable-card :corp target))}]}))
+               :req (req (eligible? (:card context)))
+               :effect (effect (disable-card :corp (:card context)))}]}))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]
@@ -2882,7 +2882,7 @@
 
 (defcard "Unscheduled Maintenance"
   {:events [{:event :corp-install
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :effect (effect (register-turn-flag!
                                card :can-install-ice
                                (fn [state side card]
