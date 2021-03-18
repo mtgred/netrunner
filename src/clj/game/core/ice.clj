@@ -8,7 +8,7 @@
     [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [card-flag?]]
-    [game.core.payment :refer [can-pay? merge-costs]]
+    [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req effect msg continue-ability wait-for]]
@@ -648,6 +648,7 @@
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
+                                             :cost-label (build-cost-label total-cost)
                                              :label (str (if (and pump-ability (pos? times-pump))
                                                            "Match strength and fully break "
                                                            "Fully break ")
@@ -657,6 +658,7 @@
                                                     (can-pay? state side eid card total-pump-cost))
                                            [{:dynamic :auto-pump
                                              :cost total-pump-cost
+                                             :cost-label (build-cost-label total-pump-cost)
                                              :label (str "Match strength of " (:title current-ice))}])))
                             abs)))))})
 

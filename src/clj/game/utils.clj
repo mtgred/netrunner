@@ -2,7 +2,6 @@
   (:require
     [jinteki.cards :refer [all-cards]]
     [clojure.string :as string]
-    [clojure.stacktrace :refer [print-stack-trace]]
     [clj-uuid :as uuid]))
 
 (defn make-cid []
