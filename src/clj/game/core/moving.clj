@@ -509,7 +509,7 @@
   "Forfeits the given agenda to the :rfg zone."
   ([state side card] (forfeit state side (make-eid state) card))
   ([state side eid card] (forfeit state side eid card {:msg true}))
-  ([state side eid card args]
+  ([state side eid card {:keys [msg no-checkpoint]}]
    ;; Remove all hosted cards first
    (doseq [h (:hosted card)]
      (trash state side
@@ -517,12 +517,15 @@
             (update-in h [:zone] #(map to-keyword %))
             {:unpreventable true :suppress-event true}))
    (let [card (get-card state card)]
-     (when (:msg args)
+     (when msg
        (system-msg state side (str "forfeits " (:title card))))
      (move state (to-keyword (:side card)) card :rfg)
      (update-all-agenda-points state side)
      (check-win-by-agenda state side)
-     (trigger-event-sync state side eid (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) card))))
+     (queue-event state (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) {:card card})
+     (if no-checkpoint
+       (effect-completed state nil eid)
+       (checkpoint state nil eid nil)))))
 
 (defn flip-facedown
   "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"

@@ -189,7 +189,8 @@
   (if (empty? agendas)
     (complete-with-result state side eid acc)
     (let [agenda (first agendas)]
-      (wait-for (forfeit state side agenda {:msg false})
+      (wait-for (forfeit state side agenda {:msg false
+                                            :no-checkpoint true})
                 (forfeit-multiple state side eid (rest agendas) (conj acc agenda))))))
 
 ;; Forfeit
@@ -227,7 +228,7 @@
   (is-scored? state side (get-card state card)))
 (defmethod handler :forfeit-self
   [cost state side eid card actions]
-  (wait-for (forfeit state side card {:msg false})
+  (wait-for (forfeit state side card {:msg false :no-checkpoint true})
             (complete-with-result
               state side eid
               {:msg (str "forfeits " (:title card))
