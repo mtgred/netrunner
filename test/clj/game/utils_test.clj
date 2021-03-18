@@ -6,7 +6,7 @@
 
 (defmacro error-wrapper [form]
   `(try ~form
-        (catch Exception ex#
+        (catch clojure.lang.ExceptionInfo ex#
           (let [msg# (.getMessage ^Throwable ex#)
                 form# (:cause (ex-data ex#))
                 result# (:result (ex-data ex#))]

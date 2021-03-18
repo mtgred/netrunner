@@ -1346,7 +1346,7 @@
        :type :custom}}}))
 
 (defcard "Plascrete Carapace"
-  {:data [:counter {:power 4}]
+  {:data {:counter {:power 4}}
    :interactions {:prevent [{:type #{:meat}
                              :req (req true)}]}
    :events [(trash-on-empty :power)]

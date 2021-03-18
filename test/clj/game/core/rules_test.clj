@@ -392,36 +392,6 @@
       (take-credits state :corp)
       (is (= 0 (get-counters (refresh iw) :virus)) "Purging removed Ice Wall counters"))))
 
-(deftest virus-counter-flags
-  (testing "Set counter flag when virus card enters play with counters"
-    (do-game
-      (new-game {:runner {:deck ["Surge" "Imp" "Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Imp")
-      (let [imp (get-program state 0)]
-        (is (get-in imp [:added-virus-counter]) "Counter flag was set on Imp"))))
-  (testing "Set counter flag when add-prop is called on a virus"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ;click to add a virus counter
-        (is (= 1 (get-counters (refresh crypsis) :virus)) "Crypsis added a virus token")
-        (is (get-in (refresh crypsis) [:added-virus-counter])
-            "Counter flag was set on Crypsis"))))
-  (testing "Clear the virus counter flag at the end of each turn"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ; click to add a virus counter
-        (take-credits state :runner 2)
-        (take-credits state :corp 1)
-        (is (not (get-in (refresh crypsis) [:added-virus-counter]))
-            "Counter flag was cleared on Crypsis")))))
-
 (deftest end-the-run-test
   ;; Since all ETR ice share a common ability, we only need one test
   (do-game

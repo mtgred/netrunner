@@ -14,6 +14,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg merge-costs]]
+    [game.core.props :refer [add-counter]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
@@ -341,13 +342,6 @@
                        (when host-card (str " on " (card-str state host-card)))
                        (when no-cost " at no cost"))))))
 
-(defn- handle-virus-counter-flag
-  "Deal with setting the added-virus-counter flag"
-  [state side installed-card]
-  (when (and (has-subtype? installed-card "Virus")
-           (pos? (get-counters installed-card :virus)))
-    (update! state side (assoc installed-card :added-virus-counter true))))
-
 (defn runner-install
   "Installs specified runner card if able"
   ([state side card] (runner-install state side (make-eid state) card nil))
@@ -388,7 +382,6 @@
                            (when-not no-msg
                              (runner-install-message state side (:title installed-card) payment-str params))
                            (play-sfx state side "install-runner")
-                           (handle-virus-counter-flag state side (get-card state installed-card))
                            (when (and (not facedown)
                                       (resource? card))
                              (swap! state assoc-in [:runner :register :installed-resource] true))
