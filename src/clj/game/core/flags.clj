@@ -308,6 +308,10 @@
          (let [cost (get-advancement-requirement card)]
            (and cost
                 (<= cost (get-counters card :advancement)))))
+     ;; Score req on the card is allowed
+     (if (card-flag? card :can-score)
+       (card-flag-fn? state side card :can-score)
+       true)
      ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
      (check-flag-types? state side card :can-score [:current-turn :persistent])
      ;; An effect hasn't set a card as unable to be scored (Clot)

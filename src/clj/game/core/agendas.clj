@@ -50,7 +50,7 @@
       (:current-points card)
       0))
 
-(defn- agenda-points
+(defn agenda-points
   "Apply agenda-point modifications to calculate the number of points this card is worth
   to the given player."
   [state side card]
@@ -61,7 +61,8 @@
                       (:agendapoints-corp (card-def card))
                       (:agendapoints-runner (card-def card)))]
       (if (fn? points-fn)
-        (points-fn state side nil card nil)
+        (+ (points-fn state side nil card nil)
+           (sum-effects state side card :agenda-value nil))
         (+ base-points
            as-agenda-points
            (sum-effects state side card :agenda-value nil))))))

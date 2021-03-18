@@ -4807,7 +4807,19 @@
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 7 [Credits] to trash")
       (is (= 4 (:agenda-point (get-runner))) "Runner has 4 agenda points")
-      (is (= 2 (count (:scored (get-runner)))) "Runner has 2 agendas in scored area"))))
+      (is (= 2 (count (:scored (get-runner)))) "Runner has 2 agendas in scored area")))
+  (testing "agenda points function shouldn't override change #5643"
+    (do-game
+      (new-game {:corp {:deck ["The Board" "Global Food Initiative"]}})
+      (play-from-hand state :corp "The Board" "New remote")
+      (play-from-hand state :corp "Global Food Initiative" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (zero? (:agenda-point (get-runner))) "Runner has 0 agenda points")
+      (run-empty-server state :remote2)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Worth 2 in runner score area, The Board lowers by 1")
+      (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area"))))
 
 (deftest the-news-now-hour
   ;; The News Now Hour

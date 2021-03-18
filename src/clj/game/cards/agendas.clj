@@ -1721,17 +1721,10 @@
                                (add-counter card :agenda -1))}}}]})
 
 (defcard "Vulnerability Audit"
-  {:derezzed-events
-   [{:event :pre-agenda-scored
-     :req (req (and (same-card? target card)
-                    (= :this-turn (installed? target))))
-     :effect (effect (register-turn-flag!
-                       card :can-score
-                       (fn [state side other-card]
-                         (if (same-card? other-card card)
-                           ((constantly false)
-                            (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
-                           true))))}]})
+  {:flags {:can-score (req (let [result (not= :this-turn (installed? card))]
+                             (when-not result
+                               (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
+                             result))}})
 
 (defcard "Vulcan Coverup"
   {:on-score {:interactive (req true)
