@@ -302,7 +302,7 @@
   "Attempts to trash each given card, and then once all given cards have been either
   added or not added to the trash list, all of those cards are trashed"
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards {:keys [cause keep-server-alive host-trashed game-trash accessed] :as args}]
+  ([state side eid cards {:keys [cause keep-server-alive host-trashed game-trash accessed no-checkpoint] :as args}]
    (wait-for (prevent-trash state side (make-eid state eid) cards args)
              (let [trashlist async-result
                    _ (update-current-ice-to-trash state trashlist)
@@ -377,7 +377,9 @@
                    (queue-event state trash-event {:card trashed-card
                                                    :cause cause
                                                    :accessed accessed}))
-                 (checkpoint state nil eid nil))))))
+                 (if no-checkpoint
+                   (effect-completed state nil eid)
+                   (checkpoint state nil eid nil)))))))
 
 (defn trash
   ([state side eid card] (trash-cards state side eid [card] nil))

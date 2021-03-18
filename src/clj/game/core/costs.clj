@@ -177,7 +177,8 @@
 (defmethod handler :trash
   [cost state side eid card actions]
   (wait-for (trash state side card {:cause :ability-cost
-                                    :unpreventable true})
+                                    :unpreventable true
+                                    :no-checkpoint true})
             (complete-with-result state side eid {:msg (str "trashes " (:title card))
                                                   :type :trash
                                                   :value 1
