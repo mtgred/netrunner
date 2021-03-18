@@ -151,6 +151,7 @@
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
+                                             :cost-label (build-cost-label total-cost)
                                              :label (str "Match strength and fully break "
                                                          (:title current-ice))}])))
                             abs)))))})

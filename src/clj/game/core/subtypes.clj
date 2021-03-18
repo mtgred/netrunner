@@ -3,7 +3,7 @@
             [game.core.card :refer [get-card]]
             [game.core.effects :refer [get-effects]]
             [game.core.update :refer [update!]]
-            [game.utils :refer [remove-once server-card]]))
+            [game.utils :refer [remove-once server-card to-keyword]]))
 
 (defn subtypes-for-card
   [state card]
@@ -29,8 +29,8 @@
         old-subtypes (:subtypes card)
         new-subtypes (subtypes-for-card state card)
         changed? (not= old-subtypes new-subtypes)]
-    (if changed?
-      (update! state side (assoc card :subtypes new-subtypes)))
+    (when changed?
+      (update! state (to-keyword (:side card)) (assoc card :subtypes new-subtypes)))
     changed?))
 
 (defn update-all-subtypes

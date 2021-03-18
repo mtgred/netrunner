@@ -625,16 +625,20 @@
                                                       :flipped false
                                                       :face :front
                                                       :code (subs (:code card) 0 5)
-                                                      :subtype "Natural"
-                                                      :subtypes ["Natural"])
+                                                      :subtype "Natural")
                                                (assoc card
                                                       :flipped true
                                                       :face :back
                                                       :code (str (subs (:code card) 0 5) "flip")
-                                                      :subtype "Digital"
-                                                      :subtypes ["Digital"])))
+                                                      :subtype "Digital")))
                          (update-link state))]
-    {:constant-effects [(link+ (req (:flipped card)) 1)]
+    {:constant-effects [(link+ (req (:flipped card)) 1)
+                        {:type :gain-subtype
+                         :req (req (and (same-card? card target) (:flipped card)))
+                         :value "Digital"}
+                        {:type :lose-subtype
+                         :req (req (and (same-card? card target) (:flipped card)))
+                         :value "Natural"}]
      :events [{:event :pre-first-turn
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
