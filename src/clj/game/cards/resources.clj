@@ -2826,10 +2826,7 @@
    :leave-play (req (swap! state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
-  (let [first-event-check (fn [state fn1 fn2]
-                            (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
-                                 (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-        ability {:async true
+  (let [ability {:async true
                  :prompt "Select a card to install with Thunder Art Gallery"
                  :choices
                  {:req (req (and (runner? target)
@@ -2841,15 +2838,16 @@
                  :effect (effect (runner-install (assoc eid
                                                         :source card
                                                         :source-type :runner-install)
-                                                 target {:cost-bonus -1}))
-                 :cancel-effect (effect (effect-completed eid))}]
+                                                 target {:cost-bonus -1}))}]
     {:events [(assoc ability
                      :event :runner-lose-tag
-                     :req (req (and (first-event-check state first-event? no-event?)
-                                    (= side :runner))))
+                     :req (req (and (= side :runner)
+                                    (first-event? state :runner :runner-lose-tag #(= :runner (:side (first %))))
+                                    (no-event? state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t)))))))
               (assoc ability
                      :event :runner-prevent
-                     :req (req (and (first-event-check state no-event? first-event?)
+                     :req (req (and (no-event? state :runner :runner-lose-tag #(= :runner (:side (first %))))
+                                    (first-event? state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))
                                     (seq (filter #(some #{:tag} %) targets)))))]}))
 
 (defcard "Trickster Taka"

@@ -2,7 +2,7 @@
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
     [game.core.eid :refer [effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync]]
+    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -87,10 +87,15 @@
 
 (defn lose-tags
   "Always removes `:base` tags"
-  [state side eid n]
+  ([state side eid n] (lose-tags state side eid n nil))
+  ([state side eid n {:keys [no-checkpoint] :as args}]
   (if (= n :all)
-    (lose-tags state side eid (get-in @state [:runner :tag :base]))
+    (lose-tags state side eid (get-in @state [:runner :tag :base]) args)
     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
         (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag n side))))
+        (queue-event state :runner-lose-tag {:amount n
+                                             :side side})
+        (if no-checkpoint
+          (effect-completed state nil eid)
+          (checkpoint state nil eid nil))))))

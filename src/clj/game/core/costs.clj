@@ -245,7 +245,7 @@
   (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost))))
 (defmethod handler :tag
   [cost state side eid card actions]
-  (wait-for (lose-tags state side (value cost))
+  (wait-for (lose-tags state side (value cost) {:no-checkpoint true})
             (complete-with-result state side eid {:msg (str "removes " (quantify (value cost) "tag"))
                                                   :type :tag
                                                   :value (value cost)})))
