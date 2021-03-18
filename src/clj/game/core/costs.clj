@@ -498,7 +498,7 @@
   (<= 0 (- (count (get-in @state [side :deck])) (value cost))))
 (defmethod handler :trash-from-deck
   [cost state side eid card actions]
-  (wait-for (mill state side side (value cost))
+  (wait-for (mill state side side (value cost) {:no-checkpoint true})
             (complete-with-result
               state side eid
               {:msg (str "trashes " (quantify (count async-result) "card")
@@ -530,7 +530,9 @@
                  :max (value cost)
                  :card select-fn}
        :async true
-       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :seen false})
+       :effect (req (wait-for (trash-cards state side targets {:unpreventable true
+                                                               :seen false
+                                                               :no-checkpoint true})
                               (complete-with-result
                                 state side eid
                                 {:msg (str "trashes " (quantify (count async-result) "card")
@@ -551,7 +553,7 @@
   (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
 (defmethod handler :randomly-trash-from-hand
   [cost state side eid card actions]
-  (wait-for (discard-from-hand state side side (value cost))
+  (wait-for (discard-from-hand state side side (value cost) {:no-checkpoint true})
             (complete-with-result
               state side eid
               {:msg (str "trashes " (quantify (count async-result) "card")
@@ -570,7 +572,8 @@
 (defmethod handler :trash-entire-hand
   [cost state side eid card actions]
   (let [cards (get-in @state [side :hand])]
-    (wait-for (trash-cards state side cards {:unpreventable true})
+    (wait-for (trash-cards state side cards {:unpreventable true
+                                             :no-checkpoint true})
               (complete-with-result
                 state side eid
                 {:msg (str "trashes all (" (count async-result) ") cards in "
@@ -599,7 +602,8 @@
      :choices {:all true
                :max (value cost)
                :card (every-pred hardware? in-hand?)}
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:unpreventable true
+                                                             :no-checkpoint true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "piece")
@@ -628,7 +632,8 @@
      :choices {:all true
                :max (value cost)
                :card (every-pred program? in-hand?)}
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:unpreventable true
+                                                             :no-checkpoint true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "program")
@@ -656,7 +661,8 @@
      :choices {:all true
                :max (value cost)
                :card (every-pred resource? in-hand?)}
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:unpreventable true
+                                                             :no-checkpoint true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "resource")
