@@ -1024,9 +1024,8 @@
 
 (defcard "Māui"
   {:constant-effects [(mu+ 2)]
-   :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
-   :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
-   :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
+   :recurring (req (count (get-in corp [:servers :hq :ices])))
+   :interactions {:pay-credits {:req (req (= [:hq] (get-in @state [:run :server])))
                                 :type :recurring}}})
 
 (defcard "Maw"
@@ -1082,7 +1081,7 @@
                                {:prompt "Select a card and replace 1 spent [Recurring Credits] on it"
                                 :choices {:card #(< (get-counters % :recurring) (:recurring (card-def %) 0))}
                                 :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
-                                :effect (effect (add-prop target :rec-counter 1))}
+                                :effect (effect (add-counter target :recurring 1))}
                                card nil))}]})
 
 (defcard "Monolith"

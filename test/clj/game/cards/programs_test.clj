@@ -4213,12 +4213,13 @@
       (let [phero (get-program state 0)
             inti (get-program state 1)]
         (is (changes-credits (get-runner) -2 (card-ability state :runner inti 1)))
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 2 credits from Pheromones"
-                           (run-on state "HQ")
-                           (card-ability state :runner inti 1)
-                           (click-card state :runner phero)
-                           (click-card state :runner phero))))))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Used 2 credits from Pheromones"
+          (run-on state "HQ")
+          (card-ability state :runner inti 1)
+          (click-card state :runner phero)
+          (click-card state :runner phero))))))
 
 (deftest plague
   ;; Plague

@@ -24,12 +24,6 @@
              (trigger-event-sync state side eid :advancement-placed (get-card state updated-card) args)))
        (trigger-event-sync state side eid :counter-added (get-card state updated-card) args)))))
 
-(defn set-prop
-  "Like add-prop, but sets multiple keys to corresponding values without triggering events.
-  Example: (set-prop ... card :counter 4 :current-strength 0)"
-  [state side card & args]
-  (update! state side (apply assoc (cons card args))))
-
 (defn add-counter
   "Adds n counters of the specified type to a card"
   ([state side card prop-type n] (add-counter state side (make-eid state) card prop-type n nil))
@@ -40,6 +34,12 @@
      (add-prop state side eid card :advance-counter n args)
      (let [updated-card (update! state side (update-in card [:counter prop-type] #(+ (or % 0) n)))]
        (trigger-event-sync state side eid :counter-added updated-card {:counter-type prop-type :amount n :placed placed})))))
+
+(defn set-prop
+  "Like add-prop, but sets multiple keys to corresponding values without triggering events.
+  Example: (set-prop ... card :counter 4 :current-strength 0)"
+  [state side card & args]
+  (update! state side (apply assoc (cons card args))))
 
 (defn add-icon
   "Adds an icon to a card. E.g. a Femme Fatale token.

@@ -103,11 +103,10 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
-    (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
           apt (get-resource state 0)]
-      (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
-      (click-card state :runner (find-card "Compromised Employee" (get-resource state)))
+      (card-ability state :runner apt 0) ; use Off-Campus option to host a card
+      (click-card state :runner "Compromised Employee")
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))

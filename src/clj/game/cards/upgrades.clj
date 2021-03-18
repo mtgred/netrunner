@@ -801,8 +801,7 @@
                 :effect (effect (trash eid target nil))}]})
 
 (defcard "Khondi Plaza"
-  {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-   :on-rez {:effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
+  {:recurring (req (count (get-remotes state)))
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))
@@ -1210,7 +1209,7 @@
      :once :per-turn
      :label "Take all credits"
      :async true
-     :effect (effect (set-prop card :counter {:credit 0})
+     :effect (effect (add-counter card :credit (- (get-counters card :credit)))
                      (gain-credits eid (get-counters card :credit)))}]})
 
 (defcard "Signal Jamming"

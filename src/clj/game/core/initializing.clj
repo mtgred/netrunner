@@ -1,7 +1,7 @@
 (ns game.core.initializing
   (:require
     [game.core.board :refer [all-active all-active-installed]]
-    [game.core.card :refer [get-card has-subtype? program? runner? map->Card]]
+    [game.core.card :refer [get-card get-counters has-subtype? program? runner? map->Card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost]]
     [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
@@ -12,7 +12,7 @@
     [game.core.ice :refer [add-sub]]
     [game.core.memory :refer [update-mu]]
     [game.core.payment :refer [add-cost-label-to-ability]]
-    [game.core.props :refer [add-counter set-prop]]
+    [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req]]
     [game.utils :refer [make-cid server-card to-keyword]]
@@ -43,7 +43,7 @@
                   :runner-abilities :corp-abilities :rezzed :new
                   :subtype-target :server-target :extra-advance-counter)
         c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
+        c (if keep-counter c (dissoc c :counter :advance-counter))]
     c))
 
 (defn- trigger-leave-effect
@@ -101,14 +101,23 @@
          c (update! state side
                     (merge card {:runner-abilities run-abs
                                  :corp-abilities corp-abs}))
-         c (update! state side (if (number? recurring) (assoc c :rec-counter recurring) c))
-         _ (doseq [[c-type c-num] (when init-data (:counter (:data cdef)))]
+         data (merge
+                (when init-data (:counter (:data cdef)))
+                (when recurring
+                  {:recurring
+                   (cond
+                     (fn? recurring) (recurring state side eid c nil)
+                     (number? recurring) recurring
+                     :else (throw (Exception. (str (:title card) " - Recurring isn't number or fn"))))}))
+         _ (doseq [[c-type c-num] data]
              (add-counter state side (get-card state c) c-type c-num {:placed true}))
          c (get-card state c)]
      (when recurring
-       (let [r (if (number? recurring)
-                 (effect (set-prop card :rec-counter recurring))
-                 recurring)]
+       (let [recurring-fn (req (if (number? recurring) recurring (recurring state side eid card targets)))
+             r (req (let [card (update! state side (assoc-in card [:counter :recurring] 0))]
+                      (add-counter state side card
+                                   :recurring (recurring-fn state side eid card targets)
+                                   {:placed true})))]
          (register-events
            state side c
            [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)

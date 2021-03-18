@@ -14,7 +14,6 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg merge-costs]]
-    [game.core.props :refer [add-counter]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]

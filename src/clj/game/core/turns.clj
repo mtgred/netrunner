@@ -12,7 +12,6 @@
     [game.core.hand-size :refer [hand-size]]
     [game.core.ice :refer [update-all-ice update-breaker-strength]]
     [game.core.moving :refer [move]]
-    [game.core.props :refer [set-prop]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]

@@ -1276,10 +1276,7 @@
 
 (defcard "Project Yagi-Uda"
   (letfn [(put-back-counter [state side card]
-            (set-prop state side card :counter
-                      (merge
-                        (:counter card)
-                        {:agenda (+ 1 (get-counters card :agenda))})))
+            (update! state side (assoc-in card [:counter :agenda] (+ 1 (get-counters card :agenda)))))
           (choose-swap [to-swap]
             {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
              :choices {:not-self true

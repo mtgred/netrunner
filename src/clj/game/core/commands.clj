@@ -24,6 +24,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [show-error-toast toast]]
     [game.core.trace :refer [init-trace]]
+    [game.core.update :refer [update!]]
     [game.core.winning :refer [clear-win]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [dissoc-in quantify safe-split same-card? same-side? server-card string->num]]
@@ -71,7 +72,7 @@
                                "error" {:time-out 0 :close-button true})
 
                         :else
-                        (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
+                        (do (update! state side (assoc-in target [:counter counter-type] value))
                             (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
                                                         (card-str state target))))))))}
     (map->Card {:title "/counter command"}) nil))
@@ -106,7 +107,7 @@
       (if advance
         (command-adv-counter state side value)
         (resolve-ability state side
-                         {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
+                         {:effect (effect (update! (assoc-in target [:counter counter-type] value))
                                           (system-msg (str "sets " (name counter-type) " counters to " value " on "
                                                            (card-str state target))))
                           :choices {:card (fn [t] (same-side? (:side t) side))}}
