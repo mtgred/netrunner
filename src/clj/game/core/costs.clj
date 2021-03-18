@@ -34,7 +34,7 @@
 (defmethod handler :click
   [cost state side eid card actions]
   (let [a (keep :action actions)]
-    (when (not (some #{:steal-cost :bioroid-cost} a))
+    (when (not (some #{:steal-cost} a))
       (swap! state assoc :click-state (dissoc @state :log)))
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
@@ -45,6 +45,29 @@
               (complete-with-result state side eid {:msg (str "spends " (label cost))
                                                     :type :click
                                                     :value (value cost)}))))
+
+;; Lose Click
+(defmethod cost-name :lose-click [_] :lose-click)
+(defmethod value :lose-click [[_ cost-value]] cost-value)
+(defmethod label :lose-click [cost]
+  (->> (repeat "[Click]")
+       (take (value cost))
+       (apply str)))
+(defmethod payable? :lose-click
+  [cost state side _ _]
+  (<= 0 (- (get-in @state [side :click]) (value cost))))
+(defmethod handler :lose-click
+  [cost state side eid card actions]
+  (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
+  (deduct state side [:click (value cost)])
+  (wait-for (trigger-event-sync state side (make-eid state eid)
+                                (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                nil (value cost))
+            (swap! state assoc-in [side :register :spent-click] true)
+            (complete-with-result state side eid {:msg (str "loses " (label cost))
+                                                  :type :lose-click
+                                                  :value (value cost)})))
+
 
 (defn- all-active-pay-credit-cards
   [state side eid card]

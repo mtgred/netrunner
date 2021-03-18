@@ -46,6 +46,30 @@
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
 
+(deftest undo-click-with-bioroid-cost
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Eli 1.0"]}})
+    (play-from-hand state :corp "Eli 1.0" "R&D")
+    (take-credits state :corp)
+    (run-on state :rd)
+    (let [ice (get-ice state :rd 0)]
+      (rez state :corp ice)
+      (run-continue state)
+      (card-side-ability state :runner ice 0)
+      (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0"))
+      (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0")))
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (not (get-run)))
+    (is (= 1 (:click (get-runner))))
+    (core/command-undo-click state :runner)
+    (is (= 4 (:click (get-runner))))
+    (is (last-log-contains? state "Runner uses the undo-click command"))))
+
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
