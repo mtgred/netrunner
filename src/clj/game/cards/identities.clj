@@ -1028,14 +1028,14 @@
      :abilities [mm-ability]
      :events [{:event :corp-spent-click
                :async true
-               :effect (req (let [cid (first target)
+               :effect (req (let [cid (first (:action context))
                                   ability-idx (:ability-idx (:source-info eid))
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? (first target))
-                                          (case (first target)
+                                  cause (if (keyword? (first (:action context)))
+                                          (case (first (:action context))
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                            (first (:action context))) ; in clojure there's: (= [1 2 3] '(1 2 3))
                                           [cid ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]

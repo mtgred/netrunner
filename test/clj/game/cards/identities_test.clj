@@ -2419,10 +2419,10 @@
                           :deck [(qty "Hedge Fund" 10)]}})
         (click-draw state :corp)
         (click-credit state :corp)
-        (play-from-hand state :corp "Hedge Fund")
         (changes-val-macro
           5 (:credit (get-corp))
           "Gained 1 credit from MM ability"
+          (play-from-hand state :corp "Hedge Fund")
           (click-prompt state :corp "Gain 1 [Credits]"))))
     (testing "Gain click from using Asset ability"
       (do-game
@@ -2505,10 +2505,10 @@
         (take-credits state :runner)
         (click-credit state :corp)
         (click-draw state :corp)
-        (play-from-hand state :corp "Blue Level Clearance")
         (changes-val-macro
           4 (:credit (get-corp))
           "Gained 1 credit from MM ability"
+          (play-from-hand state :corp "Blue Level Clearance")
           (click-prompt state :corp "Gain 1 [Credits]"))))
     (testing "Trigger Mirrormorph with MCAAP"
       (do-game

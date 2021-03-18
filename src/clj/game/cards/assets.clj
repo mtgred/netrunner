@@ -1001,16 +1001,16 @@
     {:abilities [ability]
      :leave-play cleanup
      :events [{:event :corp-spent-click
-               :effect (req (let [cid (first target)
+               :effect (req (let [cid (first (:action context))
                                   ability-idx (:ability-idx (:source-info eid))
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? (first target))
-                                          (case (first target)
+                                  cause (if (keyword? (first (:action context)))
+                                          (case (first (:action context))
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                            (first (:action context))) ; in clojure there's: (= [1 2 3] '(1 2 3))
                                           [cid ability-idx])
-                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) (second targets))]
+                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) (:value context))]
                               (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))
                               (when (>= clicks-spent 3) ; can be >= 3 because :once :per-turn on ability
                                 (resolve-ability state side ability (get-card state card) nil))))}
@@ -2058,8 +2058,6 @@
                        :value [:credit 2]}]})
 
 (defcard "Sundew"
-  ; If this a run event then handle in :begin-run as we do not know the server
-  ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
              :msg (req (if (not= :run (get-in @state [:runner :register :click-type]))

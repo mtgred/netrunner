@@ -1064,7 +1064,7 @@
                               state side eid
                               {:msg (->> payment-result
                                          (keep :msg)
-                                         sentence-join)
+                                         (sentence-join))
                                :cost-paid (->> payment-result
                                                (keep #(not-empty (select-keys % [:type :targets :value])))
                                                (reduce
