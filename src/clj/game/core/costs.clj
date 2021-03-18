@@ -801,15 +801,15 @@
                            (pos? (get-counters % :agenda)))}
      :effect (req (let [title (:title target)
                         target (update! state side (update-in target [:counter :agenda] - (value cost)))]
-                    (wait-for (trigger-event-sync state side :agenda-counter-spent target)
-                              (complete-with-result
-                                state side eid
-                                {:msg (str "spends "
-                                           (quantify (value cost) (str "hosted agenda counter"))
-                                           " from on " title)
-                                 :type :any-agenda-counter
-                                 :value (value cost)
-                                 :targets [target]}))))}
+                    (queue-event state :agenda-counter-spent {:card target})
+                    (complete-with-result
+                      state side eid
+                      {:msg (str "spends "
+                                 (quantify (value cost) (str "hosted agenda counter"))
+                                 " from on " title)
+                       :type :any-agenda-counter
+                       :value (value cost)
+                       :targets [target]})))}
     nil nil))
 
 ;; AnyVirusCounter
@@ -867,14 +867,14 @@
   [cost state side eid card actions]
   (let [title (:title card)
         card (update! state side (update-in card [:counter :agenda] - (value cost)))]
-    (wait-for (trigger-event-sync state side :agenda-counter-spent card)
-              (complete-with-result
-                state side eid
-                {:msg (str "spends "
-                           (quantify (value cost) (str "hosted agenda counter"))
-                           " from on " title)
-                 :type :agenda
-                 :value (value cost)}))))
+    (queue-event state :agenda-counter-spent {:card target})
+    (complete-with-result
+      state side eid
+      {:msg (str "spends "
+                 (quantify (value cost) (str "hosted agenda counter"))
+                 " from on " title)
+       :type :agenda
+       :value (value cost)})))
 
 ;; PowerCounter
 (defmethod cost-name :power [_] :power)
