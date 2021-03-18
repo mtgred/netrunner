@@ -2688,10 +2688,16 @@
    :effect (effect (gain-credits eid 9))})
 
 (defcard "Surge"
-  {:msg (msg "place 2 virus tokens on " (:title target))
-   :choices {:card #(and (has-subtype? % "Virus")
-                         (:added-virus-counter %))}
-   :effect (req (add-counter state :runner target :virus 2))})
+  (letfn [(placed-virus-cards [state]
+            (->> (turn-events state :runner :counter-added)
+                 (filter #(= :virus (:counter-type (second %))))
+                 (map first)
+                 (keep #(get-card state %))
+                 (seq)))]
+    {:req (req (placed-virus-cards state))
+     :choices {:req (req (some #(same-card? % target) (placed-virus-cards state)))}
+     :msg (msg "place 2 virus tokens on " (:title target))
+     :effect (effect (add-counter :runner target :virus 2))}))
 
 (defcard "SYN Attack"
   {:player :corp

@@ -103,11 +103,10 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
-    (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
           apt (get-resource state 0)]
-      (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
-      (click-card state :runner (find-card "Compromised Employee" (get-resource state)))
+      (card-ability state :runner apt 0) ; use Off-Campus option to host a card
+      (click-card state :runner "Compromised Employee")
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
@@ -391,36 +390,6 @@
       (play-from-hand state :corp "Cyberdex Trial")
       (take-credits state :corp)
       (is (= 0 (get-counters (refresh iw) :virus)) "Purging removed Ice Wall counters"))))
-
-(deftest virus-counter-flags
-  (testing "Set counter flag when virus card enters play with counters"
-    (do-game
-      (new-game {:runner {:deck ["Surge" "Imp" "Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Imp")
-      (let [imp (get-program state 0)]
-        (is (get-in imp [:added-virus-counter]) "Counter flag was set on Imp"))))
-  (testing "Set counter flag when add-prop is called on a virus"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ;click to add a virus counter
-        (is (= 1 (get-counters (refresh crypsis) :virus)) "Crypsis added a virus token")
-        (is (get-in (refresh crypsis) [:added-virus-counter])
-            "Counter flag was set on Crypsis"))))
-  (testing "Clear the virus counter flag at the end of each turn"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ; click to add a virus counter
-        (take-credits state :runner 2)
-        (take-credits state :corp 1)
-        (is (not (get-in (refresh crypsis) [:added-virus-counter]))
-            "Counter flag was cleared on Crypsis")))))
 
 (deftest end-the-run-test
   ;; Since all ETR ice share a common ability, we only need one test

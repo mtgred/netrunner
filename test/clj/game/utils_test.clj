@@ -6,7 +6,7 @@
 
 (defmacro error-wrapper [form]
   `(try ~form
-        (catch Exception ex#
+        (catch clojure.lang.ExceptionInfo ex#
           (let [msg# (.getMessage ^Throwable ex#)
                 form# (:cause (ex-data ex#))
                 result# (:result (ex-data ex#))]
@@ -21,7 +21,7 @@
       (if result#
         (do-report {:type :pass, :message ~msg,
                     :expected '~form, :actual (list result#)})
-        (throw (ex-info ~msg {:cause '~form :result result#}))))))
+        (throw (ex-info ~msg {:cause '~form :result '~form}))))))
 
 ;;; helper functions for prompt interaction
 (defn get-prompt
@@ -72,9 +72,7 @@
       ;; Prompt is a select, but card isn't correct type
       (not (or (map? card)
                (string? card)))
-      (is' (or (map? card)
-               (string? card))
-           (expect-type "card string or map" card)))))
+      (is' (true? (or (map? card) (string? card))) (expect-type "card string or map" card)))))
 
 (defmacro click-card
   "Resolves a 'select prompt' by clicking a card. Takes a card map or a card name."
@@ -113,7 +111,7 @@
       ;; List of card titles for auto-completion
       (:card-title choices)
       (when-not (core/process-action "choice" state side {:choice choice})
-        (is' (or (map? choice) (string? choice)) (expect-type "card string or map" choice)))
+        (is' (true? (or (map? choice) (string? choice))) (expect-type "card string or map" choice)))
 
       ;; Default text prompt
       :else

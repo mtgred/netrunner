@@ -1538,10 +1538,11 @@
             en (get-ice state :remote1 0)]
         (rez state :corp kh)
         (is (= 4 (get-counters (refresh kh) :recurring)) "4 recurring credits on Khondi")
-        (changes-val-macro 0 (:credit (get-corp))
-                           "Used 3 credits from Khondi Plaza"
-                           (rez state :corp en)
-                           (dotimes [c 3] (click-card state :corp kh)))))))
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Used 3 credits from Khondi Plaza"
+          (rez state :corp en)
+          (dotimes [c 3] (click-card state :corp kh)))))))
 
 (deftest la-costa-grid
   (testing "La Costa Grid cannot be installed in a central server"

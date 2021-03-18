@@ -1921,8 +1921,7 @@
                                      :value target})))}]})
 
 (defcard "Pheromones"
-  {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
-                     (set-prop state side card :rec-counter (get-counters card :virus))))
+  {:recurring (req (get-counters card :virus))
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :hq (target-server context)))

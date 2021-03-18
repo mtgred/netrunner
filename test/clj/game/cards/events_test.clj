@@ -5165,8 +5165,7 @@
       (play-from-hand state :runner "Security Testing")
       (let [st (get-resource state 0)]
         (play-from-hand state :runner "Surge")
-        (click-card state :runner st)
-        (is (not (contains? st :counter)) "Surge does not fire on Security Testing"))))
+        (is (empty? (:prompt (get-runner))) "Surge does not fire on Security Testing"))))
   (testing "Don't fire surge if target does not have virus counter flag set"
     (do-game
       (new-game {:runner {:deck ["Imp" "Surge"]}})
@@ -5174,11 +5173,10 @@
       (play-from-hand state :runner "Imp")
       (let [imp (get-program state 0)]
         (is (= 2 (get-counters imp :virus)) "Imp has 2 counters after install")
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (take-credits state :corp)
         (play-from-hand state :runner "Surge")
-        (click-card state :runner imp)
-        (is (= 2 (get-counters (refresh imp) :virus)) "Surge does not fire on Imp turn after install"))))
+        (is (empty? (:prompt (get-runner))) "Surge does not fire on Imp turn after install"))))
   (testing "Don't allow surging Gorman Drip, since it happens on the corp turn"
     (do-game
       (new-game {:runner {:deck ["Gorman Drip v1" "Surge"]}})
@@ -5186,13 +5184,12 @@
       (play-from-hand state :runner "Gorman Drip v1")
       (let [gd (get-program state 0)]
         (is (zero? (get-counters gd :virus)) "Gorman Drip starts without counters")
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (take-credits state :corp)
         (is (= 3 (get-counters (refresh gd) :virus))
             "Gorman Drip gains 3 counters after Corp clicks 3 times for credits")
         (play-from-hand state :runner "Surge")
-        (click-card state :runner gd)
-        (is (= 3 (get-counters (refresh gd) :virus)) "Surge does not trigger on Gorman Drip")))))
+        (is (empty? (:prompt (get-runner))) "Surge does not trigger on Gorman Drip")))))
 
 (deftest syn-attack
   ;; SYN Attack

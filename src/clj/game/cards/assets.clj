@@ -1358,8 +1358,7 @@
                   (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]}))
 
 (defcard "Net Police"
-  {:recurring (effect (set-prop card :rec-counter (get-link state)))
-   :on-rez {:effect (effect (set-prop card :rec-counter (get-link state)))}
+  {:recurring (req (get-link state))
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 

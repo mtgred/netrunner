@@ -8,7 +8,7 @@
     [game.core.moving :refer [trash]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
-    [game.core.props :refer [add-prop]]
+    [game.core.props :refer [add-counter]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect req wait-for]]
@@ -138,9 +138,9 @@
           {:msg "take 1 [Recurring Credits]"
            :req (req (pos? (get-counters card :recurring)))
            :async true
-           :effect (req (add-prop state side card :rec-counter -1)
+           :effect (req (add-counter state side card :recurring -1)
                         (wait-for (gain-credits state side 1)
-                                  (trigger-event-sync state side eid :spent-credits-from-card card)))}]
+                                  (trigger-event-sync state side eid :spent-credits-from-card (get-card state card))))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 

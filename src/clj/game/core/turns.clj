@@ -12,7 +12,6 @@
     [game.core.hand-size :refer [hand-size]]
     [game.core.ice :refer [update-all-ice update-breaker-strength]]
     [game.core.moving :refer [move]]
-    [game.core.props :refer [set-prop]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
@@ -137,10 +136,6 @@
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
                    (update! state side (assoc (get-card state card) :installed true)))
-                 ;; Clear the added-virus-counter flag for each virus in play.
-                 ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-                 (when (has-subtype? card "Virus")
-                   (set-prop state :runner (get-card state card) :added-virus-counter false))
                  ;; Remove all :turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
                  (when (has-subtype? card "Icebreaker")

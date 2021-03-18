@@ -5,7 +5,7 @@
     [game.core.eid :refer [effect-completed make-eid complete-with-result]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.gaining :refer [lose]]
-    [game.core.props :refer [add-counter set-prop]]
+    [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [in-coll? quantify same-card?]]
@@ -123,12 +123,11 @@
                                             {:async true :effect pay-credits-custom})
                            current-counters (get-counters target pay-credits-type)
                            ; In this next bit, we don't want to trigger any events yet
-                           ; so we use `set-prop` to directly change the number of credits
+                           ; so we use `update!` to directly change the number of credits
                            gained-credits (case pay-credits-type
-                                            :recurring
-                                            (do (set-prop state side target :rec-counter (dec current-counters)) 1)
-                                            :credit
-                                            (do (set-prop state side target :counter {:credit (dec current-counters)}) 1)
+                                            (:recurring :credit)
+                                            (do (update! state side (assoc-in target [:counter pay-credits-type] (dec current-counters)))
+                                                1)
                                             ; Custom credits will be handled separately later
                                             0)
                            target (get-card state target)
