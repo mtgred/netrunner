@@ -254,7 +254,7 @@
              {:player :corp
               :req (req (and (has-subtype? (:card context) "Run")
                              (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
-                             (no-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))))
+                             (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))))
               :waiting-prompt "Corp to use Better Citizen Program"
               :prompt "Give the runner 1 tag?"
               :yes-ability
@@ -265,9 +265,9 @@
              :silent (req true)
              :optional
              {:player :corp
-              :req (req (and (not (facedown? target))
-                             (has-subtype? target "Icebreaker")
-                             (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
+              :req (req (and (not (:facedown context))
+                             (has-subtype? (:card context) "Icebreaker")
+                             (first-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
               :waiting-prompt "Corp to use Better Citizen Program"
               :prompt "Give the runner 1 tag?"
@@ -1100,7 +1100,7 @@
     {:events [(assoc pp :event :searched-stack)
               (assoc pp
                      :event :runner-install
-                     :req (req (and (some #{:discard} (:previous-zone target))
+                     :req (req (and (some #{:discard} (:previous-zone (:card context)))
                                     (pos? (count (:hand runner))))))]}))
 
 (defcard "Philotic Entanglement"

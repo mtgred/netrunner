@@ -2034,7 +2034,7 @@
                     :effect (req (doseq [c (get-in card [:hosted])]
                                    (card-init state side c {:resolve-effect false})))}
      :events [{:event :runner-install
-               :req (req (same-card? card (:host target)))
+               :req (req (same-card? card (:host (:card context))))
                :effect (req (disable-hosted state side card)
                          (update-ice-strength state side card))}]
      :subroutines [end-the-run]}))

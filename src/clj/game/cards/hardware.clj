@@ -26,13 +26,13 @@
 
 (defcard "Adjusted Matrix"
   {:implementation "Click Adjusted Matrix to use ability."
-   :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
-   :prompt "Choose Icebreaker on which to install Adjusted Matrix"
-   :choices {:card #(and (runner? %)
-                         (has-subtype? % "Icebreaker")
-                         (installed? %))}
-   :msg (msg "host it on " (card-str state target))
-   :effect (effect (host (get-card state target) (get-card state card)))
+   :on-install {:req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
+                :prompt "Choose Icebreaker on which to install Adjusted Matrix"
+                :choices {:card #(and (runner? %)
+                                      (has-subtype? % "Icebreaker")
+                                      (installed? %))}
+                :msg (msg "host it on " (card-str state target))
+                :effect (effect (host (get-card state target) (get-card state card)))}
    :constant-effects [{:type :gain-subtype
                        :req (req (same-card? target (:host card)))
                        :value "AI"}]
@@ -83,22 +83,23 @@
 (defcard "Autoscripter"
   {:events [{:event :runner-install
              :silent (req true)
-             :req (req (and (program? target)
+             :req (req (and (program? (:card context))
                             ;; only trigger on Runner's turn
                             (= (:active-player @state) :runner)
                             ;; only trigger when playing a Program from grip
-                            (some #{:hand} (:previous-zone target))
+                            (some #{:hand} (:previous-zone (:card context)))
                             ;; check that we haven't played a Program from the grip this turn
                             ;; which translates to just one case of playing a Program in turn-events
                             (first-event? state :runner :runner-install
-                                          (fn [[card _]] (and (some #{:hand} (:previous-zone card))
-                                                              (program? card))))))
+                                          (fn [[context]]
+                                            (and (some #{:hand} (:previous-zone (:card context)))
+                                                 (program? (:card context)))))))
              :msg "gain [Click]"
              :effect (effect (gain :click 1))}
             {:event :unsuccessful-run
              :async true
              :effect (effect (system-msg "trashes Autoscripter")
-                             (trash eid card nil))}]})
+                             (trash eid card))}]})
 
 (defcard "Blackguard"
   {:constant-effects [(mu+ 2)]
@@ -151,12 +152,12 @@
                                (get-card state card) nil))}]})
 
 (defcard "Boomerang"
-  {:prompt "Choose an installed piece of ice"
-   :msg (msg "target " (card-str state target))
-   :choices {:card #(and (installed? %)
-                         (ice? %))}
-   :effect (effect (add-icon card target "B" "blue")
-                   (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))
+  {:on-install {:prompt "Choose an installed piece of ice"
+                :msg (msg "target " (card-str state target))
+                :choices {:card #(and (installed? %)
+                                      (ice? %))}
+                :effect (effect (add-icon card target "B" "blue")
+                                (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
    :leave-play (effect (remove-icon card))
    :abilities [(assoc
                  (break-sub
@@ -197,8 +198,8 @@
 
 (defcard "Brain Cage"
   {:constant-effects [(runner-hand-size+ 3)]
-   :async true
-   :effect (effect (damage eid :brain 1 {:card card}))})
+   :on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}})
 
 (defcard "Brain Chip"
   (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
@@ -393,21 +394,22 @@
   {:constant-effects [(caissa-mu+ 3)]
    :events [{:event :runner-install
              :optional
-             {:req (req (has-subtype? target "Caïssa"))
+             {:req (req (has-subtype? (:card context) "Caïssa"))
               :prompt "Use Deep Red?"
-              :yes-ability {:async true
-                            :effect (req (let [cid (:cid target)]
-                                           (continue-ability
-                                             state side
-                                             {:async true
-                                              :prompt "Choose the just-installed Caïssa to have Deep Red trigger its [Click] ability"
-                                              :choices {:card #(= cid (:cid %))}
-                                              :msg (msg "trigger the [Click] ability of " (:title target)
-                                                        " without spending [Click]")
-                                              :effect (req (gain state :runner :click 1)
-                                                           (play-ability state side {:card target :ability 0})
-                                                           (effect-completed state side eid))}
-                                             card nil)))}}}]})
+              :yes-ability
+              {:async true
+               :effect (effect
+                         (continue-ability
+                           (let [cid (:cid (:card context))]
+                             {:async true
+                              :prompt "Choose the just-installed Caïssa to have Deep Red trigger its [Click] ability"
+                              :choices {:card #(= cid (:cid %))}
+                              :msg (msg "trigger the [Click] ability of " (:title target)
+                                        " without spending [Click]")
+                              :effect (req (gain state :runner :click 1)
+                                           (play-ability state side {:card target :ability 0})
+                                           (effect-completed state side eid))})
+                           card nil))}}}]})
 
 (defcard "Demolisher"
   {:constant-effects [(mu+ 1)
@@ -474,7 +476,7 @@
 (defcard "Doppelgänger"
   {:constant-effects [(mu+ 1)]
    :events [{:event :runner-install
-             :req (req (= card target))
+             :req (req (same-card? card (:card context)))
              :silent (req true)
              :effect (effect (update! (assoc card :dopp-active true)))}
             {:event :runner-turn-begins
@@ -687,7 +689,7 @@
                  :effect (req (add-counter state :runner card :virus -1)
                               (add-counter state :runner target :virus 1))}]
     {:abilities [(set-autoresolve :auto-accept "Friday Chip")]
-     :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
+     :on-install {:effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))}
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-trash
                :once-per-instance true
@@ -849,8 +851,8 @@
   {:constant-effects [(mu+ 2)]
    :events [{:event :runner-install
              :silent (req true)
-             :req (req (has-subtype? target "Virus"))
-             :effect (effect (add-counter target :virus 1))}]})
+             :req (req (has-subtype? (:card context) "Virus"))
+             :effect (effect (add-counter (:card context) :virus 1))}]})
 
 (defcard "Heartbeat"
   {:constant-effects [(mu+ 1)]
@@ -902,18 +904,29 @@
   {:in-play [:hq-access 1]})
 
 (defcard "Keiko"
-  (let [keiko-ability {:req (req (and (not (facedown? target))
-                                      (has-subtype? target "Companion")
-                                      (let [f #(and (not (facedown? (first %)))
-                                                    (has-subtype? (first %) "Companion"))]
-                                        (= 1 (+ (event-count state :runner :spent-credits-from-card f)
-                                                (event-count state :runner :runner-install f))))))
-                       :msg "gain 1 [Credit]"
-                       :async true
-                       :effect (effect (gain-credits :runner eid 1))}]
-    {:constant-effects [(mu+ 2)]
-     :events [(assoc keiko-ability :event :spent-credits-from-card)
-              (assoc keiko-ability :event :runner-install)]}))
+  {:constant-effects [(mu+ 2)]
+   :events [{:event :spent-credits-from-card
+             :req (req (and (not (facedown? target))
+                            (has-subtype? target "Companion")
+                            (let [f #(and (not (facedown? (first %)))
+                                          (has-subtype? (first %) "Companion"))]
+                              (= 1 (+ (event-count state :runner :spent-credits-from-card f)
+                                      (event-count state :runner :runner-install f))))))
+             :msg "gain 1 [Credit]"
+             :async true
+             :effect (effect (gain-credits :runner eid 1))}
+            {:event :runner-install
+             :req (req (and (not (:facedown context))
+                            (has-subtype? (:card context) "Companion")
+                            (= 1 (+ (event-count state :runner :spent-credits-from-card
+                                                 #(and (not (facedown? (first %)))
+                                                       (has-subtype? (first %) "Companion")))
+                                    (event-count state :runner :runner-install
+                                                 #(and (not (:facedown (first %)))
+                                                       (has-subtype? (:card (first %)) "Companion")))))))
+             :msg "gain 1 [Credit]"
+             :async true
+             :effect (effect (gain-credits :runner eid 1))}]})
 
 (defcard "Knobkierie"
   {:constant-effects [(virus-mu+ 3)]
@@ -946,8 +959,8 @@
 (defcard "LLDS Processor"
   {:events [{:event :runner-install
              :silent (req true)
-             :req (req (has-subtype? target "Icebreaker"))
-             :effect (effect (pump target 1 :end-of-turn))}]})
+             :req (req (has-subtype? (:card context) "Icebreaker"))
+             :effect (effect (pump (:card context) 1 :end-of-turn))}]})
 
 (defcard "Lockpick"
   {:recurring 1
@@ -1018,8 +1031,8 @@
             {:event :runner-install
              :async true
              :interactive (req true)
-             :req (req (and (hardware? target)
-                            (first-event? state side :runner-install #(hardware? (first %)))))
+             :req (req (and (hardware? (:card context))
+                            (first-event? state side :runner-install #(hardware? (:card (first %))))))
              :effect (effect (draw eid 1 nil))}]})
 
 (defcard "Māui"
@@ -1098,8 +1111,8 @@
     {:interactions {:prevent [{:type #{:net :brain}
                                :req (req true)}]}
      :constant-effects [(mu+ 3)]
-     :async true
-     :effect (effect (continue-ability (mhelper 1) card nil))
+     :on-install {:async true
+                  :effect (effect (continue-ability (mhelper 1) card nil))}
      :abilities [{:msg "prevent 1 brain or net damage"
                   :cost [:trash-program-from-hand 1]
                   :effect (effect (damage-prevent :brain 1)
@@ -1153,8 +1166,9 @@
              :effect (effect (damage-prevent :meat 1))}]})
 
 (defcard "Net-Ready Eyes"
-  {:effect (effect (damage eid :meat 2 {:unboostable true :card card}))
-   :msg "suffer 2 meat damage"
+  {:on-install {:async true
+                :msg "suffer 2 meat damage"
+                :effect (effect (damage eid :meat 2 {:unboostable true :card card}))}
    :events [{:event :run
              :req (req (some #(and (program? %)
                                    (has-subtype? % "Icebreaker"))
@@ -1463,15 +1477,17 @@
 
 (defcard "Rabbit Hole"
   {:constant-effects [(link+ 1)]
-   :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
-              :prompt "Install another Rabbit Hole?"
-              :msg "install another Rabbit Hole"
-              :yes-ability {:async true
-                            :effect (req (trigger-event state side :searched-stack nil)
-                                         (shuffle! state :runner :deck)
-                                         (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
-                                                            (:deck runner))]
-                                           (runner-install state side eid c nil)))}}})
+   :on-install
+   {:optional
+    {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
+     :prompt "Install another Rabbit Hole?"
+     :msg "install another Rabbit Hole"
+     :yes-ability {:async true
+                   :effect (req (trigger-event state side :searched-stack nil)
+                                (shuffle! state :runner :deck)
+                                (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                                   (:deck runner))]
+                                  (runner-install state side eid c nil)))}}}})
 
 (defcard "Ramujan-reliant 550 BMI"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1532,15 +1548,16 @@
             (and (hardware? target)
                  (some #(= (:title %) (:title target)) (:deck runner))))]
     {:events [{:event :runner-install
-               :interactive (req (hardware-and-in-deck? target runner))
-               :silent (req (not (hardware-and-in-deck? target runner)))
-               :optional {:prompt "Use Replicator to add a copy?"
-                          :req (req (hardware-and-in-deck? target runner))
-                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
-                                        :effect (effect (trigger-event :searched-stack nil)
-                                                  (shuffle! :deck)
-                                                  (move (some #(when (= (:title %) (:title target)) %)
-                                                              (:deck runner)) :hand))}}}]}))
+               :interactive (req (hardware-and-in-deck? (:card context) runner))
+               :silent (req (not (hardware-and-in-deck? (:card context) runner)))
+               :optional
+               {:prompt "Use Replicator to add a copy?"
+                :req (req (hardware-and-in-deck? (:card context) runner))
+                :yes-ability
+                {:msg (msg "add a copy of " (:title (:card context)) " to their Grip")
+                 :effect (effect (trigger-event :searched-stack nil)
+                           (shuffle! :deck)
+                           (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))
 
 (defcard "Respirocytes"
   (let [ability {:once :per-turn
@@ -1554,11 +1571,12 @@
                                           (effect-completed state side eid))))}
         event {:req (req (zero? (count (:hand runner))))
                :async true
-               :effect (req (continue-ability state side ability card nil))}]
+               :effect (effect (continue-ability ability card targets))}]
     {:implementation "Only watches trashes, playing events, and installing"
-     :async true
-     :effect (effect (damage eid :meat 1 {:unboostable true :card card}))
-     :msg "suffer 1 meat damage"
+     :on-install {:async true
+                  :msg "suffer 1 meat damage"
+                  :effect (effect (damage eid :meat 1 {:unboostable true
+                                                       :card card}))}
      :events [(assoc event :event :play-event)
               (assoc event
                      :event :runner-trash
@@ -1576,7 +1594,7 @@
                                     (zero? (count (:hand runner))))))
               (assoc event
                      :event :runner-install
-                     :req (req (and (some #{:hand} (:previous-zone target))
+                     :req (req (and (some #{:hand} (:previous-zone (:card context)))
                                     (zero? (count (:hand runner))))))
               {:event :runner-turn-begins
                :req (req (empty? (:hand runner)))
@@ -1763,7 +1781,8 @@
                     card nil))}]})
 
 (defcard "Skulljack"
-  {:effect (effect (damage eid :brain 1 {:card card}))
+  {:on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
    :constant-effects [{:type :trash-cost
                        :value -1}]})
 
@@ -1852,7 +1871,7 @@
 (defcard "The Personal Touch"
   {:hosting {:card #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
-   :effect (effect (update-breaker-strength (:host card)))
+   :on-install {:effect (effect (update-breaker-strength (:host card)))}
    :constant-effects [{:type :breaker-strength
                        :req (req (same-card? target (:host card)))
                        :value 1}]})
@@ -1866,10 +1885,10 @@
                                 :type :recurring}}})
 
 (defcard "Titanium Ribs"
-  {:async true
-   :effect (effect (enable-runner-damage-choice)
-                   (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                   (damage eid :meat 2 {:unboostable true :card card}))
+  {:on-install {:async true
+                :effect (effect (enable-runner-damage-choice)
+                                (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
+                                (damage eid :meat 2 {:unboostable true :card card}))}
    :leave-play (req (swap! state update :damage dissoc :damage-choose-runner))
    :events [{:event :pre-resolve-damage
              :async true

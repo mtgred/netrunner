@@ -265,8 +265,8 @@
              :effect (effect (update! (assoc card :az-target target))
                              (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
             {:event :runner-install
-             :req (req (and (is-type? target (:az-target card))
-                            (not (facedown? target))))
+             :req (req (and (is-type? (:card context) (:az-target card))
+                            (not (:facedown context))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
              :once :per-turn
@@ -284,16 +284,16 @@
                                (and (resource? card)
                                     (or (has-subtype? card "Job")
                                         (has-subtype? card "Connection")))))
-          (not-triggered? [state card] (no-event? state :runner :runner-install #(az-type? (first %))))]
+          (not-triggered? [state] (no-event? state :runner :runner-install #(az-type? (:card (first %)))))]
     {:constant-effects [{:type :install-cost
                          :req (req (and (az-type? target)
-                                        (not-triggered? state card)))
+                                        (not-triggered? state)))
                          :value -1}]
      :events [{:event :runner-install
-               :req (req (and (az-type? target)
-                              (not-triggered? state card)))
+               :req (req (and (az-type? (:card context))
+                              (not-triggered? state)))
                :silent (req true)
-               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]}))
+               :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -436,13 +436,11 @@
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
    :events [{:event :runner-install
-             :silent (req (not (and (program? target)
-                                    (some #{:discard} (:previous-zone target)))))
              :async true
-             :req (req (and (program? target)
-                            (some #{:discard} (:previous-zone target))))
-             :msg (msg "draw a card")
-             :effect (req (draw state side eid 1 nil))}]})
+             :req (req (and (program? (:card context))
+                            (some #{:discard} (:previous-zone (:card context)))))
+             :msg "draw a card"
+             :effect (effect (draw eid 1 nil))}]})
 
 (defcard "Freedom Khumalo: Crypto-Anarchist"
   {:interactions
@@ -594,21 +592,21 @@
 (defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
              :silent (req (not (and (first-event? state side :runner-install)
-                                    (some #(is-type? % (:type target)) (:hand runner)))))
+                                    (some #(is-type? % (:type (:card context))) (:hand runner)))))
              :req (req (and (first-event? state side :runner-install)
-                            (not (:facedown target))))
+                            (not (:facedown context))))
              :once :per-turn
              :async true
              :waiting-prompt "Runner to use Hayley's ability"
              :effect
              (effect (continue-ability
-                       (let [itarget target
+                       (let [itarget (:card context)
                              card-type (:type itarget)]
                          (if (some #(is-type? % (:type itarget)) (:hand runner))
                            {:optional
-                            {:prompt (msg "Install another " card-type " from your Grip?")
+                            {:prompt (str "Install another " card-type " from your Grip?")
                              :yes-ability
-                             {:prompt (msg "Select another " card-type " to install from your Grip")
+                             {:prompt (str "Select another " card-type " to install from your Grip")
                               :choices {:card #(and (is-type? % card-type)
                                                     (in-hand? %))}
                               :msg (msg "install " (:title target))
@@ -895,16 +893,16 @@
   ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
   (letfn [(kate-type? [card] (or (hardware? card)
                                  (program? card)))
-          (not-triggered? [state card] (no-event? state :runner :runner-install #(kate-type? (first %))))]
+          (not-triggered? [state card] (no-event? state :runner :runner-install #(kate-type? (:card (first %)))))]
     {:constant-effects [{:type :install-cost
                          :req (req (and (kate-type? target)
                                         (not-triggered? state card)))
                          :value -1}]
      :events [{:event :runner-install
-               :req (req (and (kate-type? target)
+               :req (req (and (kate-type? (:card context))
                               (not-triggered? state card)))
                :silent (req true)
-               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]}))
+               :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
 (defcard "Ken \"Express\" Tenma: Disappeared Clone"
   {:events [{:event :play-event
@@ -1234,7 +1232,7 @@
 (defcard "Noise: Hacker Extraordinaire"
   {:events [{:async true
              :event :runner-install
-             :req (req (has-subtype? target "Virus"))
+             :req (req (has-subtype? (:card context) "Virus"))
              :msg "force the Corp to trash the top card of R&D"
              :effect (effect (mill :corp eid :corp 1))}]})
 
