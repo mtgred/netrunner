@@ -563,7 +563,7 @@
              :show-discard true
              :choices {:card #(and (corp? %)
                                    (in-discard? %))}
-             :msg (msg "add " (card-str state target) " to HQ")
+             :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
              :effect (effect (move :corp target :hand))}]})
 
 (defcard "Haas-Bioroid: Stronger Together"
