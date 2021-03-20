@@ -1612,7 +1612,7 @@
                         @cards))
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [scored]
+(defn scored-view [scored agenda-point me?]
   (let [size (count @scored)]
     [:div.panel.blue-shade.scored.squeeze
      (doall
@@ -1621,7 +1621,10 @@
                                           :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                        [:div [card-view card]]])
                     @scored))
-     [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]]))
+     [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
+     [:div.stats
+      [:div (tr [:game.agenda-count] @agenda-point)
+       (when me? (controls :agenda-point))]]]))
 
 (defn name-area
   [user]
@@ -1663,7 +1666,7 @@
   (let [me? (= (:side @game-state) :runner)]
     (fn [runner]
       (let [{:keys [user click credit run-credit memory link tag
-                    brain-damage agenda-point hand-size active]} @runner]
+                    brain-damage hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
@@ -1674,8 +1677,6 @@
          [display-special-memory memory]
          [:div (str link " " (tr [:game.link-strength "Link Strength"]))
           (when me? (controls :link))]
-         [:div (tr [:game.agenda-count] agenda-point)
-          (when me? (controls :agenda-point))]
          (let [{:keys [base total is-tagged]} tag
                additional (- total base)
                show-tagged (or is-tagged (pos? total))]
@@ -1691,15 +1692,13 @@
 (defmethod stats-view "Corp" [corp]
   (let [me? (= (:side @game-state) :corp)]
     (fn [corp]
-      (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
+      (let [{:keys [user click credit bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
           (when me? (controls :click))]
          [:div (tr [:game.credit-count] credit -1)
           (when me? (controls :credit))]
-         [:div (tr [:game.agenda-count] agenda-point)
-          (when me? (controls :agenda-point))]
          (let [{:keys [base additional]} bad-publicity]
            [:div (tr [:game.bad-pub-count] base additional)
             (when me? (controls :bad-publicity))])
@@ -2441,6 +2440,8 @@
                    op-ident (r/cursor game-state [op-side :identity])
                    me-scored (r/cursor game-state [me-side :scored])
                    op-scored (r/cursor game-state [op-side :scored])
+                   me-agenda-point (r/cursor game-state [me-side :agenda-point])
+                   op-agenda-point (r/cursor game-state [op-side :agenda-point])
                    corp-servers (r/cursor game-state [:corp :servers])
                    corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
                    runner-rig (r/cursor game-state [:runner :rig])
@@ -2493,9 +2494,9 @@
                    [:div.left-inner-leftpane
                     [:div
                      [stats-view opponent]
-                     [scored-view op-scored]]
+                     [scored-view op-scored op-agenda-point false]]
                     [:div
-                     [scored-view me-scored]
+                     [scored-view me-scored me-agenda-point true]
                      [stats-view me]]]
 
                    [:div.right-inner-leftpane
