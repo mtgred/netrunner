@@ -184,7 +184,7 @@
 (defmacro defcard
   [title ability]
   `(defmethod ~'defcard-impl ~title [~'_]
-     (if-let [cached-ability# (get @card-defs-cache ~title)]
+     (if-let [cached-ability# (get card-defs-cache ~title)]
        cached-ability#
        (let [ability# (add-default-abilities ~title ~ability)]
          (swap! card-defs-cache assoc ~title ability#)

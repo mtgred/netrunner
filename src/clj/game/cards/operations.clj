@@ -990,7 +990,8 @@
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
              :async true
-             :msg (msg "force the Runner to trash" (:title target) " from their grip")
+             :msg (msg "force the Runner to trash"
+                       (:title target) " from their grip")
              :effect (effect (trash :runner eid target {:unpreventable true}))}]})
 
 (defcard "Hunter Seeker"
@@ -2162,20 +2163,17 @@
              :effect (effect (trash eid card nil))}]})
 
 (defcard "Targeted Marketing"
-  (let [gaincr {:async true
-                :effect (effect (gain-credits :corp eid 10))
-                :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
+  (let [gaincr {:req (req (= (:title (:card context)) (get-in card [:special :marketing-target])))
+                :async true
+                :msg (msg "gain 10 [Credits] from " (:marketing-target card))
+                :effect (effect (gain-credits :corp eid 10))}]
     {:prompt "Name a Runner card"
      :choices {:card-title (req (and (runner? target)
                                      (not (identity? target))))}
      :effect (effect (update! (assoc-in card [:special :marketing-target] target))
                      (system-msg (str "uses Targeted Marketing to name " target)))
-     :events [(assoc gaincr
-                     :event :runner-install
-                     :req (req (= (:title target) (get-in card [:special :marketing-target]))))
-              (assoc gaincr
-                     :event :play-event
-                     :req (req (= (:title (:card context)) (get-in card [:special :marketing-target]))))]}))
+     :events [(assoc gaincr :event :runner-install)
+              (assoc gaincr :event :play-event)]}))
 
 (defcard "The All-Seeing I"
   (let [trash-all-resources

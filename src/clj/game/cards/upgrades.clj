@@ -1263,7 +1263,8 @@
               :yes-ability {:prompt "Select a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
-                                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                     (can-pay? state side (assoc eid :source card :source-type :rez)
+                                                               target nil
                                                                [:credit (rez-cost state side target {:cost-bonus -2})])))}
                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                             :async true

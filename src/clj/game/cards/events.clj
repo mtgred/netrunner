@@ -304,12 +304,14 @@
 (defcard "Career Fair"
   {:prompt "Select a resource to install from your Grip"
    :req (req (some #(and (resource? %)
-                         (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
+                         (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                   % nil
                                    [:credit (install-cost state side % {:cost-bonus -3})]))
                    (:hand runner)))
    :choices {:req (req (and (resource? target)
                             (in-hand? target)
-                            (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                            (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                      target nil
                                       [:credit (install-cost state side target {:cost-bonus -3})])))}
    :async true
    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))})
@@ -465,8 +467,6 @@
 
 (defcard "Corporate \"Grant\""
   {:events [{:event :runner-install
-             ;; there are no current interactions where we'd want Grant to not be last, and this fixes a bug with Hayley
-             :silent (req true)
              :req (req (first-event? state side :runner-install))
              :msg "force the Corp to lose 1 [Credit]"
              :async true
@@ -1385,10 +1385,9 @@
 (defcard "In the Groove"
   {:events [{:event :runner-install
              :duration :end-of-turn
-             :req (req (<= 1 (:cost target)))
-             :interactive (req (or
-                                 (has-subtype? target "Cybernetic")
-                                 (first-event? state side :runner-install)))
+             :req (req (<= 1 (:cost (:card context))))
+             :interactive (req (or (has-subtype? (:card context) "Cybernetic")
+                                   (first-event? state side :runner-install)))
              :async true
              :prompt "What to get from In the Groove?"
              :choices ["Draw 1 card" "Gain 1 [Credits]"]

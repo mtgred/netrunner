@@ -6,7 +6,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [card-as-handler checkpoint pay queue-event register-events trigger-event-simult]]
+    [game.core.engine :refer [card-as-handler checkpoint make-pending-event pay queue-event register-events trigger-event-simult]]
     [game.core.finding :refer [find-latest]]
     [game.core.flags :refer [turn-flag?]]
     [game.core.hosting :refer [host]]
@@ -371,13 +371,14 @@
                            (when (and (not facedown)
                                       (has-subtype? installed-card "Icebreaker"))
                              (update-breaker-strength state side installed-card))
-                           (let [new-eid (make-eid state eid)]
-                             (wait-for (trigger-event-simult state side new-eid :runner-install
-                                                             (when-not facedown
-                                                               {:card-abilities (card-as-handler (get-card state installed-card))})
-                                                             (get-card state installed-card))
-                                       (complete-with-result state side eid (get-card state installed-card)))))
-                         (let [returned-card (move state :runner played-card (:zone card))]
+                           (queue-event state :runner-install {:card (get-card state installed-card)
+                                                               :facedown facedown})
+                           (when-let [on-install (and (not facedown)
+                                                      (:on-install (card-def installed-card)))]
+                             (make-pending-event state :runner-install installed-card on-install))
+                           (wait-for (checkpoint state nil (make-eid state eid) nil)
+                                     (complete-with-result state side eid (get-card state installed-card))))
+                         (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]
                            (update! state :runner (assoc returned-card
                                                          :cid (:cid card)
                                                          :previous-zone (:previous-zone card)))

@@ -611,7 +611,8 @@
              :silent (req true)
              :req (req (and (pos? (get-counters card :power))
                             (not (get-in @state [:per-turn (:cid card)]))))
-             :msg (msg "increase the install cost of " (:title target) " by " (get-counters card :power) " [Credits]")
+             :msg (msg "increase the install cost of " (:title (:card context))
+                       " by " (get-counters card :power) " [Credits]")
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
 
 (defcard "Drudge Work"
@@ -2069,8 +2070,8 @@
                                         (not (:facedown (second targets)))))
                          :value 1}]
      :events [{:event :runner-install
-               :req (req (and (is-techno-target target)
-                              (not (:facedown (second targets)))))
+               :req (req (and (is-techno-target (:card context))
+                              (not (:facedown context))))
                :msg "gain 1 [Credits]"
                :async true
                :effect (effect (gain-credits :corp eid 1))}]}))

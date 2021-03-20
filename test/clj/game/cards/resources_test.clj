@@ -3503,7 +3503,7 @@
       (play-from-hand state :runner "Rolodex")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner)))
           "Runner has simultaneous resolution prompt")
-      (is (= ["Rolodex" "Paige Piper"] (prompt-titles :runner))
+      (is (= #{"Rolodex" "Paige Piper"} (set (prompt-titles :runner)))
           "Both Rolodex and Paige Piper can be chosen")
       (click-prompt state :runner "Paige Piper")
       (click-prompt state :runner "Yes")

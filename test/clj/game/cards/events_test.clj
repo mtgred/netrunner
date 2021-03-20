@@ -2775,7 +2775,8 @@
                              (click-prompt state :runner "Gain 1 [Credits]")))))
   (testing "Hayley Kaplan interaction"
     (do-game
-      (new-game {:runner {:deck [(qty "In the Groove" 3) "Pelangi" "Imp" "Sure Gamble"]
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["In the Groove" "Pelangi" "Imp" "Sure Gamble"]
                           :id "Hayley Kaplan: Universal Scholar"}})
       (take-credits state :corp)
       (play-from-hand state :runner "In the Groove")
