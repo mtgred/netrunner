@@ -1644,6 +1644,7 @@
 
 (defcard "Weyland Consortium: Built to Last"
   {:events [{:event :advance
+             :async true
              :req (req (not (pos? (- (get-counters target :advancement) (:amount (second targets) 0)))))
              :msg "gain 2 [Credits]"
              :effect (req (gain-credits state :corp eid 2))}]})
@@ -1651,7 +1652,7 @@
 (defcard "Whizzard: Master Gamer"
   {:recurring 3
    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
-                                            (corp? target)))
+                                               (corp? target)))
                                 :type :recurring}}})
 
 (defcard "Wyvern: Chemically Enhanced"
