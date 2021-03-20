@@ -265,7 +265,8 @@
    do-net-damage
    make-recurring-ability
    reorder-choice
-   trash-on-empty]
+   trash-on-empty
+   corp-recur]
 
   [game.core.diffs
    public-states

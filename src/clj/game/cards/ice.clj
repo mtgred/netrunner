@@ -1031,13 +1031,7 @@
                                                           (end-run state :corp eid card)))})]})
 
 (defcard "Drafter"
-  {:subroutines [{:label "Add 1 card from Archives to HQ"
-                  :prompt "Select a card from Archives to add to HQ"
-                  :show-discard true
-                  :choices {:card #(and (corp? %)
-                                        (in-discard? %))}
-                  :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
-                  :effect (effect (move target :hand))}
+  {:subroutines [(corp-recur)
                  {:async true
                   :label "Install a card from HQ or Archives"
                   :prompt "Select a card to install from Archives or HQ"

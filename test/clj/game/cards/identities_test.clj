@@ -1457,14 +1457,15 @@
   ;; Haas-Bioroid: Precision Design
   (testing "Basic test"
     (do-game
-     (new-game {:corp {:id "Haas-Bioroid: Precision Design"
-                       :hand ["Project Vitruvius"]
-                       :discard ["Hedge Fund"]}})
-     (is (= 6 (hand-size :corp)) "Max hand size is 6")
-     (play-and-score state "Project Vitruvius")
-     (is (= 1 (count (:discard (get-corp)))) "1 card in archives")
-     (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp)))) ; Ability target
-     (is (= 0 (count (:discard (get-corp)))) "0 card in archives"))))
+      (new-game {:corp {:id "Haas-Bioroid: Precision Design"
+                        :hand ["Project Vitruvius"]
+                        :discard ["Hedge Fund"]}})
+      (is (= 6 (hand-size :corp)) "Max hand size is 6")
+      (play-and-score state "Project Vitruvius")
+      (is (= 1 (count (:discard (get-corp)))) "1 card in archives")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp)))) ; Ability target
+      (is (= 0 (count (:discard (get-corp)))) "0 card in archives"))))
 
 (deftest haas-bioroid-stronger-together
   ;; Stronger Together - +1 strength for Bioroid ice

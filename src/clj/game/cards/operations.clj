@@ -101,13 +101,7 @@
     :effect (effect (draw eid 3 nil))}})
 
 (defcard "Archived Memories"
-  {:on-play
-   {:prompt "Select a card from Archives to add to HQ"
-    :show-discard true
-    :choices {:card #(and (corp? %)
-                          (in-discard? %))}
-    :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
-    :effect (effect (move target :hand))}})
+  {:on-play (corp-recur)})
 
 (defcard "Argus Crackdown"
   {:on-play {:trash-after-resolving false}

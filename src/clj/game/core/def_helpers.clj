@@ -1,17 +1,17 @@
 (ns game.core.def-helpers
   (:require
-    [game.core.card :refer [corp? get-card get-counters has-subtype?]]
+    [game.core.card :refer [corp? get-card get-counters has-subtype? in-discard? faceup?]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.moving :refer [trash]]
+    [game.core.moving :refer [trash move]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [continue-ability effect req wait-for]]
+    [game.macros :refer [continue-ability effect req wait-for msg]]
     [game.utils :refer [remove-once same-card? server-card to-keyword]]
     [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
@@ -178,6 +178,18 @@
   (->> ability
        (make-current-event-handler title)
        (make-recurring-ability)))
+
+(defn corp-recur
+  ([] (corp-recur (constantly true)))
+  ([pred]
+   {:label "add card from Archives to HQ"
+    :prompt "Select a card to add to HQ"
+    :show-discard true
+    :choices {:card #(and (corp? %)
+                       (in-discard? %)
+                       (pred %))}
+    :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
+    :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
 
