@@ -13,6 +13,7 @@
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg merge-costs]]
     [game.core.say :refer [play-sfx system-msg]]
+    [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card? to-keyword]]))
 
@@ -39,7 +40,7 @@
     (play-sfx state side "play-instant")
     ;; Select the "on the table" version of the card
     (let [card (current-handler state side card)
-          cdef (-> (card-def card)
+          cdef (-> (:on-play (card-def card))
                    (dissoc :cost :additional-cost)
                    (dissoc-req))
           card (card-init state side
@@ -76,7 +77,7 @@
   ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
-         cdef (card-def card)
+         cdef (or (:on-play (card-def card)) {})
          cost (play-cost state side card)
          additional-costs (play-additional-cost-bonus state side card)
          costs (merge-costs
@@ -101,7 +102,7 @@
               (not (and (has-subtype? card "Current")
                         (get-in @state [side :register :cannot-play-current])))
               ;; This is a run event or makes a run, and running is allowed
-              (not (and (or (:makes-run cdef)
+              (not (and (or (:makes-run (card-def card))
                             (has-subtype? card "Run"))
                         (not (can-run? state :runner))))
               ;; if priority, have not spent a click
@@ -119,8 +120,12 @@
                      (if payment-str
                        (complete-play-instant state side (assoc eid :cost-paid (:cost-paid async-result)) moved-card payment-str ignore-cost)
                        ;; could not pay the card's price; put it back and mark the effect as being over.
-                       (do
-                         (move state side moved-card original-zone)
+                       (let [returned-card (move state side moved-card original-zone)]
+                         (update! state :runner (-> returned-card
+                                                    (dissoc :seen)
+                                                    (assoc
+                                                      :cid (:cid card)
+                                                      :previous-zone (:previous-zone card))))
                          (effect-completed state side eid))))))
        ;; card's req or other effects was not satisfied; mark the effect as being over.
        (effect-completed state side eid)))))
