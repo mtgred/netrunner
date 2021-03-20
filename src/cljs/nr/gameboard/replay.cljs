@@ -1,24 +1,13 @@
 (ns nr.gameboard.replay
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
+  (:require [cljs.core.async :refer [<! timeout]]
+            [clojure.string :refer [join blank?]]
             [differ.core :as differ]
-            [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
-                                    faceup? installed? same-card? in-scored?]]
-            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
-            [jinteki.cards :refer [all-cards]]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
-            [nr.auth :as auth]
-            [nr.avatar :refer [avatar]]
-            [nr.cardbrowser :refer [card-as-text]]
-            [nr.end-of-game-stats :refer [build-game-stats]]
-            [nr.translations :refer [tr tr-pronouns tr-side]]
-            [nr.utils :refer [banned-span influence-dot influence-dots map-longest
-                              toastr-options render-icons render-message
-                              checkbox-button cond-button get-image-path
-                              non-game-toast image-or-face]]
-            [nr.ws :as ws]
+            [nr.gameboard.state :refer [game-state]]
+            [nr.translations :refer [tr]]
+            [nr.utils :refer [render-message non-game-toast]]
             [reagent.core :as r]))
 
 (defonce replay-timeline (atom []))
