@@ -1423,6 +1423,14 @@
      (str (get-in opts [:opts :name])
           (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
+(defn controls
+  "Create the control buttons for the side displays."
+  ([key] (controls key 1 -1))
+  ([key increment decrement]
+   [:div.controls
+    [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
+    [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
+
 (defn- this-user?
   [user]
   (if (:replay @game-state)
@@ -1614,14 +1622,6 @@
                        [:div [card-view card]]])
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]]))
-
-(defn controls
-  "Create the control buttons for the side displays."
-  ([key] (controls key 1 -1))
-  ([key increment decrement]
-   [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
 
 (defn name-area
   [user]
