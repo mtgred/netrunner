@@ -16,8 +16,7 @@
    (let [updated-card (update! state side (update card prop-type #(+ (or % 0) n)))
          args {:counter-type prop-type :amount n :placed placed}]
      (if (= prop-type :advance-counter)
-       (do (when (and (ice? updated-card)
-                      (rezzed? updated-card))
+       (do (when ((every-pred ice? rezzed?) updated-card)
              (update-ice-strength state side updated-card))
            (if-not placed
              (trigger-event-sync state side eid :advance (get-card state updated-card) args)

@@ -1645,7 +1645,8 @@
 (defcard "Weyland Consortium: Built to Last"
   {:events [{:event :advance
              :async true
-             :req (req (not (pos? (- (get-counters target :advancement) (:amount (second targets) 0)))))
+             :req (req ((complement pos?)
+                        (- (get-counters target :advancement) (:amount (second targets) 0))))
              :msg "gain 2 [Credits]"
              :effect (req (gain-credits state :corp eid 2))}]})
 
