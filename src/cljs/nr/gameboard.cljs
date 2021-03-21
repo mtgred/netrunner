@@ -1478,6 +1478,9 @@
             [:div
              [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game.close "Close"])]
              [:label (tr [:game.card-count] size)]
+             (let [{:keys [total]} @hand-size]
+               [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
+                (controls :hand-size)])
              [build-hand-card-view user hand prompt remotes "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
@@ -1666,7 +1669,7 @@
   (let [me? (= (:side @game-state) :runner)]
     (fn [runner]
       (let [{:keys [user click credit run-credit memory link tag
-                    brain-damage hand-size active]} @runner]
+                    brain-damage active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
@@ -1684,15 +1687,12 @@
             (when show-tagged [:div.warning "!"])
             (when me? (controls :tag))])
          [:div (str brain-damage " " (tr [:game.brain-damage "Brain Damage"]))
-          (when me? (controls :brain-damage))]
-         (let [{:keys [total]} hand-size]
-           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
-            (when me? (controls :hand-size))])]))))
+          (when me? (controls :brain-damage))]]))))
 
 (defmethod stats-view "Corp" [corp]
   (let [me? (= (:side @game-state) :corp)]
     (fn [corp]
-      (let [{:keys [user click credit bad-publicity hand-size active]} @corp]
+      (let [{:keys [user click credit bad-publicity active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
@@ -1701,10 +1701,7 @@
           (when me? (controls :credit))]
          (let [{:keys [base additional]} bad-publicity]
            [:div (tr [:game.bad-pub-count] base additional)
-            (when me? (controls :bad-publicity))])
-         (let [{:keys [total]} hand-size]
-           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
-            (when me? (controls :hand-size))])]))))
+            (when me? (controls :bad-publicity))])]))))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
