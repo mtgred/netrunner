@@ -1459,16 +1459,17 @@
                    [facedown-card (:side card)])])
               @hand))]))
 
-(defn hand-view [user name translated-name hand prompt remotes popup popup-direction]
+(defn hand-view [user name translated-name hand hand-size prompt remotes popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name translated-name hand prompt remotes popup popup-direction]
+    (fn [user name translated-name hand hand-size prompt remotes popup popup-direction]
       (let [size (count @hand)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
            [build-hand-card-view user hand prompt remotes "card-wrapper"]
-           [label @hand {:opts {:name translated-name}}]]
+           [label @hand {:opts {:name translated-name
+                                :fn (fn [cursor] (str (count cursor) "/" (:total @hand-size)))}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -2425,6 +2426,8 @@
                    opponent (r/cursor game-state [op-side])
                    me-hand (r/cursor game-state [me-side :hand])
                    op-hand (r/cursor game-state [op-side :hand])
+                   me-hand-size (r/cursor game-state [me-side :hand-size])
+                   op-hand-size (r/cursor game-state [op-side :hand-size])
                    me-deck (r/cursor game-state [me-side :deck])
                    op-deck (r/cursor game-state [op-side :deck])
                    me-discard (r/cursor game-state [me-side :discard])
@@ -2482,7 +2485,7 @@
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
                                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                                   [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
+                                   [hand-view op-user srv translated-srv op-hand op-hand-size op-prompt corp-remotes
                                     (= @side :spectator) "opponent"])]
 
                   [:div.inner-leftpane
@@ -2519,7 +2522,7 @@
                   [:div.me
                    (let [srv (if (= :corp me-side) "HQ" "Grip")
                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                     [hand-view me-user srv translated-srv me-hand me-prompt
+                     [hand-view me-user srv translated-srv me-hand me-hand-size me-prompt
                       corp-remotes true "me"])]]]
                 (when (:replay @game-state)
                   [:div.bottompane
