@@ -11,6 +11,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
+    [game.core.to-string :refer [card-str]]
     [game.macros :refer [continue-ability effect req wait-for msg]]
     [game.utils :refer [remove-once same-card? server-card to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -188,7 +189,7 @@
     :choices {:card #(and (corp? %)
                        (in-discard? %)
                        (pred %))}
-    :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
+    :msg (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
