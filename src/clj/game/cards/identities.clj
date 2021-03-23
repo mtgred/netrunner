@@ -1571,6 +1571,10 @@
                 :once :per-turn
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
+(defcard "The Catalyst: Convention Breaker"
+  ;; No special implementation
+  {})
+
 (defcard "The Foundry: Refining the Process"
   {:events [{:event :rez
              :optional
@@ -1603,6 +1607,10 @@
 (defcard "The Shadow: Pulling the Strings"
   {:events [{:event :pre-start-game
              :effect draft-points-target}]})
+
+(defcard "The Syndicate: Profit over Principle"
+  ;; No special implementation
+  {})
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored

@@ -560,6 +560,12 @@
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 
+(defcard "Cookbook"
+  {:events [{:event :runner-install
+             :silent (req true)
+             :req (req (has-subtype? (:card context) "Virus"))
+             :effect (effect (add-counter (:card context) :virus 1))}]})
+
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
              :msg (msg "reveal " (-> target first :title))
@@ -2117,6 +2123,35 @@
                          (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)
                          (effect-completed state side eid)))}
          card nil))}]})
+
+(defcard "Red Team"
+  {:data {:counter {:credit 12}}
+   :events [(trash-on-empty :credit)
+            {:event :successful-run
+             :req (req this-card-run)
+             :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+             :silent (req true)
+             :async true
+             :effect (req (let [credits (min 3 (get-counters card :credit))]
+                            (add-counter state side card :credit (- credits))
+                            (gain-credits state side eid credits)))}]
+   :abilities [{:cost [:click 1]
+                :prompt "Choose a server"
+                :req (req (->> runnable-servers
+                               (map unknown->kw)
+                               (filter is-central?)
+                               (remove (into #{} (:made-run runner-reg)))
+                               (map central->name)
+                               not-empty))
+                :choices (req (->> runnable-servers
+                                   (map unknown->kw)
+                                   (filter is-central?)
+                                   (remove (into #{} (:made-run runner-reg)))
+                                   (map central->name)))
+                :msg "make a run on central server"
+                :makes-run true
+                :async true
+                :effect (effect (make-run eid target card))}]})
 
 (defcard "Rogue Trading"
   {:data {:counter {:credit 18}}

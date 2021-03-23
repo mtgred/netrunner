@@ -1831,6 +1831,21 @@
                    (brain-trash "program")]
      :runner-abilities [(bioroid-break 1 1)]}))
 
+(defcard "Karunā"
+  (let [offer-jack-out
+        {:optional
+         {:waiting-prompt "Runner to decide on jack out"
+          :player :runner
+          :prompt "Jack out?"
+          :yes-ability {:async true
+                        :effect (effect (jack-out eid))}
+          :no-ability {:effect (effect (system-msg :runner "chooses to continue"))}}}]
+    {:subroutines [{:label "Do 2 net damage"
+                    :async true
+                    :effect (req (wait-for (resolve-ability state side (do-net-damage 2) card nil)
+                                           (continue-ability state side offer-jack-out card nil)))}
+                   (do-net-damage 2)]}))
+
 (defcard "Kitsune"
   {:subroutines [{:optional
                   {:req (req (pos? (count (:hand corp))))

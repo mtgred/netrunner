@@ -39,6 +39,20 @@
       (is (zero? (count (:scored (get-corp))))))
     (is (find-card "15 Minutes" (:deck (get-corp))))))
 
+(deftest above-the-law
+  ;; Above the Law
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:hand ["Above the Law"]}
+                :runner {:hand ["Armitage Codebusting"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Armitage Codebusting")
+     (take-credits state :runner)
+     (play-and-score state "Above the Law")
+     (click-card state :corp "Armitage Codebusting")
+     (is (find-card "Armitage Codebusting" (:discard (get-runner))) "Armitage Codebusting is trashed"))))
+
+
 (deftest accelerated-beta-test
   ;; Accelerated Beta Test
   (do-game
@@ -1800,6 +1814,41 @@
       (click-prompt state :corp "New remote")
       (is (some? (get-content state :remote8 0))))))
 
+(deftest longevity-serum
+  ;; Longevity Serum
+  (do-game
+    (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
+                      :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
+    (play-and-score state "Longevity Serum")
+    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (click-card state :corp (find-card "IPO" (:hand (get-corp))))
+    (is (= 4 (count (:discard (get-corp)))))
+    (click-prompt state :corp "Done")
+    (is (= 6 (count (:discard (get-corp)))) "Corp trashes two cards from HQ")
+    (click-card state :corp "Ice Wall")
+    (click-card state :corp "Fire Wall")
+    (click-card state :corp "Prisec")
+    (is (find-card "Fire Wall" (:deck (get-corp))))
+    (is (find-card "Ice Wall" (:deck (get-corp))))
+    (is (find-card "Prisec" (:deck (get-corp))))))
+
+(deftest luminal-transubstantiation
+  ;; Luminal Transubstantiation
+  (do-game
+   (new-game {:corp {:deck ["Luminal Transubstantiation" "Project Vitruvius"]}})
+   (play-from-hand state :corp "Luminal Transubstantiation" "New remote")
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (changes-val-macro
+     3 (:click (get-corp))
+     "Corp gains 3 clicks from Luminal Transubstantiation"
+     (score state :corp (get-content state :remote1 0)))
+   (is (find-card "Luminal Transubstantiation" (:scored (get-corp))))
+   (is (= 1 (count (:scored (get-corp)))))
+   (play-from-hand state :corp "Project Vitruvius" "New remote")
+   (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
+   (score state :corp (get-content state :remote2 0))
+   (is (= 1 (count (:scored (get-corp)))) "Cannot be scored because Luminal Transubstantiation")))
+
 (deftest mandatory-seed-replacement
   ;; Mandatory Seed Replacement
   (do-game
@@ -2170,6 +2219,21 @@
       (click-prompt state :runner "Pay to steal"))
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
+
+(deftest orbital-superiority
+  ;; Orbital Superiority
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand [(qty "Orbital Superiority" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 10)]}})
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner takes 1 tag from Orbital Superiority"
+        (play-and-score state "Orbital Superiority"))
+      (changes-val-macro
+        -4 (count (:hand (get-runner)))
+        "Runner takes 1 tag from Orbital Superiority"
+        (play-and-score state "Orbital Superiority")))))
 
 (deftest paper-trail
   ;; Paper Trail
@@ -3269,6 +3333,21 @@
     (is (= 5 (:credit (get-corp))) "Should still have 5 credits")
     (is (some? (get-ice state :hq 9)))))
 
+(deftest superconducting-hub
+  ;; Superconducting Hub
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Superconducting Hub"]
+                      :credits 10}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Superconducting Hub" "New remote")
+    (changes-val-macro
+      2 (count (:hand (get-corp)))
+      "Superconducting Hub draws 2 cards"
+      (score-agenda state :corp (get-content state :remote1 0))
+      (click-prompt state :corp "Yes"))
+    (is (= 7 (hand-size :corp)))))
+
 (deftest superior-cyberwalls
   ;; Superior Cyberwalls
   (do-game
@@ -3453,6 +3532,26 @@
           (run-continue state)
           (run-continue state)
           (is (= "Vanilla" (:title (core/get-current-ice state))) "Now approaching Vanilla"))))))
+
+(deftest tomorrows-headline
+  ;;Tomorrow's Headline
+  (testing "Basic test - scored"
+    (do-game
+      (new-game {:corp {:deck ["Tomorrow's Headline"]}})
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner takes 1 tag on Tomorrow's Headline score"
+        (play-and-score state "Tomorrow's Headline"))))
+  (testing "Basic test - stolen"
+    (do-game
+      (new-game {:corp {:deck ["Tomorrow's Headline"]}})
+      (play-from-hand state :corp "Tomorrow's Headline" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner takes 1 tag on Tomorrow's Headline steal"
+        (click-prompt state :runner "Steal")))))
 
 (deftest transport-monopoly
   ;; Transport Monopoly

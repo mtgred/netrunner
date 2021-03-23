@@ -606,6 +606,16 @@
         (click-card state :runner ce))
       (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
+(deftest cookbook
+  ;; Cookbook - add a free virus counter to installed virus programs
+  (do-game
+    (new-game {:runner {:deck ["Cookbook" "Imp"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cookbook")
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-program state 0)]
+      (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
+
 (deftest councilman
   ;; Councilman
   (testing "Rez prevention"
@@ -3965,6 +3975,33 @@
       (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
       (card-ability state :runner (get-resource state 0) 0)
       (is (empty? (:prompt (get-runner))) "Reclaim prompt did not come up"))))
+
+(deftest red-team
+  ;; Red Team
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Red Team"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Red Team")
+      (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+      (is (= 9 (get-counters (get-resource state 0) :credit)) "Red team has 9 credits remaining")
+      (click-prompt state :runner "No action")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 2 (count (:choices (prompt-map :runner)))) "Only 2 choices in promp. HQ no longer shown")
+      (click-prompt state :runner "R&D")
+      (run-continue state)
+      (is (= 6 (:credit (get-runner))) "Runner has 6 credits")
+      (is (= 6 (get-counters (get-resource state 0) :credit)) "Red team has 6 credits remaining")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in promp. HQ and R&D no longer shown")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (is (= 9 (:credit (get-runner))) "Runner has 9 credits")
+      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team has 3 credits remaining"))))
 
 (deftest rolodex
   ;; Rolodex - Full test
