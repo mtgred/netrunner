@@ -264,6 +264,19 @@
                                                                       (quantify (count async-result) "card")))
                                                      (effect-completed state side eid))))))}]})
 
+(defcard "Carnivore"
+  {:constant-effects [(mu+ 1)]
+   :interactions
+   {:access-ability
+    {:label "Trash card"
+     :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                    (<= 2 (count (:hand runner)))))
+     :cost [:trash-from-hand 2]
+     :msg (msg "trash " (:title target) " at no cost")
+     :once :per-turn
+     :async true
+     :effect (effect (trash eid (assoc target :seen true) {:accessed true}))}}})
+
 (defcard "Chop Bot 3000"
   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
    :abilities [{:req (req (:runner-phase-12 @state))
@@ -473,6 +486,14 @@
                        :req (req (same-card? target (first (:hosted card))))
                        :value 2}]})
 
+(defcard "Docklands Pass"
+  {:events [{:event :pre-access
+             :req (req (and (= :hq target)
+                            (first-event? state side :pre-access #(= :hq (first %)))))
+             :silent (req true)
+             :msg "access 1 additional cards from HQ"
+             :effect (effect (access-bonus :runner :hq 1))}]})
+
 (defcard "Doppelgänger"
   {:constant-effects [(mu+ 1)]
    :events [{:event :runner-install
@@ -530,6 +551,18 @@
 (defcard "Dyson Mem Chip"
   {:constant-effects [(mu+ 1)
                       (link+ 1)]})
+
+(defcard "DZMZ Optimizer"
+  {:constant-effects [(mu+ 1)
+                      {:type :install-cost
+                       :req (req (and (program? target)
+                                      (no-event? state :runner :runner-install #(program? (:card (first %))))))
+                       :value -1}]
+   :events [{:event :runner-install
+             :req (req (and (program? target)
+                            (first-event? state :runner :runner-install #(program? (first %)))))
+             :silent (req true)
+             :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
@@ -1357,6 +1390,21 @@
                          :cancel-effect (effect (effect-completed (make-result eid 0)))}
                         card nil)))
        :type :custom}}}))
+
+(defcard "Pennyshaver"
+  {:constant-effects [(mu+ 1)]
+   :events [{:event :successful-run
+             :silent (req true)
+             :async true
+             :msg "place 1 [Credits]"
+             :effect (req (add-counter state :runner eid card :credit 1 nil))}]
+   :abilities [{:cost [:click 1]
+                :label "Gain 1 [Credits]. Take all hosted [Credits]"
+                :async true
+                :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
+                :effect (req (let [credits (inc (get-counters card :credit))]
+                               (add-counter state side card :credit (-(dec credits)))
+                               (gain-credits state :runner eid credits)))}]})
 
 (defcard "Plascrete Carapace"
   {:data {:counter {:power 4}}

@@ -32,6 +32,19 @@
                                 (update-all-agenda-points))}]
    :flags {:has-abilities-when-stolen true}})
 
+(defcard "Above the Law"
+  {:on-score
+   {:interactive (req true)
+    :prompt "Select resource"
+    :req (req (some #(and (installed? %)
+                          (resource? %))
+                    (all-active-installed state :runner)))
+    :choices {:card #(and (installed? %)
+                          (resource? %))}
+    :msg (msg "trash " (card-str state target))
+    :async true
+    :effect (effect (trash eid target))}})
+
 (defcard "Accelerated Beta Test"
   (letfn [(abt [titles choices]
             {:async true
@@ -928,6 +941,27 @@
               :async true
               :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}})
 
+(defcard "Longevity Serum"
+  {:on-score
+   {:prompt "Select any number of cards in HQ to trash"
+    :choices {:max (req (count (:hand corp)))
+              :card #(and (corp? %)
+                          (in-hand? %))}
+    :msg (msg "trash " (quantify (count targets) "card") " in HQ")
+    :async true
+    :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+                           (shuffle-into-rd-effect state side eid card 3)))}})
+
+(defcard "Luminal Transubstantiation"
+  {:on-score
+   {:silent (req true)
+    :effect (req (gain state :corp :click 3)
+                 (register-turn-flag!
+                   state side card :can-score
+                   (fn [state side card]
+                     ((constantly false)
+                      (toast state :corp "Cannot score cards this turn due to Luminal Transubstantiation." "warning")))))}})
+
 (defcard "Mandatory Seed Replacement"
   (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
                    :choices {:card #(and (installed? %)
@@ -1077,6 +1111,14 @@
 
 (defcard "Obokata Protocol"
   {:steal-cost-bonus (req [:net 4])})
+
+(defcard "Orbital Superiority"
+  {:on-score
+   {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
+    :async true
+    :effect (req (if (is-tagged? state)
+                   (damage state :corp eid :meat 4 {:card card})
+                   (gain-tags state :corp eid 1)))}})
 
 (defcard "Paper Trail"
   {:on-score
@@ -1563,6 +1605,17 @@
                 :effect (req (let [max-ops (count (filter (complement operation?) (:hand corp)))]
                                (continue-ability state side (sft 1 max-ops) card nil)))}}))
 
+(defcard "Superconducting Hub"
+  {:constant-effects [{:type :hand-size
+                       :req (req (= :corp side))
+                       :value 2}]
+   :on-score
+   {:optional
+    {:prompt "Draw 2 cards?"
+     :yes-ability {:msg "draw 2 cards"
+                   :async true
+                   :effect (effect (draw :corp eid 2 nil))}}}})
+
 (defcard "Superior Cyberwalls"
   (ice-boost-agenda "Barrier"))
 
@@ -1643,6 +1696,15 @@
                                                                        (effect-completed state side eid))))})
                                            card nil))})
                             card nil))}]})
+
+(defcard "Tomorrow's Headline"
+  (let [ability
+        {:interactive (req true)
+         :msg "give Runner 1 tag"
+         :async true
+         :effect (req (gain-tags state :corp eid 1))}]
+    {:on-score ability
+     :stolen ability}))
 
 (defcard "Transport Monopoly"
   {:on-score {:silent (req true)

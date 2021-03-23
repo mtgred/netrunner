@@ -376,6 +376,29 @@
                             (do (system-msg state :runner "takes 1 tag")
                                 (gain-tags state :corp eid 1))))}]})
 
+(defcard "Clearinghouse"
+  (let [ability {:once :per-turn
+                 :async true
+                 :label "Trash this asset to do 1 meat damage for each hosted advancement counter (start of turn)"
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect
+                  (continue-ability
+                   {:optional
+                    {:prompt (msg "Trash Clearinghouse to do " (get-counters card :advancement) " meat damage?")
+                     :yes-ability
+                     {:async true
+                      :msg "do 1 meat damage for each hosted advancement counter"
+                      :effect (req (wait-for
+                                    (trash state side card nil)
+                                    (damage state side eid :meat (get-counters card :advancement) {:card card})))}}}
+                   card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :advanceable :always
+     :abilities [ability]}))
+
 (defcard "Clone Suffrage Movement"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (and (some operation? (:discard corp))
@@ -1412,6 +1435,31 @@
      :abilities [(builder 1 5)
                  (builder 2 8)]}))
 
+(defcard "Nico Campaign"
+  (let [ability
+        {:async true
+         :interactive (req true)
+         :once :per-turn
+         :label "Take 3 [Credits] (start of turn)"
+         :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+         :req (req (:corp-phase-12 @state))
+         :effect (req (let [credits (min 3 (get-counters card :credit))]
+                        (add-counter state side card :credit (- credits))
+                        (wait-for
+                          (gain-credits state :corp credits)
+                          (if (pos? (get-counters (get-card state card) :credit))
+                            (effect-completed state side eid)
+                            (wait-for
+                              (trash state :corp card {:unpreventable true})
+                              (system-msg state :corp (str "trashes Nico Campaign"
+                                                           (when (not (empty? (:deck corp)))
+                                                             " and draws 1 card")))
+                              (draw state :corp eid 1 nil))))))}]
+    {:data {:counter {:credit 9}}
+     :derezzed-events [corp-rez-toast]
+     :abilities [ability]
+     :events [(assoc ability :event :corp-turn-begins)]}))
+
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
@@ -1978,6 +2026,15 @@
                            :choices {:card can-be-advanced?}
                            :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
 
+(defcard "Spin Doctor"
+  {:on-rez {:async true
+            :msg "draw 2 cards"
+            :effect (effect (draw eid 2 nil))}
+   :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
+                :cost [:remove-from-game]
+                :async true
+                :effect (effect (shuffle-into-rd-effect eid card 2))}]})
+
 (defcard "Storgotic Resonator"
   {:abilities [{:cost [:click 1 :power 1]
                 :label "Do 1 net damage"
@@ -2184,6 +2241,11 @@
                                       (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
                                       (damage state side eid :meat 4 {:card card}))
                             (effect-completed state side eid)))}]})
+
+(defcard "Urtica Cipher"
+  (advance-ambush 0 {:msg (msg "do " (+ 2 (get-counters (get-card state card) :advancement)) " net damage")
+                     :async true
+                     :effect (effect (damage eid :net (+ 2 (get-counters (get-card state card) :advancement)) {:card card}))}))
 
 (defcard "Vaporframe Fabricator"
   {:on-trash {:req (req (= :runner side))

@@ -926,6 +926,22 @@
         (click-card state :runner (nth (:hand (get-runner)) n))))
     (is (= 3 (count (:hand (get-runner)))) "3 cards in hand after using Capstone")))
 
+(deftest carnivore
+  ;; Carnivore
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Anansi"]}
+                 :runner {:hand ["Carnivore" "Sure Gamble" "Aumakua"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Carnivore")
+      (is (= 5 (core/available-mu state)) "Gain 1 memory")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "[Carnivore] Trash 2 cards from your hand: Trash card")
+      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (click-card state :runner (find-card "Aumakua" (:hand (get-runner))))
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (zero? (count (:hand (get-runner))))))))
+
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
@@ -1214,6 +1230,40 @@
           (is (= 4 (core/available-mu state))
               "Battering Ram 2 MU not added to available MU when Battering Ram was trashed"))))))
 
+(deftest docklands-pass
+  ;; Docklands Pass - run again when successful
+  (testing "Corp access extra card on HQ run"
+    (do-game
+      (new-game {:runner {:hand ["Docklands Pass"]}
+                 :corp {:hand [(qty "Vanilla" 4)]
+                        :deck [(qty "Vanilla" 10)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Docklands Pass")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with run after 2 accesses")
+      (is (not (:run @state)) "2 access run over")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Second run is over after 1 access")
+      (is (not (:run @state)) "1 access run over")))
+  (testing "No bonus access when playing Docklands Pass after first run"
+    (do-game
+      (new-game {:runner {:hand ["Docklands Pass"]}
+                 :corp {:hand [(qty "Vanilla" 4)]
+                        :deck [(qty "Vanilla" 10)]}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with run after 1 accesses")
+      (is (not (:run @state)) "1 access run over")
+      (play-from-hand state :runner "Docklands Pass")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No bonus access on second run")
+      (is (not (:run @state)) "1 access run over"))))
+
 (deftest doppelganger
   ;; Doppelgänger - run again when successful
   (testing "Basic test"
@@ -1287,6 +1337,25 @@
                            "Used 1 credit from Dyson Fractal Generator"
                            (card-ability state :runner bs 1)
                            (click-card state :runner dfg))))))
+
+(deftest dzmz-optimizer
+  ;; DZMZ Optimizer
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]}
+                 :runner {:hand ["DZMZ Optimizer" (qty "Aumakua" 2)]
+                          :credits 20}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DZMZ Optimizer")
+      (is (= 5 (core/available-mu state)) "Gain 1 memory")
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Pays 2 credit for first install"
+        (play-from-hand state :runner "Aumakua"))
+      (changes-val-macro
+        -3 (:credit (get-runner))
+        "Pays 3 credit for second install"
+        (play-from-hand state :runner "Aumakua")))))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
@@ -2860,6 +2929,29 @@
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
       (is (= 1 (:credit (get-runner))) "Runner should still have 1c")
       (is (get-resource state 0) "Installed Film Critic"))))
+
+(deftest pennyshaver
+  ;; Pennyshaver - Prevent meat damage
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Hedge Fund"]}
+                 :runner {:deck ["Pennyshaver"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pennyshaver")
+      (is (= 5 (core/available-mu state)) "Gain 1 memory")
+      (let [pennyshaver (get-hardware state 0)]
+        (is (= 0 (get-counters (refresh pennyshaver) :credit)) "0 credits on install")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action")
+        (is (= 1 (get-counters (refresh pennyshaver) :credit)) "1 credits after one run")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action")
+        (is (= 2 (get-counters (refresh pennyshaver) :credit)) "2 credits after second run")
+        (changes-val-macro
+          3 (:credit (get-runner))
+          "Gain 1 + 2 credit from Pennyshaver"
+          (card-ability state :runner pennyshaver 0))
+        (is (= 0 (get-counters (refresh pennyshaver) :credit)) "0 credits after ability trigger")))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

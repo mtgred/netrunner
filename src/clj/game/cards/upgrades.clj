@@ -2,7 +2,8 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [cond-plus.core :refer [cond+]]))
 
 ;; Card definitions
 
@@ -11,6 +12,23 @@
                        :req (req (and (ice? target)
                                       (= (card->server state card) (card->server state target))))
                        :value -2}]})
+
+(defcard "AMAZE Amusements"
+  (let [ability
+        {:event :run-ends
+         :req (req (= (second (get-zone card)) (first (:server context))))
+         :async true
+         :effect (req (if (:did-steal context)
+                        (gain-tags state :corp eid 2)
+                        (effect-completed state side eid)))}]
+  {:events [ability]
+   :on-trash
+   {:req (req (and run (= :runner side)))
+    :effect (effect (register-events
+                      card
+                      [(assoc ability
+                              :req (req (= (second (:previous-zone card)) (first (:server context))))
+                              :duration :end-of-run)]))}}))
 
 (defcard "Amazon Industrial Zone"
   {:events [{:event :corp-install
@@ -806,6 +824,49 @@
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))
                                 :type :recurring}}})
+
+(defcard "Malapert Data Vault"
+  {:events [{:event :agenda-scored
+             :optional
+             {:prompt "Search R&D for non-agenda card?"
+              :req (req (= (:previous-zone (:card context)) (get-zone card)))
+              :yes-ability
+              {:prompt "Select card"
+               :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
+                                          :sorted))
+               :msg (msg "reveal " (:title target) " and add it to HQ")
+               :async true
+               :effect (req (wait-for
+                              (reveal state side target)
+                              (shuffle! state side :deck)
+                              (move state side target :hand)
+                              (effect-completed state side eid)))}}}]})
+
+(defcard "Manegarm Skunkworks"
+  {:events [{:event :successful-run
+             :player :runner
+             :prompt "Choose one"
+             :req (req this-server)
+             :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2])
+                              "Spend [Click][Click]")
+                            (when (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5])
+                              "Pay 5 [Credits]")
+                            "End the run"])
+             :async true
+             :effect (req (cond+
+                            [(and (= target "Spend [Click][Click]")
+                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
+                             (wait-for (pay state side card :click 2)
+                                       (system-msg state side (:msg async-result))
+                                       (effect-completed state :runner eid))]
+                            [(and (= target "Pay 5 [Credits]")
+                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
+                             (wait-for (pay state side card :credit 5)
+                                       (system-msg state side (:msg async-result))
+                                       (effect-completed state :runner eid))]
+                            [:else
+                             (system-msg state :corp "ends the run")
+                             (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"
   {:events [{:event :run-ends

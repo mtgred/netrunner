@@ -2341,6 +2341,31 @@
       (is (empty? (get-program state)) "Cache trashed")
       (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
 
+(deftest karuna
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Karunā"]}
+                 :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
+      (play-from-hand state :corp "Karunā" "HQ")
+      (take-credits state :corp)
+      (let [kar (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp kar)
+        (run-continue state)
+        (is (= 0 (count (:discard (get-runner)))) "Heap Empty")
+        (fire-subs state kar)
+        (is (= 2 (count (:discard (get-runner)))) "2 cards trashed")
+        (click-prompt state :runner "Yes")
+        (is (nil? (:run @state)) "Runner jacked out")
+        (is (= 2 (count (:discard (get-runner)))) "2 cards trashed, 2nd sub didn't fire")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state kar)
+        (is (= 4 (count (:discard (get-runner)))) "4 cards trashed")
+        (click-prompt state :runner "No")
+        (is (= 6 (count (:discard (get-runner)))) "6 cards trashed")
+        (is (not (nil? (:run @state))) "Run Continues")))))
+
 (deftest kitsune
   (testing "Corp choices card for Runner to access"
     (do-game

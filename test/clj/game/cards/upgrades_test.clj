@@ -8,6 +8,39 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
+(deftest amaze-amusements
+  ;; AMAZE Amusements
+  (testing "Basic test - no trash"
+    (do-game
+     (new-game {:corp {:deck ["AMAZE Amusements" "Project Atlas"]}})
+     (play-from-hand state :corp "AMAZE Amusements" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (play-from-hand state :corp "Project Atlas" "Server 1")
+     (take-credits state :corp)
+     (run-empty-server state :remote1)
+     (let [exchange (get-content state :remote1 0)
+           atlas (get-content state :remote1 1)]
+       (click-card state :runner atlas)
+       (click-prompt state :runner "Steal")
+       (click-card state :runner exchange)
+       (click-prompt state :runner "No action")
+       (is (= 2 (count-tags state)) "Runner has 2 tags"))))
+  (testing "Basic test - trash"
+    (do-game
+     (new-game {:corp {:deck ["AMAZE Amusements" "Project Atlas"]}})
+     (play-from-hand state :corp "AMAZE Amusements" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (play-from-hand state :corp "Project Atlas" "Server 1")
+     (take-credits state :corp)
+     (run-empty-server state :remote1)
+     (let [exchange (get-content state :remote1 0)
+           atlas (get-content state :remote1 1)]
+       (click-card state :runner exchange)
+       (click-prompt state :runner "Pay 3 [Credits] to trash")
+       (click-card state :runner atlas)
+       (click-prompt state :runner "Steal")
+       (is (= 2 (count-tags state)) "Runner has 2 tags")))))
+
 (deftest amazon-industrial-zone
   ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
   (do-game
@@ -1670,6 +1703,73 @@
       (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
       (is (nil? (refresh letheia)) "Letheia is trashed")
       (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives"))))
+
+(deftest malapert-data-vault
+  ;; Malapert Data Vault
+  (do-game
+    (new-game {:corp {:deck ["Quandary" "Project Atlas" "Government Takeover" "Hostile Takeover"]
+                      :hand ["Project Atlas" "Malapert Data Vault"]
+                      :click 10}})
+    (play-from-hand state :corp "Malapert Data Vault" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (let [atlas (get-content state :remote1 1)]
+      (score-agenda state :corp (refresh atlas))
+      (click-prompt state :corp "Yes")
+      (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options (Quandry and Cancel)")
+      (is (= ["Quandary" "Cancel"] (map #(or (:title %) %) (prompt-buttons :corp))))
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "Clicking prompt causes Quandary to move to HQ"
+        (click-prompt state :corp "Quandary")))))
+
+(deftest manegarm-skunkworks
+  ;; Manegarm Skunkworks
+  (testing "Basic test - clicks"
+    (do-game
+      (new-game {:corp {:hand ["Manegarm Skunkworks"]}})
+      (play-from-hand state :corp "Manegarm Skunkworks" "New remote")
+      (let [encryption (get-content state :remote1 0)]
+        (rez state :corp encryption)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (changes-val-macro
+          -2 (:click (get-runner))
+          "Spend 2 clicks"
+          (click-prompt state :runner "Spend [Click][Click]"))
+        (is (:run @state) "Run not ended by Manegarm Skunkworks"))))
+  (testing "Basic test - credits"
+    (do-game
+      (new-game {:corp {:hand ["Manegarm Skunkworks"]}})
+      (play-from-hand state :corp "Manegarm Skunkworks" "New remote")
+      (let [encryption (get-content state :remote1 0)]
+        (rez state :corp encryption)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (changes-val-macro
+          -5 (:credit (get-runner))
+          "Pay 5 credits"
+          (click-prompt state :runner "Pay 5 [Credits]"))
+        (is (:run @state) "Run not ended by Manegarm Skunkworks"))))
+  (testing "Basic test - ETR"
+    (do-game
+      (new-game {:corp {:hand ["Manegarm Skunkworks"]}})
+      (play-from-hand state :corp "Manegarm Skunkworks" "New remote")
+      (let [encryption (get-content state :remote1 0)]
+        (rez state :corp encryption)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "End the run")
+        (is (not (:run @state)) "Run ended by Manegarm Skunkworks"))))
+  (testing "No prompt for runs on other servers"
+    (do-game
+      (new-game {:corp {:hand ["Manegarm Skunkworks"]}})
+      (play-from-hand state :corp "Manegarm Skunkworks" "New remote")
+      (let [encryption (get-content state :remote1 0)]
+        (rez state :corp encryption)
+        (take-credits state :corp)
+        (run-empty-server state "HQ")
+        (is (empty? (:prompt (get-runner))) "Manegarm Skunkworks didn't trigger")))))
 
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.

@@ -1164,6 +1164,21 @@
       (take-credits state :corp)
       (is (zero? (get-in (get-corp) [:bad-publicity :base])) "Corp has BP, didn't take 1 from Activist Support"))))
 
+(deftest creative-commision
+  ;; Creative Commission
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 2)]}
+                 :runner {:hand ["Creative Commission"]}})
+      (take-credits state :corp)
+      (let [clicks (:click (get-runner))]
+        (changes-val-macro
+          4 (:credit (get-runner))
+          "gain 4 credits from Creative Commission"
+          (play-from-hand state :runner "Creative Commission"))
+        (is (= (+ clicks -1 -1) (:click (get-runner))) "Runner plays Creative Commission and loses 1 click")))))
+
 (deftest credit-crash
   ;; Credit Crash
   (testing "Corp pays to keep"
@@ -3815,6 +3830,71 @@
       (is (= 3 (count (:hand (get-runner)))) "Runner draws 3 cards")
       (is (find-card "Sure Gamble" (:hand (get-runner))) "Runner drew Sure Gamble"))))
 
+(deftest mutual-favor
+  ;; Mutual Favor
+  (testing "Basic test - no install"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 4)]}
+                 :runner {:deck [(qty "Aumakua" 3)]
+                          :hand ["Mutual Favor"]}})
+      (take-credits state :corp)
+      (let [original-deck-count (count (:deck (get-runner)))
+            original-hand-count (count (:hand (get-runner)))]
+        (run-empty-server state :archives)
+        (play-from-hand state :runner "Mutual Favor")
+        (click-prompt state :runner "Aumakua")
+        (click-prompt state :runner "No")
+        (is (= 5 (:credit (get-runner))) "Spent 0 credits")
+        (is (= 0 (count (get-program state))) "Pulled card was not installed")
+        (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck...")
+        (is (= (+ original-hand-count 1 -1) (count (:hand (get-runner)))) "...into hand -one played, +one drawn"))))
+  (testing "Basic test - install"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 4)]}
+                 :runner {:deck [(qty "Aumakua" 3)]
+                          :hand ["Mutual Favor"]}})
+      (take-credits state :corp)
+      (let [original-deck-count (count (:deck (get-runner)))
+            original-hand-count (count (:hand (get-runner)))]
+        (run-empty-server state :archives)
+        (play-from-hand state :runner "Mutual Favor")
+        (click-prompt state :runner "Aumakua")
+        (click-prompt state :runner "Yes")
+        (is (= (+ 5 -3) (:credit (get-runner))) "Spent 3 credits")
+        (is (= 1 (count (get-program state))) "Pulled card was installed")
+        (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck...")
+        (is (= (+ original-hand-count -1) (count (:hand (get-runner)))) "...into play -one played"))))
+  (testing "Basic test - no prompt when not enough credits to install"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 4)]}
+                 :runner {:deck [(qty "Aumakua" 3)]
+                          :hand ["Mutual Favor"]
+                          :credits 0}})
+      (take-credits state :corp)
+      (let [original-deck-count (count (:deck (get-runner)))
+            original-hand-count (count (:hand (get-runner)))]
+        (run-empty-server state :archives)
+        (play-from-hand state :runner "Mutual Favor")
+        (click-prompt state :runner "Aumakua")
+        (is (= 0 (:credit (get-runner))) "Spent 0 credits")
+        (is (= 0 (count (get-program state))) "Pulled card was not installed")
+        (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck...")
+        (is (= (+ original-hand-count 1 -1) (count (:hand (get-runner)))) "...into hand -one played, +one drawn"))))
+  (testing "Basic test - no prompt when no successful run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 4)]}
+                 :runner {:deck [(qty "Aumakua" 3)]
+                          :hand ["Mutual Favor"]}})
+      (take-credits state :corp)
+      (let [original-deck-count (count (:deck (get-runner)))
+            original-hand-count (count (:hand (get-runner)))]
+        (play-from-hand state :runner "Mutual Favor")
+        (click-prompt state :runner "Aumakua")
+        (is (= 5 (:credit (get-runner))) "Spent 0 credits")
+        (is (= 0 (count (get-program state))) "Pulled card was not installed")
+        (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck...")
+        (is (= (+ original-hand-count 1 -1) (count (:hand (get-runner)))) "...into hand -one played, +one drawn")))))
+
 (deftest net-celebrity
   ;; Net-celebrity
   (testing "Pay-credits prompt"
@@ -5557,6 +5637,30 @@
       (score state :corp (refresh tg))
       (is (= 3 (:agenda-point (get-corp))) "Took 5 advancements to score"))))
 
+(deftest tread-lightly
+  ;; Tread Lightly
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Vanilla"]
+                      :credits 100}
+               :runner {:hand ["Tread Lightly"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tread Lightly")
+    (click-prompt state :runner "HQ")
+    (let [vanilla (get-ice state :hq 0)
+          icewall (get-ice state :hq 1)]
+      (changes-val-macro
+        -3 (:credit (get-corp))
+        "Paid 3 credits to rez Vanilla"
+        (rez state :corp vanilla))
+      (run-continue state)
+      (changes-val-macro
+        -4 (:credit (get-corp))
+        "Paid 4 credits to rez Ice Wall"
+        (rez state :corp icewall)))))
+
 (deftest uninstall
   ;; Uninstall
   (do-game
@@ -5603,6 +5707,21 @@
     (is (= 1 (count-tags state)) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))
+
+(deftest vrcation
+  ;; VRcation
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["VRcation"]}})
+      (take-credits state :corp)
+      (let [hand (count (:hand (get-runner)))
+            clicks (:click (get-runner))]
+        (play-from-hand state :runner "VRcation")
+        (is (= (+ hand -1 4) (count (:hand (get-runner)))) "Runner plays VRcation and draws 4 cards")
+        (is (= (+ clicks -1 -1) (:click (get-runner))) "Runner plays VRcation and loses 1 click")))))
 
 (deftest wanton-destruction
   ;; Wanton Destruction
@@ -5722,6 +5841,33 @@
     (click-prompt state :runner (find-card "Ice Wall" (:hand (get-corp))))
     (click-prompt state :runner (find-card "Enigma" (:hand (get-corp))))
     (is (= #{"Ice Wall" "Enigma"} (->> (get-corp) :deck (map :title) (into #{}))))))
+
+(deftest wildcat-strike
+  ;; Wildcat Strike
+  (testing "Basic test - corp selects credits"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Wildcat Strike"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Wildcat Strike")
+      (changes-val-macro
+        6 (:credit (get-runner))
+        "gain 6 credits from Wildcat Strike"
+        (click-prompt state :corp "Runner gains 6 [Credits]"))))
+  (testing "Basic test - corp selects credits"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Wildcat Strike"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Wildcat Strike")
+      (changes-val-macro
+        4 (count (:hand (get-runner)))
+        "draw 4 cards from Wildcat Strike"
+        (click-prompt state :corp "Runner draws 4 cards")))))
 
 (deftest windfall
   ;; Windfall

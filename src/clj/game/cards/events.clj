@@ -493,6 +493,15 @@
              :effect (req (swap! state update-in [:corp :bad-publicity :additional] inc))}
    :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))})
 
+(defcard "Creative Commission"
+  {:on-play {:msg (msg "gain 5 [Credits]"
+                       (when (pos? (:click runner))
+                         " and lose [Click]"))
+             :async true
+             :effect (req (when (pos? (:click runner))
+                            (lose state :runner :click 1))
+                          (gain-credits state :runner eid 5))}})
+
 (defcard "Credit Crash"
   {:makes-run true
    :on-play {:prompt "Choose a server"
@@ -2004,6 +2013,32 @@
     :effect (req (wait-for (draw state side 3 nil)
                            (gain-credits state side eid 3)))}})
 
+(defcard "Mutual Favor"
+  {:on-play
+   {:prompt "Choose an Icebreaker"
+    :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
+    :msg (msg "add " (:title target) " to their grip and shuffle their stack")
+    :async true
+    :effect (effect (trigger-event :searched-stack nil)
+                    (continue-ability
+                      (let [icebreaker target]
+                        (if (and (:successful-run runner-reg)
+                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) icebreaker nil
+                                           [:credit (install-cost state side icebreaker)]))
+                          {:optional
+                           {:prompt "Do you want to install it?"
+                            :yes-ability
+                            {:async true
+                             :msg (msg " install " (:title icebreaker))
+                             :effect (req (runner-install state side (assoc eid :source card :source-type :runner-install) icebreaker nil)
+                                          (shuffle! state side :deck))}
+                            :no-ability
+                            {:effect (req (move state side icebreaker :hand)
+                                          (shuffle! state side :deck))}}}
+                          {:effect (req (move state side icebreaker :hand)
+                                        (shuffle! state side :deck))}))
+                      card nil))}})
+
 (defcard "Net Celebrity"
   {:recurring 1
    :interactions {:pay-credits {:req (req run)
@@ -2975,6 +3010,20 @@
                                         (filter #(= (:title %) (:title target)))
                                         (count)))}]})
 
+(defcard "Tread Lightly"
+  {:on-play
+   {:prompt "Choose a server"
+    :choices (req runnable-servers)
+    :makes-run true
+    :async true
+    :effect (effect (register-floating-effect
+                      card
+                      {:type :rez-additional-cost
+                       :duration :end-of-run
+                       :req (req true)
+                       :value (req [:credit 3])})
+                    (make-run eid target card))}})
+
 (defcard "Uninstall"
   {:on-play
    {:req (req (some #(or (hardware? %)
@@ -3014,6 +3063,16 @@
                 :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp target)
                                        (gain-tags state side eid 1)))}} )]})
+
+(defcard "VRcation"
+  {:on-play
+   {:msg (msg "draw 4 cards"
+              (when (pos? (:click runner))
+                " and lose [Click]"))
+    :async true
+    :effect (req (when (pos? (:click runner))
+                   (lose state :runner :click 1))
+                 (draw state :runner eid 4 nil))}})
 
 (defcard "Wanton Destruction"
   {:makes-run true
@@ -3082,6 +3141,19 @@
         :effect (req (wait-for
                        (reveal state side (:hand corp))
                        (continue-ability state :runner (choose-cards (set (:hand corp)) #{}) card nil)))}}}}))
+
+(defcard "Wildcat Strike"
+  {:on-play
+   {:player :corp
+    :waiting-prompt "Corp to choose Wildcat Strike effect"
+    :prompt "Choose one"
+    :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
+    :async true
+    :effect (req (if (= target "Runner gains 6 [Credits]")
+                   (do (system-msg state :corp "chooses 6 credits for runner")
+                       (gain-credits state :runner eid 6))
+                   (do (system-msg state :corp "chooses 4 cards for runner")
+                       (draw state :runner eid 4 nil))))}})
 
 (defcard "Windfall"
   {:on-play

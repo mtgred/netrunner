@@ -656,6 +656,26 @@
       (run-continue state)
       (is (empty? (:prompt (get-runner))) "Black Orchestra prompt did not come up"))))
 
+(deftest botulus
+  ;; Botulus
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]}
+               :runner {:credits 15
+                        :hand ["Botulus"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Botulus")
+    (click-card state :runner (get-ice state :hq 0))
+    (let [iw (get-ice state :hq 0)
+          bot (first (:hosted (refresh iw)))]
+      (run-on state :hq)
+      (rez state :corp iw)
+      (run-continue state)
+      (card-ability state :runner (refresh bot) 0)
+      (click-prompt state :runner "End the run")
+      (is (zero? (count (remove :broken (:subroutines (refresh iw))))) "All subroutines have been broken"))))
+
 (deftest brahman
   ;; Brahman
   (testing "Basic test"
@@ -1106,6 +1126,34 @@
                            "Used 1 credit from Cloak"
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl))))))
+
+(deftest conduit
+  ;; Conduit
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 8)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Conduit"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Conduit")
+      (let [conduit (get-program state 0)]
+        (card-ability state :runner conduit 0)
+        (is (:run @state) "Run initiated")
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (is (empty? (:prompt (get-runner))) "Prompt closed")
+        (is (= 1 (get-counters (refresh conduit) :virus)))
+        (is (not (:run @state)) "Run ended")
+        (card-ability state :runner conduit 0)
+        (run-continue state)
+        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (is (= 2 (get-counters (refresh conduit) :virus)))
+        (run-empty-server state :rd)
+        (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should access 0 additional card on normal run")))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
@@ -2159,6 +2207,42 @@
       (run-continue state)
       (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
 
+(deftest fermenter
+  ;; Fermenter - click, trash to get 2c per counter.
+  (testing "Trash and cash out"
+    (do-game
+      (new-game {:runner {:deck ["Fermenter"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fermenter")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [fermenter (get-program state 0)]
+        (is (= 1 (get-counters (refresh fermenter) :virus)) "Fermenter has 1 counter")
+        (changes-val-macro
+          2 (:credit (get-runner))
+          "Gain 2 credits from Fermenter ability"
+          (card-ability state :runner fermenter 0))
+        (is (= 1 (count (:discard (get-runner)))) "Fermenter is trashed"))))
+  (testing "Hivemind interaction"
+    (do-game
+      (new-game {:corp {:deck ["Adonis Campaign"]}
+                 :runner {:deck ["Fermenter" "Hivemind"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fermenter")
+      (play-from-hand state :runner "Hivemind")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [fermenter (get-program state 0)
+            hivemind (get-program state 1)]
+        (is (= 1 (get-counters (refresh fermenter) :virus)) "Fermenter has 1 counter")
+        (is (= 1 (get-counters (refresh hivemind) :virus)) "Hivemind has 1 counter")
+        (changes-val-macro
+          4 (:credit (get-runner))
+          "Gain 4 credits from Fermenter ability"
+          (card-ability state :runner fermenter 0))
+        (is (= 1 (count (:discard (get-runner)))) "Fermenter is trashed")
+        (is (= 1 (get-counters (refresh hivemind) :virus)) "Hivemind has still 1 counter")))))
+
 (deftest gauss
   ;; Gauss
   (testing "Loses strength at end of Runner's turn"
@@ -2950,6 +3034,59 @@
       (core/purge state :corp)
       (is (empty? (get-program state)) "Lamprey trashed by purge"))))
 
+(deftest leech
+  ;; Leech - Reduce strength of encountered ICE
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Fire Wall"]}
+                 :runner {:deck ["Leech"]}})
+      (play-from-hand state :corp "Fire Wall" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :click 3)
+      (play-from-hand state :runner "Leech")
+      (let [le (get-program state 0)
+            fw (get-ice state :remote1 0)]
+        (run-empty-server state "Archives")
+        (click-prompt state :runner "Yes")
+        (is (= 1 (get-counters (refresh le) :virus)))
+        (run-empty-server state "Archives")
+        (click-prompt state :runner "Yes")
+        (is (= 2 (get-counters (refresh le) :virus)))
+        (run-on state "Server 1")
+        (run-continue state)
+        (run-continue state)
+        (is (= 2 (get-counters (refresh le) :virus)) "No counter gained, not a central server")
+        (run-on state "Server 1")
+        (rez state :corp fw)
+        (run-continue state)
+        (is (= 5 (get-strength (refresh fw))))
+        (card-ability state :runner le 0)
+        (is (= 1 (get-counters (refresh le) :virus)) "1 counter spent from Leech")
+        (is (= 4 (get-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
+  (testing "does not affect next ice when current is trashed. Issue #1788"
+    (do-game
+      (new-game {:corp {:deck ["Wraparound" "Spiderweb"]}
+                 :runner {:deck ["Leech" "Parasite"]}})
+      (play-from-hand state :corp "Wraparound" "HQ")
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :runner "Leech")
+      (let [leech (get-program state 0)
+            wrap (get-ice state :hq 0)
+            spider (get-ice state :hq 1)]
+        (core/add-counter state :runner leech :virus 2)
+        (rez state :corp spider)
+        (rez state :corp wrap)
+        (play-from-hand state :runner "Parasite")
+        (click-card state :runner "Spiderweb")
+        (run-on state "HQ")
+        (run-continue state)
+        (card-ability state :runner (refresh leech) 0)
+        (card-ability state :runner (refresh leech) 0)
+        (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Leech")
+        (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Leech")))))
+
 (deftest leprechaun
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
   (testing "Basic test"
@@ -3224,6 +3361,29 @@
         (card-ability state :runner (refresh maven) 0)
         (click-prompt state :runner "End the run")
         (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break")))))
+
+(deftest mayfly
+  ;; Mayfly
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Anansi"]
+                        :credits 20}
+                 :runner {:hand ["Mayfly"]
+                          :credits 20}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mayfly")
+      (let [mayfly (get-program state 0)]
+        (run-on state "HQ")
+        (run-continue state)
+        (changes-val-macro
+          -7 (:credit (get-runner))
+          "Paid 7 to fully break Anansi with Mayfly"
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)}))
+        (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")
+        (run-jack-out state)
+        (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends")))))
 
 (deftest mimic
   ;; Mimic
@@ -5095,6 +5255,34 @@
         (run-continue state)
         (run-continue state)
         (is (= 2 (get-strength (refresh corr))) "Corroder returned to normal strength")))))
+
+(deftest tranquilizer
+  ;; Tranquilizer
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Tranquilizer"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tranquilizer")
+      (click-card state :runner (get-ice state :hq 0))
+      (let [iw (get-ice state :hq 0)
+            tranquilizer (first (:hosted (refresh iw)))]
+        (is (= 1 (get-counters (refresh tranquilizer) :virus)))
+        (take-credits state :runner)
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh tranquilizer) :virus)))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 3 (get-counters (refresh tranquilizer) :virus)))
+        (is (not (rezzed? (refresh iw))) "Ice Wall derezzed")
+        (take-credits state :runner)
+        (rez state :corp iw)
+        (take-credits state :corp)
+        (is (= 4 (get-counters (refresh tranquilizer) :virus)))
+        (is (not (rezzed? (refresh iw))) "Ice Wall derezzed again")))))
 
 (deftest trope
   ;; Trope
