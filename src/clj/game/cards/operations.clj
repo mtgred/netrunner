@@ -1871,6 +1871,12 @@
                        card targets)
                      (trash state side eid target nil))))}})
 
+(defcard "Restructure"
+  {:on-play
+   {:msg "gain 15 [Credits]"
+    :async true
+    :effect (effect (gain-credits eid 15))}})
+
 (defcard "Retribution"
   {:on-play
    {:req (req (and tagged
@@ -1885,12 +1891,6 @@
     :msg (msg "trash " (card-str state target))
     :async true
     :effect (effect (trash eid target))}})
-
-(defcard "Restructure"
-  {:on-play
-   {:msg "gain 15 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 15))}})
 
 (defcard "Reuse"
   {:on-play

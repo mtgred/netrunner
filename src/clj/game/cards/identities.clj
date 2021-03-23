@@ -258,6 +258,23 @@
                                           (shuffle! state side :deck))}
                             card nil))}]})
 
+(defcard "Az McCaffrey: Mechanical Prodigy"
+  ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
+  (letfn [(az-type? [card] (or (hardware? card)
+                               (and (resource? card)
+                                    (or (has-subtype? card "Job")
+                                        (has-subtype? card "Connection")))))
+          (not-triggered? [state] (no-event? state :runner :runner-install #(az-type? (:card (first %)))))]
+    {:constant-effects [{:type :install-cost
+                         :req (req (and (az-type? target)
+                                        (not-triggered? state)))
+                         :value -1}]
+     :events [{:event :runner-install
+               :req (req (and (az-type? (:card context))
+                              (not-triggered? state)))
+               :silent (req true)
+               :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
+
 (defcard "Azmari EdTech: Shaping the Future"
   {:events [{:event :corp-turn-ends
              :prompt "Name a Runner card type"
@@ -277,23 +294,6 @@
              :effect (effect (gain-credits :corp eid 2))
              :once :per-turn
              :msg (msg "gain 2 [Credits] from " (:az-target card))}]})
-
-(defcard "Az McCaffrey: Mechanical Prodigy"
-  ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
-  (letfn [(az-type? [card] (or (hardware? card)
-                               (and (resource? card)
-                                    (or (has-subtype? card "Job")
-                                        (has-subtype? card "Connection")))))
-          (not-triggered? [state] (no-event? state :runner :runner-install #(az-type? (:card (first %)))))]
-    {:constant-effects [{:type :install-cost
-                         :req (req (and (az-type? target)
-                                        (not-triggered? state)))
-                         :value -1}]
-     :events [{:event :runner-install
-               :req (req (and (az-type? (:card context))
-                              (not-triggered? state)))
-               :silent (req true)
-               :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -727,22 +727,6 @@
              :once :per-turn
              :async true
              :effect (effect (draw eid 1 nil))}]})
-
-(defcard "René \"Loup\" Arcemont: Party Animal"
-  {:events [{:event :runner-trash
-             :optional
-             {:req (req (and (:accessed context)
-                             (first-event? state side :runner-trash
-                                           (fn [targets]
-                                             (some #(:accessed %) targets)))))
-              :prompt "Gain 1 [Credits] and draw 1 card?"
-              :autoresolve (get-autoresolve :auto-rene)
-              :yes-ability
-              {:async true
-               :msg "gain 1 [Credits] and draw 1 card"
-               :effect (req (wait-for (draw state :runner 1 nil)
-                                      (gain-credits state :runner eid 1)))}}}]
-   :abilities [(set-autoresolve :auto-rene "René")]})
 
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
@@ -1305,6 +1289,22 @@
                :req (req (and (ice? (:card context))
                               (not-triggered? state)))
                :msg (msg "increased the rez cost of " (:title (:card context)) " by 1 [Credits]")}]}))
+
+(defcard "René \"Loup\" Arcemont: Party Animal"
+  {:events [{:event :runner-trash
+             :optional
+             {:req (req (and (:accessed context)
+                             (first-event? state side :runner-trash
+                                           (fn [targets]
+                                             (some #(:accessed %) targets)))))
+              :prompt "Gain 1 [Credits] and draw 1 card?"
+              :autoresolve (get-autoresolve :auto-rene)
+              :yes-ability
+              {:async true
+               :msg "gain 1 [Credits] and draw 1 card"
+               :effect (req (wait-for (draw state :runner 1 nil)
+                                      (gain-credits state :runner eid 1)))}}}]
+   :abilities [(set-autoresolve :auto-rene "René")]})
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice

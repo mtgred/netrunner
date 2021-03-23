@@ -2709,16 +2709,16 @@
                   :effect (effect (redirect-run target :approach-ice)
                                   (trash eid card {:unpreventable true :cause :subroutine}))}]})
 
+(defcard "Sandman"
+  {:subroutines [add-runner-card-to-grip
+                 add-runner-card-to-grip]})
+
 (defcard "Sandstone"
   {:subroutines [end-the-run]
    :strength-bonus (req (- (get-counters card :virus)))
    :on-encounter {:msg "place 1 virus counter on Sandstone"
                   :effect (effect (add-counter card :virus 1)
                                   (update-ice-strength (get-card state card)))}})
-
-(defcard "Sandman"
-  {:subroutines [add-runner-card-to-grip
-                 add-runner-card-to-grip]})
 
 (defcard "Sapper"
   {:flags {:rd-reveal (req true)}
@@ -3182,14 +3182,14 @@
                   :effect (effect (lose-credits :runner eid 1))}
    :subroutines [(tag-trace 5)]})
 
-(defcard "Tyrant"
-  (zero-to-hero end-the-run))
-
 (defcard "Týr"
   {:subroutines [(do-brain-damage 2)
                  (combine-abilities trash-installed-sub (gain-credits-sub 3))
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]})
+
+(defcard "Tyrant"
+  (zero-to-hero end-the-run))
 
 (defcard "Universal Connectivity Fee"
   {:subroutines [{:label "Force the Runner to lose credits"

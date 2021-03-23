@@ -294,21 +294,6 @@
                      :successful {:msg "prevents all bad publicity"
                                   :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}]})
 
-(defcard "Calvin B4L3Y"
-  {:abilities [{:cost [:click 1]
-                :msg "draw 2 cards"
-                :once :per-turn
-                :async true
-                :effect (effect (draw eid 2 nil))}]
-   :on-trash {:interactive (req true)
-              :optional
-              {:req (req (= :runner side))
-               :waiting-prompt "Corp to use Calvin B4L3Y"
-               :prompt "Draw 2 cards?"
-               :player :corp
-               :yes-ability {:msg "draw 2 cards"
-                             :effect (effect (draw eid 2 nil))}}}})
-
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
@@ -329,6 +314,21 @@
              :req (req (>= (get-counters card :credit) 6))
              :effect (effect (add-counter card :credit 2)
                              (system-msg (str "adds 2 [Credits] to C.I. Fund")))}]})
+
+(defcard "Calvin B4L3Y"
+  {:abilities [{:cost [:click 1]
+                :msg "draw 2 cards"
+                :once :per-turn
+                :async true
+                :effect (effect (draw eid 2 nil))}]
+   :on-trash {:interactive (req true)
+              :optional
+              {:req (req (= :runner side))
+               :waiting-prompt "Corp to use Calvin B4L3Y"
+               :prompt "Draw 2 cards?"
+               :player :corp
+               :yes-ability {:msg "draw 2 cards"
+                             :effect (effect (draw eid 2 nil))}}}})
 
 (defcard "Capital Investors"
   {:abilities [{:cost [:click 1]
@@ -2168,13 +2168,6 @@
                                      wait-msg (str "Corp to derez " (quantify advancements "card"))]
                                  (continue-ability state side (derez-card advancements wait-msg) card nil)))}]}))
 
-(defcard "Tiered Subscription"
-  {:events [{:event :run
-             :req (req (first-event? state side :run))
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :corp eid 1))}]})
-
 (defcard "The Board"
   {:on-trash executive-trash-effect
    :constant-effects [{:type :agenda-value
@@ -2201,6 +2194,13 @@
                 :cost [:trash]
                 :async true
                 :effect (effect (gain-credits eid (* 2 (get-counters card :advancement))))}]})
+
+(defcard "Tiered Subscription"
+  {:events [{:event :run
+             :req (req (first-event? state side :run))
+             :msg "gain 1 [Credits]"
+             :async true
+             :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "Toshiyuki Sakai"
   (advance-ambush
