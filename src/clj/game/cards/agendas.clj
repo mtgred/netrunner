@@ -684,7 +684,7 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "place 1 advancement token on " (card-str state target))
                 :once :per-turn
-                :effect (effect (add-prop target :advance-counter 1))}]})
+                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Flower Sermon"
   {:on-score {:silent (req true)
