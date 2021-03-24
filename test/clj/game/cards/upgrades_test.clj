@@ -65,7 +65,7 @@
      (let [av (get-content state :remote1 0)]
      (rez state :corp av)
      (take-credits state :corp)
-     (run-empty-server state "Server 1")
+     (run-on state "Server 1")
        (click-prompt state :corp "Yes")
        (click-card state :corp "Ice Wall")
        (click-card state :corp "Fire Wall")
