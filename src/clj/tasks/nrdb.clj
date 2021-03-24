@@ -43,8 +43,10 @@
               (fn [{:keys [status body error]}]
                 (case status
                   404 (println "No image for card" code title)
-                  200 (with-open [w (io/output-stream (.getPath (card-image-file code )))]
-                        (.write w body))
+                  200 (let [card-path (.getPath (card-image-file code))]
+                        (io/make-parents card-path)
+                        (with-open [w (io/output-stream card-path)]
+                          (.write w body)))
                   (println "Error downloading art for card" code error))))))
 
 (def download-card-image-throttled
@@ -95,14 +97,15 @@
              {:upsert true}))
 
 (defn fetch-data
-  [{:keys [card-images db local]}]
+  [{:keys [card-images db local db-connection]}]
   (let [edn (dissoc (download-edn-data local) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
       (println (str "Wrote data/" filename ".edn to disk")))
     (when db
-      (webdb/connect)
+      (when (not db-connection)
+        (webdb/connect))
       (try
         (doseq [[k data] edn
                 :let [col (name k)]]
@@ -112,7 +115,7 @@
         (when card-images
           (download-card-images (:cards edn)))
         (add-images)
-        (finally (webdb/disconnect))))
+        (finally (when (not db-connection) (webdb/disconnect)))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")

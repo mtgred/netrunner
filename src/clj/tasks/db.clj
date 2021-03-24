@@ -108,17 +108,18 @@
 
   `create-indexes` can safely be executed multiple times, as long as the
   existing indexes don't conflict with the ones created here."
-  []
-  (webdb/connect)
-  (try
-    (do
-      (doseq [index-args indexes]
-        (apply mc/create-index db index-args))
-      (println "Indexes successfully created."))
-    (catch Exception e (do
-                         (println "Create indexes failed" (.getMessage e))
-                         (.printStackTrace e)))
-    (finally (webdb/disconnect))))
+  ([] (create-indexes true))
+  ([standalone]
+   (when standalone (webdb/connect))
+   (try
+     (do
+       (doseq [index-args indexes]
+         (apply mc/create-index db index-args))
+       (println "Indexes successfully created."))
+     (catch Exception e (do
+                          (println "Create indexes failed" (.getMessage e))
+                          (.printStackTrace e)))
+     (finally (when standalone (webdb/disconnect))))))
 
 (defn drop-indexes
   "Drop all indexes except the index on the `_id` field."
