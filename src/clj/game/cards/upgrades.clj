@@ -43,7 +43,8 @@
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
 
 (defcard "Anoetic Void"
-  {:events [{:event :successful-run
+  {:events [{:event :approach-server
+             :interactive (req true)
              :optional
              {:prompt "Pay 2 [Credits] and trash 2 cards from HQ to end the run?"
               :req (req (and (can-pay? state side eid card nil [:credit 2 :trash-from-hand 2])
@@ -843,7 +844,8 @@
                               (effect-completed state side eid)))}}}]})
 
 (defcard "Manegarm Skunkworks"
-  {:events [{:event :successful-run
+  {:events [{:event :approach-server
+             :interactive (req true)
              :player :runner
              :prompt "Choose one"
              :req (req this-server)
@@ -854,19 +856,19 @@
                             "End the run"])
              :async true
              :effect (req (cond+
-                            [(and (= target "Spend [Click][Click]")
-                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
-                             (wait-for (pay state side card :click 2)
-                                       (system-msg state side (:msg async-result))
-                                       (effect-completed state :runner eid))]
-                            [(and (= target "Pay 5 [Credits]")
-                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
-                             (wait-for (pay state side card :credit 5)
-                                       (system-msg state side (:msg async-result))
-                                       (effect-completed state :runner eid))]
-                            [:else
-                             (system-msg state :corp "ends the run")
-                             (end-run state :corp eid card)]))}]})
+                           [(and (= target "Spend [Click][Click]")
+                                 (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
+                            (wait-for (pay state side card :click 2)
+                                      (system-msg state side (:msg async-result))
+                                      (effect-completed state :runner eid))]
+                           [(and (= target "Pay 5 [Credits]")
+                                 (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
+                            (wait-for (pay state side card :credit 5)
+                                      (system-msg state side (:msg async-result))
+                                      (effect-completed state :runner eid))]
+                           [:else
+                            (system-msg state :corp "ends the run")
+                            (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"
   {:events [{:event :run-ends
