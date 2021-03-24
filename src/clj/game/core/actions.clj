@@ -545,7 +545,7 @@
          permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
      (if ignore-costs
        permitted-zones
-       (filter #(can-pay? state :runner eid (total-run-cost state side card {:server (unknown->kw %)}))
+       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
                permitted-zones)))))
 
 (defn generate-runnable-zones
