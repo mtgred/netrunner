@@ -856,19 +856,19 @@
                             "End the run"])
              :async true
              :effect (req (cond+
-                           [(and (= target "Spend [Click][Click]")
-                                 (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
-                            (wait-for (pay state side card :click 2)
-                                      (system-msg state side (:msg async-result))
-                                      (effect-completed state :runner eid))]
-                           [(and (= target "Pay 5 [Credits]")
-                                 (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
-                            (wait-for (pay state side card :credit 5)
-                                      (system-msg state side (:msg async-result))
-                                      (effect-completed state :runner eid))]
-                           [:else
-                            (system-msg state :corp "ends the run")
-                            (end-run state :corp eid card)]))}]})
+                            [(and (= target "Spend [Click][Click]")
+                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
+                             (wait-for (pay state side card :click 2)
+                                       (system-msg state side (:msg async-result))
+                                       (effect-completed state :runner eid))]
+                            [(and (= target "Pay 5 [Credits]")
+                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
+                             (wait-for (pay state side card :credit 5)
+                                       (system-msg state side (:msg async-result))
+                                       (effect-completed state :runner eid))]
+                            [:else
+                             (system-msg state :corp "ends the run")
+                             (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"
   {:events [{:event :run-ends
