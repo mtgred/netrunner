@@ -2968,81 +2968,6 @@
         (rez state :corp enig)
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
-(deftest tranquility-home-grid
-  ;; Tranquility Home Grid
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
-                        :hand ["Tranquility Home Grid" "PAD Campaign"]}})
-      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
-      (let [thg (get-content state :remote1 0)]
-        (rez state :corp thg)
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
-        (changes-val-macro 2 (:credit (get-corp))
-                           "Gained 2 credits from THG"
-                           (click-prompt state :corp "Gain 2 [Credits]"))
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
-        (changes-val-macro 1 (count (:hand (get-corp)))
-                           "Drew 1 card from THG"
-                           (click-prompt state :corp "Draw 1 card")))))
-  (testing "Not installable on centrals"
-    (do-game
-      (new-game {:corp {:hand ["Tranquility Home Grid"]}})
-      (play-from-hand state :corp "Tranquility Home Grid")
-      (is (= ["New remote"] (prompt-buttons :corp)) "Only installable in a remote server")))
-  (testing "Restore interaction"
-    (do-game
-      (new-game {:corp {:hand ["Tranquility Home Grid" "Restore"]}})
-      (core/move state :corp (find-card "Tranquility Home Grid" (:hand (get-corp))) :discard)
-      (play-from-hand state :corp "Restore")
-      (click-card state :corp (find-card "Tranquility Home Grid" (:discard (get-corp))))
-      (click-prompt state :corp "New remote")
-      (is (empty? (:prompt (get-corp))) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
-  (testing "THG interaction with ICE install"
-    (do-game
-      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
-                        :hand ["Tranquility Home Grid" "PAD Campaign" "Ice Wall"]}})
-      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
-      (let [thg (get-content state :remote1 0)]
-        (rez state :corp thg)
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (play-from-hand state :corp "Ice Wall" "Server 1")
-        (is (empty? (:prompt (get-corp))) "No prompt from Ice Wall install")
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
-        (changes-val-macro 2 (:credit (get-corp))
-                           "Gained 2 credits from THG"
-                           (click-prompt state :corp "Gain 2 [Credits]")))))
-  (testing "Interaction with PAD Tap. Issue #4835"
-    (do-game
-      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
-                        :hand ["Tranquility Home Grid" "PAD Campaign"]}
-                 :runner {:hand ["PAD Tap"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "PAD Tap")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
-      (let [thg (get-content state :remote1 0)]
-        (rez state :corp thg)
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (changes-val-macro
-          1 (:credit (get-runner))
-          "Runner gained 1 credit from PAD Tap"
-          (click-prompt state :corp "Gain 2 [Credits]"))))))
-
 (deftest tempus
   ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
   (do-game
@@ -3199,6 +3124,81 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Neural EMP")
         (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly")))))
+
+(deftest tranquility-home-grid
+  ;; Tranquility Home Grid
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
+                        :hand ["Tranquility Home Grid" "PAD Campaign"]}})
+      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+      (let [thg (get-content state :remote1 0)]
+        (rez state :corp thg)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
+        (changes-val-macro 2 (:credit (get-corp))
+                           "Gained 2 credits from THG"
+                           (click-prompt state :corp "Gain 2 [Credits]"))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
+        (changes-val-macro 1 (count (:hand (get-corp)))
+                           "Drew 1 card from THG"
+                           (click-prompt state :corp "Draw 1 card")))))
+  (testing "Not installable on centrals"
+    (do-game
+      (new-game {:corp {:hand ["Tranquility Home Grid"]}})
+      (play-from-hand state :corp "Tranquility Home Grid")
+      (is (= ["New remote"] (prompt-buttons :corp)) "Only installable in a remote server")))
+  (testing "Restore interaction"
+    (do-game
+      (new-game {:corp {:hand ["Tranquility Home Grid" "Restore"]}})
+      (core/move state :corp (find-card "Tranquility Home Grid" (:hand (get-corp))) :discard)
+      (play-from-hand state :corp "Restore")
+      (click-card state :corp (find-card "Tranquility Home Grid" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (empty? (:prompt (get-corp))) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
+  (testing "THG interaction with ICE install"
+    (do-game
+      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
+                        :hand ["Tranquility Home Grid" "PAD Campaign" "Ice Wall"]}})
+      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+      (let [thg (get-content state :remote1 0)]
+        (rez state :corp thg)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Ice Wall" "Server 1")
+        (is (empty? (:prompt (get-corp))) "No prompt from Ice Wall install")
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (click-prompt state :corp "OK") ; Trash existing PAD Campaign
+        (changes-val-macro 2 (:credit (get-corp))
+                           "Gained 2 credits from THG"
+                           (click-prompt state :corp "Gain 2 [Credits]")))))
+  (testing "Interaction with PAD Tap. Issue #4835"
+    (do-game
+      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
+                        :hand ["Tranquility Home Grid" "PAD Campaign"]}
+                 :runner {:hand ["PAD Tap"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "PAD Tap")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+      (let [thg (get-content state :remote1 0)]
+        (rez state :corp thg)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (changes-val-macro
+          1 (:credit (get-runner))
+          "Runner gained 1 credit from PAD Tap"
+          (click-prompt state :corp "Gain 2 [Credits]"))))))
 
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server

@@ -104,6 +104,72 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck")
       (is (nil? (refresh aim)) "Aimor is trashed"))))
 
+(deftest akhet
+  ;; Akhet
+  (testing "Akhet gains strength at 3 advancements"
+    (do-game
+      (new-game {:corp {:deck ["Akhet"]}})
+      (play-from-hand state :corp "Akhet" "HQ")
+      (core/gain state :corp :click 1 :credit 1)
+      (let [akhet (get-ice state :hq 0)]
+        (rez state :corp akhet)
+        (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
+        (is (= 2 (get-strength (refresh akhet))) "Akhet starts at 2 strength")
+        (dotimes [n 2]
+          (advance state akhet)
+          (is (= (inc n) (get-counters (refresh akhet) :advancement)) (str "Akhet has " (inc n) " adv tokens"))
+          (is (= 2 (get-strength (refresh akhet))) "Akhet stays at 2 strength"))
+        (advance state akhet)
+        (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet has 3 adv tokens")
+        (is (= 5 (get-strength (refresh akhet))) "Akhet is now at 5 strength"))))
+  (testing "Akhet subroutines"
+    (do-game
+      (new-game {:corp {:deck ["Akhet"]}})
+      (play-from-hand state :corp "Akhet" "HQ")
+      (take-credits state :corp)
+      (let [akhet (get-ice state :hq 0)]
+        (run-on state :hq)
+        (rez state :corp akhet)
+        (run-continue state)
+        (fire-subs state akhet)
+        (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
+        (click-card state :corp (refresh akhet))
+        (is (= 1 (get-counters (refresh akhet) :advancement)) "Akhet gained 1 adv tokens")
+        (is (not (:run @state)) "Run has ended"))))
+  (testing "Breaking restriction"
+    (do-game
+      (new-game {:corp {:hand ["Akhet"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Akhet" "HQ")
+      (let [akhet (get-ice state :hq 0)]
+        (advance state akhet 2)
+        (is (= 2 (get-counters (refresh akhet) :advancement)) "Akhet has 2 adv tokens")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state :hq)
+        (let [cor (get-program state 0)]
+          (rez state :corp (refresh akhet))
+          (run-continue state)
+          (card-ability state :runner cor 0)
+          (click-prompt state :runner "End the run")
+          (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
+          (click-prompt state :runner "Gain 1[Credit]. Place 1 advancement token.")
+          (is (empty? (:prompt (get-runner))) "Prompt now closed")
+          (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
+          (run-jack-out state)
+          (take-credits state :runner)
+          (core/gain state :corp :credit 1)
+          (advance state akhet)
+          (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet now has 3 adv tokens")
+          (take-credits state :corp)
+          (core/gain state :runner :credit 5)
+          (run-on state :hq)
+          (run-continue state)
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+          (card-ability state :runner (refresh cor) 0)
+          (click-prompt state :runner "End the run")
+          (is (empty? (:prompt (get-runner))) "No option to break second sub"))))))
+
 (deftest anansi
   ;; Anansi
   (testing "3 net damage when bypassing"
@@ -220,72 +286,6 @@
                           "No new card from Anansi"
                           (click-prompt state :runner "No"))
        (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi")))))
-
-(deftest akhet
-  ;; Akhet
-  (testing "Akhet gains strength at 3 advancements"
-    (do-game
-      (new-game {:corp {:deck ["Akhet"]}})
-      (play-from-hand state :corp "Akhet" "HQ")
-      (core/gain state :corp :click 1 :credit 1)
-      (let [akhet (get-ice state :hq 0)]
-        (rez state :corp akhet)
-        (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
-        (is (= 2 (get-strength (refresh akhet))) "Akhet starts at 2 strength")
-        (dotimes [n 2]
-          (advance state akhet)
-          (is (= (inc n) (get-counters (refresh akhet) :advancement)) (str "Akhet has " (inc n) " adv tokens"))
-          (is (= 2 (get-strength (refresh akhet))) "Akhet stays at 2 strength"))
-        (advance state akhet)
-        (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet has 3 adv tokens")
-        (is (= 5 (get-strength (refresh akhet))) "Akhet is now at 5 strength"))))
-  (testing "Akhet subroutines"
-    (do-game
-      (new-game {:corp {:deck ["Akhet"]}})
-      (play-from-hand state :corp "Akhet" "HQ")
-      (take-credits state :corp)
-      (let [akhet (get-ice state :hq 0)]
-        (run-on state :hq)
-        (rez state :corp akhet)
-        (run-continue state)
-        (fire-subs state akhet)
-        (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
-        (click-card state :corp (refresh akhet))
-        (is (= 1 (get-counters (refresh akhet) :advancement)) "Akhet gained 1 adv tokens")
-        (is (not (:run @state)) "Run has ended"))))
-  (testing "Breaking restriction"
-    (do-game
-      (new-game {:corp {:hand ["Akhet"]}
-                 :runner {:hand ["Corroder"]}})
-      (play-from-hand state :corp "Akhet" "HQ")
-      (let [akhet (get-ice state :hq 0)]
-        (advance state akhet 2)
-        (is (= 2 (get-counters (refresh akhet) :advancement)) "Akhet has 2 adv tokens")
-        (take-credits state :corp)
-        (play-from-hand state :runner "Corroder")
-        (run-on state :hq)
-        (let [cor (get-program state 0)]
-          (rez state :corp (refresh akhet))
-          (run-continue state)
-          (card-ability state :runner cor 0)
-          (click-prompt state :runner "End the run")
-          (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
-          (click-prompt state :runner "Gain 1[Credit]. Place 1 advancement token.")
-          (is (empty? (:prompt (get-runner))) "Prompt now closed")
-          (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
-          (run-jack-out state)
-          (take-credits state :runner)
-          (core/gain state :corp :credit 1)
-          (advance state akhet)
-          (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet now has 3 adv tokens")
-          (take-credits state :corp)
-          (core/gain state :runner :credit 5)
-          (run-on state :hq)
-          (run-continue state)
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
-          (card-ability state :runner (refresh cor) 0)
-          (click-prompt state :runner "End the run")
-          (is (empty? (:prompt (get-runner))) "No option to break second sub"))))))
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
@@ -840,23 +840,6 @@
         (rez state :corp paper)
         (is (= 6 (get-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
-(deftest datapike
-  ;; Datapike - Runner pays 2 credits or end the run
-  (do-game
-    (new-game {:corp {:deck ["Datapike"]}})
-    (play-from-hand state :corp "Datapike" "HQ")
-    (let [dp (get-ice state :hq 0)]
-      (rez state :corp dp)
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (run-continue state)
-      (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
-      (card-subroutine state :corp dp 0)
-      (is (= 3 (:credit (get-runner))) "Runner spent 2 credits")
-      (is (some? (:run @state)) "Run is continuing")
-      (card-subroutine state :corp dp 1)
-      (is (nil? (:run @state)) "Run has ended"))))
-
 (deftest data-hound
   ;; Data Hound - Full test
   (do-game
@@ -1020,6 +1003,42 @@
         (fire-subs state (refresh dw))
         (is (:run @state) "Run still ongoing")))))
 
+(deftest datapike
+  ;; Datapike - Runner pays 2 credits or end the run
+  (do-game
+    (new-game {:corp {:deck ["Datapike"]}})
+    (play-from-hand state :corp "Datapike" "HQ")
+    (let [dp (get-ice state :hq 0)]
+      (rez state :corp dp)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+      (card-subroutine state :corp dp 0)
+      (is (= 3 (:credit (get-runner))) "Runner spent 2 credits")
+      (is (some? (:run @state)) "Run is continuing")
+      (card-subroutine state :corp dp 1)
+      (is (nil? (:run @state)) "Run has ended"))))
+
+(deftest draco
+  ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
+  (do-game
+    (new-game {:corp {:deck ["Dracō"]}})
+    (play-from-hand state :corp "Dracō" "HQ")
+    (take-credits state :corp)
+    (let [drac (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp drac)
+      (click-prompt state :corp "4")
+      (run-continue state)
+      (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
+      (is (= 4 (get-strength (refresh drac))) "Dracō is 4 strength")
+      (card-subroutine state :corp drac 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count-tags state)) "Runner took 1 tag")
+      (is (nil? (get-in @state [:run])) "Run was ended"))))
+
 (deftest drafter
   ;; Drafter
   (testing "Subroutine 1: Add 1 card from Archives to HQ"
@@ -1078,25 +1097,6 @@
             (click-prompt state :corp "HQ"))
           (is (= "Fairchild" (:title (get-ice state :hq 1)))
               "Fairchild is now installed in the outermost position protecting HQ"))))))
-
-(deftest draco
-  ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
-  (do-game
-    (new-game {:corp {:deck ["Dracō"]}})
-    (play-from-hand state :corp "Dracō" "HQ")
-    (take-credits state :corp)
-    (let [drac (get-ice state :hq 0)]
-      (run-on state "HQ")
-      (rez state :corp drac)
-      (click-prompt state :corp "4")
-      (run-continue state)
-      (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
-      (is (= 4 (get-strength (refresh drac))) "Dracō is 4 strength")
-      (card-subroutine state :corp drac 0)
-      (click-prompt state :corp "0")
-      (click-prompt state :runner "0")
-      (is (= 1 (count-tags state)) "Runner took 1 tag")
-      (is (nil? (get-in @state [:run])) "Run was ended"))))
 
 (deftest endless-eula
   ;; Endless EULA
@@ -2011,28 +2011,6 @@
       (card-subroutine state :corp iw 0)
       (is (nil? (:run @state))))))
 
-(deftest information-overload
-  ;; Information Overload
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Information Overload"]
-                      :credits 6}})
-    (play-from-hand state :corp "Information Overload" "HQ")
-    (take-credits state :corp)
-    (let [io (get-ice state :hq 0)]
-      (run-on state "HQ")
-      (rez state :corp io)
-      (is (zero? (count (:subroutines (refresh io)))))
-      (run-continue state)
-      (click-prompt state :corp "0")
-      (click-prompt state :runner "0")
-      (is (= 1 (count (:subroutines (refresh io)))))
-      (gain-tags state :runner 1)
-      (is (= 2 (count (:subroutines (refresh io)))))
-      (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
-      (core/fake-checkpoint state)
-      (is (zero? (count (:subroutines (refresh io))))))))
-
 (deftest inazuma
   ;; Inazuma
   (testing "Cannot jack out after encounter of next ICE"
@@ -2097,6 +2075,28 @@
        (card-ability state :runner corroder 0)
        (click-prompt state :runner "End the run")
        (is (empty? (remove :broken (:subroutines (refresh ice-wall)))) "All subroutines broken")))))
+
+(deftest information-overload
+  ;; Information Overload
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Information Overload"]
+                      :credits 6}})
+    (play-from-hand state :corp "Information Overload" "HQ")
+    (take-credits state :corp)
+    (let [io (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp io)
+      (is (zero? (count (:subroutines (refresh io)))))
+      (run-continue state)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count (:subroutines (refresh io)))))
+      (gain-tags state :runner 1)
+      (is (= 2 (count (:subroutines (refresh io)))))
+      (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
+      (core/fake-checkpoint state)
+      (is (zero? (count (:subroutines (refresh io))))))))
 
 (deftest interrupt-0
   ;; Interrupt 0
@@ -4969,19 +4969,6 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state))))
 
-(deftest tyrant
-  ;; Tyrant
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Tyrant"]
-                      :credits 10}})
-    (play-from-hand state :corp "Tyrant" "HQ")
-    (let [tyrant (get-ice state :hq 0)]
-      (rez state :corp tyrant)
-      (is (zero? (count (:subroutines (refresh tyrant)))) "Tyrant starts with 0 subs")
-      (advance state tyrant 2)
-      (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
-
 (deftest tyr
   ;; Týr
   (testing "Click gain by bioroid breaking"
@@ -5003,6 +4990,19 @@
         (run-jack-out state)
         (take-credits state :runner)
         (is (= 6 (:click (get-corp))) "Corp has 6 clicks")))))
+
+(deftest tyrant
+  ;; Tyrant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tyrant"]
+                      :credits 10}})
+    (play-from-hand state :corp "Tyrant" "HQ")
+    (let [tyrant (get-ice state :hq 0)]
+      (rez state :corp tyrant)
+      (is (zero? (count (:subroutines (refresh tyrant)))) "Tyrant starts with 0 subs")
+      (advance state tyrant 2)
+      (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
