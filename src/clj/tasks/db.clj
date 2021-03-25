@@ -103,40 +103,6 @@
      ["users" (array-map :special 1)]
      ["users" (array-map :resetPasswordToken 1)]]))
 
-(defn create-indexes
-  "Create indexes for queries in our codebase.
-
-  `create-indexes` can safely be executed multiple times, as long as the
-  existing indexes don't conflict with the ones created here."
-  ([] (create-indexes true))
-  ([standalone]
-   (when standalone (webdb/connect))
-   (try
-     (do
-       (doseq [index-args indexes]
-         (apply mc/create-index db index-args))
-       (println "Indexes successfully created."))
-     (catch Exception e (do
-                          (println "Create indexes failed" (.getMessage e))
-                          (.printStackTrace e)))
-     (finally (when standalone (webdb/disconnect))))))
-
-(defn drop-indexes
-  "Drop all indexes except the index on the `_id` field."
-  []
-  (webdb/connect)
-  (try
-    (do
-      (doseq [coll (monger.db/get-collection-names db)]
-        (do
-          (mc/drop-indexes db coll)
-          (println "Dropped indexes on" coll)))
-      (println "\nIndexes successfully dropped."))
-    (catch Exception e (do
-                         (println "Drop indexes failed" (.getMessage e))
-                         (.printStackTrace e)))
-    (finally (webdb/disconnect))))
-
 (defn- prepare-sample-decks
   [nrdb-urls]
   (vec

@@ -45,7 +45,6 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
-            ;; [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
             [lein-eftest "0.5.8"]
             [lein-exec "0.3.7"]]
