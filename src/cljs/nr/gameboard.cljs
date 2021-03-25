@@ -1477,25 +1477,27 @@
   (-> ((keyword (str ref "-menu")) @board-dom) js/$ .fadeOut)
   (send-command "view-deck"))
 
-(defn identity-view [render-side identity hand]
+(defn identity-view [render-side identity hand-count]
   (let [is-runner (= :runner render-side)
-        name (if is-runner (tr [:game.grip "Grip"]) (tr [:game.hq "HQ"]))]
+        title (if is-runner (tr [:game.grip "Grip"]) (tr [:game.hq "HQ"]))]
     [:div.blue-shade.identity
      [card-view @identity]
-     [label @hand {:opts {:name name :classes "server-label"}}]]))
+     [:div.header {:class "darkbg server-label"}
+      (str title " (" @hand-count ")")]]))
 
-(defn deck-view [render-side player-side identity deck]
+(defn deck-view [render-side player-side identity deck deck-count]
    (let [is-runner (= :runner render-side)
-         name (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
+         title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
          ref (if is-runner "stack" "rd")
          menu-ref (keyword (str ref "-menu"))
          content-ref (keyword (str ref "-content"))]
      (fn [render-side player-side identity deck]
        [:div.blue-shade.deck
-        (drop-area name {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
-        (when (pos? (count @deck))
+        (drop-area title {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
+        (when (pos? @deck-count)
           [facedown-card (:side @identity) ["bg"] nil])
-        [label @deck {:opts {:name name :classes "server-label"}}]
+        [:div.header {:class "darkbg server-label"}
+         (str title " (" @deck-count ")")]
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
@@ -1519,8 +1521,9 @@
       [:div.blue-shade.discard
        (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
        (when-not (empty? @discard)
-         [:<> [card-view (last @discard)]])
-       [label @discard {:opts {:name (tr [:game.heap "Heap"]) :classes "server-label"}}]
+         [card-view (last @discard)])
+       [:div.header {:class "darkbg server-label"}
+        (str (tr [:game.heap "Heap"]) " (" (count @discard) ")")]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
@@ -1542,15 +1545,14 @@
                            [facedown-card "corp"]))]
         [:div.blue-shade.discard
          (drop-area "Archives" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
-         (when-not (empty? @discard) [:<> {:key "discard"} (draw-card (last @discard))])
-
-         [label @discard {:opts {:name (tr [:game.archives "Archives"])
-                                 :classes "server-label"
-                                 :fn (fn [cursor] (let [total (count cursor)
-                                                        face-up (count (filter faceup? cursor))]
-                                                    ;; use non-breaking space to keep counts on same line.
-                                                    (tr [:game.up-down-count] total face-up)))}}]
-
+         (when-not (empty? @discard)
+           [:<> {:key "discard"} (draw-card (last @discard))])
+         [:div.header {:class "darkbg server-label"}
+          (let [total (count @discard)
+                face-up (count (filter faceup? @discard))]
+            (str (tr [:game.archives "Archives"])
+                 ;; use non-breaking space to keep counts on same line
+                 " (" (tr [:game.up-down-count] total face-up) ")"))]
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                        :class (if (= (:side @game-state) :runner) "opponent" "me")}
           [:div
@@ -1558,9 +1560,10 @@
            [:label (let [total (count @discard)
                          face-up (count (filter faceup? @discard))]
                      (tr [:game.face-down-count] total face-up))]]
-          (doall (for [c @discard]
-                   ^{:key (:cid c)}
-                   [:div (draw-card c)]))]]))))
+          (doall
+            (for [[idx c] (map-indexed vector @discard)]
+              ^{:key idx}
+              [:div (draw-card c)]))]]))))
 
 (defn rfg-view [cards name popup]
   (let [dom (atom {})]
@@ -1760,10 +1763,10 @@
                                   (map remote->name))
         full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
         numbers (map #(second (split % " ")) full-server-names)]
-    (label full-server-names (update-in opts [:opts] assoc
+    [label full-server-names (update-in opts [:opts] assoc
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
-                                        :hide-cursor true))))
+                                        :hide-cursor true)]))
 
 (defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
   (let [content (apply conj
@@ -1809,7 +1812,7 @@
            (-> ss1 :content first :hosted empty?)
            (-> ss2 :content first :hosted empty?)))))
 
-(defn board-view-corp [player-side identity deck hand discard servers run]
+(defn board-view-corp [player-side identity deck deck-count hand hand-count discard servers run]
   (let [rs (:server @run)
         server-type (first rs)]
     [:div.corp-board {:class (if (= player-side :runner) "opponent" "me")}
@@ -1837,23 +1840,23 @@
             {:opts {:name (remote->name (first server))}}])))
      [server-view {:key "hq"
                    :server (:hq @servers)
-                   :central-view [identity-view :corp identity hand]
+                   :central-view [identity-view :corp identity hand-count]
                    :run (when (= server-type "hq") @run)}]
      [server-view {:key "rd"
                    :server (:rd @servers)
-                   :central-view [deck-view :corp player-side identity deck]
+                   :central-view [deck-view :corp player-side identity deck deck-count]
                    :run (when (= server-type "rd") @run)}]
      [server-view {:key "archives"
                    :server (:archives @servers)
                    :central-view [discard-view-corp player-side discard]
                    :run (when (= server-type "archives") @run)}]]))
 
-(defn board-view-runner [player-side identity deck hand discard rig run]
+(defn board-view-runner [player-side identity deck deck-count hand hand-count discard rig run]
   (let [is-me (= player-side :runner)
         centrals [:div.runner-centrals
                   [discard-view-runner player-side discard]
-                  [deck-view :runner player-side identity deck]
-                  [identity-view :runner identity hand]]
+                  [deck-view :runner player-side identity deck deck-count]
+                  [identity-view :runner identity hand-count]]
         runner-f (if (and (not is-me)
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
@@ -2427,20 +2430,32 @@
                    op-side (utils/other-side me-side)
                    me (r/cursor game-state [me-side])
                    opponent (r/cursor game-state [op-side])
+                   ;; hands
                    me-hand (r/cursor game-state [me-side :hand])
+                   me-hand-count (r/cursor game-state [me-side :hand-count])
                    op-hand (r/cursor game-state [op-side :hand])
+                   op-hand-count (r/cursor game-state [op-side :hand-count])
+                   ;; decks
                    me-deck (r/cursor game-state [me-side :deck])
+                   me-deck-count (r/cursor game-state [me-side :deck-count])
                    op-deck (r/cursor game-state [op-side :deck])
+                   op-deck-count (r/cursor game-state [op-side :deck-count])
+                   ;; discards
                    me-discard (r/cursor game-state [me-side :discard])
                    op-discard (r/cursor game-state [op-side :discard])
+                   ;; user settings
                    me-user (r/cursor game-state [me-side :user])
                    op-user (r/cursor game-state [op-side :user])
+                   ;; prompts
                    me-prompt (r/cursor game-state [me-side :prompt])
                    op-prompt (r/cursor game-state [op-side :prompt])
+                   ;; identity cards
                    me-ident (r/cursor game-state [me-side :identity])
                    op-ident (r/cursor game-state [op-side :identity])
+                   ;; score areas
                    me-scored (r/cursor game-state [me-side :scored])
                    op-scored (r/cursor game-state [op-side :scored])
+                   ;; servers
                    corp-servers (r/cursor game-state [:corp :servers])
                    corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
                    runner-rig (r/cursor game-state [:runner :rig])
@@ -2475,11 +2490,11 @@
 
                  [:div.centralpane
                   (if (= op-side :corp)
-                    [board-view-corp me-side op-ident op-deck op-hand op-discard corp-servers run]
-                    [board-view-runner me-side op-ident op-deck op-hand op-discard runner-rig run])
+                    [board-view-corp   me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
+                    [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run])
                   (if (= me-side :corp)
-                    [board-view-corp me-side me-ident me-deck me-hand me-discard corp-servers run]
-                    [board-view-runner me-side me-ident me-deck me-hand me-discard runner-rig run])]
+                    [board-view-corp   me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
+                    [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run])]
 
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
