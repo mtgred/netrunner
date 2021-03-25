@@ -3047,10 +3047,8 @@
       (let [le (get-program state 0)
             fw (get-ice state :remote1 0)]
         (run-empty-server state "Archives")
-        (click-prompt state :runner "Yes")
         (is (= 1 (get-counters (refresh le) :virus)))
         (run-empty-server state "Archives")
-        (click-prompt state :runner "Yes")
         (is (= 2 (get-counters (refresh le) :virus)))
         (run-on state "Server 1")
         (run-continue state)
