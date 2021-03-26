@@ -45,7 +45,6 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
-            [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
             [lein-eftest "0.5.8"]
             [lein-exec "0.3.7"]]
@@ -63,8 +62,8 @@
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "rename-card" ["run" "-m" "tasks.card-rename/command"]
             "card-coverage" ["run" "-m" "tasks.card-coverage/test-coverage"]
-            "create-indexes" ["run" "-m" "tasks.db/create-indexes"]
-            "drop-indexes" ["run" "-m" "tasks.db/drop-indexes"]
+            "create-indexes" ["run" "-m" "tasks.index/create-indexes"]
+            "drop-indexes" ["run" "-m" "tasks.index/drop-indexes"]
             "create-sample-data" ["run" "-m" "tasks.db/create-sample-data"]
             "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
@@ -76,7 +75,6 @@
   :aot [#"game\.*"
         #"web\.*"
         #"tasks.fetch"
-        #"tasks.altart"
         #"jinteki\.*"]
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"

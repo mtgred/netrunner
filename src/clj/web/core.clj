@@ -8,6 +8,8 @@
             [game.core :as core]
             [game.quotes :as quotes]
             [jinteki.cards :as cards]
+            [tasks.index :as index]
+            [tasks.nrdb :as nrdb]
             [web.api :refer [app]]
             [web.chat :as chat]
             [web.config :refer [frontend-version server-config server-mode]]
@@ -38,7 +40,6 @@
     (reset! server nil)))
 
 (defn load-data []
-  (web.db/connect)
   (let [cards (mc/find-maps db "cards" nil)
         stripped-cards (map (fn [c] (update c :_id #(str %))) cards)
         all-cards (into {} (map (juxt :title identity) stripped-cards))
@@ -65,14 +66,18 @@
 
 (defn -main [& args]
   (let [port (or (-> server-config :web :port) 4141)]
-    (load-data)
+    (web.db/connect)
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))
 
     (if-let [config (mc/find-one-as-map db "config" nil)]
       (reset! frontend-version (:version config))
       (do (mc/create db "config" nil)
-          (mc/insert db "config" {:version "0.1.0" :cards-version 0})))
+          (mc/insert db "config" {:version "0.1.0" :cards-version 0})
+          (nrdb/fetch-data {:db true :card-images true :db-connection true})
+          (index/create-indexes false)))
+
+    (load-data)
 
     ;; Clear inactive lobbies after 30 minutes
     (web.utils/tick #(lobby/clear-inactive-lobbies 1800) 1000)
