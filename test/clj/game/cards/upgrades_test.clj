@@ -65,7 +65,7 @@
      (let [av (get-content state :remote1 0)]
      (rez state :corp av)
      (take-credits state :corp)
-     (run-empty-server state "Server 1")
+     (run-on state "Server 1")
        (click-prompt state :corp "Yes")
        (click-card state :corp "Ice Wall")
        (click-card state :corp "Fire Wall")
@@ -1732,7 +1732,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-empty-server state "Server 1")
+        (run-on state "Server 1")
         (changes-val-macro
           -2 (:click (get-runner))
           "Spend 2 clicks"
@@ -1745,7 +1745,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-empty-server state "Server 1")
+        (run-on state "Server 1")
         (changes-val-macro
           -5 (:credit (get-runner))
           "Pay 5 credits"
@@ -1758,7 +1758,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-empty-server state "Server 1")
+        (run-on state "Server 1")
         (click-prompt state :runner "End the run")
         (is (not (:run @state)) "Run ended by Manegarm Skunkworks"))))
   (testing "No prompt for runs on other servers"
