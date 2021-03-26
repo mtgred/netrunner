@@ -558,13 +558,11 @@
 (defcard "Haas-Bioroid: Precision Design"
   {:constant-effects [(corp-hand-size+ 1)]
    :events [{:event :agenda-scored
-             :label "add card from Archives to HQ"
-             :prompt "Select a card to add to HQ"
-             :show-discard true
-             :choices {:card #(and (corp? %)
-                                   (in-discard? %))}
-             :msg (msg "add " (card-str state target) " to HQ")
-             :effect (effect (move :corp target :hand))}]})
+             :interactive (req true)
+             :optional {:prompt "Add card from Archives to HQ?"
+                        :autoresolve (get-autoresolve :auto-precision-design)
+                        :yes-ability (corp-recur)}}]
+   :abilities [(set-autoresolve :auto-precision-design "add card from Archives to HQ")]})
 
 (defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength

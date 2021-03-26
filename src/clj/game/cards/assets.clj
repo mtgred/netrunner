@@ -402,20 +402,13 @@
 (defcard "Clone Suffrage Movement"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (and (some operation? (:discard corp))
-                                    unprotected))}
-   :abilities [{:label "Add 1 operation from Archives to HQ"
-                :waiting-prompt "Corp to use Clone Suffrage Movement"
-                :prompt "Select an operation in Archives to add to HQ"
-                :once :per-turn
-                :show-discard true
-                :choices {:card #(and (operation? %)
-                                      (in-discard? %))}
-                :msg (msg "add "
-                          (if (:seen target)
-                            (:title target)
-                            "a facedown card")
-                          " to HQ")
-                :effect (effect (move target :hand))}]})
+                                 unprotected))}
+   :abilities [(into
+                 (corp-recur operation?)
+                 {:label "Add 1 operation from Archives to HQ"
+                  :waiting-prompt "Corp to use Clone Suffrage Movement"
+                  :prompt "Select an operation in Archives to add to HQ"
+                  :once :per-turn})]})
 
 (defcard "Clyde Van Rite"
   (let [ability {:async true

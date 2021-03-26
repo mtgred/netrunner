@@ -1280,18 +1280,10 @@
 (defcard "Project Vitruvius"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 3)))}
-   :abilities [{:cost [:agenda 1]
-                :label "Add 1 card from Archives to HQ"
-                :prompt "Choose a card in Archives to add to HQ"
-                :show-discard true
-                :choices {:card #(and (in-discard? %)
-                                      (corp? %))}
-                :req (req (pos? (get-counters card :agenda)))
-                :msg (msg "add "
-                          (if (:seen target)
-                            (:title target) "an unseen card ")
-                          " to HQ from Archives")
-                :effect (effect (move target :hand))}]})
+   :abilities [(into
+                 (corp-recur)
+                 {:cost [:agenda 1]
+                  :req (req (pos? (get-counters card :agenda)))})]})
 
 (defcard "Project Wotan"
   {:on-score {:silent (req true)
