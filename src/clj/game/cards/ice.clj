@@ -2078,15 +2078,16 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Masvingo"
-  (let [ability {:req (req (same-card? card target))
-                 :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]
+  (let [subs-effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))
+        ability {:req (req (same-card? card target))
+                 :effect subs-effect}]
     {:advanceable :always
-     :on-rez {:effect (effect (add-prop card :advance-counter 1))}
+     :on-rez {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
               {:event :rez
                :req (req (same-card? card (:card context)))
-               :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]}))
+               :effect subs-effect}]}))
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [:credit 1]

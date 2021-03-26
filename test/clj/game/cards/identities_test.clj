@@ -3755,24 +3755,27 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:id "Weyland Consortium: Built to Last"
-                        :hand [(qty "NGO Front" 2)]}})
+                        :hand [(qty "NGO Front" 2) "Oaktown Renovation"]}})
       (core/gain state :corp :click 5)
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
       (let [ngo1 (get-content state :remote1 0)
-            ngo2 (get-content state :remote2 0)]
-        (advance state (refresh ngo1) 1)
+            ngo2 (get-content state :remote2 0)
+            oaktown (get-content state :remote3 0)]
         (changes-val-macro
-          2 (:credit (get-corp))
-          "Gain 2 credits from Weyland Built to Last ability"
-          (click-prompt state :corp "Yes"))
-        (advance state (refresh ngo1) 1)
-        (is (empty? (:prompt (get-corp))) "No prompt for second advance counter")
-        (advance state (refresh ngo2) 1)
+          3 (:credit (get-corp))
+          "Gain 2 + 2 - 1 = 3 credits from Weyland Built to Last + Oaktown ability"
+          (advance state (refresh oaktown) 1))
         (changes-val-macro
-          2 (:credit (get-corp))
-          "Gain 2 credits from Weyland Built to Last ability"
-          (click-prompt state :corp "Yes"))))))
+          0 (:credit (get-corp))
+          "Gain 2 - 1 - 1 = 0 credits net from double advancing Weyland Built to Last ability"
+          (advance state (refresh ngo1) 1)
+          (advance state (refresh ngo1) 1))
+        (changes-val-macro
+          1 (:credit (get-corp))
+          "Gain 2 - 1 = 1 credits from Weyland Built to Last ability"
+          (advance state (refresh ngo2) 1))))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard
