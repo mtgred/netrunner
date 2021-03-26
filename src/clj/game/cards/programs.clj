@@ -1538,17 +1538,9 @@
 
 (defcard "Leech"
   {:events [{:event :successful-run
-             :interactive (get-autoresolve :autofire (complement never?))
-             :silent (get-autoresolve :autofire never?)
-             :optional
-             {:player :runner
-              :req (req (is-central? (target-server context)))
-              :waiting-prompt "Runner to decide if they will use Leech"
-              :autoresolve (get-autoresolve :auto-fire)
-              :prompt "Use Leech?"
-              :yes-ability {:msg "add 1 virus counter to Leech"
-                            :effect (req (add-counter state side card :virus 1))}
-              :no-ability {:effect (req (system-msg state side "does not add counter to Leech"))}}}]
+             :req (req (is-central? (target-server context)))
+             :msg "add 1 virus counter to Leech"
+             :effect (req (add-counter state side card :virus 1))}]
    :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current ICE"
