@@ -126,7 +126,7 @@
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
   {:event :counter-added
-   :req (req (and (same-card? card target)
+   :req (req (and (same-card? card (or (:card context) target))
                   (not (pos? (get-counters card counter-type)))))
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))

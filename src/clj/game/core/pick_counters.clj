@@ -3,7 +3,7 @@
     [game.core.card :refer [get-card get-counters installed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid complete-with-result]]
-    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.engine :refer [queue-event resolve-ability trigger-event-sync]]
     [game.core.gaining :refer [lose]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
@@ -11,16 +11,15 @@
     [game.utils :refer [in-coll? quantify same-card?]]
     [clojure.string :as string]))
 
-(defn- pick-counter-triggers
-  [state side eid current-cards selected-cards counter-count message]
-  (if-let [[_ selected] (first current-cards)]
-    (if-let [{:keys [card number]} selected]
-      (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
-                (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
-      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
-    (complete-with-result state side eid {:number counter-count
-                                          :msg message
-                                          :targets (keep #(:card (second %)) selected-cards)})))
+(defn pick-counter-triggers
+  [state side eid current-cards counter-count message]
+  (doseq [{:keys [card number]} current-cards
+          :when (or card number)]
+    (queue-event state :counter-added {:card (get-card state card)
+                                       :number number}))
+  (complete-with-result state side eid {:number counter-count
+                                        :msg message
+                                        :targets (keep :card current-cards)}))
 
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
@@ -56,7 +55,7 @@
                                                           title (:title card)]
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
-                       (pick-counter-triggers state side eid selected-cards selected-cards counter-count message)))))
+                       (pick-counter-triggers state side eid (vals selected-cards) counter-count message)))))
     :cancel-effect (if target-count
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
                             (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
@@ -66,13 +65,6 @@
                                                            (str (quantify number "virus counter") " from " title))
                                                         (vals selected-cards)))]
                            (complete-with-result state side eid {:number counter-count :msg message}))))}))
-
-(defn- trigger-spend-credits-from-cards
-  [state side eid cards]
-  (if (seq cards)
-    (wait-for (trigger-event-sync state side :spent-credits-from-card (first cards))
-              (trigger-spend-credits-from-cards state side eid (rest cards)))
-    (effect-completed state side eid)))
 
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
@@ -97,9 +89,10 @@
                                      " from their credit pool"))]
                   (lose state side :credit remainder)
                   (let [cards (map :card (vals selected-cards))]
-                    (wait-for (trigger-spend-credits-from-cards state side cards)
-                              ; Now we trigger all of the :counter-added events we'd neglected previously
-                              (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
+                    (doseq [card cards]
+                      (queue-event state :spent-credits-from-card {:card card}))
+                    ; Now we trigger all of the :counter-added events we'd neglected previously
+                    (pick-counter-triggers state side eid (vals selected-cards) target-count message)))
                 (continue-ability
                   state side
                   (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
