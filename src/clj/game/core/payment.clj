@@ -96,9 +96,8 @@
                        (payable? % state side eid card))
                  costs)
        costs
-       (when title
-         (toast state side (str "Unable to pay for " title "."))
-         false)))))
+       (do (when title (toast state side (str "Unable to pay for " title ".")))
+           false)))))
 
 (defn cost-targets
   [eid cost-type]

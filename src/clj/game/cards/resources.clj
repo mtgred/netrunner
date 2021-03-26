@@ -2141,7 +2141,6 @@
                                (map unknown->kw)
                                (filter is-central?)
                                (remove (into #{} (:made-run runner-reg)))
-                               (map central->name)
                                not-empty))
                 :choices (req (->> runnable-servers
                                    (map unknown->kw)
