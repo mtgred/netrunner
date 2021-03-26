@@ -32,48 +32,55 @@
             :else card))
         cards))
 
-(defn- make-private-runner [state]
+(defn- make-opponent-runner [state]
   (-> (:runner @state)
       (dissoc :runnable-list)
-      (update-in [:hand] #(private-card-vector state :runner %))
-      (update-in [:discard] #(private-card-vector state :runner %))
-      (update-in [:deck] #(private-card-vector state :runner %))
+      (update :hand #(private-card-vector state :runner %))
+      (update :discard #(private-card-vector state :runner %))
+      (assoc :deck []
+             :deck-count (count (get-in @state [:runner :deck]))
+             :hand-count (count (get-in @state [:runner :hand])))
       (update-in [:rig :facedown] #(private-card-vector state :runner %))
       (update-in [:rig :resource] #(private-card-vector state :runner %))))
 
-(defn- make-private-corp [state]
-  (let [zones (concat [[:hand]] [[:discard]] [[:deck]]
+(defn- make-opponent-corp [state]
+  (let [zones (concat [[:discard]]
                       (for [server (keys (:servers (:corp @state)))] [:servers server :ices])
                       (for [server (keys (:servers (:corp @state)))] [:servers server :content]))
         corp (-> (:corp @state)
-                 (dissoc :install-list))]
+                 (dissoc :install-list)
+                 (assoc :hand []
+                        :deck []
+                        :deck-count (count (get-in @state [:corp :deck]))
+                        :hand-count (count (get-in @state [:corp :hand]))))]
     (loop [s corp
            z zones]
       (if (empty? z)
         s
         (recur (update-in s (first z) #(private-card-vector state :corp %)) (rest z))))))
 
-(defn- make-private-deck [state side deck]
-  (if (:view-deck (side @state))
-    deck
-    (private-card-vector state side deck)))
+(defn- make-deck-private-for-side [state side]
+  (let [view-deck (get-in @state [side :view-deck])
+        deck (get-in @state [side :deck])]
+    (-> (get @state side)
+        (assoc :deck (if view-deck deck []))
+        (assoc :deck-count (count (get-in @state [side :deck])))
+        (assoc :hand-count (count (get-in @state [side :hand]))))))
 
 (defn- private-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
-  ;; corp, runner, spectator, history
-  (let [corp-private (make-private-corp state)
-        runner-private (make-private-runner state)
-        corp-deck (update-in (:corp @state) [:deck] #(make-private-deck state :corp %))
-        runner-deck (update-in (:runner @state) [:deck] #(make-private-deck state :runner %))]
-    [(assoc @state :runner runner-private
-                   :corp corp-deck)
-     (assoc @state :corp corp-private
-                   :runner runner-deck)
+  (let [corp-player (make-deck-private-for-side state :corp)
+        runner-player (make-deck-private-for-side state :runner)
+        corp-opponent (make-opponent-corp state)
+        runner-opponent (make-opponent-runner state)]
+    ;; corp, runner, spectator, history
+    [(assoc @state :runner runner-opponent :corp corp-player)
+     (assoc @state :corp corp-opponent :runner runner-player)
      (if (get-in @state [:options :spectatorhands])
-       (assoc @state :corp corp-deck :runner runner-deck)
-       (assoc @state :corp corp-private :runner runner-private))
+       (assoc @state :corp corp-player :runner runner-player)
+       (assoc @state :corp corp-opponent :runner runner-opponent))
      @state]))
 
 (defn public-states [state]
