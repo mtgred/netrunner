@@ -219,8 +219,18 @@
             margin: 2px
 
         a
+        label
+        .hand-size
             display: inline-block
             margin: 0 10px 8px 4px
+
+            &:hover .controls
+                opacity: 1
+
+        .controls
+            display: inline-block
+            margin-left: 10px
+            opacity: 0
 
     .playable
         cursor: pointer
@@ -273,6 +283,15 @@
     .hand-expand
         float: right
         margin-left: 2px
+
+    .scored
+        height: 116px
+
+    .scored > .stats
+        bottom: 0
+        padding: 3px 6px
+        position: absolute
+        width: 100%
 
     .card-wrapper
         display: inline-block
@@ -830,4 +849,3 @@
 
             .log-input form input, .indicate-action
                 width: 100%
-

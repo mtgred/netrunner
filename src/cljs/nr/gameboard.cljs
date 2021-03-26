@@ -1423,6 +1423,14 @@
      (str (get-in opts [:opts :name])
           (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
+(defn controls
+  "Create the control buttons for the side displays."
+  ([key] (controls key 1 -1))
+  ([key increment decrement]
+   [:div.controls
+    [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
+    [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
+
 (defn- this-user?
   [user]
   (if (:replay @game-state)
@@ -1451,16 +1459,17 @@
                    [facedown-card (:side card)])])
               @hand))]))
 
-(defn hand-view [user name translated-name hand prompt remotes popup popup-direction]
+(defn hand-view [user name translated-name hand hand-size prompt remotes popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name translated-name hand prompt remotes popup popup-direction]
+    (fn [user name translated-name hand hand-size prompt remotes popup popup-direction]
       (let [size (count @hand)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
            [build-hand-card-view user hand prompt remotes "card-wrapper"]
-           [label @hand {:opts {:name translated-name}}]]
+           [label @hand {:opts {:name translated-name
+                                :fn (fn [cursor] (str (count cursor) "/" (:total @hand-size)))}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -1470,6 +1479,9 @@
             [:div
              [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game.close "Close"])]
              [:label (tr [:game.card-count] size)]
+             (let [{:keys [total]} @hand-size]
+               [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
+                (controls :hand-size)])
              [build-hand-card-view user hand prompt remotes "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
@@ -1607,7 +1619,7 @@
                         @cards))
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [scored]
+(defn scored-view [scored agenda-point me?]
   (let [size (count @scored)]
     [:div.panel.blue-shade.scored.squeeze
      (doall
@@ -1616,15 +1628,10 @@
                                           :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                        [:div [card-view card]]])
                     @scored))
-     [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]]))
-
-(defn controls
-  "Create the control buttons for the side displays."
-  ([key] (controls key 1 -1))
-  ([key increment decrement]
-   [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
+     [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
+     [:div.stats
+      [:div (tr [:game.agenda-count] @agenda-point)
+       (when me? (controls :agenda-point))]]]))
 
 (defn name-area
   [user]
@@ -1666,7 +1673,7 @@
   (let [me? (= (:side @game-state) :runner)]
     (fn [runner]
       (let [{:keys [user click credit run-credit memory link tag
-                    brain-damage agenda-point hand-size active]} @runner]
+                    brain-damage active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
@@ -1677,8 +1684,6 @@
          [display-special-memory memory]
          [:div (str link " " (tr [:game.link-strength "Link Strength"]))
           (when me? (controls :link))]
-         [:div (tr [:game.agenda-count] agenda-point)
-          (when me? (controls :agenda-point))]
          (let [{:keys [base total is-tagged]} tag
                additional (- total base)
                show-tagged (or is-tagged (pos? total))]
@@ -1686,29 +1691,21 @@
             (when show-tagged [:div.warning "!"])
             (when me? (controls :tag))])
          [:div (str brain-damage " " (tr [:game.brain-damage "Brain Damage"]))
-          (when me? (controls :brain-damage))]
-         (let [{:keys [total]} hand-size]
-           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
-            (when me? (controls :hand-size))])]))))
+          (when me? (controls :brain-damage))]]))))
 
 (defmethod stats-view "Corp" [corp]
   (let [me? (= (:side @game-state) :corp)]
     (fn [corp]
-      (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
+      (let [{:keys [user click credit bad-publicity active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          (name-area user)
          [:div (tr [:game.click-count] click)
           (when me? (controls :click))]
          [:div (tr [:game.credit-count] credit -1)
           (when me? (controls :credit))]
-         [:div (tr [:game.agenda-count] agenda-point)
-          (when me? (controls :agenda-point))]
          (let [{:keys [base additional]} bad-publicity]
            [:div (tr [:game.bad-pub-count] base additional)
-            (when me? (controls :bad-publicity))])
-         (let [{:keys [total]} hand-size]
-           [:div (str total " " (tr [:game.max-hand "Max hand size"]))
-            (when me? (controls :hand-size))])]))))
+            (when me? (controls :bad-publicity))])]))))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
@@ -2435,6 +2432,8 @@
                    me-hand-count (r/cursor game-state [me-side :hand-count])
                    op-hand (r/cursor game-state [op-side :hand])
                    op-hand-count (r/cursor game-state [op-side :hand-count])
+                   me-hand-size (r/cursor game-state [me-side :hand-size])
+                   op-hand-size (r/cursor game-state [op-side :hand-size])
                    ;; decks
                    me-deck (r/cursor game-state [me-side :deck])
                    me-deck-count (r/cursor game-state [me-side :deck-count])
@@ -2455,6 +2454,8 @@
                    ;; score areas
                    me-scored (r/cursor game-state [me-side :scored])
                    op-scored (r/cursor game-state [op-side :scored])
+                   me-agenda-point (r/cursor game-state [me-side :agenda-point])
+                   op-agenda-point (r/cursor game-state [op-side :agenda-point])
                    ;; servers
                    corp-servers (r/cursor game-state [:corp :servers])
                    corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
@@ -2499,7 +2500,7 @@
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
                                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                                   [hand-view op-user srv translated-srv op-hand op-prompt corp-remotes
+                                   [hand-view op-user srv translated-srv op-hand op-hand-size op-prompt corp-remotes
                                     (= @side :spectator) "opponent"])]
 
                   [:div.inner-leftpane
@@ -2508,9 +2509,9 @@
                    [:div.left-inner-leftpane
                     [:div
                      [stats-view opponent]
-                     [scored-view op-scored]]
+                     [scored-view op-scored op-agenda-point false]]
                     [:div
-                     [scored-view me-scored]
+                     [scored-view me-scored me-agenda-point true]
                      [stats-view me]]]
 
                    [:div.right-inner-leftpane
@@ -2536,7 +2537,7 @@
                   [:div.me
                    (let [srv (if (= :corp me-side) "HQ" "Grip")
                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                     [hand-view me-user srv translated-srv me-hand me-prompt
+                     [hand-view me-user srv translated-srv me-hand me-hand-size me-prompt
                       corp-remotes true "me"])]]]
                 (when (:replay @game-state)
                   [:div.bottompane
