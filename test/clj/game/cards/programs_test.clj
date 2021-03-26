@@ -2214,13 +2214,14 @@
       (new-game {:runner {:deck ["Fermenter"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Fermenter")
-      (take-credits state :runner)
-      (take-credits state :corp)
       (let [fermenter (get-program state 0)]
-        (is (= 1 (get-counters (refresh fermenter) :virus)) "Fermenter has 1 counter")
+        (is (= 1 (get-counters (refresh fermenter) :virus)) "Fermenter has 1 counter from install")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh fermenter) :virus)) "Fermenter has 2 counters")
         (changes-val-macro
-          2 (:credit (get-runner))
-          "Gain 2 credits from Fermenter ability"
+          4 (:credit (get-runner))
+          "Gain 4 credits from Fermenter ability"
           (card-ability state :runner fermenter 0))
         (is (= 1 (count (:discard (get-runner)))) "Fermenter is trashed"))))
   (testing "Hivemind interaction"
@@ -2234,11 +2235,11 @@
       (take-credits state :corp)
       (let [fermenter (get-program state 0)
             hivemind (get-program state 1)]
-        (is (= 1 (get-counters (refresh fermenter) :virus)) "Fermenter has 1 counter")
+        (is (= 2 (get-counters (refresh fermenter) :virus)) "Fermenter has 2 counters")
         (is (= 1 (get-counters (refresh hivemind) :virus)) "Hivemind has 1 counter")
         (changes-val-macro
-          4 (:credit (get-runner))
-          "Gain 4 credits from Fermenter ability"
+          6 (:credit (get-runner))
+          "Gain 6 credits from Fermenter ability"
           (card-ability state :runner fermenter 0))
         (is (= 1 (count (:discard (get-runner)))) "Fermenter is trashed")
         (is (= 1 (get-counters (refresh hivemind) :virus)) "Hivemind has still 1 counter")))))

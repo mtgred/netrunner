@@ -1222,7 +1222,8 @@
                  (strength-pump 2 1)]}))
 
 (defcard "Fermenter"
-  {:events [{:event :runner-turn-begins
+  {:on-install {:effect (effect (add-counter card :virus 1))}
+   :events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:req (req (pos? (get-virus-counters state card)))
                 :cost [:click 1 :trash]
