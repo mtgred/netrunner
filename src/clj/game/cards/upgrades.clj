@@ -828,6 +828,7 @@
 
 (defcard "Malapert Data Vault"
   {:events [{:event :agenda-scored
+             :interactive (req true)
              :optional
              {:prompt "Search R&D for non-agenda card?"
               :req (req (= (:previous-zone (:card context)) (get-zone card)))
