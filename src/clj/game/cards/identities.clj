@@ -1678,11 +1678,10 @@
 
 (defcard "Zahya Sadeghi: Versatile Smuggler"
   {:events [{:event :run-ends
-             :req (req (and (or (= :hq (target-server context))
-                                (= :rd (target-server context)))
-                            (pos? (total-cards-accessed context))))
              :optional
-             {:prompt "Gain 1 [Credits] for each card you accessed?"
+             {:req (req (and (#{:hq :rd} (target-server context))
+                          (pos? (total-cards-accessed context))))
+              :prompt "Gain 1 [Credits] for each card you accessed?"
               :async true
               :once :per-turn
               :yes-ability
