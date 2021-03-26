@@ -776,6 +776,25 @@
                             (do (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run"))
                                 (end-run state side eid card))))}]})
 
+(defcard "Keegan Lane"
+  {:abilities [{:req (req (and this-server
+                               (some? (first (filter program? (all-active-installed state :runner))))))
+                :prompt "Select a program to trash"
+                :label "Trash a program"
+                :msg (msg "trash " (:title target))
+                :choices {:card #(and (installed? %)
+                                      (program? %))}
+                :cost [:tag 1 :trash]
+                :async true
+                :effect (effect (trash eid target nil))}]})
+
+(defcard "Khondi Plaza"
+  {:recurring (req (count (get-remotes state)))
+   :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                               (ice? target)
+                                               (= (card->server state card) (card->server state target))))
+                                :type :recurring}}})
+
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Select a card in " (zone->name (second (get-zone card))))
                  :label "place an advancement counter"
@@ -805,25 +824,6 @@
                                              (effect-completed state side eid)
                                              (start-next-phase state side nil)))}}}}}]
    :abilities [(set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
-
-(defcard "Keegan Lane"
-  {:abilities [{:req (req (and this-server
-                               (some? (first (filter program? (all-active-installed state :runner))))))
-                :prompt "Select a program to trash"
-                :label "Trash a program"
-                :msg (msg "trash " (:title target))
-                :choices {:card #(and (installed? %)
-                                      (program? %))}
-                :cost [:tag 1 :trash]
-                :async true
-                :effect (effect (trash eid target nil))}]})
-
-(defcard "Khondi Plaza"
-  {:recurring (req (count (get-remotes state)))
-   :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
-                                               (ice? target)
-                                               (= (card->server state card) (card->server state target))))
-                                :type :recurring}}})
 
 (defcard "Malapert Data Vault"
   {:events [{:event :agenda-scored

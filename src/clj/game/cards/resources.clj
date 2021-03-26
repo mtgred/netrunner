@@ -2852,6 +2852,15 @@
                      :req (req (and (first-event-check state no-event? first-event?)
                                     (seq (filter #(some #{:tag} %) targets)))))]}))
 
+(defcard "Tri-maf Contact"
+  {:abilities [{:cost [:click 1]
+                :msg "gain 2 [Credits]"
+                :once :per-turn
+                :async true
+                :effect (effect (gain-credits eid 2))}]
+   :on-trash {:async true
+              :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
+
 (defcard "Trickster Taka"
   (companion-builder
     ;; companion-builder: pay-credits req
@@ -2880,15 +2889,6 @@
      :effect (req (add-counter state side card :credit -1)
                   (wait-for (gain-credits state side 1)
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
-
-(defcard "Tri-maf Contact"
-  {:abilities [{:cost [:click 1]
-                :msg "gain 2 [Credits]"
-                :once :per-turn
-                :async true
-                :effect (effect (gain-credits eid 2))}]
-   :on-trash {:async true
-              :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")

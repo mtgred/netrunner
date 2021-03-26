@@ -1779,12 +1779,6 @@
                :effect (effect (lose :runner :click 1)
                                (add-counter card :agenda -1))}}}]})
 
-(defcard "Vulnerability Audit"
-  {:flags {:can-score (req (let [result (not= :this-turn (installed? card))]
-                             (when-not result
-                               (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
-                             result))}})
-
 (defcard "Vulcan Coverup"
   {:on-score {:interactive (req true)
               :msg "do 2 meat damage"
@@ -1793,6 +1787,12 @@
    :stolen {:msg "force the Corp to take 1 bad publicity"
             :async true
             :effect (effect (gain-bad-publicity :corp eid 1))}})
+
+(defcard "Vulnerability Audit"
+  {:flags {:can-score (req (let [result (not= :this-turn (installed? card))]
+                             (when-not result
+                               (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
+                             result))}})
 
 (defcard "Water Monopoly"
   {:constant-effects [{:type :install-cost

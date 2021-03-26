@@ -1951,6 +1951,33 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                 (strength-pump 2 3)]}))
 
+(defcard "Pelangi"
+  {:data {:counter {:virus 2}}
+   :abilities [{:once :per-turn
+                :req (req (and current-ice
+                               (rezzed? current-ice)
+                               (= :encounter-ice (:phase run))))
+                :cost [:virus 1]
+                :label "Make ice gain a subtype"
+                :prompt "Choose an ICE subtype"
+                :choices (req (->> (server-cards)
+                                   (reduce (fn [acc card]
+                                             (if (ice? card)
+                                               (into acc (:subtypes card))
+                                               acc))
+                                           #{})
+                                   sort))
+                :msg (msg "make " (card-str state current-ice)
+                          " gain " target
+                          " until end of the run")
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [ice current-ice]
+                                    {:type :gain-subtype
+                                     :duration :end-of-run
+                                     :req (req (same-card? target ice))
+                                     :value target})))}]})
+
 (defcard "Penrose"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
@@ -1982,33 +2009,6 @@
                                        :effect (req (wait-for (mill state :runner :runner 1)
                                                               (mill state :runner eid :corp fired-subs)))}}})
                                   card nil))}]}))
-
-(defcard "Pelangi"
-  {:data {:counter {:virus 2}}
-   :abilities [{:once :per-turn
-                :req (req (and current-ice
-                               (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
-                :cost [:virus 1]
-                :label "Make ice gain a subtype"
-                :prompt "Choose an ICE subtype"
-                :choices (req (->> (server-cards)
-                                   (reduce (fn [acc card]
-                                             (if (ice? card)
-                                               (into acc (:subtypes card))
-                                               acc))
-                                           #{})
-                                   sort))
-                :msg (msg "make " (card-str state current-ice)
-                          " gain " target
-                          " until end of the run")
-                :effect (effect (register-floating-effect
-                                  card
-                                  (let [ice current-ice]
-                                    {:type :gain-subtype
-                                     :duration :end-of-run
-                                     :req (req (same-card? target ice))
-                                     :value target})))}]})
 
 (defcard "Pheromones"
   {:recurring (req (get-counters card :virus))

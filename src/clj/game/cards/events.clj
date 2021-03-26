@@ -22,6 +22,7 @@
              :effect (effect (trash eid target nil))}]})
 
 ;; Card definitions
+
 (defcard "Account Siphon"
   {:makes-run true
    :on-play {:req (req hq-runnable)
@@ -148,20 +149,6 @@
                                :req (req (#{:hq :rd} target))
                                :effect (effect (access-bonus target 2))}]))}}}})
 
-(defcard "Blueberry!™ Diesel"
-  {:on-play {:async true
-             :prompt "Move a card to the bottom of the stack?"
-             :not-distinct true
-             :choices (req (conj (vec (take 2 (:deck runner))) "No"))
-             :effect (req (when-not (string? target)
-                            (move state side target :deck))
-                          (system-msg state side
-                                      (str "looks at the top 2 cards of the stack"
-                                           (when-not (string? target)
-                                             " and adds one to the bottom of the stack")))
-                          (system-msg state side "uses Blueberry!™ Diesel to draw 2 cards")
-                          (draw state :runner eid 2 nil))}})
-
 (defcard "Blackmail"
   {:makes-run true
    :on-play {:req (req (has-bad-pub? state))
@@ -178,6 +165,20 @@
                                     (toast state :corp "Cannot rez ICE on this run due to Blackmail"))
                                    true)))
                              (make-run eid target card))}})
+
+(defcard "Blueberry!™ Diesel"
+  {:on-play {:async true
+             :prompt "Move a card to the bottom of the stack?"
+             :not-distinct true
+             :choices (req (conj (vec (take 2 (:deck runner))) "No"))
+             :effect (req (when-not (string? target)
+                            (move state side target :deck))
+                          (system-msg state side
+                                      (str "looks at the top 2 cards of the stack"
+                                           (when-not (string? target)
+                                             " and adds one to the bottom of the stack")))
+                          (system-msg state side "uses Blueberry!™ Diesel to draw 2 cards")
+                          (draw state :runner eid 2 nil))}})
 
 (defcard "Bravado"
   ; Bravado only counts distinct pieces of ice that were passed.
@@ -1395,13 +1396,6 @@
              :effect (req (wait-for (gain-tags state :runner 1)
                                     (gain-credits state :runner eid 9)))}]})
 
-(defcard "Isolation"
-  {:on-play
-   {:additional-cost [:resource 1]
-    :msg "gain 7 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 7))}})
-
 (defcard "I've Had Worse"
   {:on-play {:async true
              :effect (effect (draw eid 3 nil))}
@@ -1629,6 +1623,13 @@
      :events [{:event :runner-turn-begins
                :effect ab}]
      :leave-play (req (clear-all-flags-for-card! state side card))}))
+
+(defcard "Isolation"
+  {:on-play
+   {:additional-cost [:resource 1]
+    :msg "gain 7 [Credits]"
+    :async true
+    :effect (effect (gain-credits eid 7))}})
 
 (defcard "Itinerant Protesters"
   {:on-play {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"}
