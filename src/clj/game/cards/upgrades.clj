@@ -43,7 +43,7 @@
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
 
 (defcard "Anoetic Void"
-  {:events [{:event :successful-run
+  {:events [{:event :approach-server
              :optional
              {:prompt "Pay 2 [Credits] and trash 2 cards from HQ to end the run?"
               :req (req (and (can-pay? state side eid card nil [:credit 2 :trash-from-hand 2])

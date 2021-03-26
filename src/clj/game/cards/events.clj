@@ -3020,7 +3020,7 @@
                       card
                       {:type :rez-additional-cost
                        :duration :end-of-run
-                       :req (req true)
+                       :req (req (ice? target))
                        :value (req [:credit 3])})
                     (make-run eid target card))}})
 

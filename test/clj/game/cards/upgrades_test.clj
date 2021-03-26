@@ -62,14 +62,15 @@
     (do-game
      (new-game {:corp {:hand ["Anoetic Void" "Ice Wall" "Fire Wall"]}})
      (play-from-hand state :corp "Anoetic Void" "New remote")
-     (let [av (get-content state :remote1 0)]
-     (rez state :corp av)
-     (take-credits state :corp)
-     (run-empty-server state "Server 1")
-       (click-prompt state :corp "Yes")
-       (click-card state :corp "Ice Wall")
-       (click-card state :corp "Fire Wall")
-       (is (not (:run @state)) "Run ended by Anoetic Void")))))
+      (let [av (get-content state :remote1 0)]
+        (rez state :corp av))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Fire Wall")
+      (is (not (:run @state)) "Run ended by Anoetic Void")
+      (is (not (:successful-run (:register (get-runner)))) "No successful run in register"))))
 
 (deftest arella-salvatore
   ;; Arella Salvatore - when an agenda is scored from this server, install a card from hq w/ advancement token
