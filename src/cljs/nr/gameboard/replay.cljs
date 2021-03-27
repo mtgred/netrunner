@@ -5,14 +5,13 @@
             [differ.core :as differ]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
-            [nr.gameboard.state :refer [game-state]]
+            [nr.gameboard.state :refer [game-state last-state lock replay-side]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [render-message non-game-toast]]
             [reagent.core :as r]))
 
 (defonce replay-timeline (atom []))
 (defonce replay-status (r/atom {:autoplay false :speed 1600}))
-(defonce replay-side (r/atom :spectator))
 (defonce show-replay-link (r/atom false))
 
 (declare replay-jump replay-jump-to populate-replay-timeline)

@@ -11,7 +11,7 @@
             [nr.cardbrowser :refer [image-url] :as cb]
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.deckbuilder :refer [deck-name]]
-            [nr.gameboard :refer [launch-game toast]]
+            [nr.gameboard.actions :refer [launch-game toast]]
             [nr.gameboard.state :refer [game-state parse-state]]
             [nr.game-row :refer [game-row]]
             [nr.history :refer [history]]
