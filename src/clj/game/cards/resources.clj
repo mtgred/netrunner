@@ -2344,6 +2344,18 @@
                :effect (effect (update! (dissoc card :server-target)))}]
      :abilities [ability]}))
 
+(defcard "Smartware Distributor"
+  {:abilities [{:cost [:click 1]
+                :msg "place 3 [Credits]"
+                :effect (req (add-counter state side card :credit 3))}]
+   :events [{:event :runner-turn-begins
+             :req (req (pos? (get-counters card :credit)))
+             :once :per-turn
+             :msg "take 1 [Credits]"
+             :async true
+             :effect (req (add-counter state side card :credit -1)
+                          (gain-credits state side eid 1))}]})
+
 (defcard "Slipstream"
   {:events [{:event :pass-ice
              :optional
@@ -2510,6 +2522,18 @@
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
+
+(defcard "Telework Contract"
+  {:data {:counter {:credit 9}}
+   :events [(trash-on-empty :credit)]
+   :abilities [{:label "Take 3 [Credits] from this resource"
+                :cost [:click 1]
+                :once :per-turn
+                :msg "gain 3 [Credits]"
+                :async true
+                :effect (req (let [credits (min 3 (get-counters card :credit))]
+                               (add-counter state side card :credit (- credits))
+                               (gain-credits state :runner eid credits)))}]})
 
 (defcard "Temple of the Liberated Mind"
   {:abilities [{:cost [:click 1]
@@ -2914,6 +2938,13 @@
 (defcard "Utopia Shard"
   (shard-constructor "Utopia Shard" :hq "force the Corp to discard 2 cards from HQ at random"
                      (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp)))))))
+
+(defcard "Verbal Plasticity"
+  {:events [{:event :runner-click-draw
+             :req (req (genetics-trigger? state side :runner-click-draw))
+             :msg "draw 1 additional card"
+             :async true
+             :effect (effect (draw-bonus 1))}]})
 
 (defcard "Virus Breeding Ground"
   {:events [{:event :runner-turn-begins

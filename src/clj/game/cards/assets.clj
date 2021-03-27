@@ -1770,6 +1770,18 @@
                                                (effect-completed eid))})
                             card nil))}]})
 
+(defcard "Regolith Mining License"
+  {:data {:counter {:credit 15}}
+   :events [(trash-on-empty :credit)]
+   :abilities [{:label "Take 3 [Credits] from this asset"
+                :cost [:click 1]
+                :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+                :async true
+                :effect (req (let [credits (min 3 (get-counters card :credit))]
+                               (wait-for (gain-credits state :corp (make-eid state eid) credits)
+                                         (add-counter state side card :credit (- credits) {:placed true})
+                                         (effect-completed state side eid))))}]})
+
 (defcard "Reversed Accounts"
   {:advanceable :always
    :abilities [{:cost [:click 1 :trash]

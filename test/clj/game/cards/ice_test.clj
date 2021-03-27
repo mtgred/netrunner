@@ -287,6 +287,97 @@
                           (click-prompt state :runner "No"))
        (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi")))))
 
+(deftest ansel-1-0
+  ;; Ansel 1.0
+  (before-each [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]
+                                        :discard ["Adonis Campaign"]
+                                        :credits 100}
+                                 :runner {:hand ["Corroder"]
+                                          :credits 100}})
+                _ (do (core/gain state :corp :click 100)
+                      (play-from-hand state :corp "Ansel 1.0" "New remote"))
+                ansel (get-ice state :remote1 0)]
+    (testing "Has 1.0 Bioroid runner ability"
+      (do-game state
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (changes-val-macro
+          -1 (:click (get-runner))
+          "Runner loses a single click"
+          (card-side-ability state :runner (refresh ansel) 0)
+          (is (= "Break a subroutine" (:msg (prompt-map :runner))))
+          (click-prompt state :runner "Trash an installed Runner card"))
+        (is (:broken (first (:subroutines (refresh ansel)))))))
+    (testing "First sub is trash installed card"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (card-subroutine state :corp ansel 0)
+        (is (= "Select an installed card to trash" (:msg (prompt-map :corp))))
+        (is (= :select (prompt-type :corp)))
+        (click-card state :corp "Corroder")
+        (is (not (find-card "Corroder" (get-program state))))
+        (is (find-card "Corroder" (:discard (get-runner))))))
+    (testing "Second sub is install from hq or archives: HQ"
+      (do-game state
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (card-subroutine state :corp ansel 1)
+        (is (= "Select a card to install from Archives or HQ" (:msg (prompt-map :corp))))
+        (is (= :select (prompt-type :corp)))
+        (click-card state :corp "NGO Front")
+        (is (= "Choose a location to install NGO Front" (:msg (prompt-map :corp))))
+        (click-prompt state :corp "New remote")
+        (is (= "NGO Front" (:title (get-content state :remote2 0))))
+        (is (not (find-card "NGO Front" (:hand (get-corp)))))))
+    (testing "Second sub is install from hq or archives: Archives"
+      (do-game state
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (card-subroutine state :corp ansel 1)
+        (is (= "Select a card to install from Archives or HQ" (:msg (prompt-map :corp))))
+        (is (= :select (prompt-type :corp)))
+        (click-card state :corp "Adonis Campaign")
+        (is (= "Choose a location to install Adonis Campaign" (:msg (prompt-map :corp))))
+        (click-prompt state :corp "New remote")
+        (is (= "Adonis Campaign" (:title (get-content state :remote2 0))))
+        (is (not (find-card "Adonis Campaign" (:discard (get-corp)))))))
+    (testing "Third sub blocks stealing and trashing: stealing"
+      (do-game state
+        (play-from-hand state :corp "Merger" "Server 1")
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (card-subroutine state :corp ansel 2)
+        (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
+        (run-continue state :approach-server)
+        (run-continue state :access-server)
+        (is (= "You accessed Merger." (:msg (prompt-map :runner))))
+        (is (= ["No action"] (prompt-buttons :runner)))))
+    (testing "Third sub blocks stealing and trashing: stealing"
+      (do-game state
+        (play-from-hand state :corp "NGO Front" "Server 1")
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (card-subroutine state :corp ansel 2)
+        (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
+        (run-continue state :approach-server)
+        (run-continue state :access-server)
+        (is (= "You accessed NGO Front." (:msg (prompt-map :runner))))
+        (is (= ["No action"] (prompt-buttons :runner)))))))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (testing "Basic test of subroutine"
@@ -383,6 +474,42 @@
       (is (= 2 (get-counters (refresh ab) :advancement)))
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
+
+(deftest ballista
+  ;; Ballista
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Ballista" "Hedge Fund" "Ice Wall"]}
+                 :runner {:hand ["Datasucker"]}})
+      (play-from-hand state :corp "Ballista" "HQ")
+      (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Datasucker")
+      (let [ball (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp (refresh ball))
+        (run-continue state)
+        (fire-subs state ball)
+        (is (= ["Trash a program" "End the run"] (prompt-buttons :corp)) "Corp should have 2 options")
+        (click-prompt state :corp "End the run")
+        (is (not (:run @state)) "Run ended")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state ball)
+        (is (= ["Trash a program" "End the run"] (prompt-buttons :corp)) "Corp should have 2 options")
+        (click-prompt state :corp "Trash a program")
+        (click-card state :corp "Datasucker")
+        (is (nil? (get-program state 0)) "Datasucker is trashed")
+        (is (:run @state) "Run continues")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state ball)
+        (is (= ["End the run"] (prompt-buttons :corp)) "Corp should have 1 option")
+        (click-prompt state :corp "End the run")
+        (is (not (:run @state)) "Run ended")))))
 
 (deftest bandwidth
   ;; Bandwidth - Give the Runner 1 tag; remove 1 tag if the run is successful
@@ -565,6 +692,27 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh bs)))))))))
+
+(deftest bran-1-0
+  ;; Bran 1.0
+  ;; Brân 1.0
+  (do-game
+    (new-game {:corp {:hand ["Brân 1.0" "Mausolus"]}})
+    (play-from-hand state :corp "Brân 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [bran (get-ice state :hq 0)]
+      (rez state :corp bran)
+      (run-continue state)
+      (card-subroutine state :corp bran 0)
+      (changes-val-macro
+        0 (:credit (get-corp))
+        "Mausolus installed for free"
+        (click-card state :corp "Mausolus"))
+      (is (= 2 (count (get-ice state :hq))) "2 ICE protecting HQ")
+      (is (= 2 (:position (get-run))) "Runner position moved along Bran position")
+      (card-subroutine state :corp (get-ice state :hq 1) 1)
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
@@ -1020,6 +1168,36 @@
       (card-subroutine state :corp dp 1)
       (is (nil? (:run @state)) "Run has ended"))))
 
+(deftest diviner
+  ;; Diviner
+  (testing "Basic Test with Even Cost Trash"
+    (do-game
+      (new-game {:corp {:hand ["Diviner"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Diviner" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [diviner (get-ice state :hq 0)]
+        (rez state :corp diviner)
+        (run-continue state)
+        (changes-val-macro
+          1 (count (:discard (get-runner)))
+          "1 card is trashed"
+          (fire-subs state diviner))
+        (is (get-run) "Corroder has an even cost, so run continues"))))
+  (testing "Basic Test with Odd Cost Trash"
+    (do-game
+      (new-game {:corp {:hand ["Diviner"]}
+                 :runner {:hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Diviner" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [diviner (get-ice state :hq 0)]
+        (rez state :corp diviner)
+        (run-continue state)
+        (fire-subs state diviner)
+        (is (not (get-run)) "Sure Gamble has an odd cost, so run ends")))))
+
 (deftest draco
   ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game
@@ -1467,6 +1645,43 @@
         (run-continue state)
         (fire-subs state (refresh fl))
         (is (= 4 (get-counters (refresh fl) :power)) "Free Lunch has 4 power counters")))))
+
+(deftest funhouse
+  ;; Funhouse
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Funhouse"]}})
+      (play-from-hand state :corp "Funhouse" "HQ")
+      (take-credits state :corp)
+      (let [tt (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp tt)
+        (run-continue state)
+        (click-prompt state :runner "End the run")
+        (is (not (:run @state)) "Run ended")
+        (run-on state "HQ")
+        (run-continue state)
+        (is (= 0 (count-tags state)))
+        (click-prompt state :runner "Take 1 tag")
+        (is (= 1 (count-tags state)))
+        (fire-subs state tt)
+        (click-prompt state :runner "Take 1 tag")
+        (is (= 2 (count-tags state)))
+        (run-jack-out state)
+        (run-on state "HQ")
+        (run-continue state)
+        (click-prompt state :runner "Take 1 tag")
+        (fire-subs state tt)
+        (is (= 5 (:credit (get-runner))))
+        (click-prompt state :runner "Pay 4 [Credits]")
+        (is (= 1 (:credit (get-runner))))
+        (run-jack-out state)
+        (run-on state "HQ")
+        (run-continue state)
+        (click-prompt state :runner "Take 1 tag")
+        (fire-subs state tt)
+        (is (= 1 (:credit (get-runner))))
+        (is (= ["Take 1 tag"] (prompt-buttons :runner)) "Runner should have 1 option")))))
 
 (deftest gatekeeper
   ;; Gatekeeper
@@ -3571,6 +3786,26 @@
         (card-subroutine state :corp pachinko 0)
         (is (not (:run @state)) "Run ended")))))
 
+(deftest palisade
+  ;; Palisade
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand [(qty "Palisade" 2)]}})
+      (click-credit state :corp)
+      (play-from-hand state :corp "Palisade" "HQ")
+      (play-from-hand state :corp "Palisade" "New remote")
+      (take-credits state :corp)
+      (let [palisade-central (get-ice state :hq 0)
+            palisade-remote (get-ice state :remote1 0)]
+        (rez state :corp palisade-central)
+        (is (= 2 (get-strength (refresh palisade-central))) "Normal Strength")
+        (rez state :corp palisade-remote)
+        (is (= 4 (get-strength (refresh palisade-remote))) "Boosted Strength on Remote")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state palisade-central)
+        (is (not (:run @state)) "Run ended")))))
+
 (deftest paper-wall
   ;;Paper Wall
   (testing "Basic trash test"
@@ -3611,6 +3846,54 @@
       (is (= 1 (count-tags state)) "Tag ability sucessful")
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run ended"))))
+
+(deftest pharos
+  ;; Pharos
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Pharos" (qty "Hedge Fund" 2)]}})
+      (play-from-hand state :corp "Pharos" "HQ")
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
+      (is (= 0 (count-tags state)))
+      (let [pha (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp (refresh pha))
+        (run-continue state)
+        (fire-subs state pha)
+        (is (= 1 (count-tags state)))
+        (is (not (:run @state)) "Run ended")
+        (take-credits state :runner)
+        (is (= 0 (get-counters (refresh pha) :advancement)) "Pharos has no adv tokens")
+        (is (= 5 (get-strength (refresh pha))) "Pharos starts at 5 strength")
+        (dotimes [n 2]
+          (advance state pha)
+          (is (= (inc n) (get-counters (refresh pha) :advancement)) (str "Pharos has " (inc n) " adv tokens"))
+          (is (= 5 (get-strength (refresh pha))) "Pharos stays at 5 strength"))
+        (advance state pha)
+        (is (= 3 (get-counters (refresh pha) :advancement)) "Pharos has 3 adv tokens")
+        (is (= 10 (get-strength (refresh pha))) "Pharos is now at 10 strength")))))
+
+(deftest ping
+  ;; Ping
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund" (qty "Ping" 2)]}})
+      (play-from-hand state :corp "Ping" "HQ")
+      (play-from-hand state :corp "Ping" "New remote")
+      (take-credits state :corp)
+      (let [png1 (get-ice state :hq 0)
+            png2 (get-ice state :remote1 0)]
+        (is (= 0 (count-tags state)) "Start with no tags")
+        (rez state :corp (refresh png2))
+        (is (= 0 (count-tags state)) "Didn't take tag on rez outside of run")
+        (run-on state "HQ")
+        (rez state :corp (refresh png1))
+        (is (= 1 (count-tags state)) "Took 1 tag during run")
+        (run-continue state)
+        (fire-subs state png1)
+        (is (not (:run @state)) "Run ended")))))
 
 (deftest red-tape
   ;; Red Tape
@@ -4649,6 +4932,24 @@
       (click-card state :corp "Ice Wall")
       (is (= ["Thimblerig" "Ice Wall"] (map :title (get-ice state :hq)))))))
 
+(deftest tithe
+  ;; Tithe
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Tithe"]}
+                 :runner {:hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Tithe" "HQ")
+      (take-credits state :corp)
+      (is (= 7 (:credit (get-corp))) "Gained 2 credits")
+      (rez state :corp (get-ice state :hq 0))
+      (is (= 6 (:credit (get-corp))) "Cost 1 to rez")
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= 0 (count (:discard (get-runner)))) "heap empty")
+      (fire-subs state (get-ice state :hq 0))
+      (is (= 1 (count (:discard (get-runner)))) "Runner took net damage")
+      (is (= 7 (:credit (get-corp))) "Gained 1 credit"))))
+
 (deftest tithonium
   ;; Tithonium - Forfeit option as rez cost, can have hosted condition counters
   (testing "Basic test"
@@ -5097,6 +5398,34 @@
         (card-ability state :runner au 0)
         (click-prompt state :runner "The Runner cannot jack out for the remainder of this run")
         (is (refresh wp) "Whirlpool not trashed")))))
+
+(deftest whitespace
+  ;; Whitespace
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Whitespace" "Hedge Fund"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Whitespace" "HQ")
+      (take-credits state :corp)
+      (let [ws (get-ice state :hq 0)]
+        (play-from-hand state :runner "Sure Gamble")
+        (click-credit state :runner)
+        (run-on state :hq)
+        (rez state :corp ws)
+        (run-continue state)
+        (is (= 10 (:credit (get-runner))) "Starting with 10 credits")
+        (fire-subs state ws)
+        (is (= 7 (:credit (get-runner))) "Lost 3 credits")
+        (is (:run @state) "Runner has sufficient credits")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (run-on state :hq)
+        (run-continue state)
+        (is (= 7 (:credit (get-runner))) "Starting with 7 credits")
+        (fire-subs state ws)
+        (is (= 4 (:credit (get-runner))) "Lost 3 credits")
+        (is (not (:run @state)) "Runner has insufficient credits")))))
 
 (deftest winchester
   ;; Winchester

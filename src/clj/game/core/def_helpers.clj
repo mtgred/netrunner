@@ -1,6 +1,7 @@
 (ns game.core.def-helpers
   (:require
     [game.core.card :refer [corp? get-card get-counters has-subtype? in-discard? faceup?]]
+    [game.core.card-defs :refer [defcard-impl]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]

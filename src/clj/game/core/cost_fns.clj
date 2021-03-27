@@ -125,6 +125,8 @@
   ([state side ability card targets]
    (concat (:cost ability)
            (:additional-cost ability)
+           (when-let [break-fn (:break-cost-bonus ability)]
+             (break-fn state side (make-eid state) card targets))
            (get-effects state side card :break-sub-additional-cost (flatten [ability targets])))))
 
 (defn jack-out-cost

@@ -4349,6 +4349,24 @@
       (run-continue state)
       (is (= :approach-server (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
 
+(deftest smartware-distributor
+  ;; Smartware Distributor
+  (testing "basic functionality"
+    (do-game
+      (new-game {:runner {:deck ["Smartware Distributor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Smartware Distributor")
+      (changes-val-macro
+        3 (get-counters (get-resource state 0) :credit)
+        "Gains 3 credits"
+        (card-ability state :runner (get-resource state 0) 0))
+      (take-credits state :runner)
+      (changes-val-macro
+        1 (:credit (get-runner))
+        "Gain 1 credit from Smartware Distributor"
+        (take-credits state :corp))
+      (is (= 2 (get-counters (get-resource state 0) :credit)) "Smartware Distributor has 2 credits left"))))
+
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
   (testing "basic functionality"
@@ -4734,6 +4752,28 @@
         (click-card state :runner (get-program state 0))
         (is (= 1 (count (get-runner-facedown state))) "Harbinger is facedown")
         (is (= 1 (get-counters (refresh tw) :credit)) "Tech Writer gained 0c from Harbinger installing facedown")))))
+
+(deftest telework-contract
+  ;; Telework Contract
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Telework Contract"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Telework Contract")
+      (changes-val-macro 3 (:credit (get-runner))
+                         "Got 3 credits from Telework Contract"
+                         (card-ability state :runner (get-resource state 0) 0))
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Got 0 credits from second attempt to click Telework Contract"
+                         (card-ability state :runner (get-resource state 0) 0))
+      (is (= 2 (:click (get-runner))) "No click taken from second attempt")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-resource state 0) 0)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (get-resource state)) "Telework Contract trashed after all credits taken"))))
 
 (deftest temujin-contract
   ;; Temüjin Contract
@@ -5504,6 +5544,38 @@
                            (run-continue state)
                            (card-ability state :runner refr 1)
                            (click-card state :runner refr))))))
+
+(deftest verbal-plasticity
+  ;; Verbal Plasticity
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Verbal Plasticity"]
+                          :deck [(qty "Sure Gamble" 8)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Verbal Plasticity")
+      (changes-val-macro
+        2 (count (:hand (get-runner)))
+        "First draw action draws 2 cards"
+        (click-draw state :runner))
+      (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Second draw action draws only 1 card"
+        (click-draw state :runner))))
+  (testing "The first and second time you draw card each turn (with GCS installed), draw one card"
+    (do-game
+      (new-game {:runner {:hand ["Verbal Plasticity" "Gene Conditioning Shoppe"]
+                          :deck [(qty "Sure Gamble" 8)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Verbal Plasticity")
+      (play-from-hand state :runner "Gene Conditioning Shoppe")
+      (changes-val-macro
+        2 (count (:hand (get-runner)))
+        "First draw action draws 2 cards"
+        (click-draw state :runner))
+      (changes-val-macro
+        2 (count (:hand (get-runner)))
+        "Second draw action draws also 2 cards"
+        (click-draw state :runner)))))
 
 (deftest virus-breeding-ground
   ;; Virus Breeding Ground - Gain counters
