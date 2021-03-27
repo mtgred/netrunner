@@ -13,6 +13,7 @@
             [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
+            [nr.gameboard.state :refer [game-state lock last-state parse-state]]
             [nr.translations :refer [tr tr-pronouns tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
@@ -22,10 +23,6 @@
             [reagent.core :as r]))
 
 (declare stacked-card-view show-distinct-cards)
-
-(defonce game-state (r/atom {}))
-(defonce last-state (atom {}))
-(defonce lock (atom false))
 
 (defonce board-dom (atom {}))
 (defonce sfx-state (atom {}))
@@ -520,9 +517,6 @@
 (defn handle-timeout [{:keys [gameid]}]
   (when (= gameid (:gameid @game-state))
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
-
-(defn parse-state [state]
-  (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (ws/register-ws-handler! :netrunner/state #(init-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
