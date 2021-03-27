@@ -460,7 +460,7 @@
 (defn handle-add [s card-state event]
   (.preventDefault event)
   (let [qty (str->int (:quantity @card-state))
-        card (nth (:matches @card-state) (:selected @card-state))
+        card (nth (:matches @card-state) (:selected @card-state) nil)
         best-card (lookup (:side card) card)]
     (if (js/isNaN qty)
       (swap! card-state assoc :quantity 3)
@@ -492,7 +492,10 @@
         [:input.qty {:type "text"
                      :value (:quantity @card-state)
                      :on-change #(swap! card-state assoc :quantity (.. % -target -value))}]
-        [:button (tr [:deck-builder.add-to-deck "Add to deck"])]
+        [:button (let [disabled (empty? (:matches @card-state))]
+                   {:disabled disabled
+                    :class (when disabled "disabled")})
+         (tr [:deck-builder.add-to-deck "Add to deck"])]
         (let [query (:query @card-state)
               matches (match (get-in @s [:deck :identity]) query)
               exact-match (= (:title (first matches)) query)]
