@@ -69,6 +69,19 @@
   (when (not (:replay @game-state))
     (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}])))
 
+(defn build-exception-msg [msg error]
+  (letfn [(build-report-url [error]
+            (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
+                         error
+                         "\n```")))]
+    (str "<div>"
+      msg
+      "<br/>"
+      "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
+      "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
+      (build-report-url error)
+      "');\">Report on GitHub</button></div>")))
+
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."

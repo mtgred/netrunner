@@ -109,13 +109,17 @@
          (-> ".log" js/$ (.resizable #js {:handles "w, n, nw"
                                           :resize log-resize
                                           :start log-start-resize
-                                          :stop log-stop-resize})))
+                                          :stop log-stop-resize}))
+         (resize-card-zoom)
+         (when (:update @should-scroll)
+           (let [n (r/dom-node this)]
+             (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :component-will-update
        (fn [this]
          (let [n (r/dom-node this)]
            (reset! should-scroll {:update (or (:send-msg @should-scroll)
-                                                  (scrolled-to-end? n 15))
+                                            (scrolled-to-end? n 15))
                                   :send-msg false})))
 
        :component-did-update
@@ -233,14 +237,14 @@
           (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
                                           :typing true}]))))))
 
-(defn indicate-action []
+(defn indicate-action [send]
   (when (not-spectator?)
     [:button.indicate-action {:on-click #(do (.preventDefault %)
-                                             (send-command "indicate-action"))
+                                             (send "indicate-action"))
               :key "Indicate action"}
      (tr [:game.indicate-action "Indicate action"])]))
 
-(defn log-input []
+(defn log-input [send]
   (let [gameid (r/cursor game-state [:gameid])
         games (r/cursor app-state [:games])
         s (r/atom {})]
@@ -256,13 +260,13 @@
                      :value (:msg @s)
                      :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
                                      (send-typing s))}]]
-           [indicate-action]])))))
+           [indicate-action send]])))))
 
-(defn log-panel []
+(defn log-panel [send]
   (fn []
     [:div.log
      (when (:replay @game-state)
        [log-selector])
      [log-pane]
      [log-typing]
-     [log-input]]))
+     [log-input send]]))
