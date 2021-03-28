@@ -1611,7 +1611,7 @@
             [cond-button (tr [:game.draw "Draw"])
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me))
-                  (not-empty (:deck @me)))
+                  (pos? (:deck-count @me)))
              #(send-command "draw")]
             [cond-button (tr [:game.gain-credit "Gain Credit"])
              (and (not (or @runner-phase-12 @corp-phase-12))
