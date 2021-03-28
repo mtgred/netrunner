@@ -5641,16 +5641,22 @@
   ;; Tread Lightly
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall" "Vanilla"]
+                      :hand ["Ice Wall" "Vanilla" "Crisium Grid"]
                       :credits 100}
                :runner {:hand ["Tread Lightly"]}})
     (play-from-hand state :corp "Vanilla" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Crisium Grid" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Tread Lightly")
     (click-prompt state :runner "HQ")
     (let [vanilla (get-ice state :hq 0)
-          icewall (get-ice state :hq 1)]
+          icewall (get-ice state :hq 1)
+          cgrid (get-content state :hq 0)]
+      (changes-val-macro
+        -3 (:credit (get-corp))
+        "Paid 3 credits to rez Crisium Grid"
+        (rez state :corp cgrid))
       (changes-val-macro
         -3 (:credit (get-corp))
         "Paid 3 credits to rez Vanilla"
