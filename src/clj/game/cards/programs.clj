@@ -589,12 +589,21 @@
                               :async true
                               :effect (effect (gain-credits :runner eid 2))}]}))
 
+(defcard "Buzzsaw"
+  (auto-icebreaker {:abilities [(break-sub 1 2 "Code Gate")
+                                (strength-pump 3 1)]}))
+
 (defcard "Cache"
   {:abilities [{:cost [:virus 1]
                 :async true
                 :effect (effect (gain-credits eid 1))
                 :msg "gain 1 [Credits]"}]
    :data {:counter {:virus 3}}})
+
+(defcard "Carmen"
+   (auto-icebreaker {:install-cost-bonus (req (if (:successful-run runner-reg) -2 0))
+                     :abilities [(break-sub 1 1 "Sentry")
+                                 (strength-pump 2 3)]}))
 
 (defcard "Cerberus \"Cuj.0\" H3"
   (power-counter-break "Sentry"))
@@ -642,6 +651,10 @@
                                 (effect-completed state side eid))
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
                                 (trash state side eid (:ice context) nil))))}]})
+
+(defcard "Cleaver"
+  (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier")
+                                (strength-pump 2 1)]}))
 
 (defcard "Cloak"
   {:recurring 1
@@ -1071,6 +1084,13 @@
                                                                            :effect (effect (max-access 0))}
                                                       :label "break 1 subroutine and access 0 cards"})
                                 (strength-pump 1 1)]}))
+
+(defcard "Echelon"
+  (auto-icebreaker {:strength-bonus (req (count (filter #(and (program? %)
+                                                              (has-subtype? % "Icebreaker"))
+                                                        (all-active-installed state :runner))))
+                    :abilities [(break-sub 1 1 "Sentry")
+                                (strength-pump 3 2)]}))
 
 (defcard "Egret"
   {:hosting {:card #(and (ice? %)
@@ -1628,6 +1648,12 @@
                                                    (program? target))))
                                 :type :recurring}}})
 
+(defcard "Marjanah"
+  (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier"
+                                           {:label "Break 1 Barrier subroutine"
+                                            :break-cost-bonus (req (when (:successful-run runner-reg) [:credit -1]))})
+                                (strength-pump 1 1)]}))
+
 (defcard "Mass-Driver"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                 (strength-pump 1 1)]
@@ -1741,7 +1767,9 @@
 (defcard "Net Shield"
   {:interactions {:prevent [{:type #{:net}
                              :req (req true)}]}
-   :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
+   :abilities [{:cost [:credit 1]
+                :once :per-turn
+                :msg "prevent the first net damage this turn"
                 :effect (effect (damage-prevent :net 1))}]})
 
 (defcard "Nfr"
@@ -2523,6 +2551,18 @@
                               :msg "give the Corp 2 [Credits]"
                               :async true
                               :effect (effect (gain-credits :corp eid 2))}]}))
+
+(defcard "Unity"
+  {:abilities [(break-sub 1 1 "Code Gate")
+               {:label "1 [Credits]: Add 1 strength for each installed icebreaker"
+                :async true
+                :effect (effect (continue-ability
+                                  (strength-pump
+                                    1
+                                    (count (filter #(and (program? %)
+                                                         (has-subtype? % "Icebreaker"))
+                                                   (all-active-installed state :runner))))
+                                  card nil))}]})
 
 (defcard "Upya"
   {:implementation "Power counters added automatically"

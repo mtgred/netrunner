@@ -2220,6 +2220,16 @@
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
 
+(deftest offworld-office
+  ;; Offworld Office
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand [(qty "Offworld Office" 2)]}})
+      (changes-val-macro
+        7 (:credit (get-corp))
+        "Corp gains 7 tag from Offworld Office"
+        (play-and-score state "Offworld Office")))))
+
 (deftest orbital-superiority
   ;; Orbital Superiority
   (testing "Basic test"
@@ -3084,6 +3094,31 @@
     (is (= 5 (hand-size :runner)) "Runner's hand size starts at 5")
     (play-and-score state "Self-Destruct Chips")
     (is (= 4 (hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
+
+(deftest send-a-message
+  ;; Send a Message
+  (testing "Basic test - score"
+    (do-game
+     (new-game {:corp {:deck ["Send a Message" "Archer"]}})
+     (play-from-hand state :corp "Archer" "HQ")
+     (let [archer (get-ice state :hq 0)]
+       (play-and-score state "Send a Message")
+       (click-card state :corp archer)
+       (is (rezzed? (refresh archer)))
+       (is (empty? (:prompt (get-runner))) "Ability finished resolving"))))
+  (testing "Basic test - steal"
+    (do-game
+     (new-game {:corp {:deck ["Send a Message" "Archer"]}})
+     (play-from-hand state :corp "Archer" "HQ")
+     (play-from-hand state :corp "Send a Message" "New remote")
+     (let [archer (get-ice state :hq 0)]
+       (take-credits state :corp)
+       (run-empty-server state "Server 1")
+       (click-prompt state :runner "Steal")
+       (click-card state :corp archer)
+       (is (rezzed? (refresh archer)))
+       (is (empty? (:prompt (get-runner))) "Ability finished resolving")
+       (is (empty? (:prompt (get-corp))) "Ability finished resolving")))))
 
 (deftest sensor-net-activation
   ;; Sensor Net Activation

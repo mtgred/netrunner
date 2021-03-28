@@ -3854,6 +3854,19 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
+(deftest regolith-mining-license
+  ;; Regolith Mining License
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Regolith Mining License"]}})
+   (play-from-hand state :corp "Regolith Mining License" "New remote")
+   (let [rml (get-content state :remote1 0)]
+     (rez state :corp (refresh rml))
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "Corp gains 3 credits"
+      (card-ability state :corp rml 0)))))
+
 (deftest reversed-accounts
   ;; Reversed Accounts - Trash to make Runner lose 4 credits per advancement
   (do-game

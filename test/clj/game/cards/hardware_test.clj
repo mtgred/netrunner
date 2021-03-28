@@ -3890,6 +3890,16 @@
         (laundry-archives state)
         (is (= 1 (:click (get-runner))) "Don't gain a click after playing the second run event")))))
 
+(deftest t400-memory-diamond
+  ;; T400 Memory Diamond
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["T400 Memory Diamond"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "T400 Memory Diamond")
+      (is (= 6 (hand-size :runner)) "Increased hand size")
+      (is (= 5 (core/available-mu state)) "Gain 1 memory"))))
+
 (deftest the-gauntlet
   (testing "Doesn't give additional accesses when no ice are broken"
     (do-game

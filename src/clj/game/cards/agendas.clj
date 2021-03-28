@@ -1112,6 +1112,12 @@
 (defcard "Obokata Protocol"
   {:steal-cost-bonus (req [:net 4])})
 
+(defcard "Offworld Office"
+  {:on-score
+   {:async true
+    :msg "gain 7 [Credits]"
+    :effect (effect (gain-credits :corp eid 7))}})
+
 (defcard "Orbital Superiority"
   {:on-score
    {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
@@ -1489,6 +1495,17 @@
   {:on-score {:silent (req true)
               :msg "decrease the Runner's maximum hand size by 1"}
    :constant-effects [(runner-hand-size+ -1)]})
+
+(defcard "Send a Message"
+  (let [ability
+        {:interactive (req true)
+         :choices {:card #(and (ice? %)
+                               (not (rezzed? %))
+                               (installed? %))}
+         :async true
+         :effect (effect (rez eid target {:ignore-cost :all-costs}))}]
+    {:on-score ability
+     :stolen ability}))
 
 (defcard "Sensor Net Activation"
   {:on-score {:effect (effect (add-counter card :agenda 1))

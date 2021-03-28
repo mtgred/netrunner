@@ -8,20 +8,45 @@
   `(try ~form
         (catch clojure.lang.ExceptionInfo ex#
           (let [msg# (.getMessage ^Throwable ex#)
-                form# (:cause (ex-data ex#))
+                form# (:form (ex-data ex#))
+                pred# (:pred (ex-data ex#))
+                values# (:values (ex-data ex#))
                 result# (:result (ex-data ex#))]
             (do-report {:type :fail :message msg#
-                        :expected form# :actual (list '~'not result#)})
+                        :expected form# :actual (list '~'not (cons pred# values#))})
             result#))))
+
+(defn is'-predicate
+  [msg form]
+  (let [pred (first form)
+         args (rest form)]
+     `(let [values# (list ~@args)
+            result# (apply ~pred values#)]
+        (if result#
+          (do-report {:type :pass, :message ~msg,
+                      :expected '~form, :actual (cons ~pred values#)})
+          (throw (ex-info ~msg {:form '~form
+                                :pred '~pred
+                                :values values#
+                                :result result#}))))))
+
+(defn is'-any
+  [msg form]
+  `(let [value# ~form]
+     (if value#
+       (do-report {:type :pass, :message ~msg,
+                   :expected '~form, :actual value#})
+       (do-report {:type :fail, :message ~msg,
+                   :expected '~form, :actual value#}))
+     value#))
 
 (defmacro is'
   ([form] `(is' ~form nil))
   ([form msg]
-   `(let [result# ~form]
-      (if result#
-        (do-report {:type :pass, :message ~msg,
-                    :expected '~form, :actual (list result#)})
-        (throw (ex-info ~msg {:cause '~form :result '~form}))))))
+   (if (and (sequential? form)
+            (function? (first form)))
+     (is'-predicate msg form)
+     (is'-any msg form))))
 
 ;;; helper functions for prompt interaction
 (defn get-prompt
@@ -121,7 +146,7 @@
             idx (or (:idx (first args)) 0)
             chosen (nth (filter choice-fn choices) idx nil)]
         (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
-          (is' (= choice (first choices))
+          (is' (= choice (mapv :value choices))
                (str (side-str side) " expected to click [ "
                     (if (string? choice) choice (:title choice ""))
                     " ] but couldn't find it. Current prompt is: " prompt)))))))

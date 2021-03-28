@@ -1681,6 +1681,16 @@
         "All four chosen cards should be shuffled back into R&D")
     (is (= ["Genotyping"] (->> (get-corp) :rfg (map :title))) "Genotyping should be rfg'd")))
 
+(deftest government-subsidy
+  ;; Government Subsidy
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Government Subsidy"]
+                      :credits 100}})
+    (changes-val-macro
+      5 (:credit (get-corp)) "Corp gains 15 credits"
+      (play-from-hand state :corp "Government Subsidy"))))
+
 (deftest green-level-clearance
   ;; Green Level Clearance
   (do-game

@@ -898,6 +898,12 @@
     :effect (req (wait-for (mill state :corp :corp 2)
                            (shuffle-into-rd-effect state side eid card 4)))}})
 
+(defcard "Government Subsidy"
+  {:on-play
+   {:msg "gain 15 [Credits]"
+    :async true
+    :effect (effect (gain-credits eid 15))}})
+
 (defcard "Green Level Clearance"
   {:on-play
    {:msg "gain 3 [Credits] and draw 1 card"
