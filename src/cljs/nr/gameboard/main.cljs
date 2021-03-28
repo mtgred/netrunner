@@ -16,7 +16,7 @@
             [nr.gameboard.actions :refer [send-command toast]]
             [nr.gameboard.log :refer [log-panel log-mode send-msg card-preview-mouse-over card-preview-mouse-out
                                       card-highlight-mouse-over card-highlight-mouse-out resize-card-zoom
-                                      zoom-channel]]
+                                      zoom-channel should-scroll]]
             [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
                                          load-remote-annotations delete-remote-annotations publish-annotations
                                          load-annotations-file save-annotations-file]]
@@ -55,19 +55,6 @@
   (toast text severity nil))
 
 (defonce button-channel (chan))
-
-(defn build-exception-msg [msg error]
-  (letfn [(build-report-url [error]
-            (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
-                            error
-                            "\n```")))]
-    (str "<div>"
-         msg
-         "<br/>"
-         "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
-         "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
-         (build-report-url error)
-         "');\">Report on GitHub</button></div>")))
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter
@@ -1661,6 +1648,11 @@
           (let [button (<! button-channel)]
             (swap! app-state assoc :button button))))
 
+    (add-watch active :change-page
+      (fn [_k _r [o] [n]]
+        (when (and (not= o "/play") (= n "/play"))
+          (reset! should-scroll {:update true :send-msg false}))))
+
     (r/create-class
       {:display-name "gameboard"
 
@@ -1726,15 +1718,15 @@
 
                  [:div.rightpane
                   [card-zoom-view zoom-card]
-                  [log-panel]]
+                  [log-panel send-command]]
                  (do (resize-card-zoom) nil)
 
                  [:div.centralpane
                   (if (= op-side :corp)
-                    [board-view-corp   me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
+                    [board-view-corp me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
                     [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run])
                   (if (= me-side :corp)
-                    [board-view-corp   me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
+                    [board-view-corp me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
                     [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run])]
 
                  [:div.leftpane [:div.opponent
