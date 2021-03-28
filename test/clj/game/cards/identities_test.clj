@@ -2035,14 +2035,11 @@
    (new-game {:corp {:id "Jinteki: Restoring Humanity"
                      :discard ["Neural EMP"]}})
    (take-credits state :corp)
-   (changes-val-macro
-     1 (:credit (get-corp))
-     "Gain 1 credit from ability"
-     (click-prompt state :corp "Yes"))
+   (is (= 9 (:credit (get-corp))) "Gained a credit for face down card")
    (run-empty-server state "Archives")
    (take-credits state :runner)
    (take-credits state :corp)
-   (is (empty? (:prompt (get-corp))) "Not prompted when no facedown card in archives")))
+   (is (= 12 (:credit (get-corp))) "Did not gain a credit for face down card")))
 
 (deftest kabonesa-wu-netspace-thrillseeker
   ;; Kabonesa Wu

@@ -832,17 +832,10 @@
 
 (defcard "Jinteki: Restoring Humanity"
   {:events [{:event :corp-turn-ends
-             :interactive (get-autoresolve :auto-restoring (complement never?))
-             :silent (get-autoresolve :auto-restoring never?)
-             :optional
-             {:req (req (pos? (count (remove :seen (:discard corp)))))
-              :autoresolve (get-autoresolve :auto-restoring)
-              :prompt "Gain 1 [Credits]?"
-              :yes-ability
-              {:msg "gain 1 [Credits]"
-               :async true
-               :effect (effect (gain-credits :corp eid 1))}}}]
-   :abilities [(set-autoresolve :auto-restoring "Restoring Humanity")]})
+             :req (req (pos? (count (remove :seen (:discard corp)))))
+             :msg "gain 1 [Credits]"
+             :async true
+             :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "Kabonesa Wu: Netspace Thrillseeker"
   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
