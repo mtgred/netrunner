@@ -37,7 +37,9 @@
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
      :classic "Classic"
-     :casual "Casual"}
+     :casual "Casual"
+     :system-gateway "System Gateway"
+     :startup "Startup"}
     :card-type
     {:all "All"
      :identity "Identity"
@@ -836,7 +838,9 @@
      :snapshot-plus "Apshotsnay Usplay"
      :socr "SOCRYAY"
      :classic "Assicclay"
-     :casual "Asualcay"}
+     :casual "Asualcay"
+     :system-gateway "Emsystay Atewaygay"
+     :startup "Artupstay"}
     :card-type
     {:all "Allyay"
      :identity "Identityay"
