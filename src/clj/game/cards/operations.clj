@@ -835,7 +835,7 @@
                                         (continue-ability state side (repeat-choice (inc current) total)
                                                           card nil))))}))]
     {:on-play
-     {:msg (msg "uses Fully Operational to make " (quantify (inc (count (full-servers state))) "gain/draw decision"))
+     {:msg (msg "make " (quantify (inc (count (full-servers state))) "gain/draw decision"))
       :async true
       :effect (effect (continue-ability (repeat-choice 1 (inc (count (full-servers state))))
                                         card nil))}}))
