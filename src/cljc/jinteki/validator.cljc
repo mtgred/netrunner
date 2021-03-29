@@ -217,12 +217,23 @@
   [fmt deck]
   (mwl-legal? fmt (combine-id-and-cards deck)))
 
+(defn reject-system-gateway-neutral-ids
+  [fmt deck]
+  (let [id (:title (:identity deck))]
+    (when (and (not= :system-gateway fmt)
+               (or (= id "The Catalyst: Convention Breaker")
+                   (= id "The Syndicate: Profit over Principle")))
+      {:legal false
+       :reason (str "Illegal identity: " id)
+       :description (str "Legal for " (-> fmt name s/capitalize))})))
+
 (defn build-format-legality
   [valid fmt deck]
   (let [mwl (legal-format? fmt deck)]
-    {:legal (and (:legal valid) (:legal mwl))
-     :reason (or (:reason valid) (:reason mwl))
-     :description (str "Legal for " (-> fmt name s/capitalize))}))
+    (or (reject-system-gateway-neutral-ids fmt deck)
+        {:legal (and (:legal valid) (:legal mwl))
+         :reason (or (:reason valid) (:reason mwl))
+         :description (str "Legal for " (-> fmt name s/capitalize))})))
 
 (defn build-snapshot-plus-legality
   [valid deck]
