@@ -17,6 +17,8 @@
 
 (declare generate-previous-cards)
 (declare generate-flip-cards)
+(declare insert-starter-info)
+(declare insert-starter-ids)
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
@@ -25,6 +27,7 @@
                            (:json (<! (GET "/data/cards")))
                            (:cards local-cards))
           cards (->> latest-cards
+                     (insert-starter-ids)
                      (sort-by :code))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
@@ -50,6 +53,24 @@
              :previous-cards (generate-previous-cards cards)
              :alt-info alt-info)
       (put! cards-channel cards)))
+
+(defn- insert-starter-info
+  [card]
+  (-> card
+      (assoc :influencelimit "∞")
+      (assoc-in [:format :standard] "banned")
+      (assoc-in [:format :startup] "banned")
+      (assoc-in [:format :eternal] "banned")
+      (assoc-in [:format :snapshot] "banned")
+      (assoc-in [:format :snapshot-plus] "banned")
+      (assoc-in [:format :classic] "banned")))
+
+(defn- insert-starter-ids
+  "Add special case info for the Starter Deck IDs"
+  [cards]
+  (->> cards
+       (map #(if (= (:title %) "The Catalyst: Convention Breaker") (insert-starter-info %) %))
+       (map #(if (= (:title %) "The Syndicate: Profit over Principle") (insert-starter-info %) %))))
 
 (defn- expand-face [card acc f]
   (let [flip (f (:flips card))
