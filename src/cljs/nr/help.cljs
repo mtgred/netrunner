@@ -148,20 +148,27 @@
                          "players of all levels. Most official Organised Play events will "
                          "follow the Standard format. "
                          "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
+            {:id "startup"
+             :title "What is the Startup format?"
+             :content [:ul
+                        [:p "Startup is a limited-cardpool format, intended for new players "
+                         "taking their first steps into Organized Play as well as experienced "
+                         "players who want a slimmed-down deckbuilding challenge. "
+                         "Refer to " [:a {:href "https://nisei.net/players/supported-formats/"} "NISEI Supported Formats"] "."]]}
+            {:id "system-gateway"
+             :title "What is the System Gateway format?"
+             :content [:ul
+                        [:p "System Gateway is NISEI’s foundational set. It is designed as an "
+                         "out-of-the-box learning experience and provides everything you need "
+                         "to start playing Netrunner. "
+                         "Refer to " [:a {:href "https://nisei.net/products/system-gateway/"} "NISEI System Gateway"] "."]]}
             {:id "eternal"
-             :title "What is Eternal format?"
+             :title "What is the Eternal format?"
              :content [:ul
                         [:p "Eternal is not affected by rotation and has a much less "
                          "stringent Most Wanted List. The largest and most complex format, "
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
-            {:id "core-experience"
-             :title "What is the Core Experience format?"
-             :content [:ul
-                        [:p "The \"core\" of the game experience, and an excellent "
-                         "starting point for new or returning players. A single copy of "
-                         "System Core 2019 is the only legal product; there is no MWL. "
                          "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
            {:id "snapshot"
              :title "What is the Snapshot format?"
@@ -179,14 +186,6 @@
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
                          "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
-           {:id "socr"
-             :title "What is the SOCR format?"
-             :content [:ul
-                        [:p "SOCR stands for Stimhack Online Cache Refresh. It's a limited "
-                         "cardpool tournament originally based on FFG's Cache Refresh "
-                         "format but with an updated MWL and cardpool. It is currently "
-                         "in it's 9th iteration. "
-                         "Refer to the " [:a {:href "https://forum.stimhack.com/t/stimhack-online-cache-refresh-9-information-thread/10419"} "Stimhack Thread"] "."]]}
            {:id "classic"
              :title "What is the Classic format?"
              :content [:ul

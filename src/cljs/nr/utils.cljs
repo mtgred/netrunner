@@ -100,21 +100,21 @@
 
 (def slug->format
   {"standard" "Standard"
+   "system-gateway" "System Gateway"
+   "startup" "Startup"
    "eternal" "Eternal"
-   "core-experience" "Core Experience"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "socr" "SOCR"
    "classic" "Classic"
    "casual" "Casual"})
 
 (def format->slug
   {"Standard" "standard"
+   "System Gateway" "system-gateway"
+   "Startup" "startup"
    "Eternal" "eternal"
-   "Core Experience" "core-experience"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "SOCR" "socr"
    "Classic" "classic"
    "Casual" "casual"})
 

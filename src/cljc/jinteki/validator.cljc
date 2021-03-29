@@ -67,10 +67,15 @@
   [identity]
   (= "NAPD Multiplayer" (:setname identity)))
 
-(defn id-inf-limit
-  "Returns influence limit of an identity or INFINITY in case of draft IDs."
+(defn system-gateway-id?
+  "Check if the specified id is a System Gateway identity"
   [identity]
-  (if (or (draft-id? identity) (multiplayer-id? identity))
+  (= "System Gateway" (:setname identity)))
+
+(defn id-inf-limit
+  "Returns influence limit of an identity or INFINITY in case of special IDs."
+  [identity]
+  (if (or (system-gateway-id? identity) (draft-id? identity) (multiplayer-id? identity))
     INFINITY
     (:influencelimit identity 0)))
 
@@ -235,52 +240,25 @@
   (merge (build-format-legality valid :snapshot-plus deck)
          {:description "Legal for Snapshot Plus"}))
 
-(defn cards-over-one-core
-  "Returns cards in deck that require more than single box."
+(defn cards-over-one-sg
+  "Returns cards in deck that require more than one copy of System Gateway."
   [cards]
   (letfn [(one-box-num-copies? [{:keys [qty card]}] (<= qty (:quantity card 3)))]
     (remove one-box-num-copies? cards)))
 
-(defn cards-not-in-most-recent-core
-  "Returns cards in deck that aren't in latest System Core"
-  [cards]
-  (remove #(= "system-core-2019" (get-in % [:card :cycle_code])) cards))
-
-(defn build-core-experience-legality
+(defn build-system-gateway-legality
   [valid {:keys [cards] :as deck}]
-  (let [mwl (legal-format? :core-experience deck)
-        example-card (first (concat (cards-not-in-most-recent-core cards)
-                                    (cards-over-one-core cards)))]
+  (let [mwl (legal-format? :system-gateway deck)
+        example-card (first (cards-over-one-sg cards))]
     {:legal (and (nil? example-card)
                  (:legal valid)
                  (:legal mwl))
      :reason (or (when example-card
-                   (str "Only one System Core 2019 permitted - check: "
+                   (str "Only one copy of System Gateway permitted - check: "
                         (get-in example-card [:card :title])))
                  (:reason valid)
                  (:reason mwl))
-     :description "Legal for Core Experience"}))
-
-(defn build-socr-legality
-  [valid deck]
-  (let [mwl (legal-format? :socr deck)
-        big-boxes ["honor-and-profit"
-                   "order-and-chaos"
-                   "data-and-destiny"
-                   "reign-and-reverie"]
-        single-set? (as-> deck d
-                      (combine-id-and-cards d)
-                      (group-by #(get-in % [:card :cycle_code]) d)
-                      (select-keys d big-boxes)
-                      (keys d)
-                      (>= 1 (count d)))]
-    {:legal (and single-set?
-                 (:legal valid)
-                 (:legal mwl))
-     :reason (or (when-not single-set? "Cards from too many Big Boxes")
-                 (:reason valid)
-                 (:reason mwl))
-     :description "Legal for Stimhack Online Cache Refresh"}))
+     :description "Legal for System Gateway"}))
 
 (defn calculate-deck-status
   "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
@@ -290,12 +268,12 @@
     {:format (:format deck)
      :casual valid
      :standard (build-format-legality valid :standard deck)
+     :startup (build-format-legality valid :startup deck)
+     :system-gateway (build-system-gateway-legality valid deck)
      :eternal (build-format-legality valid :eternal deck)
      :classic (build-format-legality valid :classic deck)
      :snapshot (build-format-legality valid :snapshot deck)
-     :snapshot-plus (build-snapshot-plus-legality valid deck)
-     :core-experience (build-core-experience-legality valid deck)
-     :socr (build-socr-legality valid deck)}))
+     :snapshot-plus (build-snapshot-plus-legality valid deck)}))
 
 (defn trusted-deck-status
   [{:keys [status] :as deck}]
