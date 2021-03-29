@@ -62,22 +62,11 @@
   [identity]
   (= "Draft" (:setname identity)))
 
-(defn multiplayer-id?
-  "Check if the specified id is a NAPD Multiplayer identity"
-  [identity]
-  (= "NAPD Multiplayer" (:setname identity)))
-
-(defn system-gateway-id?
-  "Check if the specified id is a System Gateway identity"
-  [identity]
-  (= "System Gateway" (:setname identity)))
-
 (defn id-inf-limit
   "Returns influence limit of an identity or INFINITY in case of special IDs."
   [identity]
-  (if (or (system-gateway-id? identity) (draft-id? identity) (multiplayer-id? identity))
-    INFINITY
-    (:influencelimit identity 0)))
+  (let [inf (:influencelimit identity)]
+    (if (nil? inf) INFINITY inf)))
 
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
