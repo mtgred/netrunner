@@ -280,7 +280,7 @@
            (doall
              (for
                [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
-                    :português :sverige :stimhack-league :русский]]
+                    :português :sverige :русский]]
                ^{:key ch}
                [channel-view {:channel ch :active-channel (:channel @s)} s]))]
           [:div.chat-container

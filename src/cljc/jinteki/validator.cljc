@@ -67,10 +67,15 @@
   [identity]
   (= "NAPD Multiplayer" (:setname identity)))
 
-(defn id-inf-limit
-  "Returns influence limit of an identity or INFINITY in case of draft IDs."
+(defn system-gateway-id?
+  "Check if the specified id is a System Gateway identity"
   [identity]
-  (if (or (draft-id? identity) (multiplayer-id? identity))
+  (= "System Gateway" (:setname identity)))
+
+(defn id-inf-limit
+  "Returns influence limit of an identity or INFINITY in case of special IDs."
+  [identity]
+  (if (or (system-gateway-id? identity) (draft-id? identity) (multiplayer-id? identity))
     INFINITY
     (:influencelimit identity 0)))
 
