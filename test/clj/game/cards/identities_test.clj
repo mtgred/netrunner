@@ -2751,7 +2751,6 @@
        (rez state :corp (refresh dr2))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (click-prompt state :corp "Yes")
        (changes-val-macro
          2 (:credit (get-corp))
          "Gain 2 credit from NBN: Reality Plus"
@@ -2776,7 +2775,6 @@
        (rez state :corp (refresh dr2))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (click-prompt state :corp "Yes")
        (changes-val-macro
          2 (count (:hand (get-corp)))
          "Draw 2 cards from NBN: Reality Plus"
