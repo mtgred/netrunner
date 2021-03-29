@@ -1121,21 +1121,17 @@
 
 (defcard "NBN: Reality Plus"
   {:events [{:event :runner-gain-tag
-             :optional
-             {:req (req (first-event? state :runner :runner-gain-tag))
-              :player :corp
-              :prompt "Do you want to gain 2 [Credits] or draw 2 cards"
-              :autoresolve (get-autoresolve :auto-virtual-frontiers)
-              :yes-ability
-              {:async true
-               :waiting-prompt "Corp to use NBN: Reality Plus"
-               :prompt "Select option"
-               :player :corp
-               :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-               :effect (req (if (= target "Gain 2 [Credits]")
-                              (gain-credits state :corp eid 2)
-                              (draw state :corp eid 2 nil)))}}}]
-   :abilities [(set-autoresolve :auto-virtual-frontiers "Reality Plus")]})
+             :req (req (first-event? state :runner :runner-gain-tag))
+             :player :corp
+             :async true
+             :waiting-prompt "Corp to use NBN: Reality Plus"
+             :prompt "Select option"
+             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
+             :msg (msg (decapitalize target))
+             :effect (req
+                       (if (= target "Gain 2 [Credits]")
+                            (gain-credits state :corp eid 2)
+                            (draw state :corp eid 2 nil)))}]})
 
 (defcard "NBN: The World is Yours*"
   {:constant-effects [(corp-hand-size+ 1)]})
