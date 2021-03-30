@@ -66,7 +66,7 @@
   "Returns influence limit of an identity or INFINITY in case of special IDs."
   [identity]
   (let [inf (:influencelimit identity)]
-    (if (nil? inf) INFINITY inf)))
+    (if (or (nil? inf) (= "∞" inf)) INFINITY inf)))
 
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
