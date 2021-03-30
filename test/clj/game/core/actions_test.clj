@@ -7,7 +7,7 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest undo-turn
+(deftest undo-turn-test
   (do-game
     (new-game)
     (play-from-hand state :corp "Hedge Fund")
@@ -21,7 +21,7 @@
     (is (zero? (:click (get-corp))) "Corp has no clicks - turn not yet started")
     (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
 
-(deftest undo-click
+(deftest undo-click-test
   (do-game
     (new-game {:corp {:deck ["Ikawah Project"]}
                :runner {:deck ["Day Job"]}})
@@ -46,7 +46,7 @@
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
 
-(deftest undo-click-with-bioroid-cost
+(deftest undo-click-with-bioroid-cost-test
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Eli 1.0"]}})
@@ -70,7 +70,7 @@
     (is (= 4 (:click (get-runner))))
     (is (last-log-contains? state "Runner uses the undo-click command"))))
 
-(deftest counter-manipulation-commands
+(deftest counter-manipulation-commands-test
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
     (new-game {:corp {:deck ["Adonis Campaign"
@@ -152,7 +152,7 @@
         (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
         (is (= 12 (:credit (get-corp))))))))
 
-(deftest counter-manipulation-commands-smart
+(deftest counter-manipulation-commands-smart-test
   ;; Test interactions of smart counter advancement command
   (do-game
     (new-game {:corp {:deck ["House of Knives"]}})
@@ -173,3 +173,13 @@
       (is (empty? (:prompt (get-corp))) "Counter prompt closed")
       (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
       (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))
+
+(deftest no-action-during-action-test
+  (do-game
+    (new-game {:runner {:deck [(qty "Sure Gamble" 10)]}})
+    (take-credits state :corp)
+    (run-on state :hq)
+    (changes-val-macro
+      0 (count (:hand (get-runner)))
+      "Runner draws no cards"
+      (core/process-action "draw" state :runner nil))))

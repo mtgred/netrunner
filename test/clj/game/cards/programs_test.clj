@@ -1202,8 +1202,8 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Chisel")
-      (play-from-hand state :runner "Devil Charm")
       (click-card state :runner "Ice Wall")
+      (play-from-hand state :runner "Devil Charm")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
         (run-on state "HQ")

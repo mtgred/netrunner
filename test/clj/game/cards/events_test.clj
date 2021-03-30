@@ -2346,13 +2346,11 @@
       (is (= 11 (count (:discard (get-runner))))))))
 
 (deftest freedom-through-equality
-  ;; Move Freedom Through Equality to runner score on another steal
-  ;; Check only one current used
+  ;; Freedom Through Equality
   (do-game
     (new-game {:corp {:deck [(qty "Project Beale" 2)]}
                :runner {:deck ["Street Peddler" (qty "\"Freedom Through Equality\"" 3) "Sure Gamble"]}})
     (starting-hand state :runner ["Street Peddler"
-                                  "\"Freedom Through Equality\""
                                   "\"Freedom Through Equality\""
                                   "Sure Gamble"])
     (play-from-hand state :corp "Project Beale" "New remote")
@@ -2364,10 +2362,9 @@
     (is (= 1 (count (:scored (get-runner)))) "Freedom Through Equality not moved from Peddler to score area")
     (take-credits state :runner)
     (take-credits state :corp)
-    (run-empty-server state "Server 2")
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "\"Freedom Through Equality\"")
-    (play-from-hand state :runner "\"Freedom Through Equality\"")
+    (run-empty-server state "Server 2")
     (click-prompt state :runner "Steal")
     (is (= 3 (count (:scored (get-runner)))) "Freedom Through Equality moved to score area")
     (is (= 5 (:agenda-point (get-runner))) "Freedom Through Equality for 1 agenda point")))
@@ -3696,6 +3693,7 @@
       "Couldn't play Mining Accident without running a central first"
       (play-from-hand state :runner "Mining Accident"))
     (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
     (changes-val-macro
       1 (count-bad-pub state)
       "Corp took 1 BP"

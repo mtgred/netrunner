@@ -133,19 +133,6 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true}))})
 
-(defn make-recurring-ability
-  [ability]
-  (if (:recurring ability)
-    (let [recurring-ability
-          {:msg "take 1 [Recurring Credits]"
-           :req (req (pos? (get-counters card :recurring)))
-           :async true
-           :effect (req (add-counter state side card :recurring -1)
-                        (wait-for (gain-credits state side 1)
-                                  (trigger-event-sync state side eid :spent-credits-from-card (get-card state card))))}]
-      (update ability :abilities #(conj (into [] %) recurring-ability)))
-    ability))
-
 (defn trash-or-rfg
   [state _ eid card]
   (let [side (to-keyword (:side card))
@@ -175,11 +162,36 @@
         (update ability :constant-effects #(conj (into [] %) constant-ab)))
       ability)))
 
+(defn make-recurring-ability
+  [ability]
+  (if (:recurring ability)
+    (let [recurring-ability
+          {:msg "take 1 [Recurring Credits]"
+           :req (req (pos? (get-counters card :recurring)))
+           :async true
+           :effect (req (add-counter state side card :recurring -1)
+                        (wait-for (gain-credits state side 1)
+                                  (trigger-event-sync state side eid :spent-credits-from-card (get-card state card))))}]
+      (update ability :abilities #(conj (into [] %) recurring-ability)))
+    ability))
+
+(defn make-click-abilities-actions
+  [ability]
+  (let [paid-abilities (mapv
+                         (fn [ab]
+                           (if (and (:cost ab)
+                                    (= :click (first (:cost ab))))
+                             (assoc ab :action true)
+                             ab))
+                         (:abilities ability))]
+    (assoc ability :abilities paid-abilities)))
+
 (defn add-default-abilities
   [title ability]
   (->> ability
        (make-current-event-handler title)
-       (make-recurring-ability)))
+       (make-recurring-ability)
+       (make-click-abilities-actions)))
 
 (defn corp-recur
   ([] (corp-recur (constantly true)))

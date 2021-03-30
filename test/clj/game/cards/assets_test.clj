@@ -5369,7 +5369,6 @@
     (play-from-hand state :corp "Worlds Plaza" "New remote")
     (let [plaza (get-content state :remote1 0)]
       (rez state :corp plaza)
-      (card-ability state :corp plaza 0)
       (let [credits (:credit (get-corp))]
         (card-ability state :corp plaza 0)
         (click-card state :corp (find-card "Personalized Portal" (:hand (get-corp))))

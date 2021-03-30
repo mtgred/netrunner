@@ -253,8 +253,8 @@
   (or effect msg (seq (keys @ability-types))))
 
 (defn resolve-ability
-  ([state side {:keys [eid] :as ability} card targets]
-   (resolve-ability state side (or eid (make-eid state {:source card :source-type :ability})) ability card targets))
+  ([state side {:keys [eid action] :as ability} card targets]
+   (resolve-ability state side (or eid (make-eid state {:source card :source-type :ability :action action})) ability card targets))
   ([state side eid ability card targets]
    (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
@@ -264,9 +264,6 @@
     ;; Only has the eid, in effect a nil ability
     (and eid (= 1 (count ability)))
     (effect-completed state side eid)
-    ;; This was called directly without an eid present
-    (and ability (not eid))
-    (resolve-ability-eid state side (assoc ability :eid (make-eid state eid)) card targets)
     ;; Both ability and eid are present, so we're good to go
     (and ability eid)
     (let [ab (select-ability-kw ability)
@@ -360,7 +357,7 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
+  [state side {:keys [async eid cost player waiting-prompt action label] :as ability} card targets]
   (when waiting-prompt
     (add-to-prompt-queue
       state (cond
@@ -377,16 +374,15 @@
             (let [payment-str (:msg async-result)
                   cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
               (if payment-str
-                (wait-for (checkpoint state side (make-eid state eid) nil)
-                          (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]
-                            ;; Print the message
-                            (print-msg state side ability card targets payment-str)
-                            ;; Trigger the effect
-                            (register-once state side ability card)
-                            (do-effect state side ability (ugly-counter-hack card cost) targets)
-                            ;; If the ability isn't async, complete it
-                            (when-not async
-                              (effect-completed state side eid))))
+                (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+                  ;; Print the message
+                  (print-msg state side ability card targets payment-str)
+                  ;; Trigger the effect
+                  (register-once state side ability card)
+                  (do-effect state side ability (ugly-counter-hack card cost) targets)
+                  ;; If the ability isn't async, complete it
+                  (when-not async
+                    (effect-completed state side eid)))
                 (effect-completed state side eid)))))
 
 (defn- do-choices

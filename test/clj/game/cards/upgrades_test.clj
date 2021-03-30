@@ -2436,6 +2436,8 @@
       (click-prompt state :runner "No action")
       (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
       (is (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (click-prompt state :runner "Nihongai Grid")
+      (click-prompt state :runner "No action")
       (take-credits state :runner)
       (is (find-card "Beanstalk Royalties" (:hand (get-corp))))))
   (testing "Interaction with RNG Key. #5046"

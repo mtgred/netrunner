@@ -4339,6 +4339,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Wyrm")
     (run-empty-server state :remote1)
+    (click-prompt state :runner "No action")
     (take-credits state :runner)
     (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
     (play-from-hand state :corp "Trojan Horse")

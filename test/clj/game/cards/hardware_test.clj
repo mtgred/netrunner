@@ -1474,6 +1474,7 @@
         (click-prompt state :runner "Add installed program to the top of the Runner's Stack")
         (click-card state :runner fo)
         (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
+        (run-jack-out state)
         (take-credits state :runner)
         (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
   (testing "Pump abilities don't disappear when card is hosted #4770"
@@ -2242,8 +2243,13 @@
        (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
-       ;; trigger border control
+       (run-jack-out state)
+       (is (not (:run @state)))
+       (core/gain state :runner :click 10)
        (play-from-hand state :runner "Lucky Charm")
+       (run-on state "Server 1")
+       (run-continue state)
+       ;; trigger border control
        (card-ability state :corp (refresh bc) 0)
        (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
        (is (:run @state) "Run not ended yet")
@@ -2252,12 +2258,17 @@
        (click-prompt state :runner "Done")
        (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
-       ;; win batty psi game and fire ice wall sub
+       (run-jack-out state)
+       (is (not (:run @state)))
        (play-from-hand state :runner "Lucky Charm")
+       (run-on state "Server 1")
+       (run-continue state)
+       ;; win batty psi game and fire ice wall sub
        (card-ability state :corp mb 0)
        (click-prompt state :corp "1 [Credits]")
        (click-prompt state :runner "0 [Credits]")
-       (card-subroutine state :corp (refresh iw) 0)
+       (click-card state :corp "Ice Wall")
+       (click-prompt state :corp "End the run")
        (is (:run @state) "Run not ended yet")
        (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)

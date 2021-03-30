@@ -408,13 +408,14 @@
     (do-game
       (new-game {:corp {:deck ["Better Citizen Program"]}
                  :runner {:deck [(qty "The Maker's Eye" 2)
-                                 (qty "Wyrm" 2)]}})
+                                 (qty "Wyrm" 2)]
+                          :credit 20}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
       (is (zero? (count-tags state)) "Runner starts with 0 tags")
       (play-from-hand state :runner "The Maker's Eye")
       (click-prompt state :corp "Yes")
+      (run-continue state)
       (is (= 1 (count-tags state)) "Runner takes 1 tag for playing a Run event")
       (play-from-hand state :runner "Wyrm")
       (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")

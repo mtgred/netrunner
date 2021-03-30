@@ -8,6 +8,7 @@
 (defcard "Corp Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
+                :action true
                 :msg "gain 1 [Credits]"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
@@ -18,6 +19,7 @@
                {:label "Draw 1 card"
                 :req (req (not-empty (:deck corp)))
                 :cost [:click]
+                :action true
                 :msg "draw 1 card"
                 :async true
                 :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-corp-click-draw nil nil)
@@ -27,6 +29,7 @@
                                        (draw state side eid 1 nil)))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
+                :action true
                 :req (req (and (not-empty (:hand corp))
                                (in-hand? target)
                                (or (agenda? target)
@@ -53,6 +56,7 @@
                                  target server {:base-cost [:click 1]
                                                 :action :corp-click-install})))}
                {:label "Play 1 operation"
+                :action true
                 :async true
                 :req (req (and (not-empty (:hand corp))
                                (in-hand? target)
@@ -63,6 +67,7 @@
                                            target {:base-cost [:click 1]}))}
                {:label "Advance 1 installed card"
                 :cost [:click 1 :credit 1]
+                :action true
                 :async true
                 :msg (msg "advance " (card-str state target))
                 :req (req (can-advance? state side target))
@@ -72,6 +77,7 @@
                                 (effect-completed eid))}
                {:label "Trash 1 resource if the Runner is tagged"
                 :cost [:click 1 :credit 2]
+                :action true
                 :async true
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
@@ -83,6 +89,7 @@
                 :effect (effect (trash eid target nil))}
                {:label "Purge virus counters"
                 :cost [:click 3]
+                :action true
                 :msg "purge all virus counters"
                 :effect (effect (purge)
                                 (play-sfx "virus-purge"))}]})
@@ -90,6 +97,7 @@
 (defcard "Runner Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"
                 :cost [:click]
+                :action true
                 :msg "gain 1 [Credits]"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
@@ -100,6 +108,7 @@
                {:label "Draw 1 card"
                 :req (req (not-empty (:deck runner)))
                 :cost [:click]
+                :action true
                 :msg "draw 1 card"
                 :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-runner-click-draw nil nil)
                                        (trigger-event state side :runner-click-draw (->> @state side :deck (take 1)))
@@ -130,10 +139,12 @@
                 :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
                                            target {:base-cost [:click 1]}))}
                {:label "Run any server"
+                :action true
                 :async true
                 :effect (effect (make-run eid target nil {:click-run true}))}
                {:label "Remove 1 tag"
                 :cost [:click 1 :credit 2]
+                :action true
                 :msg "remove 1 tag"
                 :req (req tagged)
                 :async true

@@ -90,9 +90,10 @@
                       " matching cards. Current prompt is: n" prompt)))))
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
-      (is' (true? (prompt-is-type? state side :select))
-           (str "click-card should only be used with prompts "
-                "requiring the user to click on cards on table"))
+      (let [prompt (prompt-is-type? state side :select)]
+        (is' (= :select (:prompt-type prompt))
+             (str "click-card should only be used with prompts "
+                  "requiring the user to click on cards on table")))
       ;; Prompt is a select, but card isn't correct type
       (not (or (map? card)
                (string? card)))

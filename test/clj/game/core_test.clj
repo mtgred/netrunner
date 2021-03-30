@@ -314,9 +314,12 @@
 
 (defn play-from-hand-impl
   [state side title & server]
-  (let [card (find-card title (get-in @state [side :hand]))]
+  (let [card (find-card title (get-in @state [side :hand]))
+        resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
     (is' (some? card) (str title " is in the hand"))
-    (when (some? card)
+    (when (and (not resolving-action)
+               (some? card))
       (core/process-action "play" state side {:card card :server (first server)})
       true)))
 
@@ -329,10 +332,14 @@
 ;;; Run functions
 (defn run-on-impl
   [state server]
-  (let [run (:run @state)]
+  (let [run (:run @state)
+        resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
     (is' (not run) "There is no existing run")
     (is' (pos? (get-in @state [:runner :click])) "Runner can make a run")
-    (when (and (not run) (pos? (get-in @state [:runner :click])))
+    (when (and (not resolving-action)
+               (not run)
+               (pos? (get-in @state [:runner :click])))
       (core/process-action "run" state :runner {:server server})
       true)))
 
@@ -439,14 +446,18 @@
 
 (defn play-run-event-impl
   [state card server]
-  (when (play-from-hand state :runner card)
-    (is' (:run @state) "There is a run happening")
-    (is' (= [server] (get-in @state [:run :server])) "Correct server is run")
-    (when (and (:run @state)
-               (= [server] (get-in @state [:run :server]))
-               (run-continue state))
-      (is' (seq (get-in @state [:runner :prompt])) "A prompt is shown")
-      (is' (true? (get-in @state [:run :successful])) "Run is marked successful"))))
+  (let [resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
+    (when (and (not resolving-action)
+               (play-from-hand state :runner card))
+      (let [run (:run @state)]
+        (is' run "There is a run happening")
+        (is' (= [server] (:server run)) "Correct server is run")
+        (when (and run
+                   (= [server] (:server run))
+                   (run-continue state))
+          (is' (get-in @state [:runner :prompt]) "A prompt is shown")
+          (is' (get-in @state [:run :successful]) "Run is marked successful"))))))
 
 (defmacro play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
@@ -498,18 +509,28 @@
 
 (defn click-draw
   [state side]
-  (core/process-action "draw" state side nil))
+  (let [resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
+    (when (not resolving-action)
+      (core/process-action "draw" state side nil))))
 
 (defn click-credit
   [state side]
-  (core/process-action "credit" state side nil))
+  (let [resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
+    (when (not resolving-action)
+      (core/process-action "credit" state side nil))))
 
 (defn click-advance-impl
   [state side card]
-  (let [card (get-card state card)]
+  (let [card (get-card state card)
+        resolving-action (:resolving-action @state)]
+    (is' (not resolving-action) "Not currently resolving an action")
     (is' (some? card) (str (:title card) " exists"))
     (is' (installed? card) (str (:title card) " is installed"))
-    (when (and (some? card) (installed? card))
+    (when (and (not resolving-action)
+               (some? card)
+               (installed? card))
       (core/process-action "advance" state side {:card card}))))
 
 (defmacro click-advance

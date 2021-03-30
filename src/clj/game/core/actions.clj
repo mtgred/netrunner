@@ -33,11 +33,19 @@
 ;;; Neutral actions
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
-    (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
+    (when (and (or (not (:action ability))
+                   (and (:action ability)
+                        (not (:resolving-action @state))))
+               (or (nil? cost)
+                   (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
+      (let [eid (make-eid state {:source card
+                                 :source-type :ability
+                                 :source-info {:ability-idx ability-idx}
+                                 :resolving-action true})]
+        (when (:action ability)
+          (swap! state assoc :resolving-action eid))
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability

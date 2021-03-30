@@ -49,13 +49,16 @@
       (card-ability state :runner oca 0)
       (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
       (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
-      (is (= 1 (:click (get-runner))) "Not charged a click")
+      (click-prompt state :runner "Done")
+      (take-credits state :runner)
+      (take-credits state :corp)
       (play-from-hand state :runner "Hivemind")
       (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
+      (is (= 4 (:click (get-runner))) "Not charged a click")
       (card-ability state :runner scheh 0)
       (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
-      (is (= 1 (:click (get-runner))) "Not charged a click"))))
+      (is (= 3 (:click (get-runner))) "Not charged a click"))))
 
 (deftest deactivate-program
   ;; deactivate - Program; ensure MU are restored

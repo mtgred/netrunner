@@ -22,7 +22,7 @@
 (defn register-effect-completed
   [state eid effect]
   (if (get-in @state [:effect-completed (:eid eid)])
-    (throw (Exception. (str "Eid has alreasy been registered")))
+    (throw (Exception. (str "Eid has already been registered")))
     (swap! state assoc-in [:effect-completed (:eid eid)] effect)))
 
 (defn clear-eid-wait-prompt
@@ -36,10 +36,14 @@
   [state _ eid]
   (doseq [side [:corp :runner]]
     (clear-eid-wait-prompt state side eid))
-  (when-let [handler (get-in @state [:effect-completed (:eid eid)])]
+  (if-let [handler (get-in @state [:effect-completed (:eid eid)])]
     (let [results (handler eid)]
       (swap! state update :effect-completed dissoc (:eid eid))
-      results)))
+      (when (= (:eid eid) (get-in @state [:resolving-action :eid]))
+        (swap! state dissoc :resolving-action))
+      results)
+    (when (= (:eid eid) (get-in @state [:resolving-action :eid]))
+      (swap! state dissoc :resolving-action))))
 
 (defn make-result
   [eid result]

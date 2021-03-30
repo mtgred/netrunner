@@ -1930,7 +1930,7 @@
         (take-credits state :corp)
         (run-empty-server state "Server 1")
         (is (= 8 (core/trash-cost state :runner (refresh pad))))
-        (run-jack-out state)
+        (click-prompt state :runner "No action")
         (take-credits state :runner)
         (play-from-hand state :corp "Product Recall")
         (let [credits (:credit (get-corp))]
@@ -2631,15 +2631,19 @@
               mm (get-in @state [:corp :identity])]
           (rez state :corp mcaap)
           (card-ability state :corp mcaap 0)
-          (dotimes [_ 2]
-            (take-credits state :corp)
-            (take-credits state :runner)
-            (card-ability state :corp mcaap 0))
+          (take-credits state :corp)
+          (click-prompt state :corp "Gain 1 [Credits]")
+          (take-credits state :runner)
+          (card-ability state :corp mcaap 0)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (card-ability state :corp mcaap 0)
           (click-credit state :corp)
           (card-ability state :corp mcaap 1)
-          (changes-val-macro 1 (:credit (get-corp))
-                             "Gained 1 credit from MM ability"
-                             (click-prompt state :corp "Gain 1 [Credits]"))))))
+          (changes-val-macro
+            1 (:credit (get-corp))
+            "Gained 1 credit from MM ability"
+            (click-prompt state :corp "Gain 1 [Credits]"))))))
   (testing "Cases where Mirrormorph does not trigger"
     (testing "Using same Asset ability multiple times"
       (do-game
