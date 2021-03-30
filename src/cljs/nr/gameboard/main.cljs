@@ -676,7 +676,7 @@
     [:div
      (doall (map-indexed
               (fn [i card]
-                [:div {:key (:cid card)
+                [:div {:key (or (:cid card) i)
                        :class (str
                                 (if (and (not= "select" (-> @prompt first :prompt-type))
                                          (this-user? @user)
@@ -702,7 +702,7 @@
            (drop-area name {:class (when (> size 6) "squeeze")})
            [build-hand-card-view user side hand hand-count prompt remotes "card-wrapper"]
            [label @hand {:opts {:name translated-name
-                                :fn (fn [cursor] (str (count cursor) "/" (:total @hand-size)))}}]]
+                                :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}

@@ -74,6 +74,27 @@
              (= (:gameid game-from-clientid) (:gameid game-from-gameid))))
       (catch Exception e false))))
 
+(defn- is-starter-deck?
+  [player]
+  (let [id (get-in player [:deck :identity :title])
+        card-cnt (reduce + (map :qty (get-in player [:deck :cards])))]
+    (or (and (= id "The Syndicate: Profit over Principle")
+             (= card-cnt 34))
+        (and (= id "The Catalyst: Convention Breaker")
+             (= card-cnt 30)))))
+
+(defn- check-for-starter-decks
+  "Starter Decks can require 6 or 7 agenda points"
+  [game]
+  (let [starts (every? is-starter-deck? (:players game))]
+  (if (and (= (:format game) "system-gateway")
+           (every? is-starter-deck? (:players game)))
+    (do
+      (swap! (:state game) assoc-in [:runner :agenda-point-req] 6)
+      (swap! (:state game) assoc-in [:corp :agenda-point-req] 6)
+      game)
+    game)))
+
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
@@ -92,6 +113,7 @@
                           :start-date (java.util.Date.)
                           :last-update start-date
                           :state (core/init-game g))
+                   (check-for-starter-decks g)
                    (update-in g [:players] #(mapv strip-deck %)))]
         (stats/game-started game)
         (lobby/refresh-lobby gameid game)

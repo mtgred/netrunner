@@ -38,7 +38,8 @@
 (defn no-inf-cost?
   [identity card]
   (or (= (:faction card) (:faction identity))
-      (= 0 (:factioncost card)) (= INFINITY (validator/id-inf-limit identity))))
+      (= 0 (:factioncost card))
+      (= INFINITY (validator/id-inf-limit identity))))
 
 (defn take-best-card
   "Returns a non-rotated card from the list of cards or a random rotated card from the list"
