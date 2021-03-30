@@ -226,7 +226,8 @@
    command-counter
    command-undo-click
    command-undo-turn
-   parse-command]
+   parse-command
+   parse-and-perform-command]
 
   [game.core.cost-fns
    break-sub-ability-cost
@@ -583,7 +584,6 @@
    pick-virus-counters-to-spend]
 
   [game.core.process-actions
-   command-parser
    process-action]
 
   [game.core.props

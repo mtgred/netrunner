@@ -5,12 +5,11 @@
     [game.core.card :refer [get-card]]
     [game.core.change-vals :refer [change]]
     [game.core.checkpoint :refer [fake-checkpoint]]
-    [game.core.commands :refer [parse-command]]
     [game.core.eid :refer [make-eid]]
     [game.core.moving :refer [trash]]
     [game.core.rezzing :refer [derez rez]]
     [game.core.runs :refer [check-for-empty-server continue corp-phase-43 handle-end-run jack-out start-next-phase toggle-auto-no-action]]
-    [game.core.say :refer [indicate-action say system-msg]]
+    [game.core.say :refer [indicate-action system-msg]]
     [game.core.set-up :refer [keep-hand mulligan]]
     [game.core.shuffling :refer [shuffle-deck]]
     [game.core.toasts :refer [toast]]
@@ -27,16 +26,6 @@
             (:ended (:run @state)))
     (handle-end-run state :corp)
     (fake-checkpoint state)))
-
-(defn command-parser
-  [state side {:keys [user text] :as args}]
-  (let [author (or user (get-in @state [side :user]))
-        text (if (= (string/trim text) "null") " null" text)]
-    (if-let [command (parse-command text)]
-      (when (and (not= side nil) (not= side :spectator))
-        (command state side)
-        (swap! state update :log conj {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))
-      (say state side args))))
 
 (def commands
   {"ability" play-ability

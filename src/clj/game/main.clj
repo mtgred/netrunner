@@ -1,7 +1,7 @@
 (ns game.main
   (:require [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :as core]
-            [game.core.toasts :refer [toast]]))
+            [clojure.string :as str]
+            [game.core :as core]))
 
 (add-encoder java.lang.Object encode-str)
 
@@ -40,8 +40,12 @@
   "Adds a message from a user to the chat log."
   [state side user message]
   (when (and state side)
-    (core/command-parser state side {:user (select-keys user [:username :emailhash])
-                                     :text message})))
+    (let [author (or (select-keys user [:username :emailhash])
+                     (get-in @state [side :user]))
+          text (if (= (str/trim message) "null") " null" message)]
+      (or (core/parse-and-perform-command state side author text)
+          (core/say state side {:user user
+                                :text message})))))
 
 (defn handle-notification
   [state text]
@@ -52,7 +56,7 @@
   [state text]
   (when state
     (doseq [side [:runner :corp]]
-      (toast state side text "warning" {:time-out 0 :close-button true}))))
+      (core/toast state side text "warning" {:time-out 0 :close-button true}))))
 
 (defn handle-typing
   [state side user typing]

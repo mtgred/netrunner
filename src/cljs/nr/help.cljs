@@ -63,6 +63,9 @@
     :has-args :required
     :usage "/handsize n"
     :help "Set your handsize to n"}
+   {:name "/install"
+    :usage "/install"
+    :help "Install a card from hand"}
    {:name "/install-ice"
     :usage "/install-ice"
     :help "Install a piece of ice at any position in a server (Corp only)"}
@@ -201,7 +204,11 @@
              :content [:ul
                        [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
                         "requiring you to select something. List of available commands:"
-                        [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) command-info))]]]}
+                        [:ul (->> command-info
+                                  (sort-by :name)
+                                  (map-indexed (fn [idx {:keys [usage help]}]
+                                                   [:li {:key idx} [:code usage] " - " help]))
+                                  doall)]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:ul
