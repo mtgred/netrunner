@@ -325,7 +325,7 @@
   "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
   ([card1 card2] (same-card? :cid card1 card2))
   ([func card1 card2]
-    (= (func card1) (func card2))))
+   (and (func card1) (func card2) (= (func card1) (func card2)))))
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
