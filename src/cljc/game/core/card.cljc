@@ -1,5 +1,5 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case includes?]]
+  (:require [clojure.string :refer [lower-case]]
             [medley.core :refer [find-first]]))
 
 (defrecord Card
@@ -30,12 +30,6 @@
    type
    uniqueness])
 
-(defn private-card
-  "Returns only the public information of a given card when it's in a private state,
-  for example, when it's facedown or in the hand"
-  [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
-
 (defn get-cid
   "Gets the cid of a given card when wrapped in an effect-handler map"
   [card]
@@ -50,6 +44,10 @@
   "Returns the zone of the 'root' card of a hosting chain"
   [card]
   (:zone (get-nested-host card)))
+
+(defn on-host?
+  [card]
+  (= [:onhost] (get-zone card)))
 
 (defn in-server?
   "Checks if the specified card is installed in -- and not PROTECTING -- a server"
@@ -278,7 +276,7 @@
       ;; e.g. Haas Arcology AI
       (and (card-is? card :advanceable :while-unrezzed)
            (not (rezzed? card)))
-      (and (is-type? card "Agenda")
+      (and (agenda? card)
            (installed? card))))
 
 (defn get-counters
@@ -291,9 +289,9 @@
 (defn assoc-host-zones
   "Associates a new zone onto a card and its host(s)."
   [card]
-  (let [card (update-in card [:zone] #(map keyword %))]
+  (let [card (update card :zone #(map keyword %))]
     (if (:host card)
-      (update-in card [:host] assoc-host-zones)
+      (update card :host assoc-host-zones)
       card)))
 
 (declare get-card-hosted)

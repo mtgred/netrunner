@@ -4,12 +4,48 @@
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer :all]
+    [game.core.flags :refer [can-score?]]
     [game.core.cost-fns :refer [card-ability-cost]]
     [game.core.engine :refer [can-trigger?]]
     [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
     [game.core.payment :refer [can-pay?]]
     [game.core.play-instants :refer [can-play-instant?]]
     [game.utils :refer [dissoc-in prune-null-fields]]))
+
+(defn action-list
+  [card state]
+  (cond-> []
+    ;; advance
+    (or (and (agenda? card)
+             (or (installed? card)
+                 (on-host? card)))
+        (can-be-advanced? card))
+    (conj :advance)
+    ;; score
+    (and (agenda? card)
+         (can-score? state :corp card))
+    (conj :score)
+    ;; trash
+    (or (ice? card)
+        (program? card))
+    (conj :trash)
+    ;; rez
+    (and (or (asset? card)
+             (ice? card)
+             (upgrade? card))
+         (not (rezzed? card)))
+    (conj :rez)
+    ;; derez
+    (and (or (asset? card)
+             (ice? card)
+             (upgrade? card))
+         (rezzed? card))
+    (conj :derez)))
+
+(defn set-actions [card state side]
+  (if ((if (= :corp side) corp? runner?) card)
+    (assoc card :actions (action-list card state))
+    card))
 
 (defn playable? [card state side]
   (if (and ((if (= :corp side) corp? runner?) card)
@@ -67,6 +103,12 @@
         (assoc :runner-abilities (abilities-playable? state side card :runner-abilities)))
     card))
 
+(defn- private-card
+  "Returns only the public information of a given card when it's in a private state,
+  for example, when it's facedown or in the hand"
+  [card]
+  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
+
 (defn card-summary [card state side]
   (cond+
     [(not (is-public? card side))
@@ -75,6 +117,7 @@
      (update card :hosted (partial mapv #(card-summary % state side)))]
     [:else
      (-> card
+         (set-actions state side)
          (playable? state side)
          (card-abilities-playable? state side)
          (prune-null-fields))]))

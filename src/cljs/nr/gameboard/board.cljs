@@ -56,38 +56,9 @@
 
 (defonce button-channel (chan))
 
-(defn action-list
-  [{:keys [type zone rezzed advanceable advance-counter
-           advancementcost current-advancement-requirement] :as card}]
-  (cond->> []
-    ;; advance
-    (or (and (= type "Agenda")
-             (#{"servers" "onhost"} (first zone)))
-        (= advanceable "always")
-        (and rezzed
-             (= advanceable "while-rezzed"))
-        (and (not rezzed)
-             (= advanceable "while-unrezzed")))
-    (cons "advance")
-    ;; score
-    (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
-    (cons "score")
-    ;; trash
-    (#{"ICE" "Program"} type)
-    (cons "trash")
-    ;; rez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         (not rezzed))
-    (cons "rez")
-    ;; derez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         rezzed)
-    (cons "derez")))
-
 (defn handle-abilities
-  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
-  (let [actions (action-list card)
-        c (+ (count actions) (count abilities))
+  [side {:keys [abilities corp-abilities runner-abilities facedown type actions] :as card} c-state]
+  (let [c (+ (count actions) (count abilities))
         card-side (keyword (.toLowerCase (:side card)))]
     (swap! c-state dissoc :keep-menu-open)
     (when-not (and (= card-side :runner) facedown)
@@ -519,7 +490,7 @@
              (not (facedown? card))))))
 
 (defn card-abilities [card c-state abilities subroutines]
-  (let [actions (action-list card)
+  (let [actions (:actions card)
         dynabi-count (count (filter :dynamic abilities))]
     (when (and (:abilities @c-state)
                (or (nil? (:keep-menu-open @c-state))
