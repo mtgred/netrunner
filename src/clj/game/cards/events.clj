@@ -3151,9 +3151,9 @@
     :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
     :async true
     :effect (req (if (= target "Runner gains 6 [Credits]")
-                   (do (system-msg state :corp "chooses 6 credits for runner")
+                   (do (system-msg state :corp "chooses 6 [Credits] for the Runner")
                        (gain-credits state :runner eid 6))
-                   (do (system-msg state :corp "chooses 4 cards for runner")
+                   (do (system-msg state :corp "chooses 4 cards for the Runner")
                        (draw state :runner eid 4 nil))))}})
 
 (defcard "Windfall"
