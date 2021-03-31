@@ -76,9 +76,12 @@
   :aot [#"game\.*"
         #"web\.*"
         #"tasks.fetch"
-        #"jinteki\.*"]
+        #"jinteki\.*"
+        #"web.core"]
   :jar-name "netrunner.jar"
+  :jar-exclusions [#"public/img/cards/*"]
   :uberjar-name "netrunner-standalone.jar"
+  :uberjar-exclusions [#"public/img/cards/*"]
   :omit-source true
   :main web.core
 
