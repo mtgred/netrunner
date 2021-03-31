@@ -21,7 +21,7 @@
     (let [deck (get-deck deck-id)]
       (if-not deck
         (println "ERROR: Unknown deck-id" deck-id)
-        (let [usernames (get-all-usernames)
+        (let [usernames (distinct (get-all-usernames))
               new-decks (map #(assoc deck :username %) usernames)
               result (mc/insert-batch db "decks" new-decks)]
           (if (acknowledged? result)
