@@ -1044,42 +1044,44 @@
 
 (defn board-view-corp [player-side identity deck deck-count hand hand-count discard servers run]
   (let [rs (:server @run)
-        server-type (first rs)]
-    [:div.corp-board {:class (if (= player-side :runner) "opponent" "me")}
-     (doall
-       (for [server (reverse (get-remotes @servers))
-             :let [num (remote->num (first server))
-                   similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))
-                   all-servers (conj similar-servers server)]
-             :when (or (empty? similar-servers)                                     ; it is a normal server-view
-                       (not (get-in @app-state [:options :stacked-servers] false))  ; we're not in stacked mode
-                       ; otherwise only show one view for the stacked remote
-                       (< num (remote->num (first (first similar-servers)))))]
-         (if (or (empty? similar-servers)
-                 (not (get-in @app-state [:options :stacked-servers] false)))
-           [server-view {:key num
-                         :server (second server)
-                         :run (when (= server-type (str "remote" num)) @run)}
-            {:opts {:name (remote->name (first server))}}]
-           [stacked-view {:key num
+        server-type (first rs)
+        side-class (if (= player-side :runner) "opponent" "me")]
+    [:div.outer-corp-board {:class side-class}
+     [:div.corp-board {:class side-class}
+      (doall
+        (for [server (reverse (get-remotes @servers))
+              :let [num (remote->num (first server))
+                    similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))
+                    all-servers (conj similar-servers server)]
+              :when (or (empty? similar-servers)            ; it is a normal server-view
+                      (not (get-in @app-state [:options :stacked-servers] false)) ; we're not in stacked mode
+                      ; otherwise only show one view for the stacked remote
+                      (< num (remote->num (first (first similar-servers)))))]
+          (if (or (empty? similar-servers)
+                (not (get-in @app-state [:options :stacked-servers] false)))
+            [server-view {:key num
                           :server (second server)
-                          :similar-servers similar-servers
-                          :run (when
-                                 (some #(= server-type (str "remote" %)) (map #(remote->num (first %)) all-servers))
-                                 (= server-type (str "remote" num)) @run)}
-            {:opts {:name (remote->name (first server))}}])))
-     [server-view {:key "hq"
-                   :server (:hq @servers)
-                   :central-view [identity-view :corp identity hand-count]
-                   :run (when (= server-type "hq") @run)}]
-     [server-view {:key "rd"
-                   :server (:rd @servers)
-                   :central-view [deck-view :corp player-side identity deck deck-count]
-                   :run (when (= server-type "rd") @run)}]
-     [server-view {:key "archives"
-                   :server (:archives @servers)
-                   :central-view [discard-view-corp player-side discard]
-                   :run (when (= server-type "archives") @run)}]]))
+                          :run (when (= server-type (str "remote" num)) @run)}
+             {:opts {:name (remote->name (first server))}}]
+            [stacked-view {:key num
+                           :server (second server)
+                           :similar-servers similar-servers
+                           :run (when
+                                  (some #(= server-type (str "remote" %)) (map #(remote->num (first %)) all-servers))
+                                  (= server-type (str "remote" num)) @run)}
+             {:opts {:name (remote->name (first server))}}])))
+      [server-view {:key "hq"
+                    :server (:hq @servers)
+                    :central-view [identity-view :corp identity hand-count]
+                    :run (when (= server-type "hq") @run)}]
+      [server-view {:key "rd"
+                    :server (:rd @servers)
+                    :central-view [deck-view :corp player-side identity deck deck-count]
+                    :run (when (= server-type "rd") @run)}]
+      [server-view {:key "archives"
+                    :server (:archives @servers)
+                    :central-view [discard-view-corp player-side discard]
+                    :run (when (= server-type "archives") @run)}]]]))
 
 (defn board-view-runner [player-side identity deck deck-count hand hand-count discard rig run]
   (let [is-me (= player-side :runner)
