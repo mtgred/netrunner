@@ -566,7 +566,8 @@
              :optional {:prompt "Place a virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
                         :autoresolve (get-autoresolve :auto-cookbook)
-                        :yes-ability {:effect (effect (add-counter (:card context) :virus 1))}}}]
+                        :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
+                                      :effect (effect (add-counter (:card context) :virus 1))}}}]
    :abilities [(set-autoresolve :auto-cookbook "Cookbook's 'Place virus counter' ability")]})
 
 (defcard "Corporate Defector"
