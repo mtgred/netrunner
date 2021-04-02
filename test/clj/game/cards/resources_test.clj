@@ -608,13 +608,27 @@
 
 (deftest cookbook
   ;; Cookbook - add a free virus counter to installed virus programs
-  (do-game
-    (new-game {:runner {:deck ["Cookbook" "Imp"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Cookbook")
-    (play-from-hand state :runner "Imp")
-    (let [imp (get-program state 0)]
-      (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Cookbook" "Imp"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cookbook")
+      (play-from-hand state :runner "Imp")
+      (let [imp (get-program state 0)]
+        (is (= 2 (get-counters (refresh imp) :virus)) "Imp installed with two counters")
+        (click-prompt state :runner "Yes")
+        (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter"))))
+  (testing "Autoresolve"
+    (do-game
+      (new-game {:runner {:deck ["Cookbook" "Imp"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cookbook")
+      (let [cookbook (get-resource state 0)]
+        (card-ability state :runner cookbook 0)
+        (click-prompt state :runner "Always"))
+      (play-from-hand state :runner "Imp")
+      (let [imp (get-program state 0)]
+        (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install")))))
 
 (deftest councilman
   ;; Councilman

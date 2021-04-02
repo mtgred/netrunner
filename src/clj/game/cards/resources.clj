@@ -563,8 +563,11 @@
 (defcard "Cookbook"
   {:events [{:event :runner-install
              :silent (req true)
-             :req (req (has-subtype? (:card context) "Virus"))
-             :effect (effect (add-counter (:card context) :virus 1))}]})
+             :optional {:prompt "Place a virus counter?"
+                        :req (req (has-subtype? (:card context) "Virus"))
+                        :autoresolve (get-autoresolve :auto-cookbook)
+                        :yes-ability {:effect (effect (add-counter (:card context) :virus 1))}}}]
+   :abilities [(set-autoresolve :auto-cookbook "Cookbook's 'Place virus counter' ability")]})
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
