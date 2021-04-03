@@ -2672,7 +2672,7 @@
    :strength-bonus (req (if (wonder-sub card 3) 5 0))})
 
 (defcard "Ping"
-  {:on-rez {:req (req run)
+  {:on-rez {:req (req (and run this-server))
             :msg "give the Runner 1 tag"
             :async true
             :effect (effect (gain-tags :corp eid 1))}
