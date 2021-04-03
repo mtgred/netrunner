@@ -2345,16 +2345,21 @@
      :abilities [ability]}))
 
 (defcard "Smartware Distributor"
-  {:abilities [{:cost [:click 1]
-                :msg "place 3 [Credits]"
-                :effect (req (add-counter state side card :credit 3))}]
-   :events [{:event :runner-turn-begins
-             :req (req (pos? (get-counters card :credit)))
-             :once :per-turn
-             :msg "take 1 [Credits]"
-             :async true
-             :effect (req (add-counter state side card :credit -1)
-                          (gain-credits state side eid 1))}]})
+  (let [start-of-turn-ability {:once :per-turn
+                               :label "Take 1 [Credits] (start of turn)"
+                               :req (req (and (:runner-phase-12 @state)
+                                              (pos? (get-counters card :credit))))
+                               :msg "take 1 [Credits]"
+                               :async true
+                               :effect (req (add-counter state side card :credit -1)
+                                         (gain-credits state side eid 1))}]
+    {:flags {:drip-economy (req (pos? (get-counters card :credit)))}
+     :abilities [{:cost [:click 1]
+                  :msg "place 3 [Credits]"
+                  :req (req (not (:runner-phase-12 @state)))
+                  :effect (req (add-counter state side card :credit 3))}
+                 start-of-turn-ability]
+     :events [(assoc start-of-turn-ability :event :runner-turn-begins)]}))
 
 (defcard "Slipstream"
   {:events [{:event :pass-ice
