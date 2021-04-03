@@ -10,6 +10,7 @@
             [web.admin :as admin]
             [web.tournament :as tournament]
             [web.decks :as decks]
+            [web.api-keys :as api-keys]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
@@ -94,7 +95,11 @@
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
            (PUT "/data/decks" [] decks/decks-save-handler)
-           (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
+           (DELETE "/data/decks/:id" [] decks/decks-delete-handler)
+
+           (GET "/data/api-keys" [] api-keys/api-keys-handler)
+           (POST "/data/api-keys" [] api-keys/api-keys-create-handler)
+           (DELETE "/data/api-keys/:id" [] api-keys/api-keys-delete-handler))
 
 (defroutes tournament-routes
   (GET "/tournament-auth/:username" [] tournament/auth))

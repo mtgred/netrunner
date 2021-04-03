@@ -263,7 +263,10 @@
     :block "Block user"
     :update-profile "Update Profile"
     :nisei "NISEI"
-    :ffg "FFG"}
+    :ffg "FFG"
+    :api-keys "API Keys"
+    :delete-api-key "Delete"
+    :create-api-key "Create API Key"}
   :stats
   {:game-stats "Game Stats"
    :corp-stats "Corp Stats"
@@ -1063,7 +1066,10 @@
     :block "Ockblay useryay"
     :update-profile "Updateyay Ofilepray"
     :nisei "ISEINAY"
-    :ffg "FFGYAY"}
+    :ffg "FFGYAY"
+    :api-keys "APIYAY Eyskay"
+    :delete-api-key "Eleteday"
+    :create-api-key "Eatecray APIYAY Eykay"}
   :stats
   {:game-stats "Amegay Atsstay"
    :corp-stats "Orpcay Atsstay"
