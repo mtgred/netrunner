@@ -37,10 +37,10 @@
       (dissoc :runnable-list)
       (update :hand #(private-card-vector state :runner %))
       (update :discard #(private-card-vector state :runner %))
-      (assoc :hand []
-             :deck []
+      (assoc :deck []
              :deck-count (count (get-in @state [:runner :deck]))
              :hand-count (count (get-in @state [:runner :hand])))
+      (update :hand #(if (get-in @state [:runner :openhand]) % []))
       (update-in [:rig :facedown] #(private-card-vector state :runner %))
       (update-in [:rig :resource] #(private-card-vector state :runner %))))
 

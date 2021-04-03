@@ -322,10 +322,13 @@
         card))))
 
 (defn- same-card?
-  "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
+  "Checks if the two cards are the same by `:cid`. Returns false if both cards
+  do not have `:cid`. Alternatively specify 1-function to use to check the card."
   ([card1 card2] (same-card? :cid card1 card2))
   ([func card1 card2]
-    (= (func card1) (func card2))))
+   (let [r1 (func card1)
+         r2 (func card2)]
+     (and r1 r2 (= r1 r2)))))
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
