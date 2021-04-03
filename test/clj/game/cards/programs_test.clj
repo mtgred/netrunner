@@ -1276,7 +1276,43 @@
         (click-prompt state :runner "Yes")
         (is (= 2 (get-counters (refresh conduit) :virus)))
         (run-empty-server state :rd)
-        (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should access 0 additional card on normal run")))))
+        (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should access 0 additional card on normal run"))))
+  (testing "Knobkierie interaction (Issue #5748) - Knobkierie before Conduit"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 8)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Conduit" "Knobkierie"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Conduit")
+      (play-from-hand state :runner "Knobkierie")
+      (let [conduit (get-program state 0)
+            knobkierie (get-hardware state 0)]
+        (card-ability state :runner conduit 0)
+        (is (:run @state) "Run initiated")
+        (run-continue state :access-server)
+        (click-prompt state :runner "Knobkierie")
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (refresh conduit))
+        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card"))))
+  (testing "Knobkierie interaction (Issue #5748) - Conduit before Knobkierie"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 8)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck ["Conduit" "Knobkierie"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Conduit")
+      (play-from-hand state :runner "Knobkierie")
+      (let [conduit (get-program state 0)
+            knobkierie (get-hardware state 0)]
+        (card-ability state :runner conduit 0)
+        (is (:run @state) "Run initiated")
+        (run-continue state :access-server)
+        (click-prompt state :runner "Conduit")
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (refresh conduit))
+        (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should not access additional cards")))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.

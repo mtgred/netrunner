@@ -697,7 +697,6 @@
                             :effect (effect (add-counter card :virus 1))}
               :no-ability {:effect (effect (system-msg "does not add counter to Conduit"))}}}
             {:event :successful-run
-             :silent (req true)
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :effect (req (access-bonus state side :rd (max 0 (get-virus-counters state card))))}]
