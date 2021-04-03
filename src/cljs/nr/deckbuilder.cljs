@@ -535,7 +535,7 @@
 
 (defn deck-entry
   [s deck]
-  [:div.deckline {:class (when (= deck (:deck @s)) "active")
+  [:div.deckline {:class (when (= (:_id deck) (:_id (:deck @s))) "active")
                   :on-click #(put! select-channel deck)}
    [:img {:src (image-url (:identity deck))
           :alt (get-in deck [:identity :title] "")}]
@@ -595,7 +595,7 @@
      (fn [filtered-decks s scroll-top]
        [:div.deck-collection
         (doall
-          (for [deck (sort-by :date > filtered-decks)]
+          (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
             ^{:key (:_id deck)}
             [deck-entry s deck]))])}))
 
