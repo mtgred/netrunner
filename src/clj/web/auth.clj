@@ -50,7 +50,7 @@
 (defn wrap-user [handler]
   (fn [{db :system/db
         :keys [cookies] :as req}]
-    (let [user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats]
+    (let [user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats :has-api-keys]
           auth-cookie (get cookies "session")
           user (when auth-cookie
                  (unsign-token (:value auth-cookie)))

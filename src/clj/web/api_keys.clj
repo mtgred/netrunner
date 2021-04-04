@@ -13,11 +13,16 @@
 
 (defn api-keys-create-handler [{{username :username} :user}]
   (if username
-    (let [new-key (java.util.UUID/randomUUID)]
-      (response 200 (mc/insert-and-return db "api-keys"
-                                          {:username username
-                                           :date (java.util.Date.)
-                                           :api-key new-key})))
+    (let [new-key (java.util.UUID/randomUUID)
+          new-entry (mc/insert db "api-keys"
+                               {:username username
+                                :date (java.util.Date.)
+                                :api-key new-key})]
+      (if (acknowledged? new-entry)
+        (if (acknowledged? (mc/update db "users" {:username username} {"$set" {:has-api-keys true}}))
+          (response 201 {:message "Created API Key"})
+          (response 500 {:message "Failed to update user info"}))
+        (response 500 {:message "Failed to create API Key"})))
     (response 401 {:message "Unauthorized"})))
 
 (defn api-keys-delete-handler [{{username :username} :user
@@ -25,7 +30,10 @@
   (try
     (if (and username id)
       (if (acknowledged? (mc/remove db "api-keys" {:_id (object-id id) :username username}))
-        (response 200 {:message "Deleted"})
+        (let [key-count (mc/count db "api-keys" {:username username})]
+          (when-not (pos? key-count)
+            (mc/update db "users" {:username username} {"$set" {:has-api-keys false}}))
+          (response 200 {:message "Deleted"}))
         (response 403 {:message "Forbidden"}))
       (response 401 {:message "Unauthorized"}))
     (catch Exception ex

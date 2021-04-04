@@ -192,11 +192,13 @@
           (tr [:settings.cancel "Cancel"])]]]])))
 
 (defn- update-api-keys-response [response s]
-  (if (= 200 (:status response))
-    (do
-      (go (swap! s assoc :api-keys (:json (<! (GET "/data/api-keys")))))
-      (non-game-toast "Updated API Keys" "success" nil))
-    (non-game-toast "Failed to update API Keys" "error" nil)))
+  (let [status (:status response)]
+    (if (or (= 200 status)
+            (= 201 status))
+      (do
+        (go (swap! s assoc :api-keys (:json (<! (GET "/data/api-keys")))))
+        (non-game-toast "Updated API Keys" "success" nil))
+      (non-game-toast "Failed to update API Keys" "error" nil))))
 
 (defn- delete-api-key [id s]
   (go (let [response (<! (DELETE (str "/data/api-keys/" id)))]

@@ -214,7 +214,9 @@
      :password-for "Password for"
      :invalid-password "Invalid password"
      :not-allowed "Not allowed"
-     :aborted "Connection aborted"}
+     :aborted "Connection aborted"
+     :lobby.api-access "Allow API access to game information"
+     :lobby.api-requires-key "(Requires an API Key in Settings)"}
    :settings
    {:invalid-password "Invalid login or password"
     :invalid-email "No account with that email address exists"

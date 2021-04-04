@@ -108,6 +108,7 @@
                :editing true
                :replay false
                :save-replay (if (= "casual" (:room @s)) false true)
+               :api-access false
                :flash-message ""
                :protected false
                :password ""
@@ -418,7 +419,7 @@
                       :room (:room @s)}])])
 
 (defn create-new-game
-  [s]
+  [s user]
   (when (:editing @s)
     (if (:replay @s)
       [:div
@@ -502,6 +503,7 @@
                                 :value (:password @s)
                                 :placeholder (tr [:lobby.password "Password"])
                                 :maxLength "30"}]])
+
          (when-not (= "casual" (:room @s))
            [:p
             [:label
@@ -518,6 +520,7 @@
                                 :placeholder (tr [:lobby.timer-length "Timer length (minutes)"])}]])
          [:div.infobox.blue-shade {:style {:display (if (:timed @s) "block" "none")}}
           [:p "Timer is only for convenience: the game will not stop when timer runs out."]]
+
          [:p
           [:label
            [:input {:type "checkbox" :checked (:save-replay @s)
@@ -528,7 +531,20 @@
            " The file is available only after the game is finished."]
           [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
           [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
-           " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]]])))
+           " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]
+
+         (let [has-keys (:has-api-keys @user false)]
+           [:p
+            [:label
+             [:input {:disabled (not has-keys)
+                      :type "checkbox" :checked (:api-access @s)
+                      :on-change #(swap! s assoc :api-access (.. % -target -checked))}]
+             (tr [:lobby.api-access "Allow API access to game information"])
+             (when (not has-keys)
+               (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))
+             ]])
+           [:div.infobox.blue-shade {:style {:display (if (:api-access @s) "block" "none")}}
+            [:p "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"]]]]])))
 
 (defn pending-game
   [s decks games gameid password-gameid sets user]
@@ -597,7 +613,9 @@
              " The file is available only after the game is finished."]
             [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
             [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
-             " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]])]
+             " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]])
+         (when (:api-access game)
+           [:li (tr [:lobby.api-access "Allow API access to game information"])])]
 
         (when (:allow-spectator game)
           [:div.spectators
@@ -612,7 +630,7 @@
 (defn right-panel
   [decks s games gameid password-gameid sets user]
   [:div.game-panel
-   [create-new-game s]
+   [create-new-game s user]
    [pending-game s decks games gameid password-gameid sets user]])
 
 (defn game-lobby []
