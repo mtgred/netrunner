@@ -41,6 +41,7 @@
              (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (when (= side :corp)
+               (system-msg state side "makes mandatory start of turn draw")
                (wait-for (draw state side 1 nil)
                          (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
              (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))

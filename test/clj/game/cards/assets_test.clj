@@ -3671,7 +3671,7 @@
       (rez state :corp php)
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (last-log-contains? state "Aiki") "Public Health Portal should reveal Aiki")
+      (is (second-last-log-contains? state "Aiki") "Public Health Portal should reveal Aiki")
       (is (= "Ben Musashi" (-> @state :corp :deck first :title)) "Top card in R&D should be Ben Musashi"))))
 
 (deftest public-support
