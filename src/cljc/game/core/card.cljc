@@ -30,12 +30,6 @@
    type
    uniqueness])
 
-(defn card-summary
-  [card]
-  (-> card
-      (select-keys [:cid :side :title :zone :counter :advance-counter :new])
-      (assoc :hosted (mapv card-summary (:hosted card)))))
-
 (defn private-card
   "Returns only the public information of a given card when it's in a private state,
   for example, when it's facedown or in the hand"
@@ -346,3 +340,34 @@
   [state card]
   (or (:index card)
       (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (get-zone card)))))))
+
+(defn is-public?
+  ([card] (is-public? (to-keyword (:side card))))
+  ([card side]
+   (if (= side :corp)
+     ;; public runner cards:
+     ;; * installed/hosted and not facedown
+     ;; * scored or current or in heap
+     (or (corp? card)
+         (identity? card)
+         (and (or (installed? card)
+                  (:host card))
+              (not (facedown? card)))
+         (or (in-discard? card)
+             (in-scored? card)
+             (in-current? card)))
+     ;; public corp cards:
+     ;; * installed and rezzed;
+     ;; * in :discard and :seen
+     ;; * scored or current
+     (or (runner? card)
+         (identity? card)
+         (and (or (installed? card)
+                  (:host card))
+              (or (operation? card)
+                  (condition-counter? card)
+                  (rezzed? card)))
+         (and (in-discard? card)
+              (:seen card))
+         (or (in-scored? card)
+             (in-current? card))))))

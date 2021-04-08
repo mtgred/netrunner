@@ -165,6 +165,7 @@
    assoc-host-zones
    can-be-advanced?
    card-index
+   is-public?
    condition-counter?
    corp-installable-type?
    corp?
@@ -377,7 +378,6 @@
    card-can-prevent?
    card-flag-fn?
    card-flag?
-   card-is-public?
    cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!

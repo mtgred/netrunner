@@ -1,22 +1,28 @@
 (ns game.core.diffs
-  (:require [game.core.flags :refer [card-is-public?]]
-            [game.core.card :refer [private-card]]
-            [game.utils :refer [dissoc-in]]
-            [differ.core :as differ]))
+  (:require
+    [differ.core :as differ]
+    [cond-plus.core :refer [cond+]]
+    [game.core.card :refer [is-public? private-card]]
+    [game.utils :refer [dissoc-in prune-null-fields]]))
 
-(defn- private-card-vector [state side cards]
-  (mapv (fn [card]
-          (cond
-            (not (card-is-public? state side card)) (private-card card)
-            (:hosted card) (update-in card [:hosted] #(private-card-vector state side %))
-            :else card))
-        cards))
+(defn card-summary
+  [card side]
+  (cond+
+    [(not (is-public? card side))
+     (prune-null-fields (private-card card))]
+    [(:hosted card)
+     (update card :hosted (partial mapv #(card-summary % side)))]
+    [:else
+     (prune-null-fields card)]))
 
-(def corp-keys
+(defn card-summary-vec
+  [cards side]
+  (mapv #(card-summary % side) cards))
+
+(def player-keys
   [:aid
    :user
    :identity
-   :options
    :basic-action-card
    :deck
    :deck-id
@@ -25,40 +31,52 @@
    :scored
    :rfg
    :play-area
-   :servers
    :click
    :credit
-   :bad-publicity
    :toast
    :hand-size
-   :agenda-point
-   :agenda-point-req
    :keep
    :quote
    :register
    :prompt
-   :prompt-state])
+   :prompt-state
+   :agenda-point
+   :agenda-point-req])
+
+(defn player-summary
+  [player side]
+  (-> (select-keys player player-keys)
+      (update :identity prune-null-fields)
+      (update :current card-summary-vec side)
+      (update :play-area card-summary-vec side)
+      (update :rfg card-summary-vec side)
+      (update :scored card-summary-vec side)
+      (update :register select-keys [:spent-click])))
+
+(def corp-keys
+  [:servers
+   :bad-publicity])
 
 (defn servers-summary
   [state side]
   (let [corp-player? (= side :corp)
-        corp (:corp @state)
-        server-keys (keys (:servers corp))
-        zones (reduce
-                (fn [servers server]
-                  (into servers [[:servers server :content]
-                                 [:servers server :ices]]))
-                []
-                server-keys)]
+        corp (:corp @state)]
     (if corp-player?
       (:servers corp)
-      (loop [corp corp
-             zones zones]
-        (let [zone (first zones)]
-          (if (nil? zone)
-            (:servers corp)
-            (recur (update-in corp zone #(private-card-vector state :corp %))
-                   (next zones))))))))
+      (let [server-keys (keys (:servers corp))
+            zones (reduce
+                    (fn [servers server]
+                      (into servers [[:servers server :content]
+                                     [:servers server :ices]]))
+                    []
+                    server-keys)]
+        (loop [corp corp
+               zones zones]
+          (let [zone (first zones)]
+            (if (nil? zone)
+              (:servers corp)
+              (recur (update-in corp zone card-summary-vec :runner)
+                     (next zones)))))))))
 
 (defn corp-summary
   [state side]
@@ -69,47 +87,24 @@
         hand (:hand corp)
         discard (:discard corp)
         install-list (:install-list corp)]
-    (-> (select-keys corp corp-keys)
+    (-> (player-summary corp side)
+        (merge (select-keys corp corp-keys))
         (assoc
           :deck (if (and corp-player? view-deck) deck [])
           :deck-count (count deck)
           :hand (if corp-player? hand [])
           :hand-count (count hand)
-          :discard (private-card-vector state :corp discard)
+          :discard (card-summary-vec discard :corp)
           :servers (servers-summary state side))
-        (update :register select-keys [:spent-click])
         (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
 
 (def runner-keys
-  [:aid
-   :user
-   :identity
-   :options
-   :basic-action-card
-   :deck
-   :deck-id
-   :hand
-   :discard
-   :scored
-   :rfg
-   :play-area
-   :rig
-   :toast
-   :click
-   :credit
+  [:rig
    :run-credit
    :link
    :tag
    :memory
-   :hand-size
-   :agenda-point
-   :agenda-point-req
-   :brain-damage
-   :keep
-   :quote
-   :register
-   :prompt
-   :prompt-state])
+   :brain-damage])
 
 (defn rig-summary
   [state side]
@@ -117,7 +112,7 @@
         runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
-               [row (private-card-vector state :runner cards)]))))
+               [row (card-summary-vec cards :runner)]))))
 
 (defn runner-summary
   [state side]
@@ -126,8 +121,10 @@
         view-deck (:view-deck runner)
         deck (:deck runner)
         hand (:hand runner)
-        discard (:discard runner)]
-    (-> (select-keys runner runner-keys)
+        discard (:discard runner)
+        runnable-list (:runnable-list runner)]
+    (-> (player-summary runner side)
+        (merge (select-keys runner runner-keys))
         (assoc
           :deck (if (and runner-player? view-deck) deck [])
           :deck-count (count deck)
@@ -135,7 +132,7 @@
           :hand-count (count hand)
           :discard discard
           :rig (rig-summary state side))
-        (update :register select-keys [:spent-click]))))
+        (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
 (def run-keys
   [:server

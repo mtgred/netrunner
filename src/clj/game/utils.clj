@@ -189,3 +189,7 @@
                   (when (pred x)
                     idx))
                 coll))
+
+(defn prune-null-fields
+  [card]
+  (apply dissoc card (for [[k v] card :when (nil? v)] k)))

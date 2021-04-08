@@ -334,34 +334,6 @@
   [state _ card]
   (is-scored? state :runner card))
 
-(defn card-is-public?
-  [state side {:keys [zone] :as card}]
-  (if (= side :runner)
-    ;; public runner cards: in hand and :openhand is true;
-    ;; or installed/hosted and not facedown;
-    ;; or scored or current or in heap
-    (or (corp? card)
-        (and (:openhand (:runner @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (not (facedown? card)))
-        (#{:scored :discard :current} (last zone)))
-    ;; public corp cards: in hand and :openhand;
-    ;; or installed and rezzed;
-    ;; or in :discard and :seen
-    ;; or scored or current
-    (or (runner? card)
-        (and (:openhand (:corp @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (or (operation? card)
-                 (condition-counter? card)
-                 (rezzed? card)))
-        (and (in-discard? card) (:seen card))
-        (#{:scored :current} (last zone)))))
-
 (defn can-host?
   "Checks if the specified card is able to host other cards"
   [card]
