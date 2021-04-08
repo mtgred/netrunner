@@ -13,10 +13,11 @@
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash trash-cards]]
-    [game.core.payment :refer [build-spend-msg merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
+    [game.core.state :refer [make-rid]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
@@ -62,9 +63,9 @@
 
 (defn- corp-can-install?
   "Checks `corp-can-install-reason` if not true, toasts reason and returns false"
-  [state side card slot]
+  [state side card slot {:keys [no-toast]}]
   (let [reason (corp-can-install-reason state side card slot)
-        reason-toast #(do (toast state side % "warning") false)
+        reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
         title (:title card)]
     (case reason
       ;; pass on true value
@@ -109,7 +110,7 @@
                       (:title card)
                       (if (ice? card) "ICE" "a card"))
           server-name (if (= server "New remote")
-                        (str (remote-num->name (get-in @state [:rid])) " (new remote)")
+                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)]
       (system-msg state side (str (build-spend-msg cost-str "install") card-name
                                   (if (ice? card) " protecting " " in ") server-name)))))
@@ -179,27 +180,52 @@
                                 (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
                               (complete-with-result state side eid (get-card state moved-card)))))))))
 
+(defn get-slot
+  [state card server {:keys [host-card]}]
+  (if host-card
+    (get-zone host-card)
+    (conj (server->zone state server) (if (ice? card) :ices :content))))
+
+(defn corp-install-cost
+  [state side eid card server
+   {:keys [base-cost ignore-install-cost ignore-all-cost cost-bonus cached-costs] :as args}]
+  (or cached-costs
+      (let [slot (get-slot state card server args)
+            dest-zone (get-in @state (cons :corp slot))
+            ice-cost (if (and (ice? card)
+                              (not ignore-install-cost)
+                              (not ignore-all-cost)
+                              (not (ignore-install-cost? state side card)))
+                       (count dest-zone)
+                       0)
+            cost (install-cost state side card
+                               {:cost-bonus (+ (or cost-bonus 0) ice-cost)}
+                               {:server server
+                                :dest-zone dest-zone})]
+        (when-not ignore-all-cost
+          (merge-costs [base-cost [:credit cost]])))))
+
+(defn can-corp-install?
+  [state side eid card server args]
+  (let [slot (get-slot state card server (select-keys args [:host-card]))
+        costs (corp-install-cost state side eid card server args)]
+    (and (corp-can-install? state side card slot (select-keys args [:no-toast]))
+         (not (install-locked? state :corp))
+         (can-pay? state side eid card nil costs)
+         ;; explicitly return true
+         true)))
+
 (defn- corp-install-pay
-  "Used by corp-install to pay install costs, code continues in corp-install-continue"
-  [state side eid card server {:keys [base-cost ignore-install-cost ignore-all-cost action cost-bonus] :as args} slot]
-  (let [dest-zone (get-in @state (cons :corp slot))
-        ice-cost (if (and (ice? card)
-                          (not ignore-install-cost)
-                          (not ignore-all-cost)
-                          (not (ignore-install-cost? state side card)))
-                   (count dest-zone)
-                   0)
-        cost (install-cost state side card
-                           {:cost-bonus (+ (or cost-bonus 0) ice-cost)}
-                           {:server server :dest-zone dest-zone})
-        costs (when-not ignore-all-cost
-                [base-cost [:credit cost]])]
-    (if (and (corp-can-install? state side card slot)
-             (not (install-locked? state :corp)))
+  "Used by corp-install to pay install costs"
+  [state side eid card server {:keys [action] :as args}]
+  (let [slot (get-slot state card server args)
+        costs (corp-install-cost state side eid card server (dissoc args :cached-costs))]
+    (if (can-corp-install? state side eid card server (assoc args :cached-costs costs))
       (wait-for (pay state side (make-eid state eid) card costs {:action action})
                 (if-let [payment-str (:msg async-result)]
                   (if (= server "New remote")
                     (wait-for (trigger-event-simult state side :server-created nil card)
+                              (make-rid state)
                               (corp-install-continue state side eid card server args slot payment-str))
                     (corp-install-continue state side eid card server args slot payment-str))
                   (effect-completed state side eid)))
@@ -229,15 +255,13 @@
                           :effect (effect (corp-install eid card target args))}
                          card nil)
        ;; A card was selected as the server; recurse, with the :host-card parameter set.
-       (and (map? server) (not host-card))
+       (and (map? server)
+            (not host-card))
        (corp-install state side eid card server (assoc args :host-card server))
        ;; A server was selected
        :else
-       (let [slot (if host-card
-                    (get-zone host-card)
-                    (conj (server->zone state server) (if (ice? card) :ices :content)))]
-         (swap! state dissoc-in [:corp :install-list])
-         (corp-install-pay state side eid card server args slot))))))
+       (do (swap! state dissoc-in [:corp :install-list])
+           (corp-install-pay state side eid card server args))))))
 
 ;; Unused in the corp install system, necessary for card definitions
 (defn corp-install-msg

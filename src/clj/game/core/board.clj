@@ -156,7 +156,7 @@
       "HQ" [:servers :hq]
       "R&D" [:servers :rd]
       "Archives" [:servers :archives]
-      "New remote" [:servers (keyword (str "remote" (make-rid state)))]
+      "New remote" [:servers (keyword (str "remote" (:rid @state)))]
       [:servers (->> (string/split server #" ") last (str "remote") keyword)])))
 
 (defn card->server

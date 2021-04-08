@@ -596,7 +596,7 @@
       (is (= 15 (:credit (get-corp))) "Should start with 5 credits")
       (dotimes [_ n]
         (play-from-hand state :corp "Eli 1.0" "New remote")
-        (rez state :corp (get-ice state (keyword (str "remote" (:rid @state))) 0)))
+        (rez state :corp (get-ice state (keyword (str "remote" (dec (:rid @state)))) 0)))
       (let [credit (:credit (get-corp))]
         (play-and-score state "CFC Excavation Contract")
         (is (= (+ credit (* 2 n)) (:credit (get-corp)))
@@ -2250,7 +2250,7 @@
       (new-game {:corp {:hand [(qty "Offworld Office" 2)]}})
       (changes-val-macro
         7 (:credit (get-corp))
-        "Corp gains 7 tag from Offworld Office"
+        "Corp gains 7 credits from Offworld Office"
         (play-and-score state "Offworld Office")))))
 
 (deftest orbital-superiority

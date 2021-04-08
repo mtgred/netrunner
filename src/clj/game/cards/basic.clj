@@ -26,11 +26,26 @@
                                        (draw state side eid 1 nil)))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)
-                                   server (second targets)]
-                               (corp-install state side (assoc eid :source server :source-type :corp-install)
-                                             target-card server {:base-cost [:click 1] :action :corp-click-install})))}
+                :req (req (and (not-empty (:hand corp))
+                               (if-let [server (second targets)]
+                                 (can-corp-install?
+                                   state side (assoc eid :source server :source-type :corp-install)
+                                   target server {:base-cost [:click 1]
+                                                  :action :corp-click-install
+                                                  :no-toast true})
+                                 (some
+                                   (fn [server]
+                                     (can-corp-install?
+                                       state side (assoc eid :source server :source-type :corp-install)
+                                       target server {:base-cost [:click 1]
+                                                      :action :corp-click-install
+                                                      :no-toast true}))
+                                   (installable-servers state card)))))
+                :effect (req (let [server (second targets)]
+                               (corp-install
+                                 state side (assoc eid :source server :source-type :corp-install)
+                                 target server {:base-cost [:click 1]
+                                                :action :corp-click-install})))}
                {:label "Play 1 operation"
                 :async true
                 :req (req (and (not-empty (:hand corp))

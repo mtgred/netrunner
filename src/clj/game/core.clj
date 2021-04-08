@@ -503,7 +503,9 @@
    update-all-card-labels]
 
   [game.core.installing
+   can-corp-install?
    corp-install
+   corp-install-cost
    corp-install-list
    corp-install-msg
    install-locked?
