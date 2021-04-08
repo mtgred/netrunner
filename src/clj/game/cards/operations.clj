@@ -2218,11 +2218,12 @@
                                                (quantify (count async-result) "card")))
                    (continue-ability
                      state side
-                     {:prompt "Select 2 cards in HQ to shuffle"
+                     {:prompt "Select 2 cards in HQ to shuffle into R&D"
                       :choices {:max 2
+                                :all true
                                 :card #(and (corp? %)
                                             (in-hand? %))}
-                      :msg "shuffles 2 cards from HQ into R&D"
+                      :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")
                       :effect (req (doseq [c targets]
                                      (move state side c :deck))
                                    (shuffle! state side :deck))}
