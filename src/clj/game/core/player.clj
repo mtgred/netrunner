@@ -4,7 +4,8 @@
   [base total])
 
 (defrecord Corp
-  [user
+  [aid
+   user
    identity
    options
    basic-action-card
@@ -36,7 +37,8 @@
 (defn new-corp
   [user c-identity options deck deck-id c-quote]
   (map->Corp
-    {:user user
+    {:aid 0
+     :user user
      :identity c-identity
      :options options
      :basic-action-card nil
@@ -44,7 +46,9 @@
      :deck-id deck-id
      :hand []
      :discard [] :scored [] :rfg [] :play-area []
-     :servers (map->Servers {:hq {} :rd {} :archives {}})
+     :servers (map->Servers {:hq {:content [] :ices []}
+                             :rd {:content [] :ices []}
+                             :archives {:content [] :ices []}})
      :click 0 :click-per-turn 3
      :credit 5
      :bad-publicity (map->BadPublicity {:base 0 :additional 0})
@@ -55,7 +59,8 @@
      :quote c-quote}))
 
 (defrecord Runner
-  [user
+  [aid
+   user
    identity
    options
    basic-action-card
@@ -86,7 +91,7 @@
    quote])
 
 (defrecord Rig
-  [program resource hardware])
+  [facedown hardware program resource])
 
 (defrecord Tags
   [base total is-tagged])
@@ -94,7 +99,8 @@
 (defn new-runner
   [user r-identity options deck deck-id r-quote]
   (map->Runner
-    {:user user
+    {:aid 0
+     :user user
      :identity r-identity
      :options options
      :basic-action-card nil
@@ -102,7 +108,7 @@
      :deck-id deck-id
      :hand []
      :discard [] :scored [] :rfg [] :play-area []
-     :rig (map->Rig {:program [] :resource [] :hardware []})
+     :rig (map->Rig {:facedown [] :hardware [] :program [] :resource []})
      :toast []
      :click 0 :click-per-turn 4
      :credit 5 :run-credit 0

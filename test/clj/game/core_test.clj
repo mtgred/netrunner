@@ -164,6 +164,7 @@
      (when-let [tags (:tags runner)]
        (swap! state assoc-in [:runner :tag :base] tags))
      (when (= start-as :runner) (take-credits state :corp))
+     (core/fake-checkpoint state)
      state)))
 
 ;;; Card related functions
