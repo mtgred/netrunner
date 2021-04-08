@@ -503,13 +503,14 @@
    update-all-card-labels]
 
   [game.core.installing
-   can-corp-install?
+   corp-can-pay-and-install?
    corp-install
    corp-install-cost
    corp-install-list
    corp-install-msg
    install-locked?
    runner-can-install?
+   runner-can-pay-and-install?
    runner-install]
 
   [game.core.link

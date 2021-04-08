@@ -1,5 +1,6 @@
 (ns game.core.installing
   (:require
+    [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
     [game.core.card :refer [agenda? asset? get-card get-counters get-zone has-subtype? ice? program? resource? rezzed?]]
@@ -68,8 +69,6 @@
         reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
         title (:title card)]
     (case reason
-      ;; pass on true value
-      true true
       ;; failed region check
       :region
       (reason-toast (str "Cannot install " (:title card) ", limit of one Region per server"))
@@ -81,7 +80,9 @@
       (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn"))
       ;; Earth station cannot have more than one remote server
       :earth-station
-      (reason-toast (str "Unable to install " title " in new remote: Earth Station limit")))))
+      (reason-toast (str "Unable to install " title " in new remote: Earth Station limit"))
+      ;; else
+      true)))
 
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
@@ -187,7 +188,7 @@
     (conj (server->zone state server) (if (ice? card) :ices :content))))
 
 (defn corp-install-cost
-  [state side eid card server
+  [state side card server
    {:keys [base-cost ignore-install-cost ignore-all-cost cost-bonus cached-costs] :as args}]
   (or cached-costs
       (let [slot (get-slot state card server args)
@@ -205,12 +206,11 @@
         (when-not ignore-all-cost
           (merge-costs [base-cost [:credit cost]])))))
 
-(defn can-corp-install?
+(defn corp-can-pay-and-install?
   [state side eid card server args]
   (let [slot (get-slot state card server (select-keys args [:host-card]))
-        costs (corp-install-cost state side eid card server args)]
+        costs (corp-install-cost state side card server args)]
     (and (corp-can-install? state side card slot (select-keys args [:no-toast]))
-         (not (install-locked? state :corp))
          (can-pay? state side eid card nil costs)
          ;; explicitly return true
          true)))
@@ -219,8 +219,8 @@
   "Used by corp-install to pay install costs"
   [state side eid card server {:keys [action] :as args}]
   (let [slot (get-slot state card server args)
-        costs (corp-install-cost state side eid card server (dissoc args :cached-costs))]
-    (if (can-corp-install? state side eid card server (assoc args :cached-costs costs))
+        costs (corp-install-cost state side card server (dissoc args :cached-costs))]
+    (if (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs))
       (wait-for (pay state side (make-eid state eid) card costs {:action action})
                 (if-let [payment-str (:msg async-result)]
                   (if (= server "New remote")
@@ -241,8 +241,7 @@
   :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :face-up
   :display-message - Print descriptive text to the log window [default=true]
   :index - which position for an installed piece of ice"
-  ([state side card server] (corp-install state side (make-eid state) card server nil))
-  ([state side card server args] (corp-install state side (make-eid state) card server args))
+  ([state side eid card server] (corp-install state side eid card server nil))
   ([state side eid card server {:keys [host-card] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :corp-install)]
      (cond
@@ -294,47 +293,32 @@
       (and uniqueness (in-play? state card)) :unique
       ;; Req check
       (and card-req (not (card-req state side (make-eid state) card nil))) :req
+      ;; The card's zone is locked
+      (get-in @state [side :locked (first (get-zone card))]) :locked-zone
       ;; Nothing preventing install
       :else true)))
 
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
-  ([state side card] (runner-can-install? state side card false))
-  ([state side card facedown]
+  ([state side card] (runner-can-install? state side card nil))
+  ([state side card {:keys [facedown no-toast] :as args}]
    (let [reason (runner-can-install-reason state side card facedown)
-         reason-toast #(toast state side % "warning")
+         reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
      (case reason
-       ;; pass on true value
-       true true
-       ;; failed unique check
        :unique
        (reason-toast (str "Cannot install a second copy of " title " since it is unique."
                           " Please trash currently installed copy first"))
-       ;; failed install lock check
        :lock-install
        (reason-toast (str "Unable to install " title " since installing is currently locked"))
-       ;; failed console check
        :console
        (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
        :req
        (reason-toast (str "Installation requirements are not fulfilled for " title))
-       true)
-     reason)))
-
-(defn- runner-get-cost
-  "Get the total install cost for specified card"
-  [state side card {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus]}]
-  (if (or ignore-all-cost facedown)
-    [:credit 0]
-    (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
-          additional-costs (install-additional-cost-bonus state side card)]
-      (merge-costs
-        [base-cost
-         (when (and (not ignore-install-cost)
-                    (not facedown))
-           [:credit cost])
-         additional-costs]))))
+       :locked-zone
+       (reason-toast (str "Unable to install " title " because it is currently in a locked zone"))
+       ;; else
+       true))))
 
 (defn- runner-install-message
   "Prints the correct msg for the card install"
@@ -349,62 +333,98 @@
                        (when host-card (str " on " (card-str state host-card)))
                        (when no-cost " at no cost"))))))
 
+(defn runner-install-continue
+  [state side eid card
+   {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
+  (let [c (if host-card
+            (host state side host-card card)
+            (move state side card
+                  [:rig (if facedown :facedown (to-keyword (:type card)))]))
+        c (assoc c
+                 :installed :this-turn
+                 :new true
+                 :previous-zone previous-zone)
+        installed-card (if facedown
+                         (update! state side c)
+                         (card-init state side c {:resolve-effect false
+                                                  :init-data true
+                                                  :no-mu no-mu}))]
+    (when-not no-msg
+      (runner-install-message state side (:title installed-card) payment-str args))
+    (play-sfx state side "install-runner")
+    (when (and (not facedown)
+               (resource? card))
+      (swap! state assoc-in [:runner :register :installed-resource] true))
+    (when (and (not facedown)
+               (has-subtype? installed-card "Icebreaker"))
+      (update-breaker-strength state side installed-card))
+    (queue-event state :runner-install {:card (get-card state installed-card)
+                                        :facedown facedown})
+    (when-let [on-install (and (not facedown)
+                               (:on-install (card-def installed-card)))]
+      (make-pending-event state :runner-install installed-card on-install))
+    (wait-for (checkpoint state nil (make-eid state eid) nil)
+              (complete-with-result state side eid (get-card state installed-card)))))
+
+(defn- runner-install-cost
+  "Get the total install cost for specified card"
+  [state side card
+   {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus cached-costs]}]
+  (cond+
+    [cached-costs]
+    [(or ignore-all-cost facedown) [:credit 0]]
+    [:else
+     (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
+           additional-costs (install-additional-cost-bonus state side card)]
+       (merge-costs
+         [base-cost
+          (when (and (not ignore-install-cost)
+                     (not facedown))
+            [:credit cost])
+          additional-costs]))]))
+
+(defn runner-can-pay-and-install?
+  [state side eid card {:keys [facedown] :as args}]
+  (let [costs (runner-install-cost state side (assoc card :facedown facedown) args)]
+    (and (runner-can-install? state side card args)
+         (can-pay? state side eid card nil costs)
+         ;; explicitly return true
+         true)))
+
+(defn runner-install-pay
+  [state side eid card {:keys [facedown] :as args}]
+  (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))]
+    (if (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
+      (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
+        (wait-for (pay state side (make-eid state eid) card costs)
+                  (if-let [payment-str (:msg async-result)]
+                    (runner-install-continue
+                      state side eid
+                      played-card (assoc args
+                                         :previous-zone (:zone card)
+                                         :payment-str payment-str))
+                    (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]
+                      (update! state :runner
+                               (assoc returned-card
+                                      :cid (:cid card)
+                                      :previous-zone (:previous-zone card)))
+                      (effect-completed state side eid)))))
+      (effect-completed state side eid))))
+
 (defn runner-install
   "Installs specified runner card if able"
-  ([state side card] (runner-install state side (make-eid state) card nil))
-  ([state side card params] (runner-install state side (make-eid state) card params))
-  ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
-     (if (and (empty? (get-in @state [side :locked (first (get-zone card))]))
-              (not (install-locked? state :runner)))
-       (if-let [hosting (and (not host-card)
-                             (not facedown)
-                             (:hosting (card-def card)))]
-         (continue-ability
-           state side
-           {:choices hosting
-            :prompt (str "Choose a card to host " (:title card) " on")
-            :async true
-            :effect (effect (runner-install eid card (assoc params :host-card target)))}
-           card nil)
-         (if-not (true? (runner-can-install? state side card facedown))
-           (effect-completed state side eid)
-           (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})
-                 cost (runner-get-cost state side (assoc card :facedown facedown) params)]
-             (wait-for (pay state side (make-eid state eid) card cost)
-                       (if-let [payment-str (:msg async-result)]
-                         (let [c (if host-card
-                                   (host state side host-card played-card)
-                                   (move state side played-card
-                                         [:rig (if facedown :facedown (to-keyword (:type card)))]))
-                               c (assoc c
-                                        :installed :this-turn
-                                        :new true
-                                        :previous-zone (:zone card))
-                               installed-card (if facedown
-                                                (update! state side c)
-                                                (card-init state side c {:resolve-effect false
-                                                                         :init-data true
-                                                                         :no-mu no-mu}))]
-                           (when-not no-msg
-                             (runner-install-message state side (:title installed-card) payment-str params))
-                           (play-sfx state side "install-runner")
-                           (when (and (not facedown)
-                                      (resource? card))
-                             (swap! state assoc-in [:runner :register :installed-resource] true))
-                           (when (and (not facedown)
-                                      (has-subtype? installed-card "Icebreaker"))
-                             (update-breaker-strength state side installed-card))
-                           (queue-event state :runner-install {:card (get-card state installed-card)
-                                                               :facedown facedown})
-                           (when-let [on-install (and (not facedown)
-                                                      (:on-install (card-def installed-card)))]
-                             (make-pending-event state :runner-install installed-card on-install))
-                           (wait-for (checkpoint state nil (make-eid state eid) nil)
-                                     (complete-with-result state side eid (get-card state installed-card))))
-                         (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]
-                           (update! state :runner (assoc returned-card
-                                                         :cid (:cid card)
-                                                         :previous-zone (:previous-zone card)))
-                           (effect-completed state side eid)))))))
-       (effect-completed state side eid)))))
+  ([state side eid card] (runner-install state side eid card nil))
+  ([state side eid card {:keys [host-card facedown] :as args}]
+   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)
+         hosting (and (not host-card)
+                      (not facedown)
+                      (:hosting (card-def card)))]
+     (if hosting
+       (continue-ability
+         state side
+         {:choices hosting
+          :prompt (str "Choose a card to host " (:title card) " on")
+          :async true
+          :effect (effect (runner-install eid card (assoc args :host-card target)))}
+         card nil)
+       (runner-install-pay state side eid card args)))))

@@ -82,7 +82,8 @@
                    {:prompt "Select a card to install facedown"
                     :choices {:card #(and (runner? %)
                                           (in-hand? %))}
-                    :effect (effect (runner-install target {:facedown true}))}
+                    :async true
+                    :effect (effect (runner-install (make-eid state eid) target {:facedown true}))}
                    (map->Card {:title "/faceup command"}) nil))
 
 (defn command-counter [state side args]
@@ -180,11 +181,13 @@
       {:prompt "Select a piece of ice to install"
        :choices {:card #(and (ice? %)
                              (#{[:hand]} (:zone %)))}
+       :async true
        :effect (effect
                  (continue-ability
                    (let [chosen-ice target]
                      {:prompt "Choose a server"
                       :choices (req servers)
+                      :async true
                       :effect (effect
                                 (continue-ability
                                   (let [chosen-server target
@@ -192,9 +195,12 @@
                                                                (conj (server->zone state target) :ices)))]
                                     {:prompt "Which position to install in? (0 is innermost)"
                                      :choices (vec (reverse (map str (range (inc num-ice)))))
-                                     :effect (effect (corp-install chosen-ice chosen-server
-                                                                   {:no-install-cost true
-                                                                    :index (str->int target)}))})
+                                     :async true
+                                     :effect (effect (corp-install
+                                                       (make-eid state eid)
+                                                       chosen-ice chosen-server
+                                                       {:no-install-cost true
+                                                        :index (str->int target)}))})
                                   card nil))})
                    card nil))}
       (map->Card {:title "/install-ice command"}) nil)))

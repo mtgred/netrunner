@@ -28,14 +28,14 @@
                 :async true
                 :req (req (and (not-empty (:hand corp))
                                (if-let [server (second targets)]
-                                 (can-corp-install?
+                                 (corp-can-pay-and-install?
                                    state side (assoc eid :source server :source-type :corp-install)
                                    target server {:base-cost [:click 1]
                                                   :action :corp-click-install
                                                   :no-toast true})
                                  (some
                                    (fn [server]
-                                     (can-corp-install?
+                                     (corp-can-pay-and-install?
                                        state side (assoc eid :source server :source-type :corp-install)
                                        target server {:base-cost [:click 1]
                                                       :action :corp-click-install
@@ -99,10 +99,14 @@
                                        (draw state side eid 1 nil)))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (runner-install state side (assoc eid :source :action :source-type :runner-install)
-                                               target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (runner-can-pay-and-install?
+                                 state :runner (assoc eid :source :action :source-type :runner-install)
+                                 target {:base-cost [:click 1]})))
+                :effect (req (runner-install
+                               state :runner (assoc eid :source :action :source-type :runner-install)
+                               target {:base-cost [:click 1]
+                                       :no-toast true}))}
                {:label "Play 1 event"
                 :async true
                 :req (req (and (not-empty (:hand runner))
