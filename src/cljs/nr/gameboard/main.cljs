@@ -531,7 +531,7 @@
   [card flipped]
   (let [c-state (r/atom {})]
     (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-                 subtype subtypes advanceable rezzed strength current-strength title remotes selected hosted
+                 subtype subtypes advanceable rezzed strength current-strength title selected hosted
                  side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
                  corp-abilities]
           :as card}
@@ -670,9 +670,9 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [user side hand hand-count prompt remotes wrapper-class]
+  [user side hand hand-count prompt wrapper-class]
   (let [size @hand-count
-        filled-hand (concat @hand (repeat (- @hand-count (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
+        filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
     [:div
      (doall (map-indexed
               (fn [i card]
@@ -680,27 +680,30 @@
                        :class (str
                                 (if (and (not= "select" (-> @prompt first :prompt-type))
                                          (this-user? @user)
-                                         (not (:selected card)) (playable? card))
+                                         (not (:selected card))
+                                         (playable? card))
                                   "playable" "")
                                 " "
                                 wrapper-class)
                        :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
-                 (if (or (this-user? @user)
-                         (get-in @game-state [(utils/other-side (get-side @game-state)) :openhand]) ;; TODO: this rebuilds the hand UI on any state change
-                         (spectator-view-hidden?))
-                   [card-view (assoc card :remotes @remotes)]
+                 (cond
+                   (spectator-view-hidden?)
+                   [card-view (dissoc card :new :selected)]
+                   (:cid card)
+                   [card-view card]
+                   :else
                    [facedown-card (:side card)])])
               filled-hand))]))
 
-(defn hand-view [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
+(defn hand-view [user name translated-name side hand hand-size hand-count prompt popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
+    (fn [user name translated-name side hand hand-size hand-count prompt popup popup-direction]
       (let [size (if (nil? @hand-count) (count @hand) @hand-count)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view user side hand hand-count prompt remotes "card-wrapper"]
+           [build-hand-card-view user side hand hand-count prompt "card-wrapper"]
            [label @hand {:opts {:name translated-name
                                 :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
           (when popup
@@ -715,7 +718,7 @@
              (let [{:keys [total]} @hand-size]
                [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
                 (controls :hand-size)])
-             [build-hand-card-view user side hand hand-count prompt remotes "card-popup-wrapper"]]])]))))
+             [build-hand-card-view user side hand hand-count prompt "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -1739,8 +1742,7 @@
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
                                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                                   [hand-view op-user srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt corp-remotes
-                                    (= @side :spectator) "opponent"])]
+                                   [hand-view op-user srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt (= @side :spectator) "opponent"])]
 
                   [:div.inner-leftpane
                    [audio-component {:sfx sfx}]
@@ -1776,8 +1778,7 @@
                   [:div.me
                    (let [srv (if (= :corp me-side) "HQ" "Grip")
                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                     [hand-view me-user srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt
-                      corp-remotes true "me"])]]]
+                     [hand-view me-user srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt true "me"])]]]
                 (when (:replay @game-state)
                   [:div.bottompane
                    [replay-panel]])]))))})))

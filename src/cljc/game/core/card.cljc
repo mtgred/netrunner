@@ -122,6 +122,11 @@
   [card]
   (= (get-zone card) [:scored]))
 
+(defn in-rfg?
+  "Checks if the specified card is in the 'remove from game' zone"
+  [card]
+  (= (get-zone card) [:rfg]))
+
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
   as either a string or a keyword"
@@ -342,32 +347,34 @@
       (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (get-zone card)))))))
 
 (defn is-public?
+  "Returns if a given card should be visible to the opponent"
   ([card] (is-public? (to-keyword (:side card))))
   ([card side]
-   (if (= side :corp)
-     ;; public runner cards:
-     ;; * installed/hosted and not facedown
-     ;; * scored or current or in heap
-     (or (corp? card)
-         (identity? card)
-         (and (or (installed? card)
-                  (:host card))
-              (not (facedown? card)))
-         (or (in-discard? card)
-             (in-scored? card)
-             (in-current? card)))
-     ;; public corp cards:
-     ;; * installed and rezzed;
-     ;; * in :discard and :seen
-     ;; * scored or current
-     (or (runner? card)
-         (identity? card)
-         (and (or (installed? card)
-                  (:host card))
-              (or (operation? card)
-                  (condition-counter? card)
-                  (rezzed? card)))
-         (and (in-discard? card)
-              (:seen card))
-         (or (in-scored? card)
-             (in-current? card))))))
+   ;; public cards for both sides:
+   ;; * identity
+   ;; * in a public zone: score area, current, play area, remove from game
+   (or (identity? card)
+       (in-scored? card)
+       (in-current? card)
+       (in-play-area? card)
+       (in-rfg? card)
+       (if (= side :corp)
+         ;; public runner cards:
+         ;; * installed/hosted and not facedown
+         ;; * in heap
+         (or (corp? card)
+             (and (or (installed? card)
+                      (:host card))
+                  (not (facedown? card)))
+             (in-discard? card))
+         ;; public corp cards:
+         ;; * installed and rezzed
+         ;; * in archives and faceup
+         (or (runner? card)
+             (and (or (installed? card)
+                      (:host card))
+                  (or (operation? card)
+                      (condition-counter? card)
+                      (rezzed? card)))
+             (and (in-discard? card)
+                  (faceup? card)))))))

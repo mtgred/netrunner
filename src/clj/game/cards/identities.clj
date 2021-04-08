@@ -574,8 +574,12 @@
 (defcard "Harishchandra Ent.: Where You're the Star"
   {:events [{:event :tags-changed
              :effect (req (if (is-tagged? state)
-                            (reveal-hand state :runner)
-                            (conceal-hand state :runner)))}]
+                            (when-not (get-in @state [:runner :openhand])
+                              (system-msg state :corp "reveals the Runner's hand")
+                              (reveal-hand state :runner))
+                            (when (get-in @state [:runner :openhand])
+                              (system-msg state :corp "hides the Runner's hand")
+                              (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
    :leave-play (req (when (is-tagged? state)

@@ -33,10 +33,11 @@
                                              target-card server {:base-cost [:click 1] :action :corp-click-install})))}
                {:label "Play 1 operation"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand corp))
+                               (can-play-instant? state :corp (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :corp (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Advance 1 installed card"
                 :cost [:click 1 :credit 1]
                 :async true
@@ -89,10 +90,11 @@
                                                target-card {:base-cost [:click 1]})))}
                {:label "Play 1 event"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (can-play-instant? state :runner (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Run any server"
                 :async true
                 :effect (effect (make-run eid target nil {:click-run true}))}

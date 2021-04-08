@@ -568,7 +568,9 @@
    value]
 
   [game.core.play-instants
-   play-instant]
+   can-play-instant?
+   play-instant
+   play-instant-costs]
 
   [game.core.pick-counters
    pick-credit-providing-cards

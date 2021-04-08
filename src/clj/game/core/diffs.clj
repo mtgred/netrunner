@@ -2,22 +2,58 @@
   (:require
     [differ.core :as differ]
     [cond-plus.core :refer [cond+]]
-    [game.core.card :refer [is-public? private-card]]
+    [game.core.card :refer [corp? runner? is-public? private-card]]
     [game.utils :refer [dissoc-in prune-null-fields]]))
 
-(defn card-summary
-  [card side]
+; (defn playable? [{:keys [side zone cost type uniqueness] :as card}]
+;   (let [my-side (:side @game-state)
+;         me (my-side @game-state)]
+;     (and (= (keyword (.toLowerCase side)) my-side)
+
+;          (cond
+
+;            (has-subtype? card "Double")
+;            (if (>= (:click me) 2) true false)
+
+;            (has-subtype? card "Triple")
+;            (if (>= (:click me) 3) true false)
+
+;            (= (:code card) "07036") ; Day Job
+;            (if (>= (:click me) 4) true false)
+
+;            (has-subtype? card "Priority")
+;            (if (get-in @game-state [my-side :register :spent-click]) false true)
+
+;            :else
+;            true)
+
+;          (and (= zone ["hand"])
+;               (or (not uniqueness) (not (in-play? card)))
+;               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
+;               (pos? (:click me))))))
+
+; (defn playable? [card state side]
+;   (let [side? (if (= :corp side) corp? runner?)]
+;     ()
+;     )
+;   )
+
+(defn card-summary [card state side]
   (cond+
     [(not (is-public? card side))
      (prune-null-fields (private-card card))]
     [(:hosted card)
      (update card :hosted (partial mapv #(card-summary % side)))]
     [:else
-     (prune-null-fields card)]))
+     (-> card
+         ; (playable? state side)
+         (prune-null-fields))]))
 
-(defn card-summary-vec
-  [cards side]
-  (mapv #(card-summary % side) cards))
+(defn card-summary-vec [cards state side]
+  (mapv #(card-summary % state side) cards))
+
+(defn prune-vec [cards]
+  (mapv prune-null-fields cards))
 
 (def player-keys
   [:aid
@@ -44,13 +80,13 @@
    :agenda-point-req])
 
 (defn player-summary
-  [player side]
+  [player state side]
   (-> (select-keys player player-keys)
       (update :identity prune-null-fields)
-      (update :current card-summary-vec side)
-      (update :play-area card-summary-vec side)
-      (update :rfg card-summary-vec side)
-      (update :scored card-summary-vec side)
+      (update :current card-summary-vec state side)
+      (update :play-area card-summary-vec state side)
+      (update :rfg card-summary-vec state side)
+      (update :scored card-summary-vec state side)
       (update :register select-keys [:spent-click])))
 
 (def corp-keys
@@ -75,7 +111,7 @@
           (let [zone (first zones)]
             (if (nil? zone)
               (:servers corp)
-              (recur (update-in corp zone card-summary-vec :runner)
+              (recur (update-in corp zone card-summary-vec state :runner)
                      (next zones)))))))))
 
 (defn corp-summary
@@ -85,16 +121,17 @@
         view-deck (:view-deck corp)
         deck (:deck corp)
         hand (:hand corp)
+        open-hands? (:openhand corp)
         discard (:discard corp)
         install-list (:install-list corp)]
-    (-> (player-summary corp side)
+    (-> (player-summary corp state side)
         (merge (select-keys corp corp-keys))
         (assoc
-          :deck (if (and corp-player? view-deck) deck [])
+          :deck (if (and corp-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
-          :hand (if corp-player? hand [])
+          :hand (if (or corp-player? open-hands?) (prune-vec hand) [])
           :hand-count (count hand)
-          :discard (card-summary-vec discard :corp)
+          :discard (card-summary-vec discard state :corp)
           :servers (servers-summary state side))
         (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
 
@@ -112,7 +149,7 @@
         runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
-               [row (card-summary-vec cards :runner)]))))
+               [row (card-summary-vec cards state :runner)]))))
 
 (defn runner-summary
   [state side]
@@ -121,16 +158,17 @@
         view-deck (:view-deck runner)
         deck (:deck runner)
         hand (:hand runner)
+        open-hands? (:openhand runner)
         discard (:discard runner)
         runnable-list (:runnable-list runner)]
-    (-> (player-summary runner side)
+    (-> (player-summary runner state side)
         (merge (select-keys runner runner-keys))
         (assoc
-          :deck (if (and runner-player? view-deck) deck [])
+          :deck (if (and runner-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
-          :hand (if runner-player? hand [])
+          :hand (if (or runner-player? open-hands?) (prune-vec hand) [])
           :hand-count (count hand)
-          :discard discard
+          :discard (prune-vec discard)
           :rig (rig-summary state side))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
