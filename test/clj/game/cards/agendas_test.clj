@@ -1816,21 +1816,44 @@
 
 (deftest longevity-serum
   ;; Longevity Serum
-  (do-game
-    (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
-                      :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
-    (play-and-score state "Longevity Serum")
-    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-    (click-card state :corp (find-card "IPO" (:hand (get-corp))))
-    (is (= 4 (count (:discard (get-corp)))))
-    (click-prompt state :corp "Done")
-    (is (= 6 (count (:discard (get-corp)))) "Corp trashes two cards from HQ")
-    (click-card state :corp "Ice Wall")
-    (click-card state :corp "Fire Wall")
-    (click-card state :corp "Prisec")
-    (is (find-card "Fire Wall" (:deck (get-corp))))
-    (is (find-card "Ice Wall" (:deck (get-corp))))
-    (is (find-card "Prisec" (:deck (get-corp))))))
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
+                        :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
+      (play-and-score state "Longevity Serum")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp (find-card "IPO" (:hand (get-corp))))
+      (is (= 4 (count (:discard (get-corp)))))
+      (click-prompt state :corp "Done")
+      (is (= 6 (count (:discard (get-corp)))) "Corp trashes two cards from HQ")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Fire Wall")
+      (click-card state :corp "Prisec")
+      (is (find-card "Fire Wall" (:deck (get-corp))))
+      (is (find-card "Ice Wall" (:deck (get-corp))))
+      (is (find-card "Prisec" (:deck (get-corp))))))
+  (testing "No cards selected"
+    (do-game
+      (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
+                        :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
+      (play-and-score state "Longevity Serum")
+      (is (= 4 (count (:discard (get-corp)))))
+      (click-prompt state :corp "Done")
+      (is (= 4 (count (:discard (get-corp)))) "Corp trashes no cards from HQ")
+      (click-prompt state :corp "Done")
+      (is (= 4 (count (:discard (get-corp)))) "Corp shuffles no cards from discard")))
+  (testing "No cards trashed, 2 shuffled"
+    (do-game
+      (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
+                        :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
+      (play-and-score state "Longevity Serum")
+      (is (= 4 (count (:discard (get-corp)))))
+      (click-prompt state :corp "Done")
+      (is (= 4 (count (:discard (get-corp)))) "Corp trashes no cards from HQ")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Fire Wall")
+      (click-prompt state :corp "Done")
+      (is (= 2 (count (:discard (get-corp)))) "Corp shuffles 2 cards from discard"))))
 
 (deftest luminal-transubstantiation
   ;; Luminal Transubstantiation
