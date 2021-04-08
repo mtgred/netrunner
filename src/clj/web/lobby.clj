@@ -138,17 +138,18 @@
 
 (defn close-lobby
   "Closes the given game lobby, booting all players and updating stats."
-  [{:keys [started gameid] :as game}]
-  (when started
-    (stats/update-deck-stats all-games gameid)
-    (stats/update-game-stats all-games gameid)
-    (stats/push-stats-update all-games gameid))
+  ([game] (close-lobby game nil))
+  ([{:keys [started gameid] :as game} skip-on-close]
+   (when started
+     (stats/update-deck-stats all-games gameid)
+     (stats/update-game-stats all-games gameid)
+     (stats/push-stats-update all-games gameid))
 
-  (let [callback (get-in @all-games [gameid :on-close])]
-    (refresh-lobby-dissoc gameid)
-    (swap! old-states dissoc gameid)
-    (when callback
-      (callback))))
+   (let [callback (get-in @all-games [gameid :on-close])]
+     (refresh-lobby-dissoc gameid)
+     (swap! old-states dissoc gameid)
+     (when (and (not skip-on-close) callback)
+       (callback)))))
 
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
@@ -375,6 +376,9 @@
                    (assoc d :status (calculate-deck-status d)))]
     (when (and (:identity deck)
                (player? client-id game))
+      (when (= "tournament" (:room game))
+        (lobby-say gameid {:user "__system__"
+                           :text (str username " has selected deck with tournament hash " (:hash deck))}))
       (refresh-lobby-assoc-in gameid [:players first-player :deck] deck))))
 
 (defn handle-rename-game

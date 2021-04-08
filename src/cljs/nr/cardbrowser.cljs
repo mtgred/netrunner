@@ -8,7 +8,8 @@
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
             [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
-                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon get-image-path image-or-face]]
+                              influence-dots slug->format format->slug render-icons non-game-toast faction-icon
+                              get-image-path image-or-face kebab]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
             [reagent.core :as r]
             [medley.core :refer [find-first]]))
@@ -285,7 +286,7 @@
       (when-let [influence (:factioncost card)]
         (when-let [faction (:faction card)]
            [:span.influence
-            {:class (-> faction s/lower-case (s/replace " " "-"))}
+            {:class (kebab faction)}
             (influence-dots influence)]))]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
@@ -441,7 +442,7 @@
      :reagent-render
      (fn [state scroll-top]
        (let [selected (selected-set-name state)
-             selected-cycle (-> selected s/lower-case (s/replace " " "-"))
+             selected-cycle (kebab selected)
              combined-cards (concat (sort-by :code (vals @all-cards)) (:previous-cards @app-state))
              [alt-filter cards] (cond
                                   (= selected "All") [nil combined-cards]

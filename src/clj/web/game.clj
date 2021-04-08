@@ -102,7 +102,7 @@
     (when (and (lobby/first-player? client-id game)
                (not started))
       (let [strip-deck (fn [player] (-> player
-                                        (update-in [:deck] #(select-keys % [:_id :identity :name]))
+                                        (update-in [:deck] #(select-keys % [:_id :identity :name :hash]))
                                         (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
             start-date (t/now)
