@@ -695,7 +695,7 @@
 (defn hand-view [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
   (let [s (r/atom {})]
     (fn [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
-      (let [size @hand-count]
+      (let [size (if (nil? @hand-count) (count @hand) @hand-count)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
@@ -728,21 +728,23 @@
     [:div.blue-shade.identity
      [card-view @identity]
      [:div.header {:class "darkbg server-label"}
-      (str title " (" @hand-count ")")]]))
+      (str title " (" hand-count ")")]]))
 
 (defn deck-view [render-side player-side identity deck deck-count]
    (let [is-runner (= :runner render-side)
          title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
          ref (if is-runner "stack" "rd")
          menu-ref (keyword (str ref "-menu"))
-         content-ref (keyword (str ref "-content"))]
+         content-ref (keyword (str ref "-content"))
+         ; deck-count is only sent to live games and does not exist in the replay
+         deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
      (fn [render-side player-side identity deck]
        [:div.blue-shade.deck
         (drop-area title {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
-        (when (pos? @deck-count)
+        (when (pos? deck-count-number)
           [facedown-card (:side @identity) ["bg"] nil])
         [:div.header {:class "darkbg server-label"}
-         (str title " (" @deck-count ")")]
+         (str title " (" deck-count-number ")")]
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
@@ -1045,7 +1047,8 @@
 (defn board-view-corp [player-side identity deck deck-count hand hand-count discard servers run]
   (let [rs (:server @run)
         server-type (first rs)
-        side-class (if (= player-side :runner) "opponent" "me")]
+        side-class (if (= player-side :runner) "opponent" "me")
+        hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)]
     [:div.outer-corp-board {:class side-class}
      [:div.corp-board {:class side-class}
       (doall
@@ -1072,7 +1075,7 @@
              {:opts {:name (remote->name (first server))}}])))
       [server-view {:key "hq"
                     :server (:hq @servers)
-                    :central-view [identity-view :corp identity hand-count]
+                    :central-view [identity-view :corp identity hand-count-number]
                     :run (when (= server-type "hq") @run)}]
       [server-view {:key "rd"
                     :server (:rd @servers)
@@ -1085,10 +1088,11 @@
 
 (defn board-view-runner [player-side identity deck deck-count hand hand-count discard rig run]
   (let [is-me (= player-side :runner)
+        hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)
         centrals [:div.runner-centrals
                   [discard-view-runner player-side discard]
                   [deck-view :runner player-side identity deck deck-count]
-                  [identity-view :runner identity hand-count]]
+                  [identity-view :runner identity hand-count-number]]
         runner-f (if (and (not is-me)
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
