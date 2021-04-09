@@ -3177,16 +3177,15 @@
    (play-from-hand state :corp "NGO Front" "New remote")
    (take-credits state :corp)
    (run-empty-server state "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 card")
+   (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
    (click-prompt state :runner "Pay 1 [Credits] to trash")
-   (let [credits (:credit (get-runner))]
-     (changes-val-macro
-      1 (count (:hand (get-runner)))
-      "René draws one card"
-      (click-prompt state :runner "Yes"))
-     (is (= (+ credits 1) (:credit (get-runner))) "Gain 1 credit from trashing accessed card")
-     (run-empty-server state "Server 2")
-     (click-prompt state :runner "Pay 1 [Credits] to trash")
-     (is (empty? (:prompt (get-runner))) "No prompt on second trash"))))
+   (is (= 5 (:credit (get-runner))) "Gain 1 credit from trashing accessed card (and paid 1 to trash)")
+   (is (= 2 (count (:hand (get-runner)))) "Runner draws 1 card")
+   (run-empty-server state "Server 2")
+   (click-prompt state :runner "Pay 1 [Credits] to trash")
+   (is (= 4 (:credit (get-runner))) "Runner doesn't gain 1 credit from trashing accessed card")
+   (is (= 2 (count (:hand (get-runner)))) "Runner doesn't draw 1 card")))
 
 (deftest rielle-kit-peddler-transhuman
   ;; Rielle "Kit" Peddler - Give ICE Code Gate
