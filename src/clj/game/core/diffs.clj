@@ -181,6 +181,7 @@
    :jack-out-after-pass
    :phase
    :next-phase
+   :no-action
    :source-card])
 
 (defn run-summary
