@@ -2480,14 +2480,15 @@
                :effect (effect (update! (dissoc card :server-target)))}]}))
 
 (defcard "Tranquilizer"
-  {:data {:counter {:virus 1}}
-   :hosting {:card #(and (ice? %)
-                         (can-host? %))}
-   :events [{:event :runner-turn-begins
-             :effect (req (add-counter state side card :virus 1)
-                          (if (and (rezzed? (get-card state (:host card)))
-                                   (<= 3 (get-virus-counters state (get-card state card))))
-                            (derez state side (get-card state (:host card)))))}]})
+  (let [action (req (add-counter state side card :virus 1)
+                    (if (and (rezzed? (get-card state (:host card)))
+                             (<= 3 (get-virus-counters state (get-card state card))))
+                      (derez state side (get-card state (:host card)))))]
+    {:hosting {:card #(and (ice? %)
+                           (can-host? %))}
+     :on-install {:effect action}
+     :events [{:event :runner-turn-begins
+               :effect action}]}))
 
 (defcard "Trope"
   {:events [{:event :runner-turn-begins
