@@ -107,9 +107,11 @@
                                          :card #(and (runner? %)
                                                      (in-play-area? %))}
                                :effect (req (doseq [c targets]
-                                              (runner-install state side c
-                                                              {:ignore-all-cost true
-                                                               :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
+                                              (runner-install
+                                                state side
+                                                (make-eid state eid) c
+                                                {:ignore-all-cost true
+                                                 :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
                                             (swap! state assoc-in [:runner :play-area] []))}
                               card nil)))}]})
 
@@ -574,8 +576,12 @@
 (defcard "Harishchandra Ent.: Where You're the Star"
   {:events [{:event :tags-changed
              :effect (req (if (is-tagged? state)
-                            (reveal-hand state :runner)
-                            (conceal-hand state :runner)))}]
+                            (when-not (get-in @state [:runner :openhand])
+                              (system-msg state :corp "reveals the Runner's hand")
+                              (reveal-hand state :runner))
+                            (when (get-in @state [:runner :openhand])
+                              (system-msg state :corp "hides the Runner's hand")
+                              (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
    :leave-play (req (when (is-tagged? state)

@@ -164,6 +164,7 @@
      (when-let [tags (:tags runner)]
        (swap! state assoc-in [:runner :tag :base] tags))
      (when (= start-as :runner) (take-credits state :corp))
+     (core/fake-checkpoint state)
      state)))
 
 ;;; Card related functions
@@ -589,7 +590,7 @@
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
   (when (play-from-hand state :corp title "New remote")
-    (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
+    (score-agenda state :corp (get-content state (keyword (str "remote" (dec (:rid @state)))) 0))))
 
 (defn damage
   [state side dmg-type qty]

@@ -3745,18 +3745,21 @@
       (new-game {:runner {:deck [(qty "Penumbral Toolkit" 3)]}})
       (take-credits state :corp)
       (core/gain state :runner :click 1)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "No cost reduction without run"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "No cost reduction without run"
+        (play-from-hand state :runner "Penumbral Toolkit"))
       (run-empty-server state :rd)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "No cost reduction after run on R&D"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "No cost reduction after run on R&D"
+        (play-from-hand state :runner "Penumbral Toolkit"))
       (run-empty-server state :hq)
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Cost reduction after run on HQ"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
-      (is (= 3 (count (:rig (get-runner)))) "Installed all three cards")))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Cost reduction after run on HQ"
+        (play-from-hand state :runner "Penumbral Toolkit"))
+      (is (= 3 (count (get-resource state))) "Installed all three cards")))
   (testing "Pay-credits prompt"
     (do-game
       (new-game {:runner {:deck ["Penumbral Toolkit" "Refractor"]}})

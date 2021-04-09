@@ -47,7 +47,9 @@
 (defn make-rid
   "Returns a progressively-increasing integer to identify a new remote server."
   [state]
-  (get-in (swap! state update-in [:rid] inc) [:rid]))
+  (let [current-rid (:rid @state)]
+    (swap! state update :rid inc)
+    current-rid))
 
 (defn new-state
   [gameid room now spectatorhands save-replay corp runner]
@@ -55,7 +57,7 @@
     {:gameid gameid :log [] :active-player :runner :end-turn true
      :history []
      :room room
-     :rid 0 :turn 0 :eid 0
+     :rid 1 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0
      :stats {:time {:started now}}
      :start-date now

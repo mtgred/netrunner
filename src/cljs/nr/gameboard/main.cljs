@@ -125,6 +125,8 @@
           (send-command "ability" {:card card :ability 0})
           (send-command (first actions) {:card card}))))))
 
+(defn playable? [card] (:playable card))
+
 (defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -138,63 +140,32 @@
              (= side (keyword (.toLowerCase (:side card)))))
         (handle-abilities side card c-state)
 
-        ;; Runner side
-        (= side :runner)
-        (case (first zone)
-          "hand" (if (:host card)
-                   (when (:installed card)
-                     (handle-abilities side card c-state))
-                   (send-command "play" {:card card}))
-          ("current" "onhost" "play-area" "scored" "servers" "rig")
-          (handle-abilities side card c-state)
-          nil)
+        ;; Runner clicking on a runner card
+        (and (= side :runner)
+             (= "Runner" (:side card))
+             (= "hand" (first zone))
+             (playable? card))
+        (send-command "play" {:card card})
 
-        ;; Corp side
-        (= side :corp)
+        ;; Corp clicking on a corp card
+        (and (= side :corp)
+             (= "Corp" (:side card))
+             (= "hand" (first zone))
+             (playable? card))
+        (if (= "Operation" type)
+          (send-command "play" {:card card})
+          (if (:servers @c-state)
+            (do (swap! c-state dissoc :servers)
+                (send-command "generate-install-list" nil))
+            (do (swap! c-state assoc :servers true)
+                (send-command "generate-install-list" {:card card}))))
+
+        :else
         (case (first zone)
-          "hand" (case type
-                   ("Agenda" "Asset" "ICE" "Upgrade")
-                   (if (:servers @c-state)
-                     (do (swap! c-state dissoc :servers)
-                         (send-command "generate-install-list" nil))
-                     (do (swap! c-state assoc :servers true)
-                         (send-command "generate-install-list" {:card card})))
-                   (send-command "play" {:card card}))
           ("current" "onhost" "play-area" "scored" "servers" "rig")
           (handle-abilities side card c-state)
+          ; else
           nil)))))
-
-(defn in-play? [card]
-  (let [dest (when (= (:side card) "Runner")
-               (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
-    (some #(= (:title %) (:title card)) dest)))
-
-(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
-  (let [my-side (:side @game-state)
-        me (my-side @game-state)]
-    (and (= (keyword (.toLowerCase side)) my-side)
-
-         (cond
-
-           (has-subtype? card "Double")
-           (if (>= (:click me) 2) true false)
-
-           (has-subtype? card "Triple")
-           (if (>= (:click me) 3) true false)
-
-           (= (:code card) "07036") ; Day Job
-           (if (>= (:click me) 4) true false)
-
-           (has-subtype? card "Priority")
-           (if (get-in @game-state [my-side :register :spent-click]) false true)
-
-           :else
-           true)
-
-         (and (= zone ["hand"])
-              (or (not uniqueness) (not (in-play? card)))
-              (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-              (pos? (:click me))))))
 
 (defn spectator-view-hidden?
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
@@ -210,7 +181,8 @@
   (-> e .-target js/$ (.removeClass "dragover"))
   (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
-    (send-command "move" {:card card :server server})))
+    (when (not= "Identity" (:type card))
+      (send-command "move" {:card card :server server}))))
 
 (defn abs [n] (max n (- n)))
 
@@ -313,15 +285,6 @@
         [:div
          [:span.cardname title]
          [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]))
-
-(defn face-down?
-  "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed host] :as card}]
-  (if (= side "Corp")
-    (and (not= type "Operation")
-         (not rezzed)
-         (not= (:side host) "Runner"))
-    facedown))
 
 (defn card-implementation [zoom-card]
   (when-let [card @zoom-card]
@@ -531,7 +494,7 @@
   [card flipped]
   (let [c-state (r/atom {})]
     (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-                 subtype subtypes advanceable rezzed strength current-strength title remotes selected hosted
+                 subtype subtypes advanceable rezzed strength current-strength title selected hosted
                  side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
                  corp-abilities]
           :as card}
@@ -556,7 +519,7 @@
           (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                        (spectator-view-hidden?)
                                        (= (:side @game-state) (keyword (lower-case side))))
-                alt-str (if facedown-but-known (str "Facedown " title) nil)]
+                alt-str (when facedown-but-known (str "Facedown " title))]
             [facedown-card side ["bg"] alt-str])
           (when-let [url (image-url card)]
             [:div
@@ -598,6 +561,15 @@
        [:div.hosted
           (let [distinct-hosted (vals (group-by :title hosted))]
             (show-distinct-cards distinct-hosted))])])))
+
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed host] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation")
+         (not rezzed)
+         (not= (:side host) "Runner"))
+    facedown))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -670,37 +642,39 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [user side hand hand-count prompt remotes wrapper-class]
+  [side hand hand-count prompt wrapper-class]
   (let [size @hand-count
-        filled-hand (concat @hand (repeat (- @hand-count (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
+        filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
     [:div
      (doall (map-indexed
               (fn [i card]
                 [:div {:key (or (:cid card) i)
                        :class (str
                                 (if (and (not= "select" (-> @prompt first :prompt-type))
-                                         (this-user? @user)
-                                         (not (:selected card)) (playable? card))
+                                         (not (:selected card))
+                                         (playable? card))
                                   "playable" "")
                                 " "
                                 wrapper-class)
                        :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
-                 (if (or (this-user? @user)
-                         (get-in @game-state [(utils/other-side (get-side @game-state)) :openhand]) ;; TODO: this rebuilds the hand UI on any state change
-                         (spectator-view-hidden?))
-                   [card-view (assoc card :remotes @remotes)]
+                 (cond
+                   (spectator-view-hidden?)
+                   [card-view (dissoc card :new :selected)]
+                   (:cid card)
+                   [card-view card]
+                   :else
                    [facedown-card (:side card)])])
               filled-hand))]))
 
-(defn hand-view [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
+(defn hand-view [name translated-name side hand hand-size hand-count prompt popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name translated-name side hand hand-size hand-count prompt remotes popup popup-direction]
+    (fn [name translated-name side hand hand-size hand-count prompt popup popup-direction]
       (let [size (if (nil? @hand-count) (count @hand) @hand-count)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view user side hand hand-count prompt remotes "card-wrapper"]
+           [build-hand-card-view side hand hand-count prompt "card-wrapper"]
            [label @hand {:opts {:name translated-name
                                 :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
           (when popup
@@ -715,7 +689,7 @@
              (let [{:keys [total]} @hand-size]
                [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
                 (controls :hand-size)])
-             [build-hand-card-view user side hand hand-count prompt remotes "card-popup-wrapper"]]])]))))
+             [build-hand-card-view side hand hand-count prompt "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -1739,8 +1713,7 @@
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
                                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                                   [hand-view op-user srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt corp-remotes
-                                    (= @side :spectator) "opponent"])]
+                                   [hand-view srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt (= @side :spectator) "opponent"])]
 
                   [:div.inner-leftpane
                    [audio-component {:sfx sfx}]
@@ -1776,8 +1749,7 @@
                   [:div.me
                    (let [srv (if (= :corp me-side) "HQ" "Grip")
                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                     [hand-view me-user srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt
-                      corp-remotes true "me"])]]]
+                     [hand-view srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt true "me"])]]]
                 (when (:replay @game-state)
                   [:div.bottompane
                    [replay-panel]])]))))})))

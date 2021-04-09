@@ -1,22 +1,236 @@
 (ns game.core.diffs
-  (:require [game.core.flags :refer [card-is-public?]]
-            [game.core.card :refer [private-card]]
-            [game.utils :refer [dissoc-in]]
-            [differ.core :as differ]))
+  (:require
+    [differ.core :as differ]
+    [cond-plus.core :refer [cond+]]
+    [game.core.board :refer [installable-servers]]
+    [game.core.card :refer :all]
+    [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
+    [game.core.play-instants :refer [can-play-instant?]]
+    [game.utils :refer [dissoc-in prune-null-fields]]))
 
-(defn- strip [state]
-  (-> state
-      (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state :history)
-      (update-in [:corp :register] select-keys [:spent-click])
-      (update-in [:runner :register] select-keys [:spent-click])
-      (dissoc-in [:corp :register-last-turn])
-      (dissoc-in [:runner :register-last-turn])
-      (dissoc-in [:run :current-ice])
-      (dissoc-in [:run :events])))
+(defn playable? [card state side]
+  (if (and ((if (= :corp side) corp? runner?) card)
+           (in-hand? card)
+           (cond+
+             [(or (agenda? card)
+                  (asset? card)
+                  (ice? card)
+                  (upgrade? card))
+              (some
+                (fn [server]
+                  (corp-can-pay-and-install?
+                    state :corp {:source server :source-type :corp-install}
+                    card server {:base-cost [:click 1]
+                                 :action :corp-click-install
+                                 :no-toast true}))
+                (installable-servers state card))]
+             [(or (hardware? card)
+                  (program? card)
+                  (resource? card))
+              (runner-can-pay-and-install?
+                state :runner {:source :action :source-type :runner-install}
+                card {:base-cost [:click 1]
+                      :no-toast true})]
+             [(or (event? card)
+                  (operation? card))
+              (can-play-instant?
+                state side {:source :action :source-type :play}
+                card {:base-cost [:click 1]})])
+           true)
+    (assoc card :playable true)
+    card))
 
-(defn strip-for-replay [state]
-  (-> state
-      (strip)
+(defn card-summary [card state side]
+  (cond+
+    [(not (is-public? card side))
+     (prune-null-fields (private-card card))]
+    [(:hosted card)
+     (update card :hosted (partial mapv #(card-summary % side)))]
+    [:else
+     (-> card
+         (playable? state side)
+         (prune-null-fields))]))
+
+(defn card-summary-vec [cards state side]
+  (mapv #(card-summary % state side) cards))
+
+(defn prune-vec [cards]
+  (mapv prune-null-fields cards))
+
+(def player-keys
+  [:aid
+   :user
+   :identity
+   :basic-action-card
+   :deck
+   :deck-id
+   :hand
+   :discard
+   :scored
+   :rfg
+   :play-area
+   :click
+   :credit
+   :toast
+   :hand-size
+   :keep
+   :quote
+   :register
+   :prompt
+   :prompt-state
+   :agenda-point
+   :agenda-point-req])
+
+(defn player-summary
+  [player state side]
+  (-> (select-keys player player-keys)
+      (update :identity prune-null-fields)
+      (update :current card-summary-vec state side)
+      (update :play-area card-summary-vec state side)
+      (update :rfg card-summary-vec state side)
+      (update :scored card-summary-vec state side)
+      (update :register select-keys [:spent-click])))
+
+(def corp-keys
+  [:servers
+   :bad-publicity])
+
+(defn servers-summary
+  [state side]
+  (let [corp-player? (= side :corp)
+        corp (:corp @state)]
+    (if corp-player?
+      (:servers corp)
+      (let [server-keys (keys (:servers corp))
+            zones (reduce
+                    (fn [servers server]
+                      (into servers [[:servers server :content]
+                                     [:servers server :ices]]))
+                    []
+                    server-keys)]
+        (loop [corp corp
+               zones zones]
+          (let [zone (first zones)]
+            (if (nil? zone)
+              (:servers corp)
+              (recur (update-in corp zone card-summary-vec state :runner)
+                     (next zones)))))))))
+
+(defn corp-summary
+  [state side]
+  (let [corp-player? (= side :corp)
+        corp (:corp @state)
+        view-deck (:view-deck corp)
+        deck (:deck corp)
+        hand (:hand corp)
+        open-hands? (:openhand corp)
+        discard (:discard corp)
+        install-list (:install-list corp)]
+    (-> (player-summary corp state side)
+        (merge (select-keys corp corp-keys))
+        (assoc
+          :deck (if (and corp-player? view-deck) (prune-vec deck) [])
+          :deck-count (count deck)
+          :hand (if (or corp-player? open-hands?) (card-summary-vec hand state :corp) [])
+          :hand-count (count hand)
+          :discard (card-summary-vec discard state :corp)
+          :servers (servers-summary state side))
+        (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
+
+(def runner-keys
+  [:rig
+   :run-credit
+   :link
+   :tag
+   :memory
+   :brain-damage])
+
+(defn rig-summary
+  [state side]
+  (let [runner (:runner @state)]
+    (into {} (for [row [:hardware :facedown :program :resource]
+                   :let [cards (get-in runner [:rig row])]]
+               [row (card-summary-vec cards state :runner)]))))
+
+(defn runner-summary
+  [state side]
+  (let [runner-player? (= side :runner)
+        runner (:runner @state)
+        view-deck (:view-deck runner)
+        deck (:deck runner)
+        hand (:hand runner)
+        open-hands? (:openhand runner)
+        discard (:discard runner)
+        runnable-list (:runnable-list runner)]
+    (-> (player-summary runner state side)
+        (merge (select-keys runner runner-keys))
+        (assoc
+          :deck (if (and runner-player? view-deck) (prune-vec deck) [])
+          :deck-count (count deck)
+          :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
+          :hand-count (count hand)
+          :discard (prune-vec discard)
+          :rig (rig-summary state side))
+        (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
+
+(def run-keys
+  [:server
+   :position
+   :corp-auto-no-action
+   :jack-out
+   :jack-out-after-pass
+   :phase
+   :next-phase
+   :source-card])
+
+(defn run-summary
+  [state]
+  (when-let [run (:run @state)]
+    (select-keys run run-keys)))
+
+(def state-keys
+  [:active-player
+   :corp
+   :end-turn
+   :gameid
+   :log
+   :options
+   :psi
+   :room
+   :run
+   :runner
+   :sfc-current-id
+   :sfx
+   :sfx-current-id
+   :start-date
+   :stats
+   :trace
+   :turn
+   :typing])
+
+(defn state-summary
+  [state stripped-state side]
+  (-> stripped-state
+      (assoc :corp (corp-summary state side))
+      (assoc :runner (runner-summary state side))))
+
+(defn strip-state
+  [state]
+  (-> (select-keys @state state-keys)
+      (assoc :run (run-summary state))))
+
+(defn strip-for-spectators
+  [stripped-state corp-player runner-player]
+  (let [spectator? (get-in stripped-state [:options :spectatorhands])]
+    (-> stripped-state
+        (assoc :corp (:corp corp-player)
+               :runner (:runner runner-player))
+        (update-in [:corp :hand] #(if spectator? % []))
+        (update-in [:runner :hand] #(if spectator? % [])))))
+
+(defn strip-for-replay
+  [stripped-state]
+  (-> stripped-state
       (dissoc-in [:runner :user :isadmin])
       (dissoc-in [:runner :user :options :blocked-users])
       (dissoc-in [:runner :user :stats])
@@ -24,81 +238,30 @@
       (dissoc-in [:corp :user :options :blocked-users])
       (dissoc-in [:corp :user :stats])))
 
-(defn- private-card-vector [state side cards]
-  (mapv (fn [card]
-          (cond
-            (not (card-is-public? state side card)) (private-card card)
-            (:hosted card) (update-in card [:hosted] #(private-card-vector state side %))
-            :else card))
-        cards))
-
-(defn- make-opponent-runner [state]
-  (-> (:runner @state)
-      (dissoc :runnable-list)
-      (update :hand #(private-card-vector state :runner %))
-      (update :discard #(private-card-vector state :runner %))
-      (assoc :deck []
-             :deck-count (count (get-in @state [:runner :deck]))
-             :hand-count (count (get-in @state [:runner :hand])))
-      (update :hand #(if (get-in @state [:runner :openhand]) % []))
-      (update-in [:rig :facedown] #(private-card-vector state :runner %))
-      (update-in [:rig :resource] #(private-card-vector state :runner %))))
-
-(defn- make-opponent-corp [state]
-  (let [zones (concat [[:discard]]
-                      (for [server (keys (:servers (:corp @state)))] [:servers server :ices])
-                      (for [server (keys (:servers (:corp @state)))] [:servers server :content]))
-        corp (-> (:corp @state)
-                 (dissoc :install-list)
-                 (assoc :hand []
-                        :deck []
-                        :deck-count (count (get-in @state [:corp :deck]))
-                        :hand-count (count (get-in @state [:corp :hand]))))]
-    (loop [s corp
-           z zones]
-      (if (empty? z)
-        s
-        (recur (update-in s (first z) #(private-card-vector state :corp %)) (rest z))))))
-
-(defn- make-deck-private-for-side [state side]
-  (let [view-deck (get-in @state [side :view-deck])
-        deck (get-in @state [side :deck])]
-    (-> (get @state side)
-        (assoc :deck (if view-deck deck []))
-        (assoc :deck-count (count (get-in @state [side :deck])))
-        (assoc :hand-count (count (get-in @state [side :hand]))))))
-
-(defn- private-states
+(defn private-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
-  (let [corp-player (make-deck-private-for-side state :corp)
-        runner-player (make-deck-private-for-side state :runner)
-        corp-opponent (make-opponent-corp state)
-        runner-opponent (make-opponent-runner state)]
+  (let [stripped-state (strip-state state)
+        corp-player (state-summary state stripped-state :corp)
+        runner-player (state-summary state stripped-state :runner)]
     ;; corp, runner, spectator, history
-    [(assoc @state :runner runner-opponent :corp corp-player)
-     (assoc @state :corp corp-opponent :runner runner-player)
-     (if (get-in @state [:options :spectatorhands])
-       (assoc @state :corp corp-player :runner runner-player)
-       (assoc @state :corp corp-opponent :runner runner-opponent))
-     @state]))
+    [corp-player
+     runner-player
+     (strip-for-spectators stripped-state corp-player runner-player)
+     (strip-for-replay stripped-state)]))
 
 (defn public-states [state]
-  (let [[new-corp new-runner new-spect new-hist] (private-states state)]
-    {:runner-state (strip new-runner)
-     :corp-state   (strip new-corp)
-     :spect-state  (strip new-spect)
-     :hist-state   (strip-for-replay new-hist)}))
+  (let [[corp-state runner-state spectator-state history-state] (private-states state)]
+    {:corp-state corp-state
+     :runner-state runner-state
+     :spect-state spectator-state
+     :hist-state history-state}))
 
 (defn public-diffs [old-state new-state]
   (let [[old-corp old-runner old-spect old-hist] (when old-state (private-states (atom old-state)))
-        [new-corp new-runner new-spect new-hist] (private-states new-state)
-        runner-diff (differ/diff (strip old-runner) (strip new-runner))
-        corp-diff (differ/diff (strip old-corp) (strip new-corp))
-        spect-diff (differ/diff (strip old-spect) (strip new-spect))
-        hist-diff (differ/diff (strip-for-replay old-hist) (strip-for-replay new-hist))]
-    {:runner-diff runner-diff
-     :corp-diff   corp-diff
-     :spect-diff  spect-diff
-     :hist-diff   hist-diff}))
+        [new-corp new-runner new-spect new-hist] (private-states new-state)]
+    {:runner-diff (differ/diff old-runner new-runner)
+     :corp-diff (differ/diff old-corp new-corp)
+     :spect-diff (differ/diff old-spect new-spect)
+     :hist-diff (differ/diff old-hist new-hist)}))

@@ -165,6 +165,7 @@
    assoc-host-zones
    can-be-advanced?
    card-index
+   is-public?
    condition-counter?
    corp-installable-type?
    corp?
@@ -377,7 +378,6 @@
    card-can-prevent?
    card-flag-fn?
    card-flag?
-   card-is-public?
    cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!
@@ -503,11 +503,14 @@
    update-all-card-labels]
 
   [game.core.installing
+   corp-can-pay-and-install?
    corp-install
+   corp-install-cost
    corp-install-list
    corp-install-msg
    install-locked?
    runner-can-install?
+   runner-can-pay-and-install?
    runner-install]
 
   [game.core.link
@@ -568,7 +571,9 @@
    value]
 
   [game.core.play-instants
-   play-instant]
+   can-play-instant?
+   play-instant
+   play-instant-costs]
 
   [game.core.pick-counters
    pick-credit-providing-cards

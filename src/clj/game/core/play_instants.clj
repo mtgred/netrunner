@@ -11,7 +11,7 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
@@ -72,42 +72,58 @@
                                     (swap! state assoc-in [:corp :register :terminal] true))
                                   (effect-completed state side eid)))))))))
 
+(defn play-instant-costs
+  [state side eid card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]
+  (or cached-costs
+      (let [on-play (or (:on-play (card-def card)) {})
+            cost (play-cost state side card)
+            additional-costs (play-additional-cost-bonus state side card)
+            costs (merge-costs
+                    [(when-not ignore-cost
+                       [base-cost [:credit cost]])
+                     (when (and (has-subtype? card "Triple")
+                                (not no-additional-cost))
+                       [:click 2])
+                     (when (and (has-subtype? card "Double")
+                                (not no-additional-cost)
+                                (not (get-in @state [side :register :double-ignore-additional])))
+                       [:click 1])
+                     (when-not (and no-additional-cost ignore-cost)
+                       [additional-costs])])]
+        costs)))
+
+(defn can-play-instant?
+  ([state side eid card] (can-play-instant? state side eid card nil))
+  ([state side eid card {:keys [targets] :as args}]
+   (let [on-play (or (:on-play (card-def card)) {})
+         costs (play-instant-costs state side eid card args)]
+     (and ;; req is satisfied
+          (should-trigger? state side eid card targets on-play)
+          ;; can pay all costs
+          (can-pay? state side eid card nil costs)
+          ;; The zone isn't locked
+          (empty? (get-in @state [side :locked (-> card :zone first)]))
+          ;; This is a current, and currents can be played
+          (not (and (has-subtype? card "Current")
+                    (get-in @state [side :register :cannot-play-current])))
+          ;; This is a run event or makes a run, and running is allowed
+          (not (and (or (:makes-run (card-def card))
+                        (has-subtype? card "Run"))
+                    (not (can-run? state :runner))))
+          ;; if priority, have not spent a click
+          (not (and (has-subtype? card "Priority")
+                    (get-in @state [side :register :spent-click])))
+          ;; explicitly return true
+          true))))
+
 (defn play-instant
   "Plays an Event or Operation."
   ([state side eid card] (play-instant state side eid card nil))
-  ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :play)
-         cdef (or (:on-play (card-def card)) {})
-         cost (play-cost state side card)
-         additional-costs (play-additional-cost-bonus state side card)
-         costs (merge-costs
-                 [(when-not ignore-cost
-                    [base-cost [:credit cost]])
-                  (when (and (has-subtype? card "Triple")
-                             (not no-additional-cost))
-                    [:click 2])
-                  (when (and (has-subtype? card "Double")
-                             (not no-additional-cost)
-                             (not (get-in @state [side :register :double-ignore-additional])))
-                    [:click 1])
-                  (when-not (and no-additional-cost ignore-cost)
-                    [additional-costs])])
-         eid (if-not eid (make-eid state) eid)]
+  ([state side eid card {:keys [ignore-cost] :as args}]
+   (let [eid (eid-set-defaults eid :source :action :source-type :play)
+         costs (play-instant-costs state side eid card (dissoc args :cached-costs))]
      ;; ensure the instant can be played
-     (if (and ;; req is satisfied
-              (should-trigger? state side eid card targets cdef)
-              ;; The zone isn't locked
-              (empty? (get-in @state [side :locked (-> card :zone first)]))
-              ;; This is a current, and currents can be played
-              (not (and (has-subtype? card "Current")
-                        (get-in @state [side :register :cannot-play-current])))
-              ;; This is a run event or makes a run, and running is allowed
-              (not (and (or (:makes-run (card-def card))
-                            (has-subtype? card "Run"))
-                        (not (can-run? state :runner))))
-              ;; if priority, have not spent a click
-              (not (and (has-subtype? card "Priority")
-                        (get-in @state [side :register :spent-click]))))
+     (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
        (let [original-zone (:zone card)
              moved-card (move state side (assoc card :seen true) :play-area)]
