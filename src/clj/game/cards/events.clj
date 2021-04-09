@@ -1166,6 +1166,7 @@
                                    " of " serv " or trash it?")
                       :choices ["Rez" "Trash"]
                       :async true
+                      :waiting-prompt "Corp to decide to rez or trash ice"
                       :effect (effect (continue-ability
                                         (if (and (= target "Rez")
                                                  (<= (rez-cost state :corp ice)
