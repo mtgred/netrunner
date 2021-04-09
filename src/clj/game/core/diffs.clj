@@ -45,7 +45,7 @@
     [(not (is-public? card side))
      (prune-null-fields (private-card card))]
     [(:hosted card)
-     (update card :hosted (partial mapv #(card-summary % side)))]
+     (update card :hosted (partial mapv #(card-summary % state side)))]
     [:else
      (-> card
          (playable? state side)

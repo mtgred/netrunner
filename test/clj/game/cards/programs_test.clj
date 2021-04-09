@@ -5533,7 +5533,29 @@
         (rez state :corp iw)
         (take-credits state :corp)
         (is (= 4 (get-counters (refresh tranquilizer) :virus)))
-        (is (not (rezzed? (refresh iw))) "Ice Wall derezzed again")))))
+        (is (not (rezzed? (refresh iw))) "Ice Wall derezzed again"))))
+  (testing "Derez on install"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Tranquilizer" "Hivemind" "Surge"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hivemind")
+      (let [iw (get-ice state :hq 0)
+            hive (get-program state 0)]
+        (is (= 1 (get-counters (refresh hive) :virus)) "Hivemind starts with 1 virus counter")
+        (play-from-hand state :runner "Surge")
+        (click-card state :runner (refresh hive))
+        (is (= 3 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters")
+        (rez state :corp iw)
+        (is (rezzed? (refresh iw)) "Ice Wall rezzed")
+        (play-from-hand state :runner "Tranquilizer")
+        (click-card state :runner (get-ice state :hq 0))
+        (let [tranquilizer (first (:hosted (refresh iw)))]
+          (is (= 1 (get-counters (refresh tranquilizer) :virus)))
+          (is (not (rezzed? (refresh iw))) "Ice Wall derezzed"))))))
 
 (deftest trope
   ;; Trope
