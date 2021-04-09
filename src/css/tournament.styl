@@ -1,0 +1,25 @@
+ul.missing-players
+    padding: revert
+
+.game-list
+
+    .gameline
+        span.game-title
+            font-weight: bold
+
+        .game-status
+            span.not-started
+                color:yellow
+            span.started
+                color:#7cfc00
+        .players
+            display: flex
+
+            .player-info
+                flex: 1
+
+                span.username-label, span.id-label, span.hash-label, span.side-label
+                    font-weight: bold
+
+                span.hash-value
+                    font-family: monospace

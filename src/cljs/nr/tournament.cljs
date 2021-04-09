@@ -1,6 +1,9 @@
 (ns nr.tournament
   (:require [nr.appstate :refer [app-state]]
             [nr.ws :as ws]
+            [nr.avatar :refer [avatar]]
+            [nr.stats :refer [faction-icon-memo]]
+            [jinteki.utils :refer [slugify]]
             [reagent.core :as r]))
 
 (defn change-cobra-link
@@ -29,7 +32,7 @@
     (swap! state assoc :cobra-link (parse-id @state))
     (ws/ws-send! [:tournament/fetch {:cobra-link (:cobra-link @state)}])))
 
-(defn load-tournament
+(defn load-tournament-button
   [state]
   [:button {:on-click #(process-link state)} "Load tournament"])
 
@@ -39,7 +42,7 @@
     (let [players (:missing-players @state)]
       [:div
        [:h3 "Players in Cobra with no registered jnet accounts"]
-       [:ul
+       [:ul.missing-players
         (doall
           (map-indexed
             (fn [idx player]
@@ -48,7 +51,7 @@
 
 (defn delete-all-tables
   [state]
-  (ws/ws-send! [:tournament/delete {:tournament-name (:tournament-name @state)}]))
+  (ws/ws-send! [:tournament/delete {:cobra-link (:cobra-link @state)}]))
 
 (defn delete-tournament-button
   [state]
@@ -73,7 +76,8 @@
 (defn create-tables
   [state]
   (ws/ws-send! [:tournament/create {:cobra-link (:cobra-link @state)
-                                    :selected-round (:selected-round @state)}]))
+                                    :selected-round (:selected-round @state)
+                                    :save-replays? (:save-replays? @state)}]))
 
 (defn select-round-button
   [state]
@@ -89,6 +93,15 @@
       [:h2 "Success!"]
       [:p (str results " tables have been " result-type)])))
 
+(defn save-replay-option
+  [state]
+  (when (:cobra-link @state)
+    [:p
+     [:label
+      [:input {:type "checkbox" :checked (:save-replays? @state)
+               :on-change #(swap! state assoc :save-replays? (.. % -target -checked))}]
+      (str "🟢 Save replays" )]]))
+
 (defn tournament-container
   [state]
   [:div.panel
@@ -96,10 +109,11 @@
    (when (:cobra-link @state)
      [:h2 (:tournament-name @state)])
    [cobra-link state]
-   [load-tournament state]
+   [load-tournament-button state]
    [missing-players state]
    [delete-tournament-button state]
    [round-selector state]
+   [save-replay-option state]
    [select-round-button state]
    [success state]])
 
@@ -114,11 +128,52 @@
            :results (get-in json [:data json-key])
            :result-type result-type)))
 
+(defn deck-info
+  [deck]
+  [:div
+   [:div.id-info
+    [:span.id-label "ID: "]
+    [:span.id-title.influence {:class (slugify (get-in deck [:identity :faction]))}
+    (get-in deck [:identity :title])]]
+   [:div.hash-info
+    [:span.hash-label "Hash: "]
+    [:span.hash-value (:hash deck)]]])
+
+(defn player-info
+  [player]
+  [:div
+   [:span.player
+    [avatar player {:opts {:size 24}}]
+    (get-in player [:player :username]) " - "
+    (if-let [id (get-in player [:deck :identity])]
+      (str (faction-icon-memo (:faction id) (:title id)) " " (:title id)))]]
+  [:div.player-info
+   [:div.user-info
+    [:span.username-label "Username: "]
+    [:span.username-value (get-in player [:user :username])]]
+   [:div.side-info
+    [:span.side-label "Side: "]
+    [:span.side-value (:side player)]]
+   (if (:deck player)
+     [deck-info (:deck player)])])
+
+(defn game-info
+  [game]
+  [:div.gameline
+   [:div [:span.game-title (str (:title game))]]
+   [:div.game-status (if (:started game)
+           [:span.started (str "Started " (.toLocaleTimeString (js/Date. (:start-date game))))]
+           [:span.not-started (str "Not started")])]
+   [:div.players
+    [player-info (first (:players game))]
+    [player-info (second (:players game))]]])
+
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])
-               state (r/atom {:selected-round "0"})]
-
+               state (r/atom {:selected-round "0"})
+               cobra-link (r/cursor state [:cobra-link])
+               games (r/cursor app-state [:games])]
     (ws/register-ws-handler! :tournament/loaded #(load-players state %))
     (ws/register-ws-handler! :tournament/created #(store-results state "created" %))
     (ws/register-ws-handler! :tournament/deleted #(store-results state "deleted" %))
@@ -127,4 +182,9 @@
                (:tournament-organizer @user))
       [:div.container
        [:div.lobby.panel.blue-shade
-        [tournament-container state]]])))
+        [tournament-container state]
+        [:ul.game-list
+         (let [filtered-games (filter #(and @cobra-link (= @cobra-link (:cobra-link %))) @games)]
+           (doall (for [game filtered-games]
+                    ^{:key (:gameid game)}
+                    [game-info game])))]]])))
