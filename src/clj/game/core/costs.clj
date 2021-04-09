@@ -535,7 +535,9 @@
                               (complete-with-result
                                 state side eid
                                 {:msg (str "trashes " (quantify (count async-result) "card")
-                                           " (" (string/join ", " (map #(card-str state %) targets)) ")"
+                                           (when (and (= :runner side)
+                                                      (pos? (count async-result)))
+                                             " (" (string/join ", " (map #(card-str state %) targets)) ")")
                                            " from " hand)
                                  :type :trash-from-hand
                                  :value (count async-result)
