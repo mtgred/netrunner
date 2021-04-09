@@ -949,8 +949,12 @@
                           (in-hand? %))}
     :msg (msg "trash " (quantify (count targets) "card") " in HQ")
     :async true
+    :cancel-effect (req (system-msg state :corp "chooses not to trash any cards in HQ with Longevity Serum")
+                        (shuffle-into-rd-effect state side eid card 3)
+                        (effect-completed state side eid))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
-                           (shuffle-into-rd-effect state side eid card 3)))}})
+                           (shuffle-into-rd-effect state side eid card 3)
+                           (effect-completed state side eid)))}})
 
 (defcard "Luminal Transubstantiation"
   {:on-score
