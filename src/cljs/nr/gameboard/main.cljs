@@ -125,6 +125,8 @@
           (send-command "ability" {:card card :ability 0})
           (send-command (first actions) {:card card}))))))
 
+(defn playable? [card] (:playable card))
+
 (defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -138,30 +140,31 @@
              (= side (keyword (.toLowerCase (:side card)))))
         (handle-abilities side card c-state)
 
-        ;; Runner side
-        (= side :runner)
-        (case (first zone)
-          "hand" (if (:host card)
-                   (when (:installed card)
-                     (handle-abilities side card c-state))
-                   (send-command "play" {:card card}))
-          ("current" "onhost" "play-area" "scored" "servers" "rig")
-          (handle-abilities side card c-state)
-          nil)
+        ;; Runner clicking on a runner card
+        (and (= side :runner)
+             (= "Runner" (:side card))
+             (= "hand" (first zone))
+             (playable? card))
+        (send-command "play" {:card card})
 
-        ;; Corp side
-        (= side :corp)
+        ;; Corp clicking on a corp card
+        (and (= side :corp)
+             (= "Corp" (:side card))
+             (= "hand" (first zone))
+             (playable? card))
+        (if (= "Operation" type)
+          (send-command "play" {:card card})
+          (if (:servers @c-state)
+            (do (swap! c-state dissoc :servers)
+                (send-command "generate-install-list" nil))
+            (do (swap! c-state assoc :servers true)
+                (send-command "generate-install-list" {:card card}))))
+
+        :else
         (case (first zone)
-          "hand" (case type
-                   ("Agenda" "Asset" "ICE" "Upgrade")
-                   (if (:servers @c-state)
-                     (do (swap! c-state dissoc :servers)
-                         (send-command "generate-install-list" nil))
-                     (do (swap! c-state assoc :servers true)
-                         (send-command "generate-install-list" {:card card})))
-                   (send-command "play" {:card card}))
           ("current" "onhost" "play-area" "scored" "servers" "rig")
           (handle-abilities side card c-state)
+          ; else
           nil)))))
 
 (defn spectator-view-hidden?
@@ -178,7 +181,8 @@
   (-> e .-target js/$ (.removeClass "dragover"))
   (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
-    (send-command "move" {:card card :server server})))
+    (when (not= "Identity" (:type card))
+      (send-command "move" {:card card :server server}))))
 
 (defn abs [n] (max n (- n)))
 
@@ -281,15 +285,6 @@
         [:div
          [:span.cardname title]
          [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]))
-
-(defn face-down?
-  "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed host] :as card}]
-  (if (= side "Corp")
-    (and (not= type "Operation")
-         (not rezzed)
-         (not= (:side host) "Runner"))
-    facedown))
 
 (defn card-implementation [zoom-card]
   (when-let [card @zoom-card]
@@ -567,7 +562,14 @@
           (let [distinct-hosted (vals (group-by :title hosted))]
             (show-distinct-cards distinct-hosted))])])))
 
-(defn playable? [card] (:playable card))
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed host] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation")
+         (not rezzed)
+         (not= (:side host) "Runner"))
+    facedown))
 
 (defn show-distinct-cards
   [distinct-cards]
