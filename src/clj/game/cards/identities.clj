@@ -1279,19 +1279,14 @@
 
 (defcard "René \"Loup\" Arcemont: Party Animal"
   {:events [{:event :runner-trash
-             :optional
-             {:req (req (and (:accessed context)
-                             (first-event? state side :runner-trash
-                                           (fn [targets]
-                                             (some #(:accessed %) targets)))))
-              :prompt "Gain 1 [Credits] and draw 1 card?"
-              :autoresolve (get-autoresolve :auto-rene)
-              :yes-ability
-              {:async true
-               :msg "gain 1 [Credits] and draw 1 card"
-               :effect (req (wait-for (draw state :runner 1 nil)
-                                      (gain-credits state :runner eid 1)))}}}]
-   :abilities [(set-autoresolve :auto-rene "René")]})
+             :req (req (and (:accessed context)
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(:accessed %) targets)))))
+             :async true
+             :msg "gain 1 [Credits] and draw 1 card"
+             :effect (req (wait-for (draw state :runner 1 nil)
+                                    (gain-credits state :runner eid 1)))}]})
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
