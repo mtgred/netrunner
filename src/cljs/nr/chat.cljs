@@ -30,20 +30,19 @@
   (let [f (aget js/toastr type)]
     (f msg)))
 
-(ws/register-ws-handler! :chat/message (partial put! chat-channel))
-(ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
-(ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
-(ws/register-ws-handler!
-  :chat/blocked
-  (fn [{:keys [reason] :as msg}]
-    (let [reason-str (case reason
-                       :rate-exceeded "Rate exceeded"
-                       :length-exceeded "Length exceeded")]
-      (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
-                      "warning" nil))))
+(defmethod ws/-msg-handler :chat/message [{data :?data}] (put! chat-channel data))
+(defmethod ws/-msg-handler :chat/delete-msg [{data :?data}] (put! delete-msg-channel data))
+(defmethod ws/-msg-handler :chat/delete-all [{data :?data}] (put! delete-all-channel data))
 
-(defn current-block-list
-  []
+(defmethod ws/-msg-handler :chat/blocked
+  [{{:keys [reason]} :?data}]
+  (let [reason-str (case reason
+                     :rate-exceeded "Rate exceeded"
+                     :length-exceeded "Length exceeded")]
+    (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
+                    "warning" nil)))
+
+(defn current-block-list []
   (get-in @app-state [:options :blocked-users] []))
 
 (defn filter-blocked-messages

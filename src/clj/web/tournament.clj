@@ -175,7 +175,8 @@
         created-rounds (create-lobbies-for-tournament data (str->int selected-round) {:save-replays? save-replays?})]
     (ws/broadcast-to! [client-id] :tournament/created {:data {:created-rounds (count created-rounds)}})))
 
-(def handle-create-tables (wrap-with-to-handler create-tables))
+(defmethod ws/-msg-handler :tournament/create [event]
+  ((wrap-with-to-handler create-tables) event))
 
 (defn close-tournament-tables
   [cobra-link]
@@ -186,7 +187,8 @@
                     :gameid (:gameid game)})]
       (map #(close-lobby % true) tables))))
 
-(def handle-load-tournament (wrap-with-to-handler load-tournament))
+(defmethod ws/-msg-handler :tournament/fetch [event]
+  ((wrap-with-to-handler load-tournament) event))
 
 (defn- delete-tables
   [{{:keys [cobra-link]} :?data
@@ -194,8 +196,5 @@
   (let [deleted-rounds (close-tournament-tables cobra-link)]
     (ws/broadcast-to! [client-id] :tournament/deleted {:data {:deleted-rounds (count deleted-rounds)}})))
 
-(def handle-delete-tables (wrap-with-to-handler delete-tables))
-
-(swap! ws/ws-handlers assoc :tournament/fetch [#'handle-load-tournament])
-(swap! ws/ws-handlers assoc :tournament/create [#'create-tables])
-(swap! ws/ws-handlers assoc :tournament/delete [#'handle-delete-tables])
+(defmethod ws/-msg-handler :tournament/delete [event]
+  ((wrap-with-to-handler delete-tables) event))

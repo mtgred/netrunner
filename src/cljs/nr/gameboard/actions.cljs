@@ -35,10 +35,10 @@
   (when (= gameid (:gameid @game-state))
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
-(ws/register-ws-handler! :netrunner/state #(init-game (parse-state %)))
-(ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
-(ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
-(ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
+(defmethod ws/-msg-handler :netrunner/state [{data :?data}] (init-game (parse-state data)))
+(defmethod ws/-msg-handler :netrunner/start [{data :?data}] (launch-game (parse-state data)))
+(defmethod ws/-msg-handler :netrunner/diff [{data :?data}] (handle-diff (parse-state data)))
+(defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout (parse-state data)))
 
 (defn send-command
   ([command] (send-command command nil))

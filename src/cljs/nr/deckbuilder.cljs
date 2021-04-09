@@ -1009,15 +1009,11 @@
       (load-decks decks)
       (>! cards-channel cards)))
 
-(ws/register-ws-handler!
-  :decks/import-failure
-  (fn [msg]
-    (non-game-toast msg "error" nil)))
+(defmethod ws/-msg-handler :decks/import-failure [{data :?data}]
+  (non-game-toast data "error" nil))
 
-(ws/register-ws-handler!
-  :decks/import-success
-  (fn [msg]
-    (non-game-toast msg "success" nil)
-    (go (let [json (:json (<! (GET (str "/data/decks"))))
-              decks (load-decks-from-json json)]
-          (load-decks decks)))))
+(defmethod ws/-msg-handler :decks/import-success [{data :?data}]
+  (non-game-toast data "success" nil)
+  (go (let [json (:json (<! (GET (str "/data/decks"))))
+            decks (load-decks-from-json json)]
+        (load-decks decks))))

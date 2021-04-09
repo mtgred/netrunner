@@ -249,10 +249,13 @@
       (not-any? #(= username %) (blocked-users game))
       (some #(= username %) (map :username (superusers)))))
 
-(defn handle-lobby-list [{:keys [client-id] :as msg}]
+(defn handle-lobby-list [{:keys [client-id]}]
   (ws/broadcast-to! [client-id] :games/list (mapv #(game-public-view (first %) (second %)) @all-games)))
 
-(defn handle-lobby-create
+(defmethod ws/-msg-handler :chsk/uidport-open [event] (handle-lobby-list event))
+(defmethod ws/-msg-handler :lobby/list [event] (handle-lobby-list event))
+
+(defmethod ws/-msg-handler :lobby/create
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [title format allow-spectator save-replay spectatorhands password room side]} :?data :as event}]
@@ -285,7 +288,7 @@
     (refresh-lobby-update-in gameid [:messages] #(conj % {:user user-name
                                                           :text (trim text)}))))
 
-(defn handle-lobby-leave
+(defmethod ws/-msg-handler :lobby/leave
   [{{{:keys [username]} :user} :ring-req
     client-id                  :client-id}]
   (when-let [{gameid :gameid} (game-for-client client-id)]
@@ -293,7 +296,7 @@
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
       (remove-user client-id gameid))))
 
-(defn handle-lobby-say
+(defmethod ws/-msg-handler :lobby/say
   [{{user :user}         :ring-req
     client-id            :client-id
     {:keys [msg gameid]} :?data}]
@@ -301,7 +304,7 @@
     (lobby-say gameid {:user user
                        :text msg})))
 
-(defn handle-swap-sides
+(defmethod ws/-msg-handler :lobby/swap
   [{client-id :client-id
     gameid    :?data}]
   (let [game (game-for-id gameid)
@@ -309,7 +312,7 @@
     (when (= (:ws-id fplayer) client-id)
       (refresh-lobby-update-in gameid [:players] (partial mapv swap-side)))))
 
-(defn handle-lobby-join
+(defmethod ws/-msg-handler :lobby/join
   [{{{:keys [username isadmin] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid password]}           :?data
@@ -330,8 +333,8 @@
         (when reply-fn (reply-fn 403))))
     (when reply-fn (reply-fn 404))))
 
-(defn handle-lobby-watch
-  "Handles a watch command when a game has not yet started."
+(defmethod ws/-msg-handler :lobby/watch
+  ;; Handles a watch command when a game has not yet started.
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid password]}           :?data
@@ -359,7 +362,7 @@
       (reply-fn 404)
       false)))
 
-(defn handle-select-deck
+(defmethod ws/-msg-handler :lobby/deck
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     deck-id                             :?data}]
@@ -381,7 +384,7 @@
                            :text (str username " has selected deck with tournament hash " (:hash deck))}))
       (refresh-lobby-assoc-in gameid [:players first-player :deck] deck))))
 
-(defn handle-rename-game
+(defmethod ws/-msg-handler :lobby/rename-game
   [{{{:keys [username isadmin ismoderator] :as user} :user} :ring-req
     client-id                                     :client-id
     {:keys [gameid]} :?data :as event}]
@@ -398,7 +401,7 @@
                     :first-player player-name
                     :date (java.util.Date.)})))))
 
-(defn handle-delete-game
+(defmethod ws/-msg-handler :lobby/delete-game
   [{{{:keys [username isadmin ismoderator] :as user} :user} :ring-req
     client-id                                     :client-id
     {:keys [gameid]} :?data :as event}]
@@ -417,16 +420,3 @@
                     :game-name (:title game)
                     :first-player player-name
                     :date (java.util.Date.)})))))
-
-(ws/register-ws-handlers!
-  :chsk/uidport-open #'handle-lobby-list
-  :lobby/list #'handle-lobby-list
-  :lobby/create #'handle-lobby-create
-  :lobby/leave #'handle-lobby-leave
-  :lobby/join #'handle-lobby-join
-  :lobby/watch #'handle-lobby-watch
-  :lobby/say #'handle-lobby-say
-  :lobby/swap #'handle-swap-sides
-  :lobby/deck #'handle-select-deck
-  :lobby/rename-game #'handle-rename-game
-  :lobby/delete-game #'handle-delete-game)
