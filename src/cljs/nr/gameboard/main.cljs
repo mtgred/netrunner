@@ -164,38 +164,6 @@
           (handle-abilities side card c-state)
           nil)))))
 
-(defn in-play? [card]
-  (let [dest (when (= (:side card) "Runner")
-               (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
-    (some #(= (:title %) (:title card)) dest)))
-
-(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
-  (let [my-side (:side @game-state)
-        me (my-side @game-state)]
-    (and (= (keyword (.toLowerCase side)) my-side)
-
-         (cond
-
-           (has-subtype? card "Double")
-           (if (>= (:click me) 2) true false)
-
-           (has-subtype? card "Triple")
-           (if (>= (:click me) 3) true false)
-
-           (= (:code card) "07036") ; Day Job
-           (if (>= (:click me) 4) true false)
-
-           (has-subtype? card "Priority")
-           (if (get-in @game-state [my-side :register :spent-click]) false true)
-
-           :else
-           true)
-
-         (and (= zone ["hand"])
-              (or (not uniqueness) (not (in-play? card)))
-              (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-              (pos? (:click me))))))
-
 (defn spectator-view-hidden?
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
   []
@@ -556,7 +524,7 @@
           (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                        (spectator-view-hidden?)
                                        (= (:side @game-state) (keyword (lower-case side))))
-                alt-str (if facedown-but-known (str "Facedown " title) nil)]
+                alt-str (when facedown-but-known (str "Facedown " title))]
             [facedown-card side ["bg"] alt-str])
           (when-let [url (image-url card)]
             [:div
@@ -598,6 +566,8 @@
        [:div.hosted
           (let [distinct-hosted (vals (group-by :title hosted))]
             (show-distinct-cards distinct-hosted))])])))
+
+(defn playable? [card] (:playable card))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -670,7 +640,7 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [user side hand hand-count prompt wrapper-class]
+  [side hand hand-count prompt wrapper-class]
   (let [size @hand-count
         filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
     [:div
@@ -679,7 +649,6 @@
                 [:div {:key (or (:cid card) i)
                        :class (str
                                 (if (and (not= "select" (-> @prompt first :prompt-type))
-                                         (this-user? @user)
                                          (not (:selected card))
                                          (playable? card))
                                   "playable" "")
@@ -695,15 +664,15 @@
                    [facedown-card (:side card)])])
               filled-hand))]))
 
-(defn hand-view [user name translated-name side hand hand-size hand-count prompt popup popup-direction]
+(defn hand-view [name translated-name side hand hand-size hand-count prompt popup popup-direction]
   (let [s (r/atom {})]
-    (fn [user name translated-name side hand hand-size hand-count prompt popup popup-direction]
+    (fn [name translated-name side hand hand-size hand-count prompt popup popup-direction]
       (let [size (if (nil? @hand-count) (count @hand) @hand-count)]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view user side hand hand-count prompt "card-wrapper"]
+           [build-hand-card-view side hand hand-count prompt "card-wrapper"]
            [label @hand {:opts {:name translated-name
                                 :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
           (when popup
@@ -718,7 +687,7 @@
              (let [{:keys [total]} @hand-size]
                [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
                 (controls :hand-size)])
-             [build-hand-card-view user side hand hand-count prompt "card-popup-wrapper"]]])]))))
+             [build-hand-card-view side hand hand-count prompt "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -1742,7 +1711,7 @@
                  [:div.leftpane [:div.opponent
                                  (let [srv (if (= :corp op-side) "HQ" "Grip")
                                        translated-srv (if (= :corp op-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                                   [hand-view op-user srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt (= @side :spectator) "opponent"])]
+                                   [hand-view srv translated-srv op-side op-hand op-hand-size op-hand-count op-prompt (= @side :spectator) "opponent"])]
 
                   [:div.inner-leftpane
                    [audio-component {:sfx sfx}]
@@ -1778,7 +1747,7 @@
                   [:div.me
                    (let [srv (if (= :corp me-side) "HQ" "Grip")
                          translated-srv (if (= :corp me-side) (tr [:game.hq "HQ"]) (tr [:game.grip "Grip"]))]
-                     [hand-view me-user srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt true "me"])]]]
+                     [hand-view srv translated-srv me-side me-hand me-hand-size me-hand-count me-prompt true "me"])]]]
                 (when (:replay @game-state)
                   [:div.bottompane
                    [replay-panel]])]))))})))

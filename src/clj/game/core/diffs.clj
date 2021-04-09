@@ -2,41 +2,43 @@
   (:require
     [differ.core :as differ]
     [cond-plus.core :refer [cond+]]
-    [game.core.card :refer [corp? runner? is-public? private-card]]
+    [game.core.board :refer [installable-servers]]
+    [game.core.card :refer :all]
+    [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
+    [game.core.play-instants :refer [can-play-instant?]]
     [game.utils :refer [dissoc-in prune-null-fields]]))
 
-; (defn playable? [{:keys [side zone cost type uniqueness] :as card}]
-;   (let [my-side (:side @game-state)
-;         me (my-side @game-state)]
-;     (and (= (keyword (.toLowerCase side)) my-side)
-
-;          (cond
-
-;            (has-subtype? card "Double")
-;            (if (>= (:click me) 2) true false)
-
-;            (has-subtype? card "Triple")
-;            (if (>= (:click me) 3) true false)
-
-;            (= (:code card) "07036") ; Day Job
-;            (if (>= (:click me) 4) true false)
-
-;            (has-subtype? card "Priority")
-;            (if (get-in @game-state [my-side :register :spent-click]) false true)
-
-;            :else
-;            true)
-
-;          (and (= zone ["hand"])
-;               (or (not uniqueness) (not (in-play? card)))
-;               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-;               (pos? (:click me))))))
-
-; (defn playable? [card state side]
-;   (let [side? (if (= :corp side) corp? runner?)]
-;     ()
-;     )
-;   )
+(defn playable? [card state side]
+  (if (and ((if (= :corp side) corp? runner?) card)
+           (in-hand? card)
+           (cond+
+             [(or (agenda? card)
+                  (asset? card)
+                  (ice? card)
+                  (upgrade? card))
+              (some
+                (fn [server]
+                  (corp-can-pay-and-install?
+                    state :corp {:source server :source-type :corp-install}
+                    card server {:base-cost [:click 1]
+                                 :action :corp-click-install
+                                 :no-toast true}))
+                (installable-servers state card))]
+             [(or (hardware? card)
+                  (program? card)
+                  (resource? card))
+              (runner-can-pay-and-install?
+                state :runner {:source :action :source-type :runner-install}
+                card {:base-cost [:click 1]
+                      :no-toast true})]
+             [(or (event? card)
+                  (operation? card))
+              (can-play-instant?
+                state side {:source :action :source-type :play}
+                card {:base-cost [:click 1]})])
+           true)
+    (assoc card :playable true)
+    card))
 
 (defn card-summary [card state side]
   (cond+
@@ -46,7 +48,7 @@
      (update card :hosted (partial mapv #(card-summary % side)))]
     [:else
      (-> card
-         ; (playable? state side)
+         (playable? state side)
          (prune-null-fields))]))
 
 (defn card-summary-vec [cards state side]
@@ -129,7 +131,7 @@
         (assoc
           :deck (if (and corp-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
-          :hand (if (or corp-player? open-hands?) (prune-vec hand) [])
+          :hand (if (or corp-player? open-hands?) (card-summary-vec hand state :corp) [])
           :hand-count (count hand)
           :discard (card-summary-vec discard state :corp)
           :servers (servers-summary state side))
@@ -145,8 +147,7 @@
 
 (defn rig-summary
   [state side]
-  (let [runner-player? (= side :runner)
-        runner (:runner @state)]
+  (let [runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
                [row (card-summary-vec cards state :runner)]))))
@@ -166,7 +167,7 @@
         (assoc
           :deck (if (and runner-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
-          :hand (if (or runner-player? open-hands?) (prune-vec hand) [])
+          :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
           :hand-count (count hand)
           :discard (prune-vec discard)
           :rig (rig-summary state side))
