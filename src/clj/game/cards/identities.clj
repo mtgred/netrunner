@@ -1447,6 +1447,7 @@
              :prompt "Select 2 cards in your Heap"
              :show-discard true
              :choices {:max 2
+                       :all true
                        :card #(and (in-discard? %)
                                    (runner? %))}
              :effect
@@ -1460,8 +1461,8 @@
                           :msg (msg (let [[chosen other](if (= target c1)
                                                           [c1 c2]
                                                           [c2 c1])]
-                                      "to add " (:title other) " to their grip."
-                                      " Corp removes " (:title chosen) " from the game"))
+                                      (str "add " (:title other) " to their grip."
+                                           " Corp removes " (:title chosen) " from the game")))
                           :effect (req (let [[chosen other] (if (= target c1)
                                                               [c1 c2]
                                                               [c2 c1])]
