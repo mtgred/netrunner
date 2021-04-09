@@ -79,23 +79,7 @@
         c (or c (get-card state (assoc card :side (other-side (to-keyword (:side card))))))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
-        from-str (when-not (nil? src)
-                   (if (= :content last-zone)
-                     (str " in " src) ; this string matches the message when a card is trashed via (trash)
-                     (str " from their " src)))
-        label (if (and (not= last-zone :play-area)
-                       (not (and (runner? c)
-                                 (= last-zone :hand)
-                                 (or (= server "Stack")
-                                     (= server "Grip"))))
-                       (or (and (runner? c)
-                                (or (not (facedown? c))
-                                    (not= last-zone :hand)))
-                           (rezzed? c)
-                           (:seen c)
-                           (= last-zone :deck)))
-                (:title c)
-                "a card")
+        from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
     (when (and (not= src server)
@@ -105,7 +89,7 @@
       (let [move-card-to (partial move state s c)
             card-prompts (filter #(same-card? :title % c) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
-                       (system-msg state side (str verb " " label from-str
+                       (system-msg state side (str verb " " from-str
                                                    (when (seq text)
                                                      (apply str " " text)))))]
         (case server
