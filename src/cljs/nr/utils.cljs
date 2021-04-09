@@ -326,8 +326,3 @@
     (:images card) (:images card)
     (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
     :else (get-in card [:faces :front :images])))
-
-(defn kebab
-  "Kebab case a string"
-  [string]
-  (when string (-> string s/lower-case (s/replace " " "-"))))

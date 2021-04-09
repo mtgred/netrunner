@@ -2,8 +2,8 @@
   (:require [nr.appstate :refer [app-state]]
             [nr.ws :as ws]
             [nr.avatar :refer [avatar]]
-            [nr.utils :refer [kebab]]
             [nr.stats :refer [faction-icon-memo]]
+            [jinteki.utils :refer [slugify]]
             [reagent.core :as r]))
 
 (defn change-cobra-link
@@ -133,7 +133,7 @@
   [:div
    [:div.id-info
     [:span.id-label "ID: "]
-    [:span.id-title.influence {:class (kebab (get-in deck [:identity :faction]))}
+    [:span.id-title.influence {:class (slugify (get-in deck [:identity :faction]))}
     (get-in deck [:identity :title])]]
    [:div.hash-info
     [:span.hash-label "Hash: "]
