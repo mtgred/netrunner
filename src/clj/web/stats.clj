@@ -323,12 +323,12 @@
 
 (defn- get-winner-card
   [winner corp runner host]
-  (let [default-img (str host "img/icons/jinteki_167.png")]
+  (let [default-img (str host "/img/icons/jinteki_167.png")]
     (if winner
       (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
-            win-card (:code (@all-cards win-id))]
-        (if win-card
-          (str host "img/cards/" win-card ".png")
+            win-card-img (get-in (@all-cards win-id) [:images :en :default :stock])]
+        (if win-card-img
+          (str host win-card-img)
           default-img))
       default-img)))
 
@@ -345,7 +345,7 @@
             corp-id (:identity corp)
             runner-user (get-in runner [:player :username] "Unknown")
             runner-id (:identity runner)
-            host (str (name scheme) "://" (get headers "host") "/")
+            host (str (name scheme) "://" (get headers "host"))
             og {:type "website"
                 :url (request-url req)
                 :image (get-winner-card winner corp runner host)
