@@ -508,14 +508,15 @@
                                  :effect (effect (gain-tags :corp eid 2))}}}})
 
 (defcard "Fractal Threat Matrix"
-  {:implementation "Manual trigger each time all subs are broken"
-   :abilities [{:async true
-                :label "Trash the top 2 cards from the Stack"
-                :msg (msg (let [deck (:deck runner)]
-                            (if (pos? (count deck))
-                              (str "trash " (string/join ", " (map :title (take 2 deck))) " from the Stack")
-                              "trash the top 2 cards from their Stack - but the Stack is empty")))
-                :effect (effect (mill :corp eid :runner 2))}]})
+  {:events [{:event :subroutines-broken
+             :req (req (and (every? :broken (:subroutines target))
+                            (protecting-same-server? card target)))
+             :msg (msg (let [deck (:deck runner)]
+                         (if (pos? (count deck))
+                           (str "trash " (string/join ", " (map :title (take 2 deck))) " from the Stack")
+                           "trash the top 2 cards from their Stack - but the Stack is empty")))
+             :async true
+             :effect (effect (mill :corp eid :runner 2))}]})
 
 (defcard "Ganked!"
   {:implementation "Forced encounter is completely manual. All breaking and costs must be done manually"
@@ -768,6 +769,7 @@
   {:events [{:event :pass-all-ice
              :req (req this-server)
              :player :runner
+             :waiting-prompt "Runner to choose for K. P. Lynn"
              :prompt "Choose one"
              :choices ["Take 1 tag" "End the run"]
              :async true
