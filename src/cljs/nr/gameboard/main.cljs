@@ -642,41 +642,40 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [side hand hand-count prompt wrapper-class]
-  (let [size @hand-count
-        filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
-    [:div
-     (doall (map-indexed
-              (fn [i card]
-                [:div {:key (or (:cid card) i)
-                       :class (str
-                                (if (and (not= "select" (-> @prompt first :prompt-type))
-                                         (not (:selected card))
-                                         (playable? card))
-                                  "playable" "")
-                                " "
-                                wrapper-class)
-                       :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
-                 (cond
-                   (spectator-view-hidden?)
-                   [card-view (dissoc card :new :selected)]
-                   (:cid card)
-                   [card-view card]
-                   :else
-                   [facedown-card (:side card)])])
-              filled-hand))]))
+  [hand size prompt wrapper-class]
+  [:div
+   (doall (map-indexed
+            (fn [i card]
+              [:div {:key (or (:cid card) i)
+                     :class (str
+                              (if (and (not= "select" (-> @prompt first :prompt-type))
+                                       (not (:selected card))
+                                       (playable? card))
+                                "playable" "")
+                              " "
+                              wrapper-class)
+                     :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
+               (cond
+                 (spectator-view-hidden?)
+                 [card-view (dissoc card :new :selected)]
+                 (:cid card)
+                 [card-view card]
+                 :else
+                 [facedown-card (:side card)])])
+            hand))])
 
 (defn hand-view [name translated-name side hand hand-size hand-count prompt popup popup-direction]
   (let [s (r/atom {})]
     (fn [name translated-name side hand hand-size hand-count prompt popup popup-direction]
-      (let [size (if (nil? @hand-count) (count @hand) @hand-count)]
+      (let [size (if (nil? @hand-count) (count @hand) @hand-count)
+            filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area name {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view side hand hand-count prompt "card-wrapper"]
-           [label @hand {:opts {:name translated-name
-                                :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
+           [build-hand-card-view filled-hand size prompt "card-wrapper"]
+           [label filled-hand {:opts {:name translated-name
+                                      :fn (fn [cursor] (str size "/" (:total @hand-size)))}}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -689,7 +688,7 @@
              (let [{:keys [total]} @hand-size]
                [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
                 (controls :hand-size)])
-             [build-hand-card-view side hand hand-count prompt "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size prompt "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
