@@ -108,7 +108,7 @@
       ;; Deleting a deck that was never saved throws an exception
       (response 409 {:message "Unknown deck id"}))))
 
-(defn handle-deck-import
+(defmethod ws/-msg-handler :decks/import
   [{{{username :username} :user}    :ring-req
     client-id       :client-id
     {:keys [input]} :?data :as values}]
@@ -128,6 +128,3 @@
         (ws/broadcast-to! [client-id] :decks/import-failure "Failed to parse imported deck.")))
     (catch Exception ex
       (ws/broadcast-to! [client-id] :decks/import-failure "Failed to import deck."))))
-
-(ws/register-ws-handlers!
-  :decks/import #'handle-deck-import)

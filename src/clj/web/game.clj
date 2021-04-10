@@ -95,7 +95,7 @@
       game)
     game)))
 
-(defn handle-game-start
+(defmethod ws/-msg-handler :netrunner/start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
   (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
@@ -120,7 +120,7 @@
         (swap! old-states assoc gameid @(:state game))
         (send-state! :netrunner/start game (public-states (:state game)))))))
 
-(defn handle-game-leave
+(defmethod ws/-msg-handler :netrunner/leave
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str] :as msg}        :?data}]
@@ -132,7 +132,7 @@
         (main/handle-notification state (str username " has left the game."))
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 
-(defn handle-game-rejoin
+(defmethod ws/-msg-handler :netrunner/rejoin
   [{{{:keys [username _id] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid]}   :?data
@@ -151,7 +151,7 @@
         (main/handle-rejoin state user)
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 
-(defn handle-game-concede
+(defmethod ws/-msg-handler :netrunner/concede
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str] :as msg}        :?data}]
@@ -163,7 +163,7 @@
         (main/handle-concede state (side-from-str side))
         (swap-and-send-diffs! game)))))
 
-(defn handle-mute-spectators
+(defmethod ws/-msg-handler :netrunner/mute-spectators
   [{{{:keys [username] :as user} :user}          :ring-req
     client-id                                    :client-id
     {:keys [gameid-str mute-state] :as msg}      :?data}]
@@ -176,7 +176,7 @@
         (main/handle-notification state (str username " " message " spectators."))
         (swap-and-send-diffs! game)))))
 
-(defn handle-game-action
+(defmethod ws/-msg-handler :netrunner/action
   [{{{:keys [username] :as user} :user}       :ring-req
     client-id                                 :client-id
     {:keys [gameid-str command args] :as msg} :?data}]
@@ -207,8 +207,8 @@
         (println (str "Command: " command))
         (println (str "GameId: " gameid-str))))))
 
-(defn handle-game-watch
-  "Handles a watch command when a game has started."
+(defmethod ws/-msg-handler :lobby/watch
+  ;; Handles a watch command when a game has started.
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid password]}           :?data
@@ -241,7 +241,7 @@
       (reply-fn 404)
       false)))
 
-(defn handle-game-say
+(defmethod ws/-msg-handler :netrunner/say
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str msg]}                :?data}]
@@ -260,7 +260,7 @@
             (catch Exception ex
               (println (str "handle-game-say exception:" (.getMessage ex) "\n")))))))))
 
-(defn handle-game-typing
+(defmethod ws/-msg-handler :netrunner/typing
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str typing]}             :?data}]
@@ -275,23 +275,12 @@
           (catch Exception ex
             (println (str "handle-game-typing exception:" (.getMessage ex) "\n"))))))))
 
-(defn handle-ws-close [{{{:keys [username] :as user} :user} :ring-req
-                        client-id                           :client-id}]
+(defmethod ws/-msg-handler :chsk/uidport-close
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id}]
   (when-let [{:keys [gameid state] :as game} (lobby/game-for-client client-id)]
     (lobby/remove-user client-id (:gameid game))
     (when-let [game (lobby/game-for-id gameid)]
       ; The game will not exist if this is the last player to leave.
       (main/handle-notification state (str username " has disconnected."))
       (swap-and-send-diffs! game))))
-
-(ws/register-ws-handlers!
-  :netrunner/start #'handle-game-start
-  :netrunner/action #'handle-game-action
-  :netrunner/leave #'handle-game-leave
-  :netrunner/rejoin #'handle-game-rejoin
-  :netrunner/concede #'handle-game-concede
-  :netrunner/mute-spectators #'handle-mute-spectators
-  :netrunner/say #'handle-game-say
-  :netrunner/typing #'handle-game-typing
-  :lobby/watch #'handle-game-watch
-  :chsk/uidport-close #'handle-ws-close)

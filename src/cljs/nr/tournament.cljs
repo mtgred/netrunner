@@ -90,8 +90,9 @@
   (let [results (:results @state)
         result-type (:result-type @state)]
     (when results
-      [:h2 "Success!"]
-      [:p (str results " tables have been " result-type)])))
+      [:<>
+       [:h2 "Success!"]
+       [:p (str results " tables have been " result-type)]])))
 
 (defn save-replay-option
   [state]
@@ -168,16 +169,22 @@
     [player-info (first (:players game))]
     [player-info (second (:players game))]]])
 
+(defonce state (r/atom {:selected-round "0"}))
+
+(defmethod ws/-msg-handler :tournament/loaded [{data :?data}]
+  (load-players state data))
+
+(defmethod ws/-msg-handler :tournament/created [{data :?data}]
+  (store-results state "created" data))
+
+(defmethod ws/-msg-handler :tournament/deleted [{data :?data}]
+  (store-results state "deleted" data))
+
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])
-               state (r/atom {:selected-round "0"})
                cobra-link (r/cursor state [:cobra-link])
                games (r/cursor app-state [:games])]
-    (ws/register-ws-handler! :tournament/loaded #(load-players state %))
-    (ws/register-ws-handler! :tournament/created #(store-results state "created" %))
-    (ws/register-ws-handler! :tournament/deleted #(store-results state "deleted" %))
-
     (when (and (= "/tournament" (first @active))
                (:tournament-organizer @user))
       [:div.container

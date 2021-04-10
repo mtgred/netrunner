@@ -35,14 +35,15 @@
         msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
-(defn- insert-msg [{{{:keys [username emailhash options]} :user} :ring-req
-                    client-id :client-id
-                    {:keys [:channel :msg]} :?data :as event}]
-  (let [len-valid (<= (count msg) (chat-max-length))
-        rate-valid (within-rate-limit username)]
-    (when (and username
-               emailhash
-               (not (s/blank? msg)))
+(defmethod ws/-msg-handler :chat/say
+  [{{{:keys [username emailhash options]} :user} :ring-req
+    client-id :client-id
+    {:keys [channel msg]} :?data}]
+  (when (and username
+             emailhash
+             (not (s/blank? msg)))
+    (let [len-valid (<= (count msg) (chat-max-length))
+          rate-valid (within-rate-limit username)]
       (if (and len-valid rate-valid)
         (let [message {:emailhash emailhash
                        :username  username
@@ -50,20 +51,15 @@
                        :msg       msg
                        :channel   channel
                        :date      (java.util.Date.)}
-              inserted (mc/insert-and-return db msg-collection message)]
-          (update inserted :_id str))
-        (do
-          (when client-id
-            (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))
-          nil)))))
+              inserted (mc/insert-and-return db msg-collection message)
+              inserted (update inserted :_id str)]
+          (ws/broadcast! :chat/message inserted))
+        (when client-id
+          (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
 
-(defn broadcast-msg
-  [arg]
-  (when-let [msg (insert-msg arg)]
-    (ws/broadcast! :chat/message msg)))
-
-(defn- delete-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
-                    {:keys [msg]} :?data :as event}]
+(defmethod ws/-msg-handler :chat/delete-msg
+  [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+    {:keys [msg]} :?data}]
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
@@ -75,20 +71,17 @@
                   :msg msg})
       (ws/broadcast! :chat/delete-msg msg))))
 
-(defn- delete-all-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
-                        {:keys [sender]} :?data :as event}]
+
+(defmethod ws/-msg-handler :chat/delete-all
+  [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+    {:keys [sender]} :?data}]
   (when (and sender
              (or isadmin ismoderator))
-      (println username "deleted all messages from user" sender "\n")
-      (mc/remove db msg-collection {:username sender})
-      (mc/insert db log-collection
-                 {:moderator username
-                  :action :delete-all-messages
-                  :date (java.util.Date.)
-                  :sender sender})
-      (ws/broadcast! :chat/delete-all {:username sender})))
-
-(ws/register-ws-handlers!
-  :chat/say broadcast-msg
-  :chat/delete-msg delete-msg
-  :chat/delete-all delete-all-msg)
+    (println username "deleted all messages from user" sender "\n")
+    (mc/remove db msg-collection {:username sender})
+    (mc/insert db log-collection
+               {:moderator username
+                :action :delete-all-messages
+                :date (java.util.Date.)
+                :sender sender})
+    (ws/broadcast! :chat/delete-all {:username sender})))

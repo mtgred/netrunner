@@ -39,7 +39,7 @@
            games))
 
 (defn process-games-update
-  [{:keys [diff notification] :as msg}]
+  [{:keys [diff notification]}]
   (swap! app-state update :games
           (fn [games]
             (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
@@ -53,51 +53,42 @@
   (when (and notification (not (:gameid @app-state)))
     (play-sound notification)))
 
-(ws/register-ws-handler!
-  :games/list
-  (fn [msg]
-    (let [gamemap (into {} (map #(assoc {} (:gameid %) %) msg))
-          missing-gameids (->> (:games @app-state)
-                           (remove #(get gamemap (:gameid %)))
-                           (map :gameid))]
-      (process-games-update {:diff {:update gamemap
-                                    :delete missing-gameids}}))))
+(defmethod ws/-msg-handler :games/list [{data :?data}]
+  (let [gamemap (into {} (map #(assoc {} (:gameid %) %) data))
+        missing-gameids (->> (:games @app-state)
+                             (remove #(get gamemap (:gameid %)))
+                             (map :gameid))]
+    (process-games-update {:diff {:update gamemap
+                                  :delete missing-gameids}})))
 
-(ws/register-ws-handler!
-  :games/diff
-  process-games-update)
+(defmethod ws/-msg-handler :games/diff [{data :?data}]
+  (process-games-update data))
 
-(ws/register-ws-handler!
-  :games/differ
-  (fn [{:keys [diff] :as msg}]
-    (swap! app-state update-in [:games]
-           (fn [games]
-             (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
-                   update-diff (reduce-kv
-                                  (fn [m k v]
-                                    (assoc m k (reduce #(differ/patch %1 %2) (get m k {}) v)))
-                                  gamemap
-                                  (:update diff))]
-                (sort-games-list (vals update-diff)))))))
+(defmethod ws/-msg-handler :games/differ
+  [{{:keys [diff]} :?data}]
+  (swap! app-state update-in [:games]
+         (fn [games]
+           (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
+                 update-diff (reduce-kv
+                               (fn [m k v]
+                                 (assoc m k (reduce #(differ/patch %1 %2) (get m k {}) v)))
+                               gamemap
+                               (:update diff))]
+             (sort-games-list (vals update-diff))))))
 
-(ws/register-ws-handler!
-  :lobby/select
-  (fn [{:keys [gameid started state]}]
-    (swap! app-state assoc :gameid gameid)
-    (when started
-      (launch-game (parse-state state)))))
+(defmethod ws/-msg-handler :lobby/select
+  [{{:keys [gameid started state]} :?data}]
+  (swap! app-state assoc :gameid gameid)
+  (when started
+    (launch-game (parse-state state))))
 
-(ws/register-ws-handler!
-  :lobby/notification
-  (fn [notification]
-    (play-sound notification)))
+(defmethod ws/-msg-handler :lobby/notification [{data :?data}] (play-sound data))
 
-(ws/register-ws-handler!
-  :lobby/timeout
-  (fn [{:keys [gameid] :as msg}]
-    (when (= gameid (:gameid @app-state))
-      (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"]) "error" {:time-out 0 :close-button true})
-      (swap! app-state assoc :gameid nil))))
+(defmethod ws/-msg-handler :lobby/timeout
+  [{{:keys [gameid]} :?data}]
+  (when (= gameid (:gameid @app-state))
+    (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"]) "error" {:time-out 0 :close-button true})
+    (swap! app-state assoc :gameid nil)))
 
 (defn send
   ([msg] (send msg nil))
@@ -169,12 +160,15 @@
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
                      init-state (assoc init-state :replay-diffs diffs)]
-                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js
-                                                                                  (if jump-to
-                                                                                    (assoc init-state :replay-jump-to jump-to)
-                                                                                    init-state)))]))
+                 (ws/event-msg-handler
+                   {:id :netrunner/start
+                    :?data (.stringify js/JSON (clj->js
+                                                 (if jump-to
+                                                   (assoc init-state :replay-jump-to jump-to)
+                                                   init-state)))}))
                404
-               (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."]) "error" {:time-out 0 :close-button true}))))))))
+               (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."])
+                               "error" {:time-out 0 :close-button true}))))))))
 
 (defn start-replay [s]
   (let [reader (js/FileReader.)
@@ -186,7 +180,9 @@
                                      init-state (assoc-in init-state [:options :spectatorhands] true)
                                      diffs (rest history)
                                      init-state (assoc init-state :replay-diffs diffs :gameid "local-replay")]
-                                 (ws/handle-netrunner-msg [:netrunner/start (.stringify js/JSON (clj->js init-state))])))]
+                                 (ws/event-msg-handler
+                                   {:id :netrunner/start
+                                    :?data (.stringify js/JSON (clj->js init-state))})))]
     (aset reader "onload" onload)
     (.readAsText reader file)))
 

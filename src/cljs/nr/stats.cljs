@@ -31,11 +31,10 @@
         others (remove #(= (:_id %) deck-id) (:decks @app-state))]
     (swap! app-state assoc :decks (conj others deck))))
 
-(ws/register-ws-handler!
-  :stats/update
-  #(do (swap! app-state assoc :stats (-> % :userstats))
-       (update-deck-stats (-> % :deck-id) (-> % :deckstats))
-       (fetch-game-history)))
+(defmethod ws/-msg-handler :stats/update [{{:keys [userstats deck-id deckstats]} :?data}]
+  (swap! app-state assoc :stats userstats)
+  (update-deck-stats deck-id deckstats)
+  (fetch-game-history))
 
 (defn share-replay [state gameid]
   (go (let [{:keys [status json]} (<! (GET (str "/profile/history/share/" gameid)))]

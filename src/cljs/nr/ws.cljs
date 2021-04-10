@@ -10,21 +10,36 @@
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
   (let [{:keys [chsk ch-recv send-fn state]}
-        (sente/make-channel-socket! "/ws" ?csrf-token {:type :ws})]
-    (def chsk       chsk)
-    (def <ws-recv ch-recv) ; ChannelSocket's receive channel
-    (def ws-send! send-fn) ; ChannelSocket's send API fn
-    (def chsk-state state)   ; Watchable, read-only atom
-    ))
+        (sente/make-channel-socket! "/ws" ?csrf-token {:type :ws
+                                                       :wrap-recv-evs? false})]
+    (def chsk chsk)
+    (def ch-chsk ch-recv)    ; ChannelSocket's receive channel
+    (def ws-send! send-fn)   ; ChannelSocket's send API fn
+    (def chsk-state state))) ; Watchable, read-only atom
 
 
 (enable-console-print!)
 
-(let [ws-handlers (atom {})]
-  (defn register-ws-handler! [event handler-fn]
-    (swap! ws-handlers assoc event handler-fn))
+(defmulti -msg-handler
+  "Multimethod to handle Sente `event-msg`s"
+  :id)
 
-  (defn handle-state-msg [[old-state new-state]]
+(defn event-msg-handler
+  "Wraps `-msg-handler` with logging, error catching, etc."
+  [event]
+  (try
+    (-msg-handler event)
+    (catch js/Object e
+      (println "Caught an error in the message handler: " e))))
+
+(defmethod -msg-handler :default [event]
+  (println "unknown event message" event))
+
+(defmethod -msg-handler :chsk/handshake [event]
+  nil)
+
+(defmethod -msg-handler :chsk/state
+  [{[old-state new-state] :?data}]
     (when (= (:type old-state) (:type new-state))
       (when (and (:open? old-state)
                  (not (:open? new-state))
@@ -36,19 +51,13 @@
         (.clear js/toastr)
         (non-game-toast "Reconnected to server" "success" nil))))
 
-  (defn handle-netrunner-msg [[event msg]]
-    (let [handler (get @ws-handlers event)]
-      (cond
-        handler (handler msg)
-        msg (println "unknown game socket msg" event msg))))
+(defonce router_ (atom nil))
+(defn stop-router! [] (when-let [stop-fn @router_] (stop-fn)))
+(defn start-router! []
+  (stop-router!)
+  (reset! router_
+          (start-client-chsk-router!
+            ch-chsk
+            event-msg-handler)))
 
-  (defn event-msg-handler [msg]
-    (let [[event-type data] (:event msg)]
-      (case event-type
-        :chsk/handshake nil
-        :chsk/state (handle-state-msg data)
-        :chsk/recv (handle-netrunner-msg data)
-        (println "unknown event message" event-type data)))))
-
-(when ?csrf-token
-  (start-client-chsk-router! <ws-recv event-msg-handler))
+(start-router!)
