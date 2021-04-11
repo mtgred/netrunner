@@ -335,6 +335,7 @@
               (tr [:settings.runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
 
            [:br]
+           [:h4 (tr [:settings.log-size "Log size"])]
            [:div
             [log-width-option s]
             [log-top-option s]]]
