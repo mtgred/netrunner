@@ -1474,94 +1474,94 @@
     (tr [:game.ok "OK"])]])
 
 (defn prompt-div
-  [{:keys [me prompt]}]
-  (let [{:keys [card msg prompt-type choices]} (and prompt (first @prompt))]
-    [:div.panel.blue-shade
-     (when card
-       [:<>
-        (let [get-nested-host (fn [card] (if (:host card)
-                                           (recur (:host card))
-                                           card))
-              get-zone (fn [card] (:zone (get-nested-host card)))
-              in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
-              in-scored? (fn [card] (= (get-zone card) ["scored"]))
-              installed? (fn [card] (or (:installed card)
-                                        (= "servers" (first (get-zone card)))))]
-          (if (or (nil? (:side card))
-                  (installed? card)
-                  (in-scored? card)
-                  (in-play-area? card))
-            [:div {:style {:text-align "center"}
-                   :on-mouse-over #(card-highlight-mouse-over % card button-channel)
-                   :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-             (tr [:game.card "Card"]) ": " (render-message (:title card))]
-            [:div.prompt-card-preview [card-view card false]]))
-        [:hr]])
-     [:h4 (render-message msg)]
-     (cond
-       ;; number prompt
-       (get-in prompt [:choices :number])
-       (let [n (get-in prompt [:choices :number])]
-         [:div
-          [:div.credit-select
-           [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
-            (doall (for [i (range (inc n))]
-                     [:option {:key i :value i} i]))]]
-          [:button {:on-click #(send-command "choice"
-                                             {:choice (-> "#credit" js/$ .val str->int)})}
-           (tr [:game.ok "OK"])]])
+  [me {:keys [card msg prompt-type choices] :as prompt}]
+  [:div.panel.blue-shade
+   (when card
+     [:<>
+      (let [get-nested-host (fn [card] (if (:host card)
+                                         (recur (:host card))
+                                         card))
+            get-zone (fn [card] (:zone (get-nested-host card)))
+            in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+            in-scored? (fn [card] (= (get-zone card) ["scored"]))
+            installed? (fn [card] (or (:installed card)
+                                      (= "servers" (first (get-zone card)))))]
+        (if (or (nil? (:side card))
+                (installed? card)
+                (in-scored? card)
+                (in-play-area? card))
+          [:div {:style {:text-align "center"}
+                 :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                 :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+           (tr [:game.card "Card"]) ": " (render-message (:title card))]
+          [:div.prompt-card-preview [card-view card false]]))
+      [:hr]])
+   [:h4 (render-message msg)]
+   (cond
+     ;; number prompt
+     (:number choices)
+     (let [n (:number choices)]
+       [:div
+        [:div.credit-select
+         [:select#credit {:default-value (:default choices 0)}
+          (doall (for [i (range (inc n))]
+                   [:option {:key i :value i} i]))]]
+        [:button {:on-click #(send-command "choice"
+                                           {:choice (-> "#credit" js/$ .val str->int)})}
+         (tr [:game.ok "OK"])]])
 
-       ;; trace prompts require their own logic
-       (= prompt-type "trace")
-       [trace-div prompt]
+     ;; trace prompts require their own logic
+     (= prompt-type "trace")
+     [trace-div prompt]
 
-       ;; choice of number of credits
-       (= choices "credit")
+     ;; choice of number of credits
+     (= choices "credit")
+     (let [n (:number choices)]
+       [:div
+        [:div.credit-select
+         [:select#credit {:default-value (:default choices 0)}
+          (doall (for [i (range (inc n))]
+                   [:option {:key i :value i} i]))]]
+        [:button {:on-click #(send-command "choice"
+                                           {:choice (-> "#credit" js/$ .val str->int)})}
+         (tr [:game.ok "OK"])]])
+
+     ;; auto-complete text box
+     (:card-title choices)
+     [:div
+      [:div.credit-select
+       [:input#card-title {:placeholder "Enter a card title"
+                           :onKeyUp #(when (= 13 (.-keyCode %))
+                                       (-> "#card-submit" js/$ .click)
+                                       (.stopPropagation %))}]]
+      [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
+       (tr [:game.ok "OK"])]]
+
+     ;; choice of specified counters on card
+     (:counter choices)
+     (let [counter-type (keyword (:counter choices))
+           num-counters (get-in prompt [:card :counter counter-type] 0)]
        [:div
         [:div.credit-select
          [:select#credit
-          (doall (for [i (range (inc (:credit @me)))]
-                   [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
+          (doall (for [i (range (inc num-counters))]
+                   [:option {:key i :value i} i]))] (str " " (tr [:game.credits "credits"]))]
         [:button {:on-click #(send-command "choice"
                                            {:choice (-> "#credit" js/$ .val str->int)})}
-         (tr [:game.ok "OK"])]]
+         (tr [:game.ok "OK"])]])
 
-       ;; auto-complete text box
-       (:card-title choices)
-       [:div
-        [:div.credit-select
-         [:input#card-title {:placeholder "Enter a card title"
-                             :onKeyUp #(when (= 13 (.-keyCode %))
-                                         (-> "#card-submit" js/$ .click)
-                                         (.stopPropagation %))}]]
-        [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
-         (tr [:game.ok "OK"])]]
-
-       ;; choice of specified counters on card
-       (:counter choices)
-       (let [counter-type (keyword (:counter choices))
-             num-counters (get-in prompt [:card :counter counter-type] 0)]
-         [:div
-          [:div.credit-select
-           [:select#credit
-            (doall (for [i (range (inc num-counters))]
-                     [:option {:key i :value i} i]))] (str " " (tr [:game.credits "credits"]))]
-          [:button {:on-click #(send-command "choice"
-                                             {:choice (-> "#credit" js/$ .val str->int)})}
-           (tr [:game.ok "OK"])]])
-
-       ;; otherwise choice of all present choices
-       :else
-       (doall (for [{:keys [idx uuid value]} choices]
-                (when (not= value "Hide")
-                  [:button {:key idx
-                            :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                            :on-mouse-over
-                            #(card-highlight-mouse-over % value button-channel)
-                            :on-mouse-out
-                            #(card-highlight-mouse-out % value button-channel)
-                            :id (:title value)}
-                   (render-message (or (not-empty (:title value)) value))]))))]))
+     ;; otherwise choice of all present choices
+     :else
+     (doall (for [{:keys [idx uuid value]} choices]
+              (when (not= value "Hide")
+                [:button {:key idx
+                          :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                          :on-mouse-over
+                          #(card-highlight-mouse-over % value button-channel)
+                          :on-mouse-out
+                          #(card-highlight-mouse-out % value button-channel)
+                          :id (:title value)}
+                 (render-message (or (not-empty (:title value)) value))]))))])
 
 (defn basic-actions []
   (let [s (r/atom {})]
@@ -1643,12 +1643,12 @@
            (toast msg type options)))
 
        :reagent-render
-       (fn [{:keys [side run prompt] :as button-pane-args}]
+       (fn [{:keys [side run prompt me] :as button-pane-args}]
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
             (and prompt (first @prompt))
-            [prompt-div button-pane-args]
+            [prompt-div me (first @prompt)]
             @run
             [run-div side run]
             :else

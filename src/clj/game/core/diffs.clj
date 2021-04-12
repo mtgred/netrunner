@@ -57,6 +57,32 @@
 (defn prune-vec [cards]
   (mapv prune-null-fields cards))
 
+(def prompt-keys
+  [:msg
+   :choices
+   :card
+   :prompt-type
+   :show-discard
+   ;; traces
+   :player
+   :base
+   :bonus
+   :strength
+   :link
+   :corp-credits
+   :runner-credits])
+
+(defn build-prompt-state
+  [prompt]
+  (prune-null-fields
+    (select-keys prompt-keys prompt)))
+
+(defn prompt-summary
+  [player same-side?]
+  (-> player
+      (update :prompt #(if same-side? [(build-prompt-state (first %))] nil))
+      (update :prompt-state #(if same-side? (build-prompt-state %) nil))))
+
 (defn player-keys []
   [:aid
    :user
@@ -85,13 +111,13 @@
 (defn player-summary
   [player state side same-side?]
   (-> (select-keys player (player-keys))
-      (update :prompt #(if same-side? % nil))
       (update :identity prune-null-fields)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
       (update :rfg card-summary-vec state side)
       (update :scored card-summary-vec state side)
       (update :register select-keys [:spent-click])
+      (prompt-summary same-side?)
       (prune-null-fields)))
 
 (defn corp-keys []
