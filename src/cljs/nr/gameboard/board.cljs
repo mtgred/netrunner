@@ -11,18 +11,18 @@
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
             [nr.auth :as auth]
-            [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.gameboard.actions :refer [send-command toast]]
             [nr.gameboard.log :refer [log-panel log-mode send-msg card-preview-mouse-over card-preview-mouse-out
                                       card-highlight-mouse-over card-highlight-mouse-out resize-card-zoom
                                       zoom-channel should-scroll]]
+            [nr.gameboard.player-stats :refer [controls stats-view]]
             [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
                                          load-remote-annotations delete-remote-annotations publish-annotations
                                          load-annotations-file save-annotations-file]]
             [nr.gameboard.state :refer [game-state last-state lock replay-side parse-state get-side not-spectator?]]
-            [nr.translations :refer [tr tr-pronouns tr-side]]
+            [nr.translations :refer [tr tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
                               checkbox-button cond-button get-image-path
@@ -724,14 +724,6 @@
      (str (get-in opts [:opts :name])
           (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
-(defn controls
-  "Create the control buttons for the side displays."
-  ([key] (controls key 1 -1))
-  ([key increment decrement]
-   [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]))
-
 (defn- this-user?
   [user]
   (if (:replay @game-state)
@@ -937,80 +929,6 @@
      [:div.stats
       [:div (tr [:game.agenda-count] @agenda-point)
        (when me? (controls :agenda-point))]]]))
-
-(defn name-area
-  [user]
-  [:div.namearea [avatar user {:opts {:size 32}}]
-   [:div.namebox
-    [:div.username (:username user)]
-    (if-let [pronouns (get-in user [:options :pronouns])]
-      (let [pro-str (if (= "blank" pronouns) "" (tr-pronouns pronouns))]
-        [:div.pronouns (lower-case pro-str)]))]])
-
-(defmulti stats-view #(get-in @% [:identity :side]))
-
-(defn display-memory
-  [memory]
-  (let [me? (= (:side @game-state) :runner)]
-    (fn [memory]
-      (let [{:keys [available used only-for]} memory
-            unused (- available used)]
-        [:div (tr [:game.mu-count] unused available)
-         (when (neg? unused) [:div.warning "!"])
-         (when me? (controls :memory))]))))
-
-(defn display-special-memory
-  [memory]
-  (when-let [only-for (->> (:only-for memory)
-                           (filter #(pos? (:available (second %))))
-                           (into {})
-                           not-empty)]
-    [:div
-     (str "("
-          (join "), (" (for [[mu-type {:keys [available used]}] only-for
-                             :let [unused (max 0 (- available used))]]
-                         (str unused " of " available
-                              " " (capitalize (name mu-type))
-                              " MU unused")))
-          ")")]))
-
-(defmethod stats-view "Runner" [runner]
-  (let [me? (= (:side @game-state) :runner)]
-    (fn [runner]
-      (let [{:keys [user click credit run-credit memory link tag
-                    brain-damage active]} @runner]
-        [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         (name-area user)
-         [:div (tr [:game.click-count] click)
-          (when me? (controls :click))]
-         [:div (tr [:game.credit-count] credit run-credit)
-          (when me? (controls :credit))]
-         [display-memory memory]
-         [display-special-memory memory]
-         [:div (str link " " (tr [:game.link-strength "Link Strength"]))
-          (when me? (controls :link))]
-         (let [{:keys [base total is-tagged]} tag
-               additional (- total base)
-               show-tagged (or is-tagged (pos? total))]
-           [:div (tr [:game.tag-count] base additional total)
-            (when show-tagged [:div.warning "!"])
-            (when me? (controls :tag))])
-         [:div (str brain-damage " " (tr [:game.brain-damage "Brain Damage"]))
-          (when me? (controls :brain-damage))]]))))
-
-(defmethod stats-view "Corp" [corp]
-  (let [me? (= (:side @game-state) :corp)]
-    (fn [corp]
-      (let [{:keys [user click credit bad-publicity active]} @corp]
-        [:div.panel.blue-shade.stats {:class (when active "active-player")}
-         (name-area user)
-         [:div (tr [:game.click-count] click)
-          (when me? (controls :click))]
-         [:div (tr [:game.credit-count] credit -1)
-          (when me? (controls :credit))]
-         (let [{:keys [base additional]} bad-publicity]
-           [:div (tr [:game.bad-pub-count] base additional)
-            (when me? (controls :bad-publicity))])]))))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
