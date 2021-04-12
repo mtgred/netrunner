@@ -25,7 +25,7 @@
 (defn- lookup-card [id]
   (if-let [c (mc/find-one-as-map db "cards" {:code id})]
     c
-    (mc/find-one-as-map db "cards" {:previous-versions id})))
+    (mc/find-one-as-map db "cards" {:previous-versions {$elemMatch {:code id}}})))
 
 (defn- reduce-card [m k v]
   (let [card (lookup-card (name k))]

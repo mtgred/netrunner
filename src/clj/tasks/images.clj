@@ -54,7 +54,7 @@
         prev-k (string/join "." ["faces" face "images" (name lang) (name resolution) prev-k-root])
         path (string/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
     (mc/update db card-collection {:code code} {$set {k path}})
-    (mc/update db card-collection {:previous-versions code} {$set {prev-k path}})))
+    (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))
 
 (defn- add-card-image
   "Add an image to a card in the db"
@@ -69,7 +69,7 @@
              prev-k (string/join "." ["images" (name lang) (name resolution) prev-k-root])
              path (string/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
          (mc/update db card-collection {:code code} {$set {k path}})
-         (mc/update db card-collection {:previous-versions code} {$set {prev-k path}}))))))
+         (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}}))))))
 
 (defn- add-alt-images
   "All all images in the specified alt directory"

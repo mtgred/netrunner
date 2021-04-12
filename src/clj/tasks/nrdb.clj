@@ -55,7 +55,7 @@
 (defn- expand-card
   "Make a card stub for all previous versions specified in a card."
   [acc card]
-  (reduce #(conj %1 {:title (:title card) :code %2}) acc (:previous-versions card)))
+  (reduce #(conj %1 {:title (:title card) :code (:code %2)}) acc (:previous-versions card)))
 
 (defn- generate-previous-card-stubs
   "The cards database only has the latest version of a card. Create stubs for previous versions of a card."

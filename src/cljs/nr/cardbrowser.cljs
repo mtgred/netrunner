@@ -120,13 +120,12 @@
 
 (defn- expand-one
   "Reducer function to create a previous card from a newer card definition."
-  [acc version c]
-  (let [number (str->int (subs version 3))
-        cycle-pos (str->int (subs version 0 2))
-        prev-set (find-first #(= cycle-pos (:cycle_position %)) @cards/sets)
+  [acc {:keys [code set_code] :as version} c]
+  (let [number (str->int (subs code 3))
+        prev-set (find-first #(= set_code (:code %)) @cards/sets)
         prev (-> c
                  (assoc
-                   :code version
+                   :code code
                    :rotated true
                    :cycle_code (:cycle_code prev-set)
                    :setname (:name prev-set)
