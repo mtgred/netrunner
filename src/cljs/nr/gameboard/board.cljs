@@ -17,7 +17,7 @@
             [nr.gameboard.log :refer [log-panel log-mode send-msg card-preview-mouse-over card-preview-mouse-out
                                       card-highlight-mouse-over card-highlight-mouse-out resize-card-zoom
                                       zoom-channel should-scroll]]
-            [nr.gameboard.player-stats :refer [controls stats-view]]
+            [nr.gameboard.player-stats :refer [stat-controls stats-view]]
             [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
                                          load-remote-annotations delete-remote-annotations publish-annotations
                                          load-annotations-file save-annotations-file]]
@@ -775,8 +775,7 @@
              [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game.close "Close"])]
              [:label (tr [:game.card-count] size)]
              (let [{:keys [total]} @hand-size]
-               [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))
-                (controls :hand-size)])
+               (stat-controls :hand-size [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))]))
              [build-hand-card-view filled-hand size prompt "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
@@ -917,7 +916,8 @@
          [label @cards {:opts {:name name}}]]))))
 
 (defn scored-view [scored agenda-point me?]
-  (let [size (count @scored)]
+  (let [size (count @scored)
+        ctrl (if me? stat-controls (fn [key content] content))]
     [:div.panel.blue-shade.scored.squeeze
      (doall
        (map-indexed (fn [i card]
@@ -927,8 +927,7 @@
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats
-      [:div (tr [:game.agenda-count] @agenda-point)
-       (when me? (controls :agenda-point))]]]))
+      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond

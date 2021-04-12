@@ -244,13 +244,31 @@
             display: inline-block
             margin: 0 10px 8px 4px
 
-            &:hover .controls
-                opacity: 1
+        .stat-controls
+            display: inline-block
+            width: 30%
+
+    .stat-controls
+        position: relative
 
         .controls
-            display: inline-block
-            margin-left: 10px
-            opacity: 0
+            display: none
+            height: 100%
+            position: absolute
+            right: 2px
+            text-align: right
+            top: 0
+            width: 100%
+
+            button
+                margin: 0 2px
+
+        &:hover
+            > :not(.controls)
+                color: #00aeff
+
+            .controls
+                display: block
 
     .playable
         cursor: pointer
@@ -330,14 +348,6 @@
     .stats > div
         height: 20px
         font-size: 12px
-
-        .controls
-            float: right
-            display: none
-            margin-top: -1px
-
-        &:hover .controls
-            display: block
 
     .start-game
         width: 750px
