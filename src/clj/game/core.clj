@@ -38,6 +38,7 @@
     [game.core.player]
     [game.core.play-instants]
     [game.core.process-actions]
+    [game.core.prompt-state]
     [game.core.prompts]
     [game.core.props]
     [game.core.psi]
@@ -595,6 +596,10 @@
    map->Runner
    new-corp
    new-runner]
+
+  [game.core.prompt-state
+   add-to-prompt-queue
+   remove-from-prompt-queue]
 
   [game.core.prompts
    cancellable

@@ -1,9 +1,11 @@
 (ns game.core.prompt-state)
 
 (defn set-prompt-state
-  [state side]
-  (let [current-prompt (first (get-in @state [side :prompt]))]
-    (swap! state assoc-in [side :prompt-state] current-prompt)))
+  ([state side]
+   (let [current-prompt (first (get-in @state [side :prompt]))]
+     (set-prompt-state state side current-prompt)))
+  ([state side prompt]
+   (swap! state assoc-in [side :prompt-state] prompt)))
 
 (defn remove-from-prompt-queue
   [state side prompt]

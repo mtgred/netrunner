@@ -4,6 +4,7 @@
     [game.core.engine :refer [trigger-event trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.moving :refer [trash-cards]]
+    [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.winning :refer [flatline]]
@@ -18,23 +19,30 @@
   [state _ dtype n]
   (swap! state update-in [:damage :damage-bonus dtype] (fnil #(+ % n) 0)))
 
+(defn prevention-prompt-msg
+  [damage-amount damage-type prevented]
+  (str "Prevent any of the " damage-amount
+       " " (name damage-type) " damage?"
+       " (" prevented "/" damage-amount " prevented)"))
+
 (defn- damage-prevent-update-prompt
   "Look at the current runner prompt and (if a damage prevention prompt), update message."
   [state side]
-  (when-let [oldprompt (first (get-in @state [side :prompt]))]
-    (when-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
-      (let [dnumber (str->int (second match))
-            promptdtype (case (nth match 2)
+  (when-let [prompt (first (get-in @state [side :prompt]))]
+    (when-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg prompt))]
+      (let [damage-amount (str->int (second match))
+            damage-type (case (nth match 2)
                           "net" :net
                           "brain" :brain
                           "meat" :meat)
-            prevented (get-in @state [:damage :damage-prevent promptdtype] 0)
-            newprompt (assoc oldprompt :msg (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
-            update-fn #(cons newprompt (rest %))]
-        (if (>= prevented dnumber)
-          (do (swap! state update-in [side :prompt] next)
-              ((:effect oldprompt) nil))
-          (swap! state update-in [side :prompt] update-fn))))))
+            prevented (get-in @state [:damage :damage-prevent damage-type] 0)
+            new-prompt (assoc prompt :msg (prevention-prompt-msg damage-amount
+                                                                 damage-type
+                                                                 prevented))]
+        (remove-from-prompt-queue state side prompt)
+        (if (>= prevented damage-amount)
+          ((:effect prompt) nil)
+          (add-to-prompt-queue state side new-prompt))))))
 
 (defn damage-prevent
   "Registers a prevention of n damage to the next damage application of the given type. Afterwards update current prevention prompt, if found."
