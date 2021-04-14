@@ -22,6 +22,18 @@
  {:description "Card art from the 2017 World Champion decks."
   :name "World Champion 2017"
   :version "wc2017"}
+ {:description "Card art from 2019 Championship decks."
+  :name "Championship 2019"
+  :version "2019champs"}
+ {:description "Card art from 2019 Game Night decks."
+  :name "GNK 2019"
+  :version "2019gnk"}
+ {:description "Card art from 2020 Championship decks."
+  :name "Championship 2020"
+  :version "2020champs"}
+ {:description "Signed card art from 2020 Championship decks."
+  :name "Signed Championship 2020"
+  :version "2020limes"}
  {:description "Original Art from updated cards."
   :name "Previous Versions"
   :version "prev"}]
