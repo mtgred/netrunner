@@ -137,7 +137,7 @@
     (when (not-spectator?)
       (cond
         ;; Selecting card
-        (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
+        (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
         (send-command "select" {:card card})
 
         ;; Card is an identity of player's side
@@ -730,13 +730,13 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [hand size prompt wrapper-class]
+  [hand size prompt-state wrapper-class]
   [:div
    (doall (map-indexed
             (fn [i card]
               [:div {:key (or (:cid card) i)
                      :class (str
-                              (if (and (not= "select" (-> @prompt first :prompt-type))
+                              (if (and (not= "select" (:prompt-type @prompt-state))
                                        (not (:selected card))
                                        (playable? card))
                                 "playable" "")
@@ -754,14 +754,14 @@
 
 (defn hand-view []
   (let [s (r/atom {})]
-    (fn [side hand hand-size hand-count prompt popup popup-direction]
+    (fn [side hand hand-size hand-count prompt-state popup popup-direction]
       (let [size (if (nil? @hand-count) (count @hand) @hand-count)
             filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "Grip") {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view filled-hand size prompt "card-wrapper"]
+           [build-hand-card-view filled-hand size prompt-state "card-wrapper"]
            [label filled-hand {:opts {:name (if (= :corp side)
                                               (tr [:game.hq "HQ"])
                                               (tr [:game.grip "Grip"]))
@@ -777,7 +777,7 @@
              [:label (tr [:game.card-count] size)]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))]))
-             [build-hand-card-view filled-hand size prompt "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size prompt-state "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -1170,12 +1170,12 @@
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
-  [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
+  [my-ident my-user my-hand promp-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
   (let [visible-quote (r/atom true)
         mulliganed (r/atom false)
         start-shown (r/cursor app-state [:start-shown])
         card-back (get-in @app-state [:options :card-back])]
-    (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
+    (fn [my-ident my-user my-hand promp-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
       (when (and (not @start-shown)
                  (:username @op-user)
                  (pos? (count @my-hand)))
@@ -1234,14 +1234,14 @@
                                (tr [:game.close "Close"]) (tr [:game.start "Start Game"]))
                  true #(swap! app-state assoc :start-shown true)]
                 (list ^{:key "keepbtn"} [cond-button (tr [:game.keep "Keep"])
-                                         (= "mulligan" (-> @my-prompt first :prompt-type))
-                                         #(send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                         (= "mulligan" (:prompt-type @prompt-state))
+                                         #(send-command "choice" {:choice {:uuid (->> (:choices @prompt-state)
                                                                                       (filter (fn [c] (= "Keep" (:value c))))
                                                                                       first
                                                                                       :uuid)}})]
                       ^{:key "mullbtn"} [cond-button (tr [:game.mulligan "Mulligan"])
-                                         (= "mulligan" (-> @my-prompt first :prompt-type))
-                                         #(do (send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                         (= "mulligan" (:prompt-type @prompt-state))
+                                         #(do (send-command "choice" {:choice {:uuid (->> (:choices @prompt-state)
                                                                                           (filter (fn [c] (= "Mulligan" (:value c))))
                                                                                           first
                                                                                           :uuid)}})
@@ -1474,7 +1474,7 @@
     (tr [:game.ok "OK"])]])
 
 (defn prompt-div
-  [me {:keys [card msg prompt-type choices] :as prompt}]
+  [me {:keys [card msg prompt-type choices] :as prompt-state}]
   [:div.panel.blue-shade
    (when card
      [:<>
@@ -1512,7 +1512,7 @@
 
      ;; trace prompts require their own logic
      (= prompt-type "trace")
-     [trace-div prompt]
+     [trace-div prompt-state]
 
      ;; choice of number of credits
      (= choices "credit")
@@ -1621,10 +1621,10 @@
              (pos? (:click @me)))
         #(send-command "credit")]])))
 
-(defn button-pane [{:keys [side prompt]}]
-  (let [autocomp (r/track (fn [] (get-in @prompt [0 :choices :autocomplete])))
-        show-discard? (r/track (fn [] (get-in @prompt [0 :show-discard])))
-        prompt-type (r/track (fn [] (get-in @prompt [0 :prompt-type])))]
+(defn button-pane [{:keys [side prompt-state]}]
+  (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
+        show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
+        prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))]
     (r/create-class
       {:display-name "button-pane"
 
@@ -1643,12 +1643,12 @@
            (toast msg type options)))
 
        :reagent-render
-       (fn [{:keys [side run prompt me] :as button-pane-args}]
+       (fn [{:keys [side run prompt-state me] :as button-pane-args}]
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
-            (and prompt (first @prompt))
-            [prompt-div me (first @prompt)]
+            @prompt-state
+            [prompt-div me @prompt-state]
             @run
             [run-div side run]
             :else
@@ -1765,7 +1765,7 @@
                    op-user (r/cursor game-state [op-side :user])
                    ;; prompts
                    me-prompt (r/cursor game-state [me-side :prompt])
-                   me-prompt-state (r/cursor game-state [me-side :prompt-state])
+                   prompt-state (r/cursor game-state [me-side :prompt-state])
                    ;; identity cards
                    me-ident (r/cursor game-state [me-side :identity])
                    op-ident (r/cursor game-state [op-side :identity])
@@ -1786,7 +1786,7 @@
                        op-keep (r/cursor game-state [op-side :keep])
                        me-quote (r/cursor game-state [me-side :quote])
                        op-quote (r/cursor game-state [op-side :quote])]
-                   [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote side])
+                   [build-start-box me-ident me-user me-hand prompt-state me-keep op-ident op-user op-keep me-quote op-quote side])
 
                  [build-win-box game-state]
 
@@ -1846,10 +1846,10 @@
                       [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                     :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
                                     :corp corp :runner runner :me me :opponent opponent
-                                    :prompt me-prompt}])]]
+                                    :prompt-state prompt-state}])]]
 
                   [:div.me
-                   [hand-view me-side me-hand me-hand-size me-hand-count me-prompt true "me"]]]]
+                   [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true "me"]]]]
                 (when (:replay @game-state)
                   [:div.bottompane
                    [replay-panel]])]))))})))

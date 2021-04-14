@@ -74,14 +74,14 @@
 
 (defn build-prompt-state
   [prompt]
-  (prune-null-fields
-    (select-keys prompt-keys prompt)))
+  (-> prompt
+      (select-keys prompt-keys)
+      (prune-null-fields)
+      (not-empty)))
 
 (defn prompt-summary
   [player same-side?]
-  (-> player
-      (update :prompt #(if same-side? [(build-prompt-state (first %))] nil))
-      (update :prompt-state #(if same-side? (build-prompt-state %) nil))))
+  (update player :prompt-state #(if same-side? (build-prompt-state %) nil)))
 
 (defn player-keys []
   [:aid
@@ -103,7 +103,6 @@
    :keep
    :quote
    :register
-   :prompt
    :prompt-state
    :agenda-point
    :agenda-point-req])
