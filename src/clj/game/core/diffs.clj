@@ -197,6 +197,7 @@
    :log
    :options
    :psi
+   :reason
    :room
    :run
    :runner
@@ -207,7 +208,9 @@
    :stats
    :trace
    :turn
-   :typing])
+   :typing
+   :winning-user
+   :winner])
 
 (defn state-summary
   [state stripped-state side]
