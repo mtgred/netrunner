@@ -45,3 +45,7 @@ data/storage.bson
 
 #Calva
 .calva/*
+
+tags
+tags.temp
+tags.temp.tmp

@@ -1,6 +1,6 @@
-(ns tasks.split-tests
+(ns tasks.sort-card-tests
   (:require [clojure.string :as str]
-            [tasks.utils :refer [type->dir deep-merge]]
+            [tasks.utils :refer [type->dir]]
             [clojure.java.io :as io]
             [jinteki.utils :refer [slugify]]
             [jinteki.cards :refer [all-cards]]))

@@ -1,17 +1,19 @@
 (ns web.game
-  (:require [web.ws :as ws]
-            [web.lobby :refer [all-games old-states already-in-game? spectator?] :as lobby]
-            [web.utils :refer [response]]
-            [web.stats :as stats]
-            [game.main :as main]
-            [game.core.diffs :refer [public-diffs public-states]]
-            [game.core :as core]
-            [web.db :refer [db object-id]]
-            [monger.collection :as mc]
-            [jinteki.utils :refer [side-from-str]]
-            [cheshire.core :as json]
-            [crypto.password.bcrypt :as bcrypt]
-            [clj-time.core :as t]))
+  (:require
+    ;; external
+    [monger.collection :as mc]
+    [cheshire.core :as json]
+    [crypto.password.bcrypt :as bcrypt]
+    [clj-time.core :as t]
+    ;; internal
+    [web.ws :as ws]
+    [web.lobby :refer [all-games old-states already-in-game? spectator?] :as lobby]
+    [web.utils :refer [response]]
+    [web.stats :as stats]
+    [game.main :as main]
+    [game.core.diffs :refer [public-diffs public-states]]
+    [game.core :as core]
+    [jinteki.utils :refer [side-from-str]]))
 
 
 (defn send-state-diffs!
@@ -96,8 +98,9 @@
     game)))
 
 (defmethod ws/-msg-handler :netrunner/start
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id}]
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id}]
   (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id game)
                (not started))
@@ -115,18 +118,19 @@
                           :state (core/init-game g))
                    (check-for-starter-decks g)
                    (update-in g [:players] #(mapv strip-deck %)))]
-        (stats/game-started game)
+        (stats/game-started db game)
         (lobby/refresh-lobby gameid game)
         (swap! old-states assoc gameid @(:state game))
         (send-state! :netrunner/start game (public-states (:state game)))))))
 
 (defmethod ws/-msg-handler :netrunner/leave
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    {:keys [gameid-str] :as msg}        :?data}]
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [gameid-str] :as msg} :?data}]
   (let [{:keys [started players gameid state] :as game} (lobby/game-for-client client-id)]
     (when (and started state)
-      (lobby/remove-user client-id gameid)
+      (lobby/remove-user db client-id gameid)
       (when-let [game (lobby/game-for-id gameid)]
         ; The game will not exist if this is the last player to leave.
         (main/handle-notification state (str username " has left the game."))
@@ -210,9 +214,9 @@
 (defmethod ws/-msg-handler :lobby/watch
   ;; Handles a watch command when a game has started.
   [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    {:keys [gameid password]}           :?data
-    reply-fn                            :?reply-fn}]
+    client-id :client-id
+    {:keys [gameid password]} :?data
+    reply-fn :?reply-fn}]
   (if-let [{game-password :password state :state started :started :as game}
            (lobby/game-for-id gameid)]
     (when (and user game (lobby/allowed-in-game game user) state @state)
@@ -232,19 +236,17 @@
             (lobby/spectate-game user client-id gameid)
             (main/handle-notification state (str username " joined the game as a spectator."))
             (swap-and-send-diffs! (lobby/game-for-id gameid))
-            (when reply-fn (reply-fn 200))
-            true)
+            (when reply-fn
+              (reply-fn 200)))
           (when reply-fn
-            (reply-fn 403)
-            false))))
+            (reply-fn 403)))))
     (when reply-fn
-      (reply-fn 404)
-      false)))
+      (reply-fn 404))))
 
 (defmethod ws/-msg-handler :netrunner/say
   [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    {:keys [gameid-str msg]}                :?data}]
+    client-id :client-id
+    {:keys [gameid-str msg]} :?data}]
   (when (active-game? gameid-str client-id)
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [state mute-spectators] :as game} (lobby/game-for-id gameid)
@@ -262,8 +264,8 @@
 
 (defmethod ws/-msg-handler :netrunner/typing
   [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id
-    {:keys [gameid-str typing]}             :?data}]
+    client-id :client-id
+    {:keys [gameid-str typing]} :?data}]
   (when (active-game? gameid-str client-id)
     (let [gameid (java.util.UUID/fromString gameid-str)
           {:keys [state] :as game} (lobby/game-for-id gameid)
@@ -276,11 +278,12 @@
             (println (str "handle-game-typing exception:" (.getMessage ex) "\n"))))))))
 
 (defmethod ws/-msg-handler :chsk/uidport-close
-  [{{{:keys [username] :as user} :user} :ring-req
-    client-id                           :client-id}]
-  (when-let [{:keys [gameid state] :as game} (lobby/game-for-client client-id)]
-    (lobby/remove-user client-id (:gameid game))
-    (when-let [game (lobby/game-for-id gameid)]
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id}]
+  (when-let [{:keys [gameid state]} (lobby/game-for-client db client-id)]
+    (lobby/remove-user db client-id gameid)
+    (when-let [game (lobby/game-for-id db gameid)]
       ; The game will not exist if this is the last player to leave.
       (main/handle-notification state (str username " has disconnected."))
       (swap-and-send-diffs! game))))

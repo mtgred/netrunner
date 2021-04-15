@@ -8,8 +8,7 @@
             [monger.result :refer [acknowledged?]]
             [ring.middleware.anti-forgery :as anti-forgery]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
-            [web.db :refer [db object-id]]
-            [web.config :refer [server-config frontend-version]]
+            [web.config :refer [server-config frontend-version server-mode]]
             [web.utils :refer [response]]))
 
 (defn index-page
@@ -52,7 +51,7 @@
       [:script {:type "text/javascript"}
        (str "var user=" (json/generate-string user) ";")]
 
-      (if (= "dev" @web.config/server-mode)
+      (if (= "dev" @server-mode)
         (list (hiccup/include-js "/cljs/goog/base.js")
               (hiccup/include-js (str "/cljs/app10.js?v=" @frontend-version))
               [:script
@@ -67,7 +66,8 @@
                "ga('send', 'pageview');"]))])))
 
 (defn reset-password-page
-  [{{:keys [token]} :params}]
+  [{db :system/db
+    {:keys [token]} :params}]
   (if-let [user (mc/find-one-as-map db "users" {:resetPasswordToken   token
                                                 :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
     (hiccup/html5
@@ -79,9 +79,18 @@
        [:form.panel.blue-shade.reset-form {:method "POST"}
         [:h3 "Password Reset"]
         [:p
-         [:input.form-control {:type "password" :name "password" :value "" :placeholder "New password" :autofocus true :required "required"}]]
+         [:input.form-control {:type "password"
+                               :name "password"
+                               :value ""
+                               :placeholder "New password"
+                               :autofocus true
+                               :required "required"}]]
         [:p
-         [:input.form-control {:type "password" :name "confirm" :value "" :placeholder "Confirm password" :required "required"}]]
+         [:input.form-control {:type "password"
+                               :name "confirm"
+                               :value ""
+                               :placeholder "Confirm password"
+                               :required "required"}]]
         [:p
          [:button.btn.btn-primary {:type "submit"} "Update Password"]]]])
     (response 404 {:message "Sorry, but that reset token is invalid or has expired."})))

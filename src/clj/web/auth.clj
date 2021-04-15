@@ -1,6 +1,6 @@
 (ns web.auth
   (:require [web.config :refer [server-config]]
-            [web.db :refer [db find-one-as-map-case-insensitive object-id]]
+            [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
             [web.utils :refer [response md5]]
             [aero.core :refer [read-config]]
             [clj-time.core :refer [days from-now]]
@@ -49,7 +49,8 @@
       (response 401 {:message "Not authorized"}))))
 
 (defn wrap-user [handler]
-  (fn [{:keys [cookies] :as req}]
+  (fn [{db :system/db
+        :keys [cookies] :as req}]
     (let [user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats]
           auth-cookie (get cookies "session")
           user (when auth-cookie
@@ -81,7 +82,8 @@
      :options          {}}))
 
 (defn register-handler
-  [{{:keys [username password confirm-password email]} :params
+  [{db :system/db
+    {:keys [username password confirm-password email]} :params
     :as request}]
   (cond
     (< 20 (count username))
@@ -107,8 +109,10 @@
                                          demo-decks)))
       (response 200 {:message "ok"}))))
 
-(defn login-handler [{{:keys [username password]} :params
-                      :as request}]
+(defn login-handler
+  [{db :system/db
+    {:keys [username password]} :params
+    :as request}]
   (let [user (mc/find-one-as-map db "users" {:username username})]
     (if (and user
              (password/check password (:password user)))
@@ -126,26 +130,34 @@
     :cookies {"session" {:value 0
                          :max-age -1}}))
 
-(defn check-username-handler [{{:keys [username]} :params}]
+(defn check-username-handler
+  [{db :system/db
+    {:keys [username]} :params}]
   (if (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
-(defn check-email-handler [{{:keys [email]} :params}]
+(defn check-email-handler
+  [{db :system/db
+    {:keys [email]} :params}]
   (if (find-one-as-map-case-insensitive db "users" {:email email})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
-(defn email-handler [{{username :username} :user
-                      body                 :body}]
+(defn email-handler
+  [{db :system/db
+    {username :username} :user
+    body :body}]
   (if username
     (let [{:keys [email]} (find-one-as-map-case-insensitive db "users" {:username username})]
       (response 200 {:email email}))
     (response 401 {:message "Unauthorized"})))
 
-(defn change-email-handler [{{username :username} :user
-                             {email :email}       :body
-                             :as params}]
+(defn change-email-handler
+  [{db :system/db
+    {username :username} :user
+    {email :email} :body
+    :as params}]
   (cond
     (not username)
     (response 401 {:message "Unauthorized"})
@@ -162,14 +174,19 @@
     :else
     (response 404 {:message "Account not found"})))
 
-(defn update-profile-handler [{{username :username} :user
-                               body                 :body}]
+(defn profile-keys []
+  [:background :pronouns :language :show-alt-art :blocked-users
+   :alt-arts :card-resolution :deckstats :gamestats :card-zoom
+   :pin-zoom :card-back])
+
+(defn update-profile-handler
+  [{db :system/db
+    {username :username} :user
+    body                 :body}]
   (if username
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
-                                  {"$set" {:options (select-keys body [:background :pronouns :language :show-alt-art :blocked-users
-                                                                       :alt-arts :card-resolution :deckstats :gamestats :card-zoom
-                                                                       :pin-zoom :card-back])}}))
+                                  {"$set" {:options (select-keys body (profile-keys))}}))
       (response 200 {:message "Refresh your browser"})
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))
@@ -188,7 +205,7 @@
 (defn set-password-reset-code!
   "Generates a password-reset code for the given email address. Updates the user's info in the database with the code,
   and returns the code."
-  [email]
+  [db email]
   (let [reset-code (hexadecimalize (generate-secure-token 20))
         reset-expires (t/plus (t/now) (t/hours 1))]
     (mc/update db "users"
@@ -198,10 +215,11 @@
     reset-code))
 
 (defn forgot-password-handler
-  [{{:keys [email]} :params
+  [{db :system/db
+    {:keys [email]} :params
     headers         :headers}]
   (if-let [user (mc/find-one-as-map db "users" {:email email})]
-    (let [code (set-password-reset-code! email)
+    (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 (:email server-config)
                 {:from    "support@jinteki.net"
@@ -217,9 +235,11 @@
     (response 421 {:message "No account with that email address"})))
 
 (defn reset-password-handler
-  [{{:keys [password confirm token]} :params}]
-  (if-let [{:keys [username email]} (mc/find-one-as-map db "users" {:resetPasswordToken   token
-                                                                    :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+  [{db :system/db
+    {:keys [password confirm token]} :params}]
+  (if-let [{:keys [username email]}
+           (mc/find-one-as-map db "users" {:resetPasswordToken   token
+                                           :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
     (if (= password confirm)
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"

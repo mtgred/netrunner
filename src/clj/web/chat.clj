@@ -7,7 +7,6 @@
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
             [web.config :refer [server-config]]
-            [web.db :refer [db]]
             [web.utils :refer [response]]
             [web.ws :as ws])
   (:import org.bson.types.ObjectId))
@@ -21,14 +20,16 @@
 (defn config-handler [req]
   (response 200 {:max-length (chat-max-length)}))
 
-(defn messages-handler [{{:keys [channel]} :params}]
-  (response 200 (reverse (q/with-collection db msg-collection
-                                            (q/find {:channel channel})
-                                            (q/sort (array-map :date -1))
-                                            (q/limit 100)))))
+(defn messages-handler [{db :system/db
+                         {:keys [channel]} :params}]
+  (response 200 (reverse (q/with-collection
+                           db msg-collection
+                           (q/find {:channel channel})
+                           (q/sort (array-map :date -1))
+                           (q/limit 100)))))
 
 (defn- within-rate-limit
-  [username]
+  [db username]
   (let [window (:rate-window chat-config 60)
         start-date (c/to-date (t/plus (t/now) (t/seconds (- window))))
         max-cnt (:rate-cnt chat-config 10)
@@ -36,14 +37,15 @@
     (< msg-cnt max-cnt)))
 
 (defmethod ws/-msg-handler :chat/say
-  [{{{:keys [username emailhash options]} :user} :ring-req
+  [{{db :system/db
+     {:keys [username emailhash options]} :user} :ring-req
     client-id :client-id
     {:keys [channel msg]} :?data}]
   (when (and username
              emailhash
              (not (s/blank? msg)))
     (let [len-valid (<= (count msg) (chat-max-length))
-          rate-valid (within-rate-limit username)]
+          rate-valid (within-rate-limit db username)]
       (if (and len-valid rate-valid)
         (let [message {:emailhash emailhash
                        :username  username
@@ -58,7 +60,8 @@
           (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
 
 (defmethod ws/-msg-handler :chat/delete-msg
-  [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+  [{{db :system/db
+     {:keys [username isadmin ismoderator]} :user} :ring-req
     {:keys [msg]} :?data}]
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
@@ -73,7 +76,8 @@
 
 
 (defmethod ws/-msg-handler :chat/delete-all
-  [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+  [{{db :system/db
+     {:keys [username isadmin ismoderator]} :user} :ring-req
     {:keys [sender]} :?data}]
   (when (and sender
              (or isadmin ismoderator))
