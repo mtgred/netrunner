@@ -234,8 +234,10 @@
         (update-in [:runner :hand] #(if spectator? % [])))))
 
 (defn strip-for-replay
-  [stripped-state]
+  [stripped-state corp-player runner-player]
   (-> stripped-state
+      (assoc :corp (:corp corp-player)
+             :runner (:runner runner-player))
       (dissoc-in [:runner :user :isadmin])
       (dissoc-in [:runner :user :options :blocked-users])
       (dissoc-in [:runner :user :stats])
@@ -254,7 +256,7 @@
     [corp-player
      runner-player
      (strip-for-spectators stripped-state corp-player runner-player)
-     (strip-for-replay stripped-state)]))
+     (strip-for-replay stripped-state corp-player runner-player)]))
 
 (defn public-states [state]
   (let [[corp-state runner-state spectator-state history-state] (private-states state)]
