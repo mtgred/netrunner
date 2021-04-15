@@ -926,7 +926,7 @@
                        [:div [card-view card]]])
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
-     [:div.stats
+     [:div.stats-area
       (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)])]]))
 
 (defn run-arrow [run]
