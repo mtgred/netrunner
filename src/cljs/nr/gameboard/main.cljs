@@ -708,32 +708,32 @@
          title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
          ref (if is-runner "stack" "rd")
          menu-ref (keyword (str ref "-menu"))
-         content-ref (keyword (str ref "-content"))
-         ; deck-count is only sent to live games and does not exist in the replay
-         deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
+         content-ref (keyword (str ref "-content"))]
      (fn [render-side player-side identity deck]
-       [:div.blue-shade.deck
-        (drop-area title {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
-        (when (pos? deck-count-number)
-          [facedown-card (:side @identity) ["bg"] nil])
-        [:div.header {:class "darkbg server-label"}
-         (str title " (" deck-count-number ")")]
-        (when (= render-side player-side)
-          [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
-           [:div {:on-click #(do (send-command "shuffle")
-                                 (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
-           [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
-        (when (= render-side player-side)
-          [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
-           [:div
-            [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-             (tr [:game.close "Close"])]
-            [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-             (tr [:game.close-shuffle "Close & Shuffle"])]]
-           (doall
-             (for [card @deck]
-               ^{:key (:cid card)}
-               [card-view card]))])])))
+       ; deck-count is only sent to live games and does not exist in the replay
+       (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
+         [:div.blue-shade.deck
+          (drop-area title {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
+          (when (pos? deck-count-number)
+            [facedown-card (:side @identity) ["bg"] nil])
+          [:div.header {:class "darkbg server-label"}
+           (str title " (" deck-count-number ")")]
+          (when (= render-side player-side)
+            [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
+             [:div {:on-click #(do (send-command "shuffle")
+                                   (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
+             [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
+          (when (= render-side player-side)
+            [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
+             [:div
+              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
+               (tr [:game.close "Close"])]
+              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
+               (tr [:game.close-shuffle "Close & Shuffle"])]]
+             (doall
+               (for [card @deck]
+                 ^{:key (:cid card)}
+                 [card-view card]))])]))))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
