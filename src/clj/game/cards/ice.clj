@@ -2148,6 +2148,7 @@
                                                           (remove-once #(same-card? % magnet)
                                                                        (filter ice? (all-installed state corp)))))
                                           :prompt "Select a Program to host on Magnet"
+                                          :msg (msg "host " (card-str state target))
                                           :choices {:card #(and (program? %)
                                                                 (ice? (:host %))
                                                                 (not (same-card? (:host %) magnet)))}
