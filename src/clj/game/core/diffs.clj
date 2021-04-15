@@ -57,7 +57,7 @@
 (defn prune-vec [cards]
   (mapv prune-null-fields cards))
 
-(def player-keys
+(defn player-keys []
   [:aid
    :user
    :identity
@@ -83,7 +83,7 @@
 
 (defn player-summary
   [player state side]
-  (-> (select-keys player player-keys)
+  (-> (select-keys player (player-keys))
       (update :identity prune-null-fields)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
@@ -91,7 +91,7 @@
       (update :scored card-summary-vec state side)
       (update :register select-keys [:spent-click])))
 
-(def corp-keys
+(defn corp-keys []
   [:servers
    :bad-publicity])
 
@@ -127,7 +127,7 @@
         discard (:discard corp)
         install-list (:install-list corp)]
     (-> (player-summary corp state side)
-        (merge (select-keys corp corp-keys))
+        (merge (select-keys corp (corp-keys)))
         (assoc
           :deck (if (and corp-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
@@ -137,7 +137,7 @@
           :servers (servers-summary state side))
         (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
 
-(def runner-keys
+(defn runner-keys []
   [:rig
    :run-credit
    :link
@@ -163,7 +163,7 @@
         discard (:discard runner)
         runnable-list (:runnable-list runner)]
     (-> (player-summary runner state side)
-        (merge (select-keys runner runner-keys))
+        (merge (select-keys runner (runner-keys)))
         (assoc
           :deck (if (and runner-player? view-deck) (prune-vec deck) [])
           :deck-count (count deck)
@@ -173,7 +173,7 @@
           :rig (rig-summary state side))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
-(def run-keys
+(defn run-keys []
   [:server
    :position
    :corp-auto-no-action
@@ -187,11 +187,12 @@
 (defn run-summary
   [state]
   (when-let [run (:run @state)]
-    (select-keys run run-keys)))
+    (select-keys run (run-keys))))
 
-(def state-keys
+(defn state-keys []
   [:active-player
    :corp
+   :corp-phase-12
    :end-turn
    :gameid
    :log
@@ -201,6 +202,7 @@
    :room
    :run
    :runner
+   :runner-phase-12
    :sfc-current-id
    :sfx
    :sfx-current-id
@@ -212,16 +214,16 @@
    :winning-user
    :winner])
 
+(defn strip-state
+  [state]
+  (-> (select-keys @state (state-keys))
+      (assoc :run (run-summary state))))
+
 (defn state-summary
-  [state stripped-state side]
+  [stripped-state state side]
   (-> stripped-state
       (assoc :corp (corp-summary state side))
       (assoc :runner (runner-summary state side))))
-
-(defn strip-state
-  [state]
-  (-> (select-keys @state state-keys)
-      (assoc :run (run-summary state))))
 
 (defn strip-for-spectators
   [stripped-state corp-player runner-player]
@@ -247,8 +249,8 @@
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
   (let [stripped-state (strip-state state)
-        corp-player (state-summary state stripped-state :corp)
-        runner-player (state-summary state stripped-state :runner)]
+        corp-player (state-summary stripped-state state :corp)
+        runner-player (state-summary stripped-state state :runner)]
     ;; corp, runner, spectator, history
     [corp-player
      runner-player
