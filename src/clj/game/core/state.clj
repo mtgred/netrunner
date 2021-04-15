@@ -30,7 +30,6 @@
    run
    runner
    runner-phase-12
-   sfc-current-id
    sfx
    sfx-current-id
    stack
