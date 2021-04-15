@@ -30,8 +30,8 @@
                               (->> (filterv not-empty)
                                    (mapv #(str "(defcard " %))
                                    (sort-by #(slugify (last (re-find #"defcard \"(.+)\"" %)) " "))
-                                   (str/join "\n\n")))
-                ]]
+                                   (str/join "\n\n")))]]
+
     (spit (str "src/clj/game/cards/" t ".clj") (str header card-defs))))
 
 (comment
