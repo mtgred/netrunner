@@ -5,6 +5,7 @@
    bonus
    click-state
    corp
+   corp-phase-12
    effects
    effect-completed
    eid
@@ -28,6 +29,7 @@
    room
    run
    runner
+   runner-phase-12
    sfc-current-id
    sfx
    sfx-current-id
