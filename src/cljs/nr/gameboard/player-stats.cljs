@@ -15,8 +15,8 @@
 
 (defn- name-area
   [user]
-  [:div.namearea [avatar user {:opts {:size 32}}]
-   [:div.namebox
+  [:div.name-area [avatar user {:opts {:size 32}}]
+   [:div.name-box
     [:div.username (:username user)]
     (if-let [pronouns (get-in user [:options :pronouns])]
       (let [pro-str (if (= "blank" pronouns) "" (tr-pronouns pronouns))]
