@@ -1439,37 +1439,40 @@
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
-             :req (req (and (= :hq (target-server context))
-                            (first-successful-run-on-server? state :hq)
-                            (<= 2 (count (:discard runner)))
-                            (not (zone-locked? state :runner :discard))))
-             :interactive (req true)
-             :async true
-             :prompt "Select 2 cards in your Heap"
-             :show-discard true
-             :choices {:max 2
-                       :all true
-                       :card #(and (in-discard? %)
-                                   (runner? %))}
-             :effect
-             (effect (continue-ability
-                       (let [c1 (first targets)
-                             c2 (second targets)]
-                         {:waiting-prompt "Corp to choose which card to remove from the game"
-                          :prompt "Choose which card to remove from the game"
-                          :player :corp
-                          :choices [c1 c2]
-                          :msg (msg (let [[chosen other](if (= target c1)
-                                                          [c1 c2]
-                                                          [c2 c1])]
-                                      (str "add " (:title other) " to their grip."
-                                           " Corp removes " (:title chosen) " from the game")))
-                          :effect (req (let [[chosen other] (if (= target c1)
-                                                              [c1 c2]
-                                                              [c2 c1])]
-                                         (move state :runner chosen :rfg)
-                                         (move state :runner other :hand)))})
-                       card nil))}]})
+             :optional
+             {:req (req (and (= :hq (target-server context))
+                             (first-successful-run-on-server? state :hq)
+                             (<= 2 (count (:discard runner)))
+                             (not (zone-locked? state :runner :discard))))
+              :prompt "Use Steve Cambridge ability?"
+              :yes-ability
+              {:interactive (req true)
+               :async true
+               :prompt "Select 2 cards in your Heap"
+               :show-discard true
+               :choices {:max 2
+                         :all true
+                         :card #(and (in-discard? %)
+                                     (runner? %))}
+               :effect
+               (effect (continue-ability
+                         (let [c1 (first targets)
+                               c2 (second targets)]
+                           {:waiting-prompt "Corp to choose which card to remove from the game"
+                            :prompt "Choose which card to remove from the game"
+                            :player :corp
+                            :choices [c1 c2]
+                            :msg (msg (let [[chosen other](if (= target c1)
+                                                            [c1 c2]
+                                                            [c2 c1])]
+                                        (str "add " (:title other) " to their grip."
+                                             " Corp removes " (:title chosen) " from the game")))
+                            :effect (req (let [[chosen other] (if (= target c1)
+                                                                [c1 c2]
+                                                                [c2 c1])]
+                                           (move state :runner chosen :rfg)
+                                           (move state :runner other :hand)))})
+                         card nil))}}}]})
 
 (defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
