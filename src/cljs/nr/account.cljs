@@ -40,7 +40,7 @@
   (swap! app-state assoc-in [:options :pin-zoom] (:pin-zoom @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
-  (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
+  (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
   (swap! app-state assoc-in [:options :log-top] (:log-top @s))
@@ -53,7 +53,7 @@
   (.setItem js/localStorage "sounds_volume" (:volume @s))
   (.setItem js/localStorage "log-width" (:log-width @s))
   (.setItem js/localStorage "log-top" (:log-top @s))
-  (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
+  (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
   (.setItem js/localStorage "card-zoom" (:card-zoom @s))
@@ -273,9 +273,9 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
-                             :checked (:stacked-servers @s)
-                             :on-change #(swap! s assoc-in [:stacked-servers] (.. % -target -checked))}]
-             (tr [:settings.server-stacking "Server stacking is on by default"])]]
+                             :checked (:stacked-cards @s)
+                             :on-change #(swap! s assoc-in [:stacked-cards] (.. % -target -checked))}]
+             (tr [:settings.stacked-cards "Card stacking (on by default)"])]]
 
            [:br]
            [:h4 (tr [:settings.runner-layout "Runner layout from Corp perspective"])]
@@ -468,7 +468,7 @@
                        :alt-arts (get-in @app-state [:options :alt-arts])
                        :all-art-select "wc2015"
                        :card-resolution (get-in @app-state [:options :card-resolution])
-                       :stacked-servers (get-in @app-state [:options :stacked-servers])
+                       :stacked-cards (get-in @app-state [:options :stacked-cards])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
                        :log-width (get-in @app-state [:options :log-width])
                        :log-top (get-in @app-state [:options :log-top])

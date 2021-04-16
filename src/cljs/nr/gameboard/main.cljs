@@ -490,6 +490,15 @@
                      (:fired sub) "✅")]])
            subroutines))])))
 
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed host] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation")
+         (not rezzed)
+         (not= (:side host) "Runner"))
+    facedown))
+
 (defn card-view
   [card flipped]
   (let [c-state (r/atom {})]
@@ -558,17 +567,16 @@
        [card-abilities card c-state abilities subroutines]
        (when (pos? (count hosted))
          [:div.hosted
-          (let [distinct-hosted (vals (group-by :title hosted))]
-            (show-distinct-cards distinct-hosted))])])))
+          (if (get-in @app-state [:options :stacked-cards] false)
+            ; stacked mode
+            (let [distinct-hosted (vals (group-by :title hosted))]
+              (show-distinct-cards distinct-hosted))
 
-(defn face-down?
-  "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed host] :as card}]
-  (if (= side "Corp")
-    (and (not= type "Operation")
-         (not rezzed)
-         (not= (:side host) "Runner"))
-    facedown))
+            (doall
+              (for [card hosted]
+                (let [flipped (face-down? card)]
+                  ^{:key (:cid card)}
+                  [card-view card flipped]))))])])))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -1030,11 +1038,11 @@
                     similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))
                     all-servers (conj similar-servers server)]
               :when (or (empty? similar-servers)            ; it is a normal server-view
-                      (not (get-in @app-state [:options :stacked-servers] false)) ; we're not in stacked mode
+                      (not (get-in @app-state [:options :stacked-cards] false)) ; we're not in stacked mode
                       ; otherwise only show one view for the stacked remote
                       (< num (remote->num (first (first similar-servers)))))]
           (if (or (empty? similar-servers)
-                (not (get-in @app-state [:options :stacked-servers] false)))
+                (not (get-in @app-state [:options :stacked-cards] false)))
             [server-view {:key num
                           :server (second server)
                           :run (when (= server-type (str "remote" num)) @run)}
@@ -1076,9 +1084,16 @@
        (for [zone (runner-f [:program :hardware :resource :facedown])]
          ^{:key zone}
          [:div
-          (let [cards (get @rig zone)
-                distinct-cards (vals (group-by :title cards))]
-            (show-distinct-cards distinct-cards))]))
+          (if (get-in @app-state [:options :stacked-cards] false)
+            ; stacked mode
+            (let [cards (get @rig zone)
+                  distinct-cards (vals (group-by :title cards))]
+              (show-distinct-cards distinct-cards))
+            ; not in stacked mode
+            (doall (for [c (get @rig zone)]
+                     ^{:key (:cid c)}
+                     [:div.card-wrapper {:class (when (playable? c) "playable")}
+                      [card-view c]])))]))
      (when is-me centrals)]))
 
 (defn play-sfx

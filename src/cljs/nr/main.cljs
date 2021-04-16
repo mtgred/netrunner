@@ -7,7 +7,7 @@
             [nr.chat :refer [chat-page]]
             [nr.deckbuilder :refer [deck-builder]]
             [nr.gameboard :refer [gameboard]]
-            [nr.gameboard.actions :refer [concede mute-spectators stack-servers flip-runner-board]]
+            [nr.gameboard.actions :refer [concede mute-spectators stack-cards flip-runner-board]]
             [nr.gameboard.replay :refer [set-replay-side]]
             [nr.gameboard.state :refer [game-state]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
@@ -43,11 +43,11 @@
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
-            [:a.stack-servers-button {:on-click #(stack-servers)}
-             (if (get-in @app-state [:options :stacked-servers])
-               (tr [:game.unstack-servers "Unstack servers"]) (tr [:game.stack-servers "Stack servers"]))]
+            [:a.stack-cards-button {:on-click #(stack-cards)}
+             (if (get-in @app-state [:options :stacked-cards])
+               (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
             (when (not= :runner (:side @game-state))
-              [:a.stack-servers-button {:on-click #(flip-runner-board)}
+              [:a.runner-board-order-button {:on-click #(flip-runner-board)}
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
                  (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
        (when (not (nil? @gameid))
@@ -58,7 +58,14 @@
           (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
           (when (= "local-replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
+            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])
+          [:a.stack-cards-button {:on-click #(stack-cards)}
+           (if (get-in @app-state [:options :stacked-cards])
+             (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
+          (when (not= :runner (:side @game-state))
+            [:a.runner-board-order-button {:on-click #(flip-runner-board)}
+             (if (= "irl" (get-in @app-state [:options :runner-board-order]))
+               (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]
