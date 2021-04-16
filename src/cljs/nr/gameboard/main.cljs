@@ -546,19 +546,18 @@
             [:div.darkbg.additional-subtypes
              (join " - " (remove (into #{} (:subtypes server-card)) subtypes))]))
 
-      (when (and (= zone ["hand"])
-                 (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-        [server-menu card c-state])
+        (when (and (= zone ["hand"])
+                   (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
+          [server-menu card c-state])]
+       (when (pos? (+ (count runner-abilities) (count subroutines)))
+         [runner-abs card c-state runner-abilities subroutines title])
 
-      (when (pos? (+ (count runner-abilities) (count subroutines)))
-        [runner-abs card c-state runner-abilities subroutines title])
+       (when (pos? (count corp-abilities))
+         [corp-abs card c-state corp-abilities])
 
-      (when (pos? (count corp-abilities))
-        [corp-abs card c-state corp-abilities])
-
-      [card-abilities card c-state abilities subroutines]]
-     (when (pos? (count hosted))
-       [:div.hosted
+       [card-abilities card c-state abilities subroutines]
+       (when (pos? (count hosted))
+         [:div.hosted
           (let [distinct-hosted (vals (group-by :title hosted))]
             (show-distinct-cards distinct-hosted))])])))
 
@@ -990,14 +989,15 @@
       (when (and run (not current-ice))
         [run-arrow run])]
      [:div.content
-      (doall (for [card content]
-               (let [is-first (= card (first content))
-                     flipped (not (:rezzed card))]
-                 [:div.server-card {:key (:cid card)
-                                    :class (str (when (and (< 1 (count content)) (not is-first))
-                                                  "shift"))}
-                  [card-view card flipped]])))
-      [stacked-label content similar-servers opts]]]))
+      [:div.stacked
+       (doall (for [card content]
+                (let [is-first (= card (first content))
+                      flipped (not (:rezzed card))]
+                  [:div.server-card {:key (:cid card)
+                                     :class (str (when (and (< 1 (count content)) (not is-first))
+                                                   "shift"))}
+                   [card-view card flipped]])))
+       [stacked-label content similar-servers opts]]]]))
 
 (defn compare-servers-for-stacking [s1]
   (fn [s2]

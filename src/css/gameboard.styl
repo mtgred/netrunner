@@ -45,6 +45,9 @@
         top: 100%
         transform: translate(0, -100%)
 
+    .card-frame
+        position: relative
+
     .card
         position: relative
         height: 84px
@@ -554,7 +557,17 @@
         .card-wrapper
             margin: 3px 6px
 
-        .card:hover
+        .card-wrapper
+            margin: 3px 6px
+
+        // Logic of z-indices
+        // By default, z-index for cards is auto, which means that counters are not bound to cards and can be displayed on top of everything.
+        // Once the card-wrapper is hovered, cards get a z-index of 0, which binds the counters to them and allows them to be obscured.
+        .card-wrapper:hover .card:not(:hover), .stacked:hover .card:not(:hover)
+            z-index:0
+
+        // Then once both card-wrapper _and_ card are hovered, the z-index gets bumped to 1 to pull the card to the front.
+        .card-wrapper:hover .card:hover, .stacked:hover .card:hover
             z-index: 1
 
         .runner-board
@@ -696,12 +709,12 @@
                             .counters
                                 transform(rotate(-90deg))
 
-                            .abilities, .runner-abilities, .corp-abilities
-                                top: auto
-                                bottom: 100%
-                                left: 0
-                                margin: 6px -1px
-                                transform(initial)
+                        .abilities, .runner-abilities, .corp-abilities
+                            top: auto
+                            bottom: 100%
+                            left: 0
+                            margin: 6px -1px
+                            transform(initial)
 
                     .strength
                         transform(rotate(90deg))
