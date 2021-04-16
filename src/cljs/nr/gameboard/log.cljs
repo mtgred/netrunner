@@ -1,14 +1,19 @@
 (ns nr.gameboard.log
   (:require [cljs.core.async :refer [chan put!]]
+            [clojure.string :as string]
             [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
             [nr.gameboard.replay :refer [update-notes replay-status get-remote-annotations load-remote-annotations
                                          delete-remote-annotations publish-annotations load-annotations-file save-annotations-file]]
             [nr.gameboard.state :refer [game-state not-spectator?]]
+            [nr.help :refer [command-info]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [influence-dot render-message]]
             [nr.ws :as ws]
             [reagent.core :as r]))
+
+(def commands (distinct (map :name command-info)))
+(def command-info-map (into {} (map (fn [{:keys [name usage help]}] [name {:usage usage :help help}]) command-info)))
 
 (defonce zoom-channel (chan))
 
@@ -60,16 +65,16 @@
         card-ratio (/ 418 300)]
     (if (> (/ max-card-height max-card-width) card-ratio)
       (-> ".card-zoom" js/$
-          (.css "width" max-card-width)
-          (.css "height" (int (* max-card-width card-ratio))))
+        (.css "width" max-card-width)
+        (.css "height" (int (* max-card-width card-ratio))))
       (-> ".card-zoom" js/$
-          (.css "width" (int (/ max-card-height card-ratio)))
-          (.css "height" max-card-height)))
+        (.css "width" (int (/ max-card-height card-ratio)))
+        (.css "height" max-card-height)))
     (-> ".rightpane" js/$ (.css "width" width))
     (-> ".log" js/$
-        (.css "left" 0)
-        (.css "top" top)
-        (.css "width" width))))
+      (.css "left" 0)
+      (.css "top" top)
+      (.css "width" width))))
 
 (defn log-resize [event ui]
   "Resize the card zoom to fit the available space"
@@ -168,42 +173,42 @@
              [:div.click [:textarea#notes-click {:placeholder (tr [:annotations.click-placeholder "Notes for this click"])
                                                  :on-change #(update-notes)}]]]
             :notes-shared
-             (let [annotation-options (r/atom {:file ""})]
-               [:div.notes-shared
-                (when (not= "local-replay" (:gameid @game-state))
-                  [:div.remote-annotations
-                   [:h4 (tr [:annotations.available-annotations "Available annotations"]) " "
-                    [:button.small {:type "button"
-                                    :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
-                   (if (empty? (:remote-annotations @replay-status))
-                     (tr [:annotations-no-published-annotations "No published annotations."])
-                     [:ul
-                      (doall
-                        (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
-                          ^{:key (str "annotation-" n)}
-                          [:li
-                           [:a {:on-click #(load-remote-annotations n)} (:username anno)]
-                           " - " (.toLocaleDateString (js/Date. (:date anno))) " "
-                           (when (:deletable anno)
-                             [:button.small {:type "button"
-                                             :on-click #(delete-remote-annotations n)} "X"])]))])
-                   [:div.button-row
-                    [:button {:type "button"
-                              :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
-                   [:hr]])
-                [:h4 (tr [:annotations.import-local "Import local annotation file"])]
-                [:input {:field :file
-                         :type :file
-                         :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
-                [:div.button-row
-                 [:button {:type "button" :on-click #(load-annotations-file)}
-                  (tr [:annotations.load-local "Load"])]
-                 [:button {:type "button" :on-click #(save-annotations-file)}
-                  (tr [:annotations.save-local "Save"])]
-                 [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
-                                                            {:turns {:corp {} :runner {}}
-                                                             :clicks {}})}
-                  (tr [:annotations.clear "Clear"])]]]))])})))
+            (let [annotation-options (r/atom {:file ""})]
+              [:div.notes-shared
+               (when (not= "local-replay" (:gameid @game-state))
+                 [:div.remote-annotations
+                  [:h4 (tr [:annotations.available-annotations "Available annotations"]) " "
+                   [:button.small {:type "button"
+                                   :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
+                  (if (empty? (:remote-annotations @replay-status))
+                    (tr [:annotations-no-published-annotations "No published annotations."])
+                    [:ul
+                     (doall
+                       (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
+                         ^{:key (str "annotation-" n)}
+                         [:li
+                          [:a {:on-click #(load-remote-annotations n)} (:username anno)]
+                          " - " (.toLocaleDateString (js/Date. (:date anno))) " "
+                          (when (:deletable anno)
+                            [:button.small {:type "button"
+                                            :on-click #(delete-remote-annotations n)} "X"])]))])
+                  [:div.button-row
+                   [:button {:type "button"
+                             :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
+                  [:hr]])
+               [:h4 (tr [:annotations.import-local "Import local annotation file"])]
+               [:input {:field :file
+                        :type :file
+                        :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
+               [:div.button-row
+                [:button {:type "button" :on-click #(load-annotations-file)}
+                 (tr [:annotations.load-local "Load"])]
+                [:button {:type "button" :on-click #(save-annotations-file)}
+                 (tr [:annotations.save-local "Save"])]
+                [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
+                                                      {:turns {:corp {} :runner {}}
+                                                       :clicks {}})}
+                 (tr [:annotations.clear "Clear"])]]]))])})))
 
 (defn log-typing []
   (let [typing (r/cursor game-state [:typing])
@@ -218,7 +223,7 @@
 (defn send-msg [s]
   (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
-               (not (empty? text)))
+            (not (empty? text)))
       (reset! should-scroll {:update false :send-msg true})
       (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
                                     :msg text}])
@@ -229,20 +234,84 @@
   (let [text (:msg @s)
         username (get-in @app-state [:user :username])]
     (when (and (not (:replay @game-state))
-               (not-spectator?))
+            (not-spectator?))
       (if (empty? text)
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                        :typing false}])
+                                         :typing false}])
         (when (not-any? #{username} (:typing @game-state))
           (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                          :typing true}]))))))
+                                           :typing true}]))))))
 
 (defn indicate-action [send]
   (when (not-spectator?)
     [:button.indicate-action {:on-click #(do (.preventDefault %)
                                              (send "indicate-action"))
-              :key "Indicate action"}
+                              :key "Indicate action"}
      (tr [:game.indicate-action "Indicate action"])]))
+
+(defn fuzzy-match-score
+  "Matches if all characters in input appear in target in order.
+  Score is sum of matched indices, lower is a better match"
+  [input target]
+  (loop [curr-input (first input)
+         rest-input (rest input)
+         target-index (string/index-of target curr-input 0)
+         score target-index]
+    (when target-index
+      (if (not (seq rest-input))
+        score
+        (let [next-index (string/index-of target (first rest-input) (inc target-index))]
+          (recur
+            (first rest-input)
+            (rest rest-input)
+            next-index
+            (+ score (or next-index 0))))))))
+
+(defn find-command-matches
+  ([input commands]
+   (when (= "/" (first input))
+     (take 15 (->> commands
+                (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
+                (filter :score)
+                (sort-by :score)
+                (map :match))))))
+
+(defn show-command-menu? [s]
+  (seq (:command-matches s)))
+
+(defn reset-command-menu
+  "Resets the command menu state."
+  [state]
+  (do (swap! state assoc :command-matches ())
+      (swap! state assoc :command-highlight nil)))
+
+(defn command-menu-key-down-handler
+  [state e]
+  (when (show-command-menu? @state)
+    (let [key-code (-> e .-keyCode)
+          matches (:command-matches @state)
+          match-count (count matches)]
+      (cond
+        ;; ArrowDown
+        (#{40} key-code) (do (.preventDefault e)
+                             (swap! state update :command-highlight #(if % (mod (inc %) match-count) 0)))
+        ;; ArrowUp
+        (#{38} key-code) (when (:command-highlight @state)
+                           (do (.preventDefault e)
+                               (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0))))
+        ;; Return, Space, ArrowRight, Tab
+        (#{13 32 39 9} key-code) (when (or (= 1 match-count) (:command-highlight @state))
+                                   (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))]
+                                     (do (.preventDefault e)
+                                         (swap! state assoc :msg (str (nth matches use-index) " "))
+                                         (reset-command-menu state))))))))
+
+(defn log-input-change-handler
+  [s e]
+  (do (reset-command-menu s)
+      (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
+      (swap! s assoc :msg (-> e .-target .-value))
+      (send-typing s)))
 
 (defn log-input [send]
   (let [gameid (r/cursor game-state [:gameid])
@@ -251,16 +320,33 @@
     (fn []
       (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
         (when (or (not-spectator?)
-                  (not (:mutespectators game)))
+                (not (:mutespectators game)))
           [:div.log-input
-           [:form {:on-submit #(do (.preventDefault %)
-                                   (send-msg s))}
-            [:input {:placeholder (tr [:chat.placeholder "Say something"])
-                     :type "text"
-                     :value (:msg @s)
-                     :on-change #(do (swap! s assoc :msg (-> % .-target .-value))
-                                     (send-typing s))}]]
-           [indicate-action send]])))))
+           [:div.form-container
+            [:form {:on-submit #(do (.preventDefault %)
+                                    (reset-command-menu s)
+                                    (send-msg s))}
+             [:input {:placeholder (tr [:chat.placeholder "Say something"])
+                      :type "text"
+                      :value (:msg @s)
+                      :on-key-down (partial command-menu-key-down-handler s)
+                      :on-change (partial log-input-change-handler s)}]]]
+           [indicate-action send]
+           (when (show-command-menu? @s)
+             [:div.command-matches-container.panel.blue-shade
+              {:on-mouse-leave #(swap! s dissoc :command-highlight)}
+              [:ul.command-matches
+               (doall (map-indexed
+                        (fn [i match]
+                          [:li.command-match
+                           {:key match
+                            :class (when (= i (:command-highlight @s)) "highlight")}
+                           [:span {:on-mouse-over #(swap! s assoc :command-highlight i)
+                                   :on-click #(do
+                                                (swap! s assoc :msg (str match " "))
+                                                (reset-command-menu s))}
+                            (get-in command-info-map [match :usage])]])
+                        (:command-matches @s)))]])])))))
 
 (defn log-panel [send]
   (fn []

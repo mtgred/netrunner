@@ -1,6 +1,49 @@
 (ns nr.help
   (:require [clojure.string :refer [split]]))
 
+(def command-info
+  [{:name "/adv-counter" :usage "/adv-counter n" :help "set advancement counters on a card to n (player's own cards only). Deprecated in favor of /counter ad n"}
+   {:name "/bp" :usage "/bp n" :help "Set your bad publicity to n"}
+   {:name "/card-info" :usage "/card-info" :help "display debug info about a card (player's own cards only)"}
+   {:name "/clear-win" :usage "/clear-win" :help "requests game to clear the current win state.  Requires both players to request it"}
+   {:name "/click" :usage "/click n" :help "Set your clicks to n"}
+   {:name "/close-prompt" :usage "/close-prompt" :help "close an active prompt and show the next waiting prompt, or the core click actions"}
+   {:name "/counter" :usage "/counter n" :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
+   {:name "/counter" :usage "/counter type n" :help "set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", " [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"] ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."}
+   {:name "/credit" :usage "/credit n" :help "Set your credits to n"}
+   {:name "/deck" :usage "/deck #n" :help "Put card number n from your hand on top of your deck"}
+   {:name "/discard" :usage "/discard #n" :help "Discard card number n from your hand"}
+   {:name "/discard-random" :usage "/discard-random" :help "Discard a random card from your hand"}
+   {:name "/draw" :usage "/draw n" :help "Draw n cards"}
+   {:name "/end-run" :usage "/end-run" :help "End the run (Corp only)"}
+   {:name "/facedown" :usage "/facedown" :help "Install a card facedown (Runner only)"}
+   {:name "/handsize" :usage "/handsize n" :help "Set your handsize to n"}
+   {:name "/install-ice" :usage "/install-ice" :help "Install a piece of ICE at any position in a server (Corp only)"}
+   {:name "/jack-out" :usage "/jack-out" :help "Jack out (Runner only)"}
+   {:name "/link" :usage "/link n" :help "Set your link to n"}
+   {:name "/memory" :usage "/memory n" :help "Set your memory to n"}
+   {:name "/move-bottom" :usage "/move-bottom" :help "Pick a card in your hand to put on the bottom of your deck"}
+   {:name "/move-deck" :usage "/move-deck" :help "Pick a card from your play-area to put on top of your deck"}
+   {:name "/move-hand" :usage "/move-hand" :help "Pick a card from your play-area to put into your hand"}
+   {:name "/peek" :usage "/peek n" :help "See n top cards of your deck"}
+   {:name "/psi" :usage "/psi" :help "Start a Psi game (Corp only)"}
+   {:name "/replace-id" :usage "/replace-id n" :help "Replace your ID with the card \"n\""}
+   {:name "/rez" :usage "/rez" :help "Select a card to rez, ignoring all costs (Corp only)"}
+   {:name "/rez-all" :usage "/rez-all" :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
+   {:name "/rfg" :usage "/rfg" :help "Select a card to remove from the game"}
+   {:name "/roll n" :usage "/roll n" :help "Roll an n-sided die"}
+   {:name "/summon n" :usage "/summon n" :help "Add card \"n\" to your hand (from outside the game)"}
+   {:name "/swap-ice" :usage "/swap-ice" :help "Swap the position of two installed ICE (Corp only)"}
+   {:name "/swap-installed" :usage "/swap-installed" :help "Swap the position of two installed non-ICE (Corp only)"}
+   {:name "/tag" :usage "/tag n" :help "Set your tags to n"}
+   {:name "/take-brain" :usage "/take-brain n" :help "Take n brain damage (Runner only)"}
+   {:name "/take-meat" :usage "/take-meat n" :help "Take n meat damage (Runner only)"}
+   {:name "/take-net" :usage "/take-net n" :help "Take n net damage (Runner only)"}
+   {:name "/trace" :usage "/trace n" :help "Start a trace with base strength n (Corp only)"}
+   {:name "/undo-click" :usage "/undo-click" :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
+   {:name "/undo-turn" :usage "/undo-turn" :help "Resets the game back to end of the last turn. Requires both players to request it"}
+   {:name "/unique" :usage "/unique" :help "Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"}])
+
 (def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."
   (list
@@ -10,96 +53,55 @@
             {:id "dostuff"
              :title "How do I perform actions in a game?"
              :content [:ul
-                        [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
-                         "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to select a target. "
-                         "You will be prompted discard down to your hand size after you choose \"End Turn\"."]
-                        [:p "Most cards in the game are now automated, but be aware that some cards' restrictions or trigger conditions are not implemented. "
-                         "If you want to spend credits from a card, but the game is not giving you the option, just click the card with credits and take some."]]}
+                       [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
+                        "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to select a target. "
+                        "You will be prompted discard down to your hand size after you choose \"End Turn\"."]
+                       [:p "Most cards in the game are now automated, but be aware that some cards' restrictions or trigger conditions are not implemented. "
+                        "If you want to spend credits from a card, but the game is not giving you the option, just click the card with credits and take some."]]}
             {:id "manual"
              :title "What if the card I'm playing is not implemented?"
              :content [:ul
-                        [:p "Once in a while you may need to do something manually. A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
-                         "to their numbers in the panel on the left (which will appear when you move your mouse there)."]
-                        [:p "Cards can be moved by clicking them and dragging, but this does not work when moving a card into the play area (including from one server to another server). "
-                         "One workaround is to manually add a click and any credits needed, then click on the card to install it. This works even if it's not your turn."]]}
+                       [:p "Once in a while you may need to do something manually. A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
+                        "to their numbers in the panel on the left (which will appear when you move your mouse there)."]
+                       [:p "Cards can be moved by clicking them and dragging, but this does not work when moving a card into the play area (including from one server to another server). "
+                        "One workaround is to manually add a click and any credits needed, then click on the card to install it. This works even if it's not your turn."]]}
             {:id "undo"
              :title "How do I undo an action?"
              :content [:ul
-                        [:p "There are two undo functions - undo to turn start, and undo the last click. "
-                         "To undo the start of the current turn both players must use the /undo-turn command. "
-                         "To undo to the start of the click the active player must use the /undo-click command. "]
-                        [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
-                         "not supported via the undo-click function and players will need to handle manually. "
-                         " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
-                         " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]]}
+                       [:p "There are two undo functions - undo to turn start, and undo the last click. "
+                        "To undo the start of the current turn both players must use the /undo-turn command. "
+                        "To undo to the start of the click the active player must use the /undo-click command. "]
+                       [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
+                        "not supported via the undo-click function and players will need to handle manually. "
+                        " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
+                        " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]]}
             {:id "breakice"
              :title "How do I break ICE and fire ICE subroutines?"
              :content [:ul
-                        [:p "Once the Runner encounters a piece of ice, both the Runner and the Corp will see a menu. "
-                         "To break subroutines, the Runner should click on their icebreakers and use their abilities. "
-                         "If some subroutines are left unbroken, after the Runner chooses \"Let all subroutines fire\", "
-                         "the Corp clicks \"Fire unbroken subroutines\" to fire them."]
-                        [:p "It's considered common courtesy to wait as Corp for the Runner to indicate to fire unbroken subroutines, "
-                         "since the Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
-                         "and the effects of a fired subroutine may be hard to undo."]]}
+                       [:p "Once the Runner encounters a piece of ice, both the Runner and the Corp will see a menu. "
+                        "To break subroutines, the Runner should click on their icebreakers and use their abilities. "
+                        "If some subroutines are left unbroken, after the Runner chooses \"Let all subroutines fire\", "
+                        "the Corp clicks \"Fire unbroken subroutines\" to fire them."]
+                       [:p "It's considered common courtesy to wait as Corp for the Runner to indicate to fire unbroken subroutines, "
+                        "since the Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
+                        "and the effects of a fired subroutine may be hard to undo."]]}
             {:id "closemenu"
              :title "How do I close a card's menu?"
              :content [:ul
-                        [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
-                       "try using " [:code "/close-prompt"] "."]]}
+                       [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
+                        "try using " [:code "/close-prompt"] "."]]}
             {:id "commands"
              :title "How do I use commands during a game?"
              :content [:ul
-                        [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
-                         "requiring you to select something. List of available commands:"
-                         [:ul
-                          [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
-                          [:li [:code "/bp n"] " - Set your bad publicity to n"]
-                          [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]
-                          [:li [:code "/clear-win"] " - requests game to clear the current win state.  Requires both players to request it"]
-                          [:li [:code "/click n"] " - Set your clicks to n"]
-                          [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
-                          [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
-                          [:li [:code "/counter type n"] " - set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", " [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"] ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."]
-                          [:li [:code "/credit n"] " - Set your credits to n"]
-                          [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
-                          [:li [:code "/discard #n"] " - Discard card number n from your hand"]
-                          [:li [:code "/discard-random"] " - Discard a random card from your hand"]
-                          [:li [:code "/draw n"] " - Draw n cards"]
-                          [:li [:code "/end-run"] " - End the run (Corp only)"]
-                          [:li [:code "/facedown"] " - Install a card facedown (Runner only)"]
-                          [:li [:code "/handsize n"] " - Set your handsize to n"]
-                          [:li [:code "/install-ice"] " - Install a piece of ICE at any position in a server (Corp only)"]
-                          [:li [:code "/jack-out"] " - Jack out (Runner only)"]
-                          [:li [:code "/link n"] " - Set your link to n"]
-                          [:li [:code "/memory n"] " - Set your memory to n"]
-                          [:li [:code "/move-bottom"] " - Pick a card in your hand to put on the bottom of your deck"]
-                          [:li [:code "/move-deck"] " - Pick a card from your play-area to put on top of your deck"]
-                          [:li [:code "/move-hand"] " - Pick a card from your play-area to put into your hand"]
-                          [:li [:code "/peek n"] " - See n top cards of your deck"]
-                          [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
-                          [:li [:code "/replace-id n"] " - Replace your ID with the card \"n\""]
-                          [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
-                          [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
-                          [:li [:code "/rfg"] " - Select a card to remove from the game"]
-                          [:li [:code "/roll n"] " - Roll an n-sided die"]
-                          [:li [:code "/summon n"] " - Add card \"n\" to your hand (from outside the game)"]
-                          [:li [:code "/swap-ice"] " - Swap the position of two installed ICE (Corp only)"]
-                          [:li [:code "/swap-installed"] " - Swap the position of two installed non-ICE (Corp only)"]
-                          [:li [:code "/tag n"] " - Set your tags to n"]
-                          [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
-                          [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
-                          [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
-                          [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
-                          [:li [:code "/undo-click"] " - Resets the game back to start of the click.  One click only retained. Only allowed for active player"]
-                          [:li [:code "/undo-turn"] " - Resets the game back to end of the last turn. Requires both players to request it"]
-                          [:li [:code "/unique"] " - Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"]]]]}
+                       [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
+                        "requiring you to select something. List of available commands:"
+                        [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) command-info))]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:ul
-                        [:p "Read the "
-                         [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"]
-                         " on the GitHub wiki."]]})}
+                       [:p "Read the "
+                        [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"]
+                        " on the GitHub wiki."]]})}
     {:id "beginners"
      :title "Beginners"
      :sub (list
@@ -108,7 +110,7 @@
              :content [:ul [:p "The first step is reading " [:a {:href "https://www.fantasyflightgames.com/ffg_content/android-netrunner/support/android-netrunner-core-rules.pdf" :target "_blank"} "the official rulebook"]
                              ". If you prefer video form, FFG has prepared " [:a {:href "https://www.youtube.com/watch?v=VAslVfZ9p-Y" :target "_blank"} "a video tutorial"]
                              ", too."]
-                            [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
+                           [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
                              "the official FAQ on "
                              [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
                              "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
@@ -124,8 +126,8 @@
              :content [:ul [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
                              "For finding decks consisting of core set only try setting some filters in "
                              [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]
-                            [:p "Once you find a deck you like, export it in Jinteki.net's format (or plain text format if the "
-                             "site doesn't offer the former), copy and paste it into the deckbuilder."]]}
+                           [:p "Once you find a deck you like, export it in Jinteki.net's format (or plain text format if the "
+                            "site doesn't offer the former), copy and paste it into the deckbuilder."]]}
             {:id "communities"
              :title "Where can I find other Netrunner players to talk to?"
              :content [:ul
