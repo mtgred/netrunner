@@ -1,4 +1,4 @@
-(ns nr.gameboard
+(ns nr.gameboard.board
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
