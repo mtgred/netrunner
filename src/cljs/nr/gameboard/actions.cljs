@@ -58,8 +58,8 @@
     (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                               :mute-state mute-state}])))
 
-(defn stack-servers []
-  (swap! app-state update-in [:options :stacked-servers] not))
+(defn stack-cards []
+  (swap! app-state update-in [:options :stacked-cards] not))
 
 (defn flip-runner-board []
   (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
