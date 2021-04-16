@@ -490,6 +490,15 @@
                      (:fired sub) "✅")]])
            subroutines))])))
 
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed host] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation")
+         (not rezzed)
+         (not= (:side host) "Runner"))
+    facedown))
+
 (defn card-view
   [card flipped]
   (let [c-state (r/atom {})]
@@ -558,17 +567,16 @@
        [card-abilities card c-state abilities subroutines]
        (when (pos? (count hosted))
          [:div.hosted
-          (let [distinct-hosted (vals (group-by :title hosted))]
-            (show-distinct-cards distinct-hosted))])])))
+          (if (get-in @app-state [:options :stacked-cards] false)
+            ; stacked mode
+            (let [distinct-hosted (vals (group-by :title hosted))]
+              (show-distinct-cards distinct-hosted))
 
-(defn face-down?
-  "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed host] :as card}]
-  (if (= side "Corp")
-    (and (not= type "Operation")
-         (not rezzed)
-         (not= (:side host) "Runner"))
-    facedown))
+            (doall
+              (for [card hosted]
+                (let [flipped (face-down? card)]
+                  ^{:key (:cid card)}
+                  [card-view card flipped]))))])])))
 
 (defn show-distinct-cards
   [distinct-cards]
