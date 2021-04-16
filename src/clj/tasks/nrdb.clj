@@ -1,6 +1,7 @@
 (ns tasks.nrdb
   "NetrunnerDB import tasks"
   (:require [org.httpkit.client :as http]
+            [org.httpkit.sni-client :as sni-client]
             [web.db :as webdb]
             [tasks.utils :refer [replace-collection]]
             [tasks.images :refer [add-images]]
@@ -10,15 +11,14 @@
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
 
-(def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
-;; XXX - NRDB has two slashes currently in the card image download url
-(def ^:const nrdb-image-url "https://netrunnerdb.com/card_image//")
+(def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
+(def ^:const jnet-image-url "https://jinteki.net/img/cards/en/default/stock/")
 
 (defn download-edn-data
   [localpath]
   (if localpath
     ((comp edn/read-string slurp) (str localpath "/edn/raw_data.edn"))
-    (let [{:keys [status body error] :as resp} @(http/get base-url)]
+    (let [{:keys [status body error] :as resp} @(http/get edn-base-url)]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))
         (= 200 status) (edn/read-string body)
@@ -37,17 +37,18 @@
 (defn- download-card-image
   "Download a single card image from NRDB"
   [{:keys [code title]}]
-  (let [url (str nrdb-image-url code ".png")]
-    (println "Downloading: " title "\t\t(" url ")")
-    (http/get url {:as :byte-array :timeout 120000}
-              (fn [{:keys [status body error]}]
-                (case status
-                  404 (println "No image for card" code title)
-                  200 (let [card-path (.getPath (card-image-file code))]
-                        (io/make-parents card-path)
-                        (with-open [w (io/output-stream card-path)]
-                          (.write w body)))
-                  (println "Error downloading art for card" code error))))))
+  (binding [org.httpkit.client/*default-client* sni-client/default-client]
+    (let [url (str jnet-image-url code ".png")]
+      (println "Downloading: " title "\t\t(" url ")")
+      (http/get url {:as :byte-array :timeout 120000 :insecure? true}
+                (fn [{:keys [status body error]}]
+                  (case status
+                    404 (println "No image for card" code title)
+                    200 (let [card-path (.getPath (card-image-file code))]
+                          (io/make-parents card-path)
+                          (with-open [w (io/output-stream card-path)]
+                            (.write w body)))
+                    (println "Error downloading art for card" code error)))))))
 
 (def download-card-image-throttled
   (throttle-fn download-card-image 5 :second))
