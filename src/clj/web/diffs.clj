@@ -36,10 +36,10 @@
 (defn game-internal-view
   "Strips private server information from a game map, preparing to send the game to clients."
   [full-game game-update]
-    (-> game-update
-        (dissoc :state :last-update :on-close)
-        (update-if-contains :password (fn [_] true))
-        (update-if-contains :players #(map (partial user-public-view full-game) %))
-        (update-if-contains :original-players #(map (partial user-public-view full-game) %))
-        (update-if-contains :spectators #(map (partial user-public-view full-game) %))
-        (update-if-contains :ending-players #(map (partial user-public-view full-game) %))))
+  (-> game-update
+    (dissoc :state :last-update :on-close)
+    (update-if-contains :password (fn [_] true))
+    (update-if-contains :players #(map (partial user-public-view full-game) %))
+    (update-if-contains :original-players #(map (partial user-public-view full-game) %))
+    (update-if-contains :spectators #(map (partial user-public-view full-game) %))
+    (update-if-contains :ending-players #(map (partial user-public-view full-game) %))))

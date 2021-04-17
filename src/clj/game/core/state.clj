@@ -53,16 +53,18 @@
     current-rid))
 
 (defn new-state
-  [gameid room now spectatorhands save-replay corp runner]
+  [gameid room now options corp runner]
   (map->State
-    {:gameid gameid :log [] :active-player :runner :end-turn true
+    {:gameid gameid
+     :log []
+     :active-player :runner
+     :end-turn true
      :history []
      :room room
      :rid 1 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0
      :stats {:time {:started now}}
      :start-date now
-     :options {:spectatorhands spectatorhands
-               :save-replay save-replay}
+     :options options
      :corp corp
      :runner runner}))
