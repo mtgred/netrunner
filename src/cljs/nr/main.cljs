@@ -4,46 +4,68 @@
             [nr.auth :refer [auth-forms auth-menu]]
             [nr.account :refer [account]]
             [nr.cardbrowser :refer [card-browser]]
-            [nr.chat :refer [chat]]
+            [nr.chat :refer [chat-page]]
             [nr.deckbuilder :refer [deck-builder]]
-            [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
+            [nr.gameboard :refer [gameboard]]
+            [nr.gameboard.actions :refer [concede mute-spectators stack-cards flip-runner-board]]
+            [nr.gameboard.replay :refer [set-replay-side]]
+            [nr.gameboard.state :refer [game-state]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
             [nr.help :refer [help]]
-            [nr.history :refer [history]]
+            [nr.history :refer [navigate-to-current navigate]]
             [nr.navbar :refer [navbar]]
-            [nr.news :refer [news news-state]]
             [nr.player-view :refer [player-view]]
             [nr.stats :refer [stats]]
             [nr.tournament :refer [tournament]]
+            [nr.translations :refer [tr]]
+            [nr.admin :refer [admin]]
+            [nr.users :refer [users]]
+            [nr.features :refer [features]]
+            [reagent-modals.modals :as reagent-modals]
             [reagent.core :as r]))
 
-(defn status []
+(defn- status []
   (r/with-let [user (r/cursor app-state [:user])
                games (r/cursor app-state [:games])
                gameid (r/cursor app-state [:gameid])]
     [:div
      [:div.float-right
       (let [c (count (filter-blocked-games @user @games))]
-        (str c " Game" (when (not= c 1) "s")))]
+        (tr [:nav/game-count] c))]
      (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (let [user-id (-> @user :_id)
              is-player (some #(= user-id (-> % :user :_id)) (:players game))]
          (when (:started game)
            [:div.float-right
             (when is-player
-              [:a.concede-button {:on-click #(concede)} "Concede"])
-            [:a.leave-button {:on-click #(leave-game)} "Leave game"]
+              [:a.concede-button {:on-click #(concede)} (tr [:game.concede "Concede"])])
+            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
-               (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
-            [:a.stack-servers-button {:on-click #(stack-servers)}
-             (if (get-in @app-state [:options :stacked-servers]) "Unstack servers" "Stack servers")]
+               (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
+            [:a.stack-cards-button {:on-click #(stack-cards)}
+             (if (get-in @app-state [:options :stacked-cards])
+               (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
             (when (not= :runner (:side @game-state))
-              [:a.stack-servers-button {:on-click #(flip-runner-board)}
+              [:a.runner-board-order-button {:on-click #(flip-runner-board)}
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
-                 "Rig layout: IRL" "Rig layout: jnet")])]))
+                 (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
        (when (not (nil? @gameid))
-         [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
+         [:div.float-right 
+          [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
+          (when (= "local-replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
+          (when (= "local-replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
+          (when (= "local-replay" @gameid)
+            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])
+          [:a.stack-cards-button {:on-click #(stack-cards)}
+           (if (get-in @app-state [:options :stacked-cards])
+             (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
+          (when (not= :runner (:side @game-state))
+            [:a.runner-board-order-button {:on-click #(flip-runner-board)}
+             (if (= "irl" (get-in @app-state [:options :runner-board-order]))
+               (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]
@@ -54,24 +76,75 @@
                  ^{:key (get-in p [:user :_id])}
                  [player-view p game])]]))))]))
 
-(defn mount-root []
-  ; navbar stuff
-  (r/render [navbar] (.getElementById js/document "left-menu"))
-  (r/render [status] (.getElementById js/document "status"))
-  (r/render [auth-menu] (.getElementById js/document "right-menu"))
-  (r/render [auth-forms] (.getElementById js/document "auth-forms"))
-  ; main screens
-  (r/render [about] (.getElementById js/document "about"))
-  (r/render [account] (.getElementById js/document "account"))
-  (r/render [card-browser] (.getElementById js/document "cardbrowser"))
-  (r/render [chat] (.getElementById js/document "chat"))
-  (r/render [deck-builder] (.getElementById js/document "deckbuilder"))
-  (r/render [gameboard] (.getElementById js/document "gameboard"))
-  (r/render [game-lobby] (.getElementById js/document "gamelobby"))
-  (r/render [help] (.getElementById js/document "help"))
-  (r/render [news] (.getElementById js/document "news"))
-  (r/render [stats] (.getElementById js/document "stats"))
-  (r/render [tournament] (.getElementById js/document "tournament")))
+(defn- get-server-data
+  [tag]
+  (-> (.getElementById js/document "server-originated-data")
+      (.getAttribute (str "data-" tag))))
+
+(defn pages []
+  (r/create-class
+    {:display-name "main-pages"
+
+     :component-did-mount
+     (fn []
+      (let [ver (get-server-data "version")
+            rid (get-server-data "replay-id")]
+        (swap! app-state assoc :app-version ver)
+        (swap! app-state assoc :replay-id rid)
+        (if rid
+          (navigate "/play")
+          (navigate-to-current))))
+
+     :reagent-render
+     (fn []
+       [:div#main.carousel.slide {:data-interval "false"}
+        [:div.carousel-inner
+         [:div.item.active
+          [:div.home-bg]
+          [chat-page]]
+         [:div.item
+          [:div.cardbrowser-bg]
+          [card-browser]]
+         [:div.item
+          [:div.deckbuilder-bg]
+          [deck-builder]]
+         [:div.item
+          [:div#gamelobby [game-lobby]]
+          [:div#gameboard [gameboard]]]
+         [:div.item
+          [:div.help-bg]
+          [help]]
+         [:div.item
+          [:div.account-bg]
+          [account]]
+         [:div.item
+          [:div.stats-bg]
+          [stats]]
+         [:div.item
+          [:div.about-bg]
+          [about]]
+         [:div.item
+          [:div.about-bg]
+          [tournament]]
+         [:div.item
+          [:div.help-bg]
+          [admin]]
+         [:div.item
+          [:div.account-bg]
+          [users]]
+         [:div.item
+          [:div.help-bg]
+          [features]]]])}))
+
+(defn main-window []
+  [:<>
+   [:nav.topnav.blue-shade
+    [:div#left-menu [navbar]]
+    [:div#right-menu [auth-menu]]
+    [:div#status [status]]]
+   [:div#auth-forms [auth-forms]]
+   [reagent-modals/modal-window]
+   [pages]])
 
 (defn init! []
-  (mount-root))
+  (r/render [main-window] (.getElementById js/document "main-content")))

@@ -5,10 +5,10 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.effects :refer [get-effects register-floating-effect sum-effects]]
+    [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [card-flag?]]
-    [game.core.payment :refer [can-pay? merge-costs]]
+    [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req effect msg continue-ability wait-for]]
@@ -226,12 +226,13 @@
 (defn breakable-subroutines-choice
   "Takes an ice, returns the breakable subroutines for a choices prompt"
   [state side eid card ice]
-  (for [sub (remove #(or (:broken %)
-                         (not (if (fn? (:breakable %))
-                                ((:breakable %) state side eid ice [card])
-                                (:breakable % true))))
-                    (:subroutines ice))]
-    (make-label (:sub-effect sub))))
+  (when-not (any-effects state side :cannot-break-subs-on-ice true? ice)
+    (for [sub (remove #(or (:broken %)
+                           (not (if (fn? (:breakable %))
+                                  ((:breakable %) state side eid ice [card])
+                                  (:breakable % true))))
+                      (:subroutines ice))]
+      (make-label (:sub-effect sub)))))
 
 (defn resolve-subroutine
   [ice sub]
@@ -316,22 +317,30 @@
   [state side ice]
   (let [ice (get-card state ice)
         old-strength (get-strength ice)
-        new-strength (ice-strength state side ice)]
+        new-strength (ice-strength state side ice)
+        changed? (not= old-strength new-strength)]
     (when (rezzed? ice)
       (update! state side (assoc ice :current-strength new-strength))
-      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength))))
+      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
+      changed?)))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
-  (doseq [ice (:ices server)]
-    (update-ice-strength state side ice)))
+  (reduce (fn [changed? ice]
+            (or (update-ice-strength state side ice)
+                changed?))
+          false
+          (:ices server)))
 
 (defn update-all-ice
   "Updates all installed ice."
   [state side]
-  (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server))))
+  (reduce (fn [changed? server]
+            (or (update-ice-in-server state side (second server))
+                changed?))
+          false
+          (get-in @state [:corp :servers])))
 
 (defn pump-ice
   "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
@@ -367,14 +376,20 @@
   [state side breaker]
   (let [breaker (get-card state breaker)
         old-strength (get-strength breaker)
-        new-strength (breaker-strength state side breaker)]
+        new-strength (breaker-strength state side breaker)
+        changed? (not= old-strength new-strength)]
     (update! state side (assoc (get-card state breaker) :current-strength new-strength))
-    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)))
+    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)
+    changed?))
 
 (defn update-all-icebreakers
   [state side]
-  (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-    (update-breaker-strength state side icebreaker)))
+  (reduce (fn [changed? icebreaker]
+            (or (update-breaker-strength state side icebreaker)
+                changed?))
+          false
+          (filter #(has-subtype? % "Icebreaker")
+                  (all-active-installed state :runner))))
 
 (defn pump
   "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
@@ -627,19 +642,23 @@
                                    break-ability)
                             (vec (concat abs
                                          (when (and break-ability
+                                                    (or pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
-                                             :label (str (if (pos? times-pump)
+                                             :cost-label (build-cost-label total-cost)
+                                             :label (str (if (and pump-ability (pos? times-pump))
                                                            "Match strength and fully break "
                                                            "Fully break ")
                                                          (:title current-ice))}])
-                                         (when (and (pos? times-pump)
+                                         (when (and pump-ability
+                                                    (pos? times-pump)
                                                     (can-pay? state side eid card total-pump-cost))
                                            [{:dynamic :auto-pump
                                              :cost total-pump-cost
+                                             :cost-label (build-cost-label total-pump-cost)
                                              :label (str "Match strength of " (:title current-ice))}])))
                             abs)))))})
 

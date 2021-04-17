@@ -62,11 +62,9 @@
 
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
-  ([state side server] (make-run state side (make-eid state) server nil nil nil))
-  ([state side eid server] (make-run state side eid server nil nil nil))
-  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
-  ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
-  ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+  ([state side eid server] (make-run state side eid server nil nil))
+  ([state side eid server card] (make-run state side eid server card nil))
+  ([state side eid server card {:keys [click-run ignore-costs] :as args}]
    (let [cost-args (assoc args :server (unknown->kw server))
          costs (total-run-cost state side card cost-args)]
      (if-not (and (can-run? state :runner)
@@ -107,7 +105,7 @@
                                     :current-ice nil
                                     :events nil
                                     :can-access true
-                                    :source-card (select-keys card [:code :cid :zone :title :side :type :art])})
+                                    :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
                        (when card
                          (update! state side (assoc-in card [:special :run-id] run-id))))
                      (wait-for
@@ -291,9 +289,9 @@
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
-    (queue-event state :pass-ice {:ice ice})
+    (queue-event state :pass-ice {:ice (get-card state ice)})
     (when passed-all-ice
-      (queue-event state :pass-all-ice {:ice ice}))
+      (queue-event state :pass-all-ice {:ice (get-card state ice)}))
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           ;; Immediately end pass ice step if:
@@ -575,7 +573,7 @@
   ([state side eid]
    (if (get-in @state [:run :successful])
      (do (handle-end-run state side)
-         (effect-completed state nil eid))
+         (effect-completed state side eid))
      (register-unsuccessful-run state side eid))))
 
 (defn end-run
@@ -673,6 +671,8 @@
                 (unregister-floating-events state side :end-of-encounter)
                 (unregister-floating-effects state side :end-of-run)
                 (unregister-floating-events state side :end-of-run)
+                (unregister-floating-effects state side :end-of-next-run)
+                (unregister-floating-events state side :end-of-next-run)
                 (reset-all-ice state side)
                 (clear-run-register! state)
                 (run-end-fx state side run)))))

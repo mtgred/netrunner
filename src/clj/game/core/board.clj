@@ -1,11 +1,11 @@
 (ns game.core.board
   (:require [clojure.string :as string]
-            [game.core.card :refer [agenda? asset? condition-counter? corp? facedown? get-counters installed? is-type? rezzed? runner?]]
+            [game.core.card :refer [agenda? asset? condition-counter? corp? event? facedown? get-counters installed? is-type? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.servers :refer [is-remote? zones->sorted-names]]
             [game.core.state :refer [make-rid]]
-            [game.utils :refer [to-keyword]]))
+            [game.utils :refer [dissoc-in to-keyword]]))
 
 (defn get-all-cards
   "Every single card in the game. All cards in the hand, deck, discard, play-area,
@@ -104,7 +104,7 @@
     (concat [(get-in @state [side :identity])]
       (all-active-installed state side)
       (get-in @state [side :current])
-      (get-in @state [side :play-area])
+      (filter #(or (event? %) (operation? %)) (get-in @state [side :play-area]))
       (when (= side :corp)
         (get-in @state [:corp :scored])))))
 
@@ -156,7 +156,7 @@
       "HQ" [:servers :hq]
       "R&D" [:servers :rd]
       "Archives" [:servers :archives]
-      "New remote" [:servers (keyword (str "remote" (make-rid state)))]
+      "New remote" [:servers (keyword (str "remote" (:rid @state)))]
       [:servers (->> (string/split server #" ") last (str "remote") keyword)])))
 
 (defn card->server
@@ -164,3 +164,11 @@
   [state card]
   (let [z (:zone card)]
     (get-in @state [:corp :servers (second z)])))
+
+(defn clear-empty-remotes
+  [state]
+  (doseq [remote (get-remotes state)]
+    (let [zone [:corp :servers (first remote)]]
+      (when (and (empty? (get-in @state (conj zone :content)))
+                 (empty? (get-in @state (conj zone :ices))))
+        (swap! state dissoc-in zone)))))

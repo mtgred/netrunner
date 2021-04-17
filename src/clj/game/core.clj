@@ -14,6 +14,7 @@
     [game.core.costs]
     [game.core.damage]
     [game.core.def-helpers]
+    [game.core.diffs]
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]
@@ -29,6 +30,7 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.memory]
     [game.core.moving]
     [game.core.optional]
     [game.core.payment]
@@ -48,6 +50,7 @@
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
+    [game.core.subtypes]
     [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
@@ -162,6 +165,7 @@
    assoc-host-zones
    can-be-advanced?
    card-index
+   is-public?
    condition-counter?
    corp-installable-type?
    corp?
@@ -262,7 +266,12 @@
    do-net-damage
    make-recurring-ability
    reorder-choice
-   trash-on-empty]
+   trash-on-empty
+   corp-recur]
+
+  [game.core.diffs
+   public-states
+   public-diffs]
 
   [game.core.drawing
    draw
@@ -274,10 +283,13 @@
    any-effects
    gather-effects
    get-effects
+   get-effect-maps
+   get-effect-value
    register-constant-effects
    register-floating-effect
    sum-effects
    unregister-constant-effects
+   unregister-effects-for-card
    unregister-floating-effects]
 
   [game.core.eid
@@ -293,6 +305,7 @@
    can-trigger?
    card-as-handler
    checkpoint
+   dissoc-req
    effect-as-handler
    gather-events
    is-ability?
@@ -365,7 +378,6 @@
    card-can-prevent?
    card-flag-fn?
    card-flag?
-   card-is-public?
    cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!
@@ -400,21 +412,20 @@
    zone-locked?]
 
   [game.core.gaining
-   available-mu
    base-mod-size
    deduct
-   free-mu
    gain
    gain-credits
    lose
    lose-credits
    safe-inc-n
-   sub->0
-   toast-check-mu
-   use-mu]
+   sub->0]
 
   [game.core.hand-size
+   corp-hand-size+
    hand-size
+   hand-size+
+   runner-hand-size+
    sum-hand-size-effects
    update-hand-size]
 
@@ -479,9 +490,7 @@
    disable-card
    disable-identity
    enable-card
-   enable-identity
-   flip-facedown
-   flip-faceup]
+   enable-identity]
 
   [game.core.initializing
    ability-init
@@ -494,25 +503,37 @@
    update-all-card-labels]
 
   [game.core.installing
+   corp-can-pay-and-install?
    corp-install
+   corp-install-cost
    corp-install-list
    corp-install-msg
    install-locked?
    runner-can-install?
+   runner-can-pay-and-install?
    runner-install]
 
   [game.core.link
    get-link
+   link+
    update-link]
+
+  [game.core.memory
+   available-mu
+   caissa-mu+
+   mu+
+   update-mu
+   virus-mu+]
 
   [game.core.moving
    as-agenda
    discard-from-hand
+   flip-facedown
+   flip-faceup
    forfeit
    mill
    move
    move-zone
-   remove-old-current
    swap-agendas
    swap-cards
    swap-ice
@@ -550,7 +571,9 @@
    value]
 
   [game.core.play-instants
-   play-instant]
+   can-play-instant?
+   play-instant
+   play-instant-costs]
 
   [game.core.pick-counters
    pick-credit-providing-cards
@@ -679,6 +702,9 @@
    map->State
    new-state]
 
+  [game.core.subtypes
+   update-all-subtypes]
+
   [game.core.tags
    gain-tags
    lose-tags
@@ -710,7 +736,7 @@
    number-of-virus-counters]
 
   [game.core.winning
-   check-winner
+   check-win-by-agenda
    clear-win
    concede
    flatline

@@ -15,6 +15,9 @@
 (defn response [status-code msg]
   (resp/status (resp/response msg) status-code))
 
+(defn json-response [status-code msg]
+  (resp/status (resp/content-type (resp/response msg) "application/json") status-code))
+
 (defn md5
   "Taken from here: https://gist.github.com/jizhang/4325757"
   [^String s]

@@ -2,7 +2,7 @@
   (:require [clojure.string :refer [split split-lines join escape] :as s]
             [game.core.card :refer [has-subtype?]]
             [jinteki.utils :refer [faction-label INFINITY]]
-            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.cards :as cards]
             #?@(:clj [[clj-time.core :as t]
                       [clj-time.format :as f]
                       [clj-time.coerce :as c]])))
@@ -62,17 +62,11 @@
   [identity]
   (= "Draft" (:setname identity)))
 
-(defn multiplayer-id?
-  "Check if the specified id is a NAPD Multiplayer identity"
-  [identity]
-  (= "NAPD Multiplayer" (:setname identity)))
-
 (defn id-inf-limit
-  "Returns influence limit of an identity or INFINITY in case of draft IDs."
+  "Returns influence limit of an identity or INFINITY in case of special IDs."
   [identity]
-  (if (or (draft-id? identity) (multiplayer-id? identity))
-    INFINITY
-    (:influencelimit identity)))
+  (let [inf (:influencelimit identity)]
+    (if (or (nil? inf) (= "∞" inf)) INFINITY inf)))
 
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
@@ -85,26 +79,6 @@
   [deck card]
   (and (= "The Professor: Keeper of Knowledge" (get-in deck [:identity :title]))
        (= "Program" (:type card))))
-
-(defn before-today? [date]
-  #?(:clj  (let [parsed-date (if (string? date)
-                               (f/parse (f/formatters :date) date)
-                               date)]
-             (if (nil? parsed-date)
-               false
-               (t/before? parsed-date (t/now))))
-     :cljs (< date (.toJSON (js/Date.)))))
-
-(defn released?
-  "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [sets card]
-  (let [card-set (:setname card)
-        rotated (:rotated card)
-        date (some #(when (= (:name %) card-set) (:available %)) sets)]
-    (and (not rotated)
-         (not= date "")
-         (not (nil? date))
-         (before-today? date))))
 
 ;; Influence
 ;; Note: line is a map with a :card and a :qty
@@ -179,8 +153,8 @@
         min-deck-size (min-deck-size identity)
         card-count? (>= card-count min-deck-size)
         influence-count (influence-count deck)
-        id-inf-limit (id-inf-limit identity)
-        influence-limit? (<= influence-count id-inf-limit)
+        inf-limit (id-inf-limit identity)
+        influence-limit? (<= influence-count inf-limit)
         allowed-cards-fn #(allowed? (:card %) identity)
         legal-num-copies-fn #(legal-num-copies? identity %)
         allowed-cards? (every? allowed-cards-fn cards)
@@ -243,64 +217,48 @@
   [fmt deck]
   (mwl-legal? fmt (combine-id-and-cards deck)))
 
+(defn reject-system-gateway-neutral-ids
+  [fmt deck]
+  (let [id (:title (:identity deck))]
+    (when (and (not= :system-gateway fmt)
+               (or (= id "The Catalyst: Convention Breaker")
+                   (= id "The Syndicate: Profit over Principle")))
+      {:legal false
+       :reason (str "Illegal identity: " id)
+       :description (str "Legal for " (-> fmt name s/capitalize))})))
+
 (defn build-format-legality
   [valid fmt deck]
   (let [mwl (legal-format? fmt deck)]
-    {:legal (and (:legal valid) (:legal mwl))
-     :reason (or (:reason valid) (:reason mwl))
-     :description (str "Legal for " (-> fmt name s/capitalize))}))
+    (or (reject-system-gateway-neutral-ids fmt deck)
+        {:legal (and (:legal valid) (:legal mwl))
+         :reason (or (:reason valid) (:reason mwl))
+         :description (str "Legal for " (-> fmt name s/capitalize))})))
 
 (defn build-snapshot-plus-legality
   [valid deck]
   (merge (build-format-legality valid :snapshot-plus deck)
          {:description "Legal for Snapshot Plus"}))
 
-(defn cards-over-one-core
-  "Returns cards in deck that require more than single box."
+(defn cards-over-one-sg
+  "Returns cards in deck that require more than one copy of System Gateway."
   [cards]
   (letfn [(one-box-num-copies? [{:keys [qty card]}] (<= qty (:quantity card 3)))]
     (remove one-box-num-copies? cards)))
 
-(defn cards-not-in-most-recent-core
-  "Returns cards in deck that aren't in latest System Core"
-  [cards]
-  (remove #(= "system-core-2019" (get-in % [:card :cycle_code])) cards))
-
-(defn build-core-experience-legality
+(defn build-system-gateway-legality
   [valid {:keys [cards] :as deck}]
-  (let [mwl (legal-format? :core-experience deck)
-        example-card (first (concat (cards-not-in-most-recent-core cards)
-                                    (cards-over-one-core cards)))]
+  (let [mwl (legal-format? :system-gateway deck)
+        example-card (first (cards-over-one-sg cards))]
     {:legal (and (nil? example-card)
                  (:legal valid)
                  (:legal mwl))
      :reason (or (when example-card
-                   (str "Only one System Core 2019 permitted - check: "
+                   (str "Only one copy of System Gateway permitted - check: "
                         (get-in example-card [:card :title])))
                  (:reason valid)
                  (:reason mwl))
-     :description "Legal for Core Experience"}))
-
-(defn build-socr-legality
-  [valid deck]
-  (let [mwl (legal-format? :socr deck)
-        big-boxes ["honor-and-profit"
-                   "order-and-chaos"
-                   "data-and-destiny"
-                   "reign-and-reverie"]
-        single-set? (as-> deck d
-                      (combine-id-and-cards d)
-                      (group-by #(get-in % [:card :cycle_code]) d)
-                      (select-keys d big-boxes)
-                      (keys d)
-                      (>= 1 (count d)))]
-    {:legal (and single-set?
-                 (:legal valid)
-                 (:legal mwl))
-     :reason (or (when-not single-set? "Cards from too many Big Boxes")
-                 (:reason valid)
-                 (:reason mwl))
-     :description "Legal for Stimhack Online Cache Refresh"}))
+     :description "Legal for System Gateway"}))
 
 (defn calculate-deck-status
   "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
@@ -310,12 +268,12 @@
     {:format (:format deck)
      :casual valid
      :standard (build-format-legality valid :standard deck)
+     :startup (build-format-legality valid :startup deck)
+     :system-gateway (build-system-gateway-legality valid deck)
      :eternal (build-format-legality valid :eternal deck)
      :classic (build-format-legality valid :classic deck)
      :snapshot (build-format-legality valid :snapshot deck)
-     :snapshot-plus (build-snapshot-plus-legality valid deck)
-     :core-experience (build-core-experience-legality valid deck)
-     :socr (build-socr-legality valid deck)}))
+     :snapshot-plus (build-snapshot-plus-legality valid deck)}))
 
 (defn trusted-deck-status
   [{:keys [status] :as deck}]

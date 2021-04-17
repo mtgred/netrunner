@@ -9,13 +9,13 @@
             [web.stats :as stats]
             [web.admin :as admin]
             [web.tournament :as tournament]
-            [web.news :as news]
             [web.decks :as decks]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :refer [resource-response]]
             [web.db :refer [db]]
@@ -24,10 +24,8 @@
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(defroutes public-routes
+(defroutes public-CSRF-routes
            (route/resources "/")
-           (POST "/register" [] auth/register-handler)
-           (POST "/login" [] auth/login-handler)
            (GET "/check-username/:username" [] auth/check-username-handler)
            (GET "/check-email/:email" [] auth/check-email-handler)
 
@@ -35,7 +33,7 @@
            (GET "/data/cards/version" [] data/cards-version-handler)
            (GET "/data/cards/altarts" [] data/alt-arts-handler)
 
-           (GET "/data/news" [] news/news-handler)
+           (GET "/data/news" [] data/news-handler)
            (GET "/data/sets" [] data/sets-handler)
            (GET "/data/mwl" [] data/mwl-handler)
            (GET "/data/cycles" [] data/cycles-handler)
@@ -44,22 +42,34 @@
            (GET "/chat/config" [] chat/config-handler)
            (GET "/messages/:channel" [] chat/messages-handler)
 
-           (POST "/forgot" [] auth/forgot-password-handler)
            (GET "/reset/:token" [] pages/reset-password-page)
-           (POST "/reset/:token" [] auth/reset-password-handler)
 
            (GET "/ws" req ws/handshake-handler)
            (POST "/ws" req ws/post-handler)
 
+           (GET "/replay/:gameid" [] stats/replay-handler)
            (GET "/*" [] pages/index-page))
 
+(defroutes public-routes
+           (POST "/register" [] auth/register-handler)
+           (POST "/login" [] auth/login-handler)
+           (POST "/forgot" [] auth/forgot-password-handler)
+           (POST "/reset/:token" [] auth/reset-password-handler))
+
 (defroutes admin-routes
-           (GET "/admin/announce" [] pages/announce-page)
-           (POST "/admin/announce" [] admin/announcement-handler)
-           (GET "/admin/version" [] pages/version-page)
-           (POST "/admin/version" [] admin/version-handler)
-           (GET "/admin/fetch" [] pages/fetch-page)
-           (POST "/admin/fetch" [] admin/fetch-handler))
+           (POST "/admin/announce" [] admin/announce-create-handler)
+           (POST "/admin/news" [] admin/news-create-handler)
+           (DELETE "/admin/news/:id" [] admin/news-delete-handler)
+           (GET "/admin/version" [] admin/version-handler)
+           (PUT "/admin/version" [] admin/version-update-handler)
+           (GET "/admin/mods" [] admin/mods-handler)
+           (PUT "/admin/mods" [] admin/mods-update-handler)
+           (DELETE "/admin/mods/:id" [] admin/mods-delete-handler)
+           (GET "/admin/specials" [] admin/specials-handler)
+           (PUT "/admin/specials" [] admin/specials-update-handler)
+           (DELETE "/admin/specials/:id" [] admin/specials-delete-handler)
+           (GET "/admin/features" [] admin/features-handler)
+           (PUT "/admin/features" [] admin/features-update-handler))
 
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
@@ -72,6 +82,11 @@
 
            (GET "/profile/history" [] stats/history)
            (GET "/profile/history/:gameid" [] stats/fetch-log)
+           (GET "/profile/history/annotations/:gameid" [] stats/fetch-annotations)
+           (PUT "/profile/history/annotations/publish/:gameid" [] stats/publish-annotations)
+           (DELETE "/profile/history/annotations/delete/:gameid" [date] stats/delete-annotations)
+           (GET "/profile/history/share/:gameid" [] stats/share-replay)
+           (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
@@ -81,10 +96,14 @@
 (defroutes tournament-routes
   (GET "/tournament-auth/:username" [] tournament/auth))
 
-(defroutes routes
+(defroutes private-routes
   (wrap-routes user-routes auth/wrap-authentication-required)
   (wrap-routes tournament-routes auth/wrap-tournament-auth-required)
-  (wrap-routes admin-routes auth/wrap-authorization-required)
+  (wrap-routes admin-routes auth/wrap-authorization-required))
+
+(defroutes routes
+  (wrap-routes private-routes wrap-anti-forgery)
+  (wrap-routes public-CSRF-routes wrap-anti-forgery)
   public-routes)
 
 (defn wrap-return-favicon [handler]
@@ -101,6 +120,5 @@
       wrap-json-response
       wrap-session
       (wrap-json-body {:keywords? true})
-      admin/wrap-version
       wrap-return-favicon
       wrap-stacktrace))

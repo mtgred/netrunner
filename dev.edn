@@ -20,5 +20,4 @@
          :user nil
          :pass nil
          :ssl  nil}
- :sentry-dsn nil          ;; sentry.io javascript error logging
  }

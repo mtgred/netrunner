@@ -63,7 +63,8 @@
   ([state] (first-trash? state (constantly true)))
   ([state pred]
    (= 1 (+ (event-count state nil :runner-trash pred)
-           (event-count state nil :corp-trash pred)))))
+           (event-count state nil :corp-trash pred)
+           (event-count state nil :game-trash pred)))))
 
 (defn get-turn-damage
   "Returns the value of damage take this turn"

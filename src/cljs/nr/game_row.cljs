@@ -6,6 +6,7 @@
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [resume-sound]]
             [nr.utils :refer [slug->format cond-button]]
+            [nr.translations :refer [tr tr-format tr-watch-join]]
             [nr.ws :as ws]
             [jinteki.utils :refer [superuser?]]))
 
@@ -18,15 +19,14 @@
                       "watch" :lobby/watch
                       "rejoin" :netrunner/rejoin)
                     {:gameid gameid
-                     :password password
-                     :options (:options @app-state)}]
+                     :password password}]
                    8000
                    #(if (sente/cb-success? %)
                       (case %
-                        403 (swap! s assoc :error-msg "Invalid password")
-                        404 (swap! s assoc :error-msg "Not allowed")
+                        403 (swap! s assoc :error-msg (tr [:lobby.invalid-password "Invalid password"]))
+                        404 (swap! s assoc :error-msg (tr [:lobby.not-allowed "Not allowed"]))
                         200 (swap! s assoc :prompt false))
-                      (swap! s assoc :error-msg "Connection aborted"))))))
+                      (swap! s assoc :error-msg (tr [:lobby.aborted "Connection aborted"])))))))
 
 (defn- reset-game-name
   [gameid]
@@ -61,7 +61,7 @@
                (and (:allow-spectator game)
                     (not (or password-game current-game editing))))
        [:button {:on-click #(do (join "watch")
-                                (resume-sound))} "Watch" editing])
+                                (resume-sound))} (tr [:lobby.watch "Watch"]) editing])
      (when (or (and (= "tournament" room)
                     (some #(= (:username user) (get-in % [:user :username])) players))
                (and (not= "tournament" room)
@@ -72,7 +72,7 @@
                     (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) players))))
        [:button {:on-click #(do (join "join")
                                 (resume-sound))}
-        "Join"])
+        (tr [:lobby.join "Join"])])
      (when (and (not current-game)
                 (not editing)
                 started
@@ -81,31 +81,31 @@
                 (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) original-players))
        [:button {:on-click #(do (join "rejoin")
                                 (resume-sound))}
-        "Rejoin"])
+        (tr [:lobby.rejoin "Rejoin"])])
      (let [c (:spectator-count game)]
        [:h4
         {:on-click #(swap! s update :show-mod-menu not)
          :class (when (or (:isadmin user)
                           (:ismoderator user))
                   "clickable")}
-        (str (when (:password game)
-               "[PRIVATE] ")
+        (str (when (:save-replay game) "🟢")
+             (when (:password game) (str "[" (tr [:lobby.private "PRIVATE"]) "] "))
              (:title game)
-             (when (pos? c)
-               (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+             (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
 
      (when (and (:show-mod-menu @s)
                 (or (:isadmin user) (:ismoderator user)))
-       [:div.panel.blue-shade.mod-menu
-        [:div {:on-click #(do (reset-game-name gameid)
-                              (swap! s assoc :show-mod-menu false))} "Reset Game Name"]
-        [:div {:on-click #(do (delete-game gameid)
-                              (swap! s assoc :show-mod-menu false))} "Delete Game"]
-        [:div {:on-click #(swap! s assoc :show-mod-menu false)} "Cancel"]])
+       [:div.ctrl-menu
+        [:div.panel.blue-shade.mod-menu
+         [:div {:on-click #(do (reset-game-name gameid)
+                               (swap! s assoc :show-mod-menu false))} (tr [:lobby.reset "Reset Game Name"])]
+         [:div {:on-click #(do (delete-game gameid)
+                               (swap! s assoc :show-mod-menu false))} (tr [:lobby.delete "Delete Game"])]
+         [:div {:on-click #(swap! s assoc :show-mod-menu false)} (tr [:lobby.cancel "Cancel"])]]])
 
      [:div {:class "game-format"}
-      [:span.format-label "Format:  "]
-      [:span.format-type (slug->format format "Unknown")]]
+      [:span.format-label (tr [:lobby.format "Format"]) ":  "]
+      [:span.format-type (tr-format (slug->format format "Unknown"))]]
 
      [:div (doall
              (map-indexed
@@ -116,12 +116,12 @@
 
      (when-let [prompt (:prompt @s)]
        [:div.password-prompt
-        [:h3 (str "Password for " (if password-game (:title password-game) title))]
+        [:h3 (str (tr [:lobby.password-for "Password for"]) " " (if password-game (:title password-game) title))]
         [:p
          [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
                              :type "password"
                              :value (:password @s)
-                             :placeholder "Password"
+                             :placeholder (tr [:lobby.password "Password"])
                              :maxLength "30"
                              :on-key-press (fn [e]
                                             (when (= 13 (.. e -charCode))
@@ -130,13 +130,13 @@
         [:p
          [:button {:type "button"
                    :on-click #(join prompt)}
-          prompt]
+          (tr-watch-join prompt)]
          [:span.fake-link {:on-click #(do
                                         (swap! app-state dissoc :password-gameid)
                                         (swap! s assoc
                                                :prompt false
                                                :error-msg nil
                                                :password nil))}
-          "Cancel"]]
+          (tr [:lobby.cancel "Cancel"])]]
         (when-let [error-msg (:error-msg @s)]
           [:p.flash-message error-msg])])]))

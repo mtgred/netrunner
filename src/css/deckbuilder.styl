@@ -1,0 +1,234 @@
+// Deckbuilder
+
+.deck-collection
+    overflow: auto
+    -webkit-overflow-scrolling: touch
+    flex(1)
+
+    .deckline
+        height: 65px
+        padding: 5px 8px
+        margin: 0 0 5px
+        border: 1px solid white
+        border-radius: 4px
+        cursor: pointer
+        clear: both
+
+        &:hover
+            border-color: orange
+
+        p
+            margin-top: 0
+
+        h4
+            margin: 0
+            text-overflow: ellipsis
+            white-space: nowrap
+            overflow: hidden
+
+        > img
+            float: left
+            height: 100%
+            margin-right: 10px
+
+.deckbuilder
+    overflow: hidden
+    padding: 15px 0
+    margin-top: 8px
+    position: absolute
+    top: 31px
+    bottom: 10px
+    width: 995px
+
+    .viewport.edit
+        left: -497px
+
+    .viewport
+        position: relative
+        width: 1491px
+        height: 100%
+        left: 0
+        transition(all 0.5s ease-in-out)
+        display-flex()
+
+        .decks, .decklist, .deckedit
+            flex(1)
+            border-right: 1px solid white
+            padding: 0
+
+            > div
+                padding: 0 15px
+
+        .decks
+            position: relative
+            display-flex()
+            flex-direction(column)
+            padding: 0
+
+            .button-bar
+                box-sizing: initial
+                padding: 0 15px 15px
+
+                button
+                    width: 135px
+
+            .deckfilter
+                margin-bottom: 10px
+
+                .deckfilter-select
+                    margin-right: 3px
+
+                .deckfilter-select.faction-filter
+                    width: 150px
+
+            .card-preview
+                position: absolute
+                left: auto
+                z-index: 10
+                right: 5px
+                top: 0
+
+            .edit .card-preview
+                right: -100%
+                transform: translateX(100%)
+                margin-right: -17px
+
+        .decklist
+            position: relative
+            overflow: auto
+            -webkit-overflow-scrolling: touch
+
+            .button-bar
+                padding-bottom: 8px
+
+                button, a.button
+                    min-width: 75px
+
+            .header
+                display: flex
+                flex-direction: row
+                clear: both
+
+                > img
+                    height: 106px
+                    margin-right: 10px
+
+            input.deckname
+                height: 30px
+
+            .cards
+                margin-top: 10px
+                columns(2, 5px)
+
+            .line
+                position: relative
+                overflow: visible
+                line-height: 20px
+                white-space:pre
+
+                button.small
+                    margin: 3px 6px 3px 0
+
+            .notes
+                margin-top: 20px
+                white-space: pre-wrap;
+                font-style: italic
+
+            .group
+                display: inline-block
+                width: 100%
+
+                h4
+                    margin: 8px 0 0
+
+        .deckedit
+            display-flex()
+            flex-direction(column)
+
+            .deckname, .identity
+                width: 100%
+
+            .card-search
+                position: relative
+
+                .lookup
+                    width: 299px
+                    margin-right: 5px
+
+                .typeahead
+                    position: absolute
+                    padding: 2px
+                    margin: 2px 0 0 0
+                    width: 308px
+                    background-color: rgba(255, 255, 255, 0.9)
+                    color: black
+                    border-radius: 4px
+                    border: 1px solid transparent-blue
+
+                    > div
+                        padding: 2px 5px
+                        border-radius: 4px
+                        border: 1px solid transparent
+                        cursor: pointer
+
+                        &:hover
+                            background-color: transparent-orange
+                            border-color: orange
+
+                    .selected
+                        background-color: transparent-orange
+                        border-color: orange
+
+            .qty
+                width: 30px
+                text-align: center
+                margin-left: 4px
+                margin-right: 10px
+
+            p
+                margin: 0 0 5px 0
+
+            textarea
+                margin: 0 15px
+                line-height: 18px
+                flex(1)
+
+            .notes-edit
+                flex: 0.25
+
+.deck-status, .user-status
+    position: relative
+
+    .status-tooltip
+        display: none
+        position: absolute
+        left: 100%
+        top: 3px
+        z-index: 30
+        width: 185px
+        background-clip: padding-box
+        border: 1px solid white
+        border-radius: 4px
+        outline: none
+        padding: 6px 12px
+        color: white
+        transition(all 0.2s ease-in-out)
+        box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+
+        > div
+            margin: 2px 0
+
+        .tick
+            margin-right: 4px
+
+    &:hover
+        cursor: default
+
+        .status-tooltip
+            display: inline
+
+.invalid-explanation
+    padding-left: 10px
+
+input.url
+    width: 512px

@@ -46,9 +46,10 @@
   [[cost-type _]]
   (case cost-type
     :click 1
-    :credit 2
-    (:trash :remove-from-game) 3
-    4))
+    :lose-click 2
+    :credit 3
+    (:trash :remove-from-game) 4
+    5))
 
 (defn merge-costs
   "Combines disparate costs into a single cost per type. For use outside of the pay system."
@@ -95,9 +96,8 @@
                        (payable? % state side eid card))
                  costs)
        costs
-       (when title
-         (toast state side (str "Unable to pay for " title "."))
-         false)))))
+       (do (when title (toast state side (str "Unable to pay for " title ".")))
+           false)))))
 
 (defn cost-targets
   [eid cost-type]
@@ -145,7 +145,7 @@
     (let [cost-type (cost-name cost)
           cost-string (label cost)]
       (cond
-        (= :click cost-type) (str "spend " cost-string)
+        (or (= :click cost-type) (= :lose-click cost-type)) (str "spend " cost-string)
         (= :credit cost-type) (str "pay " cost-string)
         :else cost-string))))
 

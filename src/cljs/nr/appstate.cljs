@@ -13,8 +13,12 @@
            :user (js->clj js/user :keywordize-keys true)
            :options (merge {:background "lobby-bg"
                             :card-back (get-local-value "card-back" "nisei")
+                            :card-zoom (get-local-value "card-zoom" "image")
+                            :pin-zoom (get-local-value "pin-zoom" false)
                             :pronouns "none"
+                            :language "en"
                             :show-alt-art true
+                            :card-resolution "default"
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
                             :runner-board-order (let [value (get-local-value "runner-board-order" "irl")]
                                                   (case value
@@ -31,6 +35,7 @@
                            (:options (js->clj js/user :keywordize-keys true)))
 
            :cards-loaded false
+           :previous-cards {}
            :sets [] :mwl [] :cycles []
            :decks [] :decks-loaded false
            :stats (:stats (js->clj js/user :keywordize-keys true))

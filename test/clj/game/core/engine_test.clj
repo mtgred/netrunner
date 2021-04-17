@@ -59,12 +59,14 @@
         (e/queue-event state :test-event {:a 'a :b 'b :c 'c})
         (e/queue-event state :test-event-2 {:a 'x :b 'y :c 'z})
         (e/checkpoint state nil (core/make-eid state) nil)
-        (is (= '([:test-event-2 [{:a 4, :b 5, :c 6}]]
-                 [:test-event-2 [{:a x, :b y, :c z}]]
-                 [:test-event [{:a a, :b b, :c c} {:a 1, :b 2, :c 3}]]
-                 [:test-event-2 [{:a x, :b y, :c z} {:a 4, :b 5, :c 6}]]
-                 [:test-event [{:a 1, :b 2, :c 3}]]
-                 [:test-event [{:a a, :b b, :c c}]])
+        (is (= '([:test-event-2 [{:a 4, :b 5, :c 6 :event :test-event-2}]]
+                 [:test-event-2 [{:a x, :b y, :c z :event :test-event-2}]]
+                 [:test-event [{:a a, :b b, :c c :event :test-event}
+                               {:a 1, :b 2, :c 3 :event :test-event}]]
+                 [:test-event-2 [{:a x, :b y, :c z :event :test-event-2}
+                                 {:a 4, :b 5, :c 6 :event :test-event-2}]]
+                 [:test-event [{:a 1, :b 2, :c 3 :event :test-event}]]
+                 [:test-event [{:a a, :b b, :c c :event :test-event}]])
                (:order @state)))))))
 
 (deftest merge-costs-paid
@@ -113,3 +115,62 @@
                     :targets [{:title "C.I. Fund"}]
                     :value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2) (:cost-paid eid3))))))
+
+(deftest trash-currents-test
+  (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                                        :hand ["Hostile Takeover" "Cerebral Static" "Lag Time"]}
+                                 :runner {:hand ["Scrubbed" "Interdiction"]}})
+                _ (do (play-from-hand state :corp "Hostile Takeover" "New remote"))]
+    (testing "Corp current stays when agenda scored"
+      (do-game state
+        (play-from-hand state :corp "Cerebral Static")
+        (score-agenda state :corp (get-content state :remote1 0))
+        (is (find-card "Cerebral Static" (:current (get-corp))))))
+    (testing "Corp current goes away when agenda stolen"
+      (do-game state
+        (play-from-hand state :corp "Cerebral Static")
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Steal")
+        (is (not (find-card "Cerebral Static" (:current (get-corp)))))))
+    (testing "Corp current goes away when corp plays another current"
+      (do-game state
+        (play-from-hand state :corp "Cerebral Static")
+        (play-from-hand state :corp "Lag Time")
+        (is (find-card "Lag Time" (:current (get-corp))))
+        (is (not (find-card "Cerebral Static" (:current (get-corp)))))))
+    (testing "Corp current goes away when runner plays a current"
+      (do-game state
+        (play-from-hand state :corp "Cerebral Static")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Scrubbed")
+        (is (not (find-card "Cerebral Static" (:current (get-corp)))))))
+    (testing "Runner current stays when agenda stolen"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Scrubbed")
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Steal")
+        (is (find-card "Scrubbed" (:current (get-runner))))))
+    (testing "Runner current goes away when agenda scored"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Scrubbed")
+        (take-credits state :runner)
+        (score-agenda state :corp (get-content state :remote1 0))
+        (is (not (find-card "Scrubbed" (:current (get-runner)))))))
+    (testing "Runner current goes away when runner plays another current"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Scrubbed")
+        (play-from-hand state :runner "Interdiction")
+        (is (find-card "Interdiction" (:current (get-runner))))
+        (is (not (find-card "Scrubbed" (:current (get-runner)))))))
+    (testing "Runner current goes away when corp plays a current"
+      (do-game state
+        (take-credits state :corp)
+        (play-from-hand state :runner "Scrubbed")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Cerebral Static")
+        (is (not (find-card "Scrubbed" (:current (get-runner)))))))
+    ))

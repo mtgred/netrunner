@@ -9,6 +9,7 @@
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in]]
+    [game.utils :refer [side-str]]
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]))
 
@@ -122,29 +123,43 @@
       (- (or (when-not unpreventable (get-in @state [:damage :damage-prevent dtype])) 0))
       (max 0)))
 
+(defn check-damage-prevention
+  "for a preventable damage instance, handles all damage prevention effects that a player can use for it"
+  ([state side eid type n args player]
+   (let [interrupts (get-prevent-list state player type)
+         other-player (if (= player :corp) :runner :corp)
+         already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
+     (if (and (cards-can-prevent? state player interrupts type nil {:side side})
+              (> n already-prevented))
+       ;; player can prevent damage
+       (do (system-msg state player "has the option to prevent damage")
+           (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
+           (swap! state assoc-in [:prevent :current] type)
+           (show-prompt
+             state player nil (str "Prevent any of the " (- n already-prevented) " " (name type) " damage?") ["Done"]
+             (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
+                           damage-prevented (if prevent (- prevent already-prevented) false)]
+                       (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
+                       (system-msg state player
+                                   (if damage-prevented (str "prevents "
+                                                             (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
+                                                             " " (name type) " damage") "will not prevent damage"))
+                       (clear-wait-prompt state other-player)
+                       (effect-completed state side eid)))))
+       (effect-completed state side eid)))))
+
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
   prevention/boosting process and eventually resolves the damage."
+  ([state side eid type n] (damage state side eid type n nil))
   ([state side eid type n {:keys [unpreventable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
    (trigger-event state side :pre-damage type card n)
-   (let [n (damage-count state side type n args)
-         prevent (get-prevent-list state :runner type)]
-     (if (and (not unpreventable)
-              (cards-can-prevent? state :runner prevent type))
-       ;; runner can prevent the damage.
-       (do (system-msg state :runner "has the option to avoid damage")
-           (show-wait-prompt state :corp "Runner to prevent damage")
-           (swap! state assoc-in [:prevent :current] type)
-           (show-prompt
-             state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
-             (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])]
-                       (when prevent (trigger-event state side :prevented-damage type prevent))
-                       (system-msg state :runner
-                                   (if prevent (str "prevents " (if (>= prevent Integer/MAX_VALUE) "all" prevent)
-                                                    " " (name type) " damage") "will not prevent damage"))
-                       (clear-wait-prompt state :corp)
-                       (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))))
-       (resolve-damage state side eid type n args)))))
+   (let [active-player (get-in @state [:active-player])]
+     (if unpreventable
+       (resolve-damage state side eid type (damage-count state side type n args) args)
+       (wait-for (check-damage-prevention state side type n args active-player)
+                 (wait-for (check-damage-prevention state side type n args (if (= active-player :corp) :runner :corp))
+                           (resolve-damage state side eid type (damage-count state side type n args) args)))))))

@@ -46,6 +46,30 @@
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
 
+(deftest undo-click-with-bioroid-cost
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Eli 1.0"]}})
+    (play-from-hand state :corp "Eli 1.0" "R&D")
+    (take-credits state :corp)
+    (run-on state :rd)
+    (let [ice (get-ice state :rd 0)]
+      (rez state :corp ice)
+      (run-continue state)
+      (card-side-ability state :runner ice 0)
+      (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0"))
+      (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0")))
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (not (get-run)))
+    (is (= 1 (:click (get-runner))))
+    (core/command-undo-click state :runner)
+    (is (= 4 (:click (get-runner))))
+    (is (last-log-contains? state "Runner uses the undo-click command"))))
+
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
@@ -93,14 +117,14 @@
         (core/command-adv-counter state :corp 2)
         (click-card state :corp (refresh oaktown))
         ;; score should fail, shouldn't be able to score with 2 advancement tokens
-        (core/score state :corp (refresh oaktown))
+        (score state :corp (refresh oaktown))
         (is (zero? (:agenda-point (get-corp))))
         (core/command-adv-counter state :corp 4)
         (click-card state :corp (refresh oaktown))
         (is (= 4 (get-counters (refresh oaktown) :advancement)))
         (is (= 3 (:credit (get-corp))))
         (is (= 3 (:click (get-corp))))
-        (core/score state :corp (refresh oaktown)) ; now the score should go through
+        (score state :corp (refresh oaktown)) ; now the score should go through
         (is (= 2 (:agenda-point (get-corp))))
         (take-credits state :corp))
       (testing "Modifying publics1 and adonis for brevity"
@@ -137,7 +161,7 @@
       (core/command-counter state :corp [3])
       (click-card state :corp (refresh hok))
       (is (= 3 (get-counters (refresh hok) :advancement)))
-      (core/score state :corp (refresh hok)))
+      (score state :corp (refresh hok)))
     (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (core/command-counter state :corp ["virus" 2])

@@ -4,9 +4,14 @@
             [nr.appstate :refer [app-state]])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about" "/tournament" "/admin" "/users" "/features"])
 
 (def history (Html5History.))
+
+(defn navigate-to-current []
+  (let [token (first (:active-page @app-state ["/"]))
+        page-number (.indexOf tokens token)]
+    (.carousel (js/$ ".carousel") page-number)))
 
 (defn navigate [token]
   (let [page-number (.indexOf tokens token)]

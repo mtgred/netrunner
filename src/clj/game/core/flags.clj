@@ -5,6 +5,7 @@
             [game.core.card :refer [agenda? condition-counter? corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.effects :refer [any-effects]]
             [game.core.servers :refer [zone->name]]
             [game.core.to-string :refer [card-str]]
             [game.core.toasts :refer [toast]]
@@ -258,7 +259,8 @@
 (defn can-steal?
   "Checks if the runner can steal agendas"
   [state side card]
-  (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
+  (and (not (any-effects state side :cannot-steal true? card))
+       (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
 (defn can-trash?
@@ -297,19 +299,25 @@
 
 (defn can-score?
   "Checks if the corp can score a given card"
-  [state side card]
-  (and
-    (agenda? card)
-    ;; The agenda has enough agenda counters to legally score
-    (let [cost (get-advancement-requirement card)]
-      (and cost
-           (<= cost (get-counters card :advancement))))
-    ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
-    (check-flag-types? state side card :can-score [:current-turn :persistent])
-    ;; An effect hasn't set a card as unable to be scored (Clot)
-    (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
-    ;; A terminal operation hasn't been played
-    (not (get-in @state [:corp :register :terminal]))))
+  ([state side card] (can-score? state side card nil))
+  ([state side card {:keys [no-req]}]
+   (and
+     (agenda? card)
+     ;; The agenda has enough agenda counters to legally score
+     (or no-req
+         (let [cost (get-advancement-requirement card)]
+           (and cost
+                (<= cost (get-counters card :advancement)))))
+     ;; Score req on the card is allowed
+     (if (card-flag? card :can-score)
+       (card-flag-fn? state side card :can-score)
+       true)
+     ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
+     (check-flag-types? state side card :can-score [:current-turn :persistent])
+     ;; An effect hasn't set a card as unable to be scored (Clot)
+     (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
+     ;; A terminal operation hasn't been played
+     (not (get-in @state [:corp :register :terminal])))))
 
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
@@ -326,34 +334,6 @@
   [state _ card]
   (is-scored? state :runner card))
 
-(defn card-is-public?
-  [state side {:keys [zone] :as card}]
-  (if (= side :runner)
-    ;; public runner cards: in hand and :openhand is true;
-    ;; or installed/hosted and not facedown;
-    ;; or scored or current or in heap
-    (or (corp? card)
-        (and (:openhand (:runner @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (not (facedown? card)))
-        (#{:scored :discard :current} (last zone)))
-    ;; public corp cards: in hand and :openhand;
-    ;; or installed and rezzed;
-    ;; or in :discard and :seen
-    ;; or scored or current
-    (or (runner? card)
-        (and (:openhand (:corp @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (or (operation? card)
-                 (condition-counter? card)
-                 (rezzed? card)))
-        (and (in-discard? card) (:seen card))
-        (#{:scored :current} (last zone)))))
-
 (defn can-host?
   "Checks if the specified card is able to host other cards"
   [card]
@@ -363,7 +343,7 @@
 (defn when-scored?
   "Checks if the specified card is able to be used for a when-scored text ability"
   [card]
-  (not (:not-when-scored (card-def card))))
+  (:on-score (card-def card)))
 
 (defn ab-can-prevent?
   "Checks if the specified ability definition should prevent.

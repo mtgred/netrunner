@@ -1,29 +1,31 @@
 (ns game.core.initializing
   (:require
     [game.core.board :refer [all-active all-active-installed]]
-    [game.core.card :refer [get-card runner? map->Card]]
+    [game.core.card :refer [get-card get-counters has-subtype? program? runner? map->Card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
-    [game.core.gaining :refer [free-mu gain lose]]
+    [game.core.gaining :refer [gain lose]]
     [game.core.ice :refer [add-sub]]
+    [game.core.memory :refer [update-mu]]
     [game.core.payment :refer [add-cost-label-to-ability]]
-    [game.core.props :refer [set-prop]]
+    [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req]]
-    [game.utils :refer [make-cid server-card]]
+    [game.utils :refer [make-cid server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [card cdef]
-  (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
-       :subroutines
-       (into [])))
+  (let [no-subs-card (dissoc card :subroutines)]
+    (->> (:subroutines cdef)
+         (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) no-subs-card)
+         :subroutines
+         (into []))))
 
 (defn ability-init
   "Gets abilities associated with the card"
@@ -39,9 +41,9 @@
         c (dissoc card
                   :current-strength :current-advancement-requirement :current-points
                   :runner-abilities :corp-abilities :rezzed :new
-                  :added-virus-counter :subtype-target :server-target :extra-advance-counter)
+                  :subtype-target :server-target :extra-advance-counter)
         c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
+        c (if keep-counter c (dissoc c :counter :advance-counter))]
     c))
 
 (defn- trigger-leave-effect
@@ -61,14 +63,10 @@
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
   some events."
   ([state side card] (deactivate state side card nil))
-  ([state side {:keys [cid disabled facedown installed memoryunits rezzed] :as card} keep-counter]
+  ([state side {:keys [cid disabled facedown installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
    (unregister-constant-effects state side card)
    (trigger-leave-effect state side card)
-   (when (and memoryunits
-              installed
-              (not facedown))
-     (free-mu state memoryunits))
    (when (and (find-cid cid (all-active-installed state side))
               (not disabled)
               (or rezzed
@@ -95,29 +93,47 @@
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
   ([state side card args] (card-init state side (make-eid state) card args))
-  ([state side eid card {:keys [resolve-effect init-data]}]
+  ([state side eid card {:keys [resolve-effect init-data no-mu]}]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
-         c (merge card
-                  (when init-data (:data cdef))
-                  {:runner-abilities run-abs
-                   :corp-abilities corp-abs})
-         c (if (number? recurring) (assoc c :rec-counter recurring) c)
-         c (if (string? (:strength c)) (assoc c :strength 0) c)]
+         c (update! state side
+                    (merge card {:runner-abilities run-abs
+                                 :corp-abilities corp-abs}))
+         data (merge
+                (when init-data (:counter (:data cdef)))
+                (when recurring
+                  {:recurring
+                   (cond
+                     (fn? recurring) (recurring state side eid c nil)
+                     (number? recurring) recurring
+                     :else (throw (Exception. (str (:title card) " - Recurring isn't number or fn"))))}))
+         _ (doseq [[c-type c-num] data]
+             (add-counter state side (get-card state c) c-type c-num {:placed true}))
+         c (get-card state c)]
      (when recurring
-       (let [r (if (number? recurring)
-                 (effect (set-prop card :rec-counter recurring))
-                 recurring)]
+       (let [recurring-fn (req (if (number? recurring) recurring (recurring state side eid card targets)))
+             r (req (let [card (update! state side (assoc-in card [:counter :recurring] 0))]
+                      (add-counter state side card
+                                   :recurring (recurring-fn state side eid card targets)
+                                   {:placed true})))]
          (register-events
            state side c
            [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
              :req (req (not (:disabled card)))
              :effect r}])))
-     (update! state side c)
      (register-events state side c)
      (register-constant-effects state side c)
+     ;; Facedown cards can't be initialized
+     (when (and (program? card)
+                (not no-mu))
+       (register-floating-effect
+         state side c
+         {:type :used-mu
+          :duration :constant
+          :value (:memoryunits c)})
+       (update-mu state))
      (if (and resolve-effect (is-ability? cdef))
        (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
@@ -142,11 +158,16 @@
 
 (defn update-all-card-labels
   [state]
-  (doseq [side [:corp :runner]
-          card (all-active state side)]
-    (update! state side (update-abilities-cost-str state side card))))
+  (reduce (fn [changed? card]
+            (let [side (to-keyword (:side card))
+                  new-card (update-abilities-cost-str state side card)]
+              (when (not= card new-card)
+                (update! state side new-card))
+              (or (not= card new-card) changed?)))
+          false
+          (concat (all-active state :corp) (all-active state :runner))))
 
-(defn- card-implemented
+(defn card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
   If implemented also looks for `:implementation` key which may contain special notes.
   Returns either:

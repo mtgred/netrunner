@@ -14,7 +14,7 @@
    (when-not (nil? cost)
      (->> [cost
            (or cost-bonus 0)
-           (when-let [playfun (:play-cost-bonus (card-def card))]
+           (when-let [playfun (get-in (card-def card) [:on-play :play-cost-bonus])]
              (playfun state side (make-eid state) card nil))
            (sum-effects state side card :play-cost)]
           (reduce (fnil + 0 0))
@@ -24,7 +24,7 @@
   [state side card]
   (merge-costs
     (concat (:additional-cost card)
-            (:additional-cost (card-def card))
+            (get-in (card-def card) [:on-play :additional-cost])
             (get-effects state side card :play-additional-cost))))
 
 (defn rez-cost
@@ -125,6 +125,8 @@
   ([state side ability card targets]
    (concat (:cost ability)
            (:additional-cost ability)
+           (when-let [break-fn (:break-cost-bonus ability)]
+             (break-fn state side (make-eid state) card targets))
            (get-effects state side card :break-sub-additional-cost (flatten [ability targets])))))
 
 (defn jack-out-cost

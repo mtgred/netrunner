@@ -1,14 +1,17 @@
 (ns nr.chat
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :as s]
+            [clojure.string :refer [lower-case] :as s]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
-            [nr.gameboard :refer [card-preview-mouse-over card-preview-mouse-out card-zoom] :as gameboard]
-            [nr.utils :refer [toastr-options render-message]]
+            [nr.gameboard.log :refer [card-preview-mouse-over card-preview-mouse-out]]
+            [nr.news :refer [news]]
+            [nr.cardbrowser :refer [image-url]]
+            [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
+            [nr.translations :refer [tr tr-pronouns]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -27,20 +30,19 @@
   (let [f (aget js/toastr type)]
     (f msg)))
 
-(ws/register-ws-handler! :chat/message (partial put! chat-channel))
-(ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
-(ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
-(ws/register-ws-handler!
-  :chat/blocked
-  (fn [{:keys [reason] :as msg}]
-    (let [reason-str (case reason
-                       :rate-exceeded "Rate exceeded"
-                       :length-exceeded "Length exceeded")]
-      (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
-                      "warning" nil))))
+(defmethod ws/-msg-handler :chat/message [{data :?data}] (put! chat-channel data))
+(defmethod ws/-msg-handler :chat/delete-msg [{data :?data}] (put! delete-msg-channel data))
+(defmethod ws/-msg-handler :chat/delete-all [{data :?data}] (put! delete-all-channel data))
 
-(defn current-block-list
-  []
+(defmethod ws/-msg-handler :chat/blocked
+  [{{:keys [reason]} :?data}]
+  (let [reason-str (case reason
+                     :rate-exceeded "Rate exceeded"
+                     :length-exceeded "Length exceeded")]
+    (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
+                    "warning" nil)))
+
+(defn current-block-list []
   (get-in @app-state [:options :blocked-users] []))
 
 (defn filter-blocked-messages
@@ -133,19 +135,17 @@
        (and max-len
             (>= msg-len max-len)))))
 
-(defn msg-input-view [channel]
-  (let [s (r/atom {})]
-    (fn [channel]
-      [:form.msg-box {:on-submit #(do (.preventDefault %)
-                                      (when-not (illegal-message s)
-                                        (send-msg s channel)))}
-       [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
-                :placeholder "Say something...." :accessKey "l" :value (:msg @s)
-                :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
-       (let [disabled (illegal-message s)]
-         [:button {:disabled disabled
-                   :class (if disabled "disabled" "")}
-          "Send"])])))
+(defn msg-input-view [channel s]
+  [:form.msg-box {:on-submit #(do (.preventDefault %)
+                                  (when-not (illegal-message s)
+                                    (send-msg s channel)))}
+   [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
+            :placeholder (tr [:chat/placeholder "Say something...."]) :accessKey "l" :value (:msg @s)
+            :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
+   (let [disabled (illegal-message s)]
+     [:button {:disabled disabled
+               :class (if disabled "disabled" "")}
+      (tr [:chat/send "Send"])])])
 
 (defn channel-view [{:keys [channel active-channel]} s]
   [:div.block-link {:class (if (= active-channel channel) "active" "")
@@ -170,6 +170,11 @@
          {:on-click #(-> (:msg-buttons @msg-state) js/$ .toggle)
           :class (if my-msg "" "clickable")}
          (:username message)]
+
+        (when-let [pronouns (:pronouns message)]
+          (let [pro-str (if (= "blank" pronouns) "" (str "(" (tr-pronouns pronouns) ")"))]
+            [:span.pronouns (lower-case pro-str)]))
+
         (when user
           (when (not my-msg)
             [:div.panel.blue-shade.block-menu
@@ -177,20 +182,32 @@
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-message message)
-                                   (hide-block-menu msg-state))} "Delete Message"])
+                                   (hide-block-menu msg-state))} (tr [:chat.delete "Delete Message"])])
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-all-messages (:username message))
-                                   (hide-block-menu msg-state))} "Delete All Messages From User"])
+                                   (hide-block-menu msg-state))} (tr [:chat.delete-all "Delete All Messages From User"])])
              [:div {:on-click #(do
                                  (block-user (:username message))
-                                 (hide-block-menu msg-state))} "Block User"]
-             [:div {:on-click #(hide-block-menu msg-state)} "Cancel"]]))
+                                 (hide-block-menu msg-state))} (tr [:chat.block "Block User"])]
+             [:div {:on-click #(hide-block-menu msg-state)} (tr [:chat.cancel "Cancel"])]]))
         [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}
         (render-message (:msg message))]]])))
+
+(defn card-zoom-image
+  [card]
+  [:div.card-preview.blue-shade
+   (when-let [url (image-url card)]
+     [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])])
+
+(defn card-zoom [zoom-card]
+  (if-let [card @zoom-card]
+    (do (-> ".card-zoom" js/$ (.addClass "fade"))
+        [card-zoom-image card])
+    (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn fetch-all-messages []
   (doseq [channel (keys (:channels @app-state))]
@@ -198,79 +215,101 @@
               data (:json x)]
           (update-message-channel channel data)))))
 
-(defn chat []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    (when (= "/" (first @active))
-      (let [s (r/atom {:channel :general
-                       :zoom false
-                       :zoom-ch (chan)
-                       :scrolling false})
-            old (atom {:prev-msg-count 0}) ; old is not a r/atom so we don't render when this is updated
-            cards-loaded (r/cursor app-state [:cards-loaded])
-            user (r/cursor app-state [:user])]
+(fetch-all-messages)
 
-        (r/create-class
-          {:display-name "chat"
+(defn message-panel [s old scroll-top]
+  (let [cards-loaded (r/cursor app-state [:cards-loaded])]
+    (r/create-class
+      {
+       :display-name "message-panel"
 
-           :component-will-mount
-           (fn []
-             (fetch-all-messages)
-             (go (while true
-                   (let [card (<! (:zoom-ch @s))]
-                     (swap! s assoc :zoom card)))))
+       :component-did-mount #(set-scroll-top % @scroll-top)
+       :component-will-unmount #(store-scroll-top % scroll-top)
 
-           :component-did-update
-           (fn []
-             (when-let [msg-list (:message-list @chat-state)]
-               (let [curr-channel (:channel @s)
-                     prev-channel (:prev-channel @old)
-                     curr-msg-count (count (get-in @app-state [:channels curr-channel]))
-                     prev-msg-count (:prev-msg-count @old)
-                     curr-page (:active-page @app-state)
-                     prev-page (:prev-page @old)
-                     is-scrolled (:scrolling @s)]
-                 (when (or (and (zero? (.-scrollTop msg-list))
-                                (not is-scrolled))
-                           (not= curr-page prev-page)
-                           (not= curr-channel prev-channel)
-                           (and (not= curr-msg-count prev-msg-count)
-                                (not is-scrolled)))
-                   (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))
-                   ; use an atom instead of prev-props as r/current-component is only valid in component functions
-                   (swap! old assoc :prev-page curr-page)
-                   (swap! old assoc :prev-channel curr-channel)
-                   (swap! old assoc :prev-msg-count curr-msg-count)))))
+       :component-did-update
+       (fn []
+         (when-let [msg-list (:message-list @chat-state)]
+           (let [curr-channel (:channel @s)
+                 prev-channel (:prev-channel @old)
+                 curr-msg-count (count (get-in @app-state [:channels curr-channel]))
+                 prev-msg-count (:prev-msg-count @old)
+                 curr-page (:active-page @app-state)
+                 prev-page (:prev-page @old)
+                 is-scrolled (:scrolling @s)]
+             (when (or (and (zero? (.-scrollTop msg-list))
+                            (not is-scrolled))
+                       (not= curr-page prev-page)
+                       (not= curr-channel prev-channel)
+                       (and (not= curr-msg-count prev-msg-count)
+                            (not is-scrolled)))
+               (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))
+               ; use an atom instead of prev-props as r/current-component is only valid in component functions
+               (swap! old assoc :prev-page curr-page)
+               (swap! old assoc :prev-channel curr-channel)
+               (swap! old assoc :prev-msg-count curr-msg-count)))))
 
-           :reagent-render
-           (fn []
-             [:div.chat-app
-              [:div.blue-shade.panel.channel-list
-               [:h4 "Channels"]
-               (doall
-                 (for
-                   [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
-                        :português :sverige :stimhack-league :русский]]
-                   ^{:key ch}
-                   [channel-view {:channel ch :active-channel (:channel @s)} s]))]
-              [:div.chat-container
-               [:div.chat-card-zoom
-                (when-let [card (:zoom @s)]
-                  [card-zoom (r/atom card)])]
-               [:div.chat-box
-                [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
-                                                     :on-scroll #(let [currElt (.-currentTarget %)
-                                                                       scroll-top (.-scrollTop currElt)
-                                                                       scroll-height (.-scrollHeight currElt)
-                                                                       client-height (.-clientHeight currElt)
-                                                                       scrolling (< (+ scroll-top client-height) scroll-height)]
-                                                                   (swap! s assoc :scrolling scrolling))}
-                 (if (not @cards-loaded)
-                   [:h4 "Loading cards..."]
-                   (let [message-list (get-in @app-state [:channels (:channel @s)])]
-                     (doall (map-indexed
-                              (fn [i message]
-                                [:div {:key i}
-                                 [message-view message s]]) message-list))))]
-                (when @user
-                  [:div
-                   [msg-input-view (:channel @s)]])]]])})))))
+       :reagent-render
+       (fn [s scroll-top]
+         [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
+                                              :on-scroll #(let [currElt (.-currentTarget %)
+                                                                scroll-top (.-scrollTop currElt)
+                                                                scroll-height (.-scrollHeight currElt)
+                                                                client-height (.-clientHeight currElt)
+                                                                scrolling (< (+ scroll-top client-height) scroll-height)]
+                                                            (swap! s assoc :scrolling scrolling))}
+          (if (not @cards-loaded)
+            [:h4 "Loading cards..."]
+            (let [message-list (get-in @app-state [:channels (:channel @s)])]
+              (doall (map-indexed
+                       (fn [i message]
+                         [:div {:key i}
+                          [message-view message s]]) message-list))))])})))
+
+(defn chat [s curr-msg old scroll-top]
+  (let [user (r/cursor app-state [:user])]
+
+    (r/create-class
+      {:display-name "chat"
+
+       :reagent-render
+       (fn [s curr-msg old scroll-top]
+         [:div#chat.chat-app
+          [:div.blue-shade.panel.channel-list
+           [:h4 (tr [:chat.channels "Channels"])]
+           (doall
+             (for
+               [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
+                    :português :sverige :русский]]
+               ^{:key ch}
+               [channel-view {:channel ch :active-channel (:channel @s)} s]))]
+          [:div.chat-container
+           [:div.chat-card-zoom
+            (when-let [card (:zoom @s)]
+              [card-zoom (r/atom card)])]
+           [:div.chat-box
+            [message-panel s old scroll-top]
+            (when @user
+              [:div
+               [msg-input-view (:channel @s) curr-msg]])]]])})))
+
+(defn chat-page []
+  (let [active (r/cursor app-state [:active-page])
+        s (r/atom {:channel :general
+                   :zoom false
+                   :zoom-ch (chan)
+                   :scrolling false})
+        curr-msg (r/atom{})
+        scroll-top (atom 0)
+        old (atom {:prev-msg-count 0})] ; old is not a r/atom so we don't render when this is updated
+
+    (go (while true
+          (let [card (<! (:zoom-ch @s))]
+            (swap! s assoc :zoom card))))
+
+    (fn []
+      (when (= "/" (first @active))
+        [:div.container
+         [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
+         [news]
+         [chat s curr-msg old scroll-top]
+         [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]]))))

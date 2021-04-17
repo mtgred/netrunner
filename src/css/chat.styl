@@ -1,27 +1,133 @@
+// Chat
+
+.chat-app
+    display-flex()
+    position: absolute
+    top: 196px
+    bottom: 15px
+    width: 995px
+
+.channel-list
+    flex(0 0 180px)
+    margin: 0 5px 0 0
+
+    button.small
+        float: right
+        margin-right: -2px
+
+.chat-box
+    flex(1)
+    display-flex()
+    flex-direction(column)
+    min-height: 1px
+
+.chat-container
+    flex(2)
+    display-flex()
+    flex-direction(column)
+
+    .chat-card-zoom
+        position: absolute
+        left: -70px
+        transition(all 0.2s ease-in-out)
+
+.message
+    display-flex()
+    margin-bottom: 5px
+
+    .name-menu
+        position: relative
+
+    .clickable
+        cursor: pointer
+
+    .content
+        flex(1)
+
+    .block-menu
+        display: none
+        position: absolute
+        z-index: 30
+        width: 200px
+        font-size: 12px
+        line-height: 16px
+
+        > div
+            border: 1px solid white
+            padding: 3px 6px
+            border-radius: 4px
+            margin-bottom: 4px
+            cursor: pointer
+
+            &:last-child
+                margin-bottom: 0
+
+            &:hover
+                border-color: orange
+
+.message-list
+    height: 400px
+    margin: 0
+    overflow: auto
+    -webkit-overflow-scrolling: touch
+    flex(1)
+
+    .avatar
+        height: 38px
+        width: 38px
+        border-radius: 5px
+
+    .username
+        font-weight: bold
+        font-size: 14px
+        margin-right: 0px
+
+    .pronouns
+        margin-left: 3px
+
+    .date
+        font-weight: 300
+        font-size: 12px
+        margin-left: 10px
+
+.msg-box
+    display-flex()
+    flex(1)
+    margin-top: 5px
+
+    > input
+        flex(1)
+        margin-left: 0
+        margin-top: 0
+        margin-right: 5px
+
+    button
+        margin-right: 0
+
 .typing
-  position: absolute
-  margin: 0
-  padding: 0
-  overflow: hidden
-  bottom: 0
-  left: 1px
+    position: absolute
+    margin: 0
+    padding: 0
+    overflow: hidden
+    bottom: 0
+    left: 1px
 
 .typing span
-  animation-name: blink
-  animation-duration: 1.5s
-  animation-iteration-count: infinite
-  animation-fill-mode: both
+    animation-name: blink
+    animation-duration: 1.5s
+    animation-iteration-count: infinite
+    animation-fill-mode: both
 
 for i in (1..10)
-  .typing span:nth-child({i})
-    animation-delay: 0.1*i s
+    .typing span:nth-child({i})
+        animation-delay: 0.1*i s
 
 @keyframes blink
-  0%
-    opacity: .2
+    0%
+        opacity: .2
 
-  20%
-    opacity: 1
+    20%
+        opacity: 1
 
-  100%
-    opacity: .2
+    100%
+        opacity: .2

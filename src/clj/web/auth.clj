@@ -1,6 +1,6 @@
 (ns web.auth
   (:require [web.config :refer [server-config]]
-            [web.db :refer [db object-id]]
+            [web.db :refer [db find-one-as-map-case-insensitive object-id]]
             [web.utils :refer [response md5]]
             [aero.core :refer [read-config]]
             [clj-time.core :refer [days from-now]]
@@ -63,6 +63,23 @@
                      (update-in [:user :_id] str)))
         (handler req)))))
 
+(defn create-user
+  "Create a new user map."
+  [username password email & {:keys [isadmin]}]
+  (let [email-hash (md5 email)
+        registration-date (java.util.Date.)
+        last-connection registration-date
+        hash-pw (password/encrypt password)
+        isadmin (or isadmin false)]
+    {:username         username
+     :email            email
+     :emailhash        email-hash
+     :registrationDate registration-date
+     :lastConnection   last-connection
+     :password         hash-pw
+     :isadmin          isadmin
+     :options          {}}))
+
 (defn register-handler
   [{{:keys [username password confirm-password email]} :params
     :as request}]
@@ -73,28 +90,16 @@
     (not= password confirm-password)
     (response 401 {:message "Passwords must match"})
 
-    (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})
+    (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
 
-    (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$") $options "i"}})
+    (find-one-as-map-case-insensitive db "users" {:email email})
     (response 424 {:message "Email taken"})
 
     :else
     (let [first-user (not (mc/any? db "users"))
-          email-hash (md5 email)
-          registration-date (java.util.Date.)
-          last-connection registration-date
-          hash-pw (password/encrypt password)
           demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
-      (mc/insert db "users"
-                 {:username         username
-                  :email            email
-                  :emailhash        email-hash
-                  :registrationDate registration-date
-                  :lastConnection   last-connection
-                  :password         hash-pw
-                  :isadmin          first-user
-                  :options          {}})
+      (mc/insert db "users" (create-user username password email :isadmin first-user))
       (when (not-empty demo-decks)
         (mc/insert-batch db "decks" (map #(-> %
                                               (dissoc :_id)
@@ -122,22 +127,19 @@
                          :max-age -1}}))
 
 (defn check-username-handler [{{:keys [username]} :params}]
-  (if (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
-                                                 $options "i"}})
+  (if (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn check-email-handler [{{:keys [email]} :params}]
-  (if (mc/find-one-as-map db "users" {:email {$regex (str "^" email "$")
-                                              $options "i"}})
+  (if (find-one-as-map-case-insensitive db "users" {:email email})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn email-handler [{{username :username} :user
                       body                 :body}]
   (if username
-    (let [{:keys [email]} (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$")
-                                                                     $options "i"}})]
+    (let [{:keys [email]} (find-one-as-map-case-insensitive db "users" {:username username})]
       (response 200 {:email email}))
     (response 401 {:message "Unauthorized"})))
 
@@ -165,8 +167,9 @@
   (if username
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
-                                  {"$set" {:options (select-keys body [:background :pronouns :show-alt-art :blocked-users
-                                                                       :alt-arts :deckstats :gamestats])}}))
+                                  {"$set" {:options (select-keys body [:background :pronouns :language :show-alt-art :blocked-users
+                                                                       :alt-arts :card-resolution :deckstats :gamestats :card-zoom
+                                                                       :pin-zoom :card-back])}}))
       (response 200 {:message "Refresh your browser"})
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))

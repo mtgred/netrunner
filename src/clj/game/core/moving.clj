@@ -3,21 +3,21 @@
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [card-index corp? facedown? fake-identity? get-card get-zone
-                            ice? in-play-area? installed? resource? rezzed? runner?]]
+                            has-subtype? ice? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
+    [game.core.engine :refer [checkpoint dissoc-req make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [find-cid get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
-    [game.core.ice :refer [get-current-ice set-current-ice]]
+    [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg system-say]]
-    [game.core.servers :refer [is-remote?]]
+    [game.core.servers :refer [is-remote? type->rig-zone]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [jinteki.utils :refer [other-side]]
@@ -26,7 +26,7 @@
 ;; Helpers for move
 (defn- remove-old-card
   "Removes the old pre-move card from the game state, for use in move"
-  [state side {:keys [zone host] :as card}]
+  [state side {:keys [zone host title] :as card}]
   (doseq [s [:runner :corp]]
     (if host
       (remove-from-host state side card)
@@ -127,6 +127,25 @@
                      moved-card)]
     moved-card))
 
+(defn- update-effects
+  [state {:keys [cid] :as card} moved-card]
+  (if (= cid (:cid moved-card))
+    ;; Moving the card hasn't changed the cid
+    (let [new-effects (reduce
+                        (fn [all-effects current-effect]
+                          (if (= cid (:cid (:card current-effect)))
+                            (conj all-effects (assoc current-effect :card moved-card))
+                            (conj all-effects current-effect)))
+                        []
+                        (:effects @state))]
+      (swap! state assoc :effects (into [] new-effects)))
+    ;; Moving the card has changed the cid
+    (swap! state assoc :effects
+           (->> (:effects @state)
+                (remove #(and (same-card? card (:card %))
+                              (= :constant (:duration %))))
+                (into [])))))
+
 (defn update-installed-card-indices
   [state side server]
   (when (seq (get-in @state (cons side server)))
@@ -154,21 +173,7 @@
            (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
-           (if (= cid (:cid moved-card))
-             ;; Moving the card hasn't changed the cid
-             (let [new-effects (reduce
-                                 (fn [all-effects current-effect]
-                                   (if (= cid (:cid (:card current-effect)))
-                                     (conj all-effects (assoc current-effect :card moved-card))
-                                     (conj all-effects current-effect)))
-                                 []
-                                 (:effects @state))]
-               (swap! state assoc :effects (into [] new-effects)))
-             ;; Moving the card has changed the cid
-             (swap! state assoc :effects
-                    (->> (:effects @state)
-                         (remove #(same-card? card (:card %)))
-                         (into []))))
+           (update-effects state card moved-card)
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
                                       front 0
@@ -226,10 +231,11 @@
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- prevent-trash-impl
-  [state side eid {:keys [zone type] :as card} oid {:keys [unpreventable cause] :as args}]
+  [state side eid {:keys [zone type] :as card} oid {:keys [unpreventable cause game-trash] :as args}]
   (if (and card (not-any? #{:discard} zone))
     (cond
-      (untrashable-while-rezzed? card)
+      (and (not game-trash)
+           (untrashable-while-rezzed? card))
       (do (enforce-msg state card "cannot be trashed while installed")
           (effect-completed state side eid))
       (and (= side :runner)
@@ -321,7 +327,7 @@
                                           (let [once-per (:once-per-instance trash-effect)]
                                             (-> trash-effect
                                                 (assoc :once-per-instance (if (some? once-per) once-per true))
-                                                (dissoc trash-effect :req))))))
+                                                dissoc-req)))))
                    ;; No card should end up in the opponent's discard pile, so instead
                    ;; of using `side`, we use the card's `:side`.
                    move-card (fn [card]
@@ -349,7 +355,7 @@
                  (swap! state assoc-in [side :register :trashed-card] true))
                ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                (swap! state assoc-in [:corp :discard]
-                      (vec (sort-by #(if (:seen %) -1 (rand-int 30)) (get-in @state [:corp :discard]))))
+                      (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
                (let [;; The trash event will be determined by who is performing the
                      ;; trash. `:game-trash` in this case refers to when a checkpoint
                      ;; sees a card has been trashed and it has hosted cards, so it
@@ -374,7 +380,8 @@
                  (checkpoint state nil eid nil))))))
 
 (defn trash
-  [state side eid card args] (trash-cards state side eid [card] args))
+  ([state side eid card] (trash-cards state side eid [card] nil))
+  ([state side eid card args] (trash-cards state side eid [card] args)))
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"
@@ -387,21 +394,6 @@
   [state from-side eid to-side n]
   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
     (trash-cards state from-side eid cards {:unpreventable true})))
-
-(defn remove-old-current
-  "Trashes or RFG the existing current when a new current is played, or an agenda is stolen / scored"
-  [state side eid current-side]
-  (if-let [current (first (get-in @state [current-side :current]))]
-    (do (trigger-event state side :trash-current current)
-        (unregister-constant-effects state side current)
-        (let [current (get-card state current)]
-          (if (get-in current [:special :rfg-when-trashed])
-            (do (system-say state side (str (:title current) " is removed from the game."))
-                (move state (other-side side) current :rfg)
-                (effect-completed state side eid))
-            (do (system-say state side (str (:title current) " is trashed."))
-                (trash state (to-keyword (:side current)) eid current nil)))))
-    (effect-completed state side eid)))
 
 (defn swap-installed
   "Swaps two installed corp cards"
@@ -490,7 +482,7 @@
         (deactivate state :corp new-stolen)))
     ;; Update agenda points
     (update-all-agenda-points state side)
-    (check-winner state side)))
+    (check-win-by-agenda state side)))
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
@@ -504,11 +496,11 @@
                  (wait-for (resolve-ability state side (make-eid state eid) (:swapped (card-def card)) card nil)
                            (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
                                      (update-all-agenda-points state side)
-                                     (check-winner state side)
+                                     (check-win-by-agenda state side)
                                      (effect-completed state side eid))))
        (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
                  (update-all-agenda-points state side)
-                 (check-winner state side)
+                 (check-win-by-agenda state side)
                  (effect-completed state side eid))))))
 
 (defn forfeit
@@ -527,5 +519,25 @@
        (system-msg state side (str "forfeits " (:title card))))
      (move state (to-keyword (:side card)) card :rfg)
      (update-all-agenda-points state side)
-     (check-winner state side)
+     (check-win-by-agenda state side)
      (trigger-event-sync state side eid (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) card))))
+
+(defn flip-facedown
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"
+  [state side {:keys [host] :as card}]
+  (if host
+    (let [card (deactivate state side card true)
+          card (assoc-in card [:facedown] true)]
+      (update! state side card))
+    (move state side card [:rig :facedown])))
+
+(defn flip-faceup
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
+  Wires events without calling effect/init-data"
+  [state side {:keys [host] :as card}]
+  (let [card (if host
+               (dissoc card :facedown)
+               (move state side card (type->rig-zone (:type card))))]
+   (card-init state side card {:resolve-effect false :init-data false})
+   (when (has-subtype? card "Icebreaker")
+     (update-breaker-strength state side card))))

@@ -27,10 +27,10 @@
    ["-n" "--no-db" "Do not load edn data into the database"
     :id :db
     :parse-fn not]
-   ["-i" "--card-images" "Fetch card images from NetrunnerDB (default)"
+   ["-i" "--card-images" "Fetch card images from Jinteki.NET (default)"
     :id :card-images
     :default true]
-   ["-j" "--no-card-images" "Do not fetch card images from NetrunnerDB"
+   ["-j" "--no-card-images" "Do not fetch card images from Jinteki.NET"
     :id :card-images
     :parse-fn not]])
 

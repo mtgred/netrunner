@@ -15,11 +15,11 @@
                active (r/cursor app-state [:active-page])]
     (when (or (= "/news" (first @active))
               (= "/" (first @active)))
-      [:div.news-box.panel.blue-shade
+      [:div#news.news-box.panel.blue-shade
        [:ul.list
         (doall
           (for [d @news]
             [:li.news-item
              {:key (:date d)}
              [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-             [:span.title (render-icons (js/marked (:title d)))]]))]])))
+             [:span.title (render-icons (:item d ""))]]))]])))

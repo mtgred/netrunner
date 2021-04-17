@@ -23,8 +23,10 @@
   [state]
   (fake-checkpoint state)
   ;; End the run if running an empty remote
-  (when (check-for-empty-server state)
-    (handle-end-run state :corp)))
+  (when (or (check-for-empty-server state)
+            (:ended (:run @state)))
+    (handle-end-run state :corp)
+    (fake-checkpoint state)))
 
 (defn command-parser
   [state side {:keys [user text] :as args}]
@@ -63,10 +65,10 @@
    "play" play
    "purge" do-purge
    "remove-tag" remove-tag
-   "rez" #(rez %1 %2 (:card %3) (dissoc %3 :card))
+   "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))
    "run" click-run
    "runner-ability" play-runner-ability
-   "score" #(score %1 %2 (get-card %1 (:card %3)))
+   "score" #(score %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
    "select" select
    "shuffle" shuffle-deck
    "start-turn" start-turn
@@ -74,7 +76,7 @@
    "system-msg" #(system-msg %1 %2 (:msg %3))
    "toast" toast
    "toggle-auto-no-action" toggle-auto-no-action
-   "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
+   "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" trash-resource
    "unbroken-subroutines" play-unbroken-subroutines
    "view-deck" view-deck})

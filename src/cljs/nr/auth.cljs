@@ -4,6 +4,8 @@
             [nr.ajax :refer [POST GET]]
             [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
+            [nr.history :refer [history]]
+            [nr.translations :refer [tr]]
             [clojure.string :refer [lower-case]]
             [reagent.core :as r]))
 
@@ -43,11 +45,11 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link "[Admin]"])
+       [:a.block-link {:on-click #(.setToken history "/admin")} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
-       [:a.block-link "[Moderator]"])
-     [:a.block-link {:href "/account"} "Settings"]
-     [:a.block-link {:on-click #(handle-logout %)} "Jack out"]]]])
+       [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
+     [:a.block-link {:on-click #(.setToken history "/account")} (tr [:menu/settings "Settings"])]
+     [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
 (defn unlogged-menu []
   [:ul

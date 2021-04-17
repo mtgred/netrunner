@@ -3,6 +3,7 @@
     [game.core.card :refer [corp? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.checkpoint :refer [fake-checkpoint]]
+    [game.core.diffs :refer [public-states]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-sync]]
@@ -15,7 +16,7 @@
     [game.core.state :refer [new-state]]
     [game.macros :refer [wait-for]]
     [game.quotes :as quotes]
-    [game.utils :refer [server-card]]
+    [game.utils :refer [server-card dissoc-in]]
     [clj-time.core :as t]))
 
 (defn build-card
@@ -78,7 +79,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid spectatorhands room]}]
+  [{:keys [players gameid spectatorhands save-replay room]}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -99,6 +100,7 @@
         room
         (t/now)
         spectatorhands
+        save-replay
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
         (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
 
@@ -125,4 +127,5 @@
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)
                             (fake-checkpoint state)))))
+    (swap! state assoc :history [(:hist-state (public-states state))])
     state))

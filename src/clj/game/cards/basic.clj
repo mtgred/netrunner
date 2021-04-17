@@ -26,17 +26,33 @@
                                        (draw state side eid 1 nil)))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)
-                                   server (second targets)]
-                               (corp-install state side (assoc eid :source server :source-type :corp-install)
-                                             target-card server {:base-cost [:click 1] :action :corp-click-install})))}
+                :req (req (and (not-empty (:hand corp))
+                               (if-let [server (second targets)]
+                                 (corp-can-pay-and-install?
+                                   state side (assoc eid :source server :source-type :corp-install)
+                                   target server {:base-cost [:click 1]
+                                                  :action :corp-click-install
+                                                  :no-toast true})
+                                 (some
+                                   (fn [server]
+                                     (corp-can-pay-and-install?
+                                       state side (assoc eid :source server :source-type :corp-install)
+                                       target server {:base-cost [:click 1]
+                                                      :action :corp-click-install
+                                                      :no-toast true}))
+                                   (installable-servers state card)))))
+                :effect (req (let [server (second targets)]
+                               (corp-install
+                                 state side (assoc eid :source server :source-type :corp-install)
+                                 target server {:base-cost [:click 1]
+                                                :action :corp-click-install})))}
                {:label "Play 1 operation"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand corp))
+                               (can-play-instant? state :corp (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :corp (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Advance 1 installed card"
                 :cost [:click 1 :credit 1]
                 :async true
@@ -83,19 +99,24 @@
                                        (draw state side eid 1 nil)))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (runner-install state side (assoc eid :source :action :source-type :runner-install)
-                                               target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (runner-can-pay-and-install?
+                                 state :runner (assoc eid :source :action :source-type :runner-install)
+                                 target {:base-cost [:click 1]})))
+                :effect (req (runner-install
+                               state :runner (assoc eid :source :action :source-type :runner-install)
+                               target {:base-cost [:click 1]
+                                       :no-toast true}))}
                {:label "Play 1 event"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (can-play-instant? state :runner (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Run any server"
                 :async true
-                :effect (effect (make-run eid target nil nil {:click-run true}))}
+                :effect (effect (make-run eid target nil {:click-run true}))}
                {:label "Remove 1 tag"
                 :cost [:click 1 :credit 2]
                 :msg "remove 1 tag"

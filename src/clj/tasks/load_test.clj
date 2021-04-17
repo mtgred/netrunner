@@ -5,8 +5,8 @@
             [gniazdo.core :as ws]
             [clj-uuid :as uuid]
             [org.httpkit.client :as http]
-            [crypto.password.bcrypt :as password]
             [monger.collection :as mc]
+            [web.auth :refer [create-user]]
             [web.core :refer [-main]]
             [web.game :refer [handle-game-start]]
             [web.lobby :refer [handle-lobby-create handle-lobby-join handle-lobby-watch all-games]]))
@@ -18,27 +18,15 @@
 (defn add-test-users [maxUsers]
   (webdb/connect)
   (when (not (mc/find-one-as-map db "users" {:username "TestCorp"}))
-    (mc/insert db "users" {:username "TestCorp"
-                           :email "TestCorp@mailinator.com"
-                           :password (password/encrypt "password")
-                           :isadmin false
-                           :options {}}))
+    (mc/insert db "users" (create-user "TestCorp" "password" "TestCorp@mailinator.com")))
 
   (when (not (mc/find-one-as-map db "users" {:username "TestRunner"}))
-    (mc/insert db "users" {:username "TestRunner"
-                           :email "TestRunner@mailinator.com"
-                           :password (password/encrypt "password")
-                           :isadmin false
-                           :options {}}))
+    (mc/insert db "users" (create-user "TestRunner" "password" "TestRunner@mailinator.com")))
   (doall
     (pmap
       (fn [n]
         (when (not (mc/find-one-as-map db "users" {:username (str "TestUser" n)}))
-          (mc/insert db "users" {:username (str "TestUser" n)
-                                 :email (str "TestUser" n "@mailinator.com")
-                                 :password (password/encrypt "password")
-                                 :isadmin false
-                                 :options {}})))
+          (mc/insert db "users" (create-user (str "TestUser" n) "password" (str "TestUser" n "@mailinator.com")))))
       (range maxUsers))))
 
 (defn login

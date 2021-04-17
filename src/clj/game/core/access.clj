@@ -7,17 +7,17 @@
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler can-trigger? pay register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint make-pending-event pay queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
-    [game.core.moving :refer [move remove-old-current trash]]
+    [game.core.moving :refer [move trash]]
     [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs]]
     [game.core.prompts :refer [clear-wait-prompt show-wait-prompt]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-winner]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.utils :refer [quantify same-card?]]
     [game.macros :refer [continue-ability req wait-for]]
     [jinteki.utils :refer [add-cost-to-label]]
@@ -40,8 +40,9 @@
                                   ;; Don't increment :no-trash-or-steal if accessing a card in Archives
                                   (not (in-discard? c)))
                          (no-trash-or-steal state))
-                       (swap! state dissoc :access)
-                       (trigger-event-sync state side eid :post-access-card c)))))
+                       (let [accessed-card (:access @state)]
+                         (swap! state dissoc :access)
+                         (trigger-event-sync state side eid :post-access-card c accessed-card))))))
 
 ;;; Accessing rules
 (defn interactions
@@ -176,23 +177,17 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (wait-for
-      (trigger-event-simult
-        state :runner :agenda-stolen
-        {:first-ability {:async true
-                         :effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
-                                                                     (quantify points "agenda point")))
-                                      (swap! state update-in [:runner :register :stole-agenda]
-                                             #(+ (or % 0) (:agendapoints c 0)))
-                                      (update-all-agenda-points state side)
-                                      (check-winner state side)
-                                      (play-sfx state side "agenda-steal")
-                                      (when (:run @state)
-                                        (swap! state assoc-in [:run :did-steal] true))
-                                      (remove-old-current state side eid :corp))}
-         :card-abilities (ability-as-handler c (:stolen (card-def c)))}
-        c)
-      (access-end state side eid c {:stolen true}))))
+    (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
+    (play-sfx state side "agenda-steal")
+    (when (:run @state)
+      (swap! state assoc-in [:run :did-steal] true))
+    (when-let [on-stolen (:stolen (card-def c))]
+      (make-pending-event state :agenda-stolen c on-stolen))
+    (queue-event state :agenda-stolen {:card c
+                                       :points points})
+    (wait-for (checkpoint state nil (make-eid state eid) {:duration :agenda-stolen})
+              (access-end state side eid c {:stolen true}))))
 
 (defn- steal-agenda
   "Trigger the stealing of an agenda, now that costs have been paid."
@@ -397,9 +392,7 @@
     ;; Indicate that we are in the access step.
    (swap! state assoc :access card)
     ;; Reset counters for increasing costs of trash, steal, and access.
-   (swap! state update-in [:bonus] dissoc :trash)
-   (swap! state update-in [:bonus] dissoc :steal-cost)
-   (swap! state update-in [:bonus] dissoc :access-cost)
+   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
    (when (:run @state)
      (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
                     (second (get-zone card)))]

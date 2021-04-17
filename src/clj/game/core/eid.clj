@@ -22,8 +22,17 @@
     (throw (Exception. (str "Eid has alreasy been registered")))
     (swap! state assoc-in [:effect-completed (:eid eid)] effect)))
 
+(defn clear-eid-wait-prompt
+  [state side eid]
+  (when-let [prompts (remove #(and (= (:eid eid) (:eid (:eid %)))
+                                   (= :waiting (:prompt-type %)))
+                             (get-in @state [side :prompt]))]
+    (swap! state assoc-in [side :prompt] (doall prompts))))
+
 (defn effect-completed
   [state _ eid]
+  (doseq [side [:corp :runner]]
+    (clear-eid-wait-prompt state side eid))
   (when-let [handler (get-in @state [:effect-completed (:eid eid)])]
     (let [results (handler eid)]
       (swap! state update :effect-completed dissoc (:eid eid))

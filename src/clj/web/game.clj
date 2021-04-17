@@ -4,7 +4,7 @@
             [web.utils :refer [response]]
             [web.stats :as stats]
             [game.main :as main]
-            [game.diffs :refer [public-diffs public-states]]
+            [game.core.diffs :refer [public-diffs public-states]]
             [game.core :as core]
             [web.db :refer [db object-id]]
             [monger.collection :as mc]
@@ -54,30 +54,55 @@
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
   [{:keys [gameid state] :as game}]
-  (let [old-state (get @old-states gameid)]
-    (when (and state @state)
+  (when (and state @state)
+    (let [old-state (get @old-states gameid)
+          diffs (public-diffs old-state state)]
+      (swap! state update :history conj (:hist-diff diffs))
       (swap! old-states assoc gameid @state)
-      (send-state-diffs! game (public-diffs old-state state)))))
+      (send-state-diffs! game diffs))))
 
 (defn- active-game?
   [gameid-str client-id]
   (if (nil? gameid-str)
     false
-    (let [gameid (java.util.UUID/fromString gameid-str)
-          game-from-gameid (lobby/game-for-id gameid)
-          game-from-clientid (lobby/game-for-client client-id)]
-      (and game-from-clientid
-           game-from-gameid
-           (= (:gameid game-from-clientid) (:gameid game-from-gameid))))))
+    (try
+      (let [gameid (java.util.UUID/fromString gameid-str)
+            game-from-gameid (lobby/game-for-id gameid)
+            game-from-clientid (lobby/game-for-client client-id)]
+        (and game-from-clientid
+             game-from-gameid
+             (= (:gameid game-from-clientid) (:gameid game-from-gameid))))
+      (catch Exception e false))))
 
-(defn handle-game-start
+(defn- is-starter-deck?
+  [player]
+  (let [id (get-in player [:deck :identity :title])
+        card-cnt (reduce + (map :qty (get-in player [:deck :cards])))]
+    (or (and (= id "The Syndicate: Profit over Principle")
+             (= card-cnt 34))
+        (and (= id "The Catalyst: Convention Breaker")
+             (= card-cnt 30)))))
+
+(defn- check-for-starter-decks
+  "Starter Decks can require 6 or 7 agenda points"
+  [game]
+  (let [starts (every? is-starter-deck? (:players game))]
+  (if (and (= (:format game) "system-gateway")
+           (every? is-starter-deck? (:players game)))
+    (do
+      (swap! (:state game) assoc-in [:runner :agenda-point-req] 6)
+      (swap! (:state game) assoc-in [:corp :agenda-point-req] 6)
+      game)
+    game)))
+
+(defmethod ws/-msg-handler :netrunner/start
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
-  (when-let [{:keys [players gameid started messages] :as game} (lobby/game-for-client client-id)]
+  (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id game)
                (not started))
       (let [strip-deck (fn [player] (-> player
-                                        (update-in [:deck] #(select-keys % [:_id :identity :name]))
+                                        (update-in [:deck] #(select-keys % [:_id :identity :name :hash]))
                                         (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
             start-date (t/now)
@@ -88,13 +113,14 @@
                           :start-date (java.util.Date.)
                           :last-update start-date
                           :state (core/init-game g))
+                   (check-for-starter-decks g)
                    (update-in g [:players] #(mapv strip-deck %)))]
         (stats/game-started game)
         (lobby/refresh-lobby gameid game)
         (swap! old-states assoc gameid @(:state game))
         (send-state! :netrunner/start game (public-states (:state game)))))))
 
-(defn handle-game-leave
+(defmethod ws/-msg-handler :netrunner/leave
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str] :as msg}        :?data}]
@@ -106,7 +132,7 @@
         (main/handle-notification state (str username " has left the game."))
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 
-(defn handle-game-rejoin
+(defmethod ws/-msg-handler :netrunner/rejoin
   [{{{:keys [username _id] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid]}   :?data
@@ -125,7 +151,7 @@
         (main/handle-rejoin state user)
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 
-(defn handle-game-concede
+(defmethod ws/-msg-handler :netrunner/concede
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str] :as msg}        :?data}]
@@ -137,7 +163,7 @@
         (main/handle-concede state (side-from-str side))
         (swap-and-send-diffs! game)))))
 
-(defn handle-mute-spectators
+(defmethod ws/-msg-handler :netrunner/mute-spectators
   [{{{:keys [username] :as user} :user}          :ring-req
     client-id                                    :client-id
     {:keys [gameid-str mute-state] :as msg}      :?data}]
@@ -147,39 +173,45 @@
           message (if mute-state "muted" "unmuted")]
       (when (lobby/player? client-id game)
         (lobby/refresh-lobby-assoc-in gameid [:mute-spectators] mute-state)
-        (main/handle-notification state (str username " " message " specatators."))
+        (main/handle-notification state (str username " " message " spectators."))
         (swap-and-send-diffs! game)))))
 
-(defn handle-game-action
+(defmethod ws/-msg-handler :netrunner/action
   [{{{:keys [username] :as user} :user}       :ring-req
     client-id                                 :client-id
     {:keys [gameid-str command args] :as msg} :?data}]
   (when (active-game? gameid-str client-id)
-    (let [gameid (java.util.UUID/fromString gameid-str)
-          {:keys [players state] :as game} (lobby/game-for-id gameid)
-          side (some #(when (= client-id (:ws-id %)) (:side %)) players)
-          spectator (spectator? client-id game)]
-      (if (and state side)
-        (do
-          (main/handle-action user command state (side-from-str side) args)
-          (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
-          (swap-and-send-diffs! game))
-        (when-not spectator
-          (println "handle-game-action unknown state or side")
-          (println "\tGameID:" gameid)
-          (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
-          (println "\tClientID:" client-id)
-          (println "\tSide:" side)
-          (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
-          (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
-          (println "\tCommand:" command)
-          (println "\tArgs:" args "\n"))))))
+    (try
+      (let [gameid (java.util.UUID/fromString gameid-str)
+            {:keys [players state] :as game} (lobby/game-for-id gameid)
+            side (some #(when (= client-id (:ws-id %)) (:side %)) players)
+            spectator (spectator? client-id game)]
+        (if (and state side)
+          (do
+            (main/handle-action user command state (side-from-str side) args)
+            (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
+            (swap-and-send-diffs! game))
+          (when-not spectator
+            (println "handle-game-action unknown state or side")
+            (println "\tGameID:" gameid)
+            (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
+            (println "\tClientID:" client-id)
+            (println "\tSide:" side)
+            (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+            (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
+            (println "\tCommand:" command)
+            (println "\tArgs:" args "\n"))))
+      (catch clojure.lang.ExceptionInfo e
+        (println "Caught custom exception")
+        (println (str "Exception Data: " (ex-data e)))
+        (println (str "Command: " command))
+        (println (str "GameId: " gameid-str))))))
 
-(defn handle-game-watch
-  "Handles a watch command when a game has started."
+(defmethod ws/-msg-handler :lobby/watch
+  ;; Handles a watch command when a game has started.
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [gameid password options]}   :?data
+    {:keys [gameid password]}           :?data
     reply-fn                            :?reply-fn}]
   (if-let [{game-password :password state :state started :started :as game}
            (lobby/game-for-id gameid)]
@@ -209,7 +241,7 @@
       (reply-fn 404)
       false)))
 
-(defn handle-game-say
+(defmethod ws/-msg-handler :netrunner/say
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str msg]}                :?data}]
@@ -228,7 +260,7 @@
             (catch Exception ex
               (println (str "handle-game-say exception:" (.getMessage ex) "\n")))))))))
 
-(defn handle-game-typing
+(defmethod ws/-msg-handler :netrunner/typing
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [gameid-str typing]}             :?data}]
@@ -243,23 +275,12 @@
           (catch Exception ex
             (println (str "handle-game-typing exception:" (.getMessage ex) "\n"))))))))
 
-(defn handle-ws-close [{{{:keys [username] :as user} :user} :ring-req
-                        client-id                           :client-id}]
+(defmethod ws/-msg-handler :chsk/uidport-close
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id}]
   (when-let [{:keys [gameid state] :as game} (lobby/game-for-client client-id)]
     (lobby/remove-user client-id (:gameid game))
     (when-let [game (lobby/game-for-id gameid)]
       ; The game will not exist if this is the last player to leave.
       (main/handle-notification state (str username " has disconnected."))
       (swap-and-send-diffs! game))))
-
-(ws/register-ws-handlers!
-  :netrunner/start #'handle-game-start
-  :netrunner/action #'handle-game-action
-  :netrunner/leave #'handle-game-leave
-  :netrunner/rejoin #'handle-game-rejoin
-  :netrunner/concede #'handle-game-concede
-  :netrunner/mute-spectators #'handle-mute-spectators
-  :netrunner/say #'handle-game-say
-  :netrunner/typing #'handle-game-typing
-  :lobby/watch #'handle-game-watch
-  :chsk/uidport-close #'handle-ws-close)

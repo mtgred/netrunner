@@ -7,12 +7,21 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
-            [nr.deckbuilder :refer [num->percent]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.player-view :refer [player-view]]
-            [nr.utils :refer [faction-icon render-message notnum->zero]]
+            [nr.translations :refer [tr tr-side tr-format tr-lobby]]
+            [nr.utils :refer [faction-icon render-message notnum->zero num->percent set-scroll-top store-scroll-top]]
             [nr.ws :as ws]
             [reagent.core :as r]))
+
+(def state (r/atom {:games nil}))
+
+(defn- fetch-game-history []
+  (go (let [{:keys [status json]} (<! (GET "/profile/history"))]
+        (when (= 200 status)
+          (let [games (mapv #(assoc % :start-date (js/Date. (:start-date %))
+                               :end-date (js/Date. (:end-date %))) json)]
+            (swap! state assoc :games games))))))
 
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"
@@ -22,25 +31,48 @@
         others (remove #(= (:_id %) deck-id) (:decks @app-state))]
     (swap! app-state assoc :decks (conj others deck))))
 
-(ws/register-ws-handler!
-  :stats/update
-  #(do (swap! app-state assoc :stats (-> % :userstats))
-       (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
+(defmethod ws/-msg-handler :stats/update [{{:keys [userstats deck-id deckstats]} :?data}]
+  (swap! app-state assoc :stats userstats)
+  (update-deck-stats deck-id deckstats)
+  (fetch-game-history))
+
+(defn share-replay [state gameid]
+  (go (let [{:keys [status json]} (<! (GET (str "/profile/history/share/" gameid)))]
+        (when (= 200 status)
+          (swap! state assoc :view-game
+                 (assoc (:view-game @state) :replay-shared true))))))
+
+(defn- replay-link [game]
+  (str (.-origin (.-location js/window)) "/replay/" (:gameid game)))
+
+(defn launch-replay [game] (set! (.-location js/window) (replay-link game)))
 
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
-     [:h4 (:title game)]
+     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "Return to stats screen"])]]
+     [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
      [:div
-      [:div (str "Lobby: " (capitalize (str (:room game))))]
-      [:div (str "Format: " (capitalize (str (:format game))))]
-      [:div (str "Winner: " (capitalize (str (:winner game))))]
-      [:div (str "Win method: " (:reason game))]
-      [:div (str "Started: " (:start-date game))]
-      [:div (str "Ended: " (:end-date game))]
+      [:div.game-details-table
+       [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
+       [:div (str (tr [:stats.format "Format"]) ": " (capitalize (tr-format (:format game))))]
+       [:div (str (tr [:stats.winner "Winner"]) ": " (capitalize (tr-side (:winner game))))]
+       [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
+       [:div (str (tr [:stats.started "Started"]) ": " (:start-date game))]
+       [:div (str (tr [:stats.ended "Ended"]) ": " (:end-date game))]]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
-      [:p [:button {:on-click #(swap! state dissoc :view-game)} "View games"]]]]))
+      [:p
+       (when (and (:has-replay game)
+                  (not (:replay-shared game)))
+         [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
+       (if (:has-replay game)
+         [:span
+          [:button {:on-click #(launch-replay game)} (tr [:stats.launch "Launch Replay"])]
+          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]]
+         (tr [:stats.unavailable "Replay unavailable"]))]
+      (when (:replay-shared game)
+        [:p [:input.share-link {:type "text" :read-only true :value (replay-link game)}]])]]))
 
 (defn clear-user-stats []
   (authenticated
@@ -61,55 +93,62 @@
                incomplete (notnum->zero (- started completed))
                pi (notnum->zero (num->percent incomplete started))]
     [:section
-     [:div "Started: " started]
-     [:div "Completed: " completed " (" pc "%)"]
-     [:div "Not completed: " incomplete  " (" pi "%)"]
+     [:div (tr [:stats.started "Started"]) ": " started]
+     [:div (tr [:stats.completed "Completed"]) ": " completed " (" pc "%)"]
+     [:div (tr [:stats.not-completed "Not completed"]) ": " incomplete  " (" pi "%)"]
      (when-not (= "none" (get-in @app-state [:options :gamestats]))
-       [:div [:div "Won: " win  " (" pw "%)"]
-        [:div "Lost: " lose  " (" pl "%)"]])]))
+       [:div [:div (tr [:stats.won "Won"]) ": " win  " (" pw "%)"]
+        [:div (tr [:stats.lost "Lost"]) ": " lose  " (" pl "%)"]])]))
 
 (defn stats-panel [stats]
   [:div.games.panel
    [:div.games
     [:div
-     [:h3 "Game Stats"]
+     [:h3 (tr [:stats.game-stats "Game Stats"])]
      [stat-view {:stats @stats
                  :start-key :games-started :complete-key :games-completed
                  :win-key :wins :lose-key :loses}]]
     [:div
-     [:h3 "Corp Stats"]
+     [:h3 (tr [:stats.corp-stats "Corp Stats"])]
      [stat-view {:stats @stats
                  :start-key :games-started-corp :complete-key :games-completed-corp
                  :win-key :wins-corp :lose-key :loses-corp}]]
     [:div
-     [:h3 "Runner Stats"]
+     [:h3 (tr [:stats.runner-stats "Runner Stats"])]
      [stat-view {:stats @stats
                  :start-key :games-started-runner :complete-key :games-completed-runner
                  :win-key :wins-runner :lose-key :loses-runner}]]]
-   [:p [:button {:on-click #(clear-user-stats)} "Clear Stats"]]] )
+   [:p [:button {:on-click #(clear-user-stats)} (tr [:stats.clear-stats "Clear Stats"])]]] )
 
 (defn left-panel [state stats]
   (if (:view-game @state)
     [game-details state]
     [stats-panel stats]))
 
-(defn game-log [state]
-  (let [game (:view-game @state)]
-    [:div {:style {:overflow "auto"}}
-     [:div.panel.messages
-      (if (seq (:log game))
-        (doall (map-indexed
-                 (fn [i msg]
-                   (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                     (if (= (:user msg) "__system__")
-                       [:div.system {:key i} (render-message (:text msg))]
-                       [:div.message {:key i}
-                        [avatar (:user msg) {:opts {:size 38}}]
-                        [:div.content
-                         [:div.username (get-in msg [:user :username])]
-                         [:div (render-message (:text msg))]]])))
-                 (:log game)))
-        [:h4 "No log available"])]]))
+(defn game-log [state log-scroll-top]
+  (r/create-class
+    {
+     :display-name "stats-game-log"
+     :component-did-mount #(set-scroll-top % @log-scroll-top)
+     :component-will-unmount #(store-scroll-top % log-scroll-top)
+     :reagent-render
+     (fn [state log-scroll-top]
+       (let [game (:view-game @state)]
+         [:div {:style {:overflow "auto"}}
+          [:div.panel.messages
+           (if (seq (:log game))
+             (doall (map-indexed
+                      (fn [i msg]
+                        (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                          (if (= (:user msg) "__system__")
+                            [:div.system {:key i} (render-message (:text msg))]
+                            [:div.message {:key i}
+                             [avatar (:user msg) {:opts {:size 38}}]
+                             [:div.content
+                              [:div.username (get-in msg [:user :username])]
+                              [:div (render-message (:text msg))]]])))
+                      (:log game)))
+             [:h4 (tr [:stats.no-log "No log available"])])]]))}))
 
 (def faction-icon-memo (memoize faction-icon))
 
@@ -119,14 +158,21 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason] :as game}]
-  (let [corp-id (first (filter #(= (:title %) (:identity corp)) @all-cards))
-        runner-id (first (filter #(= (:title %) (:identity runner)) @all-cards))]
+  [state {:keys [title corp runner turn winner reason replay-shared has-replay start-date] :as game} log-scroll-top]
+  (let [corp-id (get @all-cards (:identity corp))
+        runner-id (get @all-cards (:identity runner))
+        turn-count (if turn turn 0)]
     [:div.gameline {:style {:min-height "auto"}}
      [:button.float-right
-      {:on-click #(fetch-log state game)}
-      "View log"]
-     [:h4 title " (" (or turn 0) " turn" (if (not= 1 turn) "s") ")"]
+      {:on-click #(do
+                    (fetch-log state game)
+                    (reset! log-scroll-top 0))}
+      (tr [:stats.view-log "View log"])]
+     [:h4.log-title
+      {:title (when replay-shared "Replay shared")}
+      title " (" (tr [:stats.turn-count] turn-count) ")" (when has-replay (if replay-shared " ⭐" " 🟢"))]
+
+     [:div.log-date (-> start-date js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
 
      [:div
       [:span.player
@@ -141,37 +187,50 @@
        (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
-       [:h4 "Winner: " winner])]))
+       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner)])]))
 
-(defn history [state]
-  (let [games (reverse (:games @state))]
-    [:div.game-panel
-     [:div.game-list
-      (if (empty? games)
-        [:h4 "No games"]
-        (doall
-          (for [game games]
-            ^{:key (:gameid game)}
-            [game-row state game])))]]))
+(defn history [state list-scroll-top log-scroll-top]
+  (r/create-class
+    {:display-name "stats-history"
+     :component-did-mount #(set-scroll-top % @list-scroll-top)
+     :component-will-unmount #(store-scroll-top % list-scroll-top)
+     :reagent-render
+     (fn [state list-scroll-top log-scroll-top]
+       (let [all-games (:games @state)
+             games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
+             cnt (count games)]
+         [:div.game-list
+           [:div.controls
+            [:button {:on-click #(swap! state update :filter-replays not)}
+             (if (:filter-replays @state)
+               (tr [:stats.all-games "Show all games"])
+               (tr [:stats.shared-games "Only show shared"]))]
+            [:span.log-count (str (tr [:stats.log-count] cnt) (when (:filter-replays @state)
+                                                                (str " " (tr [:stats.filtered "(filtered)"]))))]]
+           (if (empty? games)
+             [:h4 (tr [:stats.no-games "No games"])]
+             (doall
+               (for [game games]
+                 ^{:key (:gameid game)}
+                 [game-row state game log-scroll-top])))]))}))
 
-(defn right-panel [state]
+(defn right-panel [state list-scroll-top log-scroll-top]
   (if (:view-game @state)
-    [game-log state]
-    [history state]))
+    [game-log state log-scroll-top]
+    [:div.game-panel
+     [history state list-scroll-top log-scroll-top]]))
 
 (defn stats []
-  (r/with-let [stats (r/cursor app-state [:stats])
-               active (r/cursor app-state [:active-page])
-               state (r/atom {:games nil})]
+  (let [stats (r/cursor app-state [:stats])
+        active (r/cursor app-state [:active-page])
+        list-scroll-top (atom 0)
+        log-scroll-top (atom 0)]
 
-    (go (let [{:keys [status json]} (<! (GET "/profile/history"))
-              games (map #(assoc % :start-date (js/Date. (:start-date %))
-                                 :end-date (js/Date. (:end-date %))) json)]
-          (when (= 200 status)
-            (swap! state assoc :games games))))
+    (fetch-game-history)
 
-    (when (= "/stats" (first @active))
-      [:div.container
-       [:div.lobby.panel.blue-shade
-        [left-panel state stats]
-        [right-panel state]]])))
+    (fn []
+      (when (= "/stats" (first @active))
+        [:div.page-container
+         [:div.lobby.panel.blue-shade
+          [left-panel state stats]
+          [right-panel state list-scroll-top log-scroll-top]]]))))

@@ -4,16 +4,18 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
     [clj-uuid :as uuid]
-    [game.core.card :refer [active? facedown? get-card get-cid installed? rezzed?]]
+    [game.core.board :refer [clear-empty-remotes]]
+    [game.core.card :refer [active? facedown? get-card get-cid has-subtype? installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [unregister-floating-effects]]
+    [game.core.effects :refer [any-effects effect-pred get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
+    [game.core.prompts :refer [add-to-prompt-queue clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
+    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
+    [game.utils :refer [dissoc-in distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
     [jinteki.utils :refer [other-side]]))
 
 ;; resolve-ability docs
@@ -212,7 +214,12 @@
   [ability]
   (first (keys (select-keys ability (keys @ability-types)))))
 
-;;; Ability related function
+(defn dissoc-req
+  [ability]
+  (if-let [ab (select-ability-kw ability)]
+    (dissoc-in ability [ab :req])
+    (dissoc ability :req)))
+
 (defn should-trigger?
   "Checks if the specified ability definition should trigger.
   Checks for a :req, either in the top level map, or in an :optional or :psi sub-map
@@ -221,13 +228,15 @@
    (when ability
      (let [ab (select-ability-kw ability)]
        (cond
-         req (req state side eid card targets)
          ab (should-trigger? state side eid card targets (get ability ab))
+         req (req state side eid card targets)
          :else true)))))
 
 (defn not-used-once?
   [state {:keys [once once-key]} {:keys [cid]}]
-  (not (get-in @state [once (or once-key cid)])))
+  (if once
+    (not (get-in @state [once (or once-key cid)]))
+    true))
 
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -348,7 +357,17 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost] :as ability} card targets]
+  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
+  (when waiting-prompt
+    (add-to-prompt-queue
+      state (cond
+              player (if (= :corp player) :runner :corp)
+              (= :corp side) :runner
+              :else :corp)
+      {:eid (select-keys eid [:eid])
+       :card card
+       :prompt-type :waiting
+       :msg (str "Waiting for " waiting-prompt)}))
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
@@ -371,8 +390,10 @@
   "Handle a choices ability"
   [state side {:keys [choices eid not-distinct player prompt] :as ability} card targets]
   (let [s (or player side)
-        ab (dissoc ability :choices)
-        args (select-keys ability [:priority :cancel-effect :prompt-type :show-discard :end-effect])]
+        ab (dissoc ability :choices :waiting-prompt)
+        args (-> ability
+                 (select-keys [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (assoc :targets targets))]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -414,10 +435,11 @@
   Please refer to the documentation at the top of resolve_ability.clj for a full description."
   ([state side card message choices ability] (prompt! state side card message choices ability nil))
   ([state side card message choices ability args]
-   (show-prompt state side (:eid ability) card message choices #(resolve-ability state side ability card [%])
-                (if-let [f (:cancel-effect args)]
-                  (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
-                  args))))
+   (let [f #(resolve-ability state side ability card [%])]
+     (show-prompt state side (:eid ability) card message choices f
+                  (if-let [f (:cancel-effect args)]
+                    (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
+                    args)))))
 
 ;; EVENTS
 
@@ -621,7 +643,7 @@
     (let [handlers (gather-events state side event targets)]
       (doseq [to-resolve handlers]
         (when-let [card (card-for-ability state to-resolve)]
-          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+          (resolve-ability state side (dissoc-req (:ability to-resolve)) card targets)
           (when (:unregister-once-resolved to-resolve)
             (unregister-event-by-uuid state side (:uuid to-resolve))))))))
 
@@ -629,7 +651,7 @@
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
-      (wait-for (resolve-ability state side (make-eid state eid) (dissoc (:ability to-resolve) :req) card targets)
+      (wait-for (resolve-ability state side (make-eid state eid) (dissoc-req (:ability to-resolve)) card targets)
                 (when (:unregister-once-resolved to-resolve)
                   (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
@@ -664,21 +686,23 @@
                                (filter #(and (card-for-ability state %)
                                              (not (:disabled (card-for-ability state %))))
                                 handlers))
-                    non-silent (filter #(let [silent-fn (:silent (:ability %))]
+                    non-silent (filter #(let [silent-fn (:silent (:ability %))
+                                              card (card-for-ability state %)]
                                           (not (and silent-fn
-                                                    (silent-fn state side (make-eid state) (:card %) event-targets))))
+                                                    (silent-fn state side (make-eid state) card event-targets))))
                                        handlers)
                     titles (map :card non-silent)
-                    interactive (filter #(let [interactive-fn (:interactive (:ability %))]
+                    interactive (filter #(let [interactive-fn (:interactive (:ability %))
+                                               card (card-for-ability state %)]
                                            (and interactive-fn
-                                                (interactive-fn state side (make-eid state) (:card %) event-targets)))
+                                                (interactive-fn state side (make-eid state) card event-targets)))
                                         handlers)]
                 ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
                 (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
                   (let [to-resolve (if (= 1 (count non-silent))
                                      (first non-silent)
                                      (first handlers))
-                        ability-to-resolve (dissoc (:ability to-resolve) :req)
+                        ability-to-resolve (dissoc-req (:ability to-resolve))
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (rest handlers))]
@@ -701,7 +725,7 @@
                    :choices titles
                    :async true
                    :effect (req (let [to-resolve (some #(when (same-card? target (:card %)) %) handlers)
-                                      ability-to-resolve (dissoc (:ability to-resolve) :req)
+                                      ability-to-resolve (dissoc-req (:ability to-resolve))
                                       the-card (card-for-ability state to-resolve)]
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
@@ -802,7 +826,7 @@
   ([state event] (queue-event state event nil))
   ([state event context-map]
    (when (keyword? event)
-     (swap! state update-in [:queued-events event] conj context-map))))
+     (swap! state update-in [:queued-events event] conj (assoc context-map :event event)))))
 
 (defn make-pending-event
   [state event card ability]
@@ -833,15 +857,16 @@
                 :context [context]})))))
 
 (defn- create-handlers
-  [state eid queued-events]
-  (->> queued-events
+  [state eid event-maps]
+  (->> (gather-queued-event-handlers state event-maps)
        (mapcat create-instances)
        (filter (fn [{:keys [handler context]}]
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
-       (sort-by (complement #(is-active-player state (:handler %))))))
+       (sort-by (complement #(is-active-player state (:handler %))))
+       (seq)))
 
 (defn- trigger-queued-event-player
   [state side eid handlers {:keys [cancel-fn] :as args}]
@@ -849,7 +874,10 @@
     (effect-completed state nil eid)
     (let [handlers (when-not (and cancel-fn (cancel-fn state))
                      (filter #(let [card (card-for-ability state (:handler %))]
-                                (and card (not (:disabled card))))
+                                (and card
+                                     (not (:disabled card))
+                                     (not (apply trigger-suppress state (to-keyword (:side card))
+                                                 (get-in % [:handler :event]) card (:context %)))))
                              handlers))
           non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
                                 (not (and silent-fn
@@ -877,7 +905,7 @@
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
                                        (make-eid state eid)
-                                       (dissoc ability :req)
+                                       (dissoc-req ability)
                                        ability-card
                                        context)
                       (when (:unregister-once-resolved to-resolve)
@@ -898,7 +926,7 @@
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
                                                (make-eid state eid)
-                                               (dissoc ability :req)
+                                               (dissoc-req ability)
                                                ability-card
                                                context)
                               (when (:unregister-once-resolved to-resolve)
@@ -916,31 +944,96 @@
   [handlers player-side]
   (filterv #(is-player player-side %) handlers))
 
-(defn trigger-queued-events
-  [state _ eid args]
+(defn- mark-pending-abilities
+  [state eid args]
   (let [event-maps (:queued-events @state)]
     (doseq [[event context-map] event-maps]
       (log-event state event context-map))
-    (if (empty? event-maps)
-      (effect-completed state nil eid)
-      (let [queued-events (gather-queued-event-handlers state event-maps)
-            handlers (create-handlers state eid queued-events)
-            active-player (:active-player @state)
-            opponent (other-side active-player)
-            active-player-handlers (filter-handlers handlers active-player)
-            opponent-handlers (filter-handlers handlers opponent)]
+    (when-not (empty? event-maps)
+      (let [handlers (create-handlers state eid event-maps)]
         (swap! state assoc
                :queued-events {}
                :events (->> (:events @state)
                             (remove #(= :pending (:duration %)))
                             (into [])))
-        (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
-        (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
-                  (clear-wait-prompt state opponent)
-                  (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
-                  (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
-                            (clear-wait-prompt state active-player)
-                            (effect-completed state nil eid)))))))
+        {:handlers handlers
+         :context-maps (apply concat (vals event-maps))}))))
+
+(defn- trigger-pending-abilities
+  [state eid handlers args]
+  (if (seq handlers)
+    (let [active-player (:active-player @state)
+          opponent (other-side active-player)
+          active-player-handlers (filter-handlers handlers active-player)
+          opponent-handlers (filter-handlers handlers opponent)]
+      (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
+      (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
+                (clear-wait-prompt state opponent)
+                (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
+                (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
+                          (clear-wait-prompt state active-player)
+                          (effect-completed state nil eid))))
+    (effect-completed state nil eid)))
+
+;; CHECKPOINT
+(defn internal-trash-cards
+  [state _ eid maps]
+  (if (seq maps)
+    (let [{:keys [card value]} (first maps)]
+      (wait-for (value state nil (make-eid state eid) card)
+                (internal-trash-cards state nil eid (next maps))))
+    (effect-completed state nil eid)))
+
+(defn trash-when-expired
+  [state _ eid context-maps]
+  (if (seq context-maps)
+    (->> context-maps
+         (get-effect-maps state nil eid :trash-when-expired)
+         (internal-trash-cards state nil eid))
+    (effect-completed state nil eid)))
+
+(defn unregister-expired-durations
+  [state _ eid duration context-maps]
+  (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
+            (if duration
+              (unregister-floating-effects state nil duration)
+              (unregister-floating-events state nil duration))
+            (effect-completed state nil eid)))
+
+(defn checkpoint
+  ([state eid] (checkpoint state nil eid nil))
+  ([state _ eid] (checkpoint state nil eid nil))
+  ([state _ eid {:keys [duration] :as args}]
+   ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
+   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
+     ;; b: Any ability with a duration that has passed is removed from the game state
+     (wait-for
+       (unregister-expired-durations state nil (make-eid state eid) duration context-maps)
+       ;; c: Check winning or tying by agenda points
+       (check-win-by-agenda state)
+       ;; d: uniqueness check
+       ;; unimplemented
+       ;; e: restrictions on card abilities or game rules, MU
+       ;; unimplemented
+       ;; f: stuff on agendas moved from score zone
+       ;; unimplemented
+       ;; g: stuff on installed cards that were trashed
+       ;; unimplemented
+       ;; h: empty servers
+       (clear-empty-remotes state)
+       ;; i: card counters/agendas become cards again
+       ;; unimplemented
+       ;; j: counters in discard are returned to the bank
+       ;; unimplemented
+       ;; 10.3.2: reaction window
+       (trigger-pending-abilities state eid handlers args)))))
+
+(defn end-of-phase-checkpoint
+  ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
+  ([state _ eid event context]
+   (when event
+     (queue-event state event context))
+   (checkpoint state nil eid {:duration event})))
 
 ;; PAYMENT
 
@@ -979,26 +1072,3 @@
                                                    (assoc acc (:type cost) cost))
                                                  {}))}))))
       (complete-with-result state side eid nil))))
-
-;; CHECKPOINT
-(defn unregister-expired-durations
-  [state duration]
-  (when duration
-    (unregister-floating-effects state nil duration)
-    (unregister-floating-events state nil duration)))
-
-(defn checkpoint
-  "This only does one thing right now, but soon it will hold everything else too"
-  ([state eid] (checkpoint state nil eid nil))
-  ([state _ eid] (checkpoint state nil eid nil))
-  ([state _ eid {:keys [duration] :as args}]
-   (wait-for (trigger-queued-events state nil (make-eid state eid) args)
-             (unregister-expired-durations state duration)
-             (effect-completed state nil eid))))
-
-(defn end-of-phase-checkpoint
-  ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
-  ([state _ eid event context]
-   (when event
-     (queue-event state event context))
-   (checkpoint state nil eid {:duration event})))

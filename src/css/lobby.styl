@@ -1,0 +1,229 @@
+// Game Lobby
+
+.lobby
+    padding: 15px 0
+    margin: 8px auto
+    position: absolute
+    top: 31px
+    bottom: 5px
+    width: 995px
+    display-flex()
+
+    .clickable
+        cursor: pointer
+
+    .ctrl-menu
+        position: relative
+
+    .mod-menu
+        display: block
+        position: absolute
+        z-index: 30
+        width: 200px
+        font-size: 12px
+        line-height: 16px
+
+        > div
+            border: 1px solid white
+            padding: 3px 6px
+            border-radius: 4px
+            margin-bottom: 4px
+            cursor: pointer
+
+            &:last-child
+                margin-bottom: 0
+
+            &:hover
+                border-color: orange
+
+    .games
+        position: relative
+
+    .games, .game-panel
+        flex(1)
+        display-flex()
+        flex-direction(column)
+
+        .return-button
+            margin-bottom: 20px
+
+        .game-details-table
+            margin-bottom: 10px
+            min-width: 500px
+
+        .log-title
+            margin-bottom: 0px
+
+        .log-date
+            margin-bottom: 10px
+
+        .log-count
+            font-weight: bold
+            margin-left: 8px
+
+    .game-panel
+        border-left: 1px solid white
+        padding: 0 15px
+
+        select
+            margin-right: 10px
+            margin-bottom: 5px
+
+        p
+            margin: 4px 0
+
+    .side
+        margin-left: 5px
+
+    .button-bar
+        padding-bottom: 15px
+
+        .reload-button
+            margin-right: 50px
+
+    .games .button-bar
+        box-sizing: initial
+        padding: 0 15px 15px
+
+        .rooms
+            overflow-y: auto
+            margin-bottom: 10px
+
+        .roomtab
+            float: right
+
+        .rooms .roomtab
+            display: block
+            color: white
+            margin: 0 10px
+            line-height: 24px
+            transition(all 0.2s ease-in-out)
+
+            &:hover
+                color: orange
+                cursor: pointer
+
+            &.current
+                color: orange
+
+    .game-list
+        padding: 0 15px
+        overflow: auto
+        flex(1)
+
+        .controls
+            width: 100%
+            margin-bottom: 10px
+
+    .gameline
+        min-height: 53px
+        border: 1px solid white
+        border-radius: 4px
+        padding: 5px 10px
+        margin-bottom: 5px
+        clear: both
+
+        .game-format
+            margin-bottom: 10px
+
+        .format-label
+            font-weight: bold
+
+        .player
+            &:first-child:after
+                content: "vs"
+                margin: 0 8px
+                font-weight: bold
+
+            &:last-child:after
+                display: none
+
+        > button
+            float: right
+            margin-top: 9px
+
+        .password-prompt
+            position: absolute
+            z-index: 50
+            top: 0
+            left: 100%
+            margin-left: 15px
+            border-radius: 4px
+
+            button
+                text-transform: capitalize
+                margin-right: 12px
+
+    .game-panel
+        position: relative
+
+        .content
+            overflow: auto
+
+        > div
+            position: absolute
+            top: 0
+            bottom: 0
+            left: 15px
+            right: 15px
+            display-flex()
+            flex-direction(column)
+
+        .button-bar button
+            min-width: 80px
+            margin-right: 5px
+
+        .players
+            height: 65px
+            clear: both
+
+            > div
+                margin: 8px 0
+
+            .player
+                line-height: 22px
+
+            .label
+                text-align: center
+                color: inherit
+                border-color: inherit
+                margin-right: 0
+                text-overflow: ellipsis
+                white-space: nowrap
+                overflow: hidden
+                max-width: 187px
+
+            .fake-link
+                margin-left: 10px
+
+        .options
+            margin-left: 20px
+
+        .spectators
+            height: 65px
+
+            .player
+                margin-right: 12px
+
+        .chat-box .message-list
+            height: 298px
+            min-height: 200px
+            max-height: 200px
+            width: 100%
+            border: 1px solid white
+            border-radius: 4px
+            margin-bottom: 5px
+            overflow: auto
+            padding: 5px 10px
+
+    .game-title
+        width: 250px
+
+    .games .share-link
+        width: 500px
+
+
+.lobby-deck-selector
+  width: 496px
+  max-height: 355px
+  padding: 0

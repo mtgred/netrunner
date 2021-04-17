@@ -1,5 +1,6 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case includes?]]))
+  (:require [clojure.string :refer [lower-case includes?]]
+            [medley.core :refer [find-first]]))
 
 (defrecord Card
   [advancementcost
@@ -121,6 +122,11 @@
   [card]
   (= (get-zone card) [:scored]))
 
+(defn in-rfg?
+  "Checks if the specified card is in the 'remove from game' zone"
+  [card]
+  (= (get-zone card) [:rfg]))
+
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
   as either a string or a keyword"
@@ -212,11 +218,7 @@
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
   [card subtype]
-  (letfn [(contains-sub? [card]
-            (when-let [sub (:subtype card)]
-              (includes? (lower-case sub) (lower-case subtype))))]
-    (or (contains-sub? card)
-        (contains-sub? (:persistent card)))))
+  (find-first #(= % subtype) (:subtypes card)))
 
 (defn virus-program?
   [card]
@@ -282,12 +284,8 @@
 (defn get-counters
   "Get number of counters of specified type."
   [card counter]
-  (cond
-    (= counter :advancement)
+  (if (= counter :advancement)
     (+ (:advance-counter card 0) (:extra-advance-counter card 0))
-    (= counter :recurring)
-    (:rec-counter card 0)
-    :else
     (get-in card [:counter counter] 0)))
 
 (defn assoc-host-zones
@@ -323,10 +321,13 @@
         card))))
 
 (defn- same-card?
-  "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
+  "Checks if the two cards are the same by `:cid`. Returns false if both cards
+  do not have `:cid`. Alternatively specify 1-function to use to check the card."
   ([card1 card2] (same-card? :cid card1 card2))
   ([func card1 card2]
-    (= (func card1) (func card2))))
+   (let [r1 (func card1)
+         r2 (func card2)]
+     (and r1 r2 (= r1 r2)))))
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
@@ -344,3 +345,36 @@
   [state card]
   (or (:index card)
       (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (get-zone card)))))))
+
+(defn is-public?
+  "Returns if a given card should be visible to the opponent"
+  ([card] (is-public? (to-keyword (:side card))))
+  ([card side]
+   ;; public cards for both sides:
+   ;; * identity
+   ;; * in a public zone: score area, current, play area, remove from game
+   (or (identity? card)
+       (in-scored? card)
+       (in-current? card)
+       (in-play-area? card)
+       (in-rfg? card)
+       (if (= side :corp)
+         ;; public runner cards:
+         ;; * installed/hosted and not facedown
+         ;; * in heap
+         (or (corp? card)
+             (and (or (installed? card)
+                      (:host card))
+                  (not (facedown? card)))
+             (in-discard? card))
+         ;; public corp cards:
+         ;; * installed and rezzed
+         ;; * in archives and faceup
+         (or (runner? card)
+             (and (or (installed? card)
+                      (:host card))
+                  (or (operation? card)
+                      (condition-counter? card)
+                      (rezzed? card)))
+             (and (in-discard? card)
+                  (faceup? card)))))))

@@ -1,11 +1,12 @@
 (ns game.core.hosting
   (:require
-    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card rezzed? runner?]]
+    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card installed? program? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects unregister-floating-effects]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [register-events unregister-events]]
     [game.core.initializing :refer [card-init]]
+    [game.core.memory :refer [update-mu]]
     [game.core.update :refer [update! update-hosted!]]
     [game.utils :refer [remove-once]]))
 
@@ -20,7 +21,7 @@
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))
-  ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown]}]
+  ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown no-mu]}]
    (when (not= cid (:cid card))
      (unregister-events state side target)
      (unregister-constant-effects state side target)
@@ -34,31 +35,41 @@
      (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
      (let [card (get-card state card)
            card (assoc-host-zones card)
-           c (assoc target :host (dissoc card :hosted)
-                           :facedown facedown
-                           :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
-                           :previous-zone (:zone target))
+           c (assoc target
+                    :host (dissoc card :hosted)
+                    :facedown facedown
+                    :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
+                    :previous-zone (:zone target))
            ;; Update any cards hosted by the target, so their :host has the updated zone.
            c (update c :hosted #(map (fn [h] (assoc h :host c)) %))
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update card :hosted conj c))
        ;; events should be registered for condition counters
-       (when (or (condition-counter? target)
+       (when (or (condition-counter? c)
                  (and installed
-                      (or (runner? target)
-                          (and (corp? target)
-                               (rezzed? target)))))
+                      (or (runner? c)
+                          (and (corp? c)
+                               (rezzed? c)))))
          (if (or (:recurring tdef)
                  (:prevent tdef)
                  (:corp-abilities tdef)
                  (:runner-abilities tdef))
            ;; Initialize the whole card
            (card-init state side c {:resolve-effect false
-                                    :init-data true})
+                                    :init-data true
+                                    :no-mu no-mu})
            ;; Otherwise just register events and constant effects
            (do (register-events state side c)
-               (register-constant-effects state side c))))
+               (register-constant-effects state side c)
+               (when (and (program? c)
+                          (not no-mu))
+                 (register-floating-effect
+                   state side c
+                   {:type :used-mu
+                    :duration :constant
+                    :value (:memoryunits c)})
+                 (update-mu state)))))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [c]))
        ;; Update all constant and floating effects

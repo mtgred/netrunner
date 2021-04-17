@@ -2,40 +2,33 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [split split-lines join escape lower-case] :as s]
-            [goog.string :as gstring]
-            [goog.string.format]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.validator :as validator]
             [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
-            [nr.account :refer [load-alt-arts]]
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
-            [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
+            [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
             [nr.deck-status :refer [deck-status-span]]
-            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
-                              influence-dots make-dots restricted-span rotated-span
-                              slug->format checkbox-button cond-button]]
-            [reagent.core :as r]))
+            [nr.history :refer [history]]
+            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot set-scroll-top store-scroll-top
+                              influence-dots make-dots restricted-span rotated-span num->percent
+                              slug->format format->slug checkbox-button cond-button non-game-toast]]
+            [nr.translations :refer [tr tr-type tr-side tr-format tr-faction]]
+            [nr.ws :as ws]
+            [reagent.core :as r]
+            [reagent-modals.modals :as reagent-modals]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
 
 (defonce db-dom (atom {}))
 
-
 (defn- format-status-impl
   [format card]
   (keyword (get-in card [:format (keyword format)] "unknown")))
 
 (def format-status (fnil format-status-impl :standard {}))
-
-(defn num->percent
-  "Converts an input number to a percent of the second input number for display"
-  [num1 num2]
-  (if (zero? num2)
-    "0"
-    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn identical-cards?
   [cards]
@@ -45,7 +38,8 @@
 (defn no-inf-cost?
   [identity card]
   (or (= (:faction card) (:faction identity))
-      (= 0 (:factioncost card)) (= INFINITY (validator/id-inf-limit identity))))
+      (= 0 (:factioncost card))
+      (= INFINITY (validator/id-inf-limit identity))))
 
 (defn take-best-card
   "Returns a non-rotated card from the list of cards or a random rotated card from the list"
@@ -63,35 +57,30 @@
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
-  (let [q (lower-case (:title card ""))
-        id (:id card)
-        cards (filter #(= (:side %) side) @all-cards)
-        exact-matches (filter-exact-title q cards)
+  (let [id (:id card)
+        cards (filter #(= (:side %) side) (vals @all-cards))
         first-id (first (filter #(= id (:code %)) cards))]
-    (cond
-
-      (and id first-id)
+    (if (and id first-id)
       first-id
+      (let [q (lower-case (:title card ""))
+            exact-matches (filter-exact-title q cards)]
+        (if (not-empty exact-matches)
+          (take-best-card exact-matches)
+          (loop [i 2
+                 matches cards]
+            (let [subquery (subs q 0 i)]
+              (cond
+                (zero? (count matches))
+                card
 
-      (not-empty exact-matches)
-      (take-best-card exact-matches)
+                (or (= (count matches) 1) (identical-cards? matches))
+                (take-best-card matches)
 
-      :else
-      (loop [i 2
-             matches cards]
-        (let [subquery (subs q 0 i)]
-          (cond
-            (zero? (count matches))
-            card
+                (<= i (count (:title card)))
+                (recur (inc i) (filter-title subquery matches))
 
-            (or (= (count matches) 1) (identical-cards? matches))
-            (take-best-card matches)
-
-            (<= i (count (:title card)))
-            (recur (inc i) (filter-title subquery matches))
-
-            :else
-            card))))))
+                :else
+                card))))))))
 
 (defn- build-identity-name
   [title setname]
@@ -101,7 +90,7 @@
 
 (defn parse-identity
   "Parse an id to the corresponding card map"
-  [{:keys [side title setname]}]
+  [{:keys [side title setname code]}]
   (if (nil? title)
     {:display-name "Missing Identity"}
     (let [card (lookup side {:title title})]
@@ -193,9 +182,8 @@
       (assoc deck :cards cards :parsed? true))))
 
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)
-        updated-decks (map process-cards-in-deck decks)]
-    (swap! app-state assoc :decks updated-decks)
+  (let [decks (sort-by :date > decks)]
+    (swap! app-state assoc :decks decks)
     (swap! app-state assoc :decks-loaded true)))
 
 (defn- add-deck-name
@@ -281,13 +269,9 @@
                 (end-delete s))))))))
 
 (defn side-identities [side]
-  (let [cards (->> @all-cards
+  (let [cards (->> (vals @all-cards)
                    (filter #(and (= (:side %) side)
-                                 (= (:type %) "Identity")))
-                   (sort-by :code)
-                   (group-by :title)
-                   vals
-                   (map last))
+                                 (= (:type %) "Identity"))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (map add-deck cards)))
@@ -306,6 +290,30 @@
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
+
+(defn- send-import [s]
+  (ws/ws-send! [:decks/import {:input (:msg @s)}])
+  (reagent-modals/close-modal!))
+
+(defn import-deck-modal []
+  (r/with-let [s (r/atom {})]
+    [:div
+     [:h3 (tr [:deck-builder.import-title "Enter a Public NRDB Deck ID or URL"])]
+     [:p [:input.url {:type "text"
+                      :id "nrdb-input"
+                      :placeholder (tr [:deck-builder.import-placeholder "NRDB ID"])
+                      :value (:msg @s)
+                      :on-key-press #(when (= 13 (.. % -charCode))
+                                       (send-import s))
+                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+     [:p.float-right
+      (let [disabled (empty? (:msg @s))]
+        [:button
+         {:disabled disabled
+          :class (when disabled "disabled")
+          :on-click #(send-import s)}
+         (tr [:deck-builder.import "Import"])])
+      [:button {:on-click #(reagent-modals/close-modal!)} (tr [:deck-builder.cancel "Cancel"])]]]))
 
 (defn load-decks-from-json
   [json]
@@ -396,7 +404,7 @@
     (step coll #{})))
 
 (defn match [identity query]
-  (->> @all-cards
+  (->> (vals @all-cards)
        (filter #(validator/allowed? % identity))
        (distinct-by :title)
        (filter-title query)
@@ -453,7 +461,7 @@
 (defn handle-add [s card-state event]
   (.preventDefault event)
   (let [qty (str->int (:quantity @card-state))
-        card (nth (:matches @card-state) (:selected @card-state))
+        card (nth (:matches @card-state) (:selected @card-state) nil)
         best-card (lookup (:side card) card)]
     (if (js/isNaN qty)
       (swap! card-state assoc :quantity 3)
@@ -474,10 +482,10 @@
                             :selected 0})]
     (fn [s]
       [:div
-       [:h3 "Add cards"]
+       [:h3 (tr [:deck-builder.add-cards "Add cards"])]
        [:form.card-search {:on-submit #(handle-add s card-state %)}
         [:input.lookup {:type "text"
-                        :placeholder "Card name"
+                        :placeholder (tr [:deck-builder.card-name "Card name"])
                         :value (:query @card-state)
                         :on-change #(swap! card-state assoc :query (.. % -target -value))
                         :on-key-down #(handle-keydown card-state %)}]
@@ -485,7 +493,10 @@
         [:input.qty {:type "text"
                      :value (:quantity @card-state)
                      :on-change #(swap! card-state assoc :quantity (.. % -target -value))}]
-        [:button "Add to deck"]
+        [:button (let [disabled (empty? (:matches @card-state))]
+                   {:disabled disabled
+                    :class (when disabled "disabled")})
+         (tr [:deck-builder.add-to-deck "Add to deck"])]
         (let [query (:query @card-state)
               matches (match (get-in @s [:deck :identity]) query)
               exact-match (= (:title (first matches)) query)]
@@ -512,10 +523,11 @@
                          (:title (nth matches i))]))])))]])))
 
 (defn deck-name
-  [deck]
-  (let [deck-name (:name deck)]
-  (str (s/trim (subs deck-name 0 40))
-       (when (< 40 (count deck-name)) "..."))))
+  ([deck] (deck-name deck 40))
+  ([deck limit]
+   (let [deck-name (:name deck)]
+     (str (s/trim (subs deck-name 0 limit))
+          (when (< limit (count deck-name)) "...")))))
 
 (defn deck-date
   [deck]
@@ -523,7 +535,7 @@
 
 (defn deck-entry
   [s deck]
-  [:div.deckline {:class (when (= deck (:deck @s)) "active")
+  [:div.deckline {:class (when (= (:_id deck) (:_id (:deck @s))) "active")
                   :on-click #(put! select-channel deck)}
    [:img {:src (image-url (:identity deck))
           :alt (get-in deck [:identity :title] "")}]
@@ -540,28 +552,77 @@
             wins (or (:wins stats) 0)
             losses (or (:loses stats) 0)]
         ; adding key :games to handle legacy stats before adding started vs completed
-        [:span "  Games: " (+ started games)
-         " - Completed: " (+ completed games)
-         " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
-         " - Lost: " losses]))]])
+        [:span "  " (tr [:deck-builder.games "Games"]) ": " (+ started games)
+         " - " (tr [:deck-builder.completed "Completed"]) ": " (+ completed games)
+         " - " (tr [:deck-builder.won "Won"]) ": " wins " (" (num->percent wins (+ wins losses)) "%)"
+         " - " (tr [:deck-builder.lost "Lost"]) ": " losses]))]])
+
+(def all-sides-filter "Any Side")
+(def all-factions-filter "Any Faction")
+(def all-formats-filter "Any Format")
+
+(defn- filter-side [state decks]
+  (let [side (:side-filter @state)]
+    (if (= all-sides-filter (:side-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :side]) side) decks))))
+
+(defn- filter-faction [state decks]
+  (let [faction (:faction-filter @state)]
+    (if (= all-factions-filter (:faction-filter @state))
+      decks
+      (filter #(= (get-in % [:identity :faction]) faction) decks))))
+
+(defn- filter-format [state decks]
+  (let [fmt (:format-filter @state)
+        fmt-slug (format->slug fmt)]
+    (if (= all-formats-filter fmt)
+      decks
+      (filter #(= (:format %) fmt-slug) decks))))
+
+(defn- filter-selected [state]
+  (not (and (= all-sides-filter (:side-filter @state))
+            (= all-factions-filter (:faction-filter @state))
+            (= all-formats-filter (:format-filter @state)))))
+
+(defn decks-list [filtered-decks s scroll-top]
+  (r/create-class
+    {
+     :display-name "deck-collection"
+     :component-did-mount #(set-scroll-top % @scroll-top)
+     :component-will-unmount #(store-scroll-top % scroll-top)
+     :reagent-render
+     (fn [filtered-decks s scroll-top]
+       [:div.deck-collection
+        (doall
+          (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
+            ^{:key (:_id deck)}
+            [deck-entry s deck]))])}))
 
 (defn deck-collection
-  [s decks decks-loaded]
-  [:div.deck-collection
-   (when-not (:edit @s)
-     (cond
+  [s decks decks-loaded scroll-top]
+  (when-not (:edit @s)
+    (cond
 
-       (not @decks-loaded)
-       [:h4 "Loading deck collection..."]
+      (not @decks-loaded)
+      [:div.deck-collection
+       [:h4 (tr [:deck-builder.loading-msg "Loading deck collection..."])]]
 
-       (empty? @decks)
-       [:h4 "No decks"]
+      (empty? @decks)
+      [:div.deck-collection
+       [:h4 (tr [:deck-builder.no-decks "No decks"])]]
 
-       :else
-       (doall
-         (for [deck (sort-by :date > @decks)]
-           ^{:key (:_id deck)}
-           [deck-entry s deck]))))])
+      :else
+      (let [filtered-decks (->> @decks
+                                (filter-side s)
+                                (filter-faction s)
+                                (filter-format s))
+            n (count filtered-decks)
+            deck-str (tr [:deck-builder.deck-count] n)]
+        [:<>
+         [:div.deck-count
+          [:h4 (str deck-str (when (filter-selected s) (str "  " (tr [:deck-builder.filtered "(filtered)"]))))]]
+         [decks-list filtered-decks s scroll-top]]))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -621,46 +682,47 @@
     [:div.header
      [:img {:src (image-url id)
             :alt (:title id)}]
-     [:h4 {:class (if (= :legal (format-status (:format deck) id)) "fake-link" "casual")
-           :on-mouse-enter #(put! zoom-channel {:card id
-                                                :art (:art id)
-                                                :id (:id id)})
-           :on-mouse-leave #(put! zoom-channel false) }
-      (:title id)
-      (case (format-status (:format deck) id)
-        :banned banned-span
-        :restricted restricted-span
-        :rotated rotated-span
-        "")]
-     (let [count (validator/card-count cards)
-           min-count (validator/min-deck-size id)]
-       [:div count " cards"
-        (when (< count min-count)
-          [:span.invalid (str " (minimum " min-count ")")])])
-     (let [inf (validator/influence-count deck)
-           id-limit (validator/id-inf-limit id)]
-       [:div "Influence: "
-        ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
-        [:span {:class (if (> inf id-limit)
-                         (if (> inf id-limit)
-                           "invalid"
-                           "casual")
-                         "legal")}
-         inf]
-        "/" (if (= INFINITY id-limit) "∞" id-limit)
-        " "
-        (if (pos? inf)
-          (deck-influence-html deck))])
-     (when (= (:side id) "Corp")
-       (let [min-point (validator/min-agenda-points deck)
-             points (validator/agenda-points deck)]
-         [:div "Agenda points: " points
-          (when (< points min-point)
-            [:span.invalid " (minimum " min-point ")"])
-          (when (> points (inc min-point))
-            [:span.invalid " (maximum " (inc min-point) ")"])]))
-     [:div [deck-status-span deck true true false]]
-     (when (:hash deck) [:div "Tournament hash: " (:hash deck)])]))
+     [:div.header-text
+      [:h4 {:class (if (= :legal (format-status (:format deck) id)) "fake-link" "casual")
+            :on-mouse-enter #(put! zoom-channel {:card id
+                                                 :art (:art id)
+                                                 :id (:id id)})
+            :on-mouse-leave #(put! zoom-channel false) }
+       (:title id)
+       (case (format-status (:format deck) id)
+         :banned banned-span
+         :restricted restricted-span
+         :rotated rotated-span
+         "")]
+      (let [count (validator/card-count cards)
+            min-count (validator/min-deck-size id)]
+        [:div count (str " " (tr [:deck-builder.cards "cards"]))
+         (when (< count min-count)
+           [:span.invalid (str " (" (tr [:deck-builder.min "minimum"]) " " min-count ")")])])
+      (let [inf (validator/influence-count deck)
+            id-limit (validator/id-inf-limit id)]
+        [:div (str (tr [:deck-builder.influence "Influence"]) ": ")
+         ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
+         [:span {:class (if (> inf id-limit)
+                          (if (> inf id-limit)
+                            "invalid"
+                            "casual")
+                          "legal")}
+          inf]
+         "/" (if (= INFINITY id-limit) "∞" id-limit)
+         " "
+         (if (pos? inf)
+           (deck-influence-html deck))])
+      (when (= (:side id) "Corp")
+        (let [min-point (validator/min-agenda-points deck)
+              points (validator/agenda-points deck)]
+          [:div (str (tr [:deck-builder.agenda-points "Agenda points"]) ": " points)
+           (when (< points min-point)
+             [:span.invalid " (" (tr [:deck-builder.min "minimum"]) " " min-point ")"])
+           (when (> points (inc min-point))
+             [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
+      [:div [deck-status-span deck true true false]]
+      (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]]))
 
 (defn decklist-contents
   [s deck cards]
@@ -669,7 +731,7 @@
      (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
        ^{:key (or (first group) "Unknown")}
        [:div.group
-        [:h4 (str (or (first group) "Unknown") " (" (validator/card-count (last group)) ")") ]
+        [:h4 (str (tr-type (or (first group) "Unknown")) " (" (validator/card-count (last group)) ")") ]
         (doall
           (for [line (sort-by #(get-in % [:card :title]) (last group))]
             ^{:key (or (get-in line [:card :code]) line)}
@@ -688,26 +750,37 @@
                 [line-name-span deck line]]
                [line-span deck line])]))]))])
 
+(defn decklist-notes
+  [deck]
+  [:div.notes (:notes deck "")])
+
 (defn edit-buttons
   [s]
   [:div.button-bar
-   [:button {:on-click #(save-deck s)} "Save"]
-   [:button {:on-click #(cancel-edit s)} "Cancel"]])
+   [:button {:on-click #(save-deck s)} (tr [:deck-builder.save "Save"])]
+   [:button {:on-click #(cancel-edit s)} (tr [:deck-builder.cancel "Cancel"])]])
 
 (defn delete-buttons
   [s]
   [:div.button-bar
-   [:button {:on-click #(handle-delete s)} "Confirm Delete"]
-   [:button {:on-click #(end-delete s)} "Cancel"]])
+   [:button {:on-click #(handle-delete s)} (tr [:deck-builder.confirm-delete "Confirm Delete"])]
+   [:button {:on-click #(end-delete s)} (tr [:deck-builder.cancel "Cancel"])]])
 
 (defn view-buttons
   [s deck]
   [:div.button-bar
-   [:button {:on-click #(edit-deck s)} "Edit"]
-   [:button {:on-click #(delete-deck s)} "Delete"]
+   [:button {:on-click #(edit-deck s)} (tr [:deck-builder.edit "Edit"])]
+   [:button {:on-click #(delete-deck s)} (tr [:deck-builder.delete "Delete"])]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
-     [:button {:on-click #(clear-deck-stats s)} "Clear Stats"])])
+     [:button {:on-click #(clear-deck-stats s)} (tr [:deck-builder.clear-stats "Clear Stats"])])
+   (let [disabled (or (:editing-game @app-state false) (:gameid @app-state false))]
+     [:button.float-right {:on-click #(do
+                                        (swap! app-state assoc :create-game-deck (:deck @s))
+                                        (.setToken history "/play"))
+                           :disabled disabled
+                           :class (when disabled "disabled")}
+      (tr [:deck-builder.create-game "Create Game"])])])
 
 (defn selected-panel
   [s]
@@ -722,15 +795,17 @@
           :else [view-buttons s deck])
         [:h3 (:name deck)]
         [decklist-header deck cards]
-        [decklist-contents s deck cards]]))])
+        [decklist-contents s deck cards]
+        (when-not (:edit @s)
+          [decklist-notes deck])]))])
 
 (defn deck-name-editor
   [s]
   [:div
-   [:h3 "Deck name"]
+   [:h3 (tr [:deck-builder.deck-name "Deck name"])]
    [:input.deckname
     {:type "text"
-     :placeholder "Deck name"
+     :placeholder (tr [:deck-builder.deck-name "Deck name"])
      :ref #(swap! db-dom assoc :deckname %)
      :value (get-in @s [:deck :name])
      :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]])
@@ -738,12 +813,13 @@
 (defn format-editor
   [s]
   [:div
-   [:h3 "Format"]
+   [:h3 (tr [:deck-builder.format "Format"])]
    [:select.format {:value (get-in @s [:deck :format] "standard")
                     :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
-    (for [[k v] slug->format]
-      ^{:key k}
-      [:option {:value k} v])]])
+    (doall
+      (for [[k v] slug->format]
+        ^{:key k}
+        [:option {:value k} (tr-format v)]))]])
 
 (defn- identity-option-string
   [card]
@@ -760,7 +836,7 @@
 (defn identity-editor
   [s]
   [:div
-   [:h3 "Identity"]
+   [:h3 (tr [:deck-builder.identity "Identity"])]
    [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))
                       :on-change #(swap! s assoc-in [:deck :identity] (create-identity s %))}
     (let [idents (side-identities (get-in @s [:deck :identity :side]))]
@@ -789,6 +865,14 @@
               :value (:deck-edit @s)
               :on-change #(handle-edit s)}])
 
+(defn notes-textbox
+  [s]
+  [:textarea.notes-edit
+   {:placeholder (tr [:deck-builder.deck-notes "Deck notes"])
+    :ref #(swap! db-dom assoc :deck-notes %)
+    :value (get-in @s [:deck :notes])
+    :on-change #(swap! s assoc-in [:deck :notes] (.. % -target -value))}])
+
 (defn edit-panel
   [s]
   [:div.deckedit
@@ -797,26 +881,94 @@
    [identity-editor s]
    [card-lookup s]
    [:div
-    [:h3 "Decklist"
-     [:span.small "(Type or paste a decklist, it will be parsed)"]]]
-   [edit-textbox s]])
+    [:h3 (tr [:deck-builder.decklist "Decklist"])
+     [:span.small (tr [:deck-builder.decklist-inst "(Type or paste a decklist, it will be parsed)"])]]]
+   [edit-textbox s]
+   [:div
+    [:h3 (tr [:deck-builder.notes "Notes"])]]
+   [notes-textbox s]])
+
+(defn- reset-deck-filters [state]
+  (swap! state assoc
+         :side-filter all-sides-filter
+         :faction-filter all-factions-filter
+         :format-filter all-formats-filter))
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
-   [cond-button "New Corp deck" (and @user @decks-loaded) #(new-deck s "Corp")]
-   [cond-button "New Runner deck" (and @user @decks-loaded) #(new-deck s "Runner")]])
+   [cond-button (tr [:deck-builder.new-corp "New Corp deck"])
+   (and @user @decks-loaded) #(do
+                                (reset-deck-filters s)
+                                (new-deck s "Corp"))]
+   [cond-button (tr [:deck-builder.new-runner "New Runner deck"])
+    (and @user @decks-loaded) #(do
+                                 (reset-deck-filters s)
+                                 (new-deck s "Runner"))]
+   [cond-button (tr [:deck-builder.import-button "Import deck"]) (and @user @decks-loaded)
+    #(reagent-modals/modal! [import-deck-modal]
+                            {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
+
+(defn- simple-filter-builder
+  [state state-key options decks-loaded callback scroll-top translator]
+  [:select.deckfilter-select {:class (if-not @decks-loaded "disabled" state-key)
+                              :value (get @state state-key)
+                              :on-change #(let [old-value (get @state state-key)
+                                                new-value (.. % -target -value)]
+                                            (swap! state assoc state-key new-value)
+                                            (reset! scroll-top 0)
+                                            (when callback
+                                              (callback state old-value new-value)))}
+   (doall
+     (for [option options]
+       ^{:key option}
+       [:option.deckfilter-option {:value option
+                                   :key option
+                                   :dangerouslySetInnerHTML #js {:__html (translator option)}}]))])
+
+(defn- handle-side-changed [state old-value new-value]
+  (swap! state assoc :faction-filter all-factions-filter))
+
+(defn- filter-builder
+  [state decks-loaded scroll-top]
+  (let [formats (-> format->slug keys butlast)]
+    [:div.deckfilter
+     (doall
+       (for [[state-key options callback translator]
+             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed tr-side]
+              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil tr-faction]
+              [:format-filter (cons all-formats-filter formats) nil tr-format]]]
+         ^{:key state-key}
+         [simple-filter-builder state state-key options decks-loaded callback scroll-top translator]))
+
+     [:button {:class (if-not @decks-loaded "disabled" "")
+               :on-click #(reset-deck-filters state)}
+      (tr [:deck-builder.reset "Reset"])]]))
+
+(defn- zoom-card-view [card state]
+  [card state]
+  (when-let [url (image-url card)]
+    [:div.card-preview.blue-shade
+     [:img {:src url
+            :alt (:title card)}]]))
 
 (defn list-panel
-  [s user decks decks-loaded]
+  [s user decks decks-loaded scroll-top]
   [:div.decks
    [collection-buttons s user decks-loaded]
-   [deck-collection s decks decks-loaded]
+   [filter-builder s decks-loaded scroll-top]
+   [deck-collection s decks decks-loaded scroll-top]
    [:div {:class (when (:edit @s) "edit")}
     (when-let [line (:zoom @s)]
       (let [art (:art line)
             id (:id line)
             updated-card (add-params-to-card (:card line) id art)]
-        [card-view updated-card s]))]])
+        [zoom-card-view updated-card s]))]])
+
+(defn- class-for-state [s]
+  (cond
+    (:edit @s) "edit"
+    (:delete @s) "delete"
+    :else ""))
 
 (defn deck-builder
   "Make the deckbuilder view"
@@ -824,29 +976,44 @@
   (let [active (r/cursor app-state [:active-page])
         s (r/atom {:edit false
                    :old-deck nil
-                   :deck nil})
+                   :deck nil
+                   :side-filter all-sides-filter
+                   :faction-filter all-factions-filter
+                   :format-filter all-formats-filter})
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
-        decks-loaded (r/cursor app-state [:decks-loaded])]
-    (when (= "/deckbuilder" (first @active))
+        decks-loaded (r/cursor app-state [:decks-loaded])
+        scroll-top (atom 0)]
 
-      (go (while true
-            (let [card (<! zoom-channel)]
-              (swap! s assoc :zoom card))))
-      (go (while true
-            (let [deck (<! select-channel)]
-              (end-delete s)
-              (set-deck-on-state s deck))))
-      (fn []
-        [:div.deckbuilder.blue-shade.panel
-         [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
-          [list-panel s user decks decks-loaded]
-          [selected-panel s]
-          [edit-panel s]]]))))
+    (go (while true
+          (let [card (<! zoom-channel)]
+            (swap! s assoc :zoom card))))
+    (go (while true
+          (let [deck (<! select-channel)]
+            (end-delete s)
+            (set-deck-on-state s deck))))
+
+    (fn []
+      (when (= "/deckbuilder" (first @active))
+        [:div.container
+         [:div.deckbuilder.blue-shade.panel
+          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
+                          :class (class-for-state s)}
+           [list-panel s user decks decks-loaded scroll-top]
+           [selected-panel s]
+           [edit-panel s]]]]))))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))
           decks (load-decks-from-json json)]
       (load-decks decks)
-      (load-alt-arts)
       (>! cards-channel cards)))
+
+(defmethod ws/-msg-handler :decks/import-failure [{data :?data}]
+  (non-game-toast data "error" nil))
+
+(defmethod ws/-msg-handler :decks/import-success [{data :?data}]
+  (non-game-toast data "success" nil)
+  (go (let [json (:json (<! (GET (str "/data/decks"))))
+            decks (load-decks-from-json json)]
+        (load-decks decks))))

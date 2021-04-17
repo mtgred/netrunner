@@ -1,6 +1,10 @@
 (ns nr.utils
   (:require [clojure.string :refer [join lower-case split] :as s]
-            [jinteki.cards :refer [all-cards]]))
+            [reagent.dom :as rd]
+            [goog.string :as gstring]
+            [goog.string.format]
+            [medley.core :refer [find-first]]
+            [nr.appstate :refer [app-state]]))
 
 ;; Dot definitions
 (def zws "\u200B")                  ; zero-width space for wrapping dots
@@ -58,6 +62,7 @@
       "Shaper" (icon-span "shaper")
       "Sunny Lebeau" (icon-span "sunny")
       "Weyland Consortium" (icon-span "weyland")
+      "Neutral" [:span.side ""]
       [:span.side "(Unknown)"])))
 
 ;; Shared function options
@@ -95,21 +100,21 @@
 
 (def slug->format
   {"standard" "Standard"
+   "system-gateway" "System Gateway"
+   "startup" "Startup"
    "eternal" "Eternal"
-   "core-experience" "Core Experience"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "socr" "SOCR"
    "classic" "Classic"
    "casual" "Casual"})
 
 (def format->slug
   {"Standard" "standard"
+   "System Gateway" "system-gateway"
+   "Startup" "startup"
    "Eternal" "eternal"
-   "Core Experience" "core-experience"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "SOCR" "socr"
    "Classic" "classic"
    "Casual" "casual"})
 
@@ -164,15 +169,17 @@
       (map (fn [[k v]] [(regex-of k) (span-of v)]))
       (sort-by (comp count str first) >))))
 
-(defn card-patterns-impl []
+(defn card-patterns-impl
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
-  (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])]
-    (->> @all-cards
-         (filter #(not (:replaced_by %)))
-         (map (juxt :title :code))
-         (map (fn [[k v]] [k (span-of k v)]))
-         (sort-by (comp count str first) >))))
+  []
+  (letfn [(span-of [title code] [:span {:class "fake-link" :data-card-title title} title])]
+    (->> (:all-cards-and-flips @app-state)
+      (vals)
+      (filter #(not (:replaced_by %)))
+      (map (juxt :title :code))
+      (map (fn [[k v]] [k (span-of k v)]))
+      (sort-by (comp count str first) >))))
 
 (def card-patterns (memoize card-patterns-impl))
 
@@ -181,10 +188,11 @@
   of the text should be tested as one pass is far faster than 1500 passes"
   []
   (re-pattern
-    (->> @all-cards
-      (filter #(not (:replaced_by %)))
-      (map (fn [k] (regex-escape (:title k))))
-      (join "|"))))
+    (->> (:all-cards-and-flips @app-state)
+         (vals)
+         (filter #(not (:replaced_by %)))
+         (map (fn [k] (regex-escape (:title k))))
+         (join "|"))))
 
 (def contains-card-pattern (memoize contains-card-pattern-impl))
 
@@ -276,3 +284,45 @@
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
   (if (pos? (int input)) input 0))
+
+(defn num->percent
+  "Converts an input number to a percent of the second input number for display"
+  [num1 num2]
+  (if (zero? num2)
+    "0"
+    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
+
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
+(defn set-scroll-top
+  "Set the scrollTop parameter of a reagent component"
+  [this scroll-top]
+  (let [node (rd/dom-node this)]
+    (set! (.-scrollTop node) scroll-top)))
+
+(defn store-scroll-top
+  "Store the scrollTop parameter of a reagent component in an atom"
+  [this scroll-top-atom]
+  (let [h (.-scrollTop (rd/dom-node this))]
+    (reset! scroll-top-atom h)))
+
+(defn get-image-path
+  [images lang res art]
+  (let [path (get-in images [lang res art])]
+    (cond
+      path path
+      (not= art :stock) (get-image-path images lang res :stock)
+      (not= res :default) (get-image-path images lang :default art)
+      (not= lang :en) (get-image-path images :en res art)
+      :else "/img/missing.png")))
+
+(defn image-or-face [card]
+  (cond
+    (:images card) (:images card)
+    (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
+    :else (get-in card [:faces :front :images])))
