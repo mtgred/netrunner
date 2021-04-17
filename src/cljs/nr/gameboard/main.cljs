@@ -948,6 +948,9 @@
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)
                      :class (when (not-empty (:hosted ice)) "host")
+                     ; Since CSS flex display does not work correctly on rotated objects
+                     ; (and we're doing a lot of rotating in our front end), this hack is
+                     ; necessary to align ice with hosted cards. -- lostgeek, 17.04.2021
                      :style {:left (when (not-empty (:hosted ice)) (* 21 (dec (count (:hosted ice)))))}}
            (let [flipped (not (:rezzed ice))]
              [card-view ice flipped])
