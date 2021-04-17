@@ -506,6 +506,28 @@
                 .panel
                     margin: 0
 
+                .timestamp
+                    span.pm
+                        position: absolute
+                        top: 0
+                        right: 5px
+                        padding: 2px
+                        cursor: pointer
+                        user-select: none
+
+
+                    .timer.yellow
+                        color: yellow
+                    .timer.red
+                        color: orangered
+                    .timer.danger
+                        animation: blinker .2s step-start infinite;
+                    @keyframes blinker
+                        0%
+                            color: white
+                        50%
+                            color: orangered
+
                 .button-pane
                     .panel
                         padding: 8px
@@ -546,6 +568,8 @@
 
                         select
                             margin-right: 5px
+
+
 
     .centralpane
         flex(1)

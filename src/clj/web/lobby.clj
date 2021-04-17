@@ -49,7 +49,7 @@
       game-lobby-updates (atom {})
       send-ready (atom true)]
 
-  (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands])
+  (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer])
 
   (defn- game-public-view
     "Strips private server information from a game map, preparing to send the game to clients."
@@ -69,7 +69,7 @@
       (when (seq @public-lobby-updates)
         (let [[old] (reset-vals! public-lobby-updates {})]
           (ws/broadcast! :games/diff {:diff old}))
-          (reset! send-ready false))
+        (reset! send-ready false))
       ;; If private view exists, send only to those games clients
       (when (seq @game-lobby-updates)
         (let [[old] (reset-vals! game-lobby-updates {})]
@@ -258,7 +258,7 @@
 (defmethod ws/-msg-handler :lobby/create
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    {:keys [title format allow-spectator save-replay spectatorhands password room side]} :?data :as event}]
+    {:keys [title format timer allow-spectator save-replay spectatorhands password room side]} :?data :as event}]
   (let [gameid (java.util.UUID/randomUUID)
         game {:date            (java.util.Date.)
               :gameid          gameid
@@ -274,7 +274,8 @@
                                  :ws-id   client-id
                                  :side    side}]
               :spectators      []
-              :spectator-count  0
+              :spectator-count 0
+              :timer           timer
               :messages        [{:user "__system__"
                                  :text (str username " has created the game.")}]
               :last-update     (t/now)}]
