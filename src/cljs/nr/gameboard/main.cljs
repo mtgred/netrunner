@@ -567,7 +567,8 @@
        [card-abilities card c-state abilities subroutines]
        (when (pos? (count hosted))
          [:div.hosted
-          (if (get-in @app-state [:options :stacked-cards] false)
+          (if (and (not (ice? card))
+                   (get-in @app-state [:options :stacked-cards] false))
             ; stacked mode
             (let [distinct-hosted (vals (group-by :title hosted))]
               (show-distinct-cards distinct-hosted))
@@ -946,7 +947,8 @@
       (doall
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)
-                     :class (when (not-empty (:hosted ice)) "host")}
+                     :class (when (not-empty (:hosted ice)) "host")
+                     :style {:left (when (not-empty (:hosted ice)) (* 21 (dec (count (:hosted ice)))))}}
            (let [flipped (not (:rezzed ice))]
              [card-view ice flipped])
            (when (and current-ice (= (:cid current-ice) (:cid ice)))
