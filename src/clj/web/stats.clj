@@ -241,6 +241,10 @@
         (response 401 {:message "Unauthorized"})))
     (response 401 {:message "Unauthorized"})))
 
+(defn fetch-elapsed [gameid]
+  (let [stats (mc/find-one-as-map db :game-logs {:gameid (str gameid)} ["stats"])]
+    (-> stats :stats :time :elapsed)))
+
 (defn check-annotations-size [replay annotations]
   (let [num-diffs (count (:history replay))]
     ; Not more than 50k characters text

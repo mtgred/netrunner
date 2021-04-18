@@ -1631,7 +1631,8 @@
   (if pos
     (condp >= minutes
       2 "red"
-      5 "yellow")
+      5 "yellow"
+      nil)
     "danger"))
 
 (defn time-remaining
@@ -1654,7 +1655,7 @@
             [:span.float-center
              (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString d))]
             (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
-            (when timer [time-remaining start-date timer hide-remaining])])))
+            (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
 
 (defn gameboard []
   (let [active (r/cursor app-state [:active-page])
