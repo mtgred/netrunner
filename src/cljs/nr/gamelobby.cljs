@@ -496,13 +496,14 @@
                                 :value (:password @s)
                                 :placeholder (tr [:lobby.password "Password"])
                                 :maxLength "30"}]])
-         [:p
-          [:label
-           [:input {:type "checkbox" :checked (:timed @s)
-                    :on-change #(let [checked (.. % -target -checked)]
-                                  (swap! s assoc :timed checked)
-                                  (swap! s assoc :timer (if checked 35 nil)))}]
-           (tr [:lobby.timed-game "Start with timer"])]]
+         (when-not (#{"casual"} (:room @s))
+           [:p
+            [:label
+             [:input {:type "checkbox" :checked (:timed @s)
+                      :on-change #(let [checked (.. % -target -checked)]
+                                    (swap! s assoc :timed checked)
+                                    (swap! s assoc :timer (if checked 35 nil)))}]
+             (tr [:lobby.timed-game "Start with timer"])]])
          (when (:timed @s)
            [:p
             [:input.game-title {:on-change #(swap! s assoc :timer (-> % (.. -target -value) str->int))

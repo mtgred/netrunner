@@ -1618,7 +1618,8 @@
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
 
-(defn time-until
+(defn- time-until
+  "Helper method for timer. Computes how much time is left until `end`"
   [end]
   (let [now (js/moment)
         minutes (abs (. end (diff now "minutes")))
@@ -1626,7 +1627,8 @@
         seconds (mod (abs (. end (diff now "seconds"))) 60)]
     {:minutes minutes :seconds seconds :pos positive}))
 
-(defn warning
+(defn- warning-class
+  "Styling for the timer display."
   [{:keys [minutes pos]}]
   (if pos
     (condp >= minutes
@@ -1636,17 +1638,26 @@
     "danger"))
 
 (defn time-remaining
+  "Component which displays a readout of the time remaining on the timer."
   [start-date timer hidden]
   (let [end-date (-> start-date js/moment (.add timer "minutes"))
         remaining (r/atom nil)
         interval (r/atom nil)]
     (r/create-class
-      {:component-did-mount #(reset! interval (js/setInterval (fn [] (reset! remaining (time-until end-date))) 1000))
+      {:component-did-mount #(reset! interval
+                               (js/setInterval ;; Update timer at most every 1 sec
+                                 (fn [] (reset! remaining (time-until end-date)))
+                                 1000))
        :component-will-unmount #(js/clearInterval interval)
        :reagent-render
        (fn []
          (when (and @remaining (not @hidden))
-           [:span.float-center.timer {:class (warning @remaining)} (str (when-not (:pos @remaining) "-")  (:minutes @remaining) "m:" (:seconds @remaining) "s remaining")]))})))
+           [:span.float-center.timer
+            {:class (warning-class @remaining)}
+            (str
+              (when-not (:pos @remaining) "-")
+              (:minutes @remaining) "m:"
+              (:seconds @remaining) "s remaining")]))})))
 
 (defn starting-timestamp [start-date timer]
   (let [d (js/Date. start-date)
