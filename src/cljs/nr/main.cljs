@@ -74,7 +74,7 @@
               [:div.blue-shade.spectators
                (for [p (:spectators game)]
                  ^{:key (get-in p [:user :_id])}
-                 [player-view p game])]]))))]))
+                 [player-view p])]]))))]))
 
 (defn- get-server-data
   [tag]

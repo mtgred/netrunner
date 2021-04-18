@@ -7,7 +7,7 @@
     [clj-time.core :as t]
     ;; internal
     [web.ws :as ws]
-    [web.lobby :refer [all-games old-states already-in-game? spectator?] :as lobby]
+    [web.lobby :refer [all-games old-states already-in-game? spectator? handle-lobby-watch] :as lobby]
     [web.utils :refer [response]]
     [web.stats :as stats]
     [game.main :as main]
@@ -216,7 +216,9 @@
   [{{{:keys [username] :as user} :user} :ring-req
     client-id :client-id
     {:keys [gameid password]} :?data
-    reply-fn :?reply-fn}]
+    reply-fn :?reply-fn
+    :as arg}]
+  (handle-lobby-watch arg)
   (if-let [{game-password :password state :state started :started :as game}
            (lobby/game-for-id gameid)]
     (when (and user game (lobby/allowed-in-game game user) state @state)

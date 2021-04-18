@@ -337,7 +337,7 @@
         (when reply-fn (reply-fn 403))))
     (when reply-fn (reply-fn 404))))
 
-(defmethod ws/-msg-handler :lobby/watch
+(defn handle-lobby-watch
   ;; Handles a watch command when a game has not yet started.
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
