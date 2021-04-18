@@ -9,7 +9,7 @@
    {:name "/click" :usage "/click n" :help "Set your clicks to n"}
    {:name "/close-prompt" :usage "/close-prompt" :help "close an active prompt and show the next waiting prompt, or the core click actions"}
    {:name "/counter" :usage "/counter n" :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
-   {:name "/counter" :usage "/counter type n" :help "set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", " [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"] ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."}
+   {:name "/counter" :usage "/counter type n" :help "set the specified counter type on a card to n (player's own cards only). Type must be agenda, advance, credit, power, or virus. Can be abbreviated as ag, ad, c, p, or v respectively."}
    {:name "/credit" :usage "/credit n" :help "Set your credits to n"}
    {:name "/deck" :usage "/deck #n" :help "Put card number n from your hand on top of your deck"}
    {:name "/discard" :usage "/discard #n" :help "Discard card number n from your hand"}
@@ -31,8 +31,8 @@
    {:name "/rez" :usage "/rez" :help "Select a card to rez, ignoring all costs (Corp only)"}
    {:name "/rez-all" :usage "/rez-all" :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
    {:name "/rfg" :usage "/rfg" :help "Select a card to remove from the game"}
-   {:name "/roll n" :usage "/roll n" :help "Roll an n-sided die"}
-   {:name "/summon n" :usage "/summon n" :help "Add card \"n\" to your hand (from outside the game)"}
+   {:name "/roll" :usage "/roll n" :help "Roll an n-sided die"}
+   {:name "/summon" :usage "/summon n" :help "Add card \"n\" to your hand (from outside the game)"}
    {:name "/swap-ice" :usage "/swap-ice" :help "Swap the position of two installed ICE (Corp only)"}
    {:name "/swap-installed" :usage "/swap-installed" :help "Swap the position of two installed non-ICE (Corp only)"}
    {:name "/tag" :usage "/tag n" :help "Set your tags to n"}
