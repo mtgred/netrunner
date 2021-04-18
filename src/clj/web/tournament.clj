@@ -2,6 +2,7 @@
   (:require [clojure.string :refer [lower-case]]
             [web.db :refer [db find-maps-case-insensitive object-id]]
             [web.lobby :refer [all-games refresh-lobby close-lobby]]
+            [web.stats :refer [fetch-elapsed]]
             [web.utils :refer [response]]
             [web.ws :as ws]
             [jinteki.utils :refer [str->int]]
@@ -83,7 +84,7 @@
 (defn create-tournament-lobby
   [{:keys [tournament-name tournament-format selected-round table
            username1 username2 allow-spectator on-close cobra-link
-           save-replay]}]
+           save-replay timer]}]
   (let [gameid (uuid/v4)
         title (str tournament-name ", Round " selected-round
                    ", Table " table ": " username1 " vs " username2)
@@ -110,6 +111,7 @@
                           :text "The game has been created."}]
               :allow-spectator allow-spectator
               :save-replay save-replay
+              :timer timer
               :spectatorhands false
               :mute-spectators true
               :date (java.util.Date.)
@@ -120,7 +122,7 @@
       game)))
 
 (defn create-lobbies-for-tournament
-  [data selected-round {save-replays :save-replays? :as options}]
+  [data selected-round {timer :timer save-replays :save-replays? single-sided :single-sided? :as options}]
   (let [players (build-players data)
         rounds (process-all-rounds data players)
         round (nth rounds selected-round (count rounds))]
@@ -133,13 +135,22 @@
                     :cobra-link (:cobra-link data)
                     :selected-round (inc selected-round)
                     :table (:table table)
+                    :timer timer
                     :username1 username1
                     :username2 username2
                     :save-replay save-replays
                     :allow-spectator true}]
           (create-tournament-lobby
-            (assoc base :on-close #(create-tournament-lobby
-                                     (assoc base :username1 username2 :username2 username1))))))
+            (assoc base :on-close (when-not
+                                    single-sided
+                                    (fn [first-game]
+                                      (create-tournament-lobby
+                                        (assoc base
+                                          :username1 username2
+                                          :username2 username1
+                                          :timer (when-let
+                                                   [elapsed (fetch-elapsed (:gameid first-game))]
+                                                   (max 0 (- timer elapsed)))))))))))
       round)))
 
 (defn load-tournament
@@ -169,10 +180,15 @@
       (when reply-fn (reply-fn 403)))))
 
 (defn create-tables
-  [{{:keys [cobra-link selected-round save-replays?]} :?data
+  [{{:keys [cobra-link selected-round save-replays? single-sided? timer]} :?data
     client-id :client-id}]
   (let [data (download-cobra-data cobra-link)
-        created-rounds (create-lobbies-for-tournament data (str->int selected-round) {:save-replays? save-replays?})]
+        created-rounds (create-lobbies-for-tournament
+                         data
+                         (str->int selected-round)
+                         {:timer timer
+                          :save-replays? save-replays?
+                          :single-sided? single-sided?})]
     (ws/broadcast-to! [client-id] :tournament/created {:data {:created-rounds (count created-rounds)}})))
 
 (defmethod ws/-msg-handler :tournament/create [event]

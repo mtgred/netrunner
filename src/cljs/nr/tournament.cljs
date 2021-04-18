@@ -3,7 +3,7 @@
             [nr.ws :as ws]
             [nr.avatar :refer [avatar]]
             [nr.stats :refer [faction-icon-memo]]
-            [jinteki.utils :refer [slugify]]
+            [jinteki.utils :refer [slugify str->int]]
             [reagent.core :as r]))
 
 (defn change-cobra-link
@@ -75,9 +75,8 @@
 
 (defn create-tables
   [state]
-  (ws/ws-send! [:tournament/create {:cobra-link (:cobra-link @state)
-                                    :selected-round (:selected-round @state)
-                                    :save-replays? (:save-replays? @state)}]))
+  (ws/ws-send! [:tournament/create (select-keys @state
+                                     [:cobra-link :selected-round :save-replays? :timer :single-sided?])]))
 
 (defn select-round-button
   [state]
@@ -101,11 +100,42 @@
      [:label
       [:input {:type "checkbox" :checked (:save-replays? @state)
                :on-change #(swap! state assoc :save-replays? (.. % -target -checked))}]
-      (str "🟢 Save replays" )]]))
+      (str "🟢 Save replays")]]))
+
+(defn timed-option
+  [s]
+  (when (:cobra-link @s)
+    [:<> [:p
+          [:label
+           [:input {:type "checkbox" :checked (:timed @s)
+                    :on-change #(let [checked (.. % -target -checked)]
+                                  (swap! s assoc :timed checked)
+                                  (swap! s assoc :timer (if checked 35 nil)))}]
+           "Round timer"]]
+     (when (:timed @s)
+       [:p
+        [:input.game-title {:on-change #(swap! s assoc :timer (-> % (.. -target -value) str->int))
+                            :type "number"
+                            :value (:timer @s)
+                            :placeholder "Timer length (minutes)"}]])
+     [:div.infobox.blue-shade {:style {:display (if (:timed @s) "block" "none")}}
+      [:p "Timer is only for convenience: the game will not stop when timer runs out."]]]))
+
+(defn single-sided-option
+  [state]
+  (when (:cobra-link @state)
+    [:<>
+     [:p
+      [:label
+       [:input {:type "checkbox" :checked (:single-sided? @state)
+                :on-change #(swap! state assoc :single-sided? (.. % -target -checked))}]
+       (str "Single-sided round?")]]
+     [:div.infobox.blue-shade {:style {:display (if (:single-sided? @state) "block" "none")}}
+      [:p "A second game will not be created when the first is completed."]]]))
 
 (defn tournament-container
   [state]
-  [:div.panel
+  [:div.panel.tournament-settings-container
    [:h1 "Tournament stuff"]
    (when (:cobra-link @state)
      [:h2 (:tournament-name @state)])
@@ -114,7 +144,9 @@
    [missing-players state]
    [delete-tournament-button state]
    [round-selector state]
+   [timed-option state]
    [save-replay-option state]
+   [single-sided-option state]
    [select-round-button state]
    [success state]])
 
@@ -135,7 +167,7 @@
    [:div.id-info
     [:span.id-label "ID: "]
     [:span.id-title.influence {:class (slugify (get-in deck [:identity :faction]))}
-    (get-in deck [:identity :title])]]
+     (get-in deck [:identity :title])]]
    [:div.hash-info
     [:span.hash-label "Hash: "]
     [:span.hash-value (:hash deck)]]])
@@ -162,9 +194,10 @@
   [game]
   [:div.gameline
    [:div [:span.game-title (str (:title game))]]
-   [:div.game-status (if (:started game)
-           [:span.started (str "Started " (.toLocaleTimeString (js/Date. (:start-date game))))]
-           [:span.not-started (str "Not started")])]
+   [:div.game-status
+    (if (:started game)
+        [:span.started (str "Started " (.toLocaleTimeString (js/Date. (:start-date game))))]
+        [:span.not-started (str "Not started")])]
    [:div.players
     [player-info (first (:players game))]
     [player-info (second (:players game))]]])

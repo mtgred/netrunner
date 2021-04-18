@@ -505,7 +505,7 @@
            (tr [:lobby.timed-game "Start with timer"])]]
          (when (:timed @s)
            [:p
-            [:input.game-title {:on-change #(swap! s assoc :timer (js/parseInt (.. % -target -value)))
+            [:input.game-title {:on-change #(swap! s assoc :timer (-> % (.. -target -value) str->int))
                                 :type "number"
                                 :value (:timer @s)
                                 :placeholder (tr [:lobby.timer-length "Timer length (minutes)"])}]])
