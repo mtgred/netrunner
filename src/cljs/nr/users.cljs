@@ -73,8 +73,7 @@
       "Add"])])
 
 (defn users-container []
-  (r/with-let [
-               mods (r/cursor users-state [:mods])
+  (r/with-let [mods (r/cursor users-state [:mods])
                specials (r/cursor users-state [:specials])
                tos (r/cursor users-state [:tos])]
     (let [s (r/atom {})]

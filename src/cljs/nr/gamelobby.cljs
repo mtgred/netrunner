@@ -496,7 +496,7 @@
                                 :value (:password @s)
                                 :placeholder (tr [:lobby.password "Password"])
                                 :maxLength "30"}]])
-         (when-not (#{"casual"} (:room @s))
+         (when-not (= "casual" (:room @s))
            [:p
             [:label
              [:input {:type "checkbox" :checked (:timed @s)
