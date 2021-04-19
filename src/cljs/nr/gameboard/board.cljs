@@ -1,4 +1,4 @@
-(ns nr.gameboard
+(ns nr.gameboard.board
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank?]]
@@ -1618,15 +1618,60 @@
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
 
-(defn starting-timestamp [start-date]
-  (let [d (js/Date. start-date)]
-    [:div.panel.blue-shade
-     [:span.float-center
-      (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString d))]]))
+(defn- time-until
+  "Helper method for timer. Computes how much time is left until `end`"
+  [end]
+  (let [now (js/moment)
+        minutes (abs (. end (diff now "minutes")))
+        positive (pos? (. end (diff now "seconds")))
+        seconds (mod (abs (. end (diff now "seconds"))) 60)]
+    {:minutes minutes :seconds seconds :pos positive}))
+
+(defn- warning-class
+  "Styling for the timer display."
+  [{:keys [minutes pos]}]
+  (if pos
+    (condp >= minutes
+      2 "red"
+      5 "yellow"
+      nil)
+    "danger"))
+
+(defn time-remaining
+  "Component which displays a readout of the time remaining on the timer."
+  [start-date timer hidden]
+  (let [end-date (-> start-date js/moment (.add timer "minutes"))
+        remaining (r/atom nil)
+        interval (r/atom nil)]
+    (r/create-class
+      {:component-did-mount #(reset! interval
+                               (js/setInterval ;; Update timer at most every 1 sec
+                                 (fn [] (reset! remaining (time-until end-date)))
+                                 1000))
+       :component-will-unmount #(js/clearInterval interval)
+       :reagent-render
+       (fn []
+         (when (and @remaining (not @hidden))
+           [:span.float-center.timer
+            {:class (warning-class @remaining)}
+            (str
+              (when-not (:pos @remaining) "-")
+              (:minutes @remaining) "m:"
+              (:seconds @remaining) "s remaining")]))})))
+
+(defn starting-timestamp [start-date timer]
+  (let [d (js/Date. start-date)
+        hide-remaining (r/atom false)]
+    (fn [] [:div.panel.blue-shade.timestamp
+            [:span.float-center
+             (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString d))]
+            (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
+            (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
 
 (defn gameboard []
   (let [active (r/cursor app-state [:active-page])
         start-date (r/cursor game-state [:start-date])
+        timer (r/cursor game-state [:options :timer])
         run (r/cursor game-state [:run])
         side (r/cursor game-state [:side])
         turn (r/cursor game-state [:turn])
@@ -1753,7 +1798,7 @@
                           me-current (r/cursor game-state [me-side :current])
                           me-play-area (r/cursor game-state [me-side :play-area])]
                       [:div
-                       [starting-timestamp @start-date]
+                       (when-not (:replay @game-state) [starting-timestamp @start-date @timer])
                        [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
                        [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
                        [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]

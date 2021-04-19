@@ -110,6 +110,8 @@
                :flash-message ""
                :protected false
                :password ""
+               :timed false
+               :timer nil
                :allow-spectator true
                :spectatorhands false
                :create-game-deck (:create-game-deck @app-state))
@@ -210,7 +212,7 @@
               (swap! app-state dissoc :editing-game)
               (ws/ws-send! [:lobby/create
                             (select-keys @s [:title :password :allow-spectator :save-replay
-                                             :spectatorhands :side :format :room])])))))))
+                                             :spectatorhands :side :format :room :timer])])))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])
@@ -289,8 +291,8 @@
                              [avatar (:user msg) {:opts {:size 38}}]
                              [:div.content
                               [:div.username (get-in msg [:user :username])]
-                              [:div (:text msg)]]]) )
-                          (:messages game))]
+                              [:div (:text msg)]]]))
+                        (:messages game))]
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-msg s))}
@@ -424,9 +426,9 @@
          (tr [:lobby.cancel "Cancel"])]]
        (when-let [flash-message (:flash-message @s)]
          [:p.flash-message flash-message])
-        [:div [:input {:field :file
-                       :type :file
-                       :on-change #(swap! s assoc :replay-file (aget (.. % -target -files) 0))}]]]
+       [:div [:input {:field :file
+                      :type :file
+                      :on-change #(swap! s assoc :replay-file (aget (.. % -target -files) 0))}]]]
       [:div
        [:div.button-bar
         [:button {:type "button"
@@ -494,6 +496,22 @@
                                 :value (:password @s)
                                 :placeholder (tr [:lobby.password "Password"])
                                 :maxLength "30"}]])
+         (when-not (= "casual" (:room @s))
+           [:p
+            [:label
+             [:input {:type "checkbox" :checked (:timed @s)
+                      :on-change #(let [checked (.. % -target -checked)]
+                                    (swap! s assoc :timed checked)
+                                    (swap! s assoc :timer (if checked 35 nil)))}]
+             (tr [:lobby.timed-game "Start with timer"])]])
+         (when (:timed @s)
+           [:p
+            [:input.game-title {:on-change #(swap! s assoc :timer (-> % (.. -target -value) str->int))
+                                :type "number"
+                                :value (:timer @s)
+                                :placeholder (tr [:lobby.timer-length "Timer length (minutes)"])}]])
+         [:div.infobox.blue-shade {:style {:display (if (:timed @s) "block" "none")}}
+          [:p "Timer is only for convenience: the game will not stop when timer runs out."]]
          [:p
           [:label
            [:input {:type "checkbox" :checked (:save-replay @s)
@@ -559,6 +577,8 @@
         [:ul.options
          (when (:allow-spectator game)
            [:li (tr [:lobby.spectators "Allow spectators"])])
+         (when (:timer game)
+           [:li "Game timer set for " (:timer game) " minutes"])
          (when (:spectatorhands game)
            [:li (tr [:lobby.hidden "Make players' hidden information visible to spectators"])])
          (when (:password game)

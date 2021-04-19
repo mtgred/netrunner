@@ -6,7 +6,7 @@
             [nr.cardbrowser :refer [card-browser]]
             [nr.chat :refer [chat-page]]
             [nr.deckbuilder :refer [deck-builder]]
-            [nr.gameboard :refer [gameboard]]
+            [nr.gameboard.board :refer [gameboard]]
             [nr.gameboard.actions :refer [concede mute-spectators stack-cards flip-runner-board]]
             [nr.gameboard.replay :refer [set-replay-side]]
             [nr.gameboard.state :refer [game-state]]

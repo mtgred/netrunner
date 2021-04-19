@@ -118,8 +118,8 @@
             disabled (s/blank? msg)]
         [:button {:disabled disabled
                   :class (if disabled "disabled" "")}
-         "Send"])]
-     ]))
+         "Send"])]]))
+
 
 (defn admin []
   (r/with-let [user (r/cursor app-state [:user])

@@ -9,40 +9,39 @@
 
 (def users-state (r/atom {}))
 
+(def user-type-infos
+  {:mods     {:api-base "/admin/mods"     :display-name "moderators"}
+   :tos      {:api-base "/admin/tos"      :display-name "tournament organizers"}
+   :specials {:api-base "/admin/specials" :display-name "alt art users"}})
+
 (go (when (:isadmin (:user @app-state)) (swap! users-state assoc :mods (:json (<! (GET "/admin/mods"))))))
+(go (when (:isadmin (:user @app-state)) (swap! users-state assoc :tos (:json (<! (GET "/admin/tos"))))))
 (go (when (:isadmin (:user @app-state)) (swap! users-state assoc :specials (:json (<! (GET "/admin/specials"))))))
 
-(defn- update-mod-response [response]
-  (case (:status response)
-    200 (do
-          (go (swap! users-state assoc :mods (:json (<! (GET "/admin/mods")))))
-          (non-game-toast "Updated moderators" "success" nil))
-    404 (non-game-toast "Unknown username" "error" nil)
-    (non-game-toast "Failed to update moderators" "error" nil)))
+(defn- update-user-response-handler
+  [user-type]
+  (let [{:keys [api-base display-name]} (user-type-infos user-type)]
+    (fn [response]
+      (case (:status response)
+        200 (do
+              (go (swap! users-state assoc user-type (:json (<! (GET api-base)))))
+              (non-game-toast (str "Updated " display-name) "success" nil))
+        404 (non-game-toast "Unknown username" "error" nil)
+        (non-game-toast (str "Failed to update " display-name) "error" nil)))))
 
-(defn- remove-moderator [id]
-  (go (let [response (<! (DELETE (str "/admin/mods/" id)))]
-        (update-mod-response response))))
+(defn- remove-user
+  "Creates a handler which will remove the `user-type` from the user"
+  [user-type]
+  (fn [id]
+    (go (let [response (<! (DELETE (str (get-in user-type-infos [user-type :api-base]) "/" id)))]
+          ((update-user-response-handler user-type) response)))))
 
-(defn- add-moderator [msg]
-  (go (let [response (<! (PUT "/admin/mods" {:username msg} :json))]
-        (update-mod-response response))))
-
-(defn- update-special-response [response]
-  (case (:status response)
-    200 (do
-          (go (swap! users-state assoc :specials (:json (<! (GET "/admin/specials")))))
-          (non-game-toast "Updated alt art users" "success" nil))
-    404 (non-game-toast "Unknown username" "error" nil)
-    (non-game-toast "Failed to update alt art users" "error" nil)))
-
-(defn- remove-special [id]
-  (go (let [response (<! (DELETE (str "/admin/specials/" id)))]
-        (update-special-response response))))
-
-(defn- add-special [msg]
-  (go (let [response (<! (PUT "/admin/specials" {:username msg} :json))]
-        (update-special-response response))))
+(defn- add-user
+  "Creates a handler which will add the `user-type` to the user"
+  [user-type]
+  (fn [msg]
+    (go (let [response (<! (PUT (get-in user-type-infos [user-type :api-base]) {:username msg} :json))]
+          ((update-user-response-handler user-type) response)))))
 
 (defn- users-list [users remove-fn]
   [:div.users-box.panel.blue-shade
@@ -75,19 +74,25 @@
 
 (defn users-container []
   (r/with-let [mods (r/cursor users-state [:mods])
-               specials (r/cursor users-state [:specials])]
+               specials (r/cursor users-state [:specials])
+               tos (r/cursor users-state [:tos])]
     (let [s (r/atom {})]
       (fn []
         [:div.container.panel.blue-shade.content-page
          [:h3 "Moderators"]
-         (users-list mods remove-moderator)
+         (users-list mods (remove-user :mods))
          [:h4 "Add moderator"]
-         (user-add s :mod-name add-moderator)
+         (user-add s :mod-name (add-user :mods))
          [:br]
          [:h3 "Alt Art Access"]
-         (users-list specials remove-special)
+         (users-list specials (remove-user :specials))
          [:h4 "Add Alt Art User"]
-         (user-add s :special-name add-special)]))))
+         (user-add s :special-name (add-user :specials))
+         [:br]
+         [:h3 "Tournament Organizers"]
+         (users-list tos (remove-user :tos))
+         [:h4 "Add Tournament Organizer"]
+         (user-add s :mod-name (add-user :tos))]))))
 
 (defn users []
   (r/with-let [user (r/cursor app-state [:user])

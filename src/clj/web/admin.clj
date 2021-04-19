@@ -74,6 +74,19 @@
     (update-user {:_id (object-id id)} :ismoderator false)
     (response 400 {:message "Missing id"})))
 
+(defn tos-handler [req]
+  (find-user {:tournament-organizer true}))
+
+(defn tos-update-handler [{{username :username} :body}]
+  (if-not (empty? username)
+    (update-user {:username username} :tournament-organizer true)
+    (response 400 {:message "Missing username"})))
+
+(defn tos-delete-handler [{{id :id} :params}]
+  (if id
+    (update-user {:_id (object-id id)} :tournament-organizer false)
+    (response 400 {:message "Missing id"})))
+
 (defn specials-handler [req]
   (find-user {:special {$exists true}}))
 
