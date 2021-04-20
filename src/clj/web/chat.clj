@@ -1,14 +1,15 @@
 (ns web.chat
-  (:require [buddy.sign.jwt :as jwt]
-            [clojure.string :as s]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [monger.query :as q]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
-            [web.utils :refer [response]]
-            [web.ws :as ws])
+  (:require
+    ;; external
+    [clojure.string :as s]
+    [clj-time.core :as t]
+    [clj-time.coerce :as c]
+    [monger.query :as q]
+    [monger.collection :as mc]
+    ;; internal
+    [web.config :refer [server-config]]
+    [web.utils :refer [response]]
+    [web.ws :as ws])
   (:import org.bson.types.ObjectId))
 
 (defonce chat-config (:chat server-config))
@@ -17,7 +18,7 @@
 
 (defn- chat-max-length [] (:max-length chat-config 144))
 
-(defn config-handler [req]
+(defn config-handler [_]
   (response 200 {:max-length (chat-max-length)}))
 
 (defn messages-handler [{db :system/db

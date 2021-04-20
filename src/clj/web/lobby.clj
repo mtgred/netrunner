@@ -1,7 +1,6 @@
 (ns web.lobby
   (:require [clojure.string :refer [trim]]
             [web.mongodb :refer [object-id]]
-            [web.utils :refer [response tick]]
             [web.ws :as ws]
             [web.stats :as stats]
             [web.diffs :refer [game-internal-view]]
@@ -9,7 +8,7 @@
             [game.core :as core]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]
-            [jinteki.utils :refer [str->int superuser?]]
+            [jinteki.utils :refer [superuser?]]
             [crypto.password.bcrypt :as bcrypt]
             [monger.collection :as mc]
             [monger.operators :refer :all]
@@ -138,7 +137,7 @@
 (defn close-lobby
   "Closes the given game lobby, booting all players and updating stats."
   ([db game] (close-lobby db game nil))
-  ([db {:keys [started gameid] :as game} skip-on-close]
+  ([db {:keys [started gameid]} skip-on-close]
    (when started
      (stats/update-deck-stats db all-games gameid)
      (stats/update-game-stats db all-games gameid)
@@ -189,14 +188,13 @@
     (let [{:keys [players] :as game} (game-for-id gameid)]
       (swap! client-gameids dissoc client-id)
 
-      (if (empty? (filter identity players))
-        (do
-          (stats/game-finished db game)
-          (close-lobby db game))))))
+      (when (empty? (filter identity players))
+        (stats/game-finished db game)
+        (close-lobby db game)))))
 
 (defn already-in-game?
   "Checks if a user with the given username is already in the game"
-  [{:keys [username] :as user} {:keys [players spectators] :as game}]
+  [{:keys [username]} {:keys [players spectators]}]
   (some #(= username (get-in % [:user :username])) (concat players spectators)))
 
 (defn join-game
@@ -219,7 +217,7 @@
 (defn spectate-game
   "Adds the given user as a spectator in the given gameid"
   [user client-id gameid]
-  (when-let [{:keys [started spectators] :as game} (game-for-id gameid)]
+  (when (game-for-id gameid)
     (refresh-lobby-update-in gameid [:spectator-count] inc)
     (refresh-lobby-update-in gameid [:spectators]
            #(conj % {:user user
@@ -230,13 +228,13 @@
   "Returns a new player map with the player's :side switched"
   [player]
   (-> player
-      (update-in [:side] #(if (= % "Corp")
-                            "Runner"
-                            "Corp"))
+      (update :side #(if (= % "Corp")
+                       "Runner"
+                       "Corp"))
       (dissoc :deck)))
 
 (defn blocked-users
-  [{:keys [players] :as game}]
+  [{:keys [players]}]
   (mapcat #(get-in % [:user :options :blocked-users]) players))
 
 (defn superusers [db]
@@ -254,7 +252,7 @@
   [{{{:keys [username] :as user} :user} :ring-req
     client-id :client-id
     {:keys [title format timer allow-spectator save-replay
-            spectatorhands password room side]} :?data :as event}]
+            spectatorhands password room side]} :?data}]
   (let [gameid (java.util.UUID/randomUUID)
         game {:date            (java.util.Date.)
               :gameid          gameid
@@ -344,7 +342,7 @@
     client-id :client-id
     {:keys [gameid password]} :?data
     reply-fn :?reply-fn}]
-  (if-let [{game-password :password state :state started :started :as game}
+  (if-let [{game-password :password started :started :as game}
            (@all-games gameid)]
     (when (and user game (allowed-in-game db game user))
       (if started
@@ -369,7 +367,7 @@
 
 (defmethod ws/-msg-handler :lobby/deck
   [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
+     {:keys [username]} :user} :ring-req
     client-id :client-id
     deck-id :?data}]
   (let [game (game-for-client client-id)
@@ -391,8 +389,7 @@
 
 (defmethod ws/-msg-handler :lobby/rename-game
   [{{db :system/db
-     {:keys [username isadmin ismoderator] :as user} :user} :ring-req
-    client-id :client-id
+     {:keys [username isadmin ismoderator]} :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [game (game-for-id gameid)]
     (when (and username
@@ -409,8 +406,7 @@
 
 (defmethod ws/-msg-handler :lobby/delete-game
   [{{db :system/db
-     {:keys [username isadmin ismoderator] :as user} :user} :ring-req
-    client-id :client-id
+     {:keys [username isadmin ismoderator]} :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [game (game-for-id gameid)]
     (when (and username

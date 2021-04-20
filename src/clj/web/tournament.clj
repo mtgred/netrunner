@@ -1,6 +1,6 @@
 (ns web.tournament
-  (:require [clojure.string :refer [lower-case]]
-            [web.mongodb :refer [find-maps-case-insensitive object-id]]
+  (:require [clojure.string :as str]
+            [web.mongodb :refer [find-maps-case-insensitive]]
             [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.stats :refer [fetch-elapsed]]
             [web.utils :refer [response]]
@@ -10,8 +10,7 @@
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clj-time.core :as t]
-            [clj-uuid :as uuid]
-            [clojure.string :as str]))
+            [clj-uuid :as uuid]))
 
 (defn auth [req]
   (response 200 {:message "ok"}))
@@ -23,7 +22,7 @@
 (defn download-cobra-data
   [id]
   (let [data (http/get (str "http://cobr.ai/tournaments/" id ".json"))
-        {:keys [status body error headers] :as resp} @data]
+        {:keys [status body error headers]} @data]
     (cond
       error (throw (Exception. (str "Failed to download file " error)))
       (and
@@ -36,10 +35,6 @@
   [data]
   (into {} (for [player (:players data)]
              [(:id player) player])))
-
-(defn latest-round
-  [data]
-  (last (:rounds data)))
 
 (defn get-player-name
   [players player]
@@ -122,7 +117,7 @@
       game)))
 
 (defn create-lobbies-for-tournament
-  [db data selected-round {:keys [timer save-replays? single-sided?] :as options}]
+  [db data selected-round {:keys [timer save-replays? single-sided?]}]
   (let [players (build-players data)
         rounds (process-all-rounds data players)
         round (nth rounds selected-round (count rounds))]
@@ -160,7 +155,7 @@
         player-names (keep :name (:players data))
         query (into [] (for [username player-names] {:username username}))
         db-players (find-maps-case-insensitive db "users" {$or query})
-        found-player-names #(seq (filter (fn [e] (= (lower-case %) (lower-case e))) (map :username db-players)))
+        found-player-names #(seq (filter (fn [e] (= (str/lower-case %) (str/lower-case e))) (map :username db-players)))
         missing-players (remove found-player-names player-names)
         players (build-players data)
         rounds (process-all-rounds data players)]

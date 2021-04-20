@@ -9,17 +9,14 @@
             [web.utils :refer [response json-response]]
             [game.utils :refer [dissoc-in]]
             [jinteki.cards :refer [all-cards]]
-            [clojure.set :refer [rename-keys]]
             [clojure.string :refer [lower-case]]
-            [clj-time.core :as t]
             [cheshire.core :as json]
-            [hiccup.page :as hiccup]
             [ring.util.request :refer [request-url]]))
 
 (defn clear-userstats-handler
   "Clear any statistics for a given user-id contained in a request"
   [{db :system/db
-    {:keys [username _id]} :user}]
+    {:keys [_id]} :user}]
   (if (acknowledged? (mc/update db "users" {:_id (object-id _id)} {"$unset" {:stats ""}}))
     (response 200 {:message "Deleted"})
     (response 403 {:message "Forbidden"})))
@@ -57,8 +54,7 @@
 
 (defn deck-record-end
   [all-games gameid p]
-  (let [end-players (get-in @all-games [gameid :ending-players])
-        game-state (get-in @all-games [gameid :state])
+  (let [game-state (get-in @all-games [gameid :state])
         enable-deckstats (get-in p [:user :options :deckstats])
         deck-id (get-in p [:deck :_id])
         winning-deck (:winning-deck-id @game-state)
@@ -90,12 +86,9 @@
   (mc/update db "users" {:_id (object-id user-id)} {"$inc" record}))
 
 (defn game-record-start
-  [all-games gameid p]
-  (let [user-id (get-in p [:user :_id])
-        side-str (:side p)
-        record (merge {:stats.games-started 1}
-                      {(build-stats-kw "stats.games-started-" side-str) 1})]
-    record))
+  [p]
+  (merge {:stats.games-started 1}
+         {(build-stats-kw "stats.games-started-" (:side p)) 1}))
 
 (defn game-record-end
   [all-games gameid p]
@@ -119,7 +112,7 @@
   (let [start-players (get-in @all-games [gameid :original-players])
         end-players (get-in @all-games [gameid :ending-players])]
     (doseq [p start-players]
-      (inc-game-stats db (get-in p [:user :_id]) (game-record-start all-games gameid p)))
+      (inc-game-stats db (get-in p [:user :_id]) (game-record-start p)))
     (doseq [p end-players]
       (inc-game-stats db (get-in p [:user :_id]) (game-record-end all-games gameid p)))))
 
@@ -141,21 +134,21 @@
   [db {:keys [gameid date start-date title room players format]}]
   (let [corp (some #(when (= "Corp" (:side %)) %) players)
         runner (some #(when (= "Runner" (:side %)) %) players)]
-    (mc/insert db :game-logs {:gameid (str gameid)
-                              :title title
-                              :room room
-                              :creation-date date
-                              :start-date start-date
-                              :format format
-                              :corp {:player (select-keys (:user corp) [:username :emailhash])
-                                     :deck-name (get-in corp [:deck :name])
-                                     :identity (get-in corp [:deck :identity :title])}
-                              :runner {:player (select-keys (:user runner) [:username :emailhash])
-                                       :deck-name (get-in runner [:deck :name])
-                                       :identity (get-in runner [:deck :identity :title])}})))
+    (mc/insert db "game-logs" {:gameid (str gameid)
+                               :title title
+                               :room room
+                               :creation-date date
+                               :start-date start-date
+                               :format format
+                               :corp {:player (select-keys (:user corp) [:username :emailhash])
+                                      :deck-name (get-in corp [:deck :name])
+                                      :identity (get-in corp [:deck :identity :title])}
+                               :runner {:player (select-keys (:user runner) [:username :emailhash])
+                                        :deck-name (get-in runner [:deck :name])
+                                        :identity (get-in runner [:deck :identity :title])}})))
 
 (defn delete-old-replay
-  [db {:keys [username] :as user}]
+  [db {:keys [username]}]
   (let [games (mq/with-collection db "game-logs"
                 (mq/find {$and [{$or [{:corp.player.username username}
                                       {:runner.player.username username}]}
@@ -164,7 +157,7 @@
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
     (doseq [game games]
-      (mc/update db :game-logs
+      (mc/update db "game-logs"
                  {:gameid (:gameid game)}
                  {"$unset" {:replay nil} "$set" {:has-replay false}}))))
 
@@ -185,7 +178,7 @@
   [db {:keys [state gameid]}]
   (when state
     (try
-      (mc/update db :game-logs
+      (mc/update db "game-logs"
                  {:gameid (str gameid)}
                  {"$set" {:winner (:winner @state)
                           :reason (:reason @state)
@@ -225,7 +218,7 @@
     {username :username} :user
     {:keys [gameid]} :params}]
   (if username
-    (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])
+    (let [{:keys [log]} (mc/find-one-as-map db "game-logs" {:gameid gameid} ["log"])
           log (or log {})]
       (response 200 log))
     (response 401 {:message "Unauthorized"})))
@@ -236,7 +229,7 @@
     {:keys [gameid]}     :params}]
   (if username
     (let [{:keys [corp runner replay-shared annotations]}
-          (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])
+          (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])
           annotations (or annotations [])]
       (if (or replay-shared
               (= username (get-in corp [:player :username]))
@@ -246,7 +239,7 @@
     (response 401 {:message "Unauthorized"})))
 
 (defn fetch-elapsed [db gameid]
-  (let [stats (mc/find-one-as-map db :game-logs {:gameid (str gameid)} ["stats"])]
+  (let [stats (mc/find-one-as-map db "game-logs" {:gameid (str gameid)} ["stats"])]
     (-> stats :stats :time :elapsed)))
 
 (defn check-annotations-size [replay annotations]
@@ -263,7 +256,7 @@
     {:keys [gameid]} :params
     body :body}]
   (let [{:keys [corp runner replay replay-shared annotations]}
-        (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
+        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
         replay (or replay {})]
     (if (or replay-shared
             (or (= username (get-in corp [:player :username]))
@@ -277,7 +270,7 @@
                                        :turns {:corp (get-in body [:turns :corp])
                                                :runner (get-in body [:turns :runner])}
                                        :clicks (:clicks body)})]
-            (mc/update db :game-logs
+            (mc/update db "game-logs"
                        {:gameid (str gameid)}
                        {"$set" {:annotations new-annotations}})
             (response 200 {:message "Annotations published"}))
@@ -288,8 +281,8 @@
   [{db :system/db
     {username :username} :user
     {:keys [gameid date]} :params}]
-  (let [{:keys [corp runner replay replay-shared annotations]}
-        (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
+  (let [{:keys [corp runner replay annotations]}
+        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
         replay (or replay {})
         annotations (or annotations [])
         [ind anno] (first (filter #(= date (str (:date (second %)))) (map-indexed vector annotations)))]
@@ -302,7 +295,7 @@
           (let [new-annotations
                 (vec (concat (subvec annotations 0 ind)
                              (subvec annotations (inc ind))))]
-            (mc/update db :game-logs
+            (mc/update db "game-logs"
                        {:gameid (str gameid)}
                        {"$set" {:annotations new-annotations}})
             (response 200 {:message "Annotations deleted"}))
@@ -314,7 +307,7 @@
     {username :username} :user
     {:keys [gameid]} :params}]
   (let [{:keys [corp runner replay replay-shared]}
-        (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
+        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
         replay (or replay {})]
     (if (or replay-shared
             (or (= username (get-in corp [:player :username]))
@@ -329,18 +322,16 @@
     {username :username} :user
     {:keys [gameid]} :params}]
   (if username
-    (let [{:keys [replay]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["replay"])
-          replay (or replay {})]
-      (try
-        (mc/update db :game-logs
-                   {$and [{:gameid (str gameid)}
-                          {$or [{:corp.player.username username}
-                                {:runner.player.username username}]}]}
-                   {"$set" {:replay-shared true}})
-        (response 200 {:message "Shared"})
-        (catch Exception e
-          (println "Caught exception sharing game: " (.getMessage e))
-          (response 500 {:message "Server error"}))))
+    (try
+      (mc/update db "game-logs"
+                 {$and [{:gameid (str gameid)}
+                        {$or [{:corp.player.username username}
+                              {:runner.player.username username}]}]}
+                 {"$set" {:replay-shared true}})
+      (response 200 {:message "Shared"})
+      (catch Exception e
+        (println "Caught exception sharing game: " (.getMessage e))
+        (response 500 {:message "Server error"})))
     (response 401 {:message "Unauthorized"})))
 
 (defn- get-winner-card
@@ -360,7 +351,7 @@
     scheme :scheme
     headers :headers
     :as req}]
-  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid gameid})
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid gameid})
         replay (or replay {})
         gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
     (if (empty? replay)

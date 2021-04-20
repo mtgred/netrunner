@@ -1,8 +1,6 @@
 (ns web.mongodb
   (:require [monger.collection]
-            [monger.core :as mg]
-            [monger.cursor]
-            [web.config :refer [server-config]])
+            [monger.cursor])
   (:import org.bson.types.ObjectId))
 
 (defn ->object-id []

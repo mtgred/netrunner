@@ -1,20 +1,20 @@
 (ns web.auth
-  (:require [web.config :refer [server-config]]
-            [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
-            [web.utils :refer [response md5]]
-            [aero.core :refer [read-config]]
-            [clj-time.core :refer [days from-now]]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [monger.operators :refer :all]
-            [buddy.sign.jwt :as jwt]
-            [buddy.auth :refer [authenticated?]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [crypto.password.bcrypt :as password]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [postal.core :as mail]
-            [ring.util.response :refer [redirect]])
+  (:require
+    [clojure.string :as str]
+    ;; external
+    [buddy.sign.jwt :as jwt]
+    [clj-time.coerce :as c]
+    [clj-time.core :as t]
+    [crypto.password.bcrypt :as password]
+    [monger.collection :as mc]
+    [monger.operators :refer :all]
+    [monger.result :refer [acknowledged?]]
+    [postal.core :as mail]
+    [ring.util.response :refer [redirect]]
+    ;; internal
+    [web.config :refer [server-config]]
+    [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
+    [web.utils :refer [response md5]])
   (:import java.security.SecureRandom))
 
 (def auth-config (:auth server-config))
@@ -22,13 +22,12 @@
 (defn create-token [{:keys [_id emailhash]}]
   (let [claims {:_id _id
                 :emailhash emailhash
-                :exp (-> (:expiration auth-config) days from-now)}
-        token (jwt/sign claims (:secret auth-config) {:alg :hs512})]
+                :exp (-> (:expiration auth-config) (t/days) (t/from-now))}]
     (jwt/sign claims (:secret auth-config) {:alg :hs512})))
 
 (defn unsign-token [token]
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
-       (catch Exception e (prn "Received invalid cookie " token))))
+       (catch Exception _ (prn "Received invalid cookie " token))))
 
 (defn wrap-authorization-required [handler]
   (fn [{user :user :as req}]
@@ -83,8 +82,7 @@
 
 (defn register-handler
   [{db :system/db
-    {:keys [username password confirm-password email]} :params
-    :as request}]
+    {:keys [username password confirm-password email]} :params}]
   (cond
     (< 20 (count username))
     (response 401 {:message "Usernames are limited to 20 characters"})
@@ -111,8 +109,7 @@
 
 (defn login-handler
   [{db :system/db
-    {:keys [username password]} :params
-    :as request}]
+    {:keys [username password]} :params}]
   (let [user (mc/find-one-as-map db "users" {:username username})]
     (if (and user
              (password/check password (:password user)))
@@ -125,7 +122,7 @@
                                             (get-in server-config [:auth :cookie]))}))
       (response 401 {:error "Invalid login or password"}))))
 
-(defn logout-handler [request]
+(defn logout-handler [_]
   (assoc (response 200 {:message "ok"})
     :cookies {"session" {:value 0
                          :max-age -1}}))
@@ -146,8 +143,7 @@
 
 (defn email-handler
   [{db :system/db
-    {username :username} :user
-    body :body}]
+    {username :username} :user}]
   (if username
     (let [{:keys [email]} (find-one-as-map-case-insensitive db "users" {:username username})]
       (response 200 {:email email}))
@@ -156,8 +152,7 @@
 (defn change-email-handler
   [{db :system/db
     {username :username} :user
-    {email :email} :body
-    :as params}]
+    {email :email} :body}]
   (cond
     (not username)
     (response 401 {:message "Unauthorized"})
@@ -200,7 +195,7 @@
 (defn hexadecimalize
   "Converts a byte array to a hex string"
   [a-byte-array]
-  (clojure.string/lower-case (clojure.string/join (map #(format "%02X" %) a-byte-array))))
+  (str/lower-case (str/join (map #(format "%02X" %) a-byte-array))))
 
 (defn set-password-reset-code!
   "Generates a password-reset code for the given email address. Updates the user's info in the database with the code,
@@ -218,7 +213,7 @@
   [{db :system/db
     {:keys [email]} :params
     headers         :headers}]
-  (if-let [user (mc/find-one-as-map db "users" {:email email})]
+  (if (mc/find-one-as-map db "users" {:email email})
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 (:email server-config)
@@ -253,7 +248,8 @@
            :to      email
            :subject "Your password has been changed"
            :body    (str "Hello,\n\n"
-                         "This is a confirmation that the password for your account " email " has just been changed.\n")})
+                         "This is a confirmation that the password for your account "
+                         email " has just been changed.\n")})
         (redirect "/"))
       (response 422 {:message "New Password and Confirm Password did not match"}))
     (response 404 {:message "No reset token found"})))

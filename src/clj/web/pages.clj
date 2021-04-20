@@ -5,15 +5,13 @@
             [hiccup.page :as hiccup]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [monger.result :refer [acknowledged?]]
             [ring.middleware.anti-forgery :as anti-forgery]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
-            [web.config :refer [server-config frontend-version server-mode]]
+            [web.config :refer [frontend-version server-mode]]
             [web.utils :refer [response]]))
 
 (defn index-page
   ([req] (index-page req nil nil))
-  ([{:keys [user] :as req} og replay-id]
+  ([{:keys [user]} og replay-id]
    (hiccup/html5
      [:head
       [:meta {:charset "utf-8"}]
@@ -68,8 +66,8 @@
 (defn reset-password-page
   [{db :system/db
     {:keys [token]} :params}]
-  (if-let [user (mc/find-one-as-map db "users" {:resetPasswordToken   token
-                                                :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+  (if (mc/find-one-as-map db "users" {:resetPasswordToken   token
+                                      :resetPasswordExpires {"$gt" (c/to-date (t/now))}})
     (hiccup/html5
       [:head
        [:title "Jinteki"]

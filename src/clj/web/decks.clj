@@ -1,16 +1,18 @@
 (ns web.decks
-  (:require [web.mongodb :refer [object-id]]
-            [web.utils :refer [response]]
-            [web.ws :as ws]
-            [web.nrdb :as nrdb]
-            [clojure.string :refer [split split-lines join escape lower-case] :as s]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
-            [crypto.password.pbkdf2 :as pbkdf2]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :refer [slugify]]
-            [jinteki.validator :refer [calculate-deck-status]])
+  (:require
+    ;; external
+    [clojure.string :as str]
+    [monger.collection :as mc]
+    [monger.result :refer [acknowledged?]]
+    [crypto.password.pbkdf2 :as pbkdf2]
+    ;; internal
+    [web.mongodb :refer [object-id]]
+    [web.nrdb :as nrdb]
+    [web.utils :refer [response]]
+    [web.ws :as ws]
+    [jinteki.cards :refer [all-cards]]
+    [jinteki.utils :refer [slugify]]
+    [jinteki.validator :refer [calculate-deck-status]])
   (:import org.bson.types.ObjectId))
 
 
@@ -51,11 +53,11 @@
                        (update :identity #(get @all-cards (:title %))))
         id (-> deck :identity :title)
         sorted-cards (sort-by #(:code (:card %)) (:cards check-deck))
-        decklist (s/join (for [entry sorted-cards]
+        decklist (str/join (for [entry sorted-cards]
                            (str (:qty entry) (:code (:card entry)))))
         deckstr (str id decklist)
         salt (make-salt (:name deck))]
-    (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
+    (last (str/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
 (defn decks-create-handler
   [{db :system/db

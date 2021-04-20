@@ -1,9 +1,7 @@
 (ns web.data
   (:require [web.utils :refer [response]]
             [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
             [monger.query :as mq]
-            [web.config :refer [server-config]]
             [game.core.initializing :refer [card-implemented]]
             [clojure.edn :as edn]))
 

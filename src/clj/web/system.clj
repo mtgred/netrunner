@@ -22,7 +22,6 @@
     [game.quotes :refer [load-quotes!]]
     [jinteki.cards :as cards]
     [web.api :refer [make-app]]
-    [web.config :refer [server-config]]
     [web.ws :refer [ch-chsk event-msg-handler]]))
 
 (defn build-config []

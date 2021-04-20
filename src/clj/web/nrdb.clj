@@ -35,8 +35,9 @@
           (update m :cards #(conj % {:card (:title card) :qty v})))
         m))))
 
-(defn- parse-cards [db cards]
+(defn- parse-cards
   "Returns a map with the identity and the cards in a deck separated"
+  [db cards]
   (reduce-kv (reduce-card db) {:identity nil :cards []} cards))
 
 (defn- parse-nrdb-deck [db deck]
@@ -57,7 +58,7 @@
   (let [deck-id (parse-input input)
         url (str nrdb-decklist-url deck-id)
         data (http/get url)
-        {:keys [status body error] :as resp} @data]
+        {:keys [status body error]} @data]
     (cond
       error (throw (Exception. (str "Failed to download deck " error)))
       (= 200 status) (parse-response db body)

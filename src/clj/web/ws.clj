@@ -1,6 +1,5 @@
 (ns web.ws
-  (:require [clojure.core.async :refer [go <! >! timeout put! chan]]
-            [buddy.sign.jwt :as jwt]
+  (:require [clojure.core.async :refer [go <! >! timeout chan]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
@@ -30,7 +29,7 @@
 (defonce ratelimiter
   (go (while true
         (<! (timeout (int buffer-clear-timer-ms)))
-        (dotimes [n buffer-size]
+        (dotimes [_ buffer-size]
           (<! websocket-buffer)))))
 
 (defn broadcast-to!
@@ -65,7 +64,7 @@
 
 (defmethod -msg-handler :chsk/ws-ping
   ;; do nothing on ping messages
-  [event]
+  [_]
   nil)
 
 (defn event-msg-handler

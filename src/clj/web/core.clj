@@ -30,7 +30,7 @@
 
     ;; Clear inactive lobbies after 30 minutes
     (tick #(lobby/clear-inactive-lobbies db 1800) 1000)
-    (tick #(lobby/reset-send-lobby db) 1000)
+    (tick #(lobby/reset-send-lobby) 1000)
 
     (println "Jinteki server running in" @server-mode "mode on port" port)
     (println "Frontend version " @frontend-version)
