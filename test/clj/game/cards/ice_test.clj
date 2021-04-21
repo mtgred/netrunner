@@ -2693,39 +2693,56 @@
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
 
 (deftest loki
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Loki" "Karunā"]
-                      :credits 100}
-               :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
-    (play-from-hand state :corp "Karunā" "HQ")
-    (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
-    (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
-    (take-credits state :corp)
-    (run-on state "R&D")
-    (run-continue state)
-    (click-card state :corp "Karunā")
-    (is (last-log-contains? state "Corp chooses Karunā protecting HQ at position 0 for Loki's ability.")
-        "The message correctly prints")
-    (is (= ["Do 2 net damage. The Runner may jack out."
-            "Do 2 net damage"
-            "End the run unless the Runner shuffles their Grip into the Stack"]
-           (map :label (:subroutines (get-ice state :rd 0))))
-        "Loki gains all of Karunā's subroutines")
-    (is (= #{"AP" "Sentry" "Bioroid"} (into #{} (:subtypes (get-ice state :rd 0)))))
-    (is (= 0 (count (:discard (get-runner)))) "Heap Empty")
-    (fire-subs state (get-ice state :rd 0))
-    (is (= 2 (count (:discard (get-runner)))) "2 cards trashed")
-    (click-prompt state :runner "No")
-    (is (= 4 (count (:discard (get-runner)))) "4 cards trashed")
-    (click-prompt state :runner "No")
-    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
-    (is (not (:run @state)) "Run is ended")
-    (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
-           (map :label (:subroutines (get-ice state :rd 0))))
-        "Loki's subroutines revert to printed after the run ends")
-    (is (= ["Bioroid"] (:subtypes (get-ice state :rd 0))))))
+  (testing "Runner does not shuffle cards"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Loki" "Karunā"]
+                        :credits 100}
+                 :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
+      (play-from-hand state :corp "Karunā" "HQ")
+      (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
+      (play-from-hand state :corp "Loki" "R&D")
+      (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (click-card state :corp "Karunā")
+      (is (last-log-contains? state "Corp chooses Karunā protecting HQ at position 0 for Loki's ability.")
+          "The message correctly prints")
+      (is (= ["Do 2 net damage. The Runner may jack out."
+              "Do 2 net damage"
+              "End the run unless the Runner shuffles their Grip into the Stack"]
+             (map :label (:subroutines (get-ice state :rd 0))))
+          "Loki gains all of Karunā's subroutines")
+      (is (= #{"AP" "Sentry" "Bioroid"} (into #{} (:subtypes (get-ice state :rd 0)))))
+      (is (= 0 (count (:discard (get-runner)))) "Heap Empty")
+      (fire-subs state (get-ice state :rd 0))
+      (is (= 2 (count (:discard (get-runner)))) "2 cards trashed")
+      (click-prompt state :runner "No")
+      (is (= 4 (count (:discard (get-runner)))) "4 cards trashed")
+      (click-prompt state :runner "No")
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+      (is (not (:run @state)) "Run is ended")
+      (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
+             (map :label (:subroutines (get-ice state :rd 0))))
+          "Loki's subroutines revert to printed after the run ends")
+      (is (= ["Bioroid"] (:subtypes (get-ice state :rd 0))))))
+  (testing "Runner does shuffle cards"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Loki"]
+                        :credits 100}
+                 :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
+      (play-from-hand state :corp "Loki" "R&D")
+      (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (fire-subs state (get-ice state :rd 0))
+      (click-prompt state :runner "Yes")
+      (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+      (is (= 6 (count (:deck (get-runner)))) "Runner has 6 cards in stack")
+      (is (:run @state) "Run is still live"))))
 
 (deftest loot-box
   ;; Loot Box
