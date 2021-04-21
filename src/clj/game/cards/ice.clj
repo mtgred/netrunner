@@ -1950,7 +1950,7 @@
           :yes-ability {:async true
                         :effect (effect (jack-out eid))}
           :no-ability {:effect (effect (system-msg :runner "chooses to continue"))}}}]
-    {:subroutines [{:label "Do 2 net damage"
+    {:subroutines [{:label "Do 2 net damage. The Runner may jack out."
                     :async true
                     :effect (req (wait-for (resolve-ability state side (do-net-damage 2) card nil)
                                            (continue-ability state side offer-jack-out card nil)))}
