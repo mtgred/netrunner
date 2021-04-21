@@ -226,10 +226,14 @@
 
 (defn strip-for-spectators
   [stripped-state corp-player runner-player]
-  (let [spectator? (get-in stripped-state [:options :spectatorhands])]
+  (let [spectator? (get-in stripped-state [:options :spectatorhands])
+        hidden-discard (-> corp-player
+                           (get-in [:corp :discard])
+                           (card-summary-vec stripped-state :spectator))]
     (-> stripped-state
         (assoc :corp (:corp corp-player)
                :runner (:runner runner-player))
+        (update-in [:corp :discard] #(if spectator? % hidden-discard))
         (update-in [:corp :hand] #(if spectator? % []))
         (update-in [:runner :hand] #(if spectator? % [])))))
 
