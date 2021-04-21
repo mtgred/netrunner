@@ -2742,7 +2742,40 @@
       (click-prompt state :runner "Yes")
       (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
       (is (= 6 (count (:deck (get-runner)))) "Runner has 6 cards in stack")
-      (is (:run @state) "Run is still live"))))
+      (is (:run @state) "Run is still live")))
+  (testing "Runner can shuffle cards with zero in hand"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Loki"]
+                        :credits 100}
+                 :runner {:hand []
+                          :deck [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Loki" "R&D")
+      (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (fire-subs state (get-ice state :rd 0))
+      (click-prompt state :runner "Yes")
+      (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+      (is (= 3 (count (:deck (get-runner)))) "Runner has 3 card in stack")
+      (is (:run @state) "Run is still live")))
+  (testing "Runner cannot shuffle cards"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Loki"]
+                        :credits 100}
+                 :runner {:hand []
+                          :deck ["Sure Gamble"]}})
+      (play-from-hand state :corp "Loki" "R&D")
+      (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (fire-subs state (get-ice state :rd 0))
+      (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+      (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in stack")
+      (is (not (:run @state)) "Run is ended"))))
 
 (deftest loot-box
   ;; Loot Box

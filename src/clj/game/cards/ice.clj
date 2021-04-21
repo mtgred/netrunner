@@ -2039,7 +2039,8 @@
                          :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
                   :async true
-                  :effect (req (if (zero? (count (:hand runner)))
+                  :effect (req (if (and (zero? (count (:hand runner)))
+                                        (< (count (:deck runner)) 2)) ; UFAQ 24
                                  (do (system-msg state :corp (str "uses Loki to end the run"))
                                      (end-run state side eid card))
                                  (continue-ability
