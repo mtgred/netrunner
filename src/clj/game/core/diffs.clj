@@ -69,6 +69,7 @@
    :scored
    :rfg
    :play-area
+   :current
    :click
    :credit
    :toast
