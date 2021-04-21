@@ -2027,6 +2027,7 @@
                       :duration :end-of-run
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
+                   (system-msg state :corp (str "chooses " (card-str state target) " for Loki's ability"))
                    (doseq [sub (:subroutines target)]
                      (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events

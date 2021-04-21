@@ -2705,6 +2705,8 @@
     (run-on state "R&D")
     (run-continue state)
     (click-card state :corp "Archer")
+    (is (last-log-contains? state "Corp chooses Archer protecting HQ at position 0 for Loki's ability.")
+        "The message correctly prints")
     (is (= ["Gain 2 [Credits]" "Trash a program" "Trash a program" "End the run"
             "End the run unless the Runner shuffles their Grip into the Stack"]
            (map :label (:subroutines (get-ice state :rd 0))))
