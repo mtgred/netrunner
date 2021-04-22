@@ -904,8 +904,13 @@
                 right: 100%
                 width: fit-content
 
+                ::-webkit-scrollbar
+                    width 0
+
                 ul.command-matches
                     list-style-type: none
+                    overflow: auto
+                    max-height: 300px
 
                     li.command-match.highlight span
                         color: #ffa500
