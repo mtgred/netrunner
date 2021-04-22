@@ -1610,7 +1610,8 @@
   {:abilities [{:cost [:click 1]
                 :async true
                 :effect (effect (gain-credits eid 2))
-                :msg "gain 2 [Credits]"}]})
+                :msg "gain 2 [Credits]"
+                :keep-open :while-clicks-left}]})
 
 (defcard "Makler"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")

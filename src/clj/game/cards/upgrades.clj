@@ -615,7 +615,8 @@
                                    :duration :end-of-run
                                    :req (req (protecting-same-server? card target))
                                    :value 2})
-                                (update-all-ice))}]})
+                                (update-all-ice))
+                :keep-open :while-cards-in-hand}]})
 
 (defcard "Henry Phillips"
   (letfn [(hp-gain-credits [state side eid n]

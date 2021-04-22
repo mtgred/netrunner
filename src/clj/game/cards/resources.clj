@@ -2828,11 +2828,13 @@
             {:label (str "Access an additional card in " name)
              :cost [:power 2]
              :req (req run)
+             :keep-open :while-at-least-2-power-tokens-left
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
              :effect (req (access-bonus state side server 1))})
           (ttw-bounce [name server]
             {:label (str "Shortcut: Bounce " name)
              :cost [:click 1]
+             :keep-open :while-clicks-left
              :msg (msg "bounce off of " name " for a token (shortcut)")
              :effect (effect (add-counter card :power 1))})]
     {:events [{:event :agenda-stolen
