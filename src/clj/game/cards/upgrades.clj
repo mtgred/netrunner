@@ -616,7 +616,7 @@
                                    :req (req (protecting-same-server? card target))
                                    :value 2})
                                 (update-all-ice))
-                :keep-open :while-cards-in-hand}]})
+                :keep-menu-open :while-cards-in-hand}]})
 
 (defcard "Henry Phillips"
   (letfn [(hp-gain-credits [state side eid n]

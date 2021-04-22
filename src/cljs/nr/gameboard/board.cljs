@@ -90,7 +90,7 @@
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))
         card-side (keyword (.toLowerCase (:side card)))]
-    (swap! c-state dissoc :keep-open)
+    (swap! c-state dissoc :keep-menu-open)
     (when-not (and (= card-side :runner) facedown)
       (cond
 
@@ -129,7 +129,7 @@
 
 (defn close-abilities
   [c-state]
-  (swap! c-state dissoc :abilities :corp-abilities :runner-abilities :keep-open))
+  (swap! c-state dissoc :abilities :corp-abilities :runner-abilities :keep-menu-open))
 
 (defn playable? [card] (:playable card))
 
@@ -361,16 +361,16 @@
         [:div {:key i
                :on-click #(do
                             (send-command command {:card card :ability i})
-                            (if (:keep-open ab)
-                              (swap! c-state assoc :keep-open (keyword (:keep-open ab)))
+                            (if (:keep-menu-open ab)
+                              (swap! c-state assoc :keep-menu-open (keyword (:keep-menu-open ab)))
                               (close-abilities c-state)))}
          (render-icons (add-cost-to-label ab))]))
       abilities))
 
-(defn check-keep-open
+(defn check-keep-menu-open
   [card c-state]
   (let [side (:side @game-state)
-        keep-open (case (:keep-open @c-state)
+        keep-menu-open (case (:keep-menu-open @c-state)
                         :while-clicks-left
                         (not (zero? (get-in @game-state [side :click])))
 
@@ -386,8 +386,8 @@
                         :forever true
 
                         false)]
-    (when-not keep-open (close-abilities c-state))
-    keep-open))
+    (when-not keep-menu-open (close-abilities c-state))
+    keep-menu-open))
 
 (defn runner-abs [card c-state runner-abilities subroutines title]
   (when (:runner-abilities @c-state)
@@ -471,8 +471,8 @@
   (let [actions (action-list card)
         dynabi-count (count (filter :dynamic abilities))]
     (when (and (:abilities @c-state)
-               (or (nil? (:keep-open @c-state))
-                   (check-keep-open card c-state))
+               (or (nil? (:keep-menu-open @c-state))
+                   (check-keep-menu-open card c-state))
                (or (pos? (+ (count actions)
                             (count abilities)
                             (count subroutines)))
