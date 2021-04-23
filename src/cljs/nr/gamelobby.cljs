@@ -214,7 +214,7 @@
               (swap! app-state dissoc :editing-game)
               (ws/ws-send! [:lobby/create
                             (select-keys @s [:title :password :allow-spectator :save-replay
-                                             :spectatorhands :side :format :room :timer])])))))))
+                                             :spectatorhands :side :format :room :timer :api-access])])))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])

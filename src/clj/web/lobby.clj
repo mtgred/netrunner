@@ -49,6 +49,8 @@
       game-lobby-updates (atom {})
       send-ready (atom true)]
 
+  (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer :api-access])
+
   (defn- game-public-view
     "Strips private server information from a game map, preparing to send the game to clients."
     [gameid game]
