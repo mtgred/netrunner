@@ -17,6 +17,7 @@ pom.xml
 .rebel_readline_history
 .idea
 .eastwood
+.cache
 
 /resources/public/js/
 /resources/public/cljs/
@@ -45,3 +46,7 @@ data/storage.bson
 
 #Calva
 .calva/*
+
+tags
+tags.temp
+tags.temp.tmp

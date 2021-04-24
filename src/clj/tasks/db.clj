@@ -1,17 +1,19 @@
 (ns tasks.db
   "Database maintenance tasks"
-  (:require [web.auth :refer [create-user]]
-            [web.db :refer [db object-id] :as webdb]
-            [web.decks :refer [hash-deck update-deck prepare-deck-for-db]]
-            [web.core :refer [load-data]]
-            [web.nrdb :refer [download-public-decklist]]
-            [web.utils :refer [md5]]
-            [monger.collection :as mc]
-            [monger.db]
-            [monger.operators :refer :all]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status]]
-            [clj-uuid :as uuid]))
+  (:require
+    ;; external
+    [monger.collection :as mc]
+    [monger.db]
+    [monger.operators :refer :all]
+    [clj-uuid :as uuid]
+    ;; internal
+    [jinteki.validator :refer [calculate-deck-status]]
+    [tasks.setup :refer [connect disconnect]]
+    [web.auth :refer [create-user]]
+    [web.mongodb :refer [object-id]]
+    [web.decks :refer [hash-deck update-deck prepare-deck-for-db]]
+    [web.nrdb :refer [download-public-decklist]]
+    [web.utils :refer [md5]]))
 
 (defn- get-deck-status
   [deck]
@@ -23,9 +25,8 @@
 (defn update-all-decks
   "Run after fetching the data to update all decks"
   [& args]
-  (webdb/connect)
-  (load-data)
-  (let [cnt (atom 0)]
+  (let [{{:keys [db]} :mongodb/connection :as system} (connect)
+        cnt (atom 0)]
     (doseq [deck (mc/find-maps db "decks" nil)]
       (let [deck-id (:_id deck)]
         (swap! cnt inc)
@@ -38,26 +39,26 @@
           (catch Exception e (do (println "Something got hecked" (.getMessage e))
                                  (println "Deck id:" deck-id))))))
     (newline)
-    (println "Updated" @cnt "decks"))
-    (webdb/disconnect))
+    (println "Updated" @cnt "decks")
+    (disconnect))
 
 (defn- get-all-users
   "Get all users in the database. Takes a list of fields."
-  [fields]
+  [db fields]
   (mc/find-maps db "users" {} fields))
 
 (defn- delete-user
   "Delete a user by Mongo document id"
-  [id]
+  [db id]
   (mc/remove-by-id db "users" id))
 
 (defn delete-duplicate-users
   "Delete entries in the users table that share a username. Leave the first registered entry found in the collection."
   [& args]
-  (webdb/connect)
   (try
-    (let [dry-run (some #{"--dry-run"} args)
-          users (get-all-users [:email :username :registrationDate :lastConnection])
+    (let [{{:keys [db]} :mongodb/connection :as system} (connect)
+          dry-run (some #{"--dry-run"} args)
+          users (get-all-users db [:email :username :registrationDate :lastConnection])
           grouped (vals (group-by :username users))
           duplicates (filter #(> (count %) 1) grouped)]
       (when dry-run
@@ -74,11 +75,11 @@
           (doseq [del r]
             (println "\t\t" (:email del) "," (:registrationDate del))
             (when (not dry-run)
-              (delete-user (:_id del)))))))
+              (delete-user db (:_id del)))))))
     (catch Exception e (do
                          (println "Delete duplicate users failed" (.getMessage e))
                          (.printStackTrace e)))
-    (finally (webdb/disconnect))))
+    (finally (disconnect))))
 
 (defn- prepare-sample-decks
   [nrdb-urls]
@@ -224,15 +225,14 @@
   games and no messages, while \"sample1\" has approx. a thousand times the
   amount of decks, games and messages as the median."
   [& [users username-prefix avg-decks avg-game-logs avg-messages]]
-  (let [username-prefix (or username-prefix "sample")
-        ;; Those numbers are from January 2021, obviously rounded:
-        users (Integer/parseInt (or users "50000"))
-        decks (* users (Integer/parseInt (or avg-decks "11")))
-        game-logs (* users (Integer/parseInt (or avg-game-logs "5")))
-        messages (* users (Integer/parseInt (or avg-messages "5")))]
-    (webdb/connect)
+  (let [{{:keys [db]} :mongodb/connection :as system} (connect)]
     (try
-      (do
+      (let [username-prefix (or username-prefix "sample")
+            ;; Those numbers are from January 2021, obviously rounded:
+            users (Integer/parseInt (or users "50000"))
+            decks (* users (Integer/parseInt (or avg-decks "11")))
+            game-logs (* users (Integer/parseInt (or avg-game-logs "5")))
+            messages (* users (Integer/parseInt (or avg-messages "5")))]
         (println "This will take a few minutes to create"
                  users "users,"
                  (total-samples users decks) "decks,"
@@ -253,4 +253,4 @@
       (catch Exception e (do
                            (println "Create sample data failed:" (.getMessage e))
                            (.printStackTrace e)))
-      (finally (webdb/disconnect)))))
+      (finally (disconnect system)))))

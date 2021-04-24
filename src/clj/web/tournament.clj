@@ -1,6 +1,6 @@
 (ns web.tournament
-  (:require [clojure.string :refer [lower-case]]
-            [web.db :refer [db find-maps-case-insensitive object-id]]
+  (:require [clojure.string :as str]
+            [web.mongodb :refer [find-maps-case-insensitive]]
             [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.stats :refer [fetch-elapsed]]
             [web.utils :refer [response]]
@@ -10,8 +10,7 @@
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clj-time.core :as t]
-            [clj-uuid :as uuid]
-            [clojure.string :as str]))
+            [clj-uuid :as uuid]))
 
 (defn auth [req]
   (response 200 {:message "ok"}))
@@ -23,7 +22,7 @@
 (defn download-cobra-data
   [id]
   (let [data (http/get (str "http://cobr.ai/tournaments/" id ".json"))
-        {:keys [status body error headers] :as resp} @data]
+        {:keys [status body error headers]} @data]
     (cond
       error (throw (Exception. (str "Failed to download file " error)))
       (and
@@ -36,10 +35,6 @@
   [data]
   (into {} (for [player (:players data)]
              [(:id player) player])))
-
-(defn latest-round
-  [data]
-  (last (:rounds data)))
 
 (defn get-player-name
   [players player]
@@ -82,9 +77,9 @@
   (map #(process-round % players) (:rounds data)))
 
 (defn create-tournament-lobby
-  [{:keys [tournament-name tournament-format selected-round table
-           username1 username2 allow-spectator on-close cobra-link
-           save-replay timer]}]
+  [db {:keys [tournament-name tournament-format selected-round table
+              username1 username2 allow-spectator on-close cobra-link
+              save-replay timer]}]
   (let [gameid (uuid/v4)
         title (str tournament-name ", Round " selected-round
                    ", Table " table ": " username1 " vs " username2)
@@ -122,7 +117,7 @@
       game)))
 
 (defn create-lobbies-for-tournament
-  [data selected-round {timer :timer save-replays :save-replays? single-sided :single-sided? :as options}]
+  [db data selected-round {:keys [timer save-replays? single-sided?]}]
   (let [players (build-players data)
         rounds (process-all-rounds data players)
         round (nth rounds selected-round (count rounds))]
@@ -138,29 +133,29 @@
                     :timer timer
                     :username1 username1
                     :username2 username2
-                    :save-replay save-replays
-                    :allow-spectator true}]
+                    :save-replay save-replays?
+                    :allow-spectator true}
+              callback (fn [first-game]
+                         (create-tournament-lobby
+                           db (assoc base
+                                     :username1 username2
+                                     :username2 username1
+                                     :timer (when-let
+                                              [elapsed (fetch-elapsed db (:gameid first-game))]
+                                              (max 0 (- timer elapsed))))))]
           (create-tournament-lobby
-            (assoc base :on-close (when-not
-                                    single-sided
-                                    (fn [first-game]
-                                      (create-tournament-lobby
-                                        (assoc base
-                                          :username1 username2
-                                          :username2 username1
-                                          :timer (when-let
-                                                   [elapsed (fetch-elapsed (:gameid first-game))]
-                                                   (max 0 (- timer elapsed)))))))))))
+            db (assoc base :on-close (when-not single-sided? callback)))))
       round)))
 
 (defn load-tournament
-  [{{:keys [cobra-link]} :?data
+  [{{db :system/db} :ring-req
+    {:keys [cobra-link]} :?data
     client-id :client-id}]
   (let [data (download-cobra-data cobra-link)
         player-names (keep :name (:players data))
         query (into [] (for [username player-names] {:username username}))
         db-players (find-maps-case-insensitive db "users" {$or query})
-        found-player-names #(seq (filter (fn [e] (= (lower-case %) (lower-case e))) (map :username db-players)))
+        found-player-names #(seq (filter (fn [e] (= (str/lower-case %) (str/lower-case e))) (map :username db-players)))
         missing-players (remove found-player-names player-names)
         players (build-players data)
         rounds (process-all-rounds data players)]
@@ -173,18 +168,21 @@
 (defn wrap-with-to-handler
   "Wrap a function in a handler which checks that the user is a tournament organizer."
   [handler]
-  (fn [{{user :user} :ring-req reply-fn :?reply-fn :as msg}]
+  (fn [{{user :user} :ring-req
+        reply-fn :?reply-fn
+        :as msg}]
     (if (:tournament-organizer user)
       (do (handler msg)
           (when reply-fn (reply-fn 200)))
       (when reply-fn (reply-fn 403)))))
 
 (defn create-tables
-  [{{:keys [cobra-link selected-round save-replays? single-sided? timer]} :?data
+  [{{db :system/db} :ring-req
+    {:keys [cobra-link selected-round save-replays? single-sided? timer]} :?data
     client-id :client-id}]
   (let [data (download-cobra-data cobra-link)
         created-rounds (create-lobbies-for-tournament
-                         data
+                         db data
                          (str->int selected-round)
                          {:timer timer
                           :save-replays? save-replays?

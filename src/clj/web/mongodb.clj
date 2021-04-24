@@ -1,24 +1,14 @@
-(ns web.db
+(ns web.mongodb
   (:require [monger.collection]
-            [monger.core :as mg]
-            [monger.cursor]
-            [web.config :refer [server-config]])
-
+            [monger.cursor])
   (:import org.bson.types.ObjectId))
 
-(defn connect[]
-  (let [{:keys [address port connection-string name]} (:db server-config)
-        connection (mg/connect-via-uri (or connection-string
-                                           (str "mongodb://" address ":" port "/" name)))]
-    (defonce conn (:conn connection))
-    (defonce db (:db connection))))
-
-(defn disconnect []
-  (mg/disconnect conn))
+(defn ->object-id []
+  (ObjectId.))
 
 (defn object-id [id]
   (if (string? id)
-    (org.bson.types.ObjectId. id)
+    (ObjectId. id)
     id))
 
 (defn- create-collation

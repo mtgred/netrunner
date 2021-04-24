@@ -1,15 +1,18 @@
 (ns tasks.nrdb
   "NetrunnerDB import tasks"
-  (:require [org.httpkit.client :as http]
-            [org.httpkit.sni-client :as sni-client]
-            [web.db :as webdb]
-            [tasks.utils :refer [replace-collection]]
-            [tasks.images :refer [add-images]]
-            [monger.collection :as mc]
-            [monger.operators :refer [$exists $inc $currentDate]]
-            [throttler.core :refer [throttle-fn]]
-            [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+  (:require
+    ;; external
+    [org.httpkit.client :as http]
+    [org.httpkit.sni-client :as sni-client]
+    [monger.collection :as mc]
+    [monger.operators :refer [$exists $inc $currentDate]]
+    [throttler.core :refer [throttle-fn]]
+    [clojure.java.io :as io]
+    [clojure.edn :as edn]
+    ;; internal
+    [tasks.utils :refer [replace-collection]]
+    [tasks.images :refer [add-images]]
+    [tasks.setup :refer [connect disconnect]]))
 
 (def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
 (def ^:const jnet-image-url "https://jinteki.net/img/cards/en/default/stock/")
@@ -90,33 +93,33 @@
 
 (defn- update-config
   "Store import meta info in the db"
-  []
-  (mc/update webdb/db "config"
+  [db]
+  (mc/update db "config"
              {:cards-version {$exists true}}
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}
              {:upsert true}))
 
 (defn fetch-data
-  [{:keys [card-images db local db-connection]}]
+  [{:keys [card-images db local db-connection] :as options}]
   (let [edn (dissoc (download-edn-data local) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
       (println (str "Wrote data/" filename ".edn to disk")))
     (when db
-      (when (not db-connection)
-        (webdb/connect))
-      (try
-        (doseq [[k data] edn
-                :let [col (name k)]]
-          (replace-collection col data)
-          (println (str "Imported " col " into database")))
-        (update-config)
-        (when card-images
-          (download-card-images (:cards edn)))
-        (add-images)
-        (finally (when (not db-connection) (webdb/disconnect)))))
+      (let [{{:keys [db]} :mongodb/connection :as system}
+            (if db-connection ({:mongodb/connection {:db db}}) (connect))]
+        (try
+          (doseq [[k data] edn
+                  :let [col (name k)]]
+            (replace-collection db col data)
+            (println (str "Imported " col " into database")))
+          (update-config db)
+          (when card-images
+            (download-card-images (:cards edn)))
+          (add-images db)
+          (finally (when (not db-connection) (disconnect system))))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")

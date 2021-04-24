@@ -51,7 +51,7 @@
                (if (= "irl" (get-in @app-state [:options :runner-board-order]))
                  (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
        (when (not (nil? @gameid))
-         [:div.float-right 
+         [:div.float-right
           [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
           (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
@@ -74,7 +74,7 @@
               [:div.blue-shade.spectators
                (for [p (:spectators game)]
                  ^{:key (get-in p [:user :_id])}
-                 [player-view p game])]]))))]))
+                 [player-view p])]]))))]))
 
 (defn- get-server-data
   [tag]

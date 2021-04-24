@@ -18,7 +18,6 @@
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :refer [resource-response]]
-            [web.db :refer [db]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]))
 
@@ -115,13 +114,18 @@
       (resource-response "jinteki.ico" {:root "public/img"})
       (handler req))))
 
-(def app
+(defn wrap-db [handler mongo]
+  (fn [req]
+    (handler (assoc req :system/db (:db mongo)))))
+
+(defn make-app [mongo]
   (-> routes
-      auth/wrap-user
-      wrap-keyword-params
-      wrap-params
-      wrap-json-response
-      wrap-session
+      (auth/wrap-user)
+      (wrap-db mongo)
+      (wrap-keyword-params)
+      (wrap-params)
+      (wrap-json-response)
+      (wrap-session)
       (wrap-json-body {:keywords? true})
-      wrap-return-favicon
-      wrap-stacktrace))
+      (wrap-return-favicon)
+      (wrap-stacktrace)))

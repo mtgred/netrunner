@@ -1,5 +1,5 @@
 (ns game.quotes
-  (:require [aero.core :refer [read-config]]
+  (:require [clojure.edn :as edn]
             [clojure.java.io :as io]))
 
 
@@ -12,9 +12,13 @@
 (defn load-quotes!
   []
   (let [quotes-corp (when (.exists (io/file quotes-corp-filename))
-                      (read-config quotes-corp-filename))
+                      (-> (io/file quotes-corp-filename)
+                          (slurp)
+                          (edn/read-string)))
         quotes-runner (when (.exists (io/file quotes-runner-filename))
-                        (read-config quotes-runner-filename))]
+                        (-> (io/file quotes-runner-filename)
+                            (slurp)
+                            (edn/read-string)))]
     (println "Loaded quote files")
     (reset! identity-quotes (merge quotes-corp quotes-runner))))
 

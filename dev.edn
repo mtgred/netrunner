@@ -1,23 +1,21 @@
 ; Copy this file as "config.edn" and edit it to change local settings. Do not commit that file.
-{:trello-auth
-        {:key     nil
-         :token   nil
-         :list-id nil}
- :db    {:address "localhost"
-         :port    27017
-         :name    "netrunner"
-         :connection-string #or [#env MONGO_CONNECTION_URI nil]} ; Monger requires a db name in the URI string, be sure to specify
- :auth  {:expiration 60
-         :secret     "Dev salt"
-         :cookie     {:http-only true
-                      :max-age   5184000                    ; 60 days
-                      }}
- :chat  {:max-length 144
-         :rate-window 60  ;; sliding window size in seconds
-         :rate-cnt 10}    ;; number of messages allowed in the sliding window
- :web   {:port 1042}
+{:db {:address "localhost"
+      :port 27017
+      :name "netrunner"
+      ; Monger requires a db name in the URI string, be sure to specify
+      :connection-string #or [#env MONGO_CONNECTION_URI nil]}
+ :auth {:expiration 60
+        :secret "Dev salt"
+        :cookie {:http-only true
+                 ; 60 days
+                 :max-age 5184000}}
+ :chat {:max-length 144
+        ;; sliding window size in seconds
+        :rate-window 60
+        ;; number of messages allowed in the sliding window
+        :rate-cnt 10}
+ :web {:port 1042}
  :email {:host nil
          :user nil
          :pass nil
-         :ssl  nil}
- }
+         :ssl  nil}}
