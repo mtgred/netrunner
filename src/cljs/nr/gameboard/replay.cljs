@@ -1,7 +1,7 @@
 (ns nr.gameboard.replay
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! timeout] :as async]
-            [clojure.string :as s :refer [join blank?]]
+            [clojure.string :as s :refer [join blank? capitalize]]
             [differ.core :as differ]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
@@ -287,6 +287,7 @@
                   [:div.step {:class [(:active-player state) (when (= n (:n @replay-status)) "active-step") (name step-type)]}
                    [:div.step-label {:on-click #(replay-jump n)
                                      :data-turn turn
+                                     :title (s/replace (capitalize (subs (str step-type) 1)) #"-" " ")
                                      :class (let [annotation (get-in @replay-status [:annotations :clicks (keyword (str n))] nil)]
                                               [(when (= n (:n @replay-status)) "active-step-label")
                                                (when (= :start-of-turn-corp step-type) :annotated-before)
