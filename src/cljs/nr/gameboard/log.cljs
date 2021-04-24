@@ -13,7 +13,7 @@
             [reagent.core :as r]))
 
 (def commands (distinct (map :name command-info)))
-(def command-info-map (into {} (map (fn [{:keys [name usage help]}] [name {:usage usage :help help}]) command-info)))
+(def command-info-map (->> command-info (map (fn [{:keys [name has-args usage help]}] [name {:has-args has-args :usage usage :help help}])) (into {})))
 
 (defonce zoom-channel (chan))
 
@@ -270,11 +270,11 @@
 (defn find-command-matches
   ([input commands]
    (when (= "/" (first input))
-     (take 15 (->> commands
-                (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
-                (filter :score)
-                (sort-by :score)
-                (map :match))))))
+     (->> commands
+       (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
+       (filter :score)
+       (sort-by :score)
+       (map :match)))))
 
 (defn show-command-menu? [s]
   (seq (:command-matches s)))
@@ -301,10 +301,15 @@
                                (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0))))
         ;; Return, Space, ArrowRight, Tab
         (#{13 32 39 9} key-code) (when (or (= 1 match-count) (:command-highlight @state))
-                                   (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))]
+                                   (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))
+                                         command (nth matches use-index)]
                                      (do (.preventDefault e)
-                                         (swap! state assoc :msg (str (nth matches use-index) " "))
-                                         (reset-command-menu state))))))))
+                                         (swap! state assoc :msg (str command " "))
+                                         (reset-command-menu state)
+                                         ;; auto send when no args needed
+                                         (when (and (= key-code 13)
+                                                 (not (get-in command-info-map [command :has-args])))
+                                           (send-msg state)))))))))
 
 (defn log-input-change-handler
   [s e]
@@ -316,6 +321,7 @@
 (defn log-input [send]
   (let [gameid (r/cursor game-state [:gameid])
         games (r/cursor app-state [:games])
+        !input-ref (r/atom nil)
         s (r/atom {})]
     (fn []
       (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
@@ -328,6 +334,7 @@
                                     (send-msg s))}
              [:input {:placeholder (tr [:chat.placeholder "Say something"])
                       :type "text"
+                      :ref (partial reset! !input-ref)
                       :value (:msg @s)
                       :on-key-down (partial command-menu-key-down-handler s)
                       :on-change (partial log-input-change-handler s)}]]]
@@ -344,7 +351,9 @@
                            [:span {:on-mouse-over #(swap! s assoc :command-highlight i)
                                    :on-click #(do
                                                 (swap! s assoc :msg (str match " "))
-                                                (reset-command-menu s))}
+                                                (reset-command-menu s)
+                                                (.focus @!input-ref))}
+
                             (get-in command-info-map [match :usage])]])
                         (:command-matches @s)))]])])))))
 
