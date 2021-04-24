@@ -395,6 +395,9 @@
 ;; communication, so every non-key keyword is converted to a string, which blows.
 ;; Until this is changed, it's better to redefine this stuff in here and just not
 ;; worry about it.
+
+;; TODO (2021-04-24): If this ever gets fixed, remember to change functions in
+;; button-pane as well.
 (letfn
   [(is-type?  [card value] (= value (:type card)))
    (identity? [card] (or (is-type? card "Fake-Identity")
@@ -1484,139 +1487,149 @@
          (doseq [{:keys [msg type options]} (get-in @game-state [side :toast])]
            (toast msg type options)))
 
-    :reagent-render
-    (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
-      [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                         :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
-       (if-let [prompt (first (:prompt @me))]
-         [:div.panel.blue-shade
-          (when-let [card (:card prompt)]
-            [:div {:style {:text-align "center"}
-                   :on-mouse-over #(card-highlight-mouse-over % card button-channel)
-                   :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-             (tr [:game.card "Card"]) ": " (render-message (:title card))])
-          (when (:card prompt)
-            [:hr])
-          [:h4 (render-message (:msg prompt))]
-          (cond
-            ;; number prompt
-            (get-in prompt [:choices :number])
-            (let [n (get-in prompt [:choices :number])]
-              [:div
-               [:div.credit-select
-                [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
-                 (doall (for [i (range (inc n))]
-                          [:option {:key i :value i} i]))]]
-               [:button {:on-click #(send-command "choice"
-                                                  {:choice (-> "#credit" js/$ .val str->int)})}
-                (tr [:game.ok "OK"])]])
-            ;; trace prompts require their own logic
-            (= (:prompt-type prompt) "trace")
-            [trace-div prompt]
+       :reagent-render
+       (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
+         [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                            :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
+          (if-let [prompt (first (:prompt @me))]
+            [:div.panel.blue-shade
+             (let [card (:card prompt)
+                   get-nested-host (fn [card] (if (:host card)
+                                                (recur (:host card))
+                                                card))
+                   get-zone (fn [card] (:zone (get-nested-host card)))
+                   in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+                   installed? (fn [card] (or (:installed card)
+                                             (= "servers" (first (get-zone card)))))]
+               (if (or (installed? card)
+                       (in-play-area? card))
+                 [:div {:style {:text-align "center"}
+                        :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                        :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+                  (tr [:game.card "Card"]) ": " (render-message (:title card))]
+                 [:div.prompt-card-preview [card-view card false]]))
+             (when (:card prompt)
+               [:hr])
+             [:h4 (render-message (:msg prompt))]
+             (cond
+               ;; number prompt
+               (get-in prompt [:choices :number])
+               (let [n (get-in prompt [:choices :number])]
+                 [:div
+                  [:div.credit-select
+                   [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
+                    (doall (for [i (range (inc n))]
+                             [:option {:key i :value i} i]))]]
+                  [:button {:on-click #(send-command "choice"
+                                                     {:choice (-> "#credit" js/$ .val str->int)})}
+                   (tr [:game.ok "OK"])]])
+               ;; trace prompts require their own logic
+               (= (:prompt-type prompt) "trace")
+               [trace-div prompt]
 
-            ;; choice of number of credits
-            (= (:choices prompt) "credit")
-            [:div
-             [:div.credit-select
-              [:select#credit
-               (doall (for [i (range (inc (:credit @me)))]
-                        [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
-             [:button {:on-click #(send-command "choice"
-                                                {:choice (-> "#credit" js/$ .val str->int)})}
-              (tr [:game.ok "OK"])]]
+               ;; choice of number of credits
+               (= (:choices prompt) "credit")
+               [:div
+                [:div.credit-select
+                 [:select#credit
+                  (doall (for [i (range (inc (:credit @me)))]
+                           [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
+                [:button {:on-click #(send-command "choice"
+                                                   {:choice (-> "#credit" js/$ .val str->int)})}
+                 (tr [:game.ok "OK"])]]
 
-            ;; auto-complete text box
-            (:card-title (:choices prompt))
-            [:div
-             [:div.credit-select
-              [:input#card-title {:placeholder "Enter a card title"
-                                  :onKeyUp #(when (= 13 (.-keyCode %))
-                                              (-> "#card-submit" js/$ .click)
-                                              (.stopPropagation %))}]]
-             [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
-              (tr [:game.ok "OK"])]]
+               ;; auto-complete text box
+               (:card-title (:choices prompt))
+               [:div
+                [:div.credit-select
+                 [:input#card-title {:placeholder "Enter a card title"
+                                     :onKeyUp #(when (= 13 (.-keyCode %))
+                                                 (-> "#card-submit" js/$ .click)
+                                                 (.stopPropagation %))}]]
+                [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
+                 (tr [:game.ok "OK"])]]
 
-            ;; choice of specified counters on card
-            (:counter (:choices prompt))
-            (let [counter-type (keyword (:counter (:choices prompt)))
-                  num-counters (get-in prompt [:card :counter counter-type] 0)]
-              [:div
-               [:div.credit-select
-                [:select#credit
-                 (doall (for [i (range (inc num-counters))]
-                          [:option {:key i :value i} i]))] (str " " (tr [:game.credits "credits"]))]
-               [:button {:on-click #(send-command "choice"
-                                                  {:choice (-> "#credit" js/$ .val str->int)})}
-                (tr [:game.ok "OK"])]])
+               ;; choice of specified counters on card
+               (:counter (:choices prompt))
+               (let [counter-type (keyword (:counter (:choices prompt)))
+                     num-counters (get-in prompt [:card :counter counter-type] 0)]
+                 [:div
+                  [:div.credit-select
+                   [:select#credit
+                    (doall (for [i (range (inc num-counters))]
+                             [:option {:key i :value i} i]))] (str " " (tr [:game.credits "credits"]))]
+                  [:button {:on-click #(send-command "choice"
+                                                     {:choice (-> "#credit" js/$ .val str->int)})}
+                   (tr [:game.ok "OK"])]])
 
-            ;; otherwise choice of all present choices
-            :else
-            (doall (for [{:keys [idx uuid value]} (:choices prompt)]
-                     (when (not= value "Hide")
-                       [:button {:key idx
-                                 :on-click #(send-command "choice" {:choice {:uuid uuid}})
-                                 :on-mouse-over
-                                 #(card-highlight-mouse-over % value button-channel)
-                                 :on-mouse-out
-                                 #(card-highlight-mouse-out % value button-channel)
-                                 :id (:title value)}
-                        (render-message (or (not-empty (:title value)) value))]))))]
-         (if @run
-           [run-div side run]
-           [:div.panel.blue-shade
-            (if (= (keyword @active-player) side)
-              (when (and (not (or @runner-phase-12 @corp-phase-12))
-                         (zero? (:click @me))
-                         (not @end-turn))
-                [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
-              (when @end-turn
-                [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
-            (when (and (= (keyword @active-player) side)
-                       (or @runner-phase-12 @corp-phase-12))
-              [:button {:on-click #(send-command "end-phase-12")}
-               (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
-            (when (= side :runner)
-              [:div
-               [cond-button (tr [:game.remove-tag "Remove Tag"])
+               ;; otherwise choice of all present choices
+               :else
+               (doall (for [{:keys [idx uuid value]} (:choices prompt)]
+                        (when (not= value "Hide")
+                          [:button {:key idx
+                                    :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                    :on-mouse-over
+                                    #(card-highlight-mouse-over % value button-channel)
+                                    :on-mouse-out
+                                    #(card-highlight-mouse-out % value button-channel)
+                                    :id (:title value)}
+                           (render-message (or (not-empty (:title value)) value))]))))]
+            (if @run
+              [run-div side run]
+              [:div.panel.blue-shade
+               (if (= (keyword @active-player) side)
+                 (when (and (not (or @runner-phase-12 @corp-phase-12))
+                            (zero? (:click @me))
+                            (not @end-turn))
+                   [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
+                 (when @end-turn
+                   [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
+               (when (and (= (keyword @active-player) side)
+                          (or @runner-phase-12 @corp-phase-12))
+                 [:button {:on-click #(send-command "end-phase-12")}
+                  (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
+               (when (= side :runner)
+                 [:div
+                  [cond-button (tr [:game.remove-tag "Remove Tag"])
+                   (and (not (or @runner-phase-12 @corp-phase-12))
+                        (pos? (:click @me))
+                        (>= (:credit @me) 2)
+                        (pos? (get-in @me [:tag :base])))
+                   #(send-command "remove-tag")]
+                  [:div.run-button
+                   [cond-button (tr [:game.run "Run"]) (and (not (or @runner-phase-12 @corp-phase-12))
+                                                            (pos? (:click @me)))
+                    #(do (send-command "generate-runnable-zones")
+                         (swap! s update :servers not))]
+                   [:div.panel.blue-shade.servers-menu {:style (when (:servers @s) {:display "inline"})}
+                    (let [servers (get-in @game-state [:runner :runnable-list])]
+                      (map-indexed (fn [i label]
+                                     [:div {:key i
+                                            :on-click #(do (send-command "run" {:server label})
+                                                           (swap! s update :servers not))}
+                                      label])
+                                   servers))]]])
+               (when (= side :corp)
+                 [cond-button (tr [:game.purge "Purge"])
+                  (and (not (or @runner-phase-12 @corp-phase-12))
+                       (>= (:click @me) 3))
+                  #(send-command "purge")])
+               (when (= side :corp)
+                 [cond-button (tr [:game.trash-resource "Trash Resource"])
+                  (and (not (or @runner-phase-12 @corp-phase-12))
+                       (pos? (:click @me))
+                       (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
+                       (is-tagged? game-state))
+                  #(send-command "trash-resource")])
+               [cond-button (tr [:game.draw "Draw"])
                 (and (not (or @runner-phase-12 @corp-phase-12))
                      (pos? (:click @me))
-                     (>= (:credit @me) 2)
-                     (pos? (get-in @me [:tag :base])))
-                #(send-command "remove-tag")]
-               [:div.run-button
-                [cond-button (tr [:game.run "Run"]) (and (not (or @runner-phase-12 @corp-phase-12))
-                                        (pos? (:click @me)))
-                 #(do (send-command "generate-runnable-zones")
-                      (swap! s update :servers not))]
-                [:div.panel.blue-shade.servers-menu {:style (when (:servers @s) {:display "inline"})}
-                 (let [servers (get-in @game-state [:runner :runnable-list])]
-                   (map-indexed (fn [i label]
-                                  [:div {:key i
-                                         :on-click #(do (send-command "run" {:server label})
-                                                        (swap! s update :servers not))}
-                                   label])
-                                servers))]]])
-            (when (= side :corp)
-              [cond-button (tr [:game.purge "Purge"])
-               (and (not (or @runner-phase-12 @corp-phase-12))
-                    (>= (:click @me) 3))
-               #(send-command "purge")])
-            (when (= side :corp)
-              [cond-button (tr [:game.trash-resource "Trash Resource"])
-               (and (not (or @runner-phase-12 @corp-phase-12))
-                    (pos? (:click @me))
-                    (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
-                    (is-tagged? game-state))
-               #(send-command "trash-resource")])
-            [cond-button (tr [:game.draw "Draw"])
-             (and (not (or @runner-phase-12 @corp-phase-12))
-                  (pos? (:click @me))
-                  (pos? (:deck-count @me)))
-             #(send-command "draw")]
-            [cond-button (tr [:game.gain-credit "Gain Credit"])
-             (and (not (or @runner-phase-12 @corp-phase-12))
-                  (pos? (:click @me)))
-             #(send-command "credit")]]))])})))
+                     (pos? (:deck-count @me)))
+                #(send-command "draw")]
+               [cond-button (tr [:game.gain-credit "Gain Credit"])
+                (and (not (or @runner-phase-12 @corp-phase-12))
+                     (pos? (:click @me)))
+                #(send-command "credit")]]))])})))
 
 (defn- time-until
   "Helper method for timer. Computes how much time is left until `end`"
