@@ -360,7 +360,7 @@
      (when (seq subroutines)
        [:div {:on-click #(send-command "system-msg"
                                        {:msg (str "indicates to fire all unbroken subroutines on " title)})}
-        (tr [:game.let-subs-fire "Let all subroutines fire"])])
+        (tr [:game.let-subs-fire "Let unbroken subroutines fire"])])
      (when (seq subroutines)
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
      (map-indexed
@@ -1392,7 +1392,7 @@
        (let [current-ice (get-current-ice)
              title (:title current-ice)]
          [cond-button
-          (tr [:game.let-subs-fire "Let all subroutines fire"])
+          (tr [:game.let-subs-fire "Let unbroken subroutines fire"])
           (and (seq (:subroutines current-ice))
                (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
           #(send-command "system-msg"
