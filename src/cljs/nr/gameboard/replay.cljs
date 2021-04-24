@@ -244,11 +244,11 @@
       "+" (change-replay-speed 200)
       "-" (change-replay-speed -200)
       "ArrowLeft" (cond (.-ctrlKey e) (replay-step-backward)
-                        (.-shiftKey e) (replay-log-backward)
-                        :else (replay-backward))
+                        (.-shiftKey e) (replay-backward)
+                        :else (replay-log-backward))
       "ArrowRight" (cond (.-ctrlKey e) (replay-step-forward)
-                         (.-shiftKey e) (replay-log-forward)
-                         :else (replay-forward))
+                         (.-shiftKey e) (replay-forward)
+                         :else (replay-log-forward))
       nil)))
 
 (defn ignore-diff? []
@@ -318,11 +318,11 @@
          [:button.small {:on-click #(replay-step-backward) :type "button"
                          :title "Rewind one click (Ctrl + ← )"} "⏮︎"]
          [:button.small {:on-click #(replay-log-backward) :type "button"
-                         :title "Rewind one log entry (Shift + ← )"} "⏪︎"]
+                         :title "Rewind one log entry (←)"} "⏪︎"]
          [:button.small {:on-click #(toggle-play-pause) :type "button"
                          :title (if (:autoplay @replay-status) "Pause (Space)" "Play (Space)")} (if (:autoplay @replay-status) "⏸ " "▶ ")]
          [:button.small {:on-click #(replay-log-forward) :type "button"
-                         :title "Forward to next log entry (Shift + → )"} "⏩︎"]
+                         :title "Forward to next log entry (→)"} "⏩︎"]
          [:button.small {:on-click #(replay-step-forward) :type "button"
                          :title "Forward one click (Ctrl + → )"} "⏭︎"]]
         (when-not (= "local-replay" (:gameid @game-state)) ; when saved replay
