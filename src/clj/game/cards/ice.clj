@@ -1950,7 +1950,7 @@
           :yes-ability {:async true
                         :effect (effect (jack-out eid))}
           :no-ability {:effect (effect (system-msg :runner "chooses to continue"))}}}]
-    {:subroutines [{:label "Do 2 net damage"
+    {:subroutines [{:label "Do 2 net damage. The Runner may jack out."
                     :async true
                     :effect (req (wait-for (resolve-ability state side (do-net-damage 2) card nil)
                                            (continue-ability state side offer-jack-out card nil)))}
@@ -2027,6 +2027,7 @@
                       :duration :end-of-run
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
+                   (system-msg state :corp (str "chooses " (card-str state target) " for Loki's ability"))
                    (doseq [sub (:subroutines target)]
                      (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events
@@ -2038,7 +2039,8 @@
                          :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
                   :async true
-                  :effect (req (if (zero? (count (:hand runner)))
+                  :effect (req (if (and (zero? (count (:hand runner)))
+                                        (< (count (:deck runner)) 2)) ; UFAQ 24
                                  (do (system-msg state :corp (str "uses Loki to end the run"))
                                      (end-run state side eid card))
                                  (continue-ability
