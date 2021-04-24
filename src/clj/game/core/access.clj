@@ -107,8 +107,10 @@
             ; Otherwise, make the label from all abilities
             ability-strs (mapv #(access-ab-label state %)
                                (if must-trash? trash-ab-cards access-ab-cards))
-            ; Only display "No action" when we're not forced to do anything
-            no-action-str (when-not (or must-trash? must-trash-with-credits?)
+            ; Only display "No action" when we're not forced to do anything, or
+            ; if it is the only thing we can do
+            forced-to-trash? (or must-trash? must-trash-with-credits?)
+            no-action-str (when (or (not can-trash) (not forced-to-trash?))
                             ["No action"])
             choices (vec (if can-trash (concat ability-strs trash-cost-str no-action-str) no-action-str))]
         (continue-ability
