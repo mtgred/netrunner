@@ -54,7 +54,9 @@
                     :else 0)
          new-sub {:label (make-label sub)
                   :from-cid cid
-                  :sub-effect (dissoc sub :breakable)
+                  :sub-effect (if (:sub-effect sub)
+                                (:sub-effect sub)
+                                (dissoc sub :breakable))
                   :position position
                   :variable (or variable false)
                   :printed (or printed false)

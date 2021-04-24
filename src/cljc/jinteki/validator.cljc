@@ -261,8 +261,8 @@
      :description "Legal for System Gateway"}))
 
 (defn calculate-deck-status
-  "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
-  Implement any new formats here."
+  "Calculates all the deck's validity for the basic deckbuilding rules,
+  as well as various official and unofficial formats. Implement any new formats here."
   [deck]
   (let [valid (valid-deck? deck)]
     {:format (:format deck)

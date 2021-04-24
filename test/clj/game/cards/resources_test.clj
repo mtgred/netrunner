@@ -3186,22 +3186,42 @@
 
 (deftest neutralize-all-threats
   ;; Neutralize All Threats - Access 2 cards from HQ, force trash first accessed card with a trash cost
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 2) "Breaker Bay Grid" "Elizabeth Mills"]}
-               :runner {:deck ["Neutralize All Threats"]}})
-    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
-    (play-from-hand state :corp "Elizabeth Mills" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Neutralize All Threats")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "No action") ; access first Hedge Fund
-    (click-prompt state :runner "No action") ; access second Hedge Fund
-    (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay 2 [Credits] to trash")
-    (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
-    (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
-    (run-empty-server state "Server 2")
-    (is (seq (:prompt (get-runner))) "Runner prompt to trash Elizabeth Mills")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 2) "Breaker Bay Grid" "Elizabeth Mills"]}
+                 :runner {:deck ["Neutralize All Threats"]}})
+      (play-from-hand state :corp "Breaker Bay Grid" "New remote")
+      (play-from-hand state :corp "Elizabeth Mills" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Neutralize All Threats")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action") ; access first Hedge Fund
+      (click-prompt state :runner "No action") ; access second Hedge Fund
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
+      (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
+      (run-empty-server state "Server 2")
+      (is (seq (:prompt (get-runner))) "Runner prompt to trash Elizabeth Mills")))
+  (testing "Interaction with Trebuchet"
+    (do-game
+      (new-game {:corp {:deck ["PAD Campaign" "Trebuchet"]}
+                 :runner {:deck ["Neutralize All Threats"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Neutralize All Threats")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (rez state :corp treb)
+        (run-continue state)
+        (card-subroutine state :corp treb 1)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-continue state)
+        (is (= 1 (count (:choices (prompt-map :runner)))) "Only one choice in prompt")
+        (click-prompt state :runner "No action")
+        (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
 
 (deftest new-angeles-city-hall
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen

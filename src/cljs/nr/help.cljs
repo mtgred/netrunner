@@ -2,47 +2,150 @@
   (:require [clojure.string :refer [split]]))
 
 (def command-info
-  [{:name "/adv-counter" :usage "/adv-counter n" :help "set advancement counters on a card to n (player's own cards only). Deprecated in favor of /counter ad n"}
-   {:name "/bp" :usage "/bp n" :help "Set your bad publicity to n"}
-   {:name "/card-info" :usage "/card-info" :help "display debug info about a card (player's own cards only)"}
-   {:name "/clear-win" :usage "/clear-win" :help "requests game to clear the current win state.  Requires both players to request it"}
-   {:name "/click" :usage "/click n" :help "Set your clicks to n"}
-   {:name "/close-prompt" :usage "/close-prompt" :help "close an active prompt and show the next waiting prompt, or the core click actions"}
-   {:name "/counter" :usage "/counter n" :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
-   {:name "/counter" :usage "/counter type n" :help "set the specified counter type on a card to n (player's own cards only). Type must be agenda, advance, credit, power, or virus. Can be abbreviated as ag, ad, c, p, or v respectively."}
-   {:name "/credit" :usage "/credit n" :help "Set your credits to n"}
-   {:name "/deck" :usage "/deck #n" :help "Put card number n from your hand on top of your deck"}
-   {:name "/discard" :usage "/discard #n" :help "Discard card number n from your hand"}
-   {:name "/discard-random" :usage "/discard-random" :help "Discard a random card from your hand"}
-   {:name "/draw" :usage "/draw n" :help "Draw n cards"}
-   {:name "/end-run" :usage "/end-run" :help "End the run (Corp only)"}
-   {:name "/facedown" :usage "/facedown" :help "Install a card facedown (Runner only)"}
-   {:name "/handsize" :usage "/handsize n" :help "Set your handsize to n"}
-   {:name "/install-ice" :usage "/install-ice" :help "Install a piece of ICE at any position in a server (Corp only)"}
-   {:name "/jack-out" :usage "/jack-out" :help "Jack out (Runner only)"}
-   {:name "/link" :usage "/link n" :help "Set your link to n"}
-   {:name "/memory" :usage "/memory n" :help "Set your memory to n"}
-   {:name "/move-bottom" :usage "/move-bottom" :help "Pick a card in your hand to put on the bottom of your deck"}
-   {:name "/move-deck" :usage "/move-deck" :help "Pick a card from your play-area to put on top of your deck"}
-   {:name "/move-hand" :usage "/move-hand" :help "Pick a card from your play-area to put into your hand"}
-   {:name "/peek" :usage "/peek n" :help "See n top cards of your deck"}
-   {:name "/psi" :usage "/psi" :help "Start a Psi game (Corp only)"}
-   {:name "/replace-id" :usage "/replace-id n" :help "Replace your ID with the card \"n\""}
-   {:name "/rez" :usage "/rez" :help "Select a card to rez, ignoring all costs (Corp only)"}
-   {:name "/rez-all" :usage "/rez-all" :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
-   {:name "/rfg" :usage "/rfg" :help "Select a card to remove from the game"}
-   {:name "/roll" :usage "/roll n" :help "Roll an n-sided die"}
-   {:name "/summon" :usage "/summon n" :help "Add card \"n\" to your hand (from outside the game)"}
-   {:name "/swap-ice" :usage "/swap-ice" :help "Swap the position of two installed ICE (Corp only)"}
-   {:name "/swap-installed" :usage "/swap-installed" :help "Swap the position of two installed non-ICE (Corp only)"}
-   {:name "/tag" :usage "/tag n" :help "Set your tags to n"}
-   {:name "/take-brain" :usage "/take-brain n" :help "Take n brain damage (Runner only)"}
-   {:name "/take-meat" :usage "/take-meat n" :help "Take n meat damage (Runner only)"}
-   {:name "/take-net" :usage "/take-net n" :help "Take n net damage (Runner only)"}
-   {:name "/trace" :usage "/trace n" :help "Start a trace with base strength n (Corp only)"}
-   {:name "/undo-click" :usage "/undo-click" :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
-   {:name "/undo-turn" :usage "/undo-turn" :help "Resets the game back to end of the last turn. Requires both players to request it"}
-   {:name "/unique" :usage "/unique" :help "Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"}])
+  [{:name "/adv-counter"
+    :has-args :required
+    :usage "/adv-counter n"
+    :help "set advancement counters on a card to n (player's own cards only). Deprecated in favor of /counter ad n"}
+   {:name "/bp"
+    :has-args :required
+    :usage "/bp n"
+    :help "Set your bad publicity to n"}
+   {:name "/card-info"
+    :usage "/card-info"
+    :help "display debug info about a card (player's own cards only)"}
+   {:name "/clear-win"
+    :usage "/clear-win"
+    :help "requests game to clear the current win state.  Requires both players to request it"}
+   {:name "/click"
+    :has-args :required
+    :usage "/click n"
+    :help "Set your clicks to n"}
+   {:name "/close-prompt"
+    :usage "/close-prompt"
+    :help "close an active prompt and show the next waiting prompt, or the core click actions"}
+   {:name "/counter"
+    :has-args :required
+    :usage "/counter n"
+    :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
+   {:name "/counter"
+    :has-args :required
+    :usage "/counter type n"
+    :help "set the specified counter type on a card to n (player's own cards only). Type must be agenda, advance, credit, power, or virus. Can be abbreviated as ag, ad, c, p, or v respectively."}
+   {:name "/credit"
+    :has-args :required
+    :usage "/credit n"
+    :help "Set your credits to n"}
+   {:name "/deck"
+    :has-args :required
+    :usage "/deck #n"
+    :help "Put card number n from your hand on top of your deck"}
+   {:name "/discard"
+    :has-args :required
+    :usage "/discard #n"
+    :help "Discard card number n from your hand"}
+   {:name "/discard-random"
+    :usage "/discard-random"
+    :help "Discard a random card from your hand"}
+   {:name "/draw"
+    :has-args :optional
+    :usage "/draw n"
+    :help "Draw n cards"}
+   {:name "/end-run"
+    :usage "/end-run"
+    :help "End the run (Corp only)"}
+   {:name "/facedown"
+    :usage "/facedown"
+    :help "Install a card facedown (Runner only)"}
+   {:name "/handsize"
+    :has-args :required
+    :usage "/handsize n"
+    :help "Set your handsize to n"}
+   {:name "/install-ice"
+    :usage "/install-ice"
+    :help "Install a piece of ICE at any position in a server (Corp only)"}
+   {:name "/jack-out"
+    :usage "/jack-out"
+    :help "Jack out (Runner only)"}
+   {:name "/link"
+    :has-args :required
+    :usage "/link n"
+    :help "Set your link to n"}
+   {:name "/memory"
+    :has-args :required
+    :usage "/memory n"
+    :help "Set your memory to n"}
+   {:name "/move-bottom"
+    :usage "/move-bottom"
+    :help "Pick a card in your hand to put on the bottom of your deck"}
+   {:name "/move-deck"
+    :usage "/move-deck"
+    :help "Pick a card from your play-area to put on top of your deck"}
+   {:name "/move-hand"
+    :usage "/move-hand"
+    :help "Pick a card from your play-area to put into your hand"}
+   {:name "/peek"
+    :has-args :optional
+    :usage "/peek n"
+    :help "See n top cards of your deck"}
+   {:name "/psi"
+    :usage "/psi"
+    :help "Start a Psi game (Corp only)"}
+   {:name "/replace-id"
+    :has-args :required
+    :usage "/replace-id n"
+    :help "Replace your ID with the card \"n\""}
+   {:name "/rez"
+    :usage "/rez"
+    :help "Select a card to rez, ignoring all costs (Corp only)"}
+   {:name "/rez-all"
+    :usage "/rez-all"
+    :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
+   {:name "/rfg"
+    :usage "/rfg"
+    :help "Select a card to remove from the game"}
+   {:name "/roll"
+    :has-args :required
+    :usage "/roll n"
+    :help "Roll an n-sided die"}
+   {:name "/summon"
+    :has-args :required
+    :usage "/summon n"
+    :help "Add card \"n\" to your hand (from outside the game)"}
+   {:name "/swap-ice"
+    :usage "/swap-ice"
+    :help "Swap the position of two installed ICE (Corp only)"}
+   {:name "/swap-installed"
+    :usage "/swap-installed"
+    :help "Swap the position of two installed non-ICE (Corp only)"}
+   {:name "/tag"
+    :has-args :required
+    :usage "/tag n"
+    :help "Set your tags to n"}
+   {:name "/take-brain"
+    :has-args :required
+    :usage "/take-brain n"
+    :help "Take n brain damage (Runner only)"}
+   {:name "/take-meat"
+    :has-args :required
+    :usage "/take-meat n"
+    :help "Take n meat damage (Runner only)"}
+   {:name "/take-net"
+    :has-args :required
+    :usage "/take-net n"
+    :help "Take n net damage (Runner only)"}
+   {:name "/trace"
+    :has-args :required
+    :usage "/trace n"
+    :help "Start a trace with base strength n (Corp only)"}
+   {:name "/undo-click"
+    :usage "/undo-click"
+    :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
+   {:name "/undo-turn"
+    :usage "/undo-turn"
+    :help "Resets the game back to end of the last turn. Requires both players to request it"}
+   {:name "/unique"
+    :usage "/unique"
+    :help "Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"}])
 
 (def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."

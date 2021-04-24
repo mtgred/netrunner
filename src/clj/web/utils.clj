@@ -1,7 +1,5 @@
 (ns web.utils
-  (:require [ring.util.response :as resp]
-            [monger.collection :as mc]
-            [web.db :refer [db]])
+  (:require [ring.util.response :as resp])
   (:import java.security.MessageDigest))
 
 (defn tick

@@ -11,4 +11,3 @@
       master-config (when (.exists (io/file master-filename))
                       (read-config master-filename))]
   (defonce server-config (merge dev-config master-config)))
-
