@@ -81,6 +81,7 @@
   (let [am {:effect (effect (add-counter card :power 2)
                             (system-msg :runner "places 2 power counters on Aaron Marrón"))}]
     {:abilities [{:cost [:power 1]
+                  :keep-open :while-power-tokens-left
                   :msg "remove 1 tag and draw 1 card"
                   :async true
                   :effect (req (wait-for (lose-tags state side 1)
@@ -184,6 +185,7 @@
                 :effect (effect (add-counter card :power target))}
    :events [(trash-on-empty :power)]
    :abilities [{:cost [:power 1]
+                :keep-open :while-power-tokens-left
                 :msg "look at the top card of Stack"
                 :optional
                 {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
@@ -195,6 +197,7 @@
   {:data {:counter {:credit 12}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "gain 2 [Credits]"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -216,6 +219,7 @@
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"
                 :cost [:click 2]
+                :keep-open :while-2-clicks-left
                 :prompt "Select a facedown installed card"
                 :choices {:card #(and (facedown? %)
                                       (installed? %)
@@ -358,6 +362,7 @@
 
 (defcard "Blockade Runner"
   {:abilities [{:cost [:click 2]
+                :keep-open :while-2-clicks-left
                 :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                 :async true
                 :effect (req (wait-for (draw state side 3 nil)
@@ -456,10 +461,12 @@
 
 (defcard "Chatterjee University"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "Place 1 power counter"
                 :msg "place 1 power counter on it"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "Install a program from your Grip"
                 :prompt "Select a program to install from your Grip"
                 :choices
@@ -779,6 +786,7 @@
    :abilities [{:async true
                 :req (req tagged)
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :effect (req (mill state :corp eid :corp 1))
                 :msg "force the Corp to trash the top card of R&D"}]})
 
@@ -951,7 +959,11 @@
              :effect (effect (lose-credits eid 1))}]})
 
 (defcard "Duggar's"
-  {:abilities [{:cost [:click 4] :async true :effect (effect (draw eid 10 nil)) :msg "draw 10 cards"}]})
+  {:abilities [{:cost [:click 4]
+                :keep-open :while-4-clicks-left
+                :async true
+                :effect (effect (draw eid 10 nil))
+                :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
   (letfn [(dummy-prevent [card-type]
@@ -1467,6 +1479,7 @@
                               (reorder-choice :runner :corp to-bottom '() (count to-bottom) to-bottom "bottom"))
                             card nil))})]
     {:abilities [{:cost [:click 1]
+                  :keep-open :while-clicks-left
                   :label "reveal cards"
                   :msg (msg "reveal 4 cards: " (string/join ", " (map :title (take 4 (:deck runner)))))
                   :async true
@@ -1501,6 +1514,7 @@
 (defcard "Liberated Account"
   {:data {:counter {:credit 16}}
    :abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -1552,6 +1566,7 @@
   {:abilities [{:async true
                 :label "Install a non-virus program on London Library"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :prompt "Select a non-virus program to install on London Library from your grip"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Virus"))
@@ -1560,6 +1575,7 @@
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
                {:label "Add a program hosted on London Library to your Grip"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
                 :msg (msg "add " (:title target) " to their Grip")
                 :effect (effect (move target :hand))}]
@@ -1607,6 +1623,7 @@
 
 (defcard "Mr. Li"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
                 :effect (req (wait-for (draw state side 2 nil)
@@ -1934,6 +1951,7 @@
 (defcard "Paule's Café"
   {:abilities [{:label "Host a program or piece of hardware"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :choices {:card #(and (#{"Program" "Hardware"} (:type %))
                                       (in-hand? %)
                                       (runner? %))}
@@ -1997,6 +2015,7 @@
      :abilities [{:async true
                   :label "Host a program or piece of hardware"
                   :cost [:click 1]
+                  :keep-open :while-clicks-left
                   :prompt "Select a card to host on Personal Workshop"
                   :choices {:card #(and (or (program? %)
                                             (hardware? %))
@@ -2160,6 +2179,7 @@
   {:data {:counter {:credit 18}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 2]
+                :keep-open :while-2-clicks-left
                 :msg "gain 6 [Credits] and take 1 tag"
                 :async true
                 :effect (req (let [credits (min 6 (get-counters card :credit))]
@@ -2808,6 +2828,7 @@
     {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
      :abilities [{:label "Host a resource or piece of hardware"
                   :cost [:click 1]
+                  :keep-open :while-clicks-left
                   :prompt "Select a card to host on The Supplier"
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
@@ -2828,7 +2849,7 @@
             {:label (str "Access an additional card in " name)
              :cost [:power 2]
              :req (req run)
-             :keep-menu-open :while-at-least-2-power-tokens-left
+             :keep-menu-open :while-2-power-tokens-left
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
              :effect (req (access-bonus state side server 1))})
           (ttw-bounce [name server]
@@ -2929,6 +2950,7 @@
                 :label "search stack for a hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
+                :keep-open :while-2-clicks-left
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}]})

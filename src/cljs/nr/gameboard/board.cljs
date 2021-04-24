@@ -371,8 +371,20 @@
   [card c-state]
   (let [side (:side @game-state)
         keep-menu-open (case (:keep-menu-open @c-state)
+                        :while-credits-left
+                        (pos? (get-in @game-state [side :credit]))
+
                         :while-clicks-left
-                        (not (zero? (get-in @game-state [side :click])))
+                        (pos? (get-in @game-state [side :click]))
+
+                        :while-2-clicks-left
+                        (>= (get-in @game-state [side :click]) 2)
+
+                        :while-3-clicks-left
+                        (>= (get-in @game-state [side :click]) 3)
+
+                        :while-4-clicks-left
+                        (>= (get-in @game-state [side :click]) 4)
 
                         :while-cards-in-hand
                         (not-empty (get-in @game-state [side :hand]))
@@ -380,8 +392,26 @@
                         :while-power-tokens-left
                         (pos? (get-counters card :power))
 
-                        :while-at-least-2-power-tokens-left
+                        :while-2-power-tokens-left
                         (>= (get-counters card :power) 2)
+
+                        :while-3-power-tokens-left
+                        (>= (get-counters card :power) 3)
+
+                        :while-5-power-tokens-left
+                        (>= (get-counters card :power) 5)
+
+                        :while-advancement-tokens-left
+                        (pos? (get-counters card :advancement))
+
+                        :while-agenda-tokens-left
+                        (pos? (get-counters card :agenda))
+
+                        :while-virus-tokens-left
+                        (pos? (get-counters card :virus))
+
+                        :while-2-virus-tokens-left
+                        (>= (get-counters card :virus) 2)
 
                         :if-abilities-available
                         (pos? (+ (count (:corp-abilities card))

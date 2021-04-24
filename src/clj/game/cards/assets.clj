@@ -333,6 +333,7 @@
 (defcard "Capital Investors"
   {:abilities [{:cost [:click 1]
                 :msg "gain 2 [Credits]"
+                :keep-open :while-clicks-left
                 :async true
                 :effect (effect (gain-credits eid 2))}]})
 
@@ -352,6 +353,7 @@
              :msg "add 1 power counter to Chief Slee"
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
+                :keep-open :while-5-power-tokens-left
                 :async true
                 :msg "do 5 meat damage"
                 :effect (effect (damage eid :meat 5 {:card card}))}]})
@@ -617,6 +619,7 @@
 
 (defcard "Docklands Crackdown"
   {:abilities [{:cost [:click 2]
+                :keep-open :while-2-clicks-left
                 :msg "add 1 power counter"
                 :effect (effect (add-counter card :power 1))}]
    :constant-effects [{:type :install-cost
@@ -683,6 +686,7 @@
 
 (defcard "Eliza's Toybox"
   {:abilities [{:cost [:click 3]
+                :keep-open :while-3-clicks-left
                 :choices {:card #(not (:rezzed %))}
                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
                 :async true
@@ -767,6 +771,7 @@
                                                    (:deck corp))
                                            :sorted))
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "Search R&D for an Executive, Sysop, or Character"
                 :effect (effect (move target :hand)
                                 (shuffle! :deck))}]})
@@ -953,15 +958,18 @@
 (defcard "Isabel McGuire"
   {:abilities [{:label "Add an installed card to HQ"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :choices {:card installed?}
                 :msg (msg "move " (card-str state target) " to HQ")
                 :effect (effect (move target :hand))}]})
 
 (defcard "IT Department"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg "add 1 counter"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:power 1]
+                :keep-open :while-power-tokens-left
                 :label "Add strength to a rezzed ICE"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
@@ -978,6 +986,7 @@
 
 (defcard "Jackson Howard"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg "draw 2 cards"
                 :effect (effect (draw 2))}
                {:label "Shuffle up to 3 cards from Archives into R&D"
@@ -1038,6 +1047,7 @@
 
 (defcard "Lady Liberty"
   {:abilities [{:cost [:click 3]
+                :keep-open :while-3-clicks-left
                 :label "Add agenda from HQ to score area"
                 :req (req (let [counters (get-counters (get-card state card) :power)]
                             (some #(and (agenda? %)
@@ -1064,6 +1074,7 @@
                 :label "Reveal an agenda worth X points from HQ"
                 :async true
                 :cost [:x-power]
+                :keep-open :while-power-tokens-left
                 :effect
                 (effect
                   (continue-ability
@@ -1094,6 +1105,7 @@
                 :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                 :label "Search R&D for a piece of ICE"
                 :cost [:click 1 :credit 1]
+                :keep-open :while-clicks-left
                 :effect (effect (move target :hand)
                                 (shuffle! :deck))}]})
 
@@ -1226,6 +1238,7 @@
 
 (defcard "Melange Mining Corp."
   {:abilities [{:cost [:click 3]
+                :keep-open :while-3-clicks-left
                 :async true
                 :effect (effect (gain-credits eid 7))
                 :msg "gain 7 [Credits]"}]})
@@ -1255,6 +1268,7 @@
 (defcard "Mumbad City Hall"
   {:abilities [{:label "Search R&D for an Alliance card"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :prompt "Choose an Alliance card to play or install"
                 :choices (req (cancellable (filter #(and (has-subtype? % "Alliance")
                                                          (if (operation? %)
@@ -1279,6 +1293,7 @@
    :events [{:event :corp-turn-begins
              :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
    :abilities [{:cost [:credit 2]
+                :keep-open :while-advancement-tokens-left
                 :req (req (and (pos? (get-counters card :advancement))
                                (not-empty (all-active-installed state :corp))))
                 :label "Move an advancement token to a faceup card"
@@ -1489,6 +1504,7 @@
 
 (defcard "PAD Factory"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "Place 1 advancement token on a card"
                 :choices {:card installed?}
                 :msg (msg "place 1 advancement token on " (card-str state target))
@@ -1600,6 +1616,7 @@
   {:on-rez {:effect (effect (add-counter card :credit 14))}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :label "gain credits"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -1775,6 +1792,7 @@
    :events [(trash-on-empty :credit)]
    :abilities [{:label "Take 3 [Credits] from this asset"
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
                 :async true
                 :effect (req (let [credits (min 3 (get-counters card :credit))]
@@ -1832,6 +1850,7 @@
 (defcard "Roughneck Repair Squad"
   {:abilities [{:label "Gain 6 [Credits], may remove 1 bad publicity"
                 :cost [:click 3]
+                :keep-open :while-3-clicks-left
                 :msg "gain 6 [Credits]"
                 :async true
                 :effect (req (wait-for
@@ -1886,6 +1905,7 @@
 
 (defcard "Security Subcontract"
   {:abilities [{:cost [:click 1 :ice 1]
+                :keep-open :while-clicks-left
                 :msg "gain 4 [Credits]"
                 :label "Gain 4 [Credits]"
                 :async true
@@ -1925,6 +1945,7 @@
 
 (defcard "Shannon Claire"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg "draw 1 card from the bottom of R&D"
                 :effect (effect (move (last (:deck corp)) :hand))}
                {:label "Search R&D for an agenda"
@@ -2042,6 +2063,7 @@
 
 (defcard "Storgotic Resonator"
   {:abilities [{:cost [:click 1 :power 1]
+                :keep-open :while-power-tokens-left
                 :label "Do 1 net damage"
                 :msg "do 1 net damage"
                 :async true
@@ -2141,6 +2163,7 @@
 (defcard "Tenma Line"
   {:abilities [{:label "Swap 2 pieces of installed ICE"
                 :cost [:click]
+                :keep-open :while-clicks-left
                 :prompt "Select two pieces of ICE to swap positions"
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
@@ -2388,6 +2411,7 @@
   {:abilities [{:label "Install an asset on Worlds Plaza"
                 :req (req (< (count (:hosted card)) 3))
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :prompt "Select an asset to install on Worlds Plaza"
                 :choices {:card #(and (asset? %)
                                       (in-hand? %)
@@ -2425,5 +2449,6 @@
    :abilities [{:async true
                 :label "Give the Runner 1 tag"
                 :cost [:click 1 :credit 1]
+                :keep-open :while-clicks-left
                 :msg (msg "give the Runner 1 tag")
                 :effect (effect (gain-tags eid 1))}]})
