@@ -388,7 +388,7 @@
                                  (count (:runner-abilities card))
                                  (count (:abilities card))))
 
-                        :while-advanceable
+                        :for-agendas
                         (or (some #(= "score" %) (action-list card))          ; can score
                             (not (zero? (get-in @game-state [side :click])))) ; clicks left
 
@@ -499,7 +499,7 @@
                                     "derez" false
                                     "rez" :if-abilities-available
                                     "trash" false
-                                    "advance" :while-advanceable
+                                    "advance" :for-agendas
                                     "score" false
                                     false)]
                [:div {:key i
