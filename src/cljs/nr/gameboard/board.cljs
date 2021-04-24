@@ -1,7 +1,7 @@
 (ns nr.gameboard.board
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split blank? starts-with?]]
+            [clojure.string :as s :refer [capitalize includes? join lower-case split blank? starts-with? ends-with?]]
             [differ.core :as differ]
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?
@@ -416,7 +416,9 @@
                         :if-abilities-available
                         (pos? (+ (count (:corp-abilities card))
                                  (count (:runner-abilities card))
-                                 (count (remove #(starts-with? (:label % "") "Toggle auto-resolve on") (:abilities card)))))
+                                 (count (remove #(or (starts-with? (:label % "") "Toggle auto-resolve on")
+                                                     (ends-with? (:label % "") "(start of turn)"))
+                                                (:abilities card)))))
 
                         :for-agendas
                         (or (some #(= "score" %) (action-list card))          ; can score
