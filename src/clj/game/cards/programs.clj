@@ -819,6 +819,7 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "All")
                                 (strength-pump 1 1)
                                 {:cost [:click 1]
+                                 :keep-open :while-clicks-left
                                  :msg "place 1 virus counter"
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :end-of-encounter
@@ -855,6 +856,7 @@
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
      :abilities [{:cost [:click 1]
+                  :keep-open :while-clicks-left
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
                   :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
@@ -1055,6 +1057,7 @@
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
                 :cost [:click 1 :credit 1]
+                :keep-open :while-clicks-left
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}
@@ -1351,6 +1354,7 @@
               (assoc e :event :corp-trash)]
      :abilities [{:async true
                   :cost [:click 1 :virus 1]
+                  :keep-open :while-virus-tokens-left
                   :msg "force the Corp to trash the top card of R&D"
                   :effect (effect (mill :corp eid :corp 1))}]}))
 
@@ -1376,6 +1380,7 @@
              :silent (req true)
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:click 1 :virus 2]
+                :keep-open :while-2-virus-tokens-left
                 :req (req (pos? (count (:hand corp))))
                 :msg "force the Corp to trash 1 card from HQ"
                 :async true
@@ -1608,6 +1613,7 @@
 
 (defcard "Magnum Opus"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :async true
                 :effect (effect (gain-credits eid 2))
                 :msg "gain 2 [Credits]"}]})
@@ -2243,6 +2249,7 @@
   {:abilities [{:label "Install and host a program from Grip"
                 :async true
                 :cost [:click 1]
+                :keep-open :while-clicks-left
                 :prompt "Choose a program to install on Scheherazade from your grip"
                 :choices {:req (req (and (program? target)
                                       (runner-can-install? state side target false)

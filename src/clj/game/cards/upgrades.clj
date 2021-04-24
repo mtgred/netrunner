@@ -215,6 +215,7 @@
 
 (defcard "Bryan Stinson"
   {:abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :req (req (and (< (:credit runner) 6)
                                (pos? (count (filter #(and (operation? %)
                                                           (has-subtype? % "Transaction")) (:discard corp))))))
@@ -335,6 +336,7 @@
              :msg "remove all hosted power counters"
              :effect (effect (add-counter card :power (- (get-counters card :power))))}]
    :abilities [{:cost [:click 1]
+                :keep-open :while-clicks-left
                 :msg "place 1 power counter on Cold Site Server"
                 :effect (effect (add-counter card :power 1))}]})
 
@@ -615,7 +617,8 @@
                                    :duration :end-of-run
                                    :req (req (protecting-same-server? card target))
                                    :value 2})
-                                (update-all-ice))}]})
+                                (update-all-ice))
+                :keep-menu-open :while-cards-in-hand}]})
 
 (defcard "Henry Phillips"
   (letfn [(hp-gain-credits [state side eid n]
@@ -1137,6 +1140,7 @@
 (defcard "Panic Button"
   {:install-req (req (filter #{"HQ"} targets))
    :abilities [{:cost [:credit 1]
+                :keep-open :while-credits-left
                 :msg "draw 1 card"
                 :req (req (and run (= (target-server run) :hq)))
                 :effect (effect (draw))}]})
