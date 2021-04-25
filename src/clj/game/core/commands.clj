@@ -51,11 +51,11 @@
 
 (defn command-bug-report [state side]
   (swap! state update :bug-reported (fnil inc -1))
-  (let [title "Please give a short description of your bug here"
+  (let [title "[EDITME] Please give a short description of your bug here"
         body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
                   "?b=" (:bug-reported @state) "\n\n"
                   "Description:\n\n"
-                  "Please describe the steps to reproduce your bug and the resulting effect here.")]
+                  "[EDITME] Please describe the steps to reproduce your bug and the resulting effect here.")]
     (unsafe-say state [:div.bugreport [:div.smallwarning "!"]
                        "Thanks for helping us make the game better! The replay was saved. "
                        "Please report a bug following "
