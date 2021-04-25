@@ -1575,21 +1575,21 @@
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (if-let [prompt (first (:prompt @me))]
             [:div.panel.blue-shade
-             (let [card (:card prompt)
-                   get-nested-host (fn [card] (if (:host card)
-                                                (recur (:host card))
-                                                card))
-                   get-zone (fn [card] (:zone (get-nested-host card)))
-                   in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
-                   installed? (fn [card] (or (:installed card)
-                                             (= "servers" (first (get-zone card)))))]
-               (if (or (installed? card)
-                       (in-play-area? card))
-                 [:div {:style {:text-align "center"}
-                        :on-mouse-over #(card-highlight-mouse-over % card button-channel)
-                        :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-                  (tr [:game.card "Card"]) ": " (render-message (:title card))]
-                 [:div.prompt-card-preview [card-view card false]]))
+             (when-let [card (:card prompt)]
+               (let [get-nested-host (fn [card] (if (:host card)
+                                                  (recur (:host card))
+                                                  card))
+                     get-zone (fn [card] (:zone (get-nested-host card)))
+                     in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+                     installed? (fn [card] (or (:installed card)
+                                               (= "servers" (first (get-zone card)))))]
+                 (if (or (installed? card)
+                         (in-play-area? card))
+                   [:div {:style {:text-align "center"}
+                          :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                          :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+                    (tr [:game.card "Card"]) ": " (render-message (:title card))]
+                   [:div.prompt-card-preview [card-view card false]])))
              (when (:card prompt)
                [:hr])
              [:h4 (render-message (:msg prompt))]
