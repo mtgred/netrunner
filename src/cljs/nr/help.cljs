@@ -10,6 +10,9 @@
     :has-args :required
     :usage "/bp n"
     :help "Set your bad publicity to n"}
+   {:name "/bug"
+    :usage "/bug"
+    :help "Report a bug on GitHub"}
    {:name "/card-info"
     :usage "/card-info"
     :help "display debug info about a card (player's own cards only)"}
