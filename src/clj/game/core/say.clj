@@ -2,6 +2,11 @@
   (:require [clojure.string :as string]
             [game.core.toasts :refer [toast]]))
 
+(defn unsafe-say
+  "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
+  [state text]
+  (swap! state update :log conj {:user "__system__" :text text}))
+
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
   __system__ shows no user name."

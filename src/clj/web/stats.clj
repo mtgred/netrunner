@@ -174,6 +174,29 @@
                 :runner.agenda-points (get-in @state [:runner :agenda-point])}
      :history (:history @state)}))
 
+(defn report-bug [state]
+  (when state
+    (let [corp (some #(when (= "Corp" (:side %)) %) (:players @state))
+          runner (some #(when (= "Runner" (:side %)) %) (:players @state))]
+      (try
+        (mc/insert db :bug-reports {:gameid (str (:gameid @state))
+                                    :title (:title @state)
+                                    :room (:room @state)
+                                    :format (:format @state)
+                                    :report-date (java.util.Date.)
+                                    :corp {:player (select-keys (:user corp) [:username :emailhash])
+                                           :deck-name (get-in corp [:deck :name])
+                                           :identity (get-in corp [:deck :identity :title])}
+                                    :runner {:player (select-keys (:user runner) [:username :emailhash])
+                                             :deck-name (get-in runner [:deck :name])
+                                             :identity (get-in runner [:deck :identity :title])}
+                                    :replay (generate-replay state)
+                                    :log (:log @state)})
+        (str "https://jinteki.net/bug-report/" (str (:gameid @state)))
+        (catch Exception e
+          (println "Caught exception saving bug report: " (.getMessage e))
+          (println "Stats: " (:stats @state)))))))
+
 (defn game-finished
   [db {:keys [state gameid]}]
   (when state
