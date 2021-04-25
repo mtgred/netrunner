@@ -177,9 +177,11 @@
 (defn report-bug [state]
   (when state
     (let [corp (some #(when (= "Corp" (:side %)) %) (:players @state))
-          runner (some #(when (= "Runner" (:side %)) %) (:players @state))]
+          runner (some #(when (= "Runner" (:side %)) %) (:players @state))
+          bugid (str (java.util.UUID/randomUUID))]
       (try
-        (mc/insert db :bug-reports {:gameid (str (:gameid @state))
+        (mc/insert db :bug-reports {:bugid bugid
+                                    :gameid (str (:gameid @state))
                                     :title (:title @state)
                                     :room (:room @state)
                                     :format (:format @state)
@@ -192,7 +194,7 @@
                                              :identity (get-in runner [:deck :identity :title])}
                                     :replay (generate-replay state)
                                     :log (:log @state)})
-        (str "https://jinteki.net/bug-report/" (str (:gameid @state)))
+        (str "https://jinteki.net/bug-report/" bugid)
         (catch Exception e
           (println "Caught exception saving bug report: " (.getMessage e))
           (println "Stats: " (:stats @state)))))))
@@ -340,6 +342,14 @@
         (json-response 200 replay))
       (response 401 {:message "Unauthorized"}))))
 
+(defn fetch-bug-report [{{username :username} :user
+                         {:keys [bugid]}      :params}]
+  (let [{:keys [replay]} (mc/find-one-as-map db :bug-reports {:bugid bugid} ["replay"])
+        replay (or replay {})]
+    (if (empty? replay)
+      (response 404 {:message "Replay not found"})
+      (json-response 200 replay))))
+
 (defn share-replay
   [{db :system/db
     {username :username} :user
@@ -368,15 +378,20 @@
           default-img))
       default-img)))
 
-(defn replay-handler
+(defn replay-handler 
   [{db :system/db
-    {:keys [gameid n d]} :params
-    scheme :scheme
-    headers :headers
+    {:keys [gameid bugid n d]}  :params
+    scheme                      :scheme
+    headers                     :headers
     :as req}]
-  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid gameid})
+  (let [{:keys [replay winner corp runner title]}
+        (cond
+          gameid (mc/find-one-as-map db "game-logs" {:gameid gameid})
+          bugid (mc/find-one-as-map db "bug-reports" {:bugid bugid}))
         replay (or replay {})
-        gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
+        gameid-str (cond
+                     gameid (if (and n d) (str gameid "?n=" n "&d=" d) gameid)
+                     bugid (str bugid "?bug-report"))]
     (if (empty? replay)
       (response 404 {:message "Replay not found"})
       (let [corp-user (get-in corp [:player :username] "Unknown")
@@ -387,7 +402,10 @@
             og {:type "website"
                 :url (request-url req)
                 :image (get-winner-card winner corp runner host)
-                :title (str "REPLAY: " title)
+                :title (str (cond
+                              gameid "REPLAY: "
+                              bugid "BUG-REPORT: ")
+                            title)
                 :site_name "jinteki.net"
                 :description (str corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
         (pages/index-page req og gameid-str)))))
