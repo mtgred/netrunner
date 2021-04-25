@@ -138,10 +138,8 @@
 
 (defn start-shared-replay
   ([s gameid]
-   (start-shared-replay s gameid nil false))
-  ([s gameid {:keys [n d] :as jump-to}]
-   (start-shared-replay s gameid jump-to false))
-  ([s gameid {:keys [n d] :as jump-to} bug-report]
+   (start-shared-replay s gameid nil))
+  ([s gameid jump-to]
    (authenticated
      (fn [user]
        (swap! s assoc
@@ -155,9 +153,7 @@
               :password ""
               :allow-spectator true
               :spectatorhands true)
-       (go (let [{:keys [status json]} (<! (GET (if bug-report
-                                                  (str "/bug-report/replay/" gameid)
-                                                  (str "/profile/history/full/" gameid))))]
+       (go (let [{:keys [status json]} (<! (GET (str "/profile/history/full/" gameid)))]
              (case status
                200
                (let [replay (js->clj json :keywordize-keys true)
@@ -166,8 +162,7 @@
                      init-state (assoc init-state :gameid gameid)
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
-                     init-state (assoc init-state :replay-diffs diffs)
-                     jump-to (if bug-report {:n 0 :d 99999} jump-to)] ; for bug-reports jump to end
+                     init-state (assoc init-state :replay-diffs diffs)]
                  (ws/event-msg-handler
                    {:id :netrunner/start
                     :?data (.stringify js/JSON (clj->js
@@ -378,9 +373,11 @@
            d (when d-match (js/parseInt (nth d-match 1)))]
        (when replay-id
          (.replaceState (.-history js/window) {} "" "/play") ; remove query parameters from url
-         (if (and n d)
-           (start-shared-replay s replay-id {:n n :d d} bug-report?)
-           (start-shared-replay s replay-id nil bug-report?))
+         (if bug-report?
+           (start-shared-replay s replay-id {:bug 0})
+           (if (and n d)
+             (start-shared-replay s replay-id {:n n :d d})
+             (start-shared-replay s replay-id nil)))
          (resume-sound)
          nil)))
    [:div.button-bar

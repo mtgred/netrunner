@@ -48,7 +48,6 @@
 
            (GET "/replay/:gameid" [] stats/replay-handler)
            (GET "/bug-report/:bugid" [] stats/replay-handler)
-           (GET "/bug-report/replay/:bugid" [] stats/fetch-bug-report)
            (GET "/*" [] pages/index-page))
 
 (defroutes public-routes

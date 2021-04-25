@@ -174,31 +174,6 @@
                 :runner.agenda-points (get-in @state [:runner :agenda-point])}
      :history (:history @state)}))
 
-(defn report-bug [state]
-  (when state
-    (let [corp (some #(when (= "Corp" (:side %)) %) (:players @state))
-          runner (some #(when (= "Runner" (:side %)) %) (:players @state))
-          bugid (str (java.util.UUID/randomUUID))]
-      (try
-        (mc/insert db :bug-reports {:bugid bugid
-                                    :gameid (str (:gameid @state))
-                                    :title (:title @state)
-                                    :room (:room @state)
-                                    :format (:format @state)
-                                    :report-date (java.util.Date.)
-                                    :corp {:player (select-keys (:user corp) [:username :emailhash])
-                                           :deck-name (get-in corp [:deck :name])
-                                           :identity (get-in corp [:deck :identity :title])}
-                                    :runner {:player (select-keys (:user runner) [:username :emailhash])
-                                             :deck-name (get-in runner [:deck :name])
-                                             :identity (get-in runner [:deck :identity :title])}
-                                    :replay (generate-replay state)
-                                    :log (:log @state)})
-        (str "https://jinteki.net/bug-report/" bugid)
-        (catch Exception e
-          (println "Caught exception saving bug report: " (.getMessage e))
-          (println "Stats: " (:stats @state)))))))
-
 (defn game-finished
   [db {:keys [state gameid]}]
   (when state
@@ -214,12 +189,18 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :replay (when (get-in @state [:options :save-replay]) (generate-replay state))
+                          :bugid (:bugid @state)
+                          :replay (when (or (get-in @state [:options :save-replay])
+                                            (:bugid @state))
+                                    (generate-replay state))
                           :has-replay (get-in @state [:options :save-replay] false)
                           :replay-shared false
                           :log (:log @state)}})
       (delete-old-replay db (get-in @state [:corp :user]))
       (delete-old-replay db (get-in @state [:corp :runner]))
+      (when (:bugid @state)
+        (mc/insert db :bug-reports {:bugid (:bugid state)
+                                    :gameid (str gameid)}))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))
@@ -331,24 +312,17 @@
   [{db :system/db
     {username :username} :user
     {:keys [gameid]} :params}]
-  (let [{:keys [corp runner replay replay-shared]}
+  (let [{:keys [corp runner replay replay-shared bugid]}
         (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
         replay (or replay {})]
-    (if (or replay-shared
-            (or (= username (get-in corp [:player :username]))
+    (if (or bugid         ; this is a bug report
+            replay-shared ; this is a shared replay
+            (or (= username (get-in corp [:player :username])) ; user is one of the players
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})
         (json-response 200 replay))
       (response 401 {:message "Unauthorized"}))))
-
-(defn fetch-bug-report [{{username :username} :user
-                         {:keys [bugid]}      :params}]
-  (let [{:keys [replay]} (mc/find-one-as-map db :bug-reports {:bugid bugid} ["replay"])
-        replay (or replay {})]
-    (if (empty? replay)
-      (response 404 {:message "Replay not found"})
-      (json-response 200 replay))))
 
 (defn share-replay
   [{db :system/db
@@ -378,18 +352,15 @@
           default-img))
       default-img)))
 
-(defn replay-handler 
+(defn replay-handler
   [{db :system/db
     {:keys [gameid bugid n d]}  :params
     scheme                      :scheme
     headers                     :headers
     :as req}]
-  (let [{:keys [replay winner corp runner title]}
-        (cond
-          gameid (mc/find-one-as-map db "game-logs" {:gameid gameid})
-          bugid (mc/find-one-as-map db "bug-reports" {:bugid bugid}))
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid (or gameid bugid)})
         replay (or replay {})
-        gameid-str (cond
+        gameid-str (cond ; different string for replays and bug-reports
                      gameid (if (and n d) (str gameid "?n=" n "&d=" d) gameid)
                      bugid (str bugid "?bug-report"))]
     (if (empty? replay)

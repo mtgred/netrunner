@@ -1,6 +1,5 @@
 (ns game.core.commands
   (:require
-    [web.stats :as stats]
     [game.core.board :refer [all-installed get-zones server->zone]]
     [game.core.card :refer [agenda? can-be-advanced? corp? get-card has-subtype? ice? identity? in-hand? installed? map->Card rezzed? runner?]]
     [game.core.damage :refer [damage]]
@@ -51,21 +50,21 @@
                      (map->Card {:title "/adv-counter command"}) nil)))
 
 (defn command-bug-report [state side]
-  (when-let [replay-url (stats/report-bug state)]
-    (let [title "Please give a short description of your bug here"
-          body (str "Link to bug replay: " replay-url "\n\n"
-                    "Description:\n\n"
-                    "Please describe the steps to reproduce your bug and the resulting effect here.")]
-      (unsafe-say state [:div.bugreport [:div.smallwarning "!"]
-                         "Thanks for helping us make the game better! The replay was saved. "
-                         "Please report a bug following "
-                         [:a {:target "_blank"
-                              :href (str "https://github.com/mtgred/netrunner/issues/new?title="
-                                         (string/replace title #" " "%20")
-                                         "&body="
-                                         (string/replace (string/replace body #" " "%20") #"\n" "%0A"))}
-                          "this link"]
-                         " to GitHub."]))))
+  (swap! state assoc :bug-reported true)
+  (let [title "Please give a short description of your bug here"
+        body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state) "/\n\n"
+                  "Description:\n\n"
+                  "Please describe the steps to reproduce your bug and the resulting effect here.")]
+    (unsafe-say state [:div.bugreport [:div.smallwarning "!"]
+                       "Thanks for helping us make the game better! The replay was saved. "
+                       "Please report a bug following "
+                       [:a {:target "_blank"
+                            :href (str "https://github.com/mtgred/netrunner/issues/new?title="
+                                       (string/replace title #" " "%20")
+                                       "&body="
+                                       (string/replace (string/replace body #" " "%20") #"\n" "%0A"))}
+                        "this link"]
+                       " to GitHub."])))
 
 (defn command-counter-smart [state side args]
   (resolve-ability
