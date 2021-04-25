@@ -351,15 +351,15 @@
 
 (defn replay-handler
   [{db :system/db
-    {:keys [gameid bugid n d]}  :params
-    scheme                      :scheme
-    headers                     :headers
+    {:keys [gameid bugid n d b]}  :params
+    scheme                        :scheme
+    headers                       :headers
     :as req}]
   (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid (or gameid bugid)})
         replay (or replay {})
         gameid-str (cond ; different string for replays and bug-reports
                      gameid (if (and n d) (str gameid "?n=" n "&d=" d) gameid)
-                     bugid (str bugid "?bug-report"))]
+                     bugid (str bugid "?bug-report" (when b (str "&b=" b))))]
     (if (empty? replay)
       (response 404 {:message "Replay not found"})
       (let [corp-user (get-in corp [:player :username] "Unknown")

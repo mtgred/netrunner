@@ -1,7 +1,7 @@
 (ns nr.gameboard.replay
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! timeout] :as async]
-            [clojure.string :as s :refer [join blank? capitalize]]
+            [clojure.string :as s :refer [join blank? capitalize ends-with?]]
             [differ.core :as differ]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
@@ -95,14 +95,17 @@
           (replay-jump (inc n))
           (swap! replay-status assoc :diffs (rest diffs)))))))
 
-(defn replay-jump-to-first-bug []
-  (while (not (or (= "uses a command: /bug" (-> @game-state :log last :text))
+(defn replay-jump-to-next-bug []
+  (replay-forward)
+  (while (not (or (ends-with? (-> @game-state :log last :text) "uses a command: /bug")
                   (replay-reached-end?)))
     (replay-forward)))
 
 (defn replay-jump-to [{:keys [n d bug]}]
   (if bug
-    (replay-jump-to-first-bug)
+    (do
+      (replay-jump 0)
+      (dotimes [i (inc bug)] (replay-jump-to-next-bug)))
     (do
       (replay-jump n)
       (dotimes [i d] (replay-forward)))))

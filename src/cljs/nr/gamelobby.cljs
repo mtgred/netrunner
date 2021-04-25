@@ -368,13 +368,15 @@
            id-match (re-find #"([0-9a-f\-]+)" params)
            n-match (re-find #"n=(\d+)" params)
            d-match (re-find #"d=(\d+)" params)
+           b-match (re-find #"b=(\d+)" params)
            replay-id (nth id-match 1)
            n (when n-match (js/parseInt (nth n-match 1)))
-           d (when d-match (js/parseInt (nth d-match 1)))]
+           d (when d-match (js/parseInt (nth d-match 1)))
+           b (when b-match (js/parseInt (nth b-match 1)))]
        (when replay-id
          (.replaceState (.-history js/window) {} "" "/play") ; remove query parameters from url
          (if bug-report?
-           (start-shared-replay s replay-id {:bug 0})
+           (start-shared-replay s replay-id {:bug (or b 0)})
            (if (and n d)
              (start-shared-replay s replay-id {:n n :d d})
              (start-shared-replay s replay-id nil)))

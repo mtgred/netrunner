@@ -50,9 +50,10 @@
                      (map->Card {:title "/adv-counter command"}) nil)))
 
 (defn command-bug-report [state side]
-  (swap! state assoc :bug-reported true)
+  (swap! state update :bug-reported (fnil inc -1))
   (let [title "Please give a short description of your bug here"
-        body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state) "/\n\n"
+        body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
+                  "?b=" (:bug-reported @state) "\n\n"
                   "Description:\n\n"
                   "Please describe the steps to reproduce your bug and the resulting effect here.")]
     (unsafe-say state [:div.bugreport [:div.smallwarning "!"]
