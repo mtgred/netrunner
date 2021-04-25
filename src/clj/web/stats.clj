@@ -189,18 +189,15 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :bugid (:bugid @state)
+                          :bug-reported (:bug-reported @state)
                           :replay (when (or (get-in @state [:options :save-replay])
-                                            (:bugid @state))
+                                            (:bug-reported @state))
                                     (generate-replay state))
                           :has-replay (get-in @state [:options :save-replay] false)
                           :replay-shared false
                           :log (:log @state)}})
       (delete-old-replay db (get-in @state [:corp :user]))
       (delete-old-replay db (get-in @state [:corp :runner]))
-      (when (:bugid @state)
-        (mc/insert db :bug-reports {:bugid (:bugid state)
-                                    :gameid (str gameid)}))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))
@@ -312,12 +309,12 @@
   [{db :system/db
     {username :username} :user
     {:keys [gameid]} :params}]
-  (let [{:keys [corp runner replay replay-shared bugid]}
-        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
+  (let [{:keys [corp runner replay replay-shared bug-reported]}
+        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "bug-reported"])
         replay (or replay {})]
-    (if (or bugid         ; this is a bug report
-            replay-shared ; this is a shared replay
-            (or (= username (get-in corp [:player :username])) ; user is one of the players
+    (if (or bug-reported
+            replay-shared
+            (or (= username (get-in corp [:player :username]))
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})

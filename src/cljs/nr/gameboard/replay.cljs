@@ -95,9 +95,17 @@
           (replay-jump (inc n))
           (swap! replay-status assoc :diffs (rest diffs)))))))
 
-(defn replay-jump-to [{:keys [n d]}]
-  (replay-jump n)
-  (dotimes [i d] (replay-forward)))
+(defn replay-jump-to-first-bug []
+  (while (not (or (= "uses a command: /bug" (-> @game-state :log last :text))
+                  (replay-reached-end?)))
+    (replay-forward)))
+
+(defn replay-jump-to [{:keys [n d bug]}]
+  (if bug
+    (replay-jump-to-first-bug)
+    (do
+      (replay-jump n)
+      (dotimes [i d] (replay-forward)))))
 
 (defn replay-log-forward []
   (let [prev-log (:log @game-state)]
