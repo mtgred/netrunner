@@ -7,7 +7,8 @@
 
 (def ^:const indexes
   (let [case-insensitive-index-opts {:collation {:locale "en" :strength (int 2)}}]
-    [["cards" (array-map :code 1)]
+    [["api-keys" (array-map :api-key 1)]
+     ["cards" (array-map :code 1)]
      ["cards" (array-map :previous-versions 1)]
      ["cards" (array-map :type 1)]
      ["decks" (array-map :username 1)]

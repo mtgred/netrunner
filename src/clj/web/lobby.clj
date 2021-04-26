@@ -37,13 +37,20 @@
   [client-id]
   (get @all-games (get @client-gameids client-id)))
 
+(defn- username-is-player
+  [username game]
+  (some #(= username (get-in % [:user :username])) (:players game)))
+
+(defn game-for-username
+  "Returns the game map the given username is playing (but not spectating)"
+  [username]
+  (first (filter #(username-is-player username %) (vals @all-games))))
+
 (defn lobby-clients
   "Returns a seq of all client-ids playing or spectating a gameid."
   [gameid]
   (let [game (game-for-id gameid)]
     (keep :ws-id (concat (:players game) (:spectators game)))))
-
-(def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer])
 
 (let [public-lobby-updates (atom {})
       game-lobby-updates (atom {})
