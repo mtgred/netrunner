@@ -139,7 +139,7 @@
 (defn start-shared-replay
   ([s gameid]
    (start-shared-replay s gameid nil))
-  ([s gameid {:keys [n d] :as jump-to}]
+  ([s gameid jump-to]
    (authenticated
      (fn [user]
        (swap! s assoc
@@ -364,17 +364,22 @@
   [:div.games
    (when-let [params (:replay-id @app-state)]
      (swap! app-state dissoc :replay-id)
-     (let [id-match (re-find #"([0-9a-f\-]+)" params)
+     (let [bug-report? (re-find #"bug-report" params)
+           id-match (re-find #"([0-9a-f\-]+)" params)
            n-match (re-find #"n=(\d+)" params)
            d-match (re-find #"d=(\d+)" params)
+           b-match (re-find #"b=(\d+)" params)
            replay-id (nth id-match 1)
            n (when n-match (js/parseInt (nth n-match 1)))
-           d (when d-match (js/parseInt (nth d-match 1)))]
+           d (when d-match (js/parseInt (nth d-match 1)))
+           b (when b-match (js/parseInt (nth b-match 1)))]
        (when replay-id
          (.replaceState (.-history js/window) {} "" "/play") ; remove query parameters from url
-         (if (and n d)
-           (start-shared-replay s replay-id {:n n :d d})
-           (start-shared-replay s replay-id))
+         (if bug-report?
+           (start-shared-replay s replay-id {:bug (or b 0)})
+           (if (and n d)
+             (start-shared-replay s replay-id {:n n :d d})
+             (start-shared-replay s replay-id nil)))
          (resume-sound)
          nil)))
    [:div.button-bar

@@ -189,7 +189,10 @@
                           :turn (:turn @state)
                           :corp.agenda-points (get-in @state [:corp :agenda-point])
                           :runner.agenda-points (get-in @state [:runner :agenda-point])
-                          :replay (when (get-in @state [:options :save-replay]) (generate-replay state))
+                          :bug-reported (:bug-reported @state)
+                          :replay (when (or (get-in @state [:options :save-replay])
+                                            (:bug-reported @state))
+                                    (generate-replay state))
                           :has-replay (get-in @state [:options :save-replay] false)
                           :replay-shared false
                           :log (:log @state)}})
@@ -306,10 +309,11 @@
   [{db :system/db
     {username :username} :user
     {:keys [gameid]} :params}]
-  (let [{:keys [corp runner replay replay-shared]}
-        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared"])
+  (let [{:keys [corp runner replay replay-shared bug-reported]}
+        (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "bug-reported"])
         replay (or replay {})]
-    (if (or replay-shared
+    (if (or bug-reported
+            replay-shared
             (or (= username (get-in corp [:player :username]))
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
@@ -347,13 +351,15 @@
 
 (defn replay-handler
   [{db :system/db
-    {:keys [gameid n d]} :params
-    scheme :scheme
-    headers :headers
+    {:keys [gameid bugid n d b]}  :params
+    scheme                        :scheme
+    headers                       :headers
     :as req}]
-  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid gameid})
+  (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db "game-logs" {:gameid (or gameid bugid)})
         replay (or replay {})
-        gameid-str (if (and n d) (str gameid "?n=" n "&d=" d) gameid)]
+        gameid-str (cond ; different string for replays and bug-reports
+                     gameid (if (and n d) (str gameid "?n=" n "&d=" d) gameid)
+                     bugid (str bugid "?bug-report" (when b (str "&b=" b))))]
     (if (empty? replay)
       (response 404 {:message "Replay not found"})
       (let [corp-user (get-in corp [:player :username] "Unknown")
@@ -364,7 +370,10 @@
             og {:type "website"
                 :url (request-url req)
                 :image (get-winner-card winner corp runner host)
-                :title (str "REPLAY: " title)
+                :title (str (cond
+                              gameid "REPLAY: "
+                              bugid "BUG-REPORT: ")
+                            title)
                 :site_name "jinteki.net"
                 :description (str corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
         (pages/index-page req og gameid-str)))))

@@ -268,7 +268,9 @@
 
 (defn render-message [input]
   "Render icons, cards and special codes in a message"
-  (render-specials (render-icons (render-cards input))))
+  (if (string? input)
+    (render-specials (render-icons (render-cards input)))
+    input))
 
 (defn cond-button [text cond f]
   (if cond

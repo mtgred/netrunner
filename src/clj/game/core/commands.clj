@@ -18,7 +18,7 @@
     [game.core.psi :refer [psi-game]]
     [game.core.rezzing :refer [rez]]
     [game.core.runs :refer [end-run jack-out]]
-    [game.core.say :refer [system-msg system-say]]
+    [game.core.say :refer [system-msg system-say unsafe-say]]
     [game.core.servers :refer [zones->sorted-names]]
     [game.core.set-up :refer [build-card]]
     [game.core.to-string :refer [card-str]]
@@ -48,6 +48,24 @@
                      {:effect (effect (set-adv-counter target value))
                       :choices {:card (fn [t] (same-side? (:side t) side))}}
                      (map->Card {:title "/adv-counter command"}) nil)))
+
+(defn command-bug-report [state side]
+  (swap! state update :bug-reported (fnil inc -1))
+  (let [title "[EDITME] Please give a short description of your bug here"
+        body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
+                  "?b=" (:bug-reported @state) "\n\n"
+                  "Description:\n\n"
+                  "[EDITME] Please describe the steps to reproduce your bug and the resulting effect here.")]
+    (unsafe-say state [:div.bugreport [:div.smallwarning "!"]
+                       "Thanks for helping us make the game better! The replay was saved. "
+                       "Please report a bug following "
+                       [:a {:target "_blank"
+                            :href (str "https://github.com/mtgred/netrunner/issues/new?title="
+                                       (string/replace title #" " "%20")
+                                       "&body="
+                                       (string/replace (string/replace body #" " "%20") #"\n" "%0A"))}
+                        "this link"]
+                       " to GitHub."])))
 
 (defn command-counter-smart [state side args]
   (resolve-ability
@@ -291,6 +309,7 @@
       (case command
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value -1000 1000))
+        "/bug"        command-bug-report
         "/card-info"  #(resolve-ability %1 %2
                                         {:effect (effect (system-msg (str "shows card-info of "
                                                                           (card-str state target)
