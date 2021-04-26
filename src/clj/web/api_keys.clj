@@ -1,17 +1,19 @@
 (ns web.api-keys
-  (:require [web.db :refer [db object-id]]
+  (:require [web.mongodb :refer [object-id]]
             [web.utils :refer [response]]
             [web.ws :as ws]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]])
   (:import org.bson.types.ObjectId))
 
-(defn api-keys-handler [req]
-  (if-let [user (:user req)]
-    (response 200 (mc/find-maps db "api-keys" {:username (:username user)}))
+(defn api-keys-handler [{db :system/db
+                         {username :username} :user}]
+  (if username
+    (response 200 (mc/find-maps db "api-keys" {:username username}))
     (response 401 {:message "Unauthorized"})))
 
-(defn api-keys-create-handler [{{username :username} :user}]
+(defn api-keys-create-handler [{db :system/db
+                                {username :username} :user}]
   (if username
     (let [new-key (java.util.UUID/randomUUID)
           new-entry (mc/insert db "api-keys"
@@ -25,7 +27,8 @@
         (response 500 {:message "Failed to create API Key"})))
     (response 401 {:message "Unauthorized"})))
 
-(defn api-keys-delete-handler [{{username :username} :user
+(defn api-keys-delete-handler [{db :system/db
+                                {username :username} :user
                                 {id :id}             :params}]
   (try
     (if (and username id)
