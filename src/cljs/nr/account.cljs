@@ -5,7 +5,7 @@
             [goog.dom :as gdom]
             [nr.auth :refer [valid-email?] :as auth]
             [nr.appstate :refer [app-state]]
-            [nr.ajax :refer [POST GET PUT]]
+            [nr.ajax :refer [POST GET PUT DELETE]]
             [nr.avatar :refer [avatar]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [non-game-toast set-scroll-top store-scroll-top]]
@@ -190,6 +190,44 @@
          [:button {:on-click #(do (.preventDefault %)
                                   (reagent-modals/close-modal!))}
           (tr [:settings.cancel "Cancel"])]]]])))
+
+(defn- update-api-keys-response [response s]
+  (let [status (:status response)]
+    (if (or (= 200 status)
+            (= 201 status))
+      (do
+        (go (swap! s assoc :api-keys (:json (<! (GET "/data/api-keys")))))
+        (non-game-toast "Updated API Keys" "success" nil))
+      (non-game-toast "Failed to update API Keys" "error" nil))))
+
+(defn- delete-api-key [id s]
+  (go (let [response (<! (DELETE (str "/data/api-keys/" id)))]
+        (update-api-keys-response response s))))
+
+(defn- create-api-key [s]
+  (go (let [response (<! (POST "/data/api-keys" {} :json))]
+        (update-api-keys-response response s))))
+
+(defn- api-keys [s]
+  (r/with-let [keys-cursor (r/cursor s [:api-keys])]
+    [:section
+     [:h3 (tr [:settings.api-keys "API Keys"])]
+     [:div.news-box.panel.blue-shade
+      [:ul.list
+       (doall
+         (for [d @keys-cursor]
+           [:li.news-item
+            {:key (:_id d)}
+            [:span
+             [:button.delete
+              {:on-click #(do (.preventDefault %)
+                              (delete-api-key (:_id d) s))}
+              (tr [:settings.delete-api-key "Delete"])]]
+            [:span.date (-> (:date d) js/Date. js/moment (.format "DD-MMM-YYYY, HH:mm "))]
+            [:span.title (:api-key d "")]]))]]
+     [:button {:on-click #(do (.preventDefault %)
+                              (create-api-key s))}
+      (tr [:settings.create-api-key "Create API Key"])]]))
 
 (defn account-content [user s scroll-top]
   (r/create-class
@@ -441,6 +479,8 @@
                                                  :on-click #(remove-user-from-block-list % s)} "X" ]
                     [:span.blocked-user-name (str "  " bu)]]))]
 
+     [api-keys s]
+
      [:section
       [:button.float-right (tr [:settings.update-profile "Update Profile"])]
       [:span.flash-message (:flash-message @s)]]]])}))
@@ -479,6 +519,8 @@
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))
             (swap! state assoc :email (:email (:json response))))))
+
+    (go (swap! state assoc :api-keys (:json (<! (GET "/data/api-keys")))))
 
     (fn []
       (when (and @user (= "/account" (first @active)))

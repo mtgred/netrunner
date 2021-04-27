@@ -37,17 +37,26 @@
   [client-id]
   (get @all-games (get @client-gameids client-id)))
 
+(defn- username-is-player
+  [username game]
+  (some #(= username (get-in % [:user :username])) (:players game)))
+
+(defn game-for-username
+  "Returns the game map the given username is playing (but not spectating)"
+  [username]
+  (first (filter #(username-is-player username %) (vals @all-games))))
+
 (defn lobby-clients
   "Returns a seq of all client-ids playing or spectating a gameid."
   [gameid]
   (let [game (game-for-id gameid)]
     (keep :ws-id (concat (:players game) (:spectators game)))))
 
-(def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer])
-
 (let [public-lobby-updates (atom {})
       game-lobby-updates (atom {})
       send-ready (atom true)]
+
+  (def lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer :api-access])
 
   (defn- game-public-view
     "Strips private server information from a game map, preparing to send the game to clients."
@@ -251,7 +260,7 @@
 (defmethod ws/-msg-handler :lobby/create
   [{{{:keys [username] :as user} :user} :ring-req
     client-id :client-id
-    {:keys [title format timer allow-spectator save-replay
+    {:keys [title format timer allow-spectator save-replay api-access
             spectatorhands password room side]} :?data}]
   (let [gameid (java.util.UUID/randomUUID)
         game {:date            (java.util.Date.)
@@ -259,6 +268,7 @@
               :title           title
               :allow-spectator allow-spectator
               :save-replay     save-replay
+              :api-access      api-access
               :spectatorhands  spectatorhands
               :mute-spectators false
               :password        (when (not-empty password) (bcrypt/encrypt password))

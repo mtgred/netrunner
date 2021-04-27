@@ -10,6 +10,8 @@
             [web.admin :as admin]
             [web.tournament :as tournament]
             [web.decks :as decks]
+            [web.api-keys :as api-keys]
+            [web.game-api :as game-api]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
@@ -54,7 +56,8 @@
            (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
            (POST "/forgot" [] auth/forgot-password-handler)
-           (POST "/reset/:token" [] auth/reset-password-handler))
+           (POST "/reset/:token" [] auth/reset-password-handler)
+           (GET "/game/deck" [] game-api/deck-handler))
 
 (defroutes admin-routes
            (POST "/admin/announce" [] admin/announce-create-handler)
@@ -94,7 +97,11 @@
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
            (PUT "/data/decks" [] decks/decks-save-handler)
-           (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
+           (DELETE "/data/decks/:id" [] decks/decks-delete-handler)
+
+           (GET "/data/api-keys" [] api-keys/api-keys-handler)
+           (POST "/data/api-keys" [] api-keys/api-keys-create-handler)
+           (DELETE "/data/api-keys/:id" [] api-keys/api-keys-delete-handler))
 
 (defroutes tournament-routes
   (GET "/tournament-auth/:username" [] tournament/auth))
@@ -106,8 +113,8 @@
 
 (defroutes routes
   (wrap-routes private-routes wrap-anti-forgery)
-  (wrap-routes public-CSRF-routes wrap-anti-forgery)
-  public-routes)
+  public-routes
+  (wrap-routes public-CSRF-routes wrap-anti-forgery))
 
 (defn wrap-return-favicon [handler]
   (fn [req]
