@@ -127,14 +127,11 @@
        ;; Wait on pay to finish before triggering instant-effect
        (let [original-zone (:zone card)
              moved-card (move state side (assoc card :seen true) :play-area)]
-         ;; Only mark the register once costs have been paid and card has been moved
-         (when (has-subtype? card "Run")
-           (swap! state assoc-in [:runner :register :click-type] :run))
          (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
                      (if payment-str
-                       (complete-play-instant state side (assoc eid :cost-paid (:cost-paid async-result)) moved-card payment-str ignore-cost)
+                       (complete-play-instant state side (assoc eid :cost-paid cost-paid) moved-card payment-str ignore-cost)
                        ;; could not pay the card's price; put it back and mark the effect as being over.
                        (let [returned-card (move state side moved-card original-zone)]
                          (update! state :runner (-> returned-card

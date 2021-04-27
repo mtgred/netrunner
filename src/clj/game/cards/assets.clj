@@ -2085,27 +2085,18 @@
                        :value [:credit 2]}]})
 
 (defcard "Sundew"
-  ; If this a run event then handle in :begin-run as we do not know the server
-  ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (if (not= :run (get-in @state [:runner :register :click-type]))
-                         "gain 2 [Credits]"))
+             :msg "gain 2 [Credits]"
              :async true
-             :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}
+             :effect (effect (gain-credits :corp eid 2))}
             {:event :run
              :once :per-turn
-             :req (req (first-event? state side :runner-spent-click))
-             :msg (req (if (and (= :run (get-in @state [:runner :register :click-type]))
-                                (not this-server))
-                         "gain 2 [Credits]"))
+             :req (req (and (first-event? state side :runner-spent-click)
+                            this-server))
+             :msg "loses 2 [Credits]"
              :async true
-             :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
-                                   (not this-server))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}]})
+             :effect (effect (lose-credits :corp eid 2))}]})
 
 (defcard "Synth DNA Modification"
   {:implementation "Manual fire once subroutine is broken"

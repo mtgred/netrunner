@@ -4527,21 +4527,6 @@
         (run-continue state)
         (click-prompt state :runner "Yes")
         (is (= 7 (:credit (get-corp))) "Corp did not gain credits from second run"))))
-  (testing "Sundew - Deuces Wild"
-    (do-game
-      (new-game {:corp {:deck ["Sundew" "Wraparound"]}
-                 :runner {:deck ["Deuces Wild"]}})
-      (play-from-hand state :corp "Sundew" "New remote")
-      (play-from-hand state :corp "Wraparound" "Server 1")
-      (let [sund (get-content state :remote1 0)]
-        (rez state :corp sund)
-        (take-credits state :corp 2)
-        (is (= 4 (:credit (get-corp))) "Corp now has 4cr")
-        (play-from-hand state :runner "Deuces Wild")
-        (click-prompt state :runner "Expose 1 ice and make a run")
-        (click-card state :runner (get-ice state :remote1 0))
-        (click-prompt state :runner "Server 1")
-        (is (= 6 (:credit (get-corp))) "Corp gained 2cr from Sundew because DW is not a run event"))))
   (testing "Sundew - Out of the Ashes"
     (do-game
       (new-game {:corp {:deck ["Sundew"]}
