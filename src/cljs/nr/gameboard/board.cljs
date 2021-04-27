@@ -357,10 +357,14 @@
       (let [command (case ab-type
                       :runner "runner-ability"
                       :corp "corp-ability"
-                      :ability (if (:dynamic ab) "dynamic-ability" "ability"))]
+                      :ability (if (:dynamic ab) "dynamic-ability" "ability"))
+            args (merge {:card card}
+                        (if (:dynamic ab)
+                          (select-keys ab [:dynamic :source :index])
+                          {:ability i}))]
         [:div {:key i
                :on-click #(do
-                            (send-command command {:card card :ability i})
+                            (send-command command args)
                             (if (:keep-menu-open ab)
                               (swap! c-state assoc :keep-menu-open (keyword (:keep-menu-open ab)))
                               (close-abilities c-state)))}
