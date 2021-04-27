@@ -541,8 +541,7 @@
                       :on-change #(swap! s assoc :api-access (.. % -target -checked))}]
              (tr [:lobby.api-access "Allow API access to game information"])
              (when (not has-keys)
-               (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))
-             ]])
+               (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))]])
            [:div.infobox.blue-shade {:style {:display (if (:api-access @s) "block" "none")}}
             [:p "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"]]]]])))
 
