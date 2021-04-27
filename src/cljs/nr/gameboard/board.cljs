@@ -1581,9 +1581,12 @@
                                                   card))
                      get-zone (fn [card] (:zone (get-nested-host card)))
                      in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+                     in-scored? (fn [card] (= (get-zone card) ["scored"]))
                      installed? (fn [card] (or (:installed card)
                                                (= "servers" (first (get-zone card)))))]
-                 (if (or (installed? card)
+                 (if (or (nil? (:side card))
+                         (installed? card)
+                         (in-scored? card)
                          (in-play-area? card))
                    [:div {:style {:text-align "center"}
                           :on-mouse-over #(card-highlight-mouse-over % card button-channel)
