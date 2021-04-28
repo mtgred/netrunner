@@ -230,23 +230,23 @@
                               card nil)))}]})
 
 (defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
-  {:abilities [{:label "Add 1 card from NVRAM to your grip"
+  {:abilities [{:label "Add 1 hosted card to your grip"
                 :cost [:click 1]
                 :async true
-                :prompt "Choose a card from NVRAM"
+                :prompt "Choose a hosted card"
                 :choices (req (cancellable (:hosted card)))
-                :msg "move a card from NVRAM to their Grip"
+                :msg "move a hosted card to their Grip"
                 :effect (effect (move target :hand)
                                 (effect-completed eid))}]
    :events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :waiting-prompt "Runner to choose cards for NVRAM"
+             :waiting-prompt "Runner to choose cards to be hosted"
              :effect (req (doseq [c (take 6 (:deck runner))]
                             (move state side c :play-area))
                           (continue-ability
                             state side
-                            {:prompt "Select 4 cards for NVRAM"
+                            {:prompt "Select 4 cards to be hosted"
                              :choices {:max 4
                                        :all true
                                        :card #(and (runner? %)
