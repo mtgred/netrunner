@@ -637,7 +637,7 @@
         (is (= 6 (count (:servers (get-corp)))) "There are six servers, including centrals")))))
 
 (deftest ayla-bios-rahim-simulant-specialist
-  ;; Ayla - choose & use cards for NVRAM
+  ;; Ayla - choose & use hosted cards
   (do-game
     (new-game {:runner {:id "Ayla \"Bios\" Rahim: Simulant Specialist"
                         :deck ["Sure Gamble" "Desperado"
@@ -650,7 +650,7 @@
     (click-card state :runner (find-card "Desperado" (get-in @state [:runner :play-area])))
     (click-card state :runner (find-card "Bank Job" (get-in @state [:runner :play-area])))
     (click-card state :runner (find-card "Eater" (get-in @state [:runner :play-area])))
-    (is (= 4 (count (:hosted (:identity (get-runner))))) "4 cards in NVRAM")
+    (is (= 4 (count (:hosted (:identity (get-runner))))) "4 hosted cards")
     (is (zero? (count (get-in @state [:runner :play-area]))) "The play area is empty")
     (click-prompt state :corp "Keep")
     (click-prompt state :runner "Keep")
