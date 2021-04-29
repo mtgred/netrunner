@@ -244,13 +244,31 @@
             display: inline-block
             margin: 0 10px 8px 4px
 
-            &:hover .controls
-                opacity: 1
+        .stat-controls
+            display: inline-block
+            width: 30%
+
+    .stat-controls
+        position: relative
 
         .controls
-            display: inline-block
-            margin-left: 10px
-            opacity: 0
+            display: none
+            height: 100%
+            position: absolute
+            right: 2px
+            text-align: right
+            top: 0
+            width: 100%
+
+            button
+                margin: 0 2px
+
+        &:hover
+            > :not(.controls)
+                color: #00aeff
+
+            .controls
+                display: block
 
     .playable
         cursor: pointer
@@ -307,7 +325,7 @@
     .scored
         height: 116px
 
-    .scored > .stats
+    .scored > .stats-area
         bottom: 0
         padding: 3px 6px
         position: absolute
@@ -327,17 +345,20 @@
     .squeeze .card-wrapper
         position: absolute
 
-    .stats > div
-        height: 20px
+    .name-area
+        margin-bottom: 3px
+
+    .stats-area
         font-size: 12px
+        line-height: 24px
 
-        .controls
-            float: right
-            display: none
-            margin-top: -1px
+        .icon-grid
+            margin-left: -6px
 
-        &:hover .controls
-            display: block
+            > div
+                display: inline-block
+                padding-left: 6px
+                width: 50%
 
     .start-game
         width: 750px
