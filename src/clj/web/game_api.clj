@@ -7,10 +7,15 @@
 
 (defn- make-link [host path] (str host path))
 
+(defn- make-card-details [host card]
+  (-> card
+      (dissoc :_id :images :quantity :format :rotated :normalizedtitle :previous-versions)
+      (assoc :image (make-link host (get-in card [:images :en :default :stock])))))
+
 (defn- make-card-info [host card]
-  {:title (:title (:card card))
-   :qty (:qty card)
-   :image (make-link host (get-in card [:card :images :en :default :stock]))})
+  {:qty (:qty card)
+   :title (:title (:card card))
+   :details (make-card-details host (:card card))})
 
 (defn- get-deck-id [username game]
   (if (:started game)
@@ -41,7 +46,7 @@
               (let [host (str (name scheme) "://" (get headers "host"))]
                 (response 200 {:name (:name deck)
                                :identity {:title (get-in deck [:identity :title])
-                                          :image (make-link host (get-in deck [:identity :images :en :default :stock]))}
+                                          :details (make-card-details host (:identity deck))}
                                :cards (map #(make-card-info host %) (:cards deck))}))
               (response 204 {:message "No deck selected"}))
             (response 403 {:message "No game for key or API Access not enabled"})))
