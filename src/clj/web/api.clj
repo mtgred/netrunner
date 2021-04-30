@@ -26,7 +26,6 @@
 (add-encoder org.bson.types.ObjectId encode-str)
 
 (defroutes public-CSRF-routes
-           (route/resources "/")
            (GET "/check-username/:username" [] auth/check-username-handler)
            (GET "/check-email/:email" [] auth/check-email-handler)
 
@@ -49,7 +48,12 @@
            (POST "/ws" req ws/post-handler)
 
            (GET "/replay/:gameid" [] stats/replay-handler)
-           (GET "/bug-report/:bugid" [] stats/replay-handler)
+           (GET "/bug-report/:bugid" [] stats/replay-handler))
+
+(defroutes missing-resource-routes
+           (GET "/*/*" [] {:status 404 :body "Resource not found"}))
+
+(defroutes public-CSRF-page-routes
            (GET "/*" [] pages/index-page))
 
 (defroutes public-routes
@@ -113,8 +117,12 @@
 
 (defroutes routes
   (wrap-routes private-routes wrap-anti-forgery)
+  (wrap-routes public-CSRF-routes wrap-anti-forgery)
   public-routes
-  (wrap-routes public-CSRF-routes wrap-anti-forgery))
+  (route/resources "/")
+  missing-resource-routes
+  (wrap-routes public-CSRF-page-routes wrap-anti-forgery)
+  (route/not-found "Page not found"))
 
 (defn wrap-return-favicon [handler]
   (fn [req]
