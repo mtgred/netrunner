@@ -51,6 +51,11 @@
 
 (defonce arena-queue (atom {:corp [] :runner []}))
 
+(defn- remove-from-queue [username]
+  (swap! arena-queue update :corp (partial remove #(= username (:username %))))
+  (swap! arena-queue update :runner (partial remove #(= username (:username %)))))
+
+(declare start-game)
 (defmethod ws/-msg-handler :angelarena/queue
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
@@ -64,21 +69,24 @@
             players-not-blocking-user (remove #(in-coll?
                                                  (get-in % [:options :blocked-users])
                                                  username)
-                                              (other-side @arena-queue))]
-        (println players-not-blocking-user)
-        (println (remove #(in-coll?
-                            (get-in user [:options :blocked-users])
-                            (get-in % [:username]))
-                         players-not-blocking-user))
-        (swap! arena-queue update side conj user)
-        (println "queue now:" @arena-queue)))))
+                                              (other-side @arena-queue))
+            match (first (remove #(in-coll?
+                                    (get-in user [:options :blocked-users])
+                                    (get-in % [:username]))
+                                 players-not-blocking-user))]
+        (if match
+          (do (remove-from-queue username)
+              (remove-from-queue (:username match))
+              (start-game username (:username match)))
+          (swap! arena-queue update side conj user))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
     client-id :client-id}]
   (when username
-    (try
-      (swap! arena-queue update :corp (partial remove #(= username (:username %))))
-      (swap! arena-queue update :runner (partial remove #(= username (:username %))))
-      (println "queue now:" @arena-queue))))
+    (remove-from-queue username)))
+
+(defn start-game
+  [username1 username2]
+  (println "starting game for" username1 "vs." username2))

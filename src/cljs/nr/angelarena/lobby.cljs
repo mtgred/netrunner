@@ -70,26 +70,26 @@
        [:button {:on-click #(reset! abandon true)} "Abandon run"])]))
 
 (defn deckselect-modal [user {:keys [side gameid games decks format]} current-run]
-  (let [side (capitalize (str side))]
-    [:div
-     [:h3 (tr [:lobby.select-title "Select your deck"])]
-     [:div.deck-collection.lobby-deck-selector
-      (let [same-side? (fn [deck] (= side (get-in deck [:identity :side])))]
-        [:div
-         (doall
-           (for [deck (->> @decks
-                           (filter same-side?)
-                           (sort-by :date >))]
-             ^{:key (:_id deck)}
-             [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
-                                                          {:side side :deckid (:_id deck)}])
-                                            (reagent-modals/close-modal!)
-                                            (fetch-current-run current-run))}
-              [:img {:src (image-url (:identity deck))
-                     :alt (get-in deck [:identity :title] "")}]
-              [:h4 (:name deck)]
-              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-              [:p (get-in deck [:identity :title])]]))])]]))
+  [:div
+   [:h3 (tr [:lobby.select-title "Select your deck"])]
+   [:div.deck-collection.lobby-deck-selector
+    (let [same-side? (fn [deck] (= (capitalize (name side))
+                                   (get-in deck [:identity :side])))]
+      [:div
+       (doall
+         (for [deck (->> @decks
+                         (filter same-side?)
+                         (sort-by :date >))]
+           ^{:key (:_id deck)}
+           [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
+                                                        {:side side :deckid (:_id deck)}])
+                                          (reagent-modals/close-modal!)
+                                          (fetch-current-run current-run))}
+            [:img {:src (image-url (:identity deck))
+                   :alt (get-in deck [:identity :title] "")}]
+            [:h4 (:name deck)]
+            [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+            [:p (get-in deck [:identity :title])]]))])]])
 
 (defn- new-run-button-bar [side decks s games gameid sets user current-run]
   [:div.button-bar
