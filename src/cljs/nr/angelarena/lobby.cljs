@@ -17,6 +17,7 @@
 
 (defonce runs (r/atom nil))
 (defonce chosen-format (r/atom (first arena-supported-formats)))
+(defonce queueing (r/atom nil))
 
 (defn- fetch-runs []
   (go (let [{:keys [status json]} (<! (GET "/profile/angelarena/runs"))]
@@ -56,14 +57,14 @@
      [tristate-button
       (tr [:angelarena.queueing "Queueing..."])
       (tr [:angelarena.queue-for-match "Queue for match"])
-      (= side (:queueing @s))
-      (and (:queueing @s)
-           (not= side (:queueing @s)))
-      #(if (:queueing @s)
+      (= (:_id deck) @queueing)
+      (and @queueing
+           (not= (:_id deck) @queueing))
+      #(if @queueing
          (do (ws/ws-send! [:angelarena/dequeue {:deck-id (:_id deck)}])
-             (swap! s dissoc :queueing))
+             (reset! queueing nil))
          (do (ws/ws-send! [:angelarena/queue {:deck-id (:_id deck)}])
-             (swap! s assoc :queueing side)))]
+             (reset! queueing (:_id deck))))]
      (if @abandon
        [:span "Are you sure? "
         [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
@@ -96,7 +97,7 @@
 (defn- new-run-button-bar [side decks s games gameid sets user]
   [:div.button-bar
    [cond-button (tr [:angelarena.start-new-run "Start new run"])
-    (not (:queueing @s))
+    (not @queueing)
     #(reagent-modals/modal!
        [deckselect-modal user {:games games :gameid gameid
                                :sets sets :decks decks
@@ -164,7 +165,7 @@
           blocked-users (get-in user [:options :blocked-users] [])]
       (filter #(blocking-from-game blocked-users %) blocked-games))))
 
-(defn game-list [user {:keys [room games gameid password-game editing]}]
+(defn game-list [user {:keys [room games gameid editing gameid] :as blubb}]
   (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
     [:div.game-list
@@ -173,27 +174,4 @@
        (doall
          (for [game @filtered-games]
            ^{:key (:gameid game)}
-           [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]))
-
-
-(defn- start-game
-  [s side]
-  (swap! s assoc :editing false)
-  (swap! app-state dissoc :editing-game)
-  (ws/ws-send! [:lobby/create
-                {:title "Angel Arena Match"
-                 :password ""
-                 :allow-spectator true
-                 :save-replay true
-                 :spectatorhands false
-                 :side side
-                 :format "standard" ; XXX: Make flexible
-                 :room "angelarena"
-                 :timer nil
-                 :api-access true
-                 :replay false
-                 :prompt false
-                 :editing false
-                 :protected false
-                 :create-game-deck nil
-                 :timed false}]))
+           [game-row (assoc game :current-game @gameid :password-game nil :editing editing)])))]))

@@ -84,6 +84,7 @@
 (defmethod ws/-msg-handler :lobby/select
   [{{:keys [gameid started state]} :?data}]
   (swap! app-state assoc :gameid gameid)
+  (reset! angelarena/queueing false)
   (when started
     (launch-game (parse-state state))))
 

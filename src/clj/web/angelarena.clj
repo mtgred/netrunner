@@ -1,5 +1,5 @@
 (ns web.angelarena
-  (:require [clojure.string :refer [lower-case]]
+  (:require [clojure.string :refer [lower-case capitalize]]
             [game.utils :refer [in-coll?]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]
@@ -108,7 +108,8 @@
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
     client-id :client-id
-    {:keys [deck-id]} :?data}]
+    {:keys [deck-id]} :?data
+    :as event}]
   (when username
     (let [runs (get-runs db username)
           deck (get-deck-from-id db username deck-id)
@@ -117,8 +118,8 @@
       (when (and runs deck form side
                  ; check that player isn't already queueing
                  (empty? (filter #(= username (:username %)) @arena-queue)))
-        (let [player {:user user :ws-id client-id :format form :side side :deck deck}
-              other-side (if (= :corp side) :runner :corp)
+        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck}
+              other-side (if (= :corp side) "Runner" "Corp")
               eligible-players (filter #(and (= form (:format %))
                                              (= other-side (:side %)))
                                        @arena-queue)
@@ -133,18 +134,11 @@
           (if match
             (do (remove-from-queue (get-in player [:user :username]))
                 (remove-from-queue (get-in match [:user :username]))
-                (start-game player match))
+                (start-game event player match form))
             (swap! arena-queue conj player)))))))
 
-(defmethod ws/-msg-handler :angelarena/dequeue
-  [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id}]
-  (when username
-    (remove-from-queue username)))
-
-(defn start-game
-  [player1 player2]
+(defn- start-game
+  [event player1 player2 form]
   (let [gameid (java.util.UUID/randomUUID)
         game {:date            (java.util.Date.)
               :gameid          gameid
@@ -159,7 +153,7 @@
               :mute-spectators true
               :password        nil
               :room            "angelarena"
-              :format          "standard" ;XXX: change
+              :format          form
               :players         [player1 player2]
               :spectators      []
               :spectator-count 0
@@ -169,4 +163,14 @@
               :last-update     (t/now)}]
     (refresh-lobby gameid game)
     (swap! client-gameids assoc (:ws-id player1) gameid (:ws-id player2) gameid)
-    (ws/broadcast-to! [(:ws-id player1) (:ws-id player2)] :lobby/select {:gameid gameid})))
+    ; send clients message to make them join lobby
+    (ws/broadcast-to! [(:ws-id player1) (:ws-id player2)] :lobby/select {:gameid gameid})
+    ; send server message to start game
+    (ws/event-msg-handler (assoc event :id :netrunner/start))))
+
+(defmethod ws/-msg-handler :angelarena/dequeue
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id}]
+  (when username
+    (remove-from-queue username)))
