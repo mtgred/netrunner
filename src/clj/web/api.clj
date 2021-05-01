@@ -7,6 +7,7 @@
             [web.game :as game]
             [web.chat :as chat]
             [web.stats :as stats]
+            [web.angelarena :as angelarena]
             [web.admin :as admin]
             [web.tournament :as tournament]
             [web.decks :as decks]
@@ -97,6 +98,8 @@
            (DELETE "/profile/history/annotations/delete/:gameid" [date] stats/delete-annotations)
            (GET "/profile/history/share/:gameid" [] stats/share-replay)
            (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
+
+           (GET "/profile/angelarena/run" [] angelarena/fetch-run)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
