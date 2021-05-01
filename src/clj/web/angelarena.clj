@@ -98,44 +98,43 @@
           ;XXX: Unlock deck
           )))))
 
-(defonce arena-queue (atom (into (hash-map)
-                                 (map (fn [form] [form {:corp [] :runner []}])
-                                      arena-supported-formats))))
+(defonce arena-queue (atom []))
 
-; XXX: more clever
-(defn- remove-from-queue [username])
-  ; (swap! arena-queue update :corp (partial remove #(= username (get-in % [:user :username]))))
-  ; (swap! arena-queue update :runner (partial remove #(= username (get-in % [:user :username])))))
+(defn- remove-from-queue [username]
+  (swap! arena-queue (partial remove #(= username (get-in % [:user :username])))))
 
 (declare start-game)
 (defmethod ws/-msg-handler :angelarena/queue
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
     client-id :client-id
-    {:keys [side]} :?data}]
-  (when (and username
-             (empty? (filter #(= username (:username %)) (:corp @arena-queue)))
-             (empty? (filter #(= username (:username %)) (:runner @arena-queue))))
-    (let [form :standard
-          deck (get-current-deck db username form side)
-          player {:user user :ws-id client-id :side side}
-          other-side (if (= :corp side) :runner :corp)
-          players-not-blocking-user (remove #(in-coll?
-                                               (get-in % [:user :options :blocked-users])
-                                               username)
-                                            (other-side @arena-queue))
-          match (first (remove #(in-coll?
-                                  (get-in player [:user :options :blocked-users])
-                                  (get-in % [:user :username]))
-                               players-not-blocking-user))]
-      (if deck
-        (if match
-          (do (remove-from-queue (get-in player [:user :username]))
-              (remove-from-queue (get-in match [:user :username]))
-              (start-game player match))
-          (swap! arena-queue update side conj {:user user :ws-id client-id :side side :deck deck}))
-        (println "Deck not found"))
-      (println (:status deck)))))
+    {:keys [deck-id]} :?data}]
+  (when username
+    (let [runs (get-runs db username)
+          deck (get-deck-from-id db username deck-id)
+          form (keyword (lower-case (get-in deck [:status :format])))
+          side (keyword (lower-case (get-in deck [:identity :side])))]
+      (when (and runs deck form side
+                 ; check that player isn't already queueing
+                 (empty? (filter #(= username (:username %)) @arena-queue)))
+        (let [player {:user user :ws-id client-id :format form :side side :deck deck}
+              other-side (if (= :corp side) :runner :corp)
+              eligible-players (filter #(and (= form (:format %))
+                                             (= other-side (:side %)))
+                                       @arena-queue)
+              eligible-players (remove #(in-coll?
+                                          (get-in % [:user :options :blocked-users])
+                                          username)
+                                       eligible-players)
+              match (first (remove #(in-coll?
+                                      (get-in player [:user :options :blocked-users])
+                                      (get-in % [:user :username]))
+                                   eligible-players))]
+          (if match
+            (do (remove-from-queue (get-in player [:user :username]))
+                (remove-from-queue (get-in match [:user :username]))
+                (start-game player match))
+            (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue
   [{{db :system/db

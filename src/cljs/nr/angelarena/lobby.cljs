@@ -36,11 +36,8 @@
       (pos? hours) (str hours " hours, " minutes " minutes")
       :else (str minutes " minutes, " seconds " seconds"))))
 
-(defn- deck-view [side s decks]
-  (r/with-let [deck (first (filter #(= (str (:_id %))
-                                       (get-in @runs [@chosen-format side :deck-id]))
-                                   @decks))
-               run-info (get-in @runs [@chosen-format side])
+(defn- deck-view [side s deck]
+  (r/with-let [run-info (get-in @runs [@chosen-format side])
                time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
                allowed-days (+ 3 (:wins run-info) (:losses run-info))]
     [:div.deck
@@ -53,7 +50,7 @@
      [:div.time (str "Time left: " (time-delta-string (- (* 1000 60 60 24 allowed-days)
                                                          time-since-start)))]]))
 
-(defn- deck-button-bar [side s]
+(defn- deck-button-bar [side s deck]
   (r/with-let [abandon (r/atom false)]
     [:div.button-bar
      [tristate-button
@@ -63,13 +60,13 @@
       (and (:queueing @s)
            (not= side (:queueing @s)))
       #(if (:queueing @s)
-         (do (ws/ws-send! [:angelarena/dequeue {:side side}])
+         (do (ws/ws-send! [:angelarena/dequeue {:deck-id (:_id deck)}])
              (swap! s dissoc :queueing))
-         (do (ws/ws-send! [:angelarena/queue {:side side}])
+         (do (ws/ws-send! [:angelarena/queue {:deck-id (:_id deck)}])
              (swap! s assoc :queueing side)))]
      (if @abandon
        [:span "Are you sure? "
-        [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (get-in @runs [@chosen-format side :deck-id])}])
+        [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
                                        (fetch-runs))} "yes"]
         [:button.small {:on-click #(reset! abandon false)} "no"]]
        [:button {:on-click #(reset! abandon true)} "Abandon run"])]))
@@ -123,16 +120,22 @@
            (get slug->format (name form))]))]
      [:h3 "Current corp run"]
      (if (get-in @runs [@chosen-format :corp])
-       [:div
-        [deck-view :corp s decks]
-        [deck-button-bar :corp s gameid games user]]
+       (let [deck (first (filter #(= (str (:_id %))
+                                     (get-in @runs [@chosen-format :corp :deck-id]))
+                                 @decks))]
+         [:div
+          [deck-view :corp s deck]
+          [deck-button-bar :corp s deck]])
        [new-run-button-bar :corp decks s games gameid sets user])
 
      [:h3 "Current runner run"]
      (if (get-in @runs [@chosen-format :runner])
-       [:div
-        [deck-view :runner s decks]
-        [deck-button-bar :runner s gameid games user]]
+       (let [deck (first (filter #(= (str (:_id %))
+                                     (get-in @runs [@chosen-format :runner :deck-id]))
+                                 @decks))]
+         [:div
+          [deck-view :runner s deck]
+          [deck-button-bar :runner s deck]])
        [new-run-button-bar :runner decks s games gameid sets user])
 
      [:h3 "Latest runs"]]))
