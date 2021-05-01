@@ -25,7 +25,7 @@
         (when (= 200 status)
           (reset! runs (js->clj json))))))
 
-(defn- time-delta-string [delta]                          ;XXX: switch to clj-time
+(defn- time-delta-string [delta]
   (let [days (Math/floor (/ delta (* 1000 60 60 24)))
         delta (mod delta (* 1000 60 60 24))
         hours (Math/floor (/ delta (* 1000 60 60)))
