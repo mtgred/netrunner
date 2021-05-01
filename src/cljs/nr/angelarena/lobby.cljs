@@ -6,6 +6,7 @@
             [nr.appstate :refer [app-state]]
             [nr.cardbrowser :refer [image-url]]
             [nr.deckbuilder :refer [deck-entry deck-name deck-date]]
+            [nr.deck-status :refer [deck-format-status-span]]
             [nr.game-row :refer [game-row]]
             [nr.translations :refer [tr tr-side tr-format]]
             [nr.utils :refer [slug->format cond-button tristate-button]]
@@ -72,17 +73,22 @@
         [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
        [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]))
 
-(defn deckselect-modal [user {:keys [side decks]}]
+(defn- deckselect-modal [user {:keys [side decks]}]
   [:div
    [:h3 (tr [:angelarena.select-deck "Select your deck"])]
    [:div.deck-collection.lobby-deck-selector
     (let [same-side? (fn [deck] (= (capitalize (name side))
-                                   (get-in deck [:identity :side])))]
+                                   (get-in deck [:identity :side])))
+          correct-format? (fn [deck] (let [form (get-in deck [:status :format])]
+                              (= (keyword form) @chosen-format)))
+          legal? (fn [deck] (let [form (get-in deck [:status :format])]
+                              (get-in deck [:status (keyword form) :legal])))]
       [:div
        (doall
          (for [deck (->> @decks
                          (filter same-side?)
-                         ; XXX: Remove illegal decks, show legality
+                         (filter correct-format?)
+                         (filter legal?)
                          (sort-by :date >))]
            ^{:key (:_id deck)}
            [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
@@ -91,6 +97,7 @@
                                           (fetch-runs))}
             [:img {:src (image-url (:identity deck))
                    :alt (get-in deck [:identity :title] "")}]
+            [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
             [:h4 (:name deck)]
             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
             [:p (get-in deck [:identity :title])]]))])]])
