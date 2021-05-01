@@ -282,6 +282,14 @@
     [:button.on {:on-click f :key on-text} on-text]
     [:button.off {:on-click f :key off-text} off-text]))
 
+(defn tristate-button [on-text off-text on-cond disable-cond f]
+  (let [text (if on-cond on-text off-text)]
+    (if disable-cond
+      [:button.disabled {:key text} text]
+      (if on-cond
+        [:button.on {:on-click f :key text} text]
+        [:button.off {:on-click f :key text} text]))))
+
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
