@@ -12,6 +12,7 @@
             [clj-time.core :as t]))
 
 (defonce arena-supported-formats [:standard :startup])
+(defonce arena-queue (atom []))
 
 (defn- get-runs
   [db username]
@@ -40,13 +41,6 @@
     (let [runs (get-runs db username)
           deck-id (get-in runs [form side :deck-id])]
       (get-deck-from-id db username deck-id))))
-
-(defn fetch-runs
-  [{db :system/db
-    {username :username} :user}]
-  (if username
-    (json-response 200 (get-runs db username))
-    (response 401 {:message "Unauthorized"})))
 
 (defn fetch-runs
   [{db :system/db
@@ -98,44 +92,8 @@
           ;XXX: Unlock deck
           )))))
 
-(defonce arena-queue (atom []))
-
 (defn- remove-from-queue [username]
   (swap! arena-queue (partial remove #(= username (get-in % [:user :username])))))
-
-(declare start-game)
-(defmethod ws/-msg-handler :angelarena/queue
-  [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id
-    {:keys [deck-id]} :?data
-    :as event}]
-  (when username
-    (let [runs (get-runs db username)
-          deck (get-deck-from-id db username deck-id)
-          form (keyword (lower-case (get-in deck [:status :format])))
-          side (keyword (lower-case (get-in deck [:identity :side])))]
-      (when (and runs deck form side
-                 ; check that player isn't already queueing
-                 (empty? (filter #(= username (:username %)) @arena-queue)))
-        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck}
-              other-side (if (= :corp side) "Runner" "Corp")
-              eligible-players (filter #(and (= form (:format %))
-                                             (= other-side (:side %)))
-                                       @arena-queue)
-              eligible-players (remove #(in-coll?
-                                          (get-in % [:user :options :blocked-users])
-                                          username)
-                                       eligible-players)
-              match (first (remove #(in-coll?
-                                      (get-in player [:user :options :blocked-users])
-                                      (get-in % [:user :username]))
-                                   eligible-players))]
-          (if match
-            (do (remove-from-queue (get-in player [:user :username]))
-                (remove-from-queue (get-in match [:user :username]))
-                (start-game event player match form))
-            (swap! arena-queue conj player)))))))
 
 (defn- start-game
   [event player1 player2 form]
@@ -159,7 +117,9 @@
               :spectator-count 0
               :timer           nil
               :messages        [{:user "__system__"
-                                 :text "Angel Arena lobby has been created."}]
+                                 :text "Angel Arena lobby has been created."}
+                                {:user "__system__"
+                                 :text "Here will be some explanations about the rules of Angel Arena."} ]
               :last-update     (t/now)}]
     (refresh-lobby gameid game)
     (swap! client-gameids assoc (:ws-id player1) gameid (:ws-id player2) gameid)
@@ -167,6 +127,40 @@
     (ws/broadcast-to! [(:ws-id player1) (:ws-id player2)] :lobby/select {:gameid gameid})
     ; send server message to start game
     (ws/event-msg-handler (assoc event :id :netrunner/start))))
+
+(defmethod ws/-msg-handler :angelarena/queue
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [deck-id]} :?data
+    :as event}]
+  (when username
+    (let [runs (get-runs db username)
+          deck (get-deck-from-id db username deck-id)
+          form (keyword (lower-case (get-in deck [:status :format])))
+          side (keyword (lower-case (get-in deck [:identity :side])))]
+      (when (and runs deck form side
+                 ; check that player isn't already queueing
+                 (empty? (filter #(= username (:username %)) @arena-queue)))
+        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck}
+              other-side (if (= :corp side) "Runner" "Corp")
+              eligible-players (filter #(and (= form (:format %))
+                                             (= other-side (:side %)))
+                                       @arena-queue)
+              ;XXX: Remove players you already played against from eligible pool
+              eligible-players (remove #(in-coll?
+                                          (get-in % [:user :options :blocked-users])
+                                          username)
+                                       eligible-players)
+              match (first (remove #(in-coll?
+                                      (get-in player [:user :options :blocked-users])
+                                      (get-in % [:user :username]))
+                                   eligible-players))]
+          (if match
+            (do (remove-from-queue (get-in player [:user :username]))
+                (remove-from-queue (get-in match [:user :username]))
+                (start-game event player match form))
+            (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue
   [{{db :system/db

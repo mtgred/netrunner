@@ -66,15 +66,15 @@
          (do (ws/ws-send! [:angelarena/queue {:deck-id (:_id deck)}])
              (reset! queueing (:_id deck))))]
      (if @abandon
-       [:span "Are you sure? "
+       [:span (tr [:angelarena.are-you-sure "Are you sure?"]) " "
         [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
-                                       (fetch-runs))} "yes"]
-        [:button.small {:on-click #(reset! abandon false)} "no"]]
-       [:button {:on-click #(reset! abandon true)} "Abandon run"])]))
+                                       (fetch-runs))} (tr [:angelarena.are-you-sure-yes "yes"])]
+        [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
+       [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]))
 
-(defn deckselect-modal [user {:keys [side gameid games decks format]}]
+(defn deckselect-modal [user {:keys [side decks]}]
   [:div
-   [:h3 (tr [:lobby.select-title "Select your deck"])]
+   [:h3 (tr [:angelarena.select-deck "Select your deck"])]
    [:div.deck-collection.lobby-deck-selector
     (let [same-side? (fn [deck] (= (capitalize (name side))
                                    (get-in deck [:identity :side])))]
@@ -82,6 +82,7 @@
        (doall
          (for [deck (->> @decks
                          (filter same-side?)
+                         ; XXX: Remove illegal decks, show legality
                          (sort-by :date >))]
            ^{:key (:_id deck)}
            [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
@@ -94,24 +95,21 @@
             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
             [:p (get-in deck [:identity :title])]]))])]])
 
-(defn- new-run-button-bar [side decks s games gameid sets user]
+(defn- new-run-button-bar [side decks user]
   [:div.button-bar
    [cond-button (tr [:angelarena.start-new-run "Start new run"])
     (not @queueing)
     #(reagent-modals/modal!
-       [deckselect-modal user {:games games :gameid gameid
-                               :sets sets :decks decks
-                               :side side :format nil}
-        runs])]])
+       [deckselect-modal user {:side side :decks decks}])]])
 
 (defn game-panel [decks s games gameid sets user]
   (if-not @runs
     (do
       (fetch-runs)
       [:div.game-panel.angelarena
-       [:h3 "Requesting run data..."]])
+       [:h3 (tr [:angelarena.requesting-run-data "Requesting run data..."])]])
     [:div.game-panel.angelarena
-     [:h3 "Format"]
+     [:h3 (tr [:angelarena.format "Format"])]
      [:div.format-bar
       (doall
         (for [form arena-supported-formats]
@@ -119,7 +117,7 @@
           [:span.tab {:on-click #(reset! chosen-format form)
                       :class [(when (= @chosen-format form) "current")]}
            (get slug->format (name form))]))]
-     [:h3 "Current corp run"]
+     [:h3 (tr [:angelarena.active-corp-run "Active Corp run"])]
      (if (get-in @runs [@chosen-format :corp])
        (let [deck (first (filter #(= (str (:_id %))
                                      (get-in @runs [@chosen-format :corp :deck-id]))
@@ -127,9 +125,9 @@
          [:div
           [deck-view :corp s deck]
           [deck-button-bar :corp s deck]])
-       [new-run-button-bar :corp decks s games gameid sets user])
+       [new-run-button-bar :corp decks user])
 
-     [:h3 "Current runner run"]
+     [:h3 (tr [:angelarena.active-runner-run "Active Runner run"])]
      (if (get-in @runs [@chosen-format :runner])
        (let [deck (first (filter #(= (str (:_id %))
                                      (get-in @runs [@chosen-format :runner :deck-id]))
@@ -137,9 +135,9 @@
          [:div
           [deck-view :runner s deck]
           [deck-button-bar :runner s deck]])
-       [new-run-button-bar :runner decks s games gameid sets user])
+       [new-run-button-bar :runner decks user])
 
-     [:h3 "Latest runs"]]))
+     [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
@@ -170,7 +168,7 @@
         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
     [:div.game-list
      (if (empty? @filtered-games)
-       [:h4 (tr [:lobby.no-games "No games"])]
+       [:h4 (tr [:angelarena.no-games "No games"])]
        (doall
          (for [game @filtered-games]
            ^{:key (:gameid game)}
