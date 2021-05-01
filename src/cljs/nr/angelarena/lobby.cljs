@@ -8,17 +8,22 @@
             [nr.deckbuilder :refer [deck-entry deck-name deck-date]]
             [nr.game-row :refer [game-row]]
             [nr.translations :refer [tr tr-side tr-format]]
-            [nr.utils :refer [num->percent cond-button tristate-button]]
+            [nr.utils :refer [slug->format cond-button tristate-button]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]))
 
-(defn- fetch-current-run [current-run]
-  (go (let [{:keys [status json]} (<! (GET "/profile/angelarena/run"))]
-        (when (= 200 status)
-          (reset! current-run (js->clj json))))))
+(defonce arena-supported-formats [:standard :startup])
 
-(defn- time-delta-string [delta]
+(defonce runs (r/atom nil))
+(defonce chosen-format (r/atom (first arena-supported-formats)))
+
+(defn- fetch-runs []
+  (go (let [{:keys [status json]} (<! (GET "/profile/angelarena/runs"))]
+        (when (= 200 status)
+          (reset! runs (js->clj json))))))
+
+(defn- time-delta-string [delta]                          ;XXX: switch to clj-time
   (let [days (Math/floor (/ delta (* 1000 60 60 24)))
         delta (mod delta (* 1000 60 60 24))
         hours (Math/floor (/ delta (* 1000 60 60)))
@@ -31,11 +36,11 @@
       (pos? hours) (str hours " hours, " minutes " minutes")
       :else (str minutes " minutes, " seconds " seconds"))))
 
-(defn- deck-view [side s decks current-run]
+(defn- deck-view [side s decks]
   (r/with-let [deck (first (filter #(= (str (:_id %))
-                                       (get-in @current-run [side :deckid]))
+                                       (get-in @runs [@chosen-format side :deck-id]))
                                    @decks))
-               run-info (side @current-run)
+               run-info (get-in @runs [@chosen-format side])
                time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
                allowed-days (+ 3 (:wins run-info) (:losses run-info))]
     [:div.deck
@@ -48,7 +53,7 @@
      [:div.time (str "Time left: " (time-delta-string (- (* 1000 60 60 24 allowed-days)
                                                          time-since-start)))]]))
 
-(defn- deck-button-bar [side s gameid games user current-run]
+(defn- deck-button-bar [side s]
   (r/with-let [abandon (r/atom false)]
     [:div.button-bar
      [tristate-button
@@ -64,12 +69,12 @@
              (swap! s assoc :queueing side)))]
      (if @abandon
        [:span "Are you sure? "
-        [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:side side}])
-                                       (fetch-current-run current-run))} "yes"]
+        [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (get-in @runs [@chosen-format side :deck-id])}])
+                                       (fetch-runs))} "yes"]
         [:button.small {:on-click #(reset! abandon false)} "no"]]
        [:button {:on-click #(reset! abandon true)} "Abandon run"])]))
 
-(defn deckselect-modal [user {:keys [side gameid games decks format]} current-run]
+(defn deckselect-modal [user {:keys [side gameid games decks format]}]
   [:div
    [:h3 (tr [:lobby.select-title "Select your deck"])]
    [:div.deck-collection.lobby-deck-selector
@@ -82,16 +87,16 @@
                          (sort-by :date >))]
            ^{:key (:_id deck)}
            [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
-                                                        {:side side :deckid (:_id deck)}])
+                                                        {:deck-id (:_id deck)}])
                                           (reagent-modals/close-modal!)
-                                          (fetch-current-run current-run))}
+                                          (fetch-runs))}
             [:img {:src (image-url (:identity deck))
                    :alt (get-in deck [:identity :title] "")}]
             [:h4 (:name deck)]
             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
             [:p (get-in deck [:identity :title])]]))])]])
 
-(defn- new-run-button-bar [side decks s games gameid sets user current-run]
+(defn- new-run-button-bar [side decks s games gameid sets user]
   [:div.button-bar
    [cond-button (tr [:angelarena.start-new-run "Start new run"])
     (not (:queueing @s))
@@ -99,31 +104,38 @@
        [deckselect-modal user {:games games :gameid gameid
                                :sets sets :decks decks
                                :side side :format nil}
-        current-run])]])
+        runs])]])
 
 (defn game-panel [decks s games gameid sets user]
-  (r/with-let [current-run (r/atom nil)]
-    (if-not @current-run
-      (do
-        (fetch-current-run current-run)
-        [:div.game-panel.angelarena
-         [:h3 "Requesting run data..."]])
+  (if-not @runs
+    (do
+      (fetch-runs)
       [:div.game-panel.angelarena
-       [:h3 "Current corp run"]
-       (if (:corp @current-run)
-         [:div
-          [deck-view :corp s decks current-run]
-          [deck-button-bar :corp s gameid games user current-run]]
-         [new-run-button-bar :corp decks s games gameid sets user current-run])
+       [:h3 "Requesting run data..."]])
+    [:div.game-panel.angelarena
+     [:h3 "Format"]
+     [:div.format-bar
+      (doall
+        (for [form arena-supported-formats]
+          ^{:key form}
+          [:span.tab {:on-click #(reset! chosen-format form)
+                      :class [(when (= @chosen-format form) "current")]}
+           (get slug->format (name form))]))]
+     [:h3 "Current corp run"]
+     (if (get-in @runs [@chosen-format :corp])
+       [:div
+        [deck-view :corp s decks]
+        [deck-button-bar :corp s gameid games user]]
+       [new-run-button-bar :corp decks s games gameid sets user])
 
-       [:h3 "Current runner run"]
-       (if (:runner @current-run)
-         [:div
-          [deck-view :runner s decks current-run]
-          [deck-button-bar :runner s gameid games user current-run]]
-         [new-run-button-bar :runner decks s games gameid sets user current-run])
+     [:h3 "Current runner run"]
+     (if (get-in @runs [@chosen-format :runner])
+       [:div
+        [deck-view :runner s decks]
+        [deck-button-bar :runner s gameid games user]]
+       [new-run-button-bar :runner decks s games gameid sets user])
 
-       [:h3 "Latest runs"]])))
+     [:h3 "Latest runs"]]))
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"

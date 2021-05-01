@@ -15,8 +15,10 @@
 
     >h3
         font-size: 18px
-        margin-top: 0
         margin-bottom: 4px
+
+        &:not(:first-child)
+            margin-top: 8px
 
     .deck
         height: 65px
@@ -38,9 +40,10 @@
             font-weight: bold
 
     .button-bar
-        margin-top: 4px
+        margin-top: 0px
         padding: 0
         width: auto
+        overflow-y: auto
 
         button
             width: auto
@@ -49,3 +52,23 @@
             min-width:0
             width: auto
             padding: 0 2px
+
+    .format-bar
+        padding: 0 15px 0
+        margin-top: 0px
+        margin-bottom: 8px
+
+        .tab
+            float: left
+            display: block
+            color: white
+            margin: 0 10px
+            line-height: 24px
+            transition(all 0.2s ease-in-out)
+
+            &:hover
+                color: orange
+                cursor: pointer
+
+            &.current
+                color: orange

@@ -616,7 +616,7 @@
           [cond-button
            (tr [:lobby.start "Start"])
            (every? :deck players)
-           #(do(println @s)(ws/ws-send! [:netrunner/start @gameid]))])
+           #(do (ws/ws-send! [:netrunner/start @gameid]))])
         [:button {:on-click #(leave-lobby s)} (tr [:lobby.leave "Leave"])]
         (when (first-user? players @user)
           (if (> (count players) 1)

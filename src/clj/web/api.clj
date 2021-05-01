@@ -99,7 +99,7 @@
            (GET "/profile/history/share/:gameid" [] stats/share-replay)
            (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
 
-           (GET "/profile/angelarena/run" [] angelarena/fetch-run)
+           (GET "/profile/angelarena/runs" [] angelarena/fetch-runs)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)
