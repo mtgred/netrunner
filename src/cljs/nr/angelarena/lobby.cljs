@@ -3,12 +3,16 @@
   (:require [clojure.string :refer [capitalize]]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET]]
+            [nr.appstate :refer [app-state]]
+            [nr.avatar :refer [avatar]]
             [nr.cardbrowser :refer [image-url]]
             [nr.deckbuilder :refer [deck-name]]
             [nr.deck-status :refer [deck-format-status-span]]
-            [nr.game-row :refer [game-row]]
+            [nr.game-row :refer [join-game]]
+            [nr.player-view :refer [user-status-span]]
+            [nr.sounds :refer [resume-sound]]
             [nr.translations :refer [tr tr-side tr-format]] ;XXX: Use tr-side and tr-format
-            [nr.utils :refer [slug->format cond-button tristate-button]]
+            [nr.utils :refer [slug->format cond-button tristate-button faction-icon]]
             [nr.ws :as ws]
             [reagent.core :as r]
             [reagent-modals.modals :as reagent-modals]))
@@ -148,6 +152,66 @@
 
      [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))
 
+(defn- player-view
+  ([player] (player-view player nil))
+  ([player game]
+   [:span.player
+    [avatar (:user player) {:opts {:size 22}}]
+    [user-status-span player]
+    (let [side (:side player)
+          faction (:faction (:identity (:deck player)))
+          identity (:title (:identity (:deck player)))
+          specs (:allow-spectator game)]
+      (cond
+        (and (some? faction)
+             (not= "Neutral" faction)
+             specs)
+        (faction-icon faction identity)
+
+        side
+        (str " (" (tr-side side) ")")))
+    (when-let [{:keys [wins losses]} (:run-info player)]
+      [:span.standings wins "-" losses])]))
+
+(defn- game-row
+  [{:keys [title format room started players gameid current-game original-players] :as game}]
+  (r/with-let [s (r/atom {:show-mod-menu false})
+               user (:user @app-state)
+               join (fn [action] (join-game gameid s action nil))]
+    [:div.gameline {:class (when (= current-game gameid) "active")}
+     (when (or (superuser? user)
+               (and (:allow-spectator game)
+                    (not current-game)))
+       [:button {:on-click #(do (join "watch")
+                                (resume-sound))} (tr [:lobby.watch "Watch"])])
+     (when (and (not current-game)
+                started
+                (= 1 (count players))
+                (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) original-players))
+       [:button {:on-click #(do (join "rejoin")
+                                (resume-sound))}
+        (tr [:lobby.rejoin "Rejoin"])])
+     (let [c (:spectator-count game)]
+       [:h4
+        {:on-click #(swap! s update :show-mod-menu not)
+         :class (when (or (:isadmin user)
+                          (:ismoderator user))
+                  "clickable")}
+        (str (when (:save-replay game) "🟢")
+             (:title game)
+             (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
+
+     [:div {:class "game-format"}
+      [:span.format-label (tr [:lobby.format "Format"]) ":  "]
+      [:span.format-type (tr-format (slug->format format "Unknown"))]]
+
+     [:div (doall
+             (map-indexed
+               (fn [idx player]
+                 ^{:key idx}
+                 [player-view player game])
+               original-players))]]))
+
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
   [user game]
@@ -178,7 +242,16 @@
     [:div.game-list
      (if (empty? @filtered-games)
        [:h4 (tr [:angelarena.no-games "No games"])]
-       (doall
-         (for [game @filtered-games]
-           ^{:key (:gameid game)}
-           [game-row (assoc game :current-game @gameid :password-game nil :editing false)])))]))
+       (let [get-player-wins (fn [game] (map #(get-in % [:run-info :wins]) (:players game)))
+             groups (->> @filtered-games
+                      (group-by #(apply max (get-player-wins %)))
+                      (sort-by first >))]
+         (doall
+           (for [[wins games] groups]
+             ^{:key wins}
+             [:div.win-group
+              [:div.win-divider wins (tr [:angelarena.wins " wins"])]
+              (doall
+                (for [game games]
+                  ^{:key (:gameid game)}
+                  [game-row (assoc game :current-game @gameid :password-game nil :editing false)]))]))))]))

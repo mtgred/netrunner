@@ -110,7 +110,7 @@
               :mute-spectators true
               :password        nil
               :room            "angelarena"
-              :format          form
+              :format          (name form)
               :players         [player1 player2]
               :spectators      []
               :spectator-count 0
@@ -137,11 +137,12 @@
     (let [runs (get-runs db username)
           deck (get-deck-from-id db username deck-id)
           form (keyword (lower-case (get-in deck [:status :format])))
-          side (keyword (lower-case (get-in deck [:identity :side])))]
+          side (keyword (lower-case (get-in deck [:identity :side])))
+          run-info (get-in runs [form side])]
       (when (and runs deck form side
                  ; check that player isn't already queueing
                  (empty? (filter #(= username (:username %)) @arena-queue)))
-        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck}
+        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck :run-info run-info}
               other-side (if (= :corp side) "Runner" "Corp")
               eligible-players (->> @arena-queue
                                     ; Players in the same format playing the other side
