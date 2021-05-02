@@ -42,9 +42,9 @@
       :else (str minutes " minutes, " seconds " seconds"))))
 
 (defn- deck-view [side s deck]
-  (r/with-let [run-info (get-in @runs [@chosen-format side])
-               time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
-               allowed-days (+ 3 (:wins run-info) (:losses run-info))]
+  (let [run-info (get-in @runs [@chosen-format side])
+        time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
+        allowed-days (+ 3 (:wins run-info) (:losses run-info))]
     [:div.deck
      [:img {:src (image-url (:identity deck))
             :alt (get-in deck [:identity :title] "")}]
@@ -115,42 +115,52 @@
     #(reagent-modals/modal!
        [deckselect-modal user {:side side :decks decks}])]])
 
+(defmethod ws/-msg-handler :angelarena/run-update [event]
+  (fetch-runs))
+
 (defn game-panel [decks s user]
-  (if-not @runs
-    (do
-      (fetch-runs)
-      [:div.game-panel.angelarena
-       [:h3 (tr [:angelarena.requesting-run-data "Requesting run data..."])]])
-    [:div.game-panel.angelarena
-     [:h3 (tr [:angelarena.format "Format"])]
-     [:div.format-bar
-      (doall
-        (for [form arena-supported-formats]
-          ^{:key form}
-          [:span.tab {:on-click #(reset! chosen-format form)
-                      :class [(when (= @chosen-format form) "current")]}
-           (get slug->format (name form))]))]
-     [:h3 (tr [:angelarena.active-corp-run "Active Corp run"])]
-     (if (get-in @runs [@chosen-format :corp])
-       (let [deck (first (filter #(= (str (:_id %))
-                                     (get-in @runs [@chosen-format :corp :deck-id]))
-                                 @decks))]
-         [:div
-          [deck-view :corp s deck]
-          [deck-button-bar :corp s deck]])
-       [new-run-button-bar :corp decks user])
+  (r/create-class
+    {:display-name "game-panel"
 
-     [:h3 (tr [:angelarena.active-runner-run "Active Runner run"])]
-     (if (get-in @runs [@chosen-format :runner])
-       (let [deck (first (filter #(= (str (:_id %))
-                                     (get-in @runs [@chosen-format :runner :deck-id]))
-                                 @decks))]
-         [:div
-          [deck-view :runner s deck]
-          [deck-button-bar :runner s deck]])
-       [new-run-button-bar :runner decks user])
+     :component-did-mount
+     (fn []
+       (fetch-runs))
 
-     [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))
+     :reagent-render
+     (fn []
+       (if-not @runs
+         [:div.game-panel.angelarena
+          [:h3 (tr [:angelarena.requesting-run-data "Requesting run data..."])]]
+         [:div.game-panel.angelarena
+          [:h3 (tr [:angelarena.format "Format"])]
+          [:div.format-bar
+           (doall
+             (for [form arena-supported-formats]
+               ^{:key form}
+               [:span.tab {:on-click #(reset! chosen-format form)
+                           :class [(when (= @chosen-format form) "current")]}
+                (get slug->format (name form))]))]
+          [:h3 (tr [:angelarena.active-corp-run "Active Corp run"])]
+          (if (get-in @runs [@chosen-format :corp])
+            (let [deck (first (filter #(= (str (:_id %))
+                                          (get-in @runs [@chosen-format :corp :deck-id]))
+                                      @decks))]
+              [:div
+               [deck-view :corp s deck]
+               [deck-button-bar :corp s deck]])
+            [new-run-button-bar :corp decks user])
+
+          [:h3 (tr [:angelarena.active-runner-run "Active Runner run"])]
+          (if (get-in @runs [@chosen-format :runner])
+            (let [deck (first (filter #(= (str (:_id %))
+                                          (get-in @runs [@chosen-format :runner :deck-id]))
+                                      @decks))]
+              [:div
+               [deck-view :runner s deck]
+               [deck-button-bar :runner s deck]])
+            [new-run-button-bar :runner decks user])
+
+          [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))}))
 
 (defn- player-view
   ([player] (player-view player nil))
@@ -193,10 +203,6 @@
         (tr [:lobby.rejoin "Rejoin"])])
      (let [c (:spectator-count game)]
        [:h4
-        {:on-click #(swap! s update :show-mod-menu not)
-         :class (when (or (:isadmin user)
-                          (:ismoderator user))
-                  "clickable")}
         (str (when (:save-replay game) "🟢")
              (:title game)
              (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
@@ -244,13 +250,12 @@
        [:h4 (tr [:angelarena.no-games "No games"])]
        (let [get-player-wins (fn [game] (map #(get-in % [:run-info :wins]) (:players game)))
              groups (->> @filtered-games
-                      (group-by #(apply max (get-player-wins %)))
-                      (sort-by first >))]
+                         (group-by #(apply max (get-player-wins %)))
+                         (sort-by first >))]
          (doall
            (for [[wins games] groups]
-             ^{:key wins}
-             [:div.win-group
-              [:div.win-divider wins (tr [:angelarena.wins " wins"])]
+             [:div.win-group {:key wins}
+              [:div.win-divider {:key (str wins "-divider")} wins " " (tr [:angelarena.wins "wins"])]
               (doall
                 (for [game games]
                   ^{:key (:gameid game)}
