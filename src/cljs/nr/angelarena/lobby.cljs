@@ -1,14 +1,13 @@
 (ns nr.angelarena
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [clojure.string :refer [lower-case capitalize]]
+  (:require [clojure.string :refer [capitalize]]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET]]
-            [nr.appstate :refer [app-state]]
             [nr.cardbrowser :refer [image-url]]
-            [nr.deckbuilder :refer [deck-entry deck-name deck-date]]
+            [nr.deckbuilder :refer [deck-name]]
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.game-row :refer [game-row]]
-            [nr.translations :refer [tr tr-side tr-format]]
+            [nr.translations :refer [tr tr-side tr-format]] ;XXX: Use tr-side and tr-format
             [nr.utils :refer [slug->format cond-button tristate-button]]
             [nr.ws :as ws]
             [reagent.core :as r]
@@ -109,7 +108,7 @@
     #(reagent-modals/modal!
        [deckselect-modal user {:side side :decks decks}])]])
 
-(defn game-panel [decks s games gameid sets user]
+(defn game-panel [decks s user]
   (if-not @runs
     (do
       (fetch-runs)
@@ -170,7 +169,7 @@
           blocked-users (get-in user [:options :blocked-users] [])]
       (filter #(blocking-from-game blocked-users %) blocked-games))))
 
-(defn game-list [user {:keys [room games gameid editing gameid] :as blubb}]
+(defn game-list [user {:keys [room games gameid]}]
   (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
     [:div.game-list
@@ -179,4 +178,4 @@
        (doall
          (for [game @filtered-games]
            ^{:key (:gameid game)}
-           [game-row (assoc game :current-game @gameid :password-game nil :editing editing)])))]))
+           [game-row (assoc game :current-game @gameid :password-game nil :editing false)])))]))

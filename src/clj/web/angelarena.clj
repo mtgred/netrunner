@@ -37,10 +37,9 @@
 
 (defn- get-current-deck
   [db username form side]
-  (try
-    (let [runs (get-runs db username)
-          deck-id (get-in runs [form side :deck-id])]
-      (get-deck-from-id db username deck-id))))
+  (let [runs (get-runs db username)
+        deck-id (get-in runs [form side :deck-id])]
+    (get-deck-from-id db username deck-id)))
 
 (defn fetch-runs
   [{db :system/db
@@ -144,18 +143,20 @@
                  (empty? (filter #(= username (:username %)) @arena-queue)))
         (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck}
               other-side (if (= :corp side) "Runner" "Corp")
-              eligible-players (filter #(and (= form (:format %))
-                                             (= other-side (:side %)))
-                                       @arena-queue)
-              ;XXX: Remove players you already played against from eligible pool
-              eligible-players (remove #(in-coll?
-                                          (get-in % [:user :options :blocked-users])
-                                          username)
-                                       eligible-players)
-              match (first (remove #(in-coll?
-                                      (get-in player [:user :options :blocked-users])
-                                      (get-in % [:user :username]))
-                                   eligible-players))]
+              eligible-players (->> @arena-queue
+                                    ; Players in the same format playing the other side
+                                    (filter #(and (= form (:format %))
+                                                  (= other-side (:side %))))
+                                    ;XXX: Remove players you already played against from eligible pool
+                                    ; Players that didn't block us
+                                    (remove #(in-coll?
+                                               (get-in % [:user :options :blocked-users])
+                                               username))
+                                    ; Players that we didn't block
+                                    (remove #(in-coll?
+                                               (get-in player [:user :options :blocked-users])
+                                               (get-in % [:user :username]))))
+              match (first eligible-players)]
           (if match
             (do (remove-from-queue (get-in player [:user :username]))
                 (remove-from-queue (get-in match [:user :username]))
