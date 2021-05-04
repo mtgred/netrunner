@@ -5353,7 +5353,35 @@
       (card-ability state :runner (get-program state 0) 0)
       (run-continue state)
       (click-prompt state :runner (second (prompt-buttons :runner)))
-      (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
+      (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log")))
+  (testing "Effect persists if Stargate deleted"
+    (do-game
+     (new-game {:corp {:deck [(qty "Ice Wall" 2)]
+                       :hand ["Herald" "Troll" "Grim"]}
+                :runner {:deck ["Stargate"]}})
+     (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+     (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+     (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+     (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+     (play-from-hand state :corp "Grim" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Stargate")
+     (let [sg (get-program state 0)
+           grim (get-ice state :rd 0)]
+       (rez state :corp (refresh grim))
+       (card-ability state :runner (refresh sg) 0)
+       (is (:run @state) "Run initiated")
+       (run-continue state)
+       (card-subroutine state :corp (refresh grim) 0)
+       (click-card state :corp (refresh sg))
+       (is (nil? (get-program state 0)) "Stargate trashed")
+       (run-continue state)
+       (click-prompt state :runner "Troll")
+       (is (empty? (:prompt (get-runner))) "Prompt closed")
+       (is (not (:run @state)) "Run ended")
+       (is (-> (get-corp) :discard first :seen) "Troll is faceup")
+       (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+       (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D")))))
 
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter
