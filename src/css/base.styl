@@ -9,7 +9,7 @@ html, body, #main-content
     height: 100vh
 
 body
-    color: text-color
+    color: obsidian
     background-color: black
     font-family: "Titillium Web", "Helvetica Neue", sans-serif
     font-size: .75rem
@@ -84,8 +84,8 @@ input, select, textarea
     padding: 0 5px
     margin: 0
     height: 28px
-    background-color: rgba(255, 255, 255, 0.9)
-    border: 2px solid rgba(39, 56, 76, 0.8)
+    background-color: transparent-white
+    border: 2px solid transparent-light-green
     color: black
     transition(all 0.2s ease-in-out)
     outline: none
@@ -112,7 +112,7 @@ button, a.button
     background-color: transparent-orange
     border: 1px solid orange
     color: white
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9)
+    text-shadow: 0 1px 2px transparent-black
     cursor: pointer
     height: 1.75rem
     outline: none
@@ -209,16 +209,16 @@ button.off
 // Scrollbars
 
 ::-webkit-scrollbar-thumb
-    background-color: #354456cc
+    background-color: blue-grey
     border-radius: 3.5px
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px #ffffff5c
+    box-shadow: 0 0 3px 0 transparent-black, inset 0 0 0 1px white
 
 ::-webkit-scrollbar
     width: 14px;
 
 ::-webkit-scrollbar-thumb:hover
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgb(255 165 0)
-    background: #ffa50045
+    box-shadow: 0 0 3px 0 transparent-black, inset 0 0 0 1px orange
+    background: transparent-orange
 
 .active
     color: orange
@@ -249,8 +249,8 @@ button.off
 
 .warning
     position: relative
-    background: #34849F
-    border: 1px solid #9AC2CF
+    background: light-blue
+    border: 1px solid silver-blue
     margin-left: 12px
     width: 12px
     display: inline-block
@@ -268,13 +268,13 @@ button.off
 
 .warning:after
     border-color: rgba(52, 132, 159, 0)
-    border-right-color: #34849F
+    border-right-color: light-blue
     border-width: 8px
     margin-top: -8px
 
 .warning:before
     border-color: rgba(154, 194, 207, 0)
-    border-right-color: #9AC2CF
+    border-right-color: silver-blue
     border-width: 10px
     margin-top: -10px
 
@@ -380,7 +380,7 @@ span.small
 .panel
     border-radius: 4px
     padding: 5px 10px
-    border: 1px solid rgba(39, 56, 76, 0.9)
+    border: 1px solid transparent-blue
     margin: 5px
 
 .panel-top
@@ -398,14 +398,14 @@ span.small
 
 .blue-shade
     background-color: transparent-blue
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+    box-shadow: 0 0 12px transparent-black, inset 0 0 0 1px most-transparent-black
 
 .green-shade
   background-color: transparent-light-green
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+  box-shadow: 0 0 12px transparent-black, inset 0 0 0 1px most-transparent-black
 
 .active-player
-    border: 1px solid #ffa500
+    border: 1px solid orange
 
 // Layout
 
@@ -426,7 +426,7 @@ span.small
     bottom: 1px
     left: 1px
     span
-        color: gainsboro
+        color: light-grey
         font-size: .75rem
 
 

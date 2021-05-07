@@ -33,7 +33,7 @@
         font-size: .75rem
 
     .darkbg
-        background: rgba(0, 0, 0, 0.6)
+        background: transparent-black
         text-shadow 1px 1px 2px black
         border-radius: 4px
 
@@ -267,7 +267,7 @@
 
         &:hover
             > :not(.controls)
-                color: #00aeff
+                color: core-blue
 
             .controls
                 display: block
@@ -384,15 +384,15 @@
             z-index:1
             font-family:Arial,sans-serif
             font-size:2.5rem
-            color:#c00
-            background: rgb(255, 255, 255, 0.5)
-            border:solid 4px #c00
+            color: red
+            background: transparent-black
+            border:solid 4px red
             padding: 12px
             border-radius:5px
             zoom:1
             opacity:0.9
-            text-shadow: 0 0 2px #c00
-            box-shadow: 0 0 2px #c00
+            text-shadow: 0 0 2px red
+            box-shadow: 0 0 2px red
 
         .keep-me:after, .keep-op:after
             content: "KEEP"
@@ -733,8 +733,8 @@
                             background-color: run-arrow
                             transform(translateX(-50%))
                             border-radius: 0 0 4px 4px
-                            -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
-                            filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                            -webkit-filter: drop-shadow(0px 0px 10px transparent-black);
+                            filter: drop-shadow(0px 0px 10px transparent-black);
 
                             &:before
                                 content: ""
@@ -749,8 +749,8 @@
                                 left: 50%
                                 transform(translateX(-50%))
                                 border-bottom: 22px solid run-arrow
-                                -webkit-filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
-                                filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.7));
+                                -webkit-filter: drop-shadow(0px 0px 10px transparent-black);
+                                filter: drop-shadow(0px 0px 10px transparent-black);
 
                         > div.approach
                             background-color: approach
@@ -972,5 +972,5 @@
                     max-height: 300px
 
                     li.command-match.highlight span
-                        color: #ffa500
+                        color: orange
                         cursor: pointer
