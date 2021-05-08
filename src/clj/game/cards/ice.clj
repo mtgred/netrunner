@@ -2128,8 +2128,7 @@
                  (trace-ability 2 {:label  "Remove a virus in the Heap from the game"
                                    :async  true
                                    :effect (effect (continue-ability
-                                                     {:async   true
-                                                      :req     (req (not (zone-locked? state :runner :discard)))
+                                                     {:req     (req (not (zone-locked? state :runner :discard)))
                                                       :prompt "Choose a virus in the Heap to remove from the game"
                                                       :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                                       :msg     (msg "remove " (:title target) " from the game")
