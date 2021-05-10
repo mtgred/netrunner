@@ -1,4 +1,5 @@
-@require "transparency"
+@require "opacity"
+@require "palette"
 .bottompane
     width: 100%
     height: 117px
@@ -34,9 +35,9 @@
                     text-align: center
                     font-size: 1.25rem
                     position: relative
-                    background-color: dark-blue-grey
+                    background-color: blue-dark
                     border-radius: 50%
-                    border: 1px solid white
+                    border: 1px solid white-solid
                     margin: auto
                     padding-top: 5px
                     z-index: 2
@@ -45,8 +46,8 @@
                     top:10px
 
                     &:hover
-                        border-color: orange
-                        box-shadow(0 0 6px blue)
+                        border-color: gold-base
+                        box-shadow(0 0 6px blue-light)
 
                 .annotated-before:before, .annotated-after:after
                     text-align: center;
@@ -57,8 +58,8 @@
                     width: 15px
                     height: 15px
                     border-radius: 50%
-                    border: 1px solid white
-                    box-shadow(0 0 3px white)
+                    border: 1px solid white-solid
+                    box-shadow(0 0 3px white-solid)
 
                 .annotated-before:before
                     left: -6px
@@ -73,8 +74,8 @@
 
                 .start-of-turn-corp:before
                     content: attr(data-turn);
-                    color: white
-                    background-color: transparent-blue
+                    color: white-solid
+                    background-color: alpha(blue-dark, o-80)
 
                 .active-step-label
                     font-size: 2rem
@@ -82,9 +83,9 @@
                     height: 45px
                     padding-top: 11px
                     top:5px
-                    border-color: orange
-                    color: orange
-                    box-shadow(0 0 6px orange)
+                    border-color: gold-base
+                    color: gold-base
+                    box-shadow(0 0 6px gold-base)
 
                 .draw .symbol, .draw .symbol:after
                     box-sizing: content-box;
@@ -95,8 +96,8 @@
 
                     height: .35*3.5ex
                     width: .35*2.5ex
-                    border: 1px solid white
-                    background: transparent-blue
+                    border: 1px solid white-solid
+                    background: alpha(blue-dark, o-80)
                     color: transparent
 
                 .draw .symbol
@@ -113,7 +114,7 @@
                     padding-top: 10px
 
                 .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
-                    border-color: orange
+                    border-color: gold-base
 
             .step:after
                 content: ''
@@ -126,10 +127,10 @@
                 height: 5px
 
             .step.corp:after
-                background-color: blue
+                background-color: blue-core
 
             .step.runner:after
-                background-color: red
+                background-color: red-core
 
             .active-step:after
                 top:-21px
@@ -151,18 +152,18 @@
               height: 30px
               width: 30px
               background-color: transparent
-              border-color: white
+              border-color: white-solid
 
               &:hover
-                background-color: transparent-orange
-                border-color: orange
+                background-color: alpha(gold-base, o-40)
+                border-color: gold-core
 
             button.on
-                background-color: transparent-gold
-                border: 1px solid gold
+                background-color: alpha(gold-mid, o-90)
+                border: 1px solid yellow-core
 
             button.off
-                background-color: transparent-orange
+                background-color: alpha(gold-base, o-40)
 
         .sharing
             position: absolute
@@ -209,8 +210,8 @@
 
         textarea
             background: transparent
-            color: white
-            box-shadow: 0 0 12px alpha(black, transparent-60), inset 0 0 0 1px alpha(black, transparent-10)
+            color: white-solid
+            box-shadow: 0 0 12px alpha(black-solid, o-60), inset 0 0 0 1px alpha(black-solid, o-10)
             width: 100%
             height: 100%
 
@@ -219,7 +220,7 @@
             top: 50%
             left: 0
             width: 100%
-            color: alpha(black, transparent-10)
+            color: alpha(black-solid, o-10)
 
         .click:after
             text-align: center
@@ -247,11 +248,11 @@
                 margin:5px
 
             .notes-icon:hover:after
-                border-color: orange!important
+                border-color: gold-base!important
 
             .notes-icon.selected:after
-                border-color: orange!important
-                box-shadow(0 0 6px orange)
+                border-color: gold-base!important
+                box-shadow(0 0 6px gold-base)
 
             .notes-separator
                 width: 10px
@@ -265,72 +266,72 @@
     font-size: .625rem
     line-height: .75rem
     border-radius: 50%
-    border: 1px solid white
-    color: white
-    box-shadow(0 0 3px white)
+    border: 1px solid white-solid
+    color: white-solid
+    box-shadow(0 0 3px white-solid)
 
 .notes-icon.none:after
     content: ''
-    color: black
-    background-color: transparent-blue
-    box-shadow(0 0 6px transparent-blue)
+    color: black-solid
+    background-color: alpha(blue-dark, o-80)
+    box-shadow(0 0 6px alpha(blue-dark, o-80))
 
 .notes-icon.blunder:after
     content: '??'
-    color: black
-    background-color: blunder
-    box-shadow(0 0 6px blunder)
+    color: black-solid
+    background-color: red-core
+    box-shadow(0 0 6px red-core)
 
 .notes-icon.mistake:after
     content: '?'
-    color: black
-    background-color: mistake
-    box-shadow(0 0 6px mistake)
+    color: black-solid
+    background-color: gold-mid
+    box-shadow(0 0 6px gold-mid)
 
 .notes-icon.inaccuracy:after
     content: '?!'
-    color: black
-    background-color: inaccuracy
-    box-shadow(0 0 6px inaccuracy)
+    color: black-solid
+    background-color: gold-light
+    box-shadow(0 0 6px gold-light)
 
 .notes-icon.good:after
     content: '!'
-    color: black
-    background-color: good
-    box-shadow(0 0 6px good)
+    color: black-solid
+    background-color: olive-green
+    box-shadow(0 0 6px olive-green)
 
 .notes-icon.brilliant:after
     content: '!!'
-    color: black
-    background-color: brilliant
-    box-shadow(0 0 6px brilliant)
+    color: black-solid
+    background-color: blue-core
+    box-shadow(0 0 6px blue-core)
 
 .notes-icon.a:after
     content: '⯀'
-    color: white
+    color: white-solid
     border-radius: 25%!important
     line-height: .75rem!important
-    background-color: note-a
-    box-shadow(0 0 6px note-a)
+    background-color: red-light
+    box-shadow(0 0 6px red-light)
 
 .notes-icon.b:after
     content: '⬥'
-    color: white
+    color: white-solid
     border-radius: 25%!important
     line-height: .75rem!important
-    background-color: note-b
-    box-shadow(0 0 6px note-b)
+    background-color: blue-light
+    box-shadow(0 0 6px blue-light)
 
 .notes-icon.c:after
     content: '☀'
-    color: black
+    color: black-solid
     border-radius: 25%!important
-    background-color: note-c
-    box-shadow(0 0 6px note-c)
+    background-color: green-bright
+    box-shadow(0 0 6px green-bright)
 
 .notes-icon.d:after
     content: '★'
-    color: white
+    color: white-solid
     border-radius: 25%!important
-    background-color: note-d
-    box-shadow(0 0 6px note-d)
+    background-color: purple-dark
+    box-shadow(0 0 6px purple-dark)

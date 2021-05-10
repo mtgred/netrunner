@@ -1,3 +1,6 @@
+@require "opacity"
+@require "palette"
+
 // Win Message Box
 .win.centered
     position: fixed
@@ -8,7 +11,7 @@
     margin-top: -50px
     margin-left: -100px
     padding: 15px
-    border: 1px solid orange
+    border: 1px solid gold-base
     z-index: 30
     border-radius: 4px
 
@@ -25,16 +28,16 @@
     border-radius: 1px
 
     &:hover
-        background-color: transparent-orange
-        border-color: orange
+        background-color: alpha(gold-base, o-40)
+        border-color: gold-base
 
 .win.table
-    border: 1px solid orange
+    border: 1px solid gold-base
     width: 100%
     text-align: left
 
 .win.th
-    border-bottom: 1px solid orange
+    border-bottom: 1px solid gold-base
 
 .page-container
     width: 1000px

@@ -50,3 +50,5 @@ data/storage.bson
 tags
 tags.temp
 tags.temp.tmp
+
+.lsp/
