@@ -1,3 +1,4 @@
+@require "transparency"
 // Modal
 .modal-open
     overflow: hidden
@@ -21,7 +22,7 @@
     left: 50%
     background-clip: padding-box
     border: 1px solid orange
-    background-color: transparent-black
+    background-color: alpha(black, transparent-60)
     border-radius: 10px
     outline: none
     padding: 15px 20px

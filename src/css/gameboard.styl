@@ -1,3 +1,4 @@
+@require "transparency"
 // Gameboard
 
 .gameview
@@ -33,7 +34,7 @@
         font-size: .75rem
 
     .darkbg
-        background: transparent-black
+        background: alpha(black, transparent-60)
         text-shadow 1px 1px 2px black
         border-radius: 4px
 
@@ -192,7 +193,7 @@
         background-color: sienna
 
     .additional-subtypes
-        background-color: dark-grey
+        background-color: mid-gray
 
     .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
         left: 0
@@ -385,7 +386,7 @@
             font-family:Arial,sans-serif
             font-size:2.5rem
             color: red
-            background: transparent-black
+            background: alpha(black, transparent-60)
             border:solid 4px red
             padding: 12px
             border-radius:5px
@@ -733,8 +734,8 @@
                             background-color: run-arrow
                             transform(translateX(-50%))
                             border-radius: 0 0 4px 4px
-                            -webkit-filter: drop-shadow(0px 0px 10px transparent-black);
-                            filter: drop-shadow(0px 0px 10px transparent-black);
+                            -webkit-filter: drop-shadow(0px 0px 10px alpha(black, transparent-60));
+                            filter: drop-shadow(0px 0px 10px alpha(black, transparent-60));
 
                             &:before
                                 content: ""
@@ -749,8 +750,8 @@
                                 left: 50%
                                 transform(translateX(-50%))
                                 border-bottom: 22px solid run-arrow
-                                -webkit-filter: drop-shadow(0px 0px 10px transparent-black);
-                                filter: drop-shadow(0px 0px 10px transparent-black);
+                                -webkit-filter: drop-shadow(0px 0px 10px alpha(black, transparent-60));
+                                filter: drop-shadow(0px 0px 10px alpha(black, transparent-60));
 
                         > div.approach
                             background-color: approach

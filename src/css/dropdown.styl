@@ -1,5 +1,5 @@
+@require "transparency"
 // Dropdown
-
 .dropdown
     position: relative
 
@@ -17,10 +17,10 @@
     padding: 4px 6px
     list-style: none
     background-clip: padding-box
-    border: 1px solid light-grey
-    border: 1px solid transparentest-black
+    border: 1px solid light-gray
+    border: 1px solid alpha(black, transparent-10)
     border-radius: 4px
-    box-shadow(0 6px 12px transparentest-black)
+    box-shadow(0 6px 12px alpha(black, transparent-10))
 
     .block-link
         padding: 2px 8px

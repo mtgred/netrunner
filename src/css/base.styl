@@ -1,3 +1,4 @@
+@require "transparency"
 *
     -moz-box-sizing: border-box
     -webkit-box-sizing: border-box
@@ -9,7 +10,7 @@ html, body, #main-content
     height: 100vh
 
 body
-    color: obsidian
+    color: dark-gray
     background-color: black
     font-family: "Titillium Web", "Helvetica Neue", sans-serif
     font-size: .75rem
@@ -84,7 +85,7 @@ input, select, textarea
     padding: 0 5px
     margin: 0
     height: 28px
-    background-color: transparent-white
+    background-color: alpha(white, transparent-90)
     border: 2px solid transparent-light-green
     color: black
     transition(all 0.2s ease-in-out)
@@ -112,7 +113,7 @@ button, a.button
     background-color: transparent-orange
     border: 1px solid orange
     color: white
-    text-shadow: 0 1px 2px transparent-black
+    text-shadow: 0 1px 2px alpha(black, transparent-60)
     cursor: pointer
     height: 1.75rem
     outline: none
@@ -211,13 +212,13 @@ button.off
 ::-webkit-scrollbar-thumb
     background-color: blue-grey
     border-radius: 3.5px
-    box-shadow: 0 0 3px 0 transparent-black, inset 0 0 0 1px white
+    box-shadow: 0 0 3px 0 alpha(black, transparent-60), inset 0 0 0 1px white
 
 ::-webkit-scrollbar
     width: 14px;
 
 ::-webkit-scrollbar-thumb:hover
-    box-shadow: 0 0 3px 0 transparent-black, inset 0 0 0 1px orange
+    box-shadow: 0 0 3px 0 alpha(black, transparent-60), inset 0 0 0 1px orange
     background: transparent-orange
 
 .active
@@ -328,7 +329,7 @@ span.small
 
 .rotated
     color: white
-    background-color: grey
+    background-color: gray
     border-color: orangered
     opacity: 0.5
     box-shadow(none)
@@ -398,11 +399,11 @@ span.small
 
 .blue-shade
     background-color: transparent-blue
-    box-shadow: 0 0 12px transparent-black, inset 0 0 0 1px most-transparent-black
+    box-shadow: 0 0 12px alpha(black, transparent-60), inset 0 0 0 1px most-alpha(black, transparent-60)
 
 .green-shade
   background-color: transparent-light-green
-  box-shadow: 0 0 12px transparent-black, inset 0 0 0 1px most-transparent-black
+  box-shadow: 0 0 12px alpha(black, transparent-60), inset 0 0 0 1px most-alpha(black, transparent-60)
 
 .active-player
     border: 1px solid orange
@@ -426,7 +427,7 @@ span.small
     bottom: 1px
     left: 1px
     span
-        color: light-grey
+        color: light-gray
         font-size: .75rem
 
 

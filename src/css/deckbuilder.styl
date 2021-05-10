@@ -1,3 +1,4 @@
+@require "transparency"
 // Deckbuilder
 
 .deck-collection
@@ -160,7 +161,7 @@
                     padding: 2px
                     margin: 2px 0 0 0
                     width: 308px
-                    background-color: transparent-white
+                    background-color: alpha(white, transparent-10)
                     color: black
                     border-radius: 4px
                     border: 1px solid transparent-blue
@@ -213,7 +214,7 @@
         padding: 6px 12px
         color: white
         transition(all 0.2s ease-in-out) 
-        box-shadow(0 6px 12px transparentest-black)
+        box-shadow(0 6px 12px alpha(black, transparent-20))
 
         > div
             margin: 2px 0
