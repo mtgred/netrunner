@@ -41,6 +41,12 @@
              :status status
              :hash deck-hash)))
 
+(defn- deck-locked?
+  [db deck-id]
+  (let [deck (mc/find-one-as-map db "decks" {:_id (object-id deck-id)})]
+    (or (:locked deck)
+        false)))
+
 (defn make-salt
   [deck-name]
   (let [salt (byte-array (map byte (slugify deck-name)))]
@@ -81,12 +87,14 @@
           deck-hash (hash-deck updated-deck)
           deck (prepare-deck-for-db deck username status deck-hash)]
       (if-let [deck-id (:_id deck)]
-        (if (:identity deck)
-          (do (mc/update db "decks"
-                         {:_id (object-id deck-id) :username username}
-                         {"$set" (dissoc deck :_id)})
-              (response 200 {:message "OK" :_id (object-id deck-id)}))
-          (response 409 {:message "Deck is missing identity"}))
+        (if-not (deck-locked? db deck-id)
+          (if (:identity deck)
+            (do (mc/update db "decks"
+                           {:_id (object-id deck-id) :username username}
+                           {"$set" (dissoc deck :_id)})
+                (response 200 {:message "OK" :_id (object-id deck-id)}))
+            (response 409 {:message "Deck is missing identity"}))
+          (response 403 {:message "Deck is locked"}))
         (response 409 {:message "Deck is missing _id"})))
     (response 401 {:message "Unauthorized"})))
 
@@ -96,9 +104,11 @@
     {id :id}             :params}]
   (try
     (if (and username id)
-      (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
-        (response 200 {:message "Deleted"})
-        (response 403 {:message "Forbidden"}))
+      (if-not (deck-locked? db id)
+        (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
+          (response 200 {:message "Deleted"})
+          (response 403 {:message "Forbidden"}))
+        (response 403 {:message "Locked"}))
       (response 401 {:message "Unauthorized"}))
     (catch Exception ex
       ;; Deleting a deck that was never saved throws an exception

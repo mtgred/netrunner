@@ -69,8 +69,9 @@
                                            :wins 0
                                            :losses 0
                                            :run-started (java.util.Date.)})}})
-            ;XXX: Lock deck
-            ))))))
+            (mc/update db "decks"
+                       {:_id (object-id deck-id) :username username}
+                       {"$set" {:locked true}})))))))
 
 (defmethod ws/-msg-handler :angelarena/abandon-run
   [{{db :system/db
@@ -88,8 +89,9 @@
                      {:username username}
                      {"$set" {:angelarena-runs
                               (assoc-in runs [form side] nil)}})
-          ;XXX: Unlock deck
-          )))))
+          (mc/update db "decks"
+                     {:_id (object-id deck-id) :username username}
+                     {"$set" {:locked false}}))))))
 
 (defn- remove-from-queue [username]
   (swap! arena-queue (partial remove #(= username (get-in % [:user :username])))))
