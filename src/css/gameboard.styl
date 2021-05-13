@@ -46,6 +46,9 @@
         top: 100%
         transform: translate(0, -100%)
 
+    .card-frame, .deck, .identity, .discard
+        pointer-events: auto
+
     .card-frame
         position: relative
 
@@ -656,6 +659,7 @@
         .outer-corp-board,.runner-board
             overflow: visible
             position: absolute
+            pointer-events: none
 
             &.me
                 bottom: 0
