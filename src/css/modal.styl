@@ -1,3 +1,5 @@
+@require "opacity"
+@require "palette"
 // Modal
 .modal-open
     overflow: hidden
@@ -20,12 +22,12 @@
     top: 50%
     left: 50%
     background-clip: padding-box
-    border: 1px solid orange
-    background-color: rgba(0, 0, 0, 0.6)
+    border: 1px solid gold-base
+    background-color: alpha(black-solid, o-60)
     border-radius: 10px
     outline: none
     padding: 15px 20px
-    color: white
+    color: white-solid
     transform(translate(-50%, -50%))
     transition(all 0.2s ease-in-out)
 
@@ -36,7 +38,7 @@
     bottom: 0
     left: 0
     z-index: 10000
-    background-color: black
+    background-color: black-solid
     transition(all 0.2s ease-in-out)
 
 .modal-backdrop.fade

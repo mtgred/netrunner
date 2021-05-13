@@ -1,5 +1,6 @@
+@require "opacity"
+@require "palette"
 // Deckbuilder
-
 .deck-collection
     overflow: auto
     -webkit-overflow-scrolling: touch
@@ -9,13 +10,13 @@
         height: 65px
         padding: 5px 8px
         margin: 0 0 5px
-        border: 1px solid white
+        border: 1px solid white-solid
         border-radius: 4px
         cursor: pointer
         clear: both
 
         &:hover
-            border-color: orange
+            border-color: gold-base
 
         p
             margin-top: 0
@@ -53,7 +54,7 @@
 
         .decks, .decklist, .deckedit
             flex(1)
-            border-right: 1px solid white
+            border-right: 1px solid white-solid
             padding: 0
 
             > div
@@ -160,10 +161,10 @@
                     padding: 2px
                     margin: 2px 0 0 0
                     width: 308px
-                    background-color: rgba(255, 255, 255, 0.9)
-                    color: black
+                    background-color: alpha(white-solid, o-10)
+                    color: black-solid
                     border-radius: 4px
-                    border: 1px solid transparent-blue
+                    border: 1px solid alpha(blue-dark, o-80)
 
                     > div
                         padding: 2px 5px
@@ -172,12 +173,12 @@
                         cursor: pointer
 
                         &:hover
-                            background-color: transparent-orange
-                            border-color: orange
+                            background-color: alpha(gold-base, o-40)
+                            border-color: gold-base
 
                     .selected
-                        background-color: transparent-orange
-                        border-color: orange
+                        background-color: alpha(gold-base, o-40)
+                        border-color: gold-base
 
             .qty
                 width: 30px
@@ -207,13 +208,13 @@
         z-index: 30
         width: 185px
         background-clip: padding-box
-        border: 1px solid white
+        border: 1px solid white-solid
         border-radius: 4px
         outline: none
         padding: 6px 12px
-        color: white
-        transition(all 0.2s ease-in-out)
-        box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+        color: white-solid
+        transition(all 0.2s ease-in-out) 
+        box-shadow(0 6px 12px alpha(black-solid, o-20))
 
         > div
             margin: 2px 0

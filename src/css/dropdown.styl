@@ -1,5 +1,6 @@
+@require "opacity"
+@require "palette"
 // Dropdown
-
 .dropdown
     position: relative
 
@@ -17,10 +18,10 @@
     padding: 4px 6px
     list-style: none
     background-clip: padding-box
-    border: 1px solid #ccc
-    border: 1px solid rgba(0, 0, 0, .15)
+    border: 1px solid gray-light
+    border: 1px solid alpha(black-solid, o-10)
     border-radius: 4px
-    box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+    box-shadow(0 6px 12px alpha(black-solid, o-10))
 
     .block-link
         padding: 2px 8px

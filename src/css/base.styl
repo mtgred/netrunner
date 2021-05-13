@@ -1,3 +1,5 @@
+@require "opacity"
+@require "palette"
 *
     -moz-box-sizing: border-box
     -webkit-box-sizing: border-box
@@ -9,8 +11,8 @@ html, body, #main-content
     height: 100vh
 
 body
-    color: text-color
-    background-color: black
+    color: gray-dark
+    background-color: black-solid
     font-family: "Titillium Web", "Helvetica Neue", sans-serif
     font-size: .75rem
     line-height: 1.125rem
@@ -36,12 +38,12 @@ h4
 
 a
     text-decoration: none
-    color: orange
+    color: gold-base
     transition(all 0.2s ease-in-out)
     cursor: pointer
 
     &:hover
-        color: blue
+        color: blue-core
         text-decoration: none
 
 table
@@ -84,15 +86,15 @@ input, select, textarea
     padding: 0 5px
     margin: 0
     height: 28px
-    background-color: rgba(255, 255, 255, 0.9)
-    border: 2px solid rgba(39, 56, 76, 0.8)
-    color: black
+    background-color: alpha(white-solid, o-90)
+    border: 2px solid alpha(green-dark, o-80)
+    color: black-solid
     transition(all 0.2s ease-in-out)
     outline: none
 
     &:focus
-        box-shadow(0 0 6px blue)
-        border-color: blue !important
+        box-shadow(0 0 6px blue-light)
+        border-color: blue-light !important
 
 input[type="radio"], input[type="checkbox"]
     height: auto
@@ -109,10 +111,10 @@ button, a.button
     font-size: .75rem
     padding: 4px 12px
     margin: 0 8px 0 0
-    background-color: transparent-orange
-    border: 1px solid orange
-    color: white
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9)
+    background-color: alpha(gold-base, o-40)
+    border: 1px solid gold-base
+    color: white-solid
+    text-shadow: 0 1px 2px alpha(black-solid, o-60)
     cursor: pointer
     height: 1.75rem
     outline: none
@@ -120,8 +122,8 @@ button, a.button
     cursor: pointer
 
     &:focus, &:hover
-        box-shadow(0 0 6px blue)
-        border-color: blue
+        box-shadow(0 0 6px blue-light)
+        border-color: blue-light
 
 button.small
     padding: 0
@@ -130,22 +132,22 @@ button.small
     height: 20px
     width: 20px
     background-color: transparent
-    border-color: white
+    border-color: white-solid
 
     &:hover
-        background-color: transparent-orange
-        border-color: orange
+        background-color: alpha(gold-base, o-40)
+        border-color: gold-base
 
 button.on
-    background-color: transparent-gold
-    border: 1px solid gold
+    background-color: alpha(gold-mid, o-90)
+    border: 1px solid yellow-core
 
 button.off
-    background-color: transparent-orange
+    background-color: alpha(gold-base, o-40)
 
 .infobox
-    border: 1px solid orange
-    background-color: transparent-orange !important
+    border: 1px solid gold-base
+    background-color: alpha(gold-base, o-40) !important
     padding:4px 8px
     margin:15px
     border-radius: 4px
@@ -159,8 +161,8 @@ button.off
     margin: 5px
     content: "!";
     border-radius: 50%;
-    border: 1px solid lighten(orange, 25);
-    color: lighten(orange, 25);
+    border: 1px solid lighten(gold-base, 25);
+    color: lighten(gold-base, 25);
     width: 20px;
     height: 20px;
     line-height: 21px;
@@ -175,10 +177,10 @@ button.off
 
 .card.dragged
     opacity: 1
-    box-shadow(0 0 1px 2px blue)
+    box-shadow(0 0 1px 2px blue-light)
 
 .dragover
-    border-color: orange !important
+    border-color: gold-base !important
 
 .name-area
     flex(1)
@@ -209,38 +211,38 @@ button.off
 // Scrollbars
 
 ::-webkit-scrollbar-thumb
-    background-color: #354456cc
+    background-color: alpha(blue-dark, o-80)
     border-radius: 3.5px
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px #ffffff5c
+    box-shadow: 0 0 3px 0 alpha(black-solid, o-60), inset 0 0 0 1px white-solid
 
 ::-webkit-scrollbar
     width: 14px;
 
 ::-webkit-scrollbar-thumb:hover
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgb(255 165 0)
-    background: #ffa50045
+    box-shadow: 0 0 3px 0 alpha(black-solid, o-60), inset 0 0 0 1px gold-base
+    background: alpha(gold-base, o-40)
 
 .active
-    color: orange
+    color: gold-base
     transition(all 0.2s ease-in-out)
 
 .standard, .eternal, .system-gateway, .startup, .snapshot, .snapshot-plus, .classic, .legal
-    color: lawngreen
-    border-color: lawngreen
+    color: green-bright
+    border-color: green-bright
 
 .casual
-    color: yellow
-    border-color: yellow
+    color: yellow-core
+    border-color: yellow-core
 
 .invalid
-    color: orangered
-    border-color: orangered
+    color: orange-dark
+    border-color: orange-dark
 
 .smallwarning
     position: relative
-    background: transparent-orange
-    border: 1px solid orange
-    color: white
+    background: alpha(gold-base, o-40)
+    border: 1px solid gold-base
+    color: white-solid
     margin-left: 2px
     margin-right: 2px
     width: 12px
@@ -249,8 +251,8 @@ button.off
 
 .warning
     position: relative
-    background: #34849F
-    border: 1px solid #9AC2CF
+    background: blue-mid
+    border: 1px solid gray-light
     margin-left: 12px
     width: 12px
     display: inline-block
@@ -267,26 +269,26 @@ button.off
     pointer-events: none
 
 .warning:after
-    border-color: rgba(52, 132, 159, 0)
-    border-right-color: #34849F
+    border-color: blue-mid
+    border-right-color: blue-mid
     border-width: 8px
     margin-top: -8px
 
 .warning:before
-    border-color: rgba(154, 194, 207, 0)
-    border-right-color: #9AC2CF
+    border-color: gray-light
+    border-right-color: gray-light
     border-width: 10px
     margin-top: -10px
 
 .fake-link
-    color: orange
+    color: gold-base
     cursor: pointer
 
 button .fake-link
-    color: white
+    color: white-solid
 
 .darken
-    background-color: black
+    background-color: black-solid
     opacity: 0.85
 
 .float-left
@@ -324,22 +326,22 @@ span.small
 
     &:hover, &:focus
         box-shadow(none)
-        border-color: orange
+        border-color: gold-base
 
 .rotated
-    color: white
-    background-color: grey
-    border-color: orangered
+    color: white-solid
+    background-color: gray
+    border-color: orange-dark
     opacity: 0.5
     box-shadow(none)
     cursor: auto
 
     &:hover, &:focus
         box-shadow(none)
-        border-color: orange
+        border-color: gold-base
 
 .label
-    border: 1px solid white
+    border: 1px solid white-solid
     border-radius: 4px
     padding: 2px 5px
     font-size: .75rem
@@ -380,7 +382,7 @@ span.small
 .panel
     border-radius: 4px
     padding: 5px 10px
-    border: 1px solid rgba(39, 56, 76, 0.9)
+    border: 1px solid alpha(blue-dark, o-80)
     margin: 5px
 
 .panel-top
@@ -397,15 +399,15 @@ span.small
     margin: 0 auto
 
 .blue-shade
-    background-color: transparent-blue
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+    background-color: alpha(blue-dark, o-80)
+    box-shadow: 0 0 12px alpha(black-solid, o-60), inset 0 0 0 1px most-alpha(black-solid, o-60)
 
 .green-shade
-  background-color: transparent-light-green
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+  background-color: alpha(green-dark, o-80)
+  box-shadow: 0 0 12px alpha(black-solid, o-60), inset 0 0 0 1px most-alpha(black-solid, o-60)
 
 .active-player
-    border: 1px solid #ffa500
+    border: 1px solid gold-base
 
 // Layout
 
@@ -418,7 +420,7 @@ span.small
         .item
             padding-top: 31px
             height: 100vh
-            color: white
+            color: white-solid
 
 // Version string on main page
 #version
@@ -426,13 +428,13 @@ span.small
     bottom: 1px
     left: 1px
     span
-        color: gainsboro
+        color: gray-light
         font-size: .75rem
 
 
 @keyframes highlight
     from
-        background: darkolivegreen
+        background: yellow-dark
     to
         background: none
 

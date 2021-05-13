@@ -1,3 +1,5 @@
+@require "opacity"
+@require "palette"
 nav ul
     list-style-type: none
 
@@ -7,8 +9,8 @@ nav ul
     top: 0
     left: 0
     right: 0
-    color: grey
-    border-bottom: 1px solid rgba(39, 56, 76, 0.9)
+    color: gray-core
+    border-bottom: 1px solid alpha(blue-dark, o-80)
     height: 32px
 
     #left-menu, #right-menu
@@ -29,44 +31,44 @@ nav ul
         line-height: 29px
 
         a
-            color: white
+            color: white-solid
 
             &:hover
-                color: orange
+                color: gold-base
 
     li.active a
-        color: orange
+        color: gold-base
 
     li.active#admin-nav a
         margin-left: 30px
-        color: orange
+        color: gold-base
 
     #admin-nav
         margin-left: 30px
 
         a
             margin-left: 30px
-            color: #ebec74
+            color: yellow-light
 
             &:hover
-                color: orange
+                color: gold-base
 
     li.active#features-nav a,
     li.active#users-nav a
-        color: orange
+        color: gold-base
 
     #features-nav a,
     #users-nav a
-        color: #ebec74
+        color: yellow-light
 
         &:hover
-            color: orange
+            color: gold-base
 
     .dropdown-menu a
         line-height: 20px
 
         &:hover
-            color: white
+            color: white-solid
 
 #left-menu
     float: left
@@ -77,7 +79,7 @@ nav ul
 #status
     .float-right
         padding-right: 12px
-        border-right: 1px solid white
+        border-right: 1px solid white-solid
 
     .spectators
         display: none

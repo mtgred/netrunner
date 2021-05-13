@@ -1,3 +1,5 @@
+@require "opacity"
+@require "palette"
 // Card Browser
 .cardbrowser
     display-flex()
@@ -15,7 +17,7 @@
 
     .selected-alt
         font-style: italic
-        color: orange
+        color: gold-base
 
     .alt-art-selector
         margin-top: 10px
@@ -63,13 +65,13 @@
 
     .search-icon
         position: absolute
-        color: dark-grey
+        color: gray-mid
         top: 0
         left: 5px
 
     .search-clear
         position: absolute
-        color: grey
+        color: gray-core
         top: 0
         right: 2px
         width: 26px
@@ -78,7 +80,7 @@
         transition(all 0.2s ease-in-out)
 
         &:hover
-            color: dark-grey
+            color: gray-mid
 
 .set-list > div
     cursor: pointer
@@ -88,8 +90,8 @@
     border-radius: 4px
 
     &:hover
-        background-color: transparent-orange
-        border: 1px solid orange
+        background-color: alpha(gold-base, o-40)
+        border: 1px solid gold-base
 
 .card-list
     overflow: auto
@@ -123,11 +125,11 @@
     padding: 10px
 
     &.selected
-        box-shadow(0 0 1px 2px limegreen)
+        box-shadow(0 0 1px 2px green-bright)
         z-index: 10
 
     &.selected-alt
-        box-shadow(0 0 1px 2px orange)
+        box-shadow(0 0 1px 2px gold-base)
 
     > h4
         margin-bottom: 5px
