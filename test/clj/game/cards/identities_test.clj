@@ -3387,7 +3387,7 @@
       (play-from-hand state :corp "Merger" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
-      (click-prompt state :corp "Gain 2 credits")
+      (click-prompt state :corp "Gain 2 [Credits]")
       (is (= 7 (:credit (get-corp))) "Corp gains 2 credits")))
   (testing "Gain 2 credits on steal"
     (do-game
@@ -3398,7 +3398,7 @@
       (run-empty-server state "Server 1")
       (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :runner "Steal")
-      (click-prompt state :corp "Gain 2 credits")
+      (click-prompt state :corp "Gain 2 [Credits]")
       (is (= 9 (:credit (get-corp))) "Corp gains 2 credits")))
   (testing "Draw 2 cards on score"
     (do-game

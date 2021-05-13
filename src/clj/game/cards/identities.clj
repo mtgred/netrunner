@@ -1385,15 +1385,15 @@
              :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
-  (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
+  (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
             :player :corp
-            :choices ["Gain 2 credits" "Draw 2 cards"]
-            :msg (msg (if (= target "Gain 2 credits")
-                        "gain 2 credits"
+            :choices ["Gain 2 [Credits]" "Draw 2 cards"]
+            :msg (msg (if (= target "Gain 2 [Credits]")
+                        "gain 2 [Credits]"
                         "draw 2 cards"))
             :async true
             :interactive (req true)
-            :effect (req (if (= target "Gain 2 credits")
+            :effect (req (if (= target "Gain 2 [Credits]")
                            (gain-credits state :corp eid 2)
                            (draw state :corp eid 2 nil)))}]
     {:events [(assoc ab :event :agenda-scored)
