@@ -1,6 +1,7 @@
 (ns nr.angelarena
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [clojure.string :refer [capitalize]]
+  (:require [clojure.string :refer [capitalize lower-case]]
+            [jinteki.cards :refer [all-cards]]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
@@ -48,17 +49,28 @@
       (pos? minutes) (str minutes " minutes, " seconds " seconds")
       :else (str seconds " seconds"))))
 
+(defn- get-wins
+  [games side]
+  (count (filter #(= (name side) (:winner %)) games)))
+
+(defn- get-losses
+  [games side]
+  (- (count (remove #(nil? (:winner %)) games))
+     (get-wins games side)))
+
 (defn- deck-view [side s deck]
   (let [run-info (get-in @runs [@chosen-format side])
+        wins (get-wins (:games run-info) side)
+        losses (get-losses (:games run-info) side)
         time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
-        allowed-days (+ 3 (:wins run-info) (:losses run-info))]
+        allowed-days (+ 3 wins losses)]
     [:div.deck
      [:img {:src (image-url (:identity deck))
             :alt (get-in deck [:identity :title] "")}]
      [:h4 (deck-name deck)]
-     [:div.result.float-right (str (:wins run-info) " wins")]
+     [:div.result.float-right (str wins " wins")]
      [:div (get-in deck [:identity :title])]
-     [:div.result.float-right (str (:losses run-info) " losses")]
+     [:div.result.float-right (str losses " losses")]
      [:div.time (str "Time left: " (time-delta-string (- (* 1000 60 60 24 allowed-days)
                                                          time-since-start)))]]))
 
@@ -85,6 +97,21 @@
                                         (fetch-runs))} (tr [:angelarena.are-you-sure-yes "yes"])]
          [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
         [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]]))
+
+(defn- deck-games [side s deck]
+  (let [run-info (get-in @runs [@chosen-format side])]
+    [:div.games
+     (doall
+       (for [{:keys [game-id opponent winner] :as game} (:games run-info)]
+         (let [result (cond
+                        (nil? winner) "aborted"
+                        (= winner (name side)) "won"
+                        :else "lost")]
+           [:div.match {:key game-id :class [result]}
+            [:img.identity {:class [result]
+                            :src (image-url (get @all-cards (:identity opponent)))
+                            :alt (:identity opponent)
+                            :title (str (:identity opponent) "\nOpponent: " (:username opponent))}]])))]))
 
 (defn- deckselect-modal [user {:keys [side decks]}]
   [:div
@@ -158,6 +185,7 @@
                                       @decks))]
               [:div.run
                [deck-view :corp s deck]
+               [deck-games :corp s deck]
                [deck-buttons :corp s deck]])
             [new-run-button-bar :corp decks user])
 
@@ -168,6 +196,7 @@
                                       @decks))]
               [:div.run
                [deck-view :runner s deck]
+               [deck-games :runner s deck]
                [deck-buttons :runner s deck]])
             [new-run-button-bar :runner decks user])
 

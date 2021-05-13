@@ -5,6 +5,7 @@
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
             [monger.query :as mq]
+            [web.angelarena.stats :as angelarena-stats]
             [web.pages :as pages]
             [web.ws :as ws]
             [web.utils :refer [response json-response]]
@@ -179,24 +180,6 @@
                 :runner.agenda-points (get-in @state [:runner :agenda-point])}
      :history (:history @state)}))
 
-(defn handle-angelarena-stats
-  [db {:keys [ending-players original-players state format] :as game}]
-  (try
-    (doall
-      (for [player original-players]
-        (let [username (get-in player [:user :username])
-              end-player (first (filter #(= username (get-in % [:user :username])) ending-players))
-              {:keys [angelarena-runs]}
-              (mc/find-one-as-map db "users" {:username username} ["angelarena-runs"])
-              form (keyword (lower-case format))
-              side (keyword (lower-case (:side player)))
-              field (if (= side (:winner @state)) :wins :losses)]
-          (mc/update db "users"
-                     {:username username}
-                     {"$set" {:angelarena-runs
-                              (update-in angelarena-runs [form side field] inc)}})
-          (ws/broadcast-to! [(:ws-id end-player)] :angelarena/run-update {}))))))
-
 (defn game-finished
   [db {:keys [state gameid room] :as game}]
   (when state
@@ -223,7 +206,7 @@
       (delete-old-replay db (get-in @state [:corp :runner]))
       (when (and (= "angelarena" room)
                  (:winner @state))
-        (handle-angelarena-stats db game))
+        (angelarena-stats/game-finished db game))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))

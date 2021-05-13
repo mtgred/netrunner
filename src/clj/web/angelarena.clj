@@ -3,6 +3,7 @@
             [game.utils :refer [in-coll?]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]
+            [web.angelarena.utils :refer [supported-formats get-runs]]
             [web.lobby :refer [client-gameids refresh-lobby]]
             [web.mongodb :refer [object-id]]
             [web.utils :refer [response json-response average]]
@@ -11,21 +12,29 @@
             [monger.operators :refer :all]
             [clj-time.core :as t]))
 
-(defonce arena-supported-formats [:standard :startup])
 (defonce arena-queue (atom []))
 (defonce arena-queue-times (atom (into (hash-map)
                                        (map (fn [form] [form {:corp [] :runner []}])
-                                            arena-supported-formats))))
+                                            supported-formats))))
 
-(defn- get-runs
-  [db username]
+(defn- add-new-game
+  [db player other-player game-id]
   (try
-    (let [{:keys [angelarena-runs]}
-          (mc/find-one-as-map db "users" {:username username} ["angelarena-runs"])]
-      (merge (into (hash-map)
-                   (map (fn [form] [form {:corp nil :runner nil}])
-                        arena-supported-formats))
-             angelarena-runs))))
+    (let [username (get-in player [:user :username])
+          runs (get-runs db username)
+          side (keyword (lower-case (:side player)))
+          form (:format player)
+          other-username (get-in other-player [:user :username])
+          other-identity (get-in other-player [:deck :identity :title])]
+      (mc/update db "users"
+                 {:username username}
+                 {"$set" {:angelarena-runs
+                          (update-in runs [form side :games] conj {:game-id game-id
+                                                                   :winner nil
+                                                                   :opponent {:username other-username
+                                                                              :identity other-identity}})}}))
+    (catch Exception e
+      (println "Caught exception adding new game to Angel Arena history: " (.getMessage e)))))
 
 (defn- get-deck-from-id
   [db username deck-id]
@@ -36,7 +45,9 @@
         (update-in d [:cards] #(mapv map-card %))
         (update-in d [:cards] #(vec (remove unknown-card %)))
         (update-in d [:identity] #(@all-cards (:title %)))
-        (assoc d :status (calculate-deck-status d))))))
+        (assoc d :status (calculate-deck-status d))))
+    (catch Exception e
+      (println "Caught exception searching for a deck from deck-id: " (.getMessage e)))))
 
 (defn- get-current-deck
   [db username form side]
@@ -69,12 +80,13 @@
                        {"$set" {:angelarena-runs
                                 (assoc-in runs [form side]
                                           {:deck-id deck-id
-                                           :wins 0
-                                           :losses 0
+                                           :games []
                                            :run-started (java.util.Date.)})}})
             (mc/update db "decks"
                        {:_id (object-id deck-id) :username username}
-                       {"$set" {:locked true}})))))))
+                       {"$set" {:locked true}}))))
+      (catch Exception e
+        (println "Caught exception while starting a new run: " (.getMessage e))))))
 
 (defmethod ws/-msg-handler :angelarena/abandon-run
   [{{db :system/db
@@ -94,7 +106,9 @@
                               (assoc-in runs [form side] nil)}})
           (mc/update db "decks"
                      {:_id (object-id deck-id) :username username}
-                     {"$set" {:locked false}}))))))
+                     {"$set" {:locked false}})))
+      (catch Exception e
+        (println "Caught exception while abandoning run: " (.getMessage e))))))
 
 (defn- remove-from-queue [username]
   (swap! arena-queue (partial remove #(= username (get-in % [:user :username])))))
@@ -116,7 +130,7 @@
                    (into (hash-map)
                          (map (fn [form] [form {:corp (average (get-in @arena-queue-times [form :corp] []))
                                                 :runner (average (get-in @arena-queue-times [form :runner] []))}])
-                              arena-supported-formats)))
+                              supported-formats)))
     (response 401 {:message "Unauthorized"})))
 
 (defn- start-game
@@ -150,7 +164,8 @@
     ; send clients message to make them join lobby
     (ws/broadcast-to! [(:ws-id player1) (:ws-id player2)] :lobby/select {:gameid gameid})
     ; send server message to start game
-    (ws/event-msg-handler (assoc event :id :netrunner/start))))
+    (ws/event-msg-handler (assoc event :id :netrunner/start))
+    gameid))
 
 (defmethod ws/-msg-handler :angelarena/queue
   [{{db :system/db
@@ -194,7 +209,9 @@
               (remove-from-queue (get-in match [:user :username]))
               (add-queue-time player)
               (add-queue-time match)
-              (start-game event (dissoc player :queue-start) (dissoc match :queue-start) form))
+              (when-let [gameid (str (start-game event (dissoc player :queue-start) (dissoc match :queue-start) form))]
+                (add-new-game db player match gameid)
+                (add-new-game db match player gameid)))
             (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue

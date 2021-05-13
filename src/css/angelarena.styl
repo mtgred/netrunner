@@ -79,6 +79,34 @@
         .queue-time
             margin-top: 4px
 
+        .games
+            margin-top: 4px
+            display-flex()
+            flex-direction(row)
+
+            .match
+                width:auto
+                margin:4px
+
+                &:first-child
+                    margin-left:0
+
+                &.aborted
+                    display:none
+
+                &>img.identity
+                    width: 30px
+                    border-radius: 2px
+
+                    &.won
+                        box-shadow(0 0 4px 2px transparent-green)
+
+                    &.lost
+                        box-shadow(0 0 4px 2px transparent-red)
+
+                    // &.aborted
+                        // filter: grayscale(100%);
+                        // box-shadow(0 0 4px 2px grey)
 
 .lobby
     .player .standings
