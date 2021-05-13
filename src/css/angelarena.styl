@@ -21,39 +21,6 @@
         &:not(:first-child)
             margin-top: 8px
 
-    .deck
-        height: 65px
-        padding: 2px 8px
-        margin: 0 0 0px 0px
-
-        h4
-            margin: 0
-            text-overflow: ellipsis
-            white-space: nowrap
-            overflow: hidden
-
-        > img
-            float: left
-            height: 100%
-            margin-right: 10px
-
-        .time, .result
-            font-weight: bold
-
-    .button-bar
-        margin-top: 0px
-        padding: 0
-        width: auto
-        overflow-y: auto
-
-        button
-            width: auto
-
-        .small
-            min-width:0
-            width: auto
-            padding: 0 2px
-
     .format-bar
         padding: 0 15px 0
         margin-top: 0px
@@ -73,6 +40,45 @@
 
             &.current
                 color: orange
+
+    .run
+        margin: 0px 8px
+        .deck
+            height: 65px
+
+            h4
+                margin: 0
+                text-overflow: ellipsis
+                white-space: nowrap
+                overflow: hidden
+
+            > img
+                float: left
+                height: 100%
+                margin-right: 10px
+
+            .time, .result
+                font-weight: bold
+
+        .buttons
+            padding: 0
+            width: auto
+            overflow-y: auto
+
+            .button-row
+                margin-top: 4px
+
+            button
+                width: auto
+
+            .small
+                min-width:0
+                width: auto
+                padding: 0 2px
+
+        .queue-time
+            margin-top: 4px
+
 
 .lobby
     .player .standings

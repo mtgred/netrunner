@@ -5,7 +5,7 @@
             [jinteki.validator :refer [calculate-deck-status]]
             [web.lobby :refer [client-gameids refresh-lobby]]
             [web.mongodb :refer [object-id]]
-            [web.utils :refer [response json-response]]
+            [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
             [monger.operators :refer :all]
@@ -13,6 +13,9 @@
 
 (defonce arena-supported-formats [:standard :startup])
 (defonce arena-queue (atom []))
+(defonce arena-queue-times (atom (into (hash-map)
+                                       (map (fn [form] [form {:corp [] :runner []}])
+                                            arena-supported-formats))))
 
 (defn- get-runs
   [db username]
@@ -96,6 +99,26 @@
 (defn- remove-from-queue [username]
   (swap! arena-queue (partial remove #(= username (get-in % [:user :username])))))
 
+(defn- add-queue-time [player]
+  (let [side (keyword (lower-case (:side player)))
+        form (:format player)
+        queue-time (t/in-seconds (t/interval (:queue-start player) (t/now)))]
+    ; keep the latest 5 wait times
+    (if (> (count (get-in @arena-queue-times [form side])) 5)
+      (swap! arena-queue-times update-in [form side] #(conj (drop 1 %) queue-time))
+      (swap! arena-queue-times update-in [form side] conj queue-time))))
+
+(defn fetch-queue-times
+  [{db :system/db
+    {username :username} :user}]
+  (if username
+    (json-response 200
+                   (into (hash-map)
+                         (map (fn [form] [form {:corp (average (get-in @arena-queue-times [form :corp] []))
+                                                :runner (average (get-in @arena-queue-times [form :runner] []))}])
+                              arena-supported-formats)))
+    (response 401 {:message "Unauthorized"})))
+
 (defn- start-game
   [event player1 player2 form]
   (let [gameid (java.util.UUID/randomUUID)
@@ -144,7 +167,13 @@
       (when (and runs deck form side
                  ; check that player isn't already queueing
                  (empty? (filter #(= username (:username %)) @arena-queue)))
-        (let [player {:user user :ws-id client-id :format form :side (capitalize (name side)) :deck deck :run-info run-info}
+        (let [player {:user user
+                      :ws-id client-id
+                      :format form
+                      :side (capitalize (name side))
+                      :deck deck
+                      :run-info run-info
+                      :queue-start (t/now)}
               other-side (if (= :corp side) "Runner" "Corp")
               eligible-players (->> @arena-queue
                                     ; Players in the same format playing the other side
@@ -161,9 +190,11 @@
                                                (get-in % [:user :username]))))
               match (first eligible-players)]
           (if match
-            (do (remove-from-queue (get-in player [:user :username]))
-                (remove-from-queue (get-in match [:user :username]))
-                (start-game event player match form))
+            (do
+              (remove-from-queue (get-in match [:user :username]))
+              (add-queue-time player)
+              (add-queue-time match)
+              (start-game event (dissoc player :queue-start) (dissoc match :queue-start) form))
             (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue

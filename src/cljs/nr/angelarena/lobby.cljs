@@ -22,11 +22,17 @@
 (defonce runs (r/atom nil))
 (defonce chosen-format (r/atom (first arena-supported-formats)))
 (defonce queueing (r/atom nil))
+(defonce queue-times (r/atom nil))
 
 (defn- fetch-runs []
   (go (let [{:keys [status json]} (<! (GET "/profile/angelarena/runs"))]
         (when (= 200 status)
           (reset! runs (js->clj json))))))
+
+(defn- fetch-queue-times []
+  (go (let [{:keys [status json]} (<! (GET "/profile/angelarena/queue-times"))]
+        (when (= 200 status)
+          (reset! queue-times (js->clj json))))))
 
 (defn- time-delta-string [delta]
   (let [days (Math/floor (/ delta (* 1000 60 60 24)))
@@ -39,7 +45,8 @@
     (cond
       (pos? days) (str days " days, " hours " hours")
       (pos? hours) (str hours " hours, " minutes " minutes")
-      :else (str minutes " minutes, " seconds " seconds"))))
+      (pos? minutes) (str minutes " minutes, " seconds " seconds")
+      :else (str seconds " seconds"))))
 
 (defn- deck-view [side s deck]
   (let [run-info (get-in @runs [@chosen-format side])
@@ -55,26 +62,29 @@
      [:div.time (str "Time left: " (time-delta-string (- (* 1000 60 60 24 allowed-days)
                                                          time-since-start)))]]))
 
-(defn- deck-button-bar [side s deck]
+(defn- deck-buttons [side s deck]
   (r/with-let [abandon (r/atom false)]
-    [:div.button-bar
-     [tristate-button
-      (tr [:angelarena.queueing "Queueing..."])
-      (tr [:angelarena.queue-for-match "Queue for match"])
-      (= (:_id deck) @queueing)
-      (and @queueing
-           (not= (:_id deck) @queueing))
-      #(if @queueing
-         (do (ws/ws-send! [:angelarena/dequeue {:deck-id (:_id deck)}])
-             (reset! queueing nil))
-         (do (ws/ws-send! [:angelarena/queue {:deck-id (:_id deck)}])
-             (reset! queueing (:_id deck))))]
-     (if @abandon
-       [:span (tr [:angelarena.are-you-sure "Are you sure?"]) " "
-        [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
-                                       (fetch-runs))} (tr [:angelarena.are-you-sure-yes "yes"])]
-        [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
-       [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]))
+    [:div.buttons
+     [:div.button-row
+      [tristate-button
+       (tr [:angelarena.queueing "Queueing..."])
+       (tr [:angelarena.queue-for-match "Queue for match"])
+       (= (:_id deck) @queueing)
+       (and @queueing
+            (not= (:_id deck) @queueing))
+       #(if @queueing
+          (do (ws/ws-send! [:angelarena/dequeue {:deck-id (:_id deck)}])
+              (reset! queueing nil))
+          (do (ws/ws-send! [:angelarena/queue {:deck-id (:_id deck)}])
+              (reset! queueing (:_id deck))))]
+      "Average waiting time: " (time-delta-string (* 1000 (get-in @queue-times [@chosen-format side])))]
+     [:div.button-row
+      (if @abandon
+        [:span (tr [:angelarena.are-you-sure "Are you sure?"]) " "
+         [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
+                                        (fetch-runs))} (tr [:angelarena.are-you-sure-yes "yes"])]
+         [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
+        [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]]))
 
 (defn- deckselect-modal [user {:keys [side decks]}]
   [:div
@@ -124,7 +134,8 @@
 
      :component-did-mount
      (fn []
-       (fetch-runs))
+       (fetch-runs)
+       (fetch-queue-times))
 
      :reagent-render
      (fn []
@@ -145,9 +156,9 @@
             (let [deck (first (filter #(= (str (:_id %))
                                           (get-in @runs [@chosen-format :corp :deck-id]))
                                       @decks))]
-              [:div
+              [:div.run
                [deck-view :corp s deck]
-               [deck-button-bar :corp s deck]])
+               [deck-buttons :corp s deck]])
             [new-run-button-bar :corp decks user])
 
           [:h3 (tr [:angelarena.active-runner-run "Active Runner run"])]
@@ -155,9 +166,9 @@
             (let [deck (first (filter #(= (str (:_id %))
                                           (get-in @runs [@chosen-format :runner :deck-id]))
                                       @decks))]
-              [:div
+              [:div.run
                [deck-view :runner s deck]
-               [deck-button-bar :runner s deck]])
+               [deck-buttons :runner s deck]])
             [new-run-button-bar :runner decks user])
 
           [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))}))
