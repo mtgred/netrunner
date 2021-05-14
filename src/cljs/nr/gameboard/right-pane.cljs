@@ -29,6 +29,7 @@
     (-> ".content-pane" js/$
       (.css "left" 0)
       (.css "top" top)
+      (.css "height" "auto")
       (.css "width" width))))
 
 (defn- pane-resize [event ui]
