@@ -33,6 +33,15 @@
                    (:name option)]]))]
 
        [:section
+        [:h4 (tr [:ingame-settings.runner-board-order "Board overlap"])]
+        [:div
+         [:label [:input {:type "checkbox"
+                          :value true
+                          :checked (get-in @app-state [:options :sides-overlap])
+                          :on-change #(swap! app-state assoc-in [:options :sides-overlap] (.. % -target -checked))}]
+          (tr [:ingame-settings.sides-overlap "Runner and Corp may overlap"])]]]
+
+       [:section
         [:h4 (tr [:ingame-settings.card-backs "Card backs"])]
         (doall (for [option [{:name (tr [:settings.nisei "NISEI"]) :ref "nisei"}
                              {:name (tr [:settings.ffg "FFG"]) :ref "ffg"}]]

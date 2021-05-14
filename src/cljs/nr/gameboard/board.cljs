@@ -1040,7 +1040,8 @@
         server-type (first rs)
         side-class (if (= player-side :runner) "opponent" "me")
         hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)]
-    [:div.outer-corp-board {:class side-class}
+    [:div.outer-corp-board {:class [side-class
+                                    (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      [:div.corp-board {:class side-class}
       (doall
         (for [server (reverse (get-remotes @servers))
@@ -1088,7 +1089,8 @@
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
                    seq)]
-    [:div.runner-board {:class (if is-me "me" "opponent")}
+    [:div.runner-board {:class [(if is-me "me" "opponent")
+                                (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      (when-not is-me centrals)
      (doall
        (for [zone (runner-f [:program :hardware :resource :facedown])]

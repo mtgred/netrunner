@@ -46,6 +46,9 @@
         top: 100%
         transform: translate(0, -100%)
 
+    .card-frame, .deck, .identity, .discard
+        pointer-events: auto
+
     .card-frame
         position: relative
 
@@ -632,7 +635,9 @@
         display-flex()
         flex-direction(column)
         min-width: 90px
-        overflow: visible
+        position:relative
+        overflow-x:auto
+        overflow-y:visible
 
         .card-wrapper
             margin: 3px 6px
@@ -649,6 +654,19 @@
         // Then once both card-wrapper _and_ card are hovered, the z-index gets bumped to 1 to pull the card to the front.
         .card-wrapper:hover .card:hover, .stacked:hover .card:hover
             z-index: 1
+
+        .outer-corp-board.overlap,.runner-board.overlap
+            overflow: visible
+            position: absolute
+            pointer-events: none
+
+            &.me
+                bottom: 0
+                width: 100%
+
+            &.opponent
+                top: 0
+                width: 100%
 
         .runner-board
             flex(1)
@@ -677,11 +695,6 @@
 
             > div:last-child
                 margin-bottom: auto
-
-        .outer-corp-board.me
-            overflow: auto
-            margin-top: -100%
-            padding-top: 100%
 
         .corp-board
             flex(1)
