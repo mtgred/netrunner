@@ -1,17 +1,12 @@
 (ns nr.gameboard.right-pane
   (:require [cljs.core.async :refer [put!]]
-            [clojure.string :as string]
             [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
             [nr.gameboard.card-preview :refer [zoom-channel]]
-            [nr.gameboard.log :refer [log-pane should-scroll scrolled-to-end?]]
+            [nr.gameboard.log :refer [log-pane]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
-            [nr.gameboard.state :refer [game-state not-spectator?]]
+            [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
-            [nr.help :refer [command-info]]
             [nr.translations :refer [tr]]
-            [nr.utils :refer [influence-dot render-message]]
-            [nr.ws :as ws]
             [reagent.core :as r]))
 
 (defonce loaded-tabs (r/atom {}))

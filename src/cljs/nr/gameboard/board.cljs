@@ -16,13 +16,11 @@
             [nr.gameboard.actions :refer [send-command toast]]
             [nr.gameboard.log :refer [send-msg should-scroll]]
             [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out
-                                      card-highlight-mouse-over card-highlight-mouse-out zoom-channel]]
-            [nr.gameboard.right-pane :refer [content-pane load-tab]]
+                                               card-highlight-mouse-over card-highlight-mouse-out zoom-channel]]
+            [nr.gameboard.right-pane :refer [content-pane]]
             [nr.gameboard.player-stats :refer [stat-controls stats-view]]
-            [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
-                                         load-remote-annotations delete-remote-annotations publish-annotations
-                                         load-annotations-file save-annotations-file]]
-            [nr.gameboard.state :refer [game-state last-state lock replay-side parse-state get-side not-spectator?]]
+            [nr.gameboard.replay :refer [replay-panel]]
+            [nr.gameboard.state :refer [game-state replay-side not-spectator?]]
             [nr.translations :refer [tr tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
