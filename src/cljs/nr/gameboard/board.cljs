@@ -1785,8 +1785,8 @@
                   [card-zoom-view zoom-card]
 
                   (if (:replay @game-state)
-                    [content-pane :log :notes :notes-shared]
-                    [content-pane :log])]
+                    [content-pane :log :settings :notes :notes-shared]
+                    [content-pane :log :settings])]
 
                  [:div.centralpane
                   (if (= op-side :corp)

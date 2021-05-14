@@ -7,6 +7,7 @@
             [nr.gameboard.log :refer [log-pane should-scroll scrolled-to-end?]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state not-spectator?]]
+            [nr.gameboard.settings :refer [settings-pane]]
             [nr.help :refer [command-info]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [influence-dot render-message]]
@@ -75,6 +76,10 @@
           :notes-shared
           {:hiccup [notes-shared-pane]
            :label (tr [:log.shared "Shared Annotations"])}
+
+          :settings
+          {:hiccup [settings-pane]
+           :label (tr [:log.settings "Settings"])}
 
           {:hiccup [:div.error "This should not happen"]
            :label "???"})]
