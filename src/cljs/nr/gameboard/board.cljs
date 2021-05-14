@@ -14,9 +14,10 @@
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.gameboard.actions :refer [send-command toast]]
-            [nr.gameboard.log :refer [log-panel log-mode send-msg card-preview-mouse-over card-preview-mouse-out
-                                      card-highlight-mouse-over card-highlight-mouse-out resize-card-zoom
-                                      zoom-channel should-scroll]]
+            [nr.gameboard.log :refer [send-msg should-scroll]]
+            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out
+                                      card-highlight-mouse-over card-highlight-mouse-out]]
+            [nr.gameboard.right-pane :refer [content-pane log-mode resize-card-zoom zoom-channel]]
             [nr.gameboard.player-stats :refer [stat-controls stats-view]]
             [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
                                          load-remote-annotations delete-remote-annotations publish-annotations
@@ -1780,9 +1781,9 @@
                                    :spectator @background)
                                  @background)}]
 
-                 [:div.rightpane
+                 [:div.right-pane
                   [card-zoom-view zoom-card]
-                  [log-panel send-command]]
+                  [content-pane]]
                  (do (resize-card-zoom) nil)
 
                  [:div.centralpane

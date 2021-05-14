@@ -870,7 +870,7 @@
                 .run-card
                     transform(initial)
 
-    .rightpane
+    .right-pane
         position: relative
         display-flex()
         flex-direction(column)
@@ -912,44 +912,36 @@
             .impl-msg
                 color: gold-base
 
+        .content-pane
+            position:absolute
+            bottom: 0px
+
         .log
-            width: 225px
-            position: absolute
-            top: 317px
-            bottom: 0
+            height:100%
+            display-flex()
+            flex-direction(column)
+            // width: 225px
+            // position: absolute
+            // top: 317px
+            // bottom: 0
 
             .username
-                font-size: .75rem
+                font-size: .875rem
                 margin-top: -2px
 
             .avatar
                 width: 28px
                 height: 28px
 
-            > .panel
-                margin-left: 0
-                font-size: .75rem
-                line-height: 1rem
-
             .messages
                 flex(1)
-                overflow: auto
+                overflow: auto!important
                 -webkit-overflow-scrolling: touch
-                position: absolute
-                top: 24px
-                bottom: 70px
-                left: 0
-                right: 4px
+                min-height: 20px
                 margin: 0
 
                 div
                     animation: fadein 0.5s
-
-            > div
-                position: absolute
-                bottom: 12px
-                left: 0
-                right: 4px
 
             .log-input form input, .indicate-action
                 width: 100%
@@ -958,15 +950,18 @@
                 position: absolute !important
                 bottom: 24px
                 right: 100%
-                width: fit-content
 
                 ::-webkit-scrollbar
                     width 0
 
                 ul.command-matches
                     list-style-type: none
-                    overflow: auto
+                    overflow-x: clip
+                    overflow-y: auto
                     max-height: 300px
+                    white-space: nowrap
+                    width: max-content
+                    scrollbar-width: none
 
                     li.command-match.highlight span
                         color: gold-base
