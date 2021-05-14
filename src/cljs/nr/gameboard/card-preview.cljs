@@ -13,7 +13,7 @@
   [e channel]
   (.preventDefault e)
   (when-let [title (get-card-data-title e)]
-    (when-let [card (get (:all-cards-and-flips @app-state) title)]
+    (when-let [card (get-in @app-state [:all-cards-and-flips title])]
       (put! channel card)))
   nil)
 
