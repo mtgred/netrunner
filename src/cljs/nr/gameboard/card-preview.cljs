@@ -1,6 +1,8 @@
 (ns nr.gameboard.card-preview
-  (:require [cljs.core.async :refer [put!]]
+  (:require [cljs.core.async :refer [chan put!]]
             [nr.appstate :refer [app-state]]))
+
+(defonce zoom-channel (chan))
 
 (defn- get-card-data-title [e]
   (let [target (.. e -target)

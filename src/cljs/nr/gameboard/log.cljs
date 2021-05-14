@@ -3,7 +3,7 @@
             [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
             [nr.gameboard.actions :refer [send-command]]
-            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out]]
+            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out zoom-channel]]
             [nr.gameboard.state :refer [game-state not-spectator?]]
             [nr.help :refer [command-info]]
             [nr.translations :refer [tr]]
@@ -168,50 +168,51 @@
                         (:command-matches @s)))]])])))))
 
 
-(defn log-messages [log zoom-channel]
-  (r/create-class
-    {:display-name "log-messages"
+(defn log-messages []
+  (let [log (r/cursor game-state [:log])]
+    (r/create-class
+      {:display-name "log-messages"
 
-     :component-did-mount
-     (fn [this]
-       (when (:update @should-scroll)
+       :component-did-mount
+       (fn [this]
+         (when (:update @should-scroll)
+           (let [n (r/dom-node this)]
+             (set! (.-scrollTop n) (.-scrollHeight n)))))
+
+       :component-will-update
+       (fn [this]
          (let [n (r/dom-node this)]
-           (set! (.-scrollTop n) (.-scrollHeight n)))))
+           (reset! should-scroll {:update (or (:send-msg @should-scroll)
+                                              (scrolled-to-end? n 15))
+                                  :send-msg false})))
 
-     :component-will-update
-     (fn [this]
-       (let [n (r/dom-node this)]
-         (reset! should-scroll {:update (or (:send-msg @should-scroll)
-                                            (scrolled-to-end? n 15))
-                                :send-msg false})))
+       :component-did-update
+       (fn [this]
+         (when (:update @should-scroll)
+           (let [n (r/dom-node this)]
+             (set! (.-scrollTop n) (.-scrollHeight n)))))
 
-     :component-did-update
-     (fn [this]
-       (when (:update @should-scroll)
-         (let [n (r/dom-node this)]
-           (set! (.-scrollTop n) (.-scrollHeight n)))))
+       :reagent-render
+       (fn []
+         [:div.messages {:class [(when (:replay @game-state)
+                                   "panel-bottom")]
+                         :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                         :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+          (doall (map-indexed
+                   (fn [i msg]
+                     (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                       (if (= (:user msg) "__system__")
+                         [:div.system {:key i} (render-message (:text msg))]
+                         [:div.message {:key i}
+                          [avatar (:user msg) {:opts {:size 38}}]
+                          [:div.content
+                           [:div.username (get-in msg [:user :username])]
+                           [:div (render-message (:text msg))]]])))
+                   @log))])})))
 
-     :reagent-render
-     (fn []
-        [:div.panel.blue-shade.messages {:class [(when (:replay @game-state)
-                                                   "panel-bottom")]
-                                         :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                                         :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-         (doall (map-indexed
-                  (fn [i msg]
-                    (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                      (if (= (:user msg) "__system__")
-                        [:div.system {:key i} (render-message (:text msg))]
-                        [:div.message {:key i}
-                         [avatar (:user msg) {:opts {:size 38}}]
-                         [:div.content
-                          [:div.username (get-in msg [:user :username])]
-                          [:div (render-message (:text msg))]]])))
-                  @log))])}))
-
-(defn log-pane [log zoom-channel]
+(defn log-pane []
   (fn []
     [:div.log
-     [log-messages log zoom-channel]
+     [log-messages]
      [log-typing]
      [log-input]]))

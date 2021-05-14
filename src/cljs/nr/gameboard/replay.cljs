@@ -450,7 +450,7 @@
         (doall (for [icon types]
                  ^{:key (str "notes-icon-" icon)}
                  [:div {:class ["notes-icon" icon (when (= icon (:selected-note-type @replay-status)) "selected")]
-                        :title (string/capitalize (subs (str icon) 1))
+                        :title (capitalize (subs (str icon) 1))
                         :on-click #(do (swap! replay-status assoc :selected-note-type icon)
                                        (update-notes))}])))]
      [:div.notes-icons

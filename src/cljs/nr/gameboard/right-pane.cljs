@@ -1,8 +1,9 @@
 (ns nr.gameboard.right-pane
-  (:require [cljs.core.async :refer [chan put!]]
+  (:require [cljs.core.async :refer [put!]]
             [clojure.string :as string]
             [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
+            [nr.gameboard.card-preview :refer [zoom-channel]]
             [nr.gameboard.log :refer [log-pane should-scroll scrolled-to-end?]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state not-spectator?]]
@@ -12,11 +13,9 @@
             [nr.ws :as ws]
             [reagent.core :as r]))
 
-(defonce zoom-channel (chan))
+(defonce loaded-tabs (r/atom {}))
 
-(defonce log-mode (r/atom :log))
-
-(defn resize-card-zoom []
+(defn- resize-card-zoom []
   "Resizes the card zoom based on the values in the app-state"
   (let [width (get-in @app-state [:options :log-width])
         top (get-in @app-state [:options :log-top])
@@ -36,55 +35,77 @@
       (.css "top" top)
       (.css "width" width))))
 
-(defn log-resize [event ui]
+(defn- pane-resize [event ui]
   "Resize the card zoom to fit the available space"
   (let [width (.. ui -size -width)
         top (.. ui -position -top)]
-    (println "ui:" ui)
-    (swap! app-state assoc-in [:options :log-width] width)
+    (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
     (swap! app-state assoc-in [:options :log-top] top)
     (.setItem js/localStorage "log-width" width)
     (.setItem js/localStorage "log-top" top)
     (resize-card-zoom)))
 
-(defn log-start-resize [event ui]
+(defn- pane-start-resize [event ui]
   "Display a zoomed card when resizing so the user can visualize how the
   resulting zoom will look."
   (when-let [card (get-in @game-state [:runner :identity])]
     (put! zoom-channel card)))
 
-(defn log-stop-resize [event ui]
+(defn- pane-stop-resize [event ui]
   (put! zoom-channel false))
 
-(defn log-selector []
+(defn- tab-selector [selected-tab]
   (fn []
     [:div.panel.panel-top.blue-shade.selector
-     [:a {:on-click #(reset! log-mode :log)} (tr [:log.game-log "Game Log"])]
-     " | "
-     [:a {:on-click #(reset! log-mode :notes)} (tr [:log.annotating "Annotating"])]
-     " | "
-     [:a {:on-click #(reset! log-mode :notes-shared)} (tr [:log.shared "Shared Annotations"])]]))
+     (doall (for [[tab {:keys [label]}] (seq @loaded-tabs)]
+              [:a {:key tab
+                   :on-click #(reset! selected-tab tab)} label]))]))
 
-(defn content-pane []
-  (r/create-class
-    (let [log (r/cursor game-state [:log])]
+(defn load-tab [tab]
+  (let [{:keys [hiccup label]}
+        (case tab
+          :log
+          {:hiccup [log-pane]
+           :label (tr [:log.game-log "Game Log"])}
+
+          :notes
+          {:hiccup [notes-pane]
+           :label (tr [:log.annotating "Annotating"])}
+
+          :notes-shared
+          {:hiccup [notes-shared-pane]
+           :label (tr [:log.shared "Shared Annotations"])}
+
+          {:hiccup [:div.error "This should not happen"]
+           :label "???"})]
+    (swap! loaded-tabs assoc tab {:hiccup hiccup :label label})))
+
+(defn unload-tab [tab]
+  (swap! loaded-tabs dissoc tab))
+
+(defn clear-tabs []
+  (reset! loaded-tabs {}))
+
+(defn content-pane [& tabs]
+  (let [selected-tab (r/atom nil)]
+    (clear-tabs)
+    (doseq [tab tabs]
+      (load-tab tab))
+    (reset! selected-tab (first tabs))
+    (r/create-class
       {:display-name "content-pane"
 
        :component-did-mount
        (fn [this]
          (-> ".content-pane" js/$ (.resizable #js {:handles "w, n, nw"
-                                                   :resize log-resize
-                                                   :start log-start-resize
-                                                   :stop log-stop-resize}))
+                                                   :resize pane-resize
+                                                   :start pane-start-resize
+                                                   :stop pane-stop-resize}))
          (resize-card-zoom))
 
        :reagent-render
        (fn []
          [:div.content-pane
-          (case @log-mode
-            :log
-            [log-pane log zoom-channel]
-            :notes
-            [notes-pane]
-            :notes-shared
-            [notes-shared-pane])])})))
+          [tab-selector selected-tab]
+          [:div.panel.blue-shade.panel-bottom.content
+           (get-in @loaded-tabs [@selected-tab :hiccup] "nothing here")]])})))

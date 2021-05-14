@@ -916,53 +916,75 @@
             position:absolute
             bottom: 0px
 
-        .log
-            height:100%
-            display-flex()
-            flex-direction(column)
-            // width: 225px
-            // position: absolute
-            // top: 317px
-            // bottom: 0
-
-            .username
-                font-size: .875rem
-                margin-top: -2px
-
-            .avatar
-                width: 28px
-                height: 28px
-
-            .messages
-                flex(1)
-                overflow: auto!important
-                -webkit-overflow-scrolling: touch
-                min-height: 20px
+            .selector
+                position: absolute
+                top: 0px
+                height:24px
+                left: 0
+                right: 0
                 margin: 0
+                padding-top: 2px
 
-                div
+                >a:not(:first-child)
+                    margin-left:3ex
+
+            .content
+                position: absolute
+                top: 24px
+                bottom: 0px
+                width: 100%
+                flex(1)
+                margin: 0
+                min-height: 20px
+
+                >div
                     animation: fadein 0.5s
 
-            .log-input form input, .indicate-action
-                width: 100%
+                .log
+                    height:100%
+                    display-flex()
+                    flex-direction(column)
+                    // width: 225px
+                    // position: absolute
+                    // top: 317px
+                    // bottom: 0
 
-            .command-matches-container
-                position: absolute !important
-                bottom: 24px
-                right: 100%
+                    .username
+                        font-size: .875rem
+                        margin-top: -2px
 
-                ::-webkit-scrollbar
-                    width 0
+                    .avatar
+                        width: 28px
+                        height: 28px
 
-                ul.command-matches
-                    list-style-type: none
-                    overflow-x: clip
-                    overflow-y: auto
-                    max-height: 300px
-                    white-space: nowrap
-                    width: max-content
-                    scrollbar-width: none
+                    .messages
+                        flex(1)
+                        overflow: auto!important
+                        -webkit-overflow-scrolling: touch
 
-                    li.command-match.highlight span
-                        color: gold-base
-                        cursor: pointer
+                        div
+                            animation: fadein 0.5s
+
+                    .log-input form input, .indicate-action
+                        width: 100%
+
+                    .command-matches-container
+                        position: absolute !important
+                        bottom: 24px
+                        right: 100%
+
+                        ::-webkit-scrollbar
+                            width 0
+
+                        ul.command-matches
+                            list-style-type: none
+                            overflow-x: clip
+                            overflow-y: auto
+                            max-height: 300px
+                            white-space: nowrap
+                            width: max-content
+                            scrollbar-width: none
+
+                            li.command-match.highlight span
+                                color: gold-base
+                                cursor: pointer
