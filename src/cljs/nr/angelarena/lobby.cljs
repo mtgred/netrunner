@@ -187,7 +187,7 @@
                [deck-view :corp s deck]
                [deck-games :corp s deck]
                [deck-buttons :corp s deck]])
-            [new-run-button-bar :corp decks user])
+            [:div.run [new-run-button-bar :corp decks user]])
 
           [:h3 (tr [:angelarena.active-runner-run "Active Runner run"])]
           (if (get-in @runs [@chosen-format :runner])
@@ -198,7 +198,7 @@
                [deck-view :runner s deck]
                [deck-games :runner s deck]
                [deck-buttons :runner s deck]])
-            [new-run-button-bar :runner decks user])
+            [:div.run [new-run-button-bar :runner decks user]])
 
           [:h3 (tr [:angelarena.latest-runs "Latest runs"])]]))}))
 
