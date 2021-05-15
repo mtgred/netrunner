@@ -1,11 +1,9 @@
 (ns web.angelarena
   (:require [clojure.string :refer [lower-case capitalize]]
             [game.utils :refer [in-coll?]]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status]]
-            [web.angelarena.utils :refer [supported-formats get-runs]]
+            [web.angelarena.runs :refer [start-run finish-run add-new-match]]
+            [web.angelarena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
             [web.lobby :refer [client-gameids refresh-lobby]]
-            [web.mongodb :refer [object-id]]
             [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -16,44 +14,6 @@
 (defonce arena-queue-times (atom (into (hash-map)
                                        (map (fn [form] [form {:corp [] :runner []}])
                                             supported-formats))))
-
-(defn- add-new-game
-  [db player other-player game-id]
-  (try
-    (let [username (get-in player [:user :username])
-          runs (get-runs db username)
-          side (keyword (lower-case (:side player)))
-          form (:format player)
-          other-username (get-in other-player [:user :username])
-          other-identity (get-in other-player [:deck :identity :title])]
-      (mc/update db "users"
-                 {:username username}
-                 {"$set" {:angelarena-runs
-                          (update-in runs [form side :games] conj {:game-id game-id
-                                                                   :winner nil
-                                                                   :opponent {:username other-username
-                                                                              :identity other-identity}})}}))
-    (catch Exception e
-      (println "Caught exception adding new game to Angel Arena history: " (.getMessage e)))))
-
-(defn- get-deck-from-id
-  [db username deck-id]
-  (try
-    (let [map-card (fn [c] (update-in c [:card] @all-cards))
-          unknown-card (fn [c] (nil? (:card c)))]
-      (as-> (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}) d
-        (update-in d [:cards] #(mapv map-card %))
-        (update-in d [:cards] #(vec (remove unknown-card %)))
-        (update-in d [:identity] #(@all-cards (:title %)))
-        (assoc d :status (calculate-deck-status d))))
-    (catch Exception e
-      (println "Caught exception searching for a deck from deck-id: " (.getMessage e)))))
-
-(defn- get-current-deck
-  [db username form side]
-  (let [runs (get-runs db username)
-        deck-id (get-in runs [form side :deck-id])]
-    (get-deck-from-id db username deck-id)))
 
 (defn fetch-runs
   [{db :system/db
@@ -73,18 +33,8 @@
             deck (get-deck-from-id db username deck-id)
             form (keyword (lower-case (get-in deck [:status :format])))
             side (keyword (lower-case (get-in deck [:identity :side])))]
-        (when-not (get-in runs [form side]) ; already running on this side and format
-          (when (get-in deck [:status form :legal]) ; deck is legal in this format
-            (mc/update db "users"
-                       {:username username}
-                       {"$set" {:angelarena-runs
-                                (assoc-in runs [form side]
-                                          {:deck-id deck-id
-                                           :games []
-                                           :run-started (java.util.Date.)})}})
-            (mc/update db "decks"
-                       {:_id (object-id deck-id) :username username}
-                       {"$set" {:locked true}}))))
+        (when-not (get-in runs [form side]) ; when not already running on this side and format
+          (start-run db username runs deck)))
       (catch Exception e
         (println "Caught exception while starting a new run: " (.getMessage e))))))
 
@@ -100,13 +50,7 @@
             form (keyword (lower-case (get-in deck [:status :format])))
             side (keyword (lower-case (get-in deck [:identity :side])))]
         (when (get-in runs [form side]) ; there's a run in this side and format
-          (mc/update db "users"
-                     {:username username}
-                     {"$set" {:angelarena-runs
-                              (assoc-in runs [form side] nil)}})
-          (mc/update db "decks"
-                     {:_id (object-id deck-id) :username username}
-                     {"$set" {:locked false}})))
+          (finish-run db username runs deck)))
       (catch Exception e
         (println "Caught exception while abandoning run: " (.getMessage e))))))
 
@@ -210,8 +154,8 @@
               (add-queue-time player)
               (add-queue-time match)
               (when-let [gameid (str (start-game event (dissoc player :queue-start) (dissoc match :queue-start) form))]
-                (add-new-game db player match gameid)
-                (add-new-game db match player gameid)))
+                (add-new-match db player match gameid)
+                (add-new-match db match player gameid)))
             (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angelarena/dequeue

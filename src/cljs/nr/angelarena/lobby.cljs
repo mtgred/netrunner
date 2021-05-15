@@ -49,19 +49,20 @@
       (pos? minutes) (str minutes " minutes, " seconds " seconds")
       :else (str seconds " seconds"))))
 
+; XXX: Copied from utils.clj.. maybe make cljc
 (defn- get-wins
-  [games side]
+  [{:keys [games side] :as run-info}]
   (count (filter #(= (name side) (:winner %)) games)))
 
 (defn- get-losses
-  [games side]
+  [{:keys [games] :as run-info}]
   (- (count (remove #(nil? (:winner %)) games))
-     (get-wins games side)))
+     (get-wins run-info)))
 
 (defn- deck-view [side s deck]
   (let [run-info (get-in @runs [@chosen-format side])
-        wins (get-wins (:games run-info) side)
-        losses (get-losses (:games run-info) side)
+        wins (get-wins run-info)
+        losses (get-losses run-info)
         time-since-start (- (js/Date.now) (js/Date.parse (:run-started run-info)))
         allowed-days (+ 3 wins losses)]
     [:div.deck
@@ -96,7 +97,10 @@
          [:button.small {:on-click #(do (ws/ws-send! [:angelarena/abandon-run {:deck-id (:_id deck)}])
                                         (fetch-runs))} (tr [:angelarena.are-you-sure-yes "yes"])]
          [:button.small {:on-click #(reset! abandon false)} (tr [:angelarena.are-you-sure-no "no"])]]
-        [:button {:on-click #(reset! abandon true)} (tr [:angelarena.abandon-run "Abandon run"])])]]))
+
+        [cond-button (tr [:angelarena.abandon-run "Abandon run"])
+         (not @queueing)
+         #(reset! abandon true)])]]))
 
 (defn- deck-games [side s deck]
   (let [run-info (get-in @runs [@chosen-format side])]
@@ -152,7 +156,9 @@
     #(reagent-modals/modal!
        [deckselect-modal user {:side side :decks decks}])]])
 
-(defmethod ws/-msg-handler :angelarena/run-update [event]
+(defmethod ws/-msg-handler :angelarena/run-update [{{:keys [finished-run] :as data} :?data}]
+  (when finished-run
+    (println "Run finished :" data "\nWould display dialog box now..."))
   (fetch-runs))
 
 (defn game-panel [decks s user]
@@ -288,7 +294,7 @@
     [:div.game-list
      (if (empty? @filtered-games)
        [:h4 (tr [:angelarena.no-games "No games"])]
-       (let [get-player-wins (fn [game] (map #(get-in % [:run-info :wins]) (:players game)))
+       (let [get-player-wins (fn [game] (map #(get-wins (:run-info %)) (:players game)))
              groups (->> @filtered-games
                          (group-by #(apply max (get-player-wins %)))
                          (sort-by first >))]
