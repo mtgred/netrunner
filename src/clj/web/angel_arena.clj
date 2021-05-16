@@ -8,6 +8,7 @@
             [web.angel-arena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
             [web.game :refer [swap-and-send-diffs!]]
             [web.lobby :refer [all-games client-gameids game-for-id close-lobby refresh-lobby refresh-lobby-assoc-in]]
+            [web.stats :as stats]
             [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -239,6 +240,7 @@
                  (= username (get-in @state [(other-side inactive-side) :user :username])))
         (system-msg state (other-side inactive-side) "claims a victory")
         (win state (other-side inactive-side) "Claim")
+        (stats/game-finished db game)
         (swap-and-send-diffs! game)
         (close-lobby db game)))))
 
@@ -253,5 +255,6 @@
       (when (and (= 2 stage)
                  (= username (get-in @state [(other-side inactive-side) :user :username])))
         (system-msg state (other-side inactive-side) "cancels the match")
+        (stats/game-finished db game)
         (swap-and-send-diffs! game)
         (close-lobby db game)))))
