@@ -1,12 +1,12 @@
 (ns web.angelarena
   (:require [clojure.string :refer [lower-case capitalize]]
-            [game.core.say :refer [unsafe-say]]
+            [game.core.say :refer [system-msg]]
             [game.utils :refer [in-coll?]]
             [jinteki.utils :refer [other-side]]
             [web.angelarena.runs :refer [start-run finish-run add-new-match]]
             [web.angelarena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
             [web.game :refer [swap-and-send-diffs!]]
-            [web.lobby :refer [all-games client-gameids refresh-lobby]]
+            [web.lobby :refer [all-games client-gameids refresh-lobby refresh-lobby-assoc-in game-for-id]]
             [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -18,6 +18,7 @@
                                        (map (fn [form] [form {:corp [] :runner []}])
                                             supported-formats))))
 (defonce inactivity-periods [5 5])
+(defonce max-inactivity-count 3)
 
 (defn fetch-runs
   [{db :system/db
@@ -188,17 +189,39 @@
                       :inactive-side inactive-side
                       :inactive-user inactive-user
                       :warning-time (t/now)
-                      :period-to-react (second inactivity-periods)}))
+                      :period-to-react (second inactivity-periods)})
+              (swap-and-send-diffs! game))
           1 (when-let [{:keys [warning-time period-to-react]} (get-in @state [:angelarena-info :inactivity-warning])]
               (if (t/after? last-update-only-actions warning-time)
                 ; there was an action after the warning
-                (swap! state update-in [:angelarena-info] dissoc :inactivity-warning)
+                (do (swap! state update-in [:angelarena-info] dissoc :inactivity-warning)
+                    (swap-and-send-diffs! game))
                 ; still no action
                 (when (t/after? (t/now) (t/plus warning-time (t/seconds period-to-react)))
                   ; reaction period over
-                  (swap! state assoc-in [:angelarena-info :inactivity-warning :stage] 2))))
+                  (do (swap! state assoc-in [:angelarena-info :inactivity-warning :stage] 2)
+                      (swap-and-send-diffs! game)))))
           (when-let [{:keys [warning-time]} (get-in @state [:angelarena-info :inactivity-warning])]
-            (if (t/after? last-update-only-actions warning-time)
+            (when (t/after? last-update-only-actions warning-time)
               ; there was an action after the warning
-              (swap! state update-in [:angelarena-info] dissoc :inactivity-warning))))
-        (swap-and-send-diffs! game)))))
+              (swap! state update-in [:angelarena-info] dissoc :inactivity-warning)
+              (swap-and-send-diffs! game))))))))
+
+(defmethod ws/-msg-handler :angelarena/more-time
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [gameid]} :?data}]
+  (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
+    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+               (get-in @state [:angelarena-info :inactivity-warning])]
+      (when (and (= username (:username inactive-user))
+                 (pos? (get-in @state [:angelarena-info :inactivity-counter inactive-side] 1)))
+        (swap! state update-in [:angelarena-info :inactivity-counter inactive-side] (fnil dec max-inactivity-count))
+        (system-msg state inactive-side (str "has asked for more time ("
+                                             (get-in @state [:angelarena-info :inactivity-counter inactive-side])
+                                             " remaining)"))
+        (swap! state update :angelarena-info dissoc :inactivity-warning)
+        (swap-and-send-diffs! game)
+        (refresh-lobby-assoc-in (java.util.UUID/fromString gameid) [:last-update] (t/now))
+        (refresh-lobby-assoc-in (java.util.UUID/fromString gameid) [:last-update-only-actions] (t/now))))))
