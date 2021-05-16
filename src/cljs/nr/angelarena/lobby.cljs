@@ -83,23 +83,26 @@
           legal? (fn [deck] (let [form (get-in deck [:status :format])]
                               (get-in deck [:status (keyword form) :legal])))]
       [:div
-       (doall
-         (for [deck (->> @decks
-                         (filter same-side?)
-                         (filter correct-format?)
-                         (filter legal?)
-                         (sort-by :date >))]
-           ^{:key (:_id deck)}
-           [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
-                                                        {:deck-id (:_id deck)}])
-                                          (reagent-modals/close-modal!)
-                                          (fetch-runs))}
-            [:img {:src (image-url (:identity deck))
-                   :alt (get-in deck [:identity :title] "")}]
-            [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
-            [:h4 (:name deck)]
-            [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-            [:p (get-in deck [:identity :title])]]))])]])
+       (let [eligible-decks (->> @decks
+                                 (filter same-side?)
+                                 (filter correct-format?)
+                                 (filter legal?)
+                                 (sort-by :date >))]
+         (if (empty? eligible-decks)
+           [:div.infobox.one-line.blue-shade [:p (tr [:angelarena.no-eligible-decks "No legal decks found for this side and format."])]]
+           (doall
+             (for [deck eligible-decks]
+               ^{:key (:_id deck)}
+               [:div.deckline {:on-click #(do (ws/ws-send! [:angelarena/start-run
+                                                            {:deck-id (:_id deck)}])
+                                              (reagent-modals/close-modal!)
+                                              (fetch-runs))}
+                [:img {:src (image-url (:identity deck))
+                       :alt (get-in deck [:identity :title] "")}]
+                [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
+                [:h4 (:name deck)]
+                [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+                [:p (get-in deck [:identity :title])]]))))])]])
 
 (defn- new-run-button-bar [side decks user]
   [:div.button-bar
