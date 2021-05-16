@@ -7,7 +7,7 @@
             [web.angelarena.runs :refer [start-run finish-run add-new-match]]
             [web.angelarena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
             [web.game :refer [swap-and-send-diffs!]]
-            [web.lobby :refer [all-games client-gameids refresh-lobby refresh-lobby-assoc-in game-for-id]]
+            [web.lobby :refer [all-games client-gameids game-for-id close-lobby refresh-lobby refresh-lobby-assoc-in]]
             [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -239,4 +239,19 @@
                  (= username (get-in @state [(other-side inactive-side) :user :username])))
         (system-msg state (other-side inactive-side) "claims a victory")
         (win state (other-side inactive-side) "Claim")
-        (swap-and-send-diffs! game)))))
+        (swap-and-send-diffs! game)
+        (close-lobby db game)))))
+
+(defmethod ws/-msg-handler :angelarena/cancel-match
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [gameid]} :?data}]
+  (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
+    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+               (get-in @state [:angelarena-info :inactivity-warning])]
+      (when (and (= 2 stage)
+                 (= username (get-in @state [(other-side inactive-side) :user :username])))
+        (system-msg state (other-side inactive-side) "cancels the match")
+        (swap-and-send-diffs! game)
+        (close-lobby db game)))))
