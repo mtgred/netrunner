@@ -182,5 +182,5 @@
                        {:stage 1
                         :inactive-side inactive-side
                         :inactive-user inactive-user
-                        :warning-time (t/now)}))
-          (swap-and-send-diffs! game)))))))
+                        :warning-time (t/now)})))
+          (swap-and-send-diffs! game))))))
