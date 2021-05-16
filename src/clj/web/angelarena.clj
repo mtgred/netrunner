@@ -1,6 +1,7 @@
 (ns web.angelarena
   (:require [clojure.string :refer [lower-case capitalize]]
             [game.core.say :refer [system-msg]]
+            [game.core.winning :refer [win]]
             [game.utils :refer [in-coll?]]
             [jinteki.utils :refer [other-side]]
             [web.angelarena.runs :refer [start-run finish-run add-new-match]]
@@ -225,3 +226,17 @@
         (swap-and-send-diffs! game)
         (refresh-lobby-assoc-in (java.util.UUID/fromString gameid) [:last-update] (t/now))
         (refresh-lobby-assoc-in (java.util.UUID/fromString gameid) [:last-update-only-actions] (t/now))))))
+
+(defmethod ws/-msg-handler :angelarena/claim-victory
+  [{{db :system/db
+     {:keys [username] :as user} :user} :ring-req
+    client-id :client-id
+    {:keys [gameid]} :?data}]
+  (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
+    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+               (get-in @state [:angelarena-info :inactivity-warning])]
+      (when (and (= 2 stage)
+                 (= username (get-in @state [(other-side inactive-side) :user :username])))
+        (system-msg state (other-side inactive-side) "claims a victory")
+        (win state (other-side inactive-side) "Claim")
+        (swap-and-send-diffs! game)))))

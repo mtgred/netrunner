@@ -423,6 +423,7 @@
    :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
    :win-flatlined (fn [[turn]] (str "wins by flatline on turn " turn))
    :win-conceded (fn [[turn]] (str "wins by concession on turn " turn))
+   :win-claimed (fn [[turn]] (str "wins by claim on turn " turn))
    :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))}
    }
    
@@ -1209,6 +1210,7 @@
    :win-decked (fn [[turn]] (str "insway ueday otay ethay Orpcay eingbay eckedday onyay urntay " turn))
    :win-flatlined (fn [[turn]] (str "insway ybay atlineflay onyay urntay " turn))
    :win-conceded (fn [[turn]] (str "insway ybay oncessionay onyay urntay " turn))
+   :win-claimed (fn [[turn]] (str "insway ybay laimcay onyay urntay " turn))
    :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))}
    }})
 
