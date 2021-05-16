@@ -10,6 +10,22 @@
             [reagent.core :as r]))
 
 (defonce loaded-tabs (r/atom {}))
+(defonce available-tabs
+  {:log
+   {:hiccup [log-pane]
+    :label (tr [:log.game-log "Game Log"])}
+
+   :notes
+   {:hiccup [notes-pane]
+    :label (tr [:log.annotating "Annotating"])}
+
+   :notes-shared
+   {:hiccup [notes-shared-pane]
+    :label (tr [:log.shared "Shared Annotations"])}
+
+   :settings
+   {:hiccup [settings-pane]
+    :label (tr [:log.settings "Settings"])}})
 
 (defn- resize-card-zoom []
   "Resizes the card zoom based on the values in the app-state"
@@ -60,25 +76,9 @@
 
 (defn load-tab [tab]
   (let [{:keys [hiccup label]}
-        (case tab
-          :log
-          {:hiccup [log-pane]
-           :label (tr [:log.game-log "Game Log"])}
-
-          :notes
-          {:hiccup [notes-pane]
-           :label (tr [:log.annotating "Annotating"])}
-
-          :notes-shared
-          {:hiccup [notes-shared-pane]
-           :label (tr [:log.shared "Shared Annotations"])}
-
-          :settings
-          {:hiccup [settings-pane]
-           :label (tr [:log.settings "Settings"])}
-
-          {:hiccup [:div.error "This should not happen"]
-           :label "???"})]
+        (get available-tabs tab
+             {:hiccup [:div.error "This should not happen"]
+              :label "???"})]
     (swap! loaded-tabs assoc tab {:hiccup hiccup :label label})))
 
 (defn unload-tab [tab]
