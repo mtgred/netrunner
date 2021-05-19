@@ -114,7 +114,7 @@
         :prompt (str "Select a credit providing card ("
                      counter-count (when (and target-count (pos? target-count))
                                      (str " of " target-count))
-                     " credits)")
+                     " [Credits])")
         :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
         :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                            pay-credits-custom (when (= :custom pay-credits-type)

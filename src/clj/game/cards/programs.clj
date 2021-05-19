@@ -473,7 +473,7 @@
                 :async true
                 ;; Cannot trash unless there are counters (so game state changes)
                 :req (req (pos? (get-counters card :credit)))
-                :msg (msg "gain " (get-counters card :credit) " credits")
+                :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :cost [:trash]
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 

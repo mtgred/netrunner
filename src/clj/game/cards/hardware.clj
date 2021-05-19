@@ -1401,7 +1401,7 @@
              :msg "place 1 [Credits]"
              :effect (req (add-counter state :runner eid card :credit 1 nil))}]
    :abilities [{:cost [:click 1]
-                :label "Gain 1 [Credits]. Take all hosted [Credits]"
+                :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
                 :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (inc (get-counters card :credit))]

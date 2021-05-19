@@ -51,7 +51,7 @@
                    {:async true
                     :effect (req (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
                                    (do
-                                     (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
+                                     (toast state :corp "Cannot afford to pay 1 [Credit] to block card exposure" "info")
                                      (expose state :runner eid (:card context)))
                                    (continue-ability
                                      state side
@@ -1385,15 +1385,15 @@
              :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
-  (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
+  (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
             :player :corp
-            :choices ["Gain 2 credits" "Draw 2 cards"]
-            :msg (msg (if (= target "Gain 2 credits")
-                        "gain 2 credits"
+            :choices ["Gain 2 [Credits]" "Draw 2 cards"]
+            :msg (msg (if (= target "Gain 2 [Credits]")
+                        "gain 2 [Credits]"
                         "draw 2 cards"))
             :async true
             :interactive (req true)
-            :effect (req (if (= target "Gain 2 credits")
+            :effect (req (if (= target "Gain 2 [Credits]")
                            (gain-credits state :corp eid 2)
                            (draw state :corp eid 2 nil)))}]
     {:events [(assoc ab :event :agenda-scored)
