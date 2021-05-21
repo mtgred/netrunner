@@ -295,6 +295,17 @@
   (cloud-icebreaker (auto-icebreaker {:abilities [(break-sub 2 0 ice-type)
                                                   (strength-pump 2 3)]})))
 
+(defn- all-stealth
+  "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
+  [costs]
+  (map #(if (= (cost-name %) :credit) [:credit (value %) (value %)] %) costs))
+
+(defn- min-stealth
+  "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
+  [stealth-requirement]
+  (fn [costs] (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)))
+
+
 ;; Card definitions
 
 (defcard "Abagnale"
@@ -892,7 +903,7 @@
 
 (defcard "Dai V"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                    :abilities [(break-sub 2 0 "All" {:all true})
+                    :abilities [(break-sub 2 0 "All" {:all true :cost-req all-stealth})
                                 (strength-pump 1 1)]}))
 
 (defcard "Darwin"
@@ -1406,7 +1417,7 @@
 
 (defcard "Houdini"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
-                                (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}))
+                                (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Hyperdriver"
   {:flags {:runner-phase-12 (req true)}

@@ -76,11 +76,12 @@
 
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
-  ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
-  ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count (hash-map) 0))
-  ([provider-func outereid target-count selected-cards counter-count]
+  ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (fn [_] 'false) 0 "" (hash-map) 0 0))
+  ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count (fn [_] 'false) 0 "" (hash-map) 0 0))
+  ([provider-func outereid target-count special? special-target special-label] (pick-credit-providing-cards provider-func outereid target-count special? special-target special-label (hash-map) 0 0))
+  ([provider-func outereid target-count special? special-target special-label selected-cards counter-count special-count]
    (let [pay-rest
-         (req (if (<= (- target-count counter-count) (get-in @state [side :credit]))
+         (req (if (and (<= (- target-count counter-count) (get-in @state [side :credit])) (>= special-count special-target))
                 (let [remainder (- target-count counter-count)
                       remainder-str (when (pos? remainder)
                                       (str remainder " [Credits]"))
@@ -102,9 +103,10 @@
                               (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
                 (continue-ability
                   state side
-                  (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
+                  (pick-credit-providing-cards provider-func eid target-count special? special-target special-label selected-cards counter-count special-count)
                   card nil)))
-         provider-cards (provider-func)]
+         special-filter (if (= (- counter-count target-count) (- special-count special-target)) #(filter special? %) identity)
+         provider-cards (special-filter (provider-func))]
      (if (or (not (pos? target-count))        ; there is a limit
              (>= counter-count target-count)  ; paid everything
              (zero? (count provider-cards)))  ; no more additional credit sources found
@@ -114,7 +116,11 @@
         :prompt (str "Select a credit providing card ("
                      counter-count (when (and target-count (pos? target-count))
                                      (str " of " target-count))
-                     " credits)")
+                     " credits"
+                     (if (< 0 (- special-target special-count))
+                        (str ", " (- special-target special-count) " " special-label)
+                        "")
+                     ")")
         :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
         :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                            pay-credits-custom (when (= :custom pay-credits-type)
@@ -135,7 +141,8 @@
                                                   ;; Store card reference and number of counters picked
                                                   ;; Overwrite card reference each time
                                                   #(assoc % :card target :number (inc (:number % 0))))
-                           counter-count (+ counter-count gained-credits)]
+                           counter-count (+ counter-count gained-credits)
+                           special-count (+ special-count (if (special? target) gained-credits 0))]
                        (if (= :custom pay-credits-type)
                          ; custom functions should be a 5-arg fn that returns an ability that provides the number of credits as async-result
                          (let [neweid (make-eid state outereid)
@@ -143,13 +150,14 @@
                            (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
                                      (continue-ability state side
                                                        (pick-credit-providing-cards
-                                                         provider-func eid target-count
+                                                         provider-func eid target-count special? special-target special-label
                                                          (update selected-cards (:cid providing-card)
                                                                  ;; correct credit count
                                                                  #(assoc % :card target :number (+ (:number % 0) (dec async-result))))
-                                                         (min (+ counter-count async-result) target-count))
+                                                         (min (+ counter-count async-result) target-count)
+                                                         (min (+ special-count (if (special? providing-card) async-result 0) special-target)))
                                                        card targets)))
                          (continue-ability state side
-                                           (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
+                                           (pick-credit-providing-cards provider-func eid target-count special? special-target special-label selected-cards counter-count special-count)
                                            card nil))))
         :cancel-effect pay-rest}))))

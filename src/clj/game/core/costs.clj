@@ -98,21 +98,36 @@
                    (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
           (reduce +))))
 
+(defn- eligible-pay-stealth-credit-cards
+  [state side eid card]
+  (filter #(has-subtype? % "Stealth") (eligible-pay-credit-cards state side eid card)))
+
+(defn- total-available-stealth-credits
+  [state side eid card]
+  (->> (eligible-pay-stealth-credit-cards state side eid card)
+          (map #(+ (get-counters % :recurring)
+                   (get-counters % :credit)
+                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
+          (reduce +)))
+
+
 ;; Credit
 (defmethod cost-name :credit [_] :credit)
 (defmethod value :credit [[_ cost-value]] cost-value)
+(defn- stealth-value [[_ __ stealth-value]] (if (nil? stealth-value) 0 stealth-value))
 (defmethod label :credit [cost] (str (value cost) " [Credits]"))
 (defmethod payable? :credit
   [cost state side eid card]
-  (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
-      (<= 0 (- (total-available-credits state side eid card) (value cost)))))
+  (and (<= 0 (- (total-available-stealth-credits state side eid card) (stealth-value cost)))
+    (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
+        (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit
   [cost state side eid card actions]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
     (cond
       (and (pos? (value cost))
            (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost)) card nil)
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost) #(has-subtype? % "Stealth") (stealth-value cost) "stealth") card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                 (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                       :type :credit

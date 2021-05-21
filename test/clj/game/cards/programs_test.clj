@@ -1690,8 +1690,74 @@
                            (card-ability state :runner daiv 0)
                            (click-prompt state :runner "Force the Runner to lose 1 [Click]")
                            (click-prompt state :runner "End the run")
+                           (is (clojure.string/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
                            (click-card state :runner cl1)
-                           (click-card state :runner cl2))))))
+                           (click-card state :runner cl2)))))
+  (testing "Can't pay with a non-stealth source"
+    (do-game
+      (new-game {:corp {:deck ["Enigma"]}
+                 :runner {:deck ["Multithreader" "Dai V"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Multithreader")
+      (play-from-hand state :runner "Dai V")
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            mt (get-program state 0)
+            daiv (get-program state 1)]
+        (rez state :corp enig)
+        (run-continue state)
+        (card-ability state :runner daiv 1)
+        (click-prompt state :runner "Done")
+        (card-ability state :runner daiv 0)
+        (is (nil? (prompt-map :runner)) "We are incapable of paying"))))
+  (testing "Can't pay from credit pool"
+    (do-game
+      (new-game {:corp {:deck ["Enigma"]}
+                 :runner {:deck ["Dai V"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Dai V")
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            daiv (get-program state 0)]
+        (rez state :corp enig)
+        (run-continue state)
+        (card-ability state :runner daiv 1)
+        (changes-val-macro 0 (:credit (get-runner))
+          "Credits are not taken from the pool"
+          (card-ability state :runner daiv 0)))))
+  (testing "Additional costs are also stealth"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Midway Station Grid"]}
+                 :runner {:deck [(qty "Cloak" 2) "Dai V"]}})
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Midway Station Grid" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Dai V")
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            cl1 (get-program state 0)
+            cl2 (get-program state 1)
+            daiv (get-program state 2)]
+        (rez state :corp enig)
+        (run-continue state)
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit to pump and 2 credits from Cloaks to break"
+                           (card-ability state :runner daiv 1)
+                           (click-prompt state :runner "Done")
+                           (card-ability state :runner daiv 0)
+                           (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+                           (click-prompt state :runner "End the run")
+                           (is (nil? (prompt-map :runner)) "We are incapable of paying")
+                           (is (= 0 (count (filter :broken (:subroutines (refresh enig))))) "No subroutines were broken"))))))
 
 (deftest darwin
   ;; Darwin - starts at 0 strength
@@ -2641,6 +2707,30 @@
       (trash state :runner (-> (get-runner) :rig :program first))
       (is (zero? (count (:discard (get-runner)))) "Harbinger not in heap")
       (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown"))))
+
+(deftest houdini
+  ;; Houdini
+  (testing "Must use a single stealth credit to pump"
+    (do-game (new-game {:runner {:deck ["Houdini" "Cloak"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Houdini")
+      (play-from-hand state :runner "Cloak")
+      (let [houdini (get-program state 0) cloak (get-program state 1)]
+        (changes-val-macro 4 (get-strength houdini)
+          "Houdini gains strength"
+          (card-ability state :runner houdini 1)
+          (click-card state :runner cloak)))))
+  (testing "Can't pump without a stealth credit"
+    (do-game (new-game {:runner {:deck ["Houdini"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Houdini")
+      (let [houdini (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+          "Runner has not been charged"
+          (card-ability state :runner houdini 1))
+        (changes-val-macro 0 (get-strength houdini)
+          "Strength has not been changed"
+          (card-ability state :runner houdini 1))))))
 
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks

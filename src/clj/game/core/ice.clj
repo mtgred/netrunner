@@ -482,7 +482,7 @@
                                                                 card ice))
                            message (when (seq broken-subs)
                                      (break-subroutines-msg ice broken-subs breaker args))]
-                       (wait-for (pay state side (make-eid state {:source-type :ability}) card total-cost)
+                       (wait-for (pay state side (make-eid state {:source card :source-info {:ability-idx (:ability-idx args) }  :source-type :ability}) card total-cost)
                                  (if-let [payment-str (:msg async-result)]
                                    (do (when (not (string/blank? message))
                                          (system-msg state :runner (str payment-str " to " message)))
@@ -545,6 +545,7 @@
         :break n
         :breaks subtype
         :break-cost cost
+        :cost-req (:cost-req args)
         :additional-ability (:additional-ability args)
         :label (str (or (:label args)
                         (str "break "
@@ -560,7 +561,7 @@
                                             state side
                                             (assoc args :cost cost :broken-subs (take n (:subroutines current-ice)))
                                             card current-ice))
-                            (break-subroutines current-ice card cost n args))
+                            (break-subroutines current-ice card cost n (assoc args :ability-idx (:ability-idx (:source-info eid)))))
                           card nil))}))))
 
 (defn strength-pump
@@ -585,6 +586,7 @@
                 " to " (+ strength (get-strength card))
                 duration-string)
       :cost cost
+      :cost-req (:cost-req args)
       :pump strength
       :effect (effect (pump card strength duration))})))
 

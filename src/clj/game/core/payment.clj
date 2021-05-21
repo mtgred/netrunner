@@ -91,7 +91,9 @@
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         costs (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
+         cost-req (if (nil? (:ability-idx (:source-info eid))) nil (:cost-req (nth (:abilities (:source eid)) (:ability-idx (:source-info eid)))))
+         cost-filter (if (fn? cost-req) cost-req identity)
+         costs (cost-filter (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost))]
      (if (every? #(and (not (flag-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
