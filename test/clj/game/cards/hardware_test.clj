@@ -2042,7 +2042,41 @@
       (changes-val-macro
         -2 (:credit (get-runner))
         "Triggers only on Companions"
-        (play-from-hand state :runner "Corroder")))))
+        (play-from-hand state :runner "Corroder"))))
+  (testing "Issue #5892: Does not fire a second time"
+    (testing "when a companion is installed and then credits from a companion are used"
+      (do-game
+        (new-game {:runner {:hand ["Keiko" "Trickster Taka"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Keiko")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Got 1c back from installing Trickster Taka"
+                           (play-from-hand state :runner "Trickster Taka"))
+        (let [tt (get-resource state 0)]
+          (core/add-counter state :runner (refresh tt) :credit 1)
+          (run-on state "HQ")
+          (changes-val-macro 1 (:credit (get-runner))
+                             "Only got 1c for using Trickster Taka"
+                             (card-ability state :runner tt 0)))))
+    (testing "when credits from a companion are used and then a companion is installed"
+      (do-game
+        (new-game {:runner {:hand ["Keiko" "Trickster Taka" "Mystic Maemi"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Keiko")
+        (play-from-hand state :runner "Trickster Taka")
+        (let [tt (get-resource state 0)]
+          (core/add-counter state :runner (refresh tt) :credit 1)
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (run-on state "HQ")
+          (changes-val-macro 2 (:credit (get-runner))
+                             "Got 1c from Keiko for using Trickster Taka"
+                             (card-ability state :runner tt 0))
+          (changes-val-macro -1 (:credit (get-runner))
+                             "Did not get 1c back from installing Mystic Maemi"
+                             (play-from-hand state :runner "Mystic Maemi")))))))
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program

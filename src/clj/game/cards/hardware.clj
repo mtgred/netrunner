@@ -942,10 +942,12 @@
    :events [{:event :spent-credits-from-card
              :req (req (and (not (facedown? target))
                             (has-subtype? target "Companion")
-                            (let [f #(and (not (facedown? (first %)))
-                                          (has-subtype? (first %) "Companion"))]
-                              (= 1 (+ (event-count state :runner :spent-credits-from-card f)
-                                      (event-count state :runner :runner-install f))))))
+                            (= 1 (+ (event-count state :runner :spent-credits-from-card
+                                                 #(and (not (facedown? (first %)))
+                                                       (has-subtype? (first %) "Companion")))
+                                    (event-count state :runner :runner-install
+                                                 #(and (not (:facedown (first %)))
+                                                       (has-subtype? (:card (first %)) "Companion")))))))
              :msg "gain 1 [Credit]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}
