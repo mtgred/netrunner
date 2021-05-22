@@ -1469,9 +1469,24 @@
                                            (effect-completed state :corp eid)))
                             :cancel-effect (effect (shuffle! :deck)
                                                    (effect-completed eid))
-                            :msg (msg "add "
-                                      (str (string/join ", " (map :title targets)))
-                                      " to R&D")}
+                            :msg (msg
+                                   "shuffle "
+                                   (string/join
+                                     " and "
+                                     (filter identity
+                                             [(when-let [h (->> targets
+                                                                (filter in-hand?)
+                                                                (map :title)
+                                                                not-empty)]
+                                                (str (enumerate-str h)
+                                                     " from HQ"))
+                                              (when-let [d (->> targets
+                                                                (filter in-discard?)
+                                                                (map :title)
+                                                                not-empty)]
+                                                (str (enumerate-str d)
+                                                     " from Archives"))]))
+                                   " into R&D")}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
                              :effect (req (wait-for (resolve-ability state side draw-ab card nil)
