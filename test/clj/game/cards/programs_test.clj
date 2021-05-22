@@ -2438,7 +2438,7 @@
         "Strength was not increased"
         (card-ability state :runner fawkes 1)
         (is (empty? (:prompt (get-runner))) "Not asked how many credits to pay")))))
-  (comment testing "Charges the correct amount"
+  (testing "Charges the correct amount"
     (do-game (new-game {:runner {:hand ["Fawkes" "Cloak"] :credits 20}})
     (take-credits state :corp)
     (play-from-hand state :runner "Fawkes")
