@@ -408,7 +408,20 @@
       (is (= 3 (core/available-mu state)))
       (let [atman (get-program state 0)]
         (is (= 2 (get-counters atman :power)) "2 power counters")
-        (is (= 2 (get-strength atman)) "2 current strength")))))
+        (is (= 2 (get-strength atman)) "2 current strength"))))
+  (testing "Paying for install with multithreader"
+    (do-game
+      (new-game {:runner {:deck ["Atman" "Multithreader"] :credits 8}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Multithreader")
+      (play-from-hand state :runner "Atman")
+      (click-prompt state :runner "4")
+      (click-card state :runner (get-program state 0))
+      (click-card state :runner (get-program state 0))
+      (is (= 2 (core/available-mu state)))
+      (let [atman (get-program state 1)]
+        (is (= 4 (get-counters atman :power)) "4 power counters")
+        (is (= 4 (get-strength atman)) "4 current strength")))))
 
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out

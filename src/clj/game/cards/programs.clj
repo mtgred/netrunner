@@ -407,12 +407,11 @@
                                               (continue :runner nil))}]}))
 
 (defcard "Atman"
-  {:on-install {:prompt "How many power counters?"
-                :choices {:number (req (total-available-credits state :runner eid card))}
-                :msg (msg "add " target " power counters")
-                :async true
-                :effect (effect (add-counter card :power target)
-                                (lose-credits eid target))}
+  {:on-install {:effect (effect
+                          (continue-ability {:eid (assoc eid :source-type :ability :source card)
+                                             :cost [:x-credits]
+                                             :msg (msg "add " (cost-value eid :x-credits) " power counters")
+                                             :effect (effect (add-counter card :power (cost-value eid :x-credits)))} card targets))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
    :strength-bonus (req (get-counters card :power))})
 
