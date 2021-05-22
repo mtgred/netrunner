@@ -2031,7 +2031,7 @@
                         :label "Remove 1 counter from a hosted card"
                         :cost [:credit 1])
                  {:async true
-                  :label "X[Credit]: Remove counters from a hosted card"
+                  :label "X [Credit]: Remove counters from a hosted card"
                   :choices {:card #(:host %)}
                   :req (req (not (empty? (:hosted card))))
                   :effect (effect

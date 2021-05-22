@@ -2529,7 +2529,7 @@
                        state side
                        {:async true
                         :prompt (str "Select a program with an install cost of no more than "
-                                     exceed "[Credits]")
+                                     exceed " [Credits]")
                         :choices {:card #(and (program? %)
                                               (installed? %)
                                               (>= exceed (:cost %)))}

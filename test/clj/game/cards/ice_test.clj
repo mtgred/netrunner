@@ -153,7 +153,7 @@
           (card-ability state :runner cor 0)
           (click-prompt state :runner "End the run")
           (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
-          (click-prompt state :runner "Gain 1[Credit]. Place 1 advancement token.")
+          (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token.")
           (is (empty? (:prompt (get-runner))) "Prompt now closed")
           (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
           (run-jack-out state)

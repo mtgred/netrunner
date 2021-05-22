@@ -1679,7 +1679,7 @@
               :async true
               :once :per-turn
               :yes-ability
-              {:msg (msg "gain " (total-cards-accessed context) "[Credits]")
+              {:msg (msg "gain " (total-cards-accessed context) " [Credits]")
                :once :per-turn
                :async true
                :effect (req (gain-credits state :runner eid (total-cards-accessed context)))}}}]})
