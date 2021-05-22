@@ -2361,6 +2361,22 @@
         (click-card state :runner "Armitage Codebusting")
         (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource")))))
 
+(deftest fawkes
+  ;; Fawkes
+  (testing "Costs the correct amount to pump"
+    (do-game (new-game {:runner {:hand ["Fawkes"] :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fawkes")
+    (let [fawkes (get-program state 0)]
+      (changes-val-macro 3 (get-strength (refresh fawkes))
+        "Strength was increased"
+        (card-ability state :runner fawkes 1)
+        (click-prompt state :runner "3"))
+      (changes-val-macro -3 (:credit (get-runner))
+        "Runner was charged correctly"
+        (card-ability state :runner fawkes 1)
+        (click-prompt state :runner "3"))))))
+
 (deftest femme-fatale
   ;; Femme Fatale
   (testing "Bypass functionality"
