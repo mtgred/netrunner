@@ -1,5 +1,6 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
+            [game.core.cost-fns :refer [all-stealth min-stealth]]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
             [clojure.string :as string]))
@@ -295,17 +296,6 @@
   (cloud-icebreaker (auto-icebreaker {:abilities [(break-sub 2 0 ice-type)
                                                   (strength-pump 2 3)]})))
 
-(defn- all-stealth
-  "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
-  [costs]
-  (map #(if (= (cost-name %) :credit) [:credit (value %) (value %)] %) costs))
-
-(defn- min-stealth
-  "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
-  [stealth-requirement]
-  (fn [costs] (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)))
-
-
 ;; Card definitions
 
 (defcard "Abagnale"
@@ -318,8 +308,7 @@
                         1 "Sentry")]))
 
 (defcard "Afterimage"
-  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                    :events [{:event :encounter-ice
+  (auto-icebreaker {:events [{:event :encounter-ice
                               :interactive (req true)
                               :optional
                               {:req (req (and (has-subtype? (:ice context) "Sentry")
@@ -333,11 +322,12 @@
                                   (continue-ability
                                     {:eid (assoc eid :source-type :ability)
                                      :cost [:credit 2]
+                                     :cost-req all-stealth
                                      :msg (msg "bypass " (:title (:ice context)))
                                      :effect (req (bypass-ice state))}
                                     card targets))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
-                                (strength-pump 1 2)]}))
+                                (strength-pump 1 2 {:cost-req (min-stealth 1)})]}))
 
 (defcard "Aghora"
   (swap-with-in-hand "Aghora"
@@ -544,13 +534,13 @@
 (defcard "BlacKat"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 1 "Barrier")
-                                (break-sub 1 3 "Barrier" {:label "break up to 3 Barrier subroutines (using a stealth [Credits])"})
+                                (break-sub 1 3 "Barrier" {:label "break up to 3 Barrier subroutines (using a stealth [Credits])" :cost-req (min-stealth 1)})
                                 (strength-pump 2 1)
-                                (strength-pump 2 2 :end-of-encounter {:label "add 2 strength (using at least 1 stealth [Credits])"})]}))
+                                (strength-pump 2 2 :end-of-encounter {:label "add 2 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Blackstone"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
-                                (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}))
+                                (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Botulus"
   {:data {:counter {:virus 1}}
@@ -897,13 +887,11 @@
      :abilities [(break-sub [:power 1] 1 "All" {:req david-req})]}))
 
 (defcard "Dagger"
-  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                    :abilities [(break-sub 1 1 "Sentry")
-                                (strength-pump 1 5)]}))
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
+                                (strength-pump 1 5 {:cost-req (min-stealth 1)})]}))
 
 (defcard "Dai V"
-  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                    :abilities [(break-sub 2 0 "All" {:all true :cost-req all-stealth})
+  (auto-icebreaker {:abilities [(break-sub 2 0 "All" {:all true :cost-req all-stealth})
                                 (strength-pump 1 1)]}))
 
 (defcard "Darwin"
@@ -1216,10 +1204,10 @@
                (strength-pump [:trash-from-hand 1] 2)]})
 
 (defcard "Fawkes"
-  {:implementation "Stealth credit restriction not enforced"
-   :abilities [(break-sub 1 1 "Sentry")
+  {:abilities [(break-sub 1 1 "Sentry")
                {:label "+X strength for the remainder of the run (using at least 1 stealth [Credits])"
                 :cost [:x-credits]
+                :cost-req (min-stealth 1)
                 :prompt "How many credits?"
                 :effect (effect
                           (continue-ability
@@ -2019,7 +2007,7 @@
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
                                 (break-sub 1 1 "Code Gate")
-                                (strength-pump 1 3)]}))
+                                (strength-pump 1 3 {:cost-req (min-stealth 1)})]}))
 
 (defcard "Peregrine"
   (return-and-derez (break-sub 1 1 "Code Gate")
@@ -2130,7 +2118,7 @@
 (defcard "Refractor"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 1 "Code Gate")
-                                (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])"})]}))
+                                (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
@@ -2440,7 +2428,7 @@
 (defcard "Switchblade"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                     :abilities [(break-sub 1 0 "Sentry" {:label "break any number of Sentry subroutines (using 1 stealth [Credits])"})
-                                (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])"})]}))
+                                (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Takobi"
   {:events [{:event :subroutines-broken
