@@ -118,7 +118,7 @@
 (defmethod payable? :credit
   [cost state side eid card]
   (and (<= 0 (- (total-available-stealth-credits state side eid card) (stealth-value cost)))
-       (<= (stealth-value cost) (value cost))
+       (<= 0 (- (value cost) (stealth-value cost)))
        (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
            (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit

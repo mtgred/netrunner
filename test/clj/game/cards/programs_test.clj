@@ -2752,7 +2752,7 @@
       (play-from-hand state :runner "Houdini")
       (play-from-hand state :runner "Cloak")
       (let [houdini (get-program state 0) cloak (get-program state 1)]
-        (changes-val-macro 4 (get-strength houdini)
+        (changes-val-macro 4 (get-strength (refresh houdini))
           "Houdini gains strength"
           (card-ability state :runner houdini 1)
           (click-card state :runner cloak)))))

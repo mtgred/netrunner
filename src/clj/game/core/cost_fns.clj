@@ -144,5 +144,5 @@
   [stealth-requirement]
   (fn [costs]
     (if (some #(= (cost-name %) :credit) costs)
-      (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement]) costs)
-      (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement]) costs))))
+      (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)
+      (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement] %) costs))))
