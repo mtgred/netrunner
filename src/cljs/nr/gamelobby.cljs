@@ -100,7 +100,7 @@
   (authenticated
     (fn [user]
       (let [fmt (:format (:create-game-deck @app-state) "standard")
-            side (:side (:identity (:create-game-deck @app-state)) "Corp")]
+            side (:side (:identity (:create-game-deck @app-state)) "Any Side")]
         (swap! s assoc
                :title (str (:username user) "'s game")
                :side side
@@ -454,7 +454,7 @@
         [:section
          [:h3 (tr [:lobby.side "Side"])]
          (doall
-           (for [option ["Corp" "Runner"]]
+           (for [option ["Any Side" "Corp" "Runner"]]
              ^{:key option}
              [:p
               [:label [:input {:type "radio"
@@ -586,7 +586,7 @@
                         (tr [:lobby.deck-selected "Deck selected"]))]])
                   (when-let [deck (:deck player)]
                     [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
-                  (when this-player
+                  (when (and this-player (not (= (:side player) (tr-side "Any Side"))))
                     [:span.fake-link.deck-load
                      {:on-click #(reagent-modals/modal!
                                    [deckselect-modal user {:games games :gameid gameid

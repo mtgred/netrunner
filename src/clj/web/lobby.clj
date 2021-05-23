@@ -206,6 +206,14 @@
   [{:keys [username]} {:keys [players spectators]}]
   (some #(= username (get-in % [:user :username])) (concat players spectators)))
 
+(defn get-remaining-player-with-side
+  "Gets the other player in the game. If that player has not picked a side then randomly select one for that player."
+  [{:keys [username]} {:keys [players]}]
+  (let [remaining-player (first (remove #(= username (get-in % [:user :username])) players))]
+    (if (= (:side remaining-player) "Any Side")
+      (assoc remaining-player :side (rand-nth ["Corp" "Runner"]))
+      remaining-player)))
+
 (defn join-game
   "Adds the given user as a player in the given gameid."
   [{:keys [username] :as user} client-id gameid]
@@ -213,7 +221,7 @@
         existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
     (when (or (< existing-players-count 2)
               (already-in-game? user game))
-      (let [remaining-player (first (remove #(= username (get-in % [:user :username])) players))
+      (let [remaining-player (get-remaining-player-with-side user game)
             side (:side remaining-player)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
