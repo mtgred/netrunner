@@ -117,8 +117,8 @@
                      counter-count (when (and target-count (pos? target-count))
                                      (str " of " target-count))
                      " credits"
-                     (if (< 0 (- special-target special-count))
-                        (str ", " (- special-target special-count) " " special-label)
+                     (if (< 0 special-target)
+                        (str ", " (min special-count special-target) " of " special-target " " special-label)
                         "")
                      ")")
         :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
