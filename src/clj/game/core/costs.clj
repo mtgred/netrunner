@@ -21,6 +21,9 @@
     [game.utils :refer [quantify]]
     [clojure.string :as string]))
 
+;; Zero stealth value for costs where it doesn't make sense
+(defmethod stealth-value :default [_] nil)
+
 ;; Click
 (defmethod cost-name :click [_] :click)
 (defmethod value :click [[_ cost-value]] cost-value)

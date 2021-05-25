@@ -137,7 +137,7 @@
 (defn all-stealth
   "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
   [costs]
-  (map #(if (= (cost-name %) :x-credits) [:x-credits nil -1] %) (map #(if (= (cost-name %) :credit) [:credit (value %) (value %)] %) costs)))
+  (mapv #(condp = (cost-name %) :x-credits [:x-credits nil -1] :credit [:credit (value %) (value %)] %) costs))
 
 (defn min-stealth
   "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
