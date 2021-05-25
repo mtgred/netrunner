@@ -21,9 +21,6 @@
     [game.utils :refer [quantify]]
     [clojure.string :as string]))
 
-;; Zero stealth value for costs where it doesn't make sense
-(defmethod stealth-value :default [_] nil)
-
 ;; Click
 (defmethod cost-name :click [_] :click)
 (defmethod value :click [[_ cost-value]] cost-value)
@@ -108,15 +105,17 @@
 (defn- total-available-stealth-credits
   [state side eid card]
   (->> (eligible-pay-stealth-credit-cards state side eid card)
-          (map #(+ (get-counters % :recurring)
-                   (get-counters % :credit)
-                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
-          (reduce +)))
+       (map #(+ (get-counters % :recurring)
+                (get-counters % :credit)
+                (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
+       (reduce +)))
 
 ;; Credit
 (defmethod cost-name :credit [_] :credit)
 (defmethod value :credit [[_ cost-value]] cost-value)
-(defmethod stealth-value :credit [[_ __ stealth-amount]] (if (nil? stealth-amount) 0 stealth-amount))
+;; Zero stealth value for costs where it doesn't make sense
+(defmethod stealth-value :default [_] 0)
+(defmethod stealth-value :credit [[_ __ stealth-amount]] (or stealth-amount 0))
 (defmethod label :credit [cost] (str (value cost) " [Credits]"))
 (defmethod payable? :credit
   [cost state side eid card]
@@ -155,7 +154,7 @@
 (defmethod cost-name :x-credits [_] :x-credits)
 (defmethod value :x-credits [_] 0)
 ;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
-(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (if (nil? stealth-amount) 0 stealth-amount)) 
+(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0)
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]
