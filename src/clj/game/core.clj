@@ -733,7 +733,8 @@
   [game.core.virus
    count-virus-programs
    get-virus-counters
-   number-of-virus-counters]
+   number-of-virus-counters
+   number-of-runner-virus-counters]
 
   [game.core.winning
    check-win-by-agenda

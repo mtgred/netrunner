@@ -1312,7 +1312,20 @@
         (click-prompt state :runner "[Freedom Khumalo] Trash card")
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
         (click-card state :runner (refresh sandstone))
-        (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone should still have 1 virus counter")))))
+        (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone should still have 1 virus counter"))))
+  (testing "Ability activation trigger only counts Runner virus counters"
+    (do-game
+      (new-game {:runner {:id "Freedom Khumalo: Crypto-Anarchist"}
+                 :corp {:deck ["Sandstone" "Ice Wall"]}})
+      (play-from-hand state :corp "Sandstone" "R&D")
+      (let [sandstone (get-ice state :rd 0)]
+        (rez state :corp sandstone)
+        (core/add-counter state :corp sandstone :virus 1)
+        (take-credits state :corp)
+        (run-empty-server state "HQ")
+        (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
+        (is (= 1 (count (prompt-buttons :runner))) "Should only have 1 option")
+        (is (= ["No action"] (prompt-buttons :runner)) "Only option should be 'Done'")))))
 
 (deftest gabriel-santiago-consummate-professional
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
