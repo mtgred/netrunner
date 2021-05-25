@@ -40,6 +40,7 @@
                                 (= "Hivemind" (:title %)))
                             true)
                           (installed? %)
+                          (= "Runner" (:side %))
                           (pos? (get-counters % :virus)))}
     :effect (req (let [target (update! state :runner (update-in target [:counter :virus] dec))
                        selected-cards (update selected-cards (:cid target)
