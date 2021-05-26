@@ -76,11 +76,8 @@
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and (most of the) task namespaces.
-  :aot [#"game\.*"
-        #"web\.*"
-        #"tasks.fetch"
-        #"jinteki\.*"
-        #"web.core"]
+  :aot [#"web.core"
+        #"tasks.fetch"]
   :jar-name "netrunner.jar"
   :jar-exclusions [#"public/img/cards/*"]
   :uberjar-name "netrunner-standalone.jar"
