@@ -2494,25 +2494,26 @@
    {:req (req (let [advanceable (some can-be-advanced? (get-all-installed state))
                     advanced (some #(get-counters % :advancement) (get-all-installed state))]
                 (and advanceable advanced)))
-    :choices {:card #(and (pos? (get-counters % :advancement))
-                          (installed? %))}
+    :choices {:card can-be-advanced?}
     :async true
     :effect (effect
               (continue-ability
-                (let [fr target]
+                (let [card-to-advance target]
                   {:async true
-                   :prompt "Move how many advancement tokens?"
-                   :choices (take (inc (get-counters fr :advancement)) ["0" "1" "2"])
+                   :prompt "Move from where?"
+                   :choices {:card #(and (not (same-card? card-to-advance %))
+                                         (pos? (get-counters % :advancement))
+                                         (installed? %))}
                    :effect (effect
                              (continue-ability
-                               (let [c (str->int target)]
-                                 {:prompt "Move to where?"
-                                  :choices {:card #(and (not (same-card? fr %))
-                                                        (can-be-advanced? %))}
-                                  :msg (msg "move " c " advancement tokens from "
-                                            (card-str state fr) " to " (card-str state target))
-                                  :effect (effect (add-prop :corp target :advance-counter c {:placed true})
-                                                  (add-prop :corp fr :advance-counter (- c) {:placed true}))})
+                               (let [card-to-take target]
+                                 {:async true
+                                  :prompt "Move how many advancement tokens?"
+                                  :choices (take (inc (get-counters card-to-take :advancement)) ["0" "1" "2"])
+                                  :msg (msg "move " (str->int target) " advancement tokens from "
+                                            (card-str state card-to-take) " to " (card-str state card-to-advance))
+                                  :effect (effect (add-prop :corp card-to-advance :advance-counter (str->int target) {:placed true})
+                                                  (add-prop :corp card-to-take :advance-counter (- (str->int target)) {:placed true}))})
                                card nil))})
                 card nil))}})
 
