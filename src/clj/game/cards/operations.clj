@@ -2511,7 +2511,7 @@
                                (let [source target]
                                  {:prompt "Choose number of counters"
                                   :choices (take (inc (get-counters source :advancement)) ["0" "1" "2"])
-                                  :msg (msg "move " target " advancement tokens from "
+                                  :msg (msg "move " target " advancement counters from "
                                             (card-str state source) " to " (card-str state card-to-advance))
                                   :effect (effect (add-prop :corp card-to-advance :advance-counter (str->int target) {:placed true})
                                                   (add-prop :corp source :advance-counter (- (str->int target)) {:placed true}))})
