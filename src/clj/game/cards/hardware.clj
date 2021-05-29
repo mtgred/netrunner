@@ -279,7 +279,7 @@
      :effect (effect (trash eid (assoc target :seen true) {:accessed true}))}}})
 
 (defcard "Chop Bot 3000"
-  {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
+  {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
    :abilities [{:req (req (:runner-phase-12 @state))
                 :label "trash and draw or remove tag"
                 :choices {:card #(and (runner? %)

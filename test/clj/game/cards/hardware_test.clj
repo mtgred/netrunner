@@ -945,21 +945,28 @@
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
-    (new-game {:runner {:deck ["Chop Bot 3000" "Spy Camera"]}})
-    (take-credits state :corp)
+    (new-game {:runner {:deck ["Chop Bot 3000" (qty "Spy Camera" 3)]}})
     (core/gain state :runner :tag 2)
+    (take-credits state :corp)
     (play-from-hand state :runner "Chop Bot 3000")
-    (play-from-hand state :runner "Spy Camera")
-    (is (= 2 (count-tags state)) "Runner has 2 tags")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (:runner-phase-12 @state) "Runner in Step 1.2")
-    (let [cb (get-hardware state 0)]
+    (is (nil? (:runner-phase-12 @state)) "Does not trigger with no other cards installed")
+    (play-from-hand state :runner "Spy Camera")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (true? (:runner-phase-12 @state)) "Does trigger when one other card is installed")
+    (play-from-hand state :runner "Spy Camera")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (true? (:runner-phase-12 @state)) "Does trigger when two other cards are installed")
+    (is (= 2 (count-tags state)) "Runner has 2 tags")
+    (let [chop-bot (get-hardware state 0)]
       (is (empty? (:discard (get-runner))) "No cards in trash")
-      (card-ability state :runner cb 0)
+      (card-ability state :runner chop-bot 0)
       (click-card state :runner (find-card "Spy Camera" (get-hardware state)))
       (click-prompt state :runner "Remove 1 tag")
-      (is (= 1 (count (:discard (get-runner)))) "Spy Camera trashed")
+      (is (find-card "Spy Camera" (:discard (get-runner))) "Spy Camera trashed")
       (is (= 1 (count-tags state)) "Runner lost 1 tag")
       (end-phase-12 state :runner))))
 
