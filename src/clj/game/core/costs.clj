@@ -129,7 +129,7 @@
     (cond
       (and (pos? (value cost))
            (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost) #(has-subtype? % "Stealth") (stealth-value cost) "stealth") card nil)
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost) (stealth-value cost)) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                 (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                       :type :credit
@@ -154,7 +154,7 @@
 (defmethod cost-name :x-credits [_] :x-credits)
 (defmethod value :x-credits [_] 0)
 ;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
-(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0)
+(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0))
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]
@@ -175,7 +175,7 @@
          (cond
            (and (pos? cost)
                 (pos? (count (provider-func))))
-           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost #(has-subtype? % "Stealth") stealth-value "stealth") card nil)
+           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost stealth-value) card nil)
                      (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
                      (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                            :type :x-credits
