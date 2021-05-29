@@ -34,7 +34,7 @@
      :value [:regular delta]})
   (update-mu state)
   (system-msg state side
-              (str "sets unused MU to " (available-mu state)
+              (str "sets unused [mu] to " (available-mu state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags

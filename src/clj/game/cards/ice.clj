@@ -957,7 +957,7 @@
    :strength-bonus (req (if (some #(has-subtype? % "AI") (all-active-installed state :runner)) 3 0))})
 
 (defcard "Cortex Lock"
-  {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
+  {:subroutines [{:label "Do 1 net damage for each unused [mu] the Runner has"
                   :msg (msg "do " (available-mu state) " net damage")
                   :effect (effect (damage eid :net (available-mu state) {:card card}))}]})
 
