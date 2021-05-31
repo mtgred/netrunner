@@ -54,7 +54,20 @@
   ; Don't clear :turn-events until the player clicks "Start Turn"
   ; Fix for Hayley triggers
   (swap! state assoc :turn-events nil)
-
+  (doseq [card (all-active-installed state :runner)]
+    ;; Clear :installed :this-turn as turn has ended
+    (when (= :this-turn (installed? card))
+      (update! state side (assoc (get-card state card) :installed true)))
+    ;; Remove all :turn strength from icebreakers.
+    ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
+    (when (has-subtype? card "Icebreaker")
+      (update-breaker-strength state :runner (get-card state card))))
+  (doseq [card (all-installed state :corp)]
+    ;; Clear :this-turn flags as turn has ended
+    (when (= :this-turn (installed? card))
+      (update! state side (assoc (get-card state card) :installed true)))
+    (when (= :this-turn (:rezzed card))
+      (update! state side (assoc (get-card state card) :rezzed true))))
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
   (swap! state assoc :turn-state (dissoc @state :log :turn-state))
@@ -133,20 +146,6 @@
                (unregister-floating-events state side :end-of-next-run)
                (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
-               (doseq [card (all-active-installed state :runner)]
-                 ;; Clear :installed :this-turn as turn has ended
-                 (when (= :this-turn (installed? card))
-                   (update! state side (assoc (get-card state card) :installed true)))
-                 ;; Remove all :turn strength from icebreakers.
-                 ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
-                 (when (has-subtype? card "Icebreaker")
-                   (update-breaker-strength state :runner (get-card state card))))
-               (doseq [card (all-installed state :corp)]
-                 ;; Clear :this-turn flags as turn has ended
-                 (when (= :this-turn (installed? card))
-                   (update! state side (assoc (get-card state card) :installed true)))
-                 (when (= :this-turn (:rezzed card))
-                   (update! state side (assoc (get-card state card) :rezzed true))))
                ;; Update strength of all ice every turn
                (update-all-ice state side)
                (swap! state assoc :end-turn true)
