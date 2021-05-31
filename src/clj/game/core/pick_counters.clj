@@ -132,10 +132,10 @@
                        ")")
            :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
            :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
-                              selection-function (if (= :custom pay-credits-type)
+                              pay-function (if (= :custom pay-credits-type)
                                                      (-> target card-def :interactions :pay-credits :custom)
                                                      (take-counters-of-type pay-credits-type))
-                              custom-ability {:async true :effect selection-function}
+                              custom-ability {:async true :effect pay-function}
                               neweid (make-eid state outereid)
                               providing-card target]
                           (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
@@ -143,7 +143,6 @@
                                                       (pick-credit-providing-cards
                                                         provider-func eid target-count stealth-target
                                                         (update selected-cards (:cid providing-card)
-                                                                   ;; correct credit count
-                                                                   #(assoc % :card providing-card :number (+ (:number % 0) async-result))))
+                                                                #(assoc % :card providing-card :number (+ (:number % 0) async-result))))
                                                       card targets))))
            :cancel-effect pay-rest}))))

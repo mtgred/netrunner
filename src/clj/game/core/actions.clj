@@ -227,6 +227,7 @@
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pump-ability (some #(when (:pump %) %) (:abilities (card-def card)))
+        cost-req (or (:cost-req pump-ability) identity)
         strength-diff (when (and current-ice
                                  (get-strength current-ice)
                                  (get-strength card))
@@ -236,8 +237,8 @@
                      (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
         total-pump-cost (when (and pump-ability
                                    times-pump)
-                          (repeat times-pump (:cost pump-ability)))]
-    (when (can-pay? state side eid card total-pump-cost)
+                          (repeat times-pump (cost-req [(:cost pump-ability)])))]
+    (when (can-pay? state side eid card (:title card) total-pump-cost)
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
@@ -366,6 +367,7 @@
                      (when (:pump ability)
                        ((:req ability) state side eid card nil)))
           pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+          pump-cost-req (or (:cost-req pump-ability) identity)
           strength-diff (when (and current-ice
                                    (get-strength current-ice)
                                    (get-strength card))
@@ -375,12 +377,13 @@
                        (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
           total-pump-cost (when (and pump-ability
                                      times-pump)
-                            (repeat times-pump (:cost pump-ability)))
+                            (repeat times-pump (pump-cost-req [(:cost pump-ability)])))
           ;; break all subs
           can-break (fn [ability]
                       (when (:break-req ability)
                         ((:break-req ability) state side eid card nil)))
           break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+          break-cost-req (or (:cost-req break-ability) identity)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
           unbroken-subs (when (:subroutines current-ice)
@@ -393,7 +396,7 @@
                           1))
           total-break-cost (when (and break-ability
                                       times-break)
-                             (repeat times-break (:break-cost break-ability)))
+                             (repeat times-break (break-cost-req [(:break-cost break-ability)])))
           total-cost (merge-costs (conj total-pump-cost total-break-cost))]
       (when (and break-ability
                  (can-pay? state side eid card (:title card) total-cost))

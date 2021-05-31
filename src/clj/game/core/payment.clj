@@ -12,36 +12,22 @@
 (defmulti value (fn [[cost-type _]] cost-type))
 (defmulti stealth-value (fn [[cost-type _ __]] cost-type))
 (defmulti label (fn [[cost-type _]] cost-type))
+(defmulti merge-cost (fn [[cost-type] _] cost-type))
 (defmulti payable? (fn [[cost-type] & _] cost-type))
 (defmulti handler (fn [[cost-type] & _] cost-type))
 
 (defn- add-default-to-costs
   "Take a sequence of costs (nested or otherwise) and add a default value of 1
   to any that don't include a value (normally with :forfeit)."
-  [costs]
-  (->> costs
-       flatten
-       ;; Padding is needed when :default is the final cost in the list or all items are :default
-       (partition 2 1 '(1))
-       (reduce
-         (fn [acc [cost-type qty]]
-           ;; the possibilities are:
-           ;; Usable:
-           ;; * (:type qty) -> a normal cost (or :default is in final postion, so is padded)
-           ;; * (:type :type) -> :default isn't the final cost
-           ;; Unusable:
-           ;; * (qty :type) -> normal part of moving one at a time
-           ;; * (qty qty) -> a quantity-less cost was used earlier, so this can be ignored
-           (cond
-             (and (keyword? cost-type)
-                  (number? qty))
-             (conj acc [cost-type qty])
-             (and (keyword? cost-type)
-                  (keyword? qty))
-             (conj acc [cost-type 1])
-             :else
-             acc))
-         [])))
+  ([costs] (add-default-to-costs (filter #(not (nil? %)) (flatten costs)) []))
+  ([costs result]
+  (if (empty? costs) result
+      (let [next-type (first costs)
+            error-check (when (not (keyword? next-type)) (throw (Exception. "Malformed costs")))
+            split (split-with #(number? %) (rest costs))
+            quantities (if (empty? (first split)) [1] (first split))
+            remainder (second split)]
+            (add-default-to-costs remainder (conj result (concat [next-type] quantities)))))))
 
 (defn- cost-ranks
   [[cost-type _]]
@@ -61,11 +47,7 @@
         vals
         (map (fn [cost-pairs]
                (reduce
-                 (fn [[_ acc] [cost-type cost-value]]
-                   ;; Using the multi-method value here in case a cost-type
-                   ;; shouldn't have more than 1 (e.g. :trash)
-                   [cost-type (value [cost-type ((fnil + 0 0) acc cost-value)])])
-                 []
+                 (fn [cost1 cost2] (merge-cost cost1 cost2))
                  cost-pairs)))
         (remove #(if remove-zero-credit-cost
                    (and (= :credit (cost-name %))
