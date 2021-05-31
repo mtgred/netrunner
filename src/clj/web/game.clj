@@ -144,7 +144,7 @@
         (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid
                                                      :started started
                                                      :state (json/generate-string (side (public-states (:state game))))}) ;side works here because user cannot rejoin as a spectator
-        (lobby/join-game user client-id gameid)
+        (lobby/join-game user client-id gameid "Any Side")
         (main/handle-rejoin state user)
         (swap-and-send-diffs! (lobby/game-for-id gameid))))))
 

@@ -206,28 +206,31 @@
   [{:keys [username]} {:keys [players spectators]}]
   (some #(= username (get-in % [:user :username])) (concat players spectators)))
 
-(defn get-remaining-player-with-side
-  "Gets the other player in the game. If that player has not picked a side then randomly select one for that player."
-  [{:keys [username]} {:keys [players]}]
-  (let [remaining-player (first (remove #(= username (get-in % [:user :username])) players))]
-    (if (= (:side remaining-player) "Any Side")
-      (assoc remaining-player :side (rand-nth ["Corp" "Runner"]))
-      remaining-player)))
+(defn determine-player-side
+  "Determines the side of a player based on their side and a requested side"
+  [player request-side]
+  (let [existing-side (:side player)]
+    (if (= existing-side "Any Side")
+      (if (= request-side "Any Side")
+        (rand-nth ["Corp" "Runner"])
+        (if (= "Corp" request-side) "Runner" "Corp"))
+      existing-side)))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
-  [{:keys [username] :as user} client-id gameid]
+  [{:keys [username] :as user} client-id gameid request-side]
   (let [{players :players :as game} (game-for-id gameid)
         existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
     (when (or (< existing-players-count 2)
               (already-in-game? user game))
-      (let [remaining-player (get-remaining-player-with-side user game)
-            side (:side remaining-player)
+      (let [existing-player (first (remove #(= username (get-in % [:user :username])) players))
+            side (determine-player-side existing-player request-side)
+            existing-player (assoc existing-player :side side)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
                         :ws-id   client-id
                         :side    new-side}]
-        (refresh-lobby-assoc-in gameid [:players] [remaining-player new-player])
+        (refresh-lobby-assoc-in gameid [:players] [existing-player new-player])
         (swap! client-gameids assoc client-id gameid)
         new-player))))
 
@@ -336,7 +339,7 @@
   [{{db :system/db
      {:keys [username isadmin] :as user} :user} :ring-req
     client-id :client-id
-    {:keys [gameid password]} :?data
+    {:keys [gameid password request-side]} :?data
     reply-fn :?reply-fn}]
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game db game user))
@@ -345,7 +348,7 @@
               isadmin)
         (do (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})
             (ws/broadcast-to! [client-id] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
-            (join-game user client-id gameid)
+            (join-game user client-id gameid request-side)
             (lobby-say gameid {:user "__system__"
                                :text (str username " joined the game.")})
             (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")

@@ -208,6 +208,8 @@
      :watch "Watch"
      :join "Join"
      :rejoin "Rejoin"
+     :as-corp "As Corp"
+     :as-runner "As Runner"
      :private "PRIVATE"
      :reset "Reset Game Name"
      :delete "Delete Game"

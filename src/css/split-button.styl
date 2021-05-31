@@ -1,0 +1,37 @@
+@require "opacity"
+@require "palette"
+// Split Button
+
+.split-button
+    position: relative
+    display: inline-block
+    vertical-align: middle
+
+    > button:first-child
+        margin: 0
+        border-top-right-radius: 0
+        border-bottom-right-radius: 0
+
+    > button.dropdown-toggle
+        margin: 0 0 0 -1px
+        padding: 4px 4px
+        border-top-left-radius: 0
+        border-bottom-left-radius: 0
+
+        .caret
+            margin: 0
+
+    .dropdown-menu
+        background-color: alpha(gold-menu, o-80)
+        border: 1px solid alpha(gold-base, o-60)
+        min-width: min-content
+
+        > .block-link
+            color: white-solid
+            white-space: nowrap
+            text-shadow: 0 1px 2px alpha(black-solid, o-60)
+
+            &:hover
+                background-color: alpha(blue-light, o-20)
+                border-color: blue-light
+                box-shadow: (0 0 6px blue-light)
