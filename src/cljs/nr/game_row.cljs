@@ -80,7 +80,7 @@
            (tr [:lobby.join "Join"])]
           [:button.dropdown-toggle {:data-toggle "dropdown"}
            [:b.caret]]
-          [:ul.dropdown-menu
+          [:ul.dropdown-menu.blue-shade
            [:a.block-link {:on-click #(do (swap! s assoc :request-side "Corp")
                                           (join "join")
                                           (resume-sound))}
