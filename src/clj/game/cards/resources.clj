@@ -2761,7 +2761,7 @@
                        :optional
                        {:prompt "Spend 2 virus counters on The Nihilist?"
                         :yes-ability
-                        {:req (req (<= 2 (number-of-virus-counters state)))
+                        {:req (req (<= 2 (number-of-runner-virus-counters state)))
                          :async true
                          :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
                                                 (if (:number async-result)

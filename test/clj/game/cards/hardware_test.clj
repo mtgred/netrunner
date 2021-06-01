@@ -44,7 +44,23 @@
         (changes-val-macro 3 (:credit (get-runner))
                            "Runner got Acacia credits"
                            (click-prompt state :runner "Done"))
-        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed")))))
+        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed"))))
+  (testing "Effect counts both Runner and Corp virus counters"
+    (do-game
+      (new-game {:runner {:deck ["Acacia"]}
+                 :corp {:deck ["Sandstone"]}})
+      (play-from-hand state :corp "Sandstone" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Acacia")
+      (take-credits state :runner)
+      (let [sandstone (get-ice state :hq 0)]
+        (rez state :corp sandstone)
+        (core/add-counter state :corp sandstone :virus 1)
+        (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
+        (is (= 7 (:credit (get-runner))) "Runner credits should be 7")
+        (core/purge state :corp)
+        (click-prompt state :runner "Yes")
+        (is (= 8 (:credit (get-runner))) "Runner gained 1 credit from Sandstone's virus counter")))))
 
 (deftest adjusted-matrix
   ;; Adjusted Matrix

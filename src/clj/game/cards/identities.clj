@@ -453,7 +453,7 @@
      :req (req (and (not (:disabled card))
                     (not (agenda? target))
                     (<= (play-cost state side target)
-                        (number-of-virus-counters state))))
+                        (number-of-runner-virus-counters state))))
      :waiting-prompt "Runner to use Freedom Khumalo's ability"
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]

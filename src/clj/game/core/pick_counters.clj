@@ -1,6 +1,6 @@
 (ns game.core.pick-counters
   (:require
-    [game.core.card :refer [get-card get-counters installed?]]
+    [game.core.card :refer [get-card get-counters installed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid complete-with-result]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
@@ -40,6 +40,7 @@
                                 (= "Hivemind" (:title %)))
                             true)
                           (installed? %)
+                          (runner? %)
                           (pos? (get-counters % :virus)))}
     :effect (req (let [target (update! state :runner (update-in target [:counter :virus] dec))
                        selected-cards (update selected-cards (:cid target)
