@@ -563,7 +563,23 @@
            #(ws/ws-send! [:netrunner/start @gameid])])
         [:button {:on-click #(leave-lobby s)} (tr [:lobby.leave "Leave"])]
         (when (first-user? players @user)
-          [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} (tr [:lobby.swap "Swap sides"])])]
+          (if (> (count players) 1)
+            [:button {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid}])}
+             (tr [:lobby.swap "Swap sides"])]
+            [:div.dropdown
+             [:button.dropdown-toggle {:data-toggle "dropdown"}
+              (tr [:lobby.swap "Swap sides"])
+              [:b.caret]]
+             [:ul.dropdown-menu.blue-shade
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Any Side"} ])}
+               (tr-side "Any Side")]
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Corp"}])}
+               (tr-side "Corp")]
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Runner"}])}
+               (tr-side "Runner")]]]))]
        [:div.content
         [:h2 (:title game)]
         (when-not (every? :deck players)

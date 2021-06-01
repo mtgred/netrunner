@@ -323,11 +323,13 @@
 
 (defmethod ws/-msg-handler :lobby/swap
   [{client-id :client-id
-    gameid :?data}]
+    {:keys [gameid side]} :?data}]
   (let [game (game-for-id gameid)
-        fplayer (first (:players game))]
-    (when (= (:ws-id fplayer) client-id)
-      (refresh-lobby-update-in gameid [:players] (partial mapv swap-side)))))
+        first-player (first (:players game))]
+    (when  (= (:ws-id first-player) client-id)
+      (if (> (count (:players game)) 1)
+        (refresh-lobby-update-in gameid [:players] (partial mapv swap-side))
+        (refresh-lobby-assoc-in gameid [:players 0 :side] side)))))
 
 (defn allowed-in-game
   [db game {:keys [username] :as user}]
