@@ -3724,7 +3724,7 @@
           "Using recurring credits"
           (card-ability state :runner mis 0)
           (click-prompt state :runner "2")
-          (is (= "Select a credit providing card (0 of 2 credits)"
+          (is (= "Select a credit providing card (0 of 2 [Credits])"
                  (:msg (prompt-map :runner)))
               "Runner has pay-credit prompt")
           (click-card state :runner multi)
@@ -3746,7 +3746,7 @@
           "Using recurring credits and credits from credit pool"
           (card-ability state :runner mis 0)
           (click-prompt state :runner "4")
-          (is (= "Select a credit providing card (0 of 4 credits)"
+          (is (= "Select a credit providing card (0 of 4 [Credits])"
                  (:msg (prompt-map :runner)))
               "Runner has pay-credit prompt")
           (click-card state :runner mantle))
@@ -3817,7 +3817,7 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credits from Multithreader"
                            (card-ability state :runner ab 1)
-                           (is (= "Select a credit providing card (0 of 2 credits)"
+                           (is (= "Select a credit providing card (0 of 2 [Credits])"
                                   (:msg (prompt-map :runner)))
                                "Runner has pay-credit prompt")
                            (click-card state :runner mt)

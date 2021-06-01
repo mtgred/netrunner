@@ -3187,7 +3187,7 @@
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
       (is (prompt-is-type? state :runner :select))
-      (is (= "Select a credit providing card (0 of 1 credits)" (:msg (prompt-map :runner)))
+      (is (= "Select a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
           "Credit selection prompt is opened"))))
 
 (deftest public-terminal
