@@ -109,6 +109,7 @@
                      (fn? recurring) (recurring state side eid c nil)
                      (number? recurring) recurring
                      :else (throw (Exception. (str (:title card) " - Recurring isn't number or fn"))))}))
+         _ (when recurring (update! state side (assoc-in c [:counter :recurring] 0)))
          _ (doseq [[c-type c-num] data]
              (add-counter state side (get-card state c) c-type c-num {:placed true}))
          c (get-card state c)]

@@ -2907,7 +2907,17 @@
         (changes-val-macro -1 (:credit (get-corp)) ; 1 credit left on Mumba
                            "Used 1 credit from Mumba"
                            (rez state :corp pad)
-                           (click-card state :corp mumba))))))
+                           (click-card state :corp mumba)))))
+  (testing "Derez test"
+    (do-game
+      (new-game {:corp {:deck ["Mumba Temple"]}})
+      (play-from-hand state :corp "Mumba Temple" "New remote")
+      (let [mumba (get-content state :remote1 0)]
+        (rez state :corp mumba)
+        (is (= 2 (get-counters (refresh mumba) :recurring)) "Should have 2 recurring credits")
+        (derez state :corp mumba)
+        (rez state :corp mumba)
+        (is (= 2 (get-counters (refresh mumba) :recurring)) "Should still have 2 recurring credits")))))
 
 (deftest mumbad-city-hall
   ;; Mumbad City Hall
