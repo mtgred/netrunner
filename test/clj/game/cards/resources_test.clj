@@ -5399,7 +5399,7 @@
   (testing "Bounce test"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 5)]
-                        :hand [(qty "Fire Wall" 5)]}
+                        :hand [(qty "Hard-Hitting News" 5)]}
                  :runner {:hand ["The Turning Wheel"]
                           :credits 10}})
       (take-credits state :corp)
@@ -5409,7 +5409,12 @@
         (card-ability state :runner ttw 2) ;; Bounce HQ ability
         (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 1 power counter")
         (card-ability state :runner ttw 3) ;; Bounce R&D ability
-        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 2 power counter")))))
+        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 2 power counter")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Hard-Hitting News")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (= 4 (count-tags state)) "Bouncing enables Hard-Hitting News")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
