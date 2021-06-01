@@ -178,16 +178,7 @@
                 width: 400px
                 margin: 5px
 
-.rightpane .log
-    .selector
-        position: absolute
-        height:24px
-        top: 0px
-        left: 0
-        right: 4px
-        margin: 0
-        padding-top: 2px
-
+.right-pane
     .notes, .notes-shared
         height: 100%
         display-flex()
@@ -220,14 +211,13 @@
             top: 50%
             left: 0
             width: 100%
-            color: alpha(black-solid, o-10)
-
-        .click:after
+            color: alpha(white-solid, o-10)
             text-align: center
             font-family: "anr-icon" !important
             font-size: 8.75rem
             speak: none
             content: "\e611"
+            pointer-events: none
 
         .turn
             content: "";

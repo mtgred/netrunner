@@ -151,7 +151,7 @@
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
    :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                :prompt "Choose how many [Credit] to move" :once :per-turn
+                :prompt "Choose how many credits to move" :once :per-turn
                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                 :async true
                 :effect (effect (add-counter card :credit target)
@@ -1340,7 +1340,7 @@
                    :choices {:number (req (get-counters card :credit))}
                    :async true
                    :effect (req (wait-for (gain-credits state :runner target)
-                                          (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
+                                          (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
                                           (trash state :runner eid card nil)))}}}]
     {:events [{:event :runner-turn-begins
                :effect (effect (add-counter :runner card :credit 1))}
@@ -2031,7 +2031,7 @@
                         :label "Remove 1 counter from a hosted card"
                         :cost [:credit 1])
                  {:async true
-                  :label "X[Credit]: Remove counters from a hosted card"
+                  :label "X [Credit]: Remove counters from a hosted card"
                   :choices {:card #(:host %)}
                   :req (req (not (empty? (:hosted card))))
                   :effect (effect

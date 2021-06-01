@@ -465,7 +465,7 @@
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
     {:advanceable :always
-     :subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
+     :subroutines [{:label "Gain 1 [Credit]. Place 1 advancement token."
                     :breakable breakable-fn
                     :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
                     :prompt "Choose an installed card"
@@ -1603,7 +1603,7 @@
                                                (system-msg state :corp (:msg async-result))
                                                (continue-ability
                                                  state side
-                                                 {:msg (msg "pay " c "[Credits] and place " (quantify c " advancement token")
+                                                 {:msg (msg "pay " c " [Credits] and place " (quantify c " advancement token")
                                                             " on " (card-str state target))
                                                   :choices {:card can-be-advanced?}
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
@@ -2090,8 +2090,8 @@
   {:subroutines [trash-program-sub
                  trash-program-sub
                  trash-hardware-sub
-                 {:label "Runner loses 3[credit], if able. End the run."
-                  :msg "make the Runner lose 3[credit] and end the run"
+                 {:label "Runner loses 3 [credit], if able. End the run."
+                  :msg "make the Runner lose 3 [credit] and end the run"
                   :async true
                   :effect (req (if (>= (:credit runner) 3)
                                  (wait-for (lose-credits state :runner 3)
@@ -2209,7 +2209,7 @@
 (defcard "Mausolus"
   {:advanceable :always
    :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
-                  :msg (msg "gain " (if (wonder-sub card 3) 3 1) "[Credits]")
+                  :msg (msg "gain " (if (wonder-sub card 3) 3 1) " [Credits]")
                   :async true
                   :effect (effect (gain-credits eid (if (wonder-sub card 3) 3 1)))}
                  {:label "Do 1 net damage (Do 3 net damage)"

@@ -46,6 +46,9 @@
         top: 100%
         transform: translate(0, -100%)
 
+    .card-frame, .deck, .identity, .discard
+        pointer-events: auto
+
     .card-frame
         position: relative
 
@@ -632,7 +635,9 @@
         display-flex()
         flex-direction(column)
         min-width: 90px
-        overflow: visible
+        position:relative
+        overflow-x:auto
+        overflow-y:visible
 
         .card-wrapper
             margin: 3px 6px
@@ -649,6 +654,19 @@
         // Then once both card-wrapper _and_ card are hovered, the z-index gets bumped to 1 to pull the card to the front.
         .card-wrapper:hover .card:hover, .stacked:hover .card:hover
             z-index: 1
+
+        .outer-corp-board.overlap,.runner-board.overlap
+            overflow: visible
+            position: absolute
+            pointer-events: none
+
+            &.me
+                bottom: 0
+                width: 100%
+
+            &.opponent
+                top: 0
+                width: 100%
 
         .runner-board
             flex(1)
@@ -677,11 +695,6 @@
 
             > div:last-child
                 margin-bottom: auto
-
-        .outer-corp-board.me
-            overflow: auto
-            margin-top: -100%
-            padding-top: 100%
 
         .corp-board
             flex(1)
@@ -870,7 +883,7 @@
                 .run-card
                     transform(initial)
 
-    .rightpane
+    .right-pane
         position: relative
         display-flex()
         flex-direction(column)
@@ -912,62 +925,81 @@
             .impl-msg
                 color: gold-base
 
-        .log
-            width: 225px
-            position: absolute
-            top: 317px
-            bottom: 0
+        .content-pane
+            position:absolute
+            bottom: 0px
 
-            .username
-                font-size: .75rem
-                margin-top: -2px
+            .selector
+                position: absolute
+                top: 0px
+                height:24px
+                left: 0
+                right: 0
+                margin: 0
+                padding-top: 2px
 
-            .avatar
-                width: 28px
-                height: 28px
+                >a:not(:first-child)
+                    margin-left:3ex
 
-            > .panel
-                margin-left: 0
-                font-size: .75rem
-                line-height: 1rem
-
-            .messages
-                flex(1)
-                overflow: auto
-                -webkit-overflow-scrolling: touch
+            &>.content
                 position: absolute
                 top: 24px
-                bottom: 70px
-                left: 0
-                right: 4px
+                bottom: 0px
+                width: 100%
+                flex(1)
                 margin: 0
+                min-height: 20px
+                overflow-x:clip
+                overflow-y:auto
 
-                div
+                >div
                     animation: fadein 0.5s
 
-            > div
-                position: absolute
-                bottom: 12px
-                left: 0
-                right: 4px
+                .log
+                    height:100%
+                    display-flex()
+                    flex-direction(column)
+                    // width: 225px
+                    // position: absolute
+                    // top: 317px
+                    // bottom: 0
 
-            .log-input form input, .indicate-action
-                width: 100%
+                    .username
+                        font-size: .875rem
+                        margin-top: -2px
 
-            .command-matches-container
-                position: absolute !important
-                bottom: 24px
-                right: 100%
-                width: fit-content
+                    .avatar
+                        width: 28px
+                        height: 28px
 
-                ::-webkit-scrollbar
-                    width 0
+                    .messages
+                        flex(1)
+                        overflow: auto!important
+                        -webkit-overflow-scrolling: touch
 
-                ul.command-matches
-                    list-style-type: none
-                    overflow: auto
-                    max-height: 300px
+                        div
+                            animation: fadein 0.5s
 
-                    li.command-match.highlight span
-                        color: gold-base
-                        cursor: pointer
+                    .log-input form input, .indicate-action
+                        width: 100%
+
+                    .command-matches-container
+                        position: absolute !important
+                        bottom: 24px
+                        right: 100%
+
+                        ::-webkit-scrollbar
+                            width 0
+
+                        ul.command-matches
+                            list-style-type: none
+                            overflow-x: clip
+                            overflow-y: auto
+                            max-height: 300px
+                            white-space: nowrap
+                            width: max-content
+                            scrollbar-width: none
+
+                            li.command-match.highlight span
+                                color: gold-base
+                                cursor: pointer

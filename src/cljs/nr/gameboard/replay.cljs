@@ -440,3 +440,61 @@
         (swap! replay-status assoc :annotations new-annotations))
       (swap! replay-status assoc-in [:annotations :clicks click] {:notes click-notes :type (:selected-note-type @replay-status)}))))
 
+
+(defn notes-pane []
+  [:div.notes
+   [:div.turn [:textarea#notes-turn {:placeholder (tr [:annotations.turn-placeholder "Notes for this turn"])
+                                     :on-change #(update-notes)}]]
+   (letfn
+     [(create-buttons [types]
+        (doall (for [icon types]
+                 ^{:key (str "notes-icon-" icon)}
+                 [:div {:class ["notes-icon" icon (when (= icon (:selected-note-type @replay-status)) "selected")]
+                        :title (capitalize (subs (str icon) 1))
+                        :on-click #(do (swap! replay-status assoc :selected-note-type icon)
+                                       (update-notes))}])))]
+     [:div.notes-icons
+      (create-buttons [:none])
+      [:div.notes-separator]
+      (create-buttons [:blunder :mistake :inaccuracy :good :brilliant])
+      [:div.notes-separator]
+      (create-buttons [:a :b :c :d])])
+   [:div.click [:textarea#notes-click {:placeholder (tr [:annotations.click-placeholder "Notes for this click"])
+                                       :on-change #(update-notes)}]]])
+(defn notes-shared-pane []
+  (let [annotation-options (r/atom {:file ""})]
+    [:div.notes-shared
+     (when (not= "local-replay" (:gameid @game-state))
+       [:div.remote-annotations
+        [:h4 (tr [:annotations.available-annotations "Available annotations"]) " "
+         [:button.small {:type "button"
+                         :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
+        (if (empty? (:remote-annotations @replay-status))
+          (tr [:annotations-no-published-annotations "No published annotations."])
+          [:ul
+           (doall
+             (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
+               ^{:key (str "annotation-" n)}
+               [:li
+                [:a {:on-click #(load-remote-annotations n)} (:username anno)]
+                " - " (.toLocaleDateString (js/Date. (:date anno))) " "
+                (when (:deletable anno)
+                  [:button.small {:type "button"
+                                  :on-click #(delete-remote-annotations n)} "X"])]))])
+        [:div.button-row
+         [:button {:type "button"
+                   :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
+        [:hr]])
+     [:h4 (tr [:annotations.import-local "Import local annotation file"])]
+     [:input {:field :file
+              :type :file
+              :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
+     [:div.button-row
+      [:button {:type "button" :on-click #(load-annotations-file)}
+       (tr [:annotations.load-local "Load"])]
+      [:button {:type "button" :on-click #(save-annotations-file)}
+       (tr [:annotations.save-local "Save"])]
+      [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
+                                                 {:turns {:corp {} :runner {}}
+                                                  :clicks {}})}
+       (tr [:annotations.clear "Clear"])]]]))

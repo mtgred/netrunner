@@ -933,7 +933,7 @@
                                       (has-subtype? target "Icebreaker")
                                       ; and is using a break ability
                                       (contains? (second targets) :break)
-                                      (pos? (:break (second targets) 0))
+                                      (pos? (count (:broken-subs (second targets))))
                                       ; during a run on this server
                                       this-server))
                        :value [:credit 1]}]})

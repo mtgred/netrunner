@@ -1,7 +1,6 @@
 (ns nr.gameboard.actions
   (:require [differ.core :as differ]
             [nr.appstate :refer [app-state]]
-            [nr.gameboard.log :refer [log-mode]]
             [nr.gameboard.replay :refer [init-replay]]
             [nr.gameboard.state :refer [game-state last-state lock check-lock? parse-state get-side not-spectator?]]
             [nr.translations :refer [tr]]
@@ -11,7 +10,6 @@
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
-    (reset! log-mode :log)
     (reset! game-state (dissoc state :replay-diffs :replay-jump-to))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
