@@ -439,8 +439,8 @@
     (when (and (:run @state)
                (= [server] (get-in @state [:run :server]))
                (run-continue state))
-      (is' (get-in @state [:runner :prompt]) "A prompt is shown")
-      (is' (get-in @state [:run :successful]) "Run is marked successful"))))
+      (is' (seq (get-in @state [:runner :prompt])) "A prompt is shown")
+      (is' (true? (get-in @state [:run :successful])) "Run is marked successful"))))
 
 (defmacro play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
