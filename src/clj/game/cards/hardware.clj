@@ -946,7 +946,7 @@
                                                  #(and (not (facedown? (first %)))
                                                        (has-subtype? (first %) "Companion")))
                                     (event-count state :runner :runner-install
-                                                 #(and (not (:facedown (first %)))
+                                                 #(and (not (facedown? (:card (first %))))
                                                        (has-subtype? (:card (first %)) "Companion")))))))
              :msg "gain 1 [Credit]"
              :async true
