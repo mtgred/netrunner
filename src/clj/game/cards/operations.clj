@@ -141,6 +141,7 @@
                                     (or (in-hand? %)
                                         (in-discard? %)))}
               :async true
+              :show-discard true
               :effect
               (req (wait-for
                      (reveal state side targets)
