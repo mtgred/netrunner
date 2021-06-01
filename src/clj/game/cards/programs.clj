@@ -411,7 +411,8 @@
                           (continue-ability {:eid (assoc eid :source-type :ability :source card)
                                              :cost [:x-credits]
                                              :msg (msg "add " (cost-value eid :x-credits) " power counters")
-                                             :effect (effect (add-counter card :power (cost-value eid :x-credits)))} card targets))}
+                                             :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
+                                            card targets))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
    :strength-bonus (req (get-counters card :power))})
 
