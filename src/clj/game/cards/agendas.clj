@@ -566,7 +566,7 @@
                           stolen-agenda (find-latest state (:card context))
                           title (:title stolen-agenda)
                           prompt (str "Forfeit Divested Trust to add " title
-                                      " to HQ and gain 5[Credits]?")
+                                      " to HQ and gain 5 [Credits]?")
                           message (str "add " title " to HQ and gain 5 [Credits]")
                           agenda-side (if (in-runner-scored? state side stolen-agenda)
                                         :runner :corp)
@@ -1055,7 +1055,7 @@
   (let [nq {:async true
             :effect (req (let [extra (int (/ (:runner-spent target) 2))]
                            (if (pos? extra)
-                             (do (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]"))
+                             (do (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]"))
                                  (gain-credits state side eid extra))
                              (effect-completed state side eid))))}]
     {:events [{:event :pre-init-trace

@@ -298,7 +298,7 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
-                :prompt "Choose how many [Credit] to move"
+                :prompt "Choose how many credits to move"
                 :once :per-turn
                 :choices {:number (req (min (:credit corp) 3))}
                 :async true
@@ -1132,10 +1132,10 @@
 
 (defcard "Long-Term Investment"
   {:derezzed-events [corp-rez-toast]
-   :abilities [{:label "Move any number of [Credits] to your credit pool"
+   :abilities [{:label "Move any number of credits to your credit pool"
                 :req (req (>= (get-counters card :credit) 8))
                 :cost [:click 1]
-                :prompt "How many [Credits]?"
+                :prompt "How many credits?"
                 :choices {:counter :credit}
                 :msg (msg "gain " target " [Credits]")
                 :async true
@@ -1880,23 +1880,23 @@
    :leave-play (effect (update-all-ice))})
 
 (defcard "Sealed Vault"
-  {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
+  {:abilities [{:label "Store any number of credits on Sealed Vault"
                 :cost [:credit 1]
-                :prompt "How many [Credits]?"
+                :prompt "How many credits?"
                 :choices {:number (req (- (:credit corp) 1))}
                 :msg (msg "store " target " [Credits]")
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))}
-               {:label "Move any number of [Credits] to your credit pool"
+               {:label "Move any number of credits to your credit pool"
                 :cost [:click 1]
-                :prompt "How many [Credits]?"
+                :prompt "How many credits?"
                 :choices {:counter :credit}
                 :msg (msg "gain " target " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid target))}
-               {:label "Move any number of [Credits] to your credit pool"
-                :prompt "How many [Credits]?"
+               {:label "Move any number of credits to your credit pool"
+                :prompt "How many credits?"
                 :choices {:counter :credit}
                 :msg (msg "trash it and gain " target " [Credits]")
                 :cost [:trash]

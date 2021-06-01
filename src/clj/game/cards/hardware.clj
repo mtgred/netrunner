@@ -21,7 +21,7 @@
                :effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
                                               (number-of-virus-counters state))]
                               (wait-for (trash state side card nil)
-                                        (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
+                                        (system-msg state side (str "trashes Acacia and gains " counters " [Credit]"))
                                         (gain-credits state side eid counters))))}}}]})
 
 (defcard "Adjusted Matrix"
@@ -633,7 +633,7 @@
                   :async true
                   :effect (req (let [credits (get-counters card :credit)]
                                  (update! state :runner (dissoc-in card [:counter :credit]))
-                                 (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))
+                                 (system-msg state :runner (str "takes " credits " [Credits] from Flame-out"))
                                  (register-events
                                    state :runner (get-card state card)
                                    [(assoc turn-end :event :runner-turn-ends)
@@ -1401,7 +1401,7 @@
              :msg "place 1 [Credits]"
              :effect (req (add-counter state :runner eid card :credit 1 nil))}]
    :abilities [{:cost [:click 1]
-                :label "Gain 1 [Credits]. Take all hosted [Credits]"
+                :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
                 :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (inc (get-counters card :credit))]
