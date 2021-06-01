@@ -10,7 +10,7 @@
             [nr.ws :as ws]
             [jinteki.utils :refer [superuser?]]))
 
-(defn join-game [gameid s action password]
+(defn join-game [gameid s action password request-side]
   (authenticated
     (fn [user]
       (swap! s assoc :editing false)
@@ -19,7 +19,8 @@
                       "watch" :lobby/watch
                       "rejoin" :netrunner/rejoin)
                     {:gameid gameid
-                     :password password}]
+                     :password password
+                     :request-side request-side}]
                    8000
                    #(if (sente/cb-success? %)
                       (case %
@@ -47,12 +48,13 @@
                user (:user @app-state)
                join (fn [action]
                       (let [password (:password password-game password)
-                            input-password (:password @s)]
+                            input-password (:password @s)
+                            request-side (:request-side @s)]
                         (cond
                           (not password)
-                          (join-game (if password-game (:gameid password-game) gameid) s action nil)
+                          (join-game (if password-game (:gameid password-game) gameid) s action nil request-side)
                           input-password
-                          (join-game (if password-game (:gameid password-game) gameid) s action input-password)
+                          (join-game (if password-game (:gameid password-game) gameid) s action input-password request-side)
                           :else
                           (do (swap! app-state assoc :password-gameid gameid)
                               (swap! s assoc :prompt action)))))]
@@ -70,9 +72,27 @@
                     (not editing)
                     (not started)
                     (not (some #(= (get-in % [:user :_id]) (get-in @app-state [:user :_id])) players))))
-       [:button {:on-click #(do (join "join")
-                                (resume-sound))}
-        (tr [:lobby.join "Join"])])
+       (if (some #(= "Any Side" (:side %)) players)
+         [:div.split-button
+          [:button {:on-click #(do (swap! s assoc :request-side "Any Side")
+                                   (join "join")
+                                   (resume-sound))}
+           (tr [:lobby.join "Join"])]
+          [:button.dropdown-toggle {:data-toggle "dropdown"}
+           [:b.caret]]
+          [:ul.dropdown-menu.blue-shade
+           [:a.block-link {:on-click #(do (swap! s assoc :request-side "Corp")
+                                          (join "join")
+                                          (resume-sound))}
+            (tr [:lobby.as-corp "As Corp"])]
+           [:a.block-link {:on-click #(do (swap! s assoc :request-side "Runner")
+                                          (join "join")
+                                          (resume-sound))}
+            (tr [:lobby.as-runner "As Runner"])]]]
+         [:button {:on-click #(do (swap! s assoc :request-side "Any Side")
+                                  (join "join")
+                                  (resume-sound))}
+          (tr [:lobby.join "Join"])]))
      (when (and (not current-game)
                 (not editing)
                 started

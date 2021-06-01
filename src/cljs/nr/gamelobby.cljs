@@ -100,7 +100,7 @@
   (authenticated
     (fn [user]
       (let [fmt (:format (:create-game-deck @app-state) "standard")
-            side (:side (:identity (:create-game-deck @app-state)) "Corp")]
+            side (:side (:identity (:create-game-deck @app-state)) "Any Side")]
         (swap! s assoc
                :title (str (:username user) "'s game")
                :side side
@@ -454,7 +454,7 @@
         [:section
          [:h3 (tr [:lobby.side "Side"])]
          (doall
-           (for [option ["Corp" "Runner"]]
+           (for [option ["Any Side" "Corp" "Runner"]]
              ^{:key option}
              [:p
               [:label [:input {:type "radio"
@@ -563,7 +563,23 @@
            #(ws/ws-send! [:netrunner/start @gameid])])
         [:button {:on-click #(leave-lobby s)} (tr [:lobby.leave "Leave"])]
         (when (first-user? players @user)
-          [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} (tr [:lobby.swap "Swap sides"])])]
+          (if (> (count players) 1)
+            [:button {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid}])}
+             (tr [:lobby.swap "Swap sides"])]
+            [:div.dropdown
+             [:button.dropdown-toggle {:data-toggle "dropdown"}
+              (tr [:lobby.swap "Swap sides"])
+              [:b.caret]]
+             [:ul.dropdown-menu.blue-shade
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Any Side"} ])}
+               (tr-side "Any Side")]
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Corp"}])}
+               (tr-side "Corp")]
+              [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                                    :side "Runner"}])}
+               (tr-side "Runner")]]]))]
        [:div.content
         [:h2 (:title game)]
         (when-not (every? :deck players)
@@ -586,7 +602,7 @@
                         (tr [:lobby.deck-selected "Deck selected"]))]])
                   (when-let [deck (:deck player)]
                     [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
-                  (when this-player
+                  (when (and this-player (not (= (:side player) (tr-side "Any Side"))))
                     [:span.fake-link.deck-load
                      {:on-click #(reagent-modals/modal!
                                    [deckselect-modal user {:games games :gameid gameid

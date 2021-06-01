@@ -1,0 +1,29 @@
+@require "opacity"
+@require "palette"
+// Split Button
+
+.split-button
+    position: relative
+    display: inline-block
+    vertical-align: middle
+
+    > button:first-child
+        margin: 0
+        border-top-right-radius: 0
+        border-bottom-right-radius: 0
+
+    > button.dropdown-toggle
+        margin: 0 0 0 -1px
+        padding: 4px 4px
+        border-top-left-radius: 0
+        border-bottom-left-radius: 0
+
+        .caret
+            margin: 0
+
+    .dropdown-menu
+        min-width: min-content
+
+        > .block-link
+            color: white-solid
+            white-space: nowrap
