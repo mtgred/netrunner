@@ -253,6 +253,13 @@
                        "Corp"))
       (dissoc :deck)))
 
+(defn change-side
+  "Returns a new player map with the player's :side set to a new side"
+  [player side]
+  (-> player
+      (assoc :side side)
+      (dissoc :deck)))
+
 (defn blocked-users
   [{:keys [players]}]
   (mapcat #(get-in % [:user :options :blocked-users]) players))
@@ -329,7 +336,8 @@
     (when  (= (:ws-id first-player) client-id)
       (if (> (count (:players game)) 1)
         (refresh-lobby-update-in gameid [:players] (partial mapv swap-side))
-        (refresh-lobby-assoc-in gameid [:players 0 :side] side)))))
+        (let [updated-player (change-side first-player side)]
+          (refresh-lobby-assoc-in gameid [:players] [updated-player]))))))
 
 (defn allowed-in-game
   [db game {:keys [username] :as user}]
