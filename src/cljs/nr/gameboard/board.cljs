@@ -14,14 +14,13 @@
             [nr.cardbrowser :refer [card-as-text]]
             [nr.end-of-game-stats :refer [build-game-stats]]
             [nr.gameboard.actions :refer [send-command toast]]
-            [nr.gameboard.log :refer [log-panel log-mode send-msg card-preview-mouse-over card-preview-mouse-out
-                                      card-highlight-mouse-over card-highlight-mouse-out resize-card-zoom
-                                      zoom-channel should-scroll]]
+            [nr.gameboard.log :refer [send-msg should-scroll]]
+            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out
+                                               card-highlight-mouse-over card-highlight-mouse-out zoom-channel]]
+            [nr.gameboard.right-pane :refer [content-pane]]
             [nr.gameboard.player-stats :refer [stat-controls stats-view]]
-            [nr.gameboard.replay :refer [init-replay replay-panel update-notes get-remote-annotations
-                                         load-remote-annotations delete-remote-annotations publish-annotations
-                                         load-annotations-file save-annotations-file]]
-            [nr.gameboard.state :refer [game-state last-state lock replay-side parse-state get-side not-spectator?]]
+            [nr.gameboard.replay :refer [replay-panel]]
+            [nr.gameboard.state :refer [game-state replay-side not-spectator?]]
             [nr.translations :refer [tr tr-side]]
             [nr.utils :refer [banned-span influence-dot influence-dots map-longest
                               toastr-options render-icons render-message
@@ -1041,7 +1040,8 @@
         server-type (first rs)
         side-class (if (= player-side :runner) "opponent" "me")
         hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)]
-    [:div.outer-corp-board {:class side-class}
+    [:div.outer-corp-board {:class [side-class
+                                    (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      [:div.corp-board {:class side-class}
       (doall
         (for [server (reverse (get-remotes @servers))
@@ -1089,7 +1089,8 @@
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
                    seq)]
-    [:div.runner-board {:class (if is-me "me" "opponent")}
+    [:div.runner-board {:class [(if is-me "me" "opponent")
+                                (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      (when-not is-me centrals)
      (doall
        (for [zone (runner-f [:program :hardware :resource :facedown])]
@@ -1780,10 +1781,12 @@
                                    :spectator @background)
                                  @background)}]
 
-                 [:div.rightpane
+                 [:div.right-pane
                   [card-zoom-view zoom-card]
-                  [log-panel send-command]]
-                 (do (resize-card-zoom) nil)
+
+                  (if (:replay @game-state)
+                    [content-pane :log :settings :notes :notes-shared]
+                    [content-pane :log :settings])]
 
                  [:div.centralpane
                   (if (= op-side :corp)

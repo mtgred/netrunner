@@ -172,7 +172,7 @@
 (defn profile-keys []
   [:background :pronouns :language :show-alt-art :blocked-users
    :alt-arts :card-resolution :deckstats :gamestats :card-zoom
-   :pin-zoom :card-back])
+   :pin-zoom :card-back :stacked-cards :sides-overlap])
 
 (defn update-profile-handler
   [{db :system/db

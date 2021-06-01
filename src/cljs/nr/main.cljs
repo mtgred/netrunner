@@ -42,14 +42,7 @@
             [:a.leave-button {:on-click #(leave-game)} (if (:replay game) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
-               (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])
-            [:a.stack-cards-button {:on-click #(stack-cards)}
-             (if (get-in @app-state [:options :stacked-cards])
-               (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
-            (when (not= :runner (:side @game-state))
-              [:a.runner-board-order-button {:on-click #(flip-runner-board)}
-               (if (= "irl" (get-in @app-state [:options :runner-board-order]))
-                 (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
+               (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])]))
        (when (not (nil? @gameid))
          [:div.float-right
           [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
@@ -58,14 +51,7 @@
           (when (= "local-replay" @gameid)
             [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
           (when (= "local-replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])
-          [:a.stack-cards-button {:on-click #(stack-cards)}
-           (if (get-in @app-state [:options :stacked-cards])
-             (tr [:game.unstack-cards "Unstack cards"]) (tr [:game.stack-cards "Stack cards"]))]
-          (when (not= :runner (:side @game-state))
-            [:a.runner-board-order-button {:on-click #(flip-runner-board)}
-             (if (= "irl" (get-in @app-state [:options :runner-board-order]))
-               (tr [:game.rig-irl "Rig layout: IRL"]) (tr [:game.rig-jnet "Rig layout: jnet"]))])]))
+            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]

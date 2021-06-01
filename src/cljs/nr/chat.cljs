@@ -7,7 +7,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
-            [nr.gameboard.log :refer [card-preview-mouse-over card-preview-mouse-out]]
+            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out]]
             [nr.news :refer [news]]
             [nr.cardbrowser :refer [image-url]]
             [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
