@@ -2311,10 +2311,8 @@
                                     :unregister-once-resolved true
                                     :interactive (req true)
                                     :req (req (= :archives (-> run :server first)))
-                                    :effect (req (swap! state update-in [:runner :register :successful-run] next)
-                                                 (swap! state assoc-in [:run :server] [:hq])
+                                    :effect (req (swap! state assoc-in [:run :server] [:hq])
                                                  (trigger-event state :corp :no-action)
-                                                 (swap! state update-in [:runner :register :successful-run] conj :hq)
                                                  (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}])
                                 (make-run eid :archives (get-card state card)))}]})
 

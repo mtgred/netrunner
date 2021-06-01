@@ -5075,6 +5075,22 @@
         (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
         (is (= (:cid ash) (-> (prompt-map :runner) :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
         (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
+   (testing "Crisium grid on HQ should prevent Gabriel gaining credits"
+    (do-game
+      (new-game {:corp {:deck ["Crisium Grid"]}
+                 :runner {:id "Gabriel Santiago: Consummate Professional"
+                          :deck ["Sneakdoor Beta"]}})
+      (play-from-hand state :corp "Crisium Grid" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (is (= 1 (:credit (get-runner))) "Sneakdoor cost 4 credits")
+      (let [sb (get-program state 0)
+            crisium (get-content state :hq 0)]
+        (rez state :corp crisium)
+        (card-ability state :runner sb 0)
+        (run-continue state)
+        (is (= 1 (:credit (get-runner))) "Did not gain 2 credits from Gabe's ability")
+        (is (not= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ was not recorded"))))
   (testing "do not switch to HQ if Archives has Crisium Grid. Issue #1229."
     (do-game
       (new-game {:corp {:deck ["Crisium Grid" "Priority Requisition" "Private Security Force"]}
