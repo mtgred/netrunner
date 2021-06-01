@@ -2857,7 +2857,10 @@
              :cost [:click 1]
              :keep-menu-open :while-clicks-left
              :msg (msg "bounce off of " name " for a token (shortcut)")
-             :effect (effect (add-counter card :power 1))})]
+             :effect (req (add-counter state :runner card :power 1)
+                          (swap! state assoc-in [:runner :register :made-click-run] true)
+                          (swap! state update-in [:runner :register :unsuccessful-run] conj server)
+                          (swap! state update-in [:runner :register :made-run] conj server))})]
     {:events [{:event :agenda-stolen
                :effect (effect (update! (assoc card :agenda-stolen true)))
                :silent (req true)}
