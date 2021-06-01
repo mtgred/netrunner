@@ -535,11 +535,12 @@
   ;; Needs prevention system to remove
   (queue-event state :pre-successful-run (select-keys (:run @state) [:server :run-id]))
   (wait-for (checkpoint state nil (make-eid state eid))
-            (when (not (any-effects state side :block-successful-run))
-              (swap! state update-in [:runner :register :successful-run] conj (-> @state :run :server first))
-              (swap! state assoc-in [:run :successful] true)
-              (queue-event state :successful-run (select-keys (:run @state) [:server :run-id]))
-              (checkpoint state nil eid))))
+            (if (any-effects state side :block-successful-run)
+              (effect-completed state side eid)
+              (do (swap! state update-in [:runner :register :successful-run] conj (-> @state :run :server first))
+                  (swap! state assoc-in [:run :successful] true)
+                  (queue-event state :successful-run (select-keys (:run @state) [:server :run-id]))
+                  (checkpoint state nil eid)))))
 
 (defn successful-run
   "The real 'successful run' trigger."
