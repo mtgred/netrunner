@@ -54,7 +54,7 @@
                              :let [unused (max 0 (- available used))]]
                          (str unused " of " available
                               " " (capitalize (name mu-type))
-                              " MU unused")))
+                              " [mu] unused")))
           ")")]))
 
 (defmulti stats-area
