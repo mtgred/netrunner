@@ -576,7 +576,7 @@
              :msg "force the Runner to pay or end the run"
              :effect (effect
                        (continue-ability
-                         (let [credits (:credit runner)
+                         (let [credits (total-available-credits state :runner (assoc eid :source-type :ability :source card) card)
                                cost (* 2 (count (:scored runner)))
                                pay-str (str "pay " cost " [Credits]")
                                c-pay-str (capitalize pay-str)]

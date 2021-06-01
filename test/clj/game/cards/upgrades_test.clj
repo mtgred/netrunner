@@ -1392,6 +1392,30 @@
       (is (= ["End the run"] (prompt-buttons :runner)) "Only choice should be End the run")
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+  (testing "Payable with net mercur"
+    (do-game
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]}})
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Net Mercur")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (let [nm (get-resource state 0)]
+        (core/command-counter state :runner '("c" "3"))
+        (click-card state :runner nm)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 6 [Credits]")
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (click-prompt state :runner "Place 1 [Credits]")
+        (click-prompt state :runner "No action"))))
   (testing "Ending the run doesn't mark the run as unsuccessful. Issue #4223"
     (do-game
       (new-game {:corp {:hand ["Giordano Memorial Field" "Hostile Takeover"]}
