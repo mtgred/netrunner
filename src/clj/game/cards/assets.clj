@@ -297,7 +297,7 @@
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
-   :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
+   :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund (start of turn)"
                 :prompt "Choose how many credits to move"
                 :once :per-turn
                 :choices {:number (req (min (:credit corp) 3))}
@@ -423,6 +423,7 @@
                                   "Pay 1 [Credits]")
                                 (when (pos? (count (:deck runner)))
                                   "Trash top card")])
+                 :label "make the Runner pay 1 [Credits] or trash the top card of the Stack (start of turn)"
                  :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
                  :effect (req (case target
                                 "Pay 1 [Credits]"
@@ -587,6 +588,7 @@
                                             [(second (get-zone card))
                                              (second (get-zone (:host card)))])
                                       (:successful-run runner-reg-last))))
+                 :label "gain 3 [Credits] (start of turn)"
                  :msg "gain 3 [Credits]"
                  :async true
                  :effect (effect (gain-credits :corp eid 3))}]
@@ -741,7 +743,7 @@
    :abilities [{:async true
                 :once :per-turn
                 :choices {:card (complement rezzed?)}
-                :label "Rez a card, lowering the cost by 1 [Credits]"
+                :label "Rez a card, lowering the cost by 1 [Credits] (start of turn)"
                 :msg (msg "rez " (:title target))
                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
                                        (update! state side (assoc card :ebc-rezzed (:cid target)))
@@ -2339,7 +2341,7 @@
                                        (continue-ability state side (choice (remove-once #(= % chosen-ability) abis) (dec n)) card nil)
                                        (effect-completed state side eid)))))}))
         ability {:async true
-                 :label "resolve an ability"
+                 :label "resolve an ability (start of turn)"
                  :once :per-turn
                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
                                                                  1

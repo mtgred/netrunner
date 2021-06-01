@@ -256,7 +256,7 @@
                                                       (same-server? card %)))
                                         count
                                         pos?))
-                 :label "place an advancement counter"
+                 :label "place an advancement counter (start of turn)"
                  :async true
                  :effect
                  (effect
@@ -460,7 +460,7 @@
 (defcard "Embolus"
   (let [maybe-gain-counter {:once :per-turn
                             :async true
-                            :label "Place a power counter on Embolus"
+                            :label "Place a power counter on Embolus (start of turn)"
                             :effect (effect
                                       (continue-ability
                                         {:optional
@@ -803,7 +803,7 @@
 
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Select a card in " (zone->name (second (get-zone card))))
-                 :label "place an advancement counter"
+                 :label "place an advancement counter (start of turn)"
                  :msg (msg "place an advancement token on " (card-str state target))
                  :choices {:req (req (and (installed? target)
                                           (in-same-server? card target)))}
