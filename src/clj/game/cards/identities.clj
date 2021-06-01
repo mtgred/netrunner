@@ -1251,10 +1251,8 @@
              :prompt "Treat as a successful run on which server?"
              :choices ["HQ" "R&D"]
              :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
-                            (swap! state update-in [:runner :register :successful-run] next)
                             (swap! state assoc-in [:run :server] [target-server])
                             (trigger-event state :corp :no-action)
-                            (swap! state update-in [:runner :register :successful-run] conj target-server)
                             (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
