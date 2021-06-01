@@ -334,7 +334,7 @@
   (let [game (game-for-id gameid)
         first-player (first (:players game))]
     (when  (= (:ws-id first-player) client-id)
-      (if (> (count (:players game)) 1)
+      (if (< 1 (count (:players game)))
         (refresh-lobby-update-in gameid [:players] (partial mapv swap-side))
         (let [updated-player (change-side first-player side)]
           (refresh-lobby-assoc-in gameid [:players] [updated-player]))))))
