@@ -1678,6 +1678,7 @@
    {:req (req (last-turn? state :runner :successful-run))
     :player :runner
     :msg (msg "force the Runner to " (decapitalize target))
+    :waiting-prompt "Runner to choose an option for Public Trail"
     :prompt "Pick one"
     :choices (req ["Take 1 tag"
                    (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
