@@ -10,24 +10,23 @@
 
 (defmulti cost-name (fn [[cost-type _]] cost-type))
 (defmulti value (fn [[cost-type _]] cost-type))
-(defmulti stealth-value (fn [[cost-type _ __]] cost-type))
+(defmulti stealth-value (fn [[cost-type]] cost-type))
 (defmulti label (fn [[cost-type _]] cost-type))
-(defmulti merge-cost (fn [[cost-type] _] cost-type))
 (defmulti payable? (fn [[cost-type] & _] cost-type))
 (defmulti handler (fn [[cost-type] & _] cost-type))
 
 (defn- add-default-to-costs
-  "Take a sequence of costs (nested or otherwise) and add a default value of 1
-  to any that don't include a value (normally with :forfeit)."
-  ([costs] (add-default-to-costs (filter #(not (nil? %)) (flatten costs)) []))
-  ([costs result]
-  (if (empty? costs) result
-      (let [next-type (first costs)
-            error-check (when (not (keyword? next-type)) (throw (Exception. "Malformed costs")))
-            split (split-with #(number? %) (rest costs))
-            quantities (if (empty? (first split)) [1] (first split))
-            remainder (second split)]
-            (add-default-to-costs remainder (conj result (concat [next-type] quantities)))))))
+  "Transform a sequence of cost vectors (with any amount of nesting) into a
+  sequence of conforming cost vectors: keyword and 1 or more numbers"
+  [costs]
+  (loop [[cost-type & rest-costs] (filter #(or (keyword? %) (number? %)) (flatten costs))
+         result []]
+    (if-not cost-type
+      result
+      (let [[quantities remainder] (split-with number? rest-costs)
+            quantities (or (not-empty quantities) [1])
+            new-cost (into [] (cons cost-type quantities))]
+        (recur remainder (conj result new-cost))))))
 
 (defn- cost-ranks
   [[cost-type _]]
@@ -38,20 +37,38 @@
     (:trash :remove-from-game) 4
     5))
 
+(defn merge-cost-impl
+  "Reducing function for merging costs of the same type, respecting stealth requirements."
+  [[_ value-acc stealth-acc] [cost-type cost-value stealth-value]]
+  (->> [cost-type
+        ;; Using the multi-method value here in case a cost-type
+        ;; shouldn't have more than 1 (e.g. :trash)
+        (value [cost-type ((fnil + 0 0) value-acc cost-value)])
+        (when (or stealth-acc stealth-value)
+          ((fnil + 0 0) stealth-acc stealth-value))]
+       ;; Remove nil stealth costs
+       (filterv some?)))
+
+(defn group-costs
+  [costs]
+  (->> costs
+       (group-by #(let [cost-type (first %)]
+                    (if (= :x-credits cost-type)
+                      (gensym)
+                      cost-type)))
+       (vals)))
+
 (defn merge-costs
-  "Combines disparate costs into a single cost per type. For use outside of the pay system."
+  "Combines disparate costs into a single cost per type."
   ([costs] (merge-costs costs false))
   ([costs remove-zero-credit-cost]
    (->> (add-default-to-costs costs)
-        (group-by first)
-        vals
-        (map (fn [cost-pairs]
-               (reduce
-                 (fn [cost1 cost2] (merge-cost cost1 cost2))
-                 cost-pairs)))
+        ;; Don't group :x-credits
+        (group-costs)
+        (map #(reduce merge-cost-impl [] %))
         (remove #(if remove-zero-credit-cost
-                   (and (= :credit (cost-name %))
-                        (zero? (value %)))
+                   (and (= :credit (first %))
+                        (zero? (second %)))
                    false))
         (sort-by cost-ranks)
         (into []))))

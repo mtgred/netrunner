@@ -9,7 +9,7 @@
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
-    [game.core.payment :refer [cost-name handler label payable? value stealth-value merge-cost]]
+    [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
     [game.core.props :refer [add-counter]]
     [game.core.shuffling :refer [shuffle!]]
@@ -20,9 +20,6 @@
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [quantify]]
     [clojure.string :as string]))
-
-;Unless otherwise specified costs are merged by simply adding the values together. We go via value to handle fixed value costs like trash.
-(defmethod merge-cost :default [[cost-type cost-value] [cost2-type cost-value2]] [cost-type (value [cost-type ((fnil + 0 0) cost-value cost-value2)])])
 
 ;; Click
 (defmethod cost-name :click [_] :click)
@@ -119,7 +116,6 @@
 ;; Zero stealth value for costs where it doesn't make sense
 (defmethod stealth-value :default [_] 0)
 (defmethod stealth-value :credit [[_ __ stealth-amount]] (or stealth-amount 0))
-(defmethod merge-cost :credit [[_ value1 stealth-value1] [__ value2 stealth-value2]] [:credit ((fnil + 0 0) value1 value2) ((fnil + 0 0) stealth-value1 stealth-value2)])
 (defmethod label :credit [cost] (str (value cost) " [Credits]"))
 (defmethod payable? :credit
   [cost state side eid card]
@@ -159,8 +155,6 @@
 (defmethod value :x-credits [_] 0)
 ;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
 (defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0))
-;Do not merge x-credit costs, if an ability somehow gets 2, each should be handled seperately
-(defmethod merge-cost :x-credits [cost1 cost2] [cost1 cost2])
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]

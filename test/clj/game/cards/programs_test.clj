@@ -2450,7 +2450,7 @@
         (card-ability state :runner fawkes 1)
         (click-prompt state :runner "3")
         (click-card state :runner cloak)))))
-   (comment testing "Pumps the correct amount"
+   (testing "Pumps the correct amount"
     (do-game (new-game {:runner {:hand ["Fawkes" "Cloak"] :credits 20}})
     (take-credits state :corp)
     (play-from-hand state :runner "Fawkes")

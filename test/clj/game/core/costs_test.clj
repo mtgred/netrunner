@@ -24,7 +24,7 @@
     (testing "Costs with all defaults are expanded"
       (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit]]))))
     (testing "Non-damage costs are combined"
-      (is (= [[:click 4] [:credit 2 0]]
+      (is (= [[:click 4] [:credit 2]]
              (core/merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
     (testing "Deeply nested costs are flattened"
       (is (= [[:click 3]] (core/merge-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
