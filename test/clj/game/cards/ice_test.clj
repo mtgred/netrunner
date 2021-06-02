@@ -1685,37 +1685,109 @@
 
 (deftest gatekeeper
   ;; Gatekeeper
-  (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 10)]
-                      :hand ["Gatekeeper" "Posted Bounty" "Hostile Takeover"]
-                      :discard [(qty "Ice Wall" 2) "Hostile Takeover"]}})
-    ;; Actual test
-    (play-from-hand state :corp "Gatekeeper" "New remote")
-    (take-credits state :corp)
-    (let [gate (get-ice state :remote1 0)
-          hand (-> (get-corp) :hand count)
-          deck (-> (get-corp) :deck count)
-          num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
-          hostile (find-card "Hostile Takeover" (:hand (get-corp)))]
-      (run-on state "Server 1")
-      (rez state :corp gate)
-      (run-continue state)
-      (is (= 6 (get-strength (refresh gate))))
-      (card-subroutine state :corp gate 0)
-      (click-prompt state :corp "3")
-      (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Corp should draw 3 cards")
-      (click-card state :corp hostile)
-      (click-card state :corp (find-card "Hostile Takeover" (:discard (get-corp))))
-      (click-card state :corp (find-card "Posted Bounty" (:hand (get-corp))))
-      (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
-      (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
-          "Corp should shuffle R&D")
-      (is (in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
-      (card-subroutine state :corp gate 1)
-      (is (not (:run @state)) "Gatekeeper subroutine should end the run")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (zero? (get-strength (refresh gate))) "Gatekeeper strength should be reset"))))
+  (testing "Gatekeeper:"
+    (testing "basic tests"
+      (do-game
+        (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                          :hand ["Gatekeeper" "Posted Bounty" "Hostile Takeover"]
+                          :discard [(qty "Ice Wall" 2) "Hostile Takeover"]}})
+        ;; Actual test
+        (play-from-hand state :corp "Gatekeeper" "New remote")
+        (take-credits state :corp)
+        (let [gate (get-ice state :remote1 0)
+              hand (-> (get-corp) :hand count)
+              deck (-> (get-corp) :deck count)
+              num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
+              hostile (find-card "Hostile Takeover" (:hand (get-corp)))]
+          (run-on state "Server 1")
+          (rez state :corp gate)
+          (run-continue state)
+          (is (= 6 (get-strength (refresh gate))))
+          (card-subroutine state :corp gate 0)
+          (click-prompt state :corp "3")
+          (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Corp should draw 3 cards")
+          (click-card state :corp hostile)
+          (click-card state :corp (find-card "Hostile Takeover" (:discard (get-corp))))
+          (click-card state :corp (find-card "Posted Bounty" (:hand (get-corp))))
+          (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
+          (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
+              "Corp should shuffle R&D")
+          (is (in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
+          (card-subroutine state :corp gate 1)
+          (is (not (:run @state)) "Gatekeeper subroutine should end the run")
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (is (zero? (get-strength (refresh gate))) "Gatekeeper strength should be reset"))))
+    (testing "log showing origin of cards"
+      (testing "with cards chosen only from HQ"
+        (do-game
+          (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                            :hand ["Gatekeeper"
+                                   "Project Vitruvius"
+                                   "NEXT Wave 2"
+                                   "Accelerated Beta Test"]}})
+          (play-from-hand state :corp "Gatekeeper" "HQ")
+          (take-credits state :corp)
+          (let [hand    (:hand (get-corp))
+                gate    (get-ice state :hq 0)
+                log-str (str "Corp uses Gatekeeper to shuffle.+"
+                             "from HQ into R&D")]
+              (run-on state "HQ")
+              (rez state :corp gate)
+              (run-continue state)
+              (card-subroutine state :corp gate 0)
+              (click-prompt state :corp "0")
+              (click-card state :corp (find-card "Accelerated Beta Test" hand))
+              (click-card state :corp (find-card "Project Vitruvius" hand))
+              (click-card state :corp (find-card "NEXT Wave 2" hand))
+              (is (last-log-contains? state log-str)))))
+      (testing "with cards chosen only from Archives"
+        (do-game
+          (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                            :hand ["Gatekeeper"]
+                            :discard ["Efficiency Committee"
+                                      "Hyperloop Extension"
+                                      "Bifrost Array"]}})
+          (play-from-hand state :corp "Gatekeeper" "HQ")
+          (take-credits state :corp)
+          (let [discard    (:discard (get-corp))
+                gate    (get-ice state :hq 0)
+                log-str (str "Corp uses Gatekeeper to shuffle.+"
+                             "from Archives into R&D")]
+              (run-on state "HQ")
+              (rez state :corp gate)
+              (run-continue state)
+              (card-subroutine state :corp gate 0)
+              (click-prompt state :corp "0")
+              (click-card state :corp (find-card "Efficiency Committee" discard))
+              (click-card state :corp (find-card "Hyperloop Extension" discard))
+              (click-card state :corp (find-card "Bifrost Array" discard))
+              (is (last-log-contains? state log-str)))))
+      (testing "with cards chosen both from HQ and R&D"
+        (do-game
+          (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                            :hand ["Gatekeeper"
+                                   "Project Vitruvius"
+                                   "NEXT Wave 2"
+                                   "Accelerated Beta Test"]
+                            :discard ["Efficiency Committee"
+                                      "Hyperloop Extension"]}})
+          (play-from-hand state :corp "Gatekeeper" "HQ")
+          (take-credits state :corp)
+          (let [hand    (:hand (get-corp))
+                discard (:discard (get-corp))
+                gate    (get-ice state :hq 0)
+                log-str (str "Corp uses Gatekeeper to shuffle.+ from HQ "
+                             "and .+ from Archives into R&D")]
+              (run-on state "HQ")
+              (rez state :corp gate)
+              (run-continue state)
+              (card-subroutine state :corp gate 0)
+              (click-prompt state :corp "0")
+              (click-card state :corp (find-card "Accelerated Beta Test" hand))
+              (click-card state :corp (find-card "Project Vitruvius" hand))
+              (click-card state :corp (find-card "Efficiency Committee" discard))
+              (is (last-log-contains? state log-str))))))))
 
 (deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success

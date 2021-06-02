@@ -177,6 +177,15 @@
   ([n string single-suffix plural-suffix]
    (str n " " (pluralize string single-suffix plural-suffix n))))
 
+(defn enumerate-str
+  "Joins a collection to a string, seperated by commas and 'and' in front of
+  the last item. If collection only has one item, justs returns that item
+  without seperators. Returns an empty string if coll is empty."
+  [coll]
+  (string/join " and "
+               (remove empty?
+                       [(string/join ", " (butlast coll)) (last coll)])))
+
 (defn in-coll?
   "true if coll contains elm"
   [coll elm]
