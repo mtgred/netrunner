@@ -157,7 +157,7 @@
   {:on-score
    {:player :runner
     :async true
-    :waiting-prompt "Runner to suffer 5 meat damage or take 2 tags"
+    :waiting-prompt "Runner to choose an option for Armed Intimidation"
     :prompt "Choose Armed Intimidation score effect"
     :choices ["Suffer 5 meat damage" "Take 2 tags"]
     :effect (req (case target
@@ -201,7 +201,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:async true
             :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
-            :waiting-prompt "Corp to place advancement tokens with Award Bait"
+            :waiting-prompt "Corp to use Award Bait"
             :prompt "How many advancement tokens?"
             :choices ["0" "1" "2"]
             :effect (effect (continue-ability
@@ -1212,7 +1212,7 @@
                 :silent (req true)
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
-                :waiting-prompt "Runner to trash installed cards"
+                :waiting-prompt "Runner to decide on Project Ares"
                 :prompt (msg "Select " (trash-count-str (:card context)) " installed cards to trash")
                 :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
@@ -1423,7 +1423,7 @@
                                 (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                                     (effect-completed state side eid))))))})]
     {:on-score {:async true
-                :waiting-prompt "Corp to add cards from HQ to bottom of R&D"
+                :waiting-prompt "Corp to use Reeducation"
                 :effect (req (let [from (get-in @state [:corp :hand])]
                                (if (pos? (count from))
                                  (continue-ability state :corp (corp-choice from '() from) card nil)
@@ -1501,7 +1501,7 @@
 (defcard "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
    :on-score {:req (req (seq (all-installed-runner-type state :program)))
-              :waiting-prompt "Corp to trash a card"
+              :waiting-prompt "Corp to use SDS Drone Deployment"
               :prompt "Select a program to trash"
               :choices {:card #(and (installed? %)
                                     (program? %))

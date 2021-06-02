@@ -286,7 +286,7 @@
                                    (* 2))]
                      {:async true
                       :player :runner
-                      :waiting-prompt "Runner to choose for Cayambe Grid"
+                      :waiting-prompt "Runner to choose an option for Cayambe Grid"
                       :prompt (str "Pay " cost " [Credits] or end the run?")
                       :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                   (str "Pay " cost " [Credits]"))
@@ -438,7 +438,7 @@
                                card nil))})]
     {:flags {:rd-reveal (req true)}
      :access {:optional
-              {:waiting-prompt "Corp to finish using Disposable HQ"
+              {:waiting-prompt "Corp to use Disposable HQ"
                :prompt "Use Disposable HQ to add cards to the bottom of R&D?"
                :yes-ability
                {:async true
@@ -672,7 +672,7 @@
    :access {:interactive (req true)
             :optional
             {:player :runner
-             :waiting-prompt "Runner to decide if they will take 1 tag"
+             :waiting-prompt "Runner to decide on Increased Drop Rates"
              :prompt "Take 1 tag to prevent Corp from removing 1 bad publicity?"
              :yes-ability
              {:async true
@@ -690,7 +690,7 @@
                     :base 4
                     :label "add an installed program or virtual resource to the Grip"
                     :successful
-                    {:waiting-prompt "Corp to resolve Intake"
+                    {:waiting-prompt "Corp to use Intake"
                      :prompt "Select a program or virtual resource"
                      :player :corp
                      :choices {:card #(and (installed? %)
@@ -739,7 +739,7 @@
                :once :per-turn
                :once-key :jinja-city-grid-draw
                :async true
-               :waiting-prompt "Corp to resolve Jinja City Grid"
+               :waiting-prompt "Corp to use Jinja City Grid"
                :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                :effect (req (cond
                               ;; if ice were drawn, do the full routine
@@ -772,7 +772,7 @@
   {:events [{:event :pass-all-ice
              :req (req this-server)
              :player :runner
-             :waiting-prompt "Runner to choose for K. P. Lynn"
+             :waiting-prompt "Runner to choose an option for K. P. Lynn"
              :prompt "Choose one"
              :choices ["Take 1 tag" "End the run"]
              :async true
@@ -1200,7 +1200,7 @@
                             (is-central? (:server context))))
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
-   :on-rez {:waiting-prompt "Corp to place credits on Reduced Service"
+   :on-rez {:waiting-prompt "Corp to use Reduced Service"
             :prompt "How many credits do you want to pay?"
             :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
             :async true
@@ -1355,7 +1355,7 @@
                                         (damage state side eid :brain 1 {:card tempus}))
                                       (continue-ability
                                         state :runner
-                                        {:waiting-prompt "Runner to resolve Tempus"
+                                        {:waiting-prompt "Runner to choose an option for Tempus"
                                          :prompt "Lose [Click][Click] or take 1 brain damage?"
                                          :player :runner
                                          :choices ["Lose [Click][Click]" "Take 1 brain damage"]
@@ -1477,7 +1477,7 @@
 
 (defcard "Warroid Tracker"
   (letfn [(wt [n]
-            {:waiting-prompt "Runner to choose cards to trash"
+            {:waiting-prompt "Runner to decide on Warroid Tracker"
              :prompt "Choose an installed card to trash due to Warroid Tracker"
              :async true
              :interactive (req true)

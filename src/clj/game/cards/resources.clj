@@ -871,7 +871,7 @@
                                                        (not (is-draft-id? %))))
                                          (sort-by :title)))
         fenris-effect {:async true
-                       :waiting-prompt "Runner to pick identity to host on DJ Fenris"
+                       :waiting-prompt "Runner to use DJ Fenris"
                        :prompt "Choose a g-mod identity to host on DJ Fenris"
                        :choices (req (sorted-id-list runner))
                        :msg (msg "host " (:title target))
@@ -1464,7 +1464,7 @@
 
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
-            {:waiting-prompt "Runner to choose card to keep"
+            {:waiting-prompt "Runner to use Levy Advanced Research Lab"
              :prompt "Choose a Program to keep"
              :choices (cons "None" (filter program? cards))
              :async true
@@ -1530,7 +1530,7 @@
                 (effect (continue-ability
                           (if (seq (:scored corp))
                             {:optional
-                             {:waiting-prompt "Corp to decide whether or not to prevent Liberated Chela"
+                             {:waiting-prompt "Corp to decide on Liberated Chela"
                               :prompt "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?"
                               :player :corp
                               :async true
@@ -1639,7 +1639,7 @@
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
-                :waiting-prompt "Corp to select a card to derez"
+                :waiting-prompt "Corp to decide on Muertos Gang Member"
                 :prompt "Select a card to derez"
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
@@ -1649,7 +1649,7 @@
    (effect
      (continue-ability
        {:player :corp
-        :waiting-prompt "Corp to select a card to rez"
+        :waiting-prompt "Corp to decide on Muertos Gang Member"
         :prompt "Select a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
@@ -2190,7 +2190,7 @@
 (defcard "Rolodex"
   {:on-install {:async true
                 :msg "look at the top 5 cards of their Stack"
-                :waiting-prompt "Runner to rearrange the top cards of their Stack"
+                :waiting-prompt "Runner to use Rolodex"
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
                                     (if (pos? (count from))
@@ -2748,7 +2748,7 @@
 (defcard "The Nihilist"
   (let [corp-choice {:optional
                      {:player :corp
-                      :waiting-prompt "Corp to decide"
+                      :waiting-prompt "Corp to decide on The Nihilist"
                       :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
                       :yes-ability {:async true
                                     :effect (effect (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
@@ -3055,7 +3055,7 @@
                                   state side
                                   {:optional
                                    {:player :corp
-                                    :waiting-prompt "Corp to decide whether or not to draw with Woman in the Red Dress"
+                                    :waiting-prompt "Corp to decide on Woman in the Red Dress"
                                     :prompt (msg "Draw " (:title (first (:deck corp))) "?")
                                     :yes-ability
                                     {:async true

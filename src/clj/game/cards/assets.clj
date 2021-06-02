@@ -93,7 +93,7 @@
                 :cost [:trash]
                 :effect (effect
                           (continue-ability
-                            {:waiting-prompt "Runner to decide whether or not to prevent Alexa Belsky"
+                            {:waiting-prompt "Runner to decide on Alexa Belsky"
                              :prompt "How many credits do you want to pay?"
                              :choices :credit
                              :player :runner
@@ -1055,7 +1055,7 @@
                             (some #(and (agenda? %)
                                         (= counters (:agendapoints %)))
                                   (:hand corp))))
-                :waiting-prompt "Corp to select an agenda for Lady Liberty"
+                :waiting-prompt "Corp to use Lady Liberty"
                 :prompt "Select an Agenda in HQ to move to score area"
                 :choices {:req (req (and (agenda? target)
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
@@ -1552,7 +1552,7 @@
   (advance-ambush
     0
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
-     :waiting-prompt "Corp to select an agenda to score with Plan B"
+     :waiting-prompt "Corp to use Plan B"
      :prompt "Select an Agenda in HQ to score"
      :choices {:req (req (and (agenda? target)
                               (<= (get-advancement-requirement target)

@@ -238,7 +238,7 @@
                      (wait-for
                        (resolve-ability
                          state :runner
-                         {:waiting-prompt "Runner to choose cards to trash"
+                         {:waiting-prompt "Runner to decide on Biased Reporting"
                           :prompt (msg "Choose any number of cards of type " t " to trash")
                           :choices {:max n
                                     :card #(and (installed? %)
@@ -720,7 +720,7 @@
       {:req (req (and (<= 6 (:credit runner))
                       (pos? (count-resources state))))
        :player :runner
-       :waiting-prompt "Runner to trash a resource to prevent Financial Collapse"
+       :waiting-prompt "Runner to decide on Financial Collapse"
        :prompt "Trash a resource to prevent Financial Collapse?"
        :yes-ability
        {:prompt "Select a resource to trash"
@@ -864,7 +864,7 @@
                                state :runner
                                {:async true
                                 :req (req (<= 3 (:credit runner)))
-                                :waiting-prompt "Runner to prevent trashes"
+                                :waiting-prompt "Runner to decide on Game Over"
                                 :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
                                 :choices {:max (req (min numtargets (quot (total-available-credits state :runner eid card) 3)))
                                           :card #(and (installed? %)
@@ -924,7 +924,7 @@
               {:optional
                {:player :runner
                 :async true
-                :waiting-prompt "Runner to resolve Hangeki"
+                :waiting-prompt "Runner to decide on Hangeki"
                 :prompt "Access card? (If not, add Hangeki to your score area worth -1 agenda point)"
                 :yes-ability
                 {:async true
@@ -986,7 +986,7 @@
     {:on-play
      {:additional-cost [:trash-from-deck 1]
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
-      :waiting-prompt "Corp to add 3 cards in HQ to the top of R&D"
+      :waiting-prompt "Corp to use Hasty Relocation"
       :async true
       :effect (req (wait-for (draw state side 3 nil)
                              (let [from (get-in @state [:corp :hand])]
@@ -1448,7 +1448,7 @@
                    (continue-ability
                      state side
                      {:optional
-                      {:waiting-prompt "Runner to decide whether or not to trash a card from their Grip"
+                      {:waiting-prompt "Runner to decide on O₂ Shortage"
                        :prompt "Trash 1 random card from your Grip?"
                        :player :runner
                        :yes-ability {:async true
@@ -1559,7 +1559,7 @@
 (defcard "Precognition"
   {:on-play
    {:msg "rearrange the top 5 cards of R&D"
-    :waiting-prompt "Corp to rearrange the top cards of R&D"
+    :waiting-prompt "Corp to use Precognition"
     :async true
     :effect (effect (continue-ability
                       (let [from (take 5 (:deck corp))]
@@ -1666,7 +1666,7 @@
     {:on-play
      {:req (req (pos? (count (:deck corp))))
       :msg (msg "look at the top " (quantify (count (take 5 (:deck corp))) "card") " of R&D")
-      :waiting-prompt "Corp to look at the top cards of R&D"
+      :waiting-prompt "Corp to use Psychokinesis"
       :async true
       :effect (effect (continue-ability
                         (let [top-5 (take 5 (:deck corp))]
@@ -1945,7 +1945,7 @@
    {:rfg-instead-of-trashing true
     :optional
     {:req (req (last-turn? state :runner :trashed-card))
-     :waiting-prompt "Runner to decide if they will take 1 brain damage"
+     :waiting-prompt "Runner to decide on Riot Suppression"
      :prompt "Take 1 brain damage to prevent having 3 fewer clicks next turn?"
      :player :runner
      :yes-ability
@@ -2185,7 +2185,7 @@
           (let [c target]
             {:optional
              {:player :runner
-              :waiting-prompt "Runner to decide if they will take 1 tag"
+              :waiting-prompt "Runner to decide on Snatch and Grab"
               :prompt (str "Take 1 tag to prevent " (:title c) " from being trashed?")
               :yes-ability
               {:async true
@@ -2429,7 +2429,7 @@
               (continue-ability
                 (let [chosen target]
                   {:player :runner
-                   :waiting-prompt "Runner to resolve Threat Assessment"
+                   :waiting-prompt "Runner to choose an option on Threat Assessment"
                    :prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
                    :choices [(str "Move " (:title chosen))
                              "Take 2 tags"]
@@ -2610,7 +2610,7 @@
                 (let [chosen target
                       wake card]
                   {:player :runner
-                   :waiting-prompt "Runner to resolve Wake Up Call"
+                   :waiting-prompt "Runner to choose an option on Wake Up Call"
                    :prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
                    :choices [(str "Trash " (:title chosen))
                              "4 meat damage"]

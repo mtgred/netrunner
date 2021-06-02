@@ -691,7 +691,7 @@
              {:req (req (and (:successful context)
                              (= :rd (target-server context))))
               :player :runner
-              :waiting-prompt "Runner to decide if they will use Conduit"
+              :waiting-prompt "Runner to use Conduit"
               :autoresolve (get-autoresolve :auto-conduit)
               :prompt "Use Conduit?"
               :yes-ability {:msg "add 1 virus counter to Conduit"
@@ -852,7 +852,7 @@
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
                   :msg (msg "reveal the top 5 cards of their Stack: " (string/join ", " (map :title (take 5 (:deck runner)))))
-                  :waiting-prompt "Runner to host programs on Customized Secretary"
+                  :waiting-prompt "Runner to use Customized Secretary"
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
@@ -1382,7 +1382,7 @@
                 :async true
                 :effect (req (continue-ability
                                state :corp
-                               {:waiting-prompt "Corp to trash a card"
+                               {:waiting-prompt "Corp to decide on Hemorrhage"
                                 :prompt "Choose a card to trash"
                                 :choices (req (filter corp? (:hand corp)))
                                 :async true

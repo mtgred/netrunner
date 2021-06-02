@@ -56,7 +56,7 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:waiting-prompt "Corp to decide about 419: Amoral Scammer"
+                                      {:waiting-prompt "Corp to decide on 419: Amoral Scammer"
                                        :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
                                        :player :corp
                                        :no-ability
@@ -150,7 +150,7 @@
              :req (req (and (= :archives (target-server context))
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
-             :waiting-prompt "Corp to trash 1 card from HQ"
+             :waiting-prompt "Corp to decide on Alice Merchant: Clan Agitator"
              :prompt "Choose a card in HQ to discard"
              :player :corp
              :choices {:all true
@@ -454,7 +454,7 @@
                     (not (agenda? target))
                     (<= (play-cost state side target)
                         (number-of-runner-virus-counters state))))
-     :waiting-prompt "Runner to use Freedom Khumalo's ability"
+     :waiting-prompt "Runner to use Freedom Khumalo: Crypto-Anarchist"
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
                     (if (zero? play-or-rez)
@@ -601,7 +601,7 @@
                             (not (:facedown context))))
              :once :per-turn
              :async true
-             :waiting-prompt "Runner to use Hayley's ability"
+             :waiting-prompt "Runner to use Hayley Kaplan: Universal Scholar"
              :effect
              (effect (continue-ability
                        (let [itarget (:card context)
@@ -735,7 +735,7 @@
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
              :async true
-             :waiting-prompt "Corp to place advancement tokens"
+             :waiting-prompt "Corp to use Jemison Astronautics: Sacrifice. Audacity. Success."
              :effect
              (effect
                (continue-ability
@@ -1367,7 +1367,7 @@
 (defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                :waiting-prompt "Corp to use Skorpios' ability"
+                :waiting-prompt "Corp to use Skorpios Defense Systems: Persuasive Power"
                 :prompt "Choose a card in the Runner's Heap that was just trashed"
                 :once :per-turn
                 :choices (req (cancellable (:discard runner)))
@@ -1414,7 +1414,7 @@
                :optional
                {:req (req (and (not-empty (installed-faceup-agendas state))
                                (not-empty (ice-with-no-advancement-tokens state))))
-                :waiting-prompt "Corp to use SSO Industries"
+                :waiting-prompt "Corp to use SSO Industries: Fueling Innovation"
                 :prompt "Place advancement tokens?"
                 :autoresolve (get-autoresolve :auto-sso)
                 :yes-ability
@@ -1456,7 +1456,7 @@
                (effect (continue-ability
                          (let [c1 (first targets)
                                c2 (second targets)]
-                           {:waiting-prompt "Corp to choose which card to remove from the game"
+                           {:waiting-prompt "Corp to decide on Steve Cambridge: Master Grifter"
                             :prompt "Choose which card to remove from the game"
                             :player :corp
                             :choices [c1 c2]

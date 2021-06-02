@@ -478,14 +478,14 @@
 
 (defcard "Anansi"
   (let [corp-draw {:optional
-                   {:waiting-prompt "Corp to draw a card"
+                   {:waiting-prompt "Corp to use Anansi"
                     :prompt "Draw 1 card?"
                     :yes-ability {:async true
                                   :msg "draw 1 card"
                                   :effect (effect (draw eid 1 nil))}}}
         runner-draw {:player :runner
                      :optional
-                     {:waiting-prompt "Runner to decide on card draw"
+                     {:waiting-prompt "Runner to choose an option for Anansi"
                       :prompt "Pay 2 [Credits] to draw 1 card?"
                       :yes-ability
                       {:async true
@@ -498,7 +498,7 @@
                       :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                     :async true
-                    :waiting-prompt "Corp to rearrange the top cards of R&D"
+                    :waiting-prompt "Corp to use Anansi"
                     :effect (req (let [from (take 5 (:deck corp))]
                                    (continue-ability
                                      state side
@@ -520,7 +520,7 @@
    :access
    {:optional
     {:req (req (not (in-discard? card)))
-     :waiting-prompt "Corp to decide to trigger Archangel"
+     :waiting-prompt "Corp to use Archangel"
      :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
      :player :corp
      :yes-ability
@@ -867,7 +867,7 @@
    :access {:optional
             {:req (req (not (in-discard? card)))
              :player :runner
-             :waiting-prompt "Runner to decide to break Chrysalis subroutine"
+             :waiting-prompt "Runner to decide on Chrysalis"
              :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
              :yes-ability {:async true
                            :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
@@ -1008,7 +1008,7 @@
                      {:async true
                       :label "Look at the top of the stack"
                       :msg "look at top X cards of the stack"
-                      :waiting-prompt "Corp to rearrange the top cards of the stack"
+                      :waiting-prompt "Corp to use Data Hound"
                       :effect (req (let [c (- target (second targets))
                                          from (take c (:deck runner))]
                                      (system-msg state :corp
@@ -1627,7 +1627,7 @@
    :access {:optional
             {:req (req (not (in-discard? card)))
              :player :runner
-             :waiting-prompt "Runner to decide to break Herald subroutines"
+             :waiting-prompt "Runner to decide on Herald"
              :prompt "You are encountering Herald. Allow its subroutines to fire?"
              :yes-ability {:async true
                            :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
@@ -1903,7 +1903,7 @@
                   :effect (effect (continue-ability
                                     (when (= 2 (count targets))
                                       {:player :runner
-                                       :waiting-prompt "Runner to decide which card to move"
+                                       :waiting-prompt "Runner to decide on Jua"
                                        :prompt "Select a card to move to the Stack"
                                        :choices {:card #(some (partial same-card? %) targets)}
                                        :effect (req (move state :runner target :deck {:front true})
@@ -1933,7 +1933,7 @@
           (sub-map [kind]
             {:player :runner
              :async true
-             :waiting-prompt "Runner to decide on Kamali 1.0 action"
+             :waiting-prompt "Runner to choose an option for Kamali 1.0"
              :prompt "Choose one"
              :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
              :effect (req (if (= target "Take 1 brain damage")
@@ -1954,7 +1954,7 @@
 (defcard "Karunā"
   (let [offer-jack-out
         {:optional
-         {:waiting-prompt "Runner to decide on jack out"
+         {:waiting-prompt "Runner to decide on Karunā"
           :player :runner
           :prompt "Jack out?"
           :yes-ability {:async true
@@ -2056,7 +2056,7 @@
                                  (continue-ability
                                    state :runner
                                    {:optional
-                                    {:waiting-prompt "Runner to decide to shuffle their Grip into the Stack"
+                                    {:waiting-prompt "Runner to decide on Loki"
                                      :prompt "Reshuffle your Grip into the Stack?"
                                      :player :runner
                                      :yes-ability
@@ -2082,7 +2082,7 @@
                                 (reveal state side (top-3 state))
                                 (continue-ability
                                   state side
-                                  {:waiting-prompt "Corp to choose a card to add to the Grip"
+                                  {:waiting-prompt "Corp to use Loot Box"
                                    :prompt "Choose a card to add to the Grip"
                                    :choices (req (top-3 state))
                                    :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
@@ -2613,7 +2613,7 @@
                                    state side
                                    {:player :runner
                                     :async true
-                                    :waiting-prompt "Runner to resolve Otoroshi"
+                                    :waiting-prompt "Runner to choose an option for Otoroshi"
                                     :prompt (str "Access " title " or pay 3 [Credits]?")
                                     :choices ["Access card"
                                               (when (>= (:credit runner) 3)
@@ -2755,7 +2755,7 @@
   (let [maybe-draw-effect
         {:optional
          {:player :corp
-          :waiting-prompt "Corp to decide on Sadaka card draw action"
+          :waiting-prompt "Corp to use Sadaka"
           :prompt "Draw 1 card?"
           :yes-ability
           {:async true
@@ -2768,7 +2768,7 @@
                     (effect (continue-ability
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
-                                {:waiting-prompt "Corp to decide on Sadaka R&D card actions"
+                                {:waiting-prompt "Corp to use Sadaka"
                                  :prompt (str "Top 3 cards of R&D: " (string/join ", " top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
@@ -2791,7 +2791,7 @@
                     (req (wait-for
                            (resolve-ability
                              state side
-                             {:waiting-prompt "Corp to select cards to trash with Sadaka"
+                             {:waiting-prompt "Corp to use Sadaka"
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
@@ -2823,7 +2823,7 @@
                                         (do (system-msg state :corp "uses Saisentan to deal a second net damage")
                                             (damage state side eid :net 1 {:card card}))
                                         (effect-completed state side eid)))))}]
-    {:on-encounter {:waiting-prompt "Corp to choose Saisentan card type"
+    {:on-encounter {:waiting-prompt "Corp to use Saisentan"
                     :prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :msg (msg "choose the card type " target)
@@ -2866,7 +2866,7 @@
             {:req (req (and (not (in-discard? card))
                             (some program? (all-active-installed state :runner))))
              :player :runner
-             :waiting-prompt "Runner to decide to break Sapper subroutine"
+             :waiting-prompt "Runner to decide on Sapper"
              :prompt "Allow Sapper subroutine to fire?"
              :yes-ability
              {:async true
@@ -2942,7 +2942,7 @@
   {:subroutines [{:label "Rearrange the top 3 cards of R&D"
                   :msg "rearrange the top 3 cards of R&D"
                   :async true
-                  :waiting-prompt "Corp to rearrange the top cards of R&D"
+                  :waiting-prompt "Corp to use Shiro"
                   :effect (effect (continue-ability
                                     (let [from (take 3 (:deck corp))]
                                       (when (pos? (count from))
