@@ -233,7 +233,7 @@
 
 (defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
-    [:h3 (tr [:lobby.select-title "Choose your deck"])]
+    [:h3 (tr [:lobby.select-title "Select your deck"])]
     [:div.deck-collection.lobby-deck-selector
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))

@@ -200,7 +200,7 @@
              :title "How do I use commands during a game?"
              :content [:ul
                        [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
-                        "requiring you to choose something. List of available commands:"
+                        "requiring you to select something. List of available commands:"
                         [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) command-info))]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"

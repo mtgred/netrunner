@@ -38,7 +38,7 @@
                    (build-spend-msg payment-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    ;; Choose the "on the table" version of the card
+    ;; Select the "on the table" version of the card
     (let [card (current-handler state side card)
           cdef (-> (:on-play (card-def card))
                    (dissoc :cost :additional-cost)
