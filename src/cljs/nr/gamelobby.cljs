@@ -608,7 +608,7 @@
                                    [deckselect-modal user {:games games :gameid gameid
                                                            :sets sets :decks decks
                                                            :format (:format game "standard")}])}
-                     (tr [:lobby.select-deck "Choose Deck"])])]))
+                     (tr [:lobby.select-deck "Select Deck"])])]))
              players))]
         [:h3 (tr [:lobby.options "Options"])]
         [:ul.options

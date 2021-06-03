@@ -569,7 +569,7 @@
                             state {:base base :total (dec total)}
                             (conj already-accessed (:cid (first unrezzed))) args)
                           nil nil))
-              ;; more than one unrezzed upgrade. allow user to choose with mouse.
+              ;; more than one unrezzed upgrade. allow user to select with mouse.
               (continue-ability
                 state side
                 {:async true
@@ -718,7 +718,7 @@
                             state {:base base :total (dec total)}
                             (conj already-accessed (:cid (first unrezzed))) args)
                           nil nil))
-              ;; more than one unrezzed upgrade. allow user to choose with mouse.
+              ;; more than one unrezzed upgrade. allow user to select with mouse.
               (continue-ability
                 state side
                 {:async true
@@ -929,7 +929,7 @@
                                state side
                                (access-helper-archives state access-amount already-accessed args)
                                nil nil)))
-                 ;; more than one unrezzed upgrade. allow user to choose with mouse.
+                 ;; more than one unrezzed upgrade. allow user to select with mouse.
                  (continue-ability
                    state side
                    {:async true
