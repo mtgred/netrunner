@@ -52,10 +52,11 @@
 (defn group-costs
   [costs]
   (->> costs
-       (group-by #(let [cost-type (first %)]
-                    (if (= :x-credits cost-type)
+       (group-by #(let [cost-name (cost-name %)]
+                    ;; Don't group :x-credits
+                    (if (= :x-credits cost-name)
                       (gensym)
-                      cost-type)))
+                      cost-name)))
        (vals)))
 
 (defn merge-costs
@@ -63,12 +64,11 @@
   ([costs] (merge-costs costs false))
   ([costs remove-zero-credit-cost]
    (->> (add-default-to-costs costs)
-        ;; Don't group :x-credits
         (group-costs)
         (map #(reduce merge-cost-impl [] %))
         (remove #(if remove-zero-credit-cost
-                   (and (= :credit (first %))
-                        (zero? (second %)))
+                   (and (= :credit (cost-name %))
+                        (zero? (value %)))
                    false))
         (sort-by cost-ranks)
         (into []))))

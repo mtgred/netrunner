@@ -2444,37 +2444,40 @@
   ;; Fawkes
   (testing "Requires a stealth credit to pump"
     (do-game (new-game {:runner {:hand ["Fawkes"] :credits 20}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fawkes")
-    (let [fawkes (get-program state 0)]
-      (changes-val-macro 0 (get-strength (refresh fawkes))
-        "Strength was not increased"
-        (card-ability state :runner fawkes 1)
-        (is (empty? (:prompt (get-runner))) "Not asked how many credits to pay")))))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fawkes")
+      (let [fawkes (get-program state 0)]
+        (changes-val-macro
+          0 (get-strength (refresh fawkes))
+          "Strength was not increased"
+          (card-ability state :runner fawkes 1)
+          (is (empty? (:prompt (get-runner))) "Not asked how many credits to pay")))))
   (testing "Charges the correct amount"
     (do-game (new-game {:runner {:hand ["Fawkes" "Cloak"] :credits 20}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fawkes")
-    (play-from-hand state :runner "Cloak")
-    (let [fawkes (get-program state 0)
-          cloak (get-program state 1)]
-      (changes-val-macro -2 (:credit (get-runner))
-        "Runner was charged correctly"
-        (card-ability state :runner fawkes 1)
-        (click-prompt state :runner "3")
-        (click-card state :runner cloak)))))
-   (testing "Pumps the correct amount"
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fawkes")
+      (play-from-hand state :runner "Cloak")
+      (let [fawkes (get-program state 0)
+            cloak (get-program state 1)]
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Runner was charged correctly"
+          (card-ability state :runner fawkes 1)
+          (click-prompt state :runner "3")
+          (click-card state :runner cloak)))))
+  (testing "Pumps the correct amount"
     (do-game (new-game {:runner {:hand ["Fawkes" "Cloak"] :credits 20}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fawkes")
-    (play-from-hand state :runner "Cloak")
-    (let [fawkes (get-program state 0)
-          cloak (get-program state 1)]
-      (changes-val-macro +3 (get-strength (refresh fawkes))
-        "Strength increased correctly"
-        (card-ability state :runner fawkes 1)
-        (click-prompt state :runner "3")
-        (click-card state :runner cloak))))))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fawkes")
+      (play-from-hand state :runner "Cloak")
+      (let [fawkes (get-program state 0)
+            cloak (get-program state 1)]
+        (changes-val-macro
+          3 (get-strength (refresh fawkes))
+          "Strength increased correctly"
+          (card-ability state :runner fawkes 1)
+          (click-prompt state :runner "3")
+          (click-card state :runner cloak))))))
 
 (deftest femme-fatale
   ;; Femme Fatale
