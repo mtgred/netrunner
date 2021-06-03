@@ -167,7 +167,7 @@
    :mulligan (effect (draw 4 {:suppress-event true}))})
 
 (defcard "Apex: Invasive Predator"
-  (let [ability {:prompt "Select a card to install facedown"
+  (let [ability {:prompt "Choose a card to install facedown"
                  :label "Install a card facedown (start of turn)"
                  :once :per-turn
                  :choices {:max 1
@@ -216,7 +216,7 @@
                                 z (butlast (get-zone installed-card))]
                             (continue-ability
                               state side
-                              {:prompt (str "Select a "
+                              {:prompt (str "Choose a "
                                             (if (is-remote? z)
                                               "non-agenda"
                                               "piece of ice")
@@ -248,7 +248,7 @@
                             (move state side c :play-area))
                           (continue-ability
                             state side
-                            {:prompt "Select 4 cards to be hosted"
+                            {:prompt "Choose 4 cards to be hosted"
                              :choices {:max 4
                                        :all true
                                        :card #(and (runner? %)
@@ -342,22 +342,22 @@
                              (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))
                              (pos? (count (:hand runner)))))
               :waiting-prompt "Corp to use Chronos Protocol: Selective Mind-mapping"
-              :prompt "Use Chronos Protocol to select the first card trashed?"
+              :prompt "Use Chronos Protocol to choose the first card trashed?"
               :yes-ability
               {:async true
                :msg (msg "look at the Runner's Grip ( "
                          (string/join ", " (map :title (sort-by :title (:hand runner))))
-                         " ) and select the card that is trashed")
+                         " ) and choose the card that is trashed")
                :effect
                (effect (continue-ability
-                         {:prompt "Select a card to trash"
+                         {:prompt "Choose a card to trash"
                           :choices (req (:hand runner))
                           :not-distinct true
                           :msg (msg "choose " (:title target) " to trash")
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to select the first card trashed"))}}}]})
+              {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to choose the first card trashed"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -392,7 +392,7 @@
      :effect (effect
                (continue-ability
                  {:req (req (< 1 (count (get-remotes state))))
-                  :prompt "Select a server to be saved from the rules apocalypse"
+                  :prompt "Choose a server to be saved from the rules apocalypse"
                   :choices (req (get-remote-names state))
                   :async true
                   :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
@@ -483,7 +483,7 @@
              :req (req (and (not (:disabled card))
                             (has-most-faction? state :corp "Weyland Consortium")
                             (some ice? (all-installed state side))))
-             :prompt "Select a piece of ice to place 1 advancement token on"
+             :prompt "Choose a piece of ice to place 1 advancement token on"
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -539,7 +539,7 @@
                                                    (installed? ice)
                                                    (has-subtype? ice "Bioroid")))))))
              :waiting-prompt "Corp to use Haas-Bioroid: Architects of Tomorrow"
-             :prompt "Select a Bioroid to rez"
+             :prompt "Choose a Bioroid to rez"
              :player :corp
              :choices
              {:req (req (and (has-subtype? target "Bioroid")
@@ -610,7 +610,7 @@
                            {:optional
                             {:prompt (str "Install another " card-type " from your Grip?")
                              :yes-ability
-                             {:prompt (str "Select another " card-type " to install from your Grip")
+                             {:prompt (str "Choose another " card-type " to install from your Grip")
                               :choices {:card #(and (is-type? % card-type)
                                                     (in-hand? %))}
                               :msg (msg "install " (:title target))
@@ -740,7 +740,7 @@
              (effect
                (continue-ability
                  (let [p (inc (get-agenda-points target))]
-                   {:prompt (str "Select a card to place advancement tokens on with " (:title card))
+                   {:prompt (str "Choose a card to place advancement tokens on with " (:title card))
                     :choices {:card #(and (installed? %)
                                           (corp? %))}
                     :msg (msg "place " (quantify p "advancement token")
@@ -795,7 +795,7 @@
                                      (update! state side (assoc card :code "greenhouse" :face :greenhouse))
                                      (continue-ability
                                        state side
-                                       {:prompt "Select a card that can be advanced"
+                                       {:prompt "Choose a card that can be advanced"
                                         :choices {:card can-be-advanced?}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
                                        card nil))
@@ -904,7 +904,7 @@
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -1})]))
                                      (:hand runner))
-                           {:prompt "Select an icebreaker to install from your Grip"
+                           {:prompt "Choose an icebreaker to install from your Grip"
                             :choices
                             {:req (req (and (in-hand? target)
                                             (has-subtype? target "Icebreaker")
@@ -947,7 +947,7 @@
 
 (defcard "Leela Patel: Trained Pragmatist"
   (let [leela {:interactive (req true)
-               :prompt "Select an unrezzed card to return to HQ"
+               :prompt "Choose an unrezzed card to return to HQ"
                :choices {:card #(and (not (rezzed? %))
                                      (installed? %)
                                      (corp? %))}
@@ -1131,7 +1131,7 @@
              :player :corp
              :async true
              :waiting-prompt "Corp to use NBN: Reality Plus"
-             :prompt "Select option"
+             :prompt "Choose option"
              :choices ["Gain 2 [Credits]" "Draw 2 cards"]
              :msg (msg (decapitalize target))
              :effect (req
@@ -1164,7 +1164,7 @@
                {:prompt "Play a Current?"
                 :player :corp
                 :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp) (:current corp))))
-                :yes-ability {:prompt "Select a Current to play from HQ or Archives"
+                :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
                               :show-discard true
                               :async true
                               :choices {:card #(and (has-subtype? % "Current")
@@ -1178,7 +1178,7 @@
 
 (defcard "NEXT Design: Guarding the Net"
   (let [ndhelper (fn nd [n] {:prompt (str "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
-                                          "Select a piece of ice in HQ to install:")
+                                          "Choose a piece of ice in HQ to install:")
                              :choices {:card #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}
@@ -1220,7 +1220,7 @@
               :prompt "Trash a card in grip to lower ice strength by 2?"
               :once :per-turn
               :yes-ability
-              {:prompt "Select a card in your Grip to trash"
+              {:prompt "Choose a card in your Grip to trash"
                :choices {:card in-hand?}
                :msg (msg "trash " (:title target)
                          " and reduce the strength of " (:title current-ice)
@@ -1307,7 +1307,7 @@
 
 (defcard "Saraswati Mnemonics: Endless Exploration"
   (letfn [(install-card [chosen]
-            {:prompt "Select a remote server"
+            {:prompt "Choose a remote server"
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
              :effect (req (let [tgtcid (:cid chosen)]
@@ -1334,7 +1334,7 @@
     {:abilities [{:async true
                   :label "Install a card from HQ"
                   :cost [:click 1 :credit 1]
-                  :prompt "Select a card to install from HQ"
+                  :prompt "Choose a card to install from HQ"
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                      (corp? %)
                                      (in-hand? %))}
@@ -1346,7 +1346,7 @@
    :abilities [{:req (req (and run (seq (:discard corp))))
                 :label "add card from Archives to R&D during a run"
                 :once :per-turn
-                :prompt "Select a card to add to the top of R&D"
+                :prompt "Choose a card to add to the top of R&D"
                 :show-discard true
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))}
@@ -1426,7 +1426,7 @@
                                     ice (ice-with-no-advancement-tokens state)]
                                 (continue-ability
                                   state side
-                                  {:prompt (str "Select a piece of ice with no advancement tokens to place "
+                                  {:prompt (str "Choose a piece of ice with no advancement tokens to place "
                                                 (quantify agenda-points "advancement token") " on")
                                    :choices {:card #(selectable-ice? %)}
                                    :msg (msg "place " (quantify agenda-points "advancement token")
@@ -1446,7 +1446,7 @@
               :yes-ability
               {:interactive (req true)
                :async true
-               :prompt "Select 2 cards in your Heap"
+               :prompt "Choose 2 cards in your Heap"
                :show-discard true
                :choices {:max 2
                          :all true
@@ -1479,7 +1479,7 @@
              :req (req (and (not (:disabled card))
                             (has-most-faction? state :corp "Haas-Bioroid")
                             (pos? (count (:discard corp)))))
-             :prompt "Select a card in Archives to shuffle into R&D"
+             :prompt "Choose a card in Archives to shuffle into R&D"
              :choices {:card #(and (corp? %)
                                    (in-discard? %))}
              :player :corp
@@ -1521,7 +1521,7 @@
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (has-most-faction? state :corp "Jinteki")
                                     (<= 2 (count (filter ice? (all-installed state :corp))))))}
-   :abilities [{:prompt "Select two pieces of installed ice to swap"
+   :abilities [{:prompt "Choose two pieces of installed ice to swap"
                 :label "swap two pieces of installed ice"
                 :choices {:card #(and (installed? %)
                                       (ice? %))
@@ -1539,7 +1539,7 @@
          {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
           :prompt "Swap ice with Tāo Salonga ability?"
           :yes-ability
-          {:prompt "Select 2 ice"
+          {:prompt "Choose 2 ice"
            :choices {:req (req (and (installed? target)
                                     (ice? target)))
                      :max 2

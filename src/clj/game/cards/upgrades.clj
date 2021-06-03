@@ -57,7 +57,7 @@
 
 (defcard "Arella Salvatore"
   (let [select-ability
-        {:prompt "Select a card to install with Arella Salvatore"
+        {:prompt "Choose a card to install with Arella Salvatore"
          :choices {:card #(and (corp-installable-type? %)
                                (in-hand? %)
                                (corp? %))}
@@ -93,7 +93,7 @@
   {:can-host (req (ice? target))
    :abilities [{:label "Host a piece of Bioroid ice"
                 :cost [:click 1]
-                :prompt "Select a piece of Bioroid ice to host on Awakening Center"
+                :prompt "Choose a piece of Bioroid ice to host on Awakening Center"
                 :choices {:card #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
@@ -134,7 +134,7 @@
                             (reveal state side (take 3 (:deck corp)))
                             (continue-ability
                               state side
-                              {:prompt "Select a card to add to HQ"
+                              {:prompt "Choose a card to add to HQ"
                                :async true
                                :choices (take 3 (:deck corp))
                                :not-distinct true
@@ -236,7 +236,7 @@
                 :async true
                 :trash-icon true
                 :effect (effect (continue-ability
-                                  {:prompt "Select a card in this server"
+                                  {:prompt "Choose a card in this server"
                                    :choices {:card #(in-same-server? % card)}
                                    :async true
                                    :msg (msg "place an advancement token on " (card-str state target))
@@ -372,7 +372,7 @@
 (defcard "Daruma"
   (let [choose-swap
         (fn [to-swap]
-          {:prompt (str "Select a card to swap with " (:title to-swap))
+          {:prompt (str "Choose a card to swap with " (:title to-swap))
            :choices {:not-self true
                      :card #(and (corp? %)
                                  (not (operation? %))
@@ -389,7 +389,7 @@
           :prompt "Trash Daruma to swap a card in this server?"
           :yes-ability
           {:async true
-           :prompt "Select a card in this server to swap"
+           :prompt "Choose a card in this server to swap"
            :choices {:req (req (and (installed? target)
                                     (in-same-server? card target)))
                      :not-self true}
@@ -426,7 +426,7 @@
   (letfn [(dhq [i n]
             {:player :corp
              :req (req (pos? n))
-             :prompt "Select a card in HQ to add to the bottom of R&D"
+             :prompt "Choose a card in HQ to add to the bottom of R&D"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))}
              :async true
@@ -691,7 +691,7 @@
                     :label "add an installed program or virtual resource to the Grip"
                     :successful
                     {:waiting-prompt "Corp to resolve Intake"
-                     :prompt "Select a program or virtual resource"
+                     :prompt "Choose a program or virtual resource"
                      :player :corp
                      :choices {:card #(and (installed? %)
                                            (or (program? %)
@@ -785,7 +785,7 @@
 (defcard "Keegan Lane"
   {:abilities [{:req (req (and this-server
                                (some? (first (filter program? (all-active-installed state :runner))))))
-                :prompt "Select a program to trash"
+                :prompt "Choose a program to trash"
                 :label "Trash a program"
                 :msg (msg "trash " (:title target))
                 :choices {:card #(and (installed? %)
@@ -802,7 +802,7 @@
                                 :type :recurring}}})
 
 (defcard "La Costa Grid"
-  (let [ability {:prompt (msg "Select a card in " (zone->name (second (get-zone card))))
+  (let [ability {:prompt (msg "Choose a card in " (zone->name (second (get-zone card))))
                  :label "place an advancement counter (start of turn)"
                  :msg (msg "place an advancement token on " (card-str state target))
                  :choices {:req (req (and (installed? target)
@@ -838,7 +838,7 @@
              {:prompt "Search R&D for non-agenda card?"
               :req (req (= (:previous-zone (:card context)) (get-zone card)))
               :yes-ability
-              {:prompt "Select card"
+              {:prompt "Choose card"
                :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
                                           :sorted))
                :msg (msg "reveal " (:title target) " and add it to HQ")
@@ -889,7 +889,7 @@
                 :cost [:trash]
                 :psi {:req (req this-server)
                       :not-equal
-                      {:prompt "Select the ice"
+                      {:prompt "Choose the ice"
                        :choices {:card #(and (ice? %)
                                              (rezzed? %))
                                  :all true}
@@ -897,7 +897,7 @@
                        :effect (effect
                                  (continue-ability
                                    (let [ice target]
-                                     {:prompt "Select the subroutine"
+                                     {:prompt "Choose the subroutine"
                                       :choices (req (unbroken-subroutines-choice ice))
                                       :msg (msg "resolve the subroutine (\"[subroutine] "
                                                                                         target "\") from " (:title ice))
@@ -920,7 +920,7 @@
               :once :per-run
               :prompt "Swap the piece of ice being approached with a piece of ice from HQ?"
               :yes-ability
-              {:prompt "Select a piece of ice"
+              {:prompt "Choose a piece of ice"
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :msg (msg "swap " (card-str state current-ice)
@@ -946,7 +946,7 @@
              (effect
                (continue-ability
                  (let [passed-ice (:ice context)]
-                   {:prompt (msg "Select a piece of ice to swap with " (:title target))
+                   {:prompt (msg "Choose a piece of ice to swap with " (:title target))
                     :choices {:req (req (and (installed? target)
                                              (ice? target)
                                              (= (target-server run) (second (get-zone target)))
@@ -1330,7 +1330,7 @@
                                                      [:credit (install-cost state side % {:cost-bonus -2})]))
                                      (all-installed state :corp)))))
               :prompt "Rez another card with Surat City Grid?"
-              :yes-ability {:prompt "Select a card to rez"
+              :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
                                                      (can-pay? state side (assoc eid :source card :source-type :rez)
@@ -1381,7 +1381,7 @@
                            (:title current-ice) " again?")
               :yes-ability
               {:async true
-               :prompt "Select a copy of the piece of ice just passed"
+               :prompt "Choose a copy of the piece of ice just passed"
                :choices {:req (req (and (in-hand? target)
                                         (ice? target)
                                         (same-card? :title current-ice target)))}

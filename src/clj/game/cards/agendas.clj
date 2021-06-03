@@ -35,7 +35,7 @@
 (defcard "Above the Law"
   {:on-score
    {:interactive (req true)
-    :prompt "Select resource"
+    :prompt "Choose a resource to trash"
     :req (req (some #(and (installed? %)
                           (resource? %))
                     (all-active-installed state :runner)))
@@ -215,7 +215,7 @@
 (defcard "Bacterial Programming"
   (letfn [(hq-step [remaining to-trash to-hq]
             {:async true
-             :prompt "Select a card to move to HQ"
+             :prompt "Choose a card to move to HQ"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
                             (wait-for (trash-cards state :corp to-trash {:unpreventable true})
@@ -234,7 +234,7 @@
                                                             (conj to-hq target)) card nil)))})
           (trash-step [remaining to-trash]
             {:async true
-             :prompt "Select a card to discard"
+             :prompt "Choose a card to discard"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
                             (continue-ability state :corp (hq-step remaining to-trash '()) card nil)
@@ -295,7 +295,7 @@
     {:req (req (seq (filter #(not= (:title %) "Bifrost Array") (:scored corp))))
      :prompt "Trigger the ability of a scored agenda?"
      :yes-ability
-     {:prompt "Select an agenda to trigger its \"when scored\" ability"
+     {:prompt "Choose an agenda to trigger its \"when scored\" ability"
       :choices {:card #(and (agenda? %)
                             (not= (:title %) "Bifrost Array")
                             (in-scored? %)
@@ -381,7 +381,7 @@
 
 (defcard "Character Assassination"
   {:on-score
-   {:prompt "Select a resource to trash"
+   {:prompt "Choose a resource to trash"
     :choices {:card #(and (installed? %)
                           (resource? %))}
     :msg (msg "trash " (:title target))
@@ -429,7 +429,7 @@
                        (continue-ability
                          (let [chosen-ice target]
                            {:async true
-                            :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                            :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                              (corp-install-list state chosen-ice))
                             :effect (effect (shuffle! :deck)
@@ -461,7 +461,7 @@
                        (continue-ability
                          (let [chosen-ice target]
                            {:async true
-                            :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                            :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
                                              (corp-install-list state chosen-ice))
                             :effect (effect (shuffle! :deck)
@@ -534,7 +534,7 @@
 
 (defcard "Director Haas' Pet Project"
   (letfn [(install-ability [server-name n]
-            {:prompt "Select a card to install"
+            {:prompt "Choose a card to install"
              :show-discard true
              :choices {:card #(and (corp? %)
                                    (not (operation? %))
@@ -803,7 +803,7 @@
 (defcard "Hades Fragment"
   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
                                     (is-scored? state :corp card)))}
-   :abilities [{:prompt "Select a card to add to the bottom of R&D"
+   :abilities [{:prompt "Choose a card to add to the bottom of R&D"
                 :label "add card to bottom of R&D"
                 :show-discard true
                 :choices {:card #(and (corp? %)
@@ -920,7 +920,7 @@
      :req (req (some #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))
                      (all-installed state :corp)))
-     :prompt "Select a card to place 2 advancement tokens on"
+     :prompt "Choose a card to place 2 advancement tokens on"
      :player :corp
      :choices {:card #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))}
@@ -939,7 +939,7 @@
 
 (defcard "License Acquisition"
   {:on-score {:interactive (req true)
-              :prompt "Select an asset or upgrade to install from Archives or HQ"
+              :prompt "Choose an asset or upgrade to install from Archives or HQ"
               :show-discard true
               :choices {:card #(and (corp? %)
                                     (or (asset? %) (upgrade? %))
@@ -950,7 +950,7 @@
 
 (defcard "Longevity Serum"
   {:on-score
-   {:prompt "Select any number of cards in HQ to trash"
+   {:prompt "Choose any number of cards in HQ to trash"
     :choices {:max (req (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
@@ -974,7 +974,7 @@
                       (toast state :corp "Cannot score cards this turn due to Luminal Transubstantiation." "warning")))))}})
 
 (defcard "Mandatory Seed Replacement"
-  (letfn [(msr [] {:prompt "Select two pieces of ice to swap positions"
+  (letfn [(msr [] {:prompt "Choose two pieces of ice to swap positions"
                    :choices {:card #(and (installed? %)
                                          (ice? %))
                              :max 2}
@@ -1072,7 +1072,7 @@
              :optional
              {:req (req (same-card? card target))
               :prompt "Install a card from HQ in a new remote?"
-              :yes-ability {:prompt "Select a card to install"
+              :yes-ability {:prompt "Choose a card to install"
                             :choices {:card #(and (not (operation? %))
                                                   (not (ice? %))
                                                   (corp? %)
@@ -1213,7 +1213,7 @@
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
                 :waiting-prompt "Runner to trash installed cards"
-                :prompt (msg "Select " (trash-count-str (:card context)) " installed cards to trash")
+                :prompt (msg "Choose " (trash-count-str (:card context)) " installed cards to trash")
                 :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
                           :card #(and (runner? %)
@@ -1336,7 +1336,7 @@
   (letfn [(put-back-counter [state side card]
             (update! state side (assoc-in card [:counter :agenda] (+ 1 (get-counters card :agenda)))))
           (choose-swap [to-swap]
-            {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
+            {:prompt (str "Choose a card in HQ to swap with " (:title to-swap))
              :choices {:not-self true
                        :card #(and (corp? %)
                                    (in-hand? %)
@@ -1367,7 +1367,7 @@
              :player :corp
              :interactive (req true)
              :waiting-prompt "Corp to use Puppet Master"
-             :prompt "Select a card to place 1 advancement token on"
+             :prompt "Choose a card to place 1 advancement token on"
              :choices {:card can-be-advanced?}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
@@ -1462,7 +1462,7 @@
                                (continue-ability
                                  (let [chosen-ice target]
                                    {:async true
-                                    :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                    :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                                     :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                                      (corp-install-list state chosen-ice))
                                     :effect (effect (shuffle! :deck)
@@ -1480,7 +1480,7 @@
               :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
               :async true
               :effect (effect (continue-ability
-                                {:prompt "Select another installed copy of Research Grant to score"
+                                {:prompt "Choose another installed copy of Research Grant to score"
                                  :choices {:card #(= (:title %) "Research Grant")}
                                  :interactive (req true)
                                  :async true
@@ -1502,7 +1502,7 @@
   {:steal-cost-bonus (req [:program 1])
    :on-score {:req (req (seq (all-installed-runner-type state :program)))
               :waiting-prompt "Corp to trash a card"
-              :prompt "Select a program to trash"
+              :prompt "Choose a program to trash"
               :choices {:card #(and (installed? %)
                                     (program? %))
                         :all true}
@@ -1620,7 +1620,7 @@
 
 (defcard "Successful Field Test"
   (letfn [(sft [n max-ops]
-            {:prompt "Select a card in HQ to install with Successful Field Test"
+            {:prompt "Choose a card in HQ to install"
              :async true
              :choices {:card #(and (corp? %)
                                    (not (operation? %))
@@ -1685,7 +1685,7 @@
    :abilities [{:cost [:agenda 1]
                 :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                 :label "Install a piece of ice in any position, ignoring all costs"
-                :prompt "Select a piece of ice to install"
+                :prompt "Choose a piece of ice to install"
                 :show-discard true
                 :choices {:card #(and (ice? %)
                                       (or (in-hand? %)

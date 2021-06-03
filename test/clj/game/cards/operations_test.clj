@@ -466,7 +466,7 @@
       (let [iw (get-ice state :remote1 0)]
         (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
         (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
-  (testing "Select invalid card"
+  (testing "Choose invalid card"
     (do-game
       (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
       (core/gain state :corp :credit 1)
@@ -2039,7 +2039,7 @@
       (click-prompt state :corp "Done")
       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
-      (is (not-empty (:prompt (get-corp))) "Could not select operation to install")
+      (is (not-empty (:prompt (get-corp))) "Could not choose operation to install")
       (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
       (click-prompt state :corp "New remote")

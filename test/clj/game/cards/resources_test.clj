@@ -4322,7 +4322,7 @@
       (run-continue state)
       (run-continue state)
       (is (empty? (:prompt (get-runner))) "No Slipstream prompt")))
-  (testing "You can only select the correct ice"
+  (testing "You can only choose the correct ice"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Ice Wall" 3)]
@@ -4621,7 +4621,7 @@
         (is (= "The Class Act" (:title (get-resource state 0))) "The Class Act was installed on Corp's turn")
         (take-credits state :corp)
         (is (seq (:prompt (get-runner))) "Runner should have The Class Act prompt")
-        (is (= "Select 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
+        (is (= "Choose 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
             "Runner gets The Class Act's power on Corp's turn")
         (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))
         (play-from-hand state :runner "Diesel")
@@ -4889,7 +4889,7 @@
       (let [the-back (get-resource state 0)]
         (core/add-counter state :runner (refresh the-back) :power 2)
         (card-ability state :runner (refresh the-back) 1)
-        (is (= "Select up to 4 targets for The Back" (:msg (prompt-map :runner))) "Runner gets up to 4 cards")
+        (is (= "Choose up to 4 targets for The Back" (:msg (prompt-map :runner))) "Runner gets up to 4 cards")
         (click-card state :runner "Spy Camera")             ; Hardware
         (click-card state :runner "Recon Drone")            ; Hardware with :trash-icon
         (click-card state :runner "Deus X")                 ; Program
@@ -4943,7 +4943,7 @@
         (run-jack-out state)
         (let [heapsize (count (:discard (get-runner)))]
           (card-ability state :runner tb 1)
-          (is (clojure.string/starts-with? (:msg (prompt-map :runner)) "Select up to 4") "Runner gets up to 4 choices")
+          (is (clojure.string/starts-with? (:msg (prompt-map :runner)) "Choose up to 4") "Runner gets up to 4 choices")
           (click-card state :runner (find-card "Spy Camera" (:discard (get-runner))))
           (click-card state :runner (find-card "Bankroll" (:discard (get-runner))))
           (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))

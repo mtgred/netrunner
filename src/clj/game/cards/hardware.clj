@@ -248,7 +248,7 @@
                 :label "trash and install cards"
                 :cost [:click 1]
                 :async true
-                :prompt "Select any number of cards to trash from your grip"
+                :prompt "Choose any number of cards to trash from your grip"
                 :choices {:max (req (count (:hand runner)))
                           :card #(and (runner? %)
                                       (in-hand? %))}
@@ -306,7 +306,7 @@
                                          card nil)))}]})
 
 (defcard "Clone Chip"
-  {:abilities [{:prompt "Select a program to install from your Heap"
+  {:abilities [{:prompt "Choose a program to install from your Heap"
                 :label "install card from heap"
                 :show-discard true
                 :req (req (and (not (zone-locked? state :runner :discard))
@@ -333,7 +333,7 @@
    :abilities [{:async true
                 :label "play an event in hand twice"
                 :req (req (:comet-event card))
-                :prompt "Select an Event in your Grip to play"
+                :prompt "Choose an Event in your Grip to play"
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
@@ -341,7 +341,7 @@
                                 (play-instant eid target nil))}]})
 
 (defcard "Cortez Chip"
-  {:abilities [{:prompt "Select a piece of ice"
+  {:abilities [{:prompt "Choose a piece of ice"
                 :label "increase rez cost of ice"
                 :choices {:card #(and (ice? %)
                                       (not (rezzed? %)))}
@@ -468,7 +468,7 @@
   {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Select a non-AI icebreaker in your Grip to install on Dinosaurus"
+                :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
@@ -476,7 +476,7 @@
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed non-AI icebreaker on Dinosaurus"
                 :req (req (empty? (:hosted card)))
-                :prompt "Select an installed non-AI icebreaker to host on Dinosaurus"
+                :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
@@ -643,7 +643,7 @@
                  {:label "Install a program on Flame-out"
                   :req (req (empty? (:hosted card)))
                   :cost [:click 1]
-                  :prompt "Select a program in your Grip to install on Flame-out"
+                  :prompt "Choose a program in your Grip to install on Flame-out"
                   :choices {:card #(and (program? %)
                                         (in-hand? %))}
                   :async true
@@ -651,7 +651,7 @@
                                   (runner-install eid target {:host-card card}))}
                  {:label "Host an installed program on Flame-out"
                   :req (req (empty? (:hosted card)))
-                  :prompt "Select an installed program to host on Flame-out"
+                  :prompt "Choose an installed program to host on Flame-out"
                   :choices {:card #(and (program? %)
                                         (installed? %))}
                   :msg (msg "host " (:title target))
@@ -973,7 +973,7 @@
                                        (pos? (count-virus-programs state))))
                         :prompt "Place a virus counter?"
                         :autoresolve (get-autoresolve :auto-add)
-                        :yes-ability {:prompt "Select an installed virus program for Knobkierie to add a virus counter to"
+                        :yes-ability {:prompt "Choose an installed virus program to add a virus counter to"
                                       :choices {:card #(and (installed? %)
                                                             (has-subtype? % "Virus")
                                                             (program? %))}
@@ -1058,7 +1058,7 @@
                               (:hand runner)))
               :prompt "Pay 1 [Credit] to install a hardware?"
               :yes-ability {:async true
-                            :prompt "Select a piece of hardware"
+                            :prompt "Choose a piece of hardware"
                             :choices
                             {:req (req (and (in-hand? target)
                                             (hardware? target)
@@ -1129,7 +1129,7 @@
              :async true
              :req (req (= :rd (target-server context)))
              :effect (effect (continue-ability
-                               {:prompt "Select a card and replace 1 spent [Recurring Credits] on it"
+                               {:prompt "Choose a card and replace 1 spent [Recurring Credits] on it"
                                 :choices {:card #(< (get-counters % :recurring) (:recurring (card-def %) 0))}
                                 :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
                                 :effect (effect (add-counter target :recurring 1))}
@@ -1138,7 +1138,7 @@
 (defcard "Monolith"
   (let [mhelper
         (fn mh [n]
-          {:prompt "Select a program to install"
+          {:prompt "Choose a program to install"
            :choices {:req (req (and (program? target)
                                     (in-hand? target)
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -1227,7 +1227,7 @@
                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                               {:async true
                                :cost [:click 1]
-                               :prompt "Select a program in your Grip to install on NetChip"
+                               :prompt "Choose a program in your Grip to install on NetChip"
                                :choices {:card #(and (program? %)
                                                      (runner-can-install? state side % false)
                                                      (<= (:memoryunits %) n)
@@ -1241,7 +1241,7 @@
                 :effect (effect
                           (continue-ability
                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                              {:prompt "Select an installed program to host on NetChip"
+                              {:prompt "Choose an installed program to host on NetChip"
                                :choices {:card #(and (program? %)
                                                      (<= (:memoryunits %) n)
                                                      (installed? %))}
@@ -1271,14 +1271,14 @@
                 :label "Install and host a program of 1[mu] or less on Omni-drive"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Select a program of 1[mu] or less to install on Omni-drive from your grip"
+                :prompt "Choose a program of 1[mu] or less to install on Omni-drive from your grip"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                 :msg (msg "host " (:title target))
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed program of 1[mu] or less on Omni-drive"
-                :prompt "Select an installed program of 1[mu] or less to host on Omni-drive"
+                :prompt "Choose an installed program of 1[mu] or less to host on Omni-drive"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
@@ -1299,7 +1299,7 @@
           :player :runner
           :yes-ability
           {:async true
-           :prompt "Select a card to install with Pantograph"
+           :prompt "Choose a card to install"
            :choices
            {:req (req (and (runner? target)
                            (in-hand? target)
@@ -1683,7 +1683,7 @@
                           " strength to " (:title target)
                           " until the end of the run")
                 :req (req (:run @state))
-                :prompt "Select one non-Cloud icebreaker"
+                :prompt "Choose one non-Cloud icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
@@ -1694,7 +1694,7 @@
                           " strength to " (count targets)
                           " Cloud icebreakers until the end of the run")
                 :req (req (:run @state))
-                :prompt "Select any number of Cloud icebreakers"
+                :prompt "Choose any number of Cloud icebreakers"
                 :choices {:max 50
                           :card #(and (has-subtype? % "Icebreaker")
                                       (has-subtype? % "Cloud")
@@ -1965,7 +1965,7 @@
                               (if (< (count hand) dmg)
                                 {:effect (effect (chosen-damage :runner hand))}
                                 {:waiting-prompt "Runner to use Titanium Ribs to choose cards to be trashed"
-                                 :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
+                                 :prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage")
                                  :choices {:max dmg
                                            :all true
                                            :card #(and (in-hand? %)
@@ -1999,7 +1999,7 @@
                            {:optional
                             {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                              :yes-ability
-                             {:prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
+                             {:prompt (str "Choose a scored Corp agenda to swap with " (:title stolen))
                               :choices {:card #(in-corp-scored? state side %)}
                               :msg (msg "swap " (:title stolen) " for " (:title target))
                               :effect (effect (swap-agendas target stolen))}}})
@@ -2033,7 +2033,7 @@
                                      (has-subtype? % "Sysop")))
                            (all-active-installed state :corp)))))
      :label "trash a Bioroid, Clone, Executive or Sysop"
-     :prompt "Select a Bioroid, Clone, Executive, or Sysop to trash"
+     :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
      :choices {:card #(and (rezzed? %)
                            (installed? %)
                            (or (has-subtype? % "Bioroid")

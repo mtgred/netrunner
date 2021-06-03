@@ -220,7 +220,7 @@
   {:abilities [{:label "Turn a facedown card faceup"
                 :cost [:click 2]
                 :keep-open :while-2-clicks-left
-                :prompt "Select a facedown installed card"
+                :prompt "Choose a facedown installed card"
                 :choices {:card #(and (facedown? %)
                                       (installed? %)
                                       (runner? %))}
@@ -269,7 +269,7 @@
                                  (continue-ability
                                    state side
                                    {:async true
-                                    :prompt "Select a copy of Bank Job to use"
+                                    :prompt "Choose a copy of Bank Job to use"
                                     :choices {:card #(and (installed? %)
                                                           (= (:title %) "Bank Job"))}
                                     :effect (effect (continue-ability (select-credits-ability target) target nil))}
@@ -468,7 +468,7 @@
                {:cost [:click 1]
                 :keep-open :while-clicks-left
                 :label "Install a program from your Grip"
-                :prompt "Select a program to install from your Grip"
+                :prompt "Choose a program to install from your Grip"
                 :choices
                 {:async true
                  :req (req (and (program? target)
@@ -838,7 +838,7 @@
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
                   :cost [:click 1 :power 3]
-                  :prompt "Select a card to add to grip?"
+                  :prompt "Choose a card to add to grip?"
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
@@ -904,7 +904,7 @@
 (defcard "Dr. Lovegood"
   {:events [{:event :runner-turn-begins
              :label "blank a card"
-             :prompt "Select an installed card to make its text box blank for the remainder of the turn"
+             :prompt "Choose an installed card to make its text box blank for the remainder of the turn"
              :once :per-turn
              :interactive (req true)
              :async true
@@ -1536,7 +1536,7 @@
                               :async true
                               :yes-ability
                               {:player :corp
-                               :prompt "Select an agenda to forfeit"
+                               :prompt "Choose an agenda to forfeit"
                                :choices {:card #(in-corp-scored? state side %)}
                                :effect (effect (forfeit target)
                                                (move :runner card :rfg))}
@@ -1567,7 +1567,7 @@
                 :label "Install a non-virus program on London Library"
                 :cost [:click 1]
                 :keep-open :while-clicks-left
-                :prompt "Select a non-virus program to install on London Library from your grip"
+                :prompt "Choose a non-virus program to install on London Library from your grip"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
@@ -1630,7 +1630,7 @@
                                        (continue-ability
                                          state side
                                          (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                           {:prompt "Select 1 card to add to the bottom of the Stack"
+                                           {:prompt "Choose 1 card to add to the bottom of the Stack"
                                             :choices {:card #(and (in-hand? %)
                                                                   (some (fn [c] (same-card? c %)) drawn))}
                                             :msg (msg "add 1 card to the bottom of the Stack")
@@ -1640,7 +1640,7 @@
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
                 :waiting-prompt "Corp to select a card to derez"
-                :prompt "Select a card to derez"
+                :prompt "Choose a card to derez"
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
                                       (rezzed? %))}
@@ -1650,7 +1650,7 @@
      (continue-ability
        {:player :corp
         :waiting-prompt "Corp to select a card to rez"
-        :prompt "Select a card to rez, ignoring the rez cost"
+        :prompt "Choose a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
         :effect (effect (system-say (str (:title card) " allows the Corp to rez "
@@ -1789,7 +1789,7 @@
    :abilities [{:async true
                 :label "Install and host a connection on Off-Campus Apartment"
                 :cost [:click 1]
-                :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
+                :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
                 :choices {:req (req (and (has-subtype? target "Connection")
                                          (can-pay? state side (assoc eid :source card :source-type :runner-install)
                                                    target nil [:credit (install-cost state side target)])
@@ -1797,7 +1797,7 @@
                 :msg (msg "host " (:title target) " and draw 1 card")
                 :effect (effect (runner-install eid target {:host-card card}))}
                {:label "Host an installed connection"
-                :prompt "Select a connection to host on Off-Campus Apartment"
+                :prompt "Choose a connection to host on Off-Campus Apartment"
                 :choices {:card #(and (has-subtype? % "Connection")
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and draw 1 card")
@@ -1895,7 +1895,7 @@
     (req (and (= :runner-install (:source-type eid))
               (not (has-subtype? target "Connection"))))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Select an installed card to trash for Paladin Poemu"
+    {:prompt "Choose an installed card to trash for Paladin Poemu"
      :choices {:all true
                :card #(and (installed? %)
                            (runner? %))}
@@ -2016,7 +2016,7 @@
                   :label "Host a program or piece of hardware"
                   :cost [:click 1]
                   :keep-open :while-clicks-left
-                  :prompt "Select a card to host on Personal Workshop"
+                  :prompt "Choose a card to host on Personal Workshop"
                   :choices {:card #(and (or (program? %)
                                             (hardware? %))
                                         (in-hand? %)
@@ -2066,7 +2066,7 @@
                 (effect
                   (continue-ability
                     ;; TODO: Convert this to a cost
-                    {:prompt "Select a rezzed card with a trash cost"
+                    {:prompt "Choose a rezzed card with a trash cost"
                      :choices {:card #(and (:trash %)
                                            (rezzed? %)
                                            (can-pay? state side (assoc eid :source card :source-type :ability) card nil [:credit (trash-cost state :runner %)]))}
@@ -2326,7 +2326,7 @@
                 :cost [:click 2 :trash]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
-                :prompt "Select an event to play"
+                :prompt "Choose an event to play"
                 :msg (msg "play " (:title target))
                 :show-discard true
                 :choices {:card #(and (event? %)
@@ -2463,10 +2463,10 @@
                                           card nil)
                                         (effect-completed state side eid)))))})]
     {:abilities [{:implementation "Effect is manually triggered"
-                  :label "choose subroutine order"
+                  :label "Choose subroutine order"
                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
                   :async true
-                  :msg (msg "select the order the unbroken subroutines on "
+                  :msg (msg "Choose the order the unbroken subroutines on "
                          (:title current-ice) " resolve")
                   :effect (effect
                             (continue-ability
@@ -2616,7 +2616,7 @@
                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                 [:credit (install-cost state side % {:cost-bonus -1})]))
                                 (:hand runner)))
-                :prompt "Select a program or piece of hardware to install from your Grip"
+                :prompt "Choose a program or piece of hardware to install from your Grip"
                 :choices
                 {:req (req (and (or (hardware? target)
                                     (program? target))
@@ -2697,7 +2697,7 @@
                                  to-draw (take (inc n) (:deck (:runner @state)))]
                              {:player :runner
                               :waiting-prompt "Runner to use The Class Act"
-                              :prompt "Select 1 card to add to the bottom of the stack"
+                              :prompt "Choose 1 card to add to the bottom of the stack"
                               :choices to-draw
                               :effect (effect (move target :deck)
                                               (system-msg
@@ -2829,7 +2829,7 @@
      :abilities [{:label "Host a resource or piece of hardware"
                   :cost [:click 1]
                   :keep-open :while-clicks-left
-                  :prompt "Select a card to host on The Supplier"
+                  :prompt "Choose a card to host on The Supplier"
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
                                         (in-hand? %))}
@@ -2888,7 +2888,7 @@
                             (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                  (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
-                 :prompt "Select a card to install with Thunder Art Gallery"
+                 :prompt "Choose a card to install with Thunder Art Gallery"
                  :choices
                  {:req (req (and (runner? target)
                                  (in-hand? target)

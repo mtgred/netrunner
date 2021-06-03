@@ -65,7 +65,7 @@
             :effect (effect (gain-credits eid 3))}
    :abilities [{:label "Install a non-agenda card from HQ"
                 :async true
-                :prompt "Select a non-agenda card to install from HQ"
+                :prompt "Choose a non-agenda card to install from HQ"
                 :req (req (not (:run @state)))
                 :choices {:card #(and (not (operation? %))
                                       (not (agenda? %))
@@ -127,7 +127,7 @@
   (letfn [(select-archives-cards [total]
             {:async true
              :show-discard true
-             :prompt (str "Select " (quantify total "card") " from Archives")
+             :prompt (str "Choose " (quantify total "card") " from Archives")
              :choices {:card #(and (corp? %)
                                    (in-discard? %))
                        :max total
@@ -135,7 +135,7 @@
              :effect (effect (complete-with-result eid targets))})
           (select-hq-cards [total]
             {:async true
-             :prompt (str "Select " (quantify total "card") " from HQ")
+             :prompt (str "Choose " (quantify total "card") " from HQ")
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
                        :max total
@@ -222,7 +222,7 @@
                                  (counters-available? state)))
                   :once :per-turn
                   :label "Remove an advancement token (start of turn)"
-                  :prompt "Select a card to remove an advancement token from"
+                  :prompt "Choose a card to remove an advancement token from"
                   :choices {:card #(and (pos? (get-counters % :advancement))
                                      (installed? %))}
                   :async true
@@ -259,7 +259,7 @@
   {:implementation "Timing restriction of ability use not enforced"
    :abilities [{:label "Install 1 card, paying all costs"
                 :req (req (= (:active-player @state) :corp))
-                :prompt "Select a card in HQ to install"
+                :prompt "Choose a card in HQ to install"
                 :choices {:card #(and (not (operation? %))
                                       (in-hand? %)
                                       (corp? %))}
@@ -409,7 +409,7 @@
                  (corp-recur operation?)
                  {:label "Add 1 operation from Archives to HQ"
                   :waiting-prompt "Corp to use Clone Suffrage Movement"
-                  :prompt "Select an operation in Archives to add to HQ"
+                  :prompt "Choose an operation in Archives to add to HQ"
                   :once :per-turn})]})
 
 (defcard "Clyde Van Rite"
@@ -515,7 +515,7 @@
    :abilities [{:label "Trash a resource"
                 :once :per-turn
                 :async true
-                :prompt "Select a resource to trash with Corporate Town"
+                :prompt "Choose a resource to trash"
                 :choices {:card resource?}
                 :msg (msg "trash " (:title target))
                 :effect (effect (trash eid target {:unpreventable true}))}]})
@@ -572,7 +572,7 @@
                             (continue-ability
                               state side
                               {:waiting-prompt "Corp to use Daily Business Show"
-                               :prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
+                               :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
                                :choices {:max dbs
                                          :card #(some (fn [c] (same-card? c %)) drawn)
                                          :all true}
@@ -813,7 +813,7 @@
    :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
                 :req (req (< (count (:hosted card)) 2))
                 :cost [:click 1]
-                :prompt "Select an asset or agenda to install"
+                :prompt "Choose an asset or agenda to install"
                 :choices {:card #(and (or (asset? %)
                                           (agenda? %))
                                       (in-hand? %)
@@ -823,7 +823,7 @@
                 :effect (effect (corp-install eid target card nil))}
                {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
                 :req (req (< (count (:hosted card)) 2))
-                :prompt "Select an installed asset or agenda to host on Full Immersion RecStudio"
+                :prompt "Choose an installed asset or agenda to host on Full Immersion RecStudio"
                 :choices {:card #(and (or (asset? %) (agenda? %))
                                       (installed? %)
                                       (corp? %))}
@@ -1056,7 +1056,7 @@
                                         (= counters (:agendapoints %)))
                                   (:hand corp))))
                 :waiting-prompt "Corp to select an agenda for Lady Liberty"
-                :prompt "Select an Agenda in HQ to move to score area"
+                :prompt "Choose an Agenda in HQ to move to score area"
                 :choices {:req (req (and (agenda? target)
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
                                          (in-hand? target)))}
@@ -1080,7 +1080,7 @@
                 :effect
                 (effect
                   (continue-ability
-                    {:prompt "Select an agenda in HQ to reveal"
+                    {:prompt "Choose an agenda in HQ to reveal"
                      :choices {:req (req (and (agenda? target)
                                               (<= (:agendapoints target) (cost-value eid :x-power))))}
                      :msg (msg "reveal " (:title target) " from HQ")
@@ -1299,7 +1299,7 @@
                 :req (req (and (pos? (get-counters card :advancement))
                                (not-empty (all-active-installed state :corp))))
                 :label "Move an advancement token to a faceup card"
-                :prompt "Select a faceup card"
+                :prompt "Choose a faceup card"
                 :choices {:card rezzed?}
                 :msg (msg "move an advancement token to " (card-str state target))
                 :effect (effect (add-prop card :advance-counter -1 {:placed true})
@@ -1312,7 +1312,7 @@
                 :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %))
                                                             (rezzed? %))
                                                       (all-installed state :corp)))]
-                               (str "Select "
+                               (str "Choose "
                                     (if (> mus 1) "a card " (str mus " cards "))
                                     "in Archives to shuffle into R&D")))
                 :choices {:card #(and (corp? %)
@@ -1553,7 +1553,7 @@
     0
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
      :waiting-prompt "Corp to select an agenda to score with Plan B"
-     :prompt "Select an Agenda in HQ to score"
+     :prompt "Choose an Agenda in HQ to score"
      :choices {:req (req (and (agenda? target)
                               (<= (get-advancement-requirement target)
                                   (get-counters (get-card state card) :advancement))
@@ -1678,7 +1678,7 @@
                              (as-agenda eid (dissoc card :counter) 1))}]})
 
 (defcard "Quarantine System"
-  (letfn [(rez-ice [cnt] {:prompt "Select a piece of ice to rez"
+  (letfn [(rez-ice [cnt] {:prompt "Choose a piece of ice to rez"
                           :async true
                           :choices {:card #(and (ice? %)
                                                 (not (rezzed? %)))}
@@ -1772,7 +1772,7 @@
    :abilities [{:label "Move advancement tokens to another card"
                 :async true
                 :trash-icon true
-                :prompt "Select a card that can be advanced"
+                :prompt "Choose a card that can be advanced"
                 :choices {:card can-be-advanced?}
                 :effect (effect
                           (continue-ability
@@ -1923,7 +1923,7 @@
                 :effect (req (wait-for (draw state side 3 nil)
                                        (continue-ability
                                          state side
-                                         {:prompt "Select a card in HQ to add to the bottom of R&D"
+                                         {:prompt "Choose a card in HQ to add to the bottom of R&D"
                                           :choices {:card #(and (corp? %)
                                                                 (in-hand? %))}
                                           :msg "add 1 card from HQ to the bottom of R&D"
@@ -1976,7 +1976,7 @@
   (advance-ambush 1 {:async true
                      :waiting-prompt "Corp to use Shattered Remains"
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :prompt (msg "Select " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
+                     :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (string/join ", " (map :title targets)))
                      :cost [:credit 1]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
@@ -2050,7 +2050,7 @@
             {:waiting-prompt "Corp to use Space Camp"
              :prompt "Place 1 advancement token with Space Camp?"
              :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
-                           :prompt "Select a card to place an advancement token on with Space Camp"
+                           :prompt "Choose a card to place an advancement token on"
                            :choices {:card can-be-advanced?}
                            :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
 
@@ -2118,7 +2118,7 @@
 
 (defcard "Team Sponsorship"
   {:events [{:event :agenda-scored
-             :prompt "Select a card from Archives or HQ to install"
+             :prompt "Choose a card from Archives or HQ to install"
              :show-discard true
              :interactive (req true)
              :async true
@@ -2166,7 +2166,7 @@
   {:abilities [{:label "Swap 2 pieces of installed ice"
                 :cost [:click]
                 :keep-open :while-clicks-left
-                :prompt "Select two pieces of ice to swap positions"
+                :prompt "Choose two pieces of ice to swap positions"
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))
@@ -2237,7 +2237,7 @@
     0
     {:async true
      :waiting-prompt "Corp to use Toshiyuki Sakai"
-     :prompt "Select an asset or agenda in HQ"
+     :prompt "Choose an asset or agenda in HQ"
      :choices {:card #(and (or (agenda? %)
                                (asset? %))
                            (in-hand? %))}
@@ -2399,7 +2399,7 @@
                 :cost [:trash-from-hand 1]
                 :effect (effect (continue-ability
                                   {:waiting-prompt "Corp to use Whampoa Reclamation"
-                                   :prompt "Select a card in Archives to add to the bottom of R&D"
+                                   :prompt "Choose a card in Archives to add to the bottom of R&D"
                                    :show-discard true
                                    :choices {:card #(and (in-discard? %)
                                                          (corp? %))}
@@ -2414,7 +2414,7 @@
                 :req (req (< (count (:hosted card)) 3))
                 :cost [:click 1]
                 :keep-open :while-clicks-left
-                :prompt "Select an asset to install on Worlds Plaza"
+                :prompt "Choose an asset to install on Worlds Plaza"
                 :choices {:card #(and (asset? %)
                                       (in-hand? %)
                                       (corp? %))}

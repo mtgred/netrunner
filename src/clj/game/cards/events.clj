@@ -318,7 +318,7 @@
 
 (defcard "Career Fair"
   {:on-play
-   {:prompt "Select a resource to install from your Grip"
+   {:prompt "Choose a resource to install from your Grip"
     :req (req (some #(and (resource? %)
                           (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                     [:credit (install-cost state side % {:cost-bonus -3})]))
@@ -542,7 +542,7 @@
 (defcard "Credit Kiting"
   {:on-play
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-    :prompt "Select a card to install from your Grip"
+    :prompt "Choose a card to install from your Grip"
     :choices {:req (req (and (not (event? target))
                              (in-hand? target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -570,7 +570,7 @@
                        {:optional
                         {:prompt (msg "Rez a piece of ice protecting " serv "?")
                          :yes-ability {:async true
-                                       :prompt (msg "Select a piece of ice protecting " serv " to rez")
+                                       :prompt (msg "Choose a piece of ice protecting " serv " to rez")
                                        :player :corp
                                        :choices {:card #(and (installed? %)
                                                              (not (rezzed? %))
@@ -686,7 +686,7 @@
              {:async true
               :effect (effect (lose-tags eid 1))
               :msg "remove 1 tag"}
-             {:prompt "Select 1 piece of ice to expose"
+             {:prompt "Choose 1 piece of ice to expose"
               :msg "expose 1 ice and make a run"
               :choices {:card #(and (installed? %)
                                     (ice? %))}
@@ -964,7 +964,7 @@
 
 (defcard "Escher"
   (letfn [(es [] {:async true
-                  :prompt "Select two pieces of ice to swap positions"
+                  :prompt "Choose two pieces of ice to swap positions"
                   :choices {:card #(and (installed? %)
                                         (ice? %))
                             :max 2}
@@ -1267,7 +1267,7 @@
                 :async true
                 :player :corp
                 :waiting-prompt "Corp to choose which cards to pick up from Archives"
-                :prompt "Select 5 cards from Archives to add to HQ"
+                :prompt "Choose 5 cards from Archives to add to HQ"
                 :choices {:max 5
                           :all true
                           :card #(and (corp? %)
@@ -1424,7 +1424,7 @@
              :effect (effect (continue-ability
                                (let [ice target]
                                  {:async true
-                                  :prompt (msg "Select a rezzed copy of " (:title ice) " to trash")
+                                  :prompt (msg "Choose a rezzed copy of " (:title ice) " to trash")
                                   :choices {:card #(and (ice? %)
                                                         (rezzed? %)
                                                         (same-card? :title % ice))}
@@ -1527,7 +1527,7 @@
            :req (req (<= 1 (count (:hand corp))))
            :async true
            :waiting-prompt "Corp to create two piles"
-           :prompt (msg "Select up to " (dec (count (:hand corp))) " cards for the first pile")
+           :prompt (msg "Choose up to " (dec (count (:hand corp))) " cards for the first pile")
            :choices {:card #(and (in-hand? %)
                                  (corp? %))
                      :max (req (dec (count (:hand corp))))}
@@ -1578,7 +1578,7 @@
     :async true
     :effect (effect (continue-ability
                       (let [server target]
-                        {:prompt "Select an icebreaker"
+                        {:prompt "Choose an icebreaker"
                          :choices {:card #(and (installed? %)
                                                (has-subtype? % "Icebreaker"))}
                          :async true
@@ -1671,7 +1671,7 @@
                                          (merge {1 0})
                                          (into (sorted-map)))]
                                 {:async true
-                                 :prompt "Select an install cost from among your installed cards."
+                                 :prompt "Choose an install cost from among your installed cards"
                                  ;; We don't want to generate 99 prompt buttons, so only add 99 at the end
                                  :choices (mapv str (for [x (->> current-values keys last inc (range 1) (#(concat % [99])))]
                                                       (str x " [Credit]: "
@@ -1731,7 +1731,7 @@
                       servname target]
                   {:player :corp
                    :async true
-                   :prompt (msg "Select a piece of ice in " target " to trash")
+                   :prompt (msg "Choose a piece of ice in " target " to trash")
                    :choices {:card #(and (ice? %)
                                          (= serv (second (get-zone %))))}
                    :effect (effect (system-msg (str "trashes " (card-str state target)))
@@ -1938,7 +1938,7 @@
                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                [:credit (install-cost state side %)]))
                                (:hand runner)))
-               :prompt "Select a program to install"
+               :prompt "Choose a program to install"
                :choices {:req (req (and (program? target)
                                         (in-hand? target)
                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -1998,7 +1998,7 @@
 
 (defcard "Modded"
   {:on-play
-   {:prompt "Select a program or piece of hardware to install from your Grip"
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
     :choices {:req (req (and (or (hardware? target)
                                  (program? target))
                              (in-hand? target)
@@ -2200,7 +2200,7 @@
                :this-card-run true
                :mandatory true
                :ability
-               {:prompt "Select an agenda to host Political Graffiti"
+               {:prompt "Choose an agenda to host Political Graffiti on"
                 :choices {:req (req (in-corp-scored? state side target))}
                 :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
                 :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
@@ -2434,14 +2434,14 @@
                                       (or (program? card)
                                           (hardware? card))))
         pick-up {:async true
-                 :prompt "Select a program or piece of hardware to add to your Grip"
+                 :prompt "Choose a program or piece of hardware to add to your Grip"
                  :choices {:card #(and (valid-target? %)
                                        (installed? %))}
                  :effect (req (move state side target :hand)
                               (effect-completed state side (make-result eid (:cost target))))}
         put-down (fn [bonus]
                    {:async true
-                    :prompt "Select a program or piece of hardware to install"
+                    :prompt "Choose a program or piece of hardware to install"
                     :choices
                     {:req (req (and (valid-target? target)
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -2458,7 +2458,7 @@
 
 (defcard "Reshape"
   {:on-play
-   {:prompt "Select two pieces of unrezzed ice to swap positions"
+   {:prompt "Choose two pieces of unrezzed ice to swap positions"
     :choices {:card #(and (installed? %)
                           (not (rezzed? %))
                           (ice? %))
@@ -2489,7 +2489,7 @@
   (letfn [(choose-ice []
             {:player :runner
              :waiting-prompt "Runner to choose ice"
-             :prompt "Select a piece of ice to bypass"
+             :prompt "Choose a piece of ice to bypass"
              :choices {:card ice?}
              :msg (msg "make a run and bypass " (card-str state target))
              :async true
@@ -2610,7 +2610,7 @@
                                 state :runner
                                 (when (seq diff)
                                   {:async true
-                                   :prompt "Select an ice to trash"
+                                   :prompt "Choose an ice to trash"
                                    :choices {:card #(some (partial same-card? %) diff)
                                              :all true}
                                    :effect (effect (trash eid target nil))})
@@ -2649,7 +2649,7 @@
    {:req (req (some #(and (program? %)
                           (installed? %))
                     (all-active-installed state :runner)))
-    :prompt "Select an installed program to trash"
+    :prompt "Choose an installed program to trash"
     :choices {:card #(and (program? %)
                           (installed? %))}
     :async true
@@ -2661,8 +2661,8 @@
                        state side
                        {:async true
                         :prompt (if (not (zone-locked? state :runner :discard))
-                                  "Select a program to install from your Grip or Heap"
-                                  "Select a program to install from your Grip")
+                                  "Choose a program to install from your Grip or Heap"
+                                  "Choose a program to install from your Grip")
                         :show-discard  (not (zone-locked? state :runner :discard))
                         :choices
                         {:req (req (and (program? target)
@@ -2728,7 +2728,7 @@
 
 (defcard "Social Engineering"
   {:on-play
-   {:prompt "Select an unrezzed piece of ice"
+   {:prompt "Choose an unrezzed piece of ice"
     :choices {:card #(and (not (rezzed? %))
                           (installed? %)
                           (ice? %))}
@@ -2778,7 +2778,7 @@
 (defcard "Spot the Prey"
   {:makes-run true
    :on-play
-   {:prompt "Select 1 non-ice card to expose"
+   {:prompt "Choose 1 non-ice card to expose"
     :msg "expose 1 card and make a run"
     :choices {:card #(and (installed? %)
                           (not (ice? %))
@@ -2972,7 +2972,7 @@
    {:req (req (some #(and (ice? %)
                           (installed? %))
                     (all-installed state :corp)))
-    :prompt "Select a piece of ice"
+    :prompt "Choose a piece of ice"
     :choices {:card #(and (installed? %)
                           (ice? %))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")

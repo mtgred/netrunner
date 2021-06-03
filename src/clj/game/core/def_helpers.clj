@@ -49,7 +49,7 @@
   ([reorder-side wait-side remaining chosen n original] (reorder-choice reorder-side wait-side remaining chosen n original nil))
   ([reorder-side wait-side remaining chosen n original dest]
    (when (not-empty remaining)
-     {:prompt (str "Select a card to move next "
+     {:prompt (str "Choose a card to move next "
                    (if (= dest "bottom") "under " "onto ")
                    (if (= reorder-side :corp) "R&D" "your Stack"))
       :choices remaining
@@ -185,7 +185,7 @@
   ([] (corp-recur (constantly true)))
   ([pred]
    {:label "add card from Archives to HQ"
-    :prompt "Select a card to add to HQ"
+    :prompt "Choose a card to add to HQ"
     :show-discard true
     :choices {:card #(and (corp? %)
                        (in-discard? %)

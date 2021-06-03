@@ -113,7 +113,7 @@
                                      :client-id runner-client-id
                                      :?data {:gameid game-id
                                              :password ""}})
-      ;; Select decks
+      ;; Choose decks
       (game-ws-handler/-msg-handler {:id :lobby/deck
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}

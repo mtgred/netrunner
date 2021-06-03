@@ -578,7 +578,7 @@
        (take-credits state :runner)
        (toggle-sso "Always")
        (take-credits state :corp)
-       (is (= "Select a piece of ice with no advancement tokens to place 1 advancement token on"
+       (is (= "Choose a piece of ice with no advancement tokens to place 1 advancement token on"
               (-> @state :corp :prompt first :msg))
            "SSO autoresolved first prompt")
        (click-card state :corp (get-ice state :remote2 0))

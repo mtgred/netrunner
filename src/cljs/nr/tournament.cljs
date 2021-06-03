@@ -64,7 +64,7 @@
   [state]
   (when (:cobra-link @state)
     [:div
-     [:h3 "Select round"]
+     [:h3 "Choose round"]
      [:select {:value (or (:selected-round @state) (count (:rounds @state)))
                :on-change #(swap! state assoc :selected-round (.. % -target -value))}
       (doall
