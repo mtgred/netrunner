@@ -1,6 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.utils :refer :all]
+            [game.core.cost-fns :refer [all-stealth min-stealth]]
             [jinteki.utils :refer :all]
             [clojure.string :as string]
             [clojure.set :as clj-set]))
@@ -1171,6 +1172,7 @@
                    {:eid (assoc eid :source-type :ability)
                     :async true
                     :cost [:credit 1]
+                    :cost-req all-stealth
                     :msg "access 1 additional card from HQ"
                     :effect (effect (access-bonus :hq 1)
                                     (effect-completed eid))}
@@ -1189,6 +1191,7 @@
                    {:eid (assoc eid :source-type :ability)
                     :async true
                     :cost [:credit 2]
+                    :cost-req all-stealth
                     :msg "access 1 additional card from R&D"
                     :effect (effect (access-bonus :rd 1)
                                     (effect-completed eid))}

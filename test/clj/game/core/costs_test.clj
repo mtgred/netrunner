@@ -31,7 +31,10 @@
     (testing "Empty costs return an empty list"
       (is (= '() (core/merge-costs []))))
     (testing "nil costs return an empty list"
-      (is (= '() (core/merge-costs nil)))))
+      (is (= '() (core/merge-costs nil))))
+    (testing "Stealth credits are totaled correctly"
+      (is (= [[:credit 5 2]]
+             (core/merge-costs [[:credit 3 1] [:credit 2 1]])))))
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
       (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
@@ -139,6 +142,45 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
         (is (second-last-log-contains? state "Runner pays 5 \\[Credits\\] to use Corroder to break all 5 subroutines on Hive.") "Should write correct break price to log"))))
+  (testing "Inability to pay for auto-pump"
+    (do-game
+      (new-game {:runner {:hand ["Corroder"]}
+                 :corp {:hand ["Hive"]}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (core/lose state :runner :credit 3)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (let [cor (get-program state 0)
+            hive (get-ice state :hq 0)]
+        (rez state :corp hive)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (is (= 2 (get-strength (refresh cor))) "Corroder still at 2 strength"))))
+  (testing "Auto-pump with stealth"
+    (do-game
+      (new-game {:runner {:hand ["Houdini" (qty "Mantle" 2)]}
+                 :corp {:hand ["Little Engine"]}})
+      (play-from-hand state :corp "Little Engine" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Houdini")
+      (play-from-hand state :runner "Mantle")
+      (play-from-hand state :runner "Mantle")
+      (run-on state :hq)
+      (let [hou (get-program state 0)
+            engine (get-ice state :hq 0)
+            mantle1 (get-program state 1)
+            mantle2 (get-program state 2)]
+        (rez state :corp engine)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh hou)})
+        (is (clojure.string/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
+        (click-card state :runner mantle1)
+        (click-card state :runner mantle2)
+        (is (= 10 (get-strength (refresh hou))) "Houdini is at 10 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh hou)})
+        (is (empty? (remove :broken (:subroutines (refresh engine)))) "Engine is now fully broken"))))
   (testing "Auto-pump and break some subs manually first"
     (do-game
       (new-game {:runner {:hand ["Corroder"]}

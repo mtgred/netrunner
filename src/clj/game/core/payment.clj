@@ -10,37 +10,23 @@
 
 (defmulti cost-name (fn [[cost-type _]] cost-type))
 (defmulti value (fn [[cost-type _]] cost-type))
+(defmulti stealth-value (fn [[cost-type]] cost-type))
 (defmulti label (fn [[cost-type _]] cost-type))
 (defmulti payable? (fn [[cost-type] & _] cost-type))
 (defmulti handler (fn [[cost-type] & _] cost-type))
 
 (defn- add-default-to-costs
-  "Take a sequence of costs (nested or otherwise) and add a default value of 1
-  to any that don't include a value (normally with :forfeit)."
+  "Transform a sequence of cost vectors (with any amount of nesting) into a
+  sequence of conforming cost vectors: keyword and 1 or more numbers"
   [costs]
-  (->> costs
-       flatten
-       ;; Padding is needed when :default is the final cost in the list or all items are :default
-       (partition 2 1 '(1))
-       (reduce
-         (fn [acc [cost-type qty]]
-           ;; the possibilities are:
-           ;; Usable:
-           ;; * (:type qty) -> a normal cost (or :default is in final postion, so is padded)
-           ;; * (:type :type) -> :default isn't the final cost
-           ;; Unusable:
-           ;; * (qty :type) -> normal part of moving one at a time
-           ;; * (qty qty) -> a quantity-less cost was used earlier, so this can be ignored
-           (cond
-             (and (keyword? cost-type)
-                  (number? qty))
-             (conj acc [cost-type qty])
-             (and (keyword? cost-type)
-                  (keyword? qty))
-             (conj acc [cost-type 1])
-             :else
-             acc))
-         [])))
+  (loop [[cost-type & rest-costs] (filter #(or (keyword? %) (number? %)) (flatten costs))
+         result []]
+    (if-not cost-type
+      result
+      (let [[quantities remainder] (split-with number? rest-costs)
+            quantities (or (not-empty quantities) [1])
+            new-cost (into [] (cons cost-type quantities))]
+        (recur remainder (conj result new-cost))))))
 
 (defn- cost-ranks
   [[cost-type _]]
@@ -51,24 +37,38 @@
     (:trash :remove-from-game) 4
     5))
 
+(defn merge-cost-impl
+  "Reducing function for merging costs of the same type, respecting stealth requirements."
+  [[_ value-acc stealth-acc] [cost-type cost-value stealth-value]]
+  (->> [cost-type
+        ;; Using the multi-method value here in case a cost-type
+        ;; shouldn't have more than 1 (e.g. :trash)
+        (value [cost-type ((fnil + 0 0) value-acc cost-value)])
+        (when (or stealth-acc stealth-value)
+          ((fnil + 0 0) stealth-acc stealth-value))]
+       ;; Remove nil stealth costs
+       (filterv some?)))
+
+(defn group-costs
+  [costs]
+  (->> costs
+       (group-by #(let [cost-type (first %)]
+                    (if (= :x-credits cost-type)
+                      (gensym)
+                      cost-type)))
+       (vals)))
+
 (defn merge-costs
-  "Combines disparate costs into a single cost per type. For use outside of the pay system."
+  "Combines disparate costs into a single cost per type."
   ([costs] (merge-costs costs false))
   ([costs remove-zero-credit-cost]
    (->> (add-default-to-costs costs)
-        (group-by first)
-        vals
-        (map (fn [cost-pairs]
-               (reduce
-                 (fn [[_ acc] [cost-type cost-value]]
-                   ;; Using the multi-method value here in case a cost-type
-                   ;; shouldn't have more than 1 (e.g. :trash)
-                   [cost-type (value [cost-type ((fnil + 0 0) acc cost-value)])])
-                 []
-                 cost-pairs)))
+        ;; Don't group :x-credits
+        (group-costs)
+        (map #(reduce merge-cost-impl [] %))
         (remove #(if remove-zero-credit-cost
-                   (and (= :credit (cost-name %))
-                        (zero? (value %)))
+                   (and (= :credit (first %))
+                        (zero? (second %)))
                    false))
         (sort-by cost-ranks)
         (into []))))
@@ -91,7 +91,9 @@
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         costs (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
+         cost-req (when (and (:abilities (:source eid)) (:ability-idx (:source-info eid))) (:cost-req (nth (:abilities (:source eid)) (:ability-idx (:source-info eid)) nil)))
+         cost-filter (if (fn? cost-req) cost-req identity)
+         costs (cost-filter (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost))]
      (if (every? #(and (not (flag-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)

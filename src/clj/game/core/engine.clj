@@ -71,6 +71,8 @@
 ;   Mark the ability as "async", meaning the :effect function must call effect-completed itself.
 ;   Without this being set to true, resolve-ability will call effect-completed once it's done.
 ;   This part of the engine is really dumb and complicated, so ask someone on slack about it.
+; :cost-req -- 1-fn
+;   A function which will be applied to the cost of an ability immediatly prior to being paid. See all-stealth or min-stealth for examples.
 
 ; PROMPT KEYS
 ; :prompt -- string or 5-fn

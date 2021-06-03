@@ -9,7 +9,7 @@
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
-    [game.core.payment :refer [cost-name handler label payable? value]]
+    [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
     [game.core.props :refer [add-counter]]
     [game.core.shuffling :refer [shuffle!]]
@@ -98,21 +98,38 @@
                    (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
           (reduce +))))
 
+(defn- eligible-pay-stealth-credit-cards
+  [state side eid card]
+  (filter #(has-subtype? % "Stealth") (eligible-pay-credit-cards state side eid card)))
+
+(defn- total-available-stealth-credits
+  [state side eid card]
+  (->> (eligible-pay-stealth-credit-cards state side eid card)
+       (map #(+ (get-counters % :recurring)
+                (get-counters % :credit)
+                (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
+       (reduce +)))
+
 ;; Credit
 (defmethod cost-name :credit [_] :credit)
 (defmethod value :credit [[_ cost-value]] cost-value)
+;; Zero stealth value for costs where it doesn't make sense
+(defmethod stealth-value :default [_] 0)
+(defmethod stealth-value :credit [[_ __ stealth-amount]] (or stealth-amount 0))
 (defmethod label :credit [cost] (str (value cost) " [Credits]"))
 (defmethod payable? :credit
   [cost state side eid card]
-  (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
-      (<= 0 (- (total-available-credits state side eid card) (value cost)))))
+  (and (<= 0 (- (total-available-stealth-credits state side eid card) (stealth-value cost)))
+       (<= 0 (- (value cost) (stealth-value cost)))
+       (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
+           (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit
   [cost state side eid card actions]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
     (cond
       (and (pos? (value cost))
            (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost)) card nil)
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost) (stealth-value cost)) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                 (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                       :type :credit
@@ -136,10 +153,13 @@
 ;; X Credits
 (defmethod cost-name :x-credits [_] :x-credits)
 (defmethod value :x-credits [_] 0)
+;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
+(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0))
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]
-  (pos? (total-available-credits state side eid card)))
+  (and (pos? (total-available-credits state side eid card))
+       (<= (stealth-value cost) (total-available-stealth-credits state side eid card))))
 (defmethod handler :x-credits
   [cost state side eid card actions]
   (continue-ability
@@ -149,12 +169,13 @@
      :choices {:number (req (total-available-credits state side eid card))}
      :effect
      (req
-       (let [cost target
+       (let [stealth-value (if (= -1 (stealth-value cost)) cost (stealth-value cost))
+             cost target
              provider-func #(eligible-pay-credit-cards state side eid card)]
          (cond
            (and (pos? cost)
                 (pos? (count (provider-func))))
-           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost) card nil)
+           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost stealth-value) card nil)
                      (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
                      (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                            :type :x-credits

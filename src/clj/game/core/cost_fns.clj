@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects get-effects sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.payment :refer [merge-costs]]))
+    [game.core.payment :refer [merge-costs cost-name value]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
@@ -133,3 +133,16 @@
   ([state side] (jack-out-cost state side nil))
   ([state side args]
    (get-effects state side nil :jack-out-additional-cost args)))
+
+(defn all-stealth
+  "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
+  [costs]
+  (mapv #(condp = (cost-name %) :x-credits [:x-credits nil -1] :credit [:credit (value %) (value %)] %) costs))
+
+(defn min-stealth
+  "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
+  [stealth-requirement]
+  (fn [costs]
+    (if (some #(= (cost-name %) :credit) costs)
+      (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)
+      (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement] %) costs))))
