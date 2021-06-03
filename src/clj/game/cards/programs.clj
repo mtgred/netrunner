@@ -1208,7 +1208,7 @@
                {:label "+X strength for the remainder of the run (using at least 1 stealth [Credits])"
                 :cost [:x-credits]
                 :cost-req (min-stealth 1)
-                :prompt "How many credits?"
+                :prompt "How many credits do you want to spend?"
                 :effect (effect (pump card (cost-value eid :x-credits) :end-of-run))
                 :msg (msg "increase strength by " (cost-value eid :x-credits)
                           " for the remainder of the run")}]})

@@ -757,7 +757,7 @@
                        state :corp
                        (when (pos? numtargets)
                          {:async true
-                          :prompt "Pay how many credits?"
+                          :prompt "How many credits do you want to pay?"
                           :choices {:number (req numtargets)}
                           :effect (req (let [c target]
                                          (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
@@ -1628,7 +1628,7 @@
 (defcard "Psychographics"
   {:on-play
    {:req (req tagged)
-    :prompt "Pay how many credits?"
+    :prompt "Choose a value for X"
     :choices {:number (req (count-tags state))}
     :async true
     :effect (req (let [c target]
