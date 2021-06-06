@@ -327,7 +327,7 @@
                                      :effect (req (bypass-ice state))}
                                     card targets))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
-                                (strength-pump 1 2 {:cost-req (min-stealth 1)})]}))
+                                (strength-pump 1 2 :end-of-encounter {:cost-req (min-stealth 1)})]}))
 
 (defcard "Aghora"
   (swap-with-in-hand "Aghora"
@@ -888,7 +888,7 @@
 
 (defcard "Dagger"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
-                                (strength-pump 1 5 {:cost-req (min-stealth 1)})]}))
+                                (strength-pump 1 5 :end-of-encounter {:cost-req (min-stealth 1)})]}))
 
 (defcard "Dai V"
   (auto-icebreaker {:abilities [(break-sub 2 0 "All" {:all true :cost-req all-stealth})
@@ -2001,10 +2001,9 @@
                                      :value target})))}]})
 
 (defcard "Penrose"
-  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                    :abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
                                 (break-sub 1 1 "Code Gate")
-                                (strength-pump 1 3 {:cost-req (min-stealth 1)})]}))
+                                (strength-pump 1 3 :end-of-encounter {:cost-req (min-stealth 1)})]}))
 
 (defcard "Peregrine"
   (return-and-derez (break-sub 1 1 "Code Gate")
