@@ -13,7 +13,7 @@
            (str (if (or (rezzed? card)
                         visible)
                   title
-                  (if installed-ice "ICE" "a card"))
+                  (if installed-ice "ice" "a card"))
                 ; Hosted cards do not need "in server 1" messages, host has them
                 (when-not host
                   (str (cond

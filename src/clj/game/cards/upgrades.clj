@@ -37,7 +37,7 @@
                              (protecting-same-server? card (:card context))
                              (can-pay? state side (assoc eid :source card :source-type :rez) (:card context) nil
                                        [:credit (rez-cost state side (:card context) {:cost-bonus -3})])))
-              :prompt "Rez ICE with rez cost lowered by 3?"
+              :prompt "Rez ice with rez cost lowered by 3?"
               :yes-ability {:msg (msg "lower the rez cost of " (:title (:card context)) " by 3 [Credits]")
                             :async true
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
@@ -91,13 +91,13 @@
 
 (defcard "Awakening Center"
   {:can-host (req (ice? target))
-   :abilities [{:label "Host a piece of Bioroid ICE"
+   :abilities [{:label "Host a piece of Bioroid ice"
                 :cost [:click 1]
-                :prompt "Select a piece of Bioroid ICE to host on Awakening Center"
+                :prompt "Select a piece of Bioroid ice to host on Awakening Center"
                 :choices {:card #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
-                :msg "host a piece of Bioroid ICE"
+                :msg "host a piece of Bioroid ice"
                 :async true
                 :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}
                {:req (req (and this-server
@@ -105,8 +105,8 @@
                                (some #(can-pay? state side (assoc eid :source card :source-type :rez) % nil
                                                 [:credit (rez-cost state side % {:cost-bonus -7})])
                                      (:hosted card))))
-                :label "Rez a hosted piece of Bioroid ICE"
-                :prompt "Choose a piece of Bioroid ICE to rez"
+                :label "Rez a hosted piece of Bioroid ice"
+                :prompt "Choose a piece of Bioroid ice to rez"
                 :choices (req (:hosted card))
                 :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
                 :async true
@@ -342,7 +342,7 @@
 
 (defcard "Corporate Troubleshooter"
   {:abilities [{:async true
-                :label "Add strength to a rezzed ICE protecting this server"
+                :label "Add strength to a rezzed piece of ice protecting this server"
                 :cost [:trash :x-credits]
                 :choices {:all true
                           :req (req (and (ice? target)
@@ -918,13 +918,13 @@
              :optional
              {:req (req this-server)
               :once :per-run
-              :prompt "Swap the ICE being approached with a piece of ICE from HQ?"
+              :prompt "Swap the piece of ice being approached with a piece of ice from HQ?"
               :yes-ability
-              {:prompt "Select a piece of ICE"
+              {:prompt "Select a piece of ice"
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :msg (msg "swap " (card-str state current-ice)
-                         " with a piece of ICE from HQ")
+                         " with a piece of ice from HQ")
                :effect (effect (swap-cards :corp current-ice target))}}}]})
 
 (defcard "Midway Station Grid"
@@ -946,7 +946,7 @@
              (effect
                (continue-ability
                  (let [passed-ice (:ice context)]
-                   {:prompt (msg "Select a piece of ICE to swap with " (:title target))
+                   {:prompt (msg "Select a piece of ice to swap with " (:title target))
                     :choices {:req (req (and (installed? target)
                                              (ice? target)
                                              (= (target-server run) (second (get-zone target)))
@@ -1381,7 +1381,7 @@
                            (:title current-ice) " again?")
               :yes-ability
               {:async true
-               :prompt "Select a copy of the ICE just passed"
+               :prompt "Select a copy of the piece of ice just passed"
                :choices {:req (req (and (in-hand? target)
                                         (ice? target)
                                         (same-card? :title current-ice target)))}
@@ -1449,7 +1449,7 @@
                             (draw state side eid 1 nil)))}]})
 
 (defcard "Tyr's Hand"
-  {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"
+  {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"
                 :req (req (and (= (butlast (get-zone current-ice)) (butlast (get-zone card)))
                                (has-subtype? current-ice "Bioroid")))
                 :cost [:trash]

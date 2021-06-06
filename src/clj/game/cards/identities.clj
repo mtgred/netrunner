@@ -125,7 +125,7 @@
                                (can-rez? state side current-ice {:ignore-unique true})))
                 :prompt "Choose another server and redirect the run to its outermost position"
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
-                :msg (msg "trash the approached ICE. The Runner is now running on " target)
+                :msg (msg "trash the approached piece of ice. The Runner is now running on " target)
                 :effect (req (let [dest (server->zone state target)
                                    ice (count (get-in corp (conj dest :ices)))
                                    phase (if (pos? ice) :encounter-ice :approach-server)]
@@ -483,7 +483,7 @@
              :req (req (and (not (:disabled card))
                             (has-most-faction? state :corp "Weyland Consortium")
                             (some ice? (all-installed state side))))
-             :prompt "Select a piece of ICE to place 1 advancement token on"
+             :prompt "Select a piece of ice to place 1 advancement token on"
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -1043,14 +1043,14 @@
   {:events [{:event :approach-server
              :optional
              {:req (req (some ice? (:hand corp)))
-              :prompt "Install an ice?"
+              :prompt "Install a piece of ice?"
               :once :per-turn
               :yes-ability
-              {:prompt "Choose ICE to install from HQ"
+              {:prompt "Choose a piece of ice to install from HQ"
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :async true
-               :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+               :msg "install ice at the innermost position of this server. Runner is now approaching that piece of ice"
                :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
                                                     {:ignore-all-cost true
                                                      :front true})
@@ -1178,7 +1178,7 @@
 
 (defcard "NEXT Design: Guarding the Net"
   (let [ndhelper (fn nd [n] {:prompt (str "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
-                                          "Select a piece of ICE in HQ to install:")
+                                          "Select a piece of ice in HQ to install:")
                              :choices {:card #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}
@@ -1186,7 +1186,7 @@
                                                     (continue-ability state side (when (< n 3) (nd (inc n))) card nil)))})]
     {:events [{:event :pre-first-turn
                :req (req (= side :corp))
-               :msg "install up to 3 pieces of ICE and draw back up to 5 cards"
+               :msg "install up to 3 pieces of ice and draw back up to 5 cards"
                :async true
                :effect (req (wait-for (resolve-ability state side (ndhelper 1) card nil)
                                       (update! state side (assoc card :fill-hq true))
@@ -1426,7 +1426,7 @@
                                     ice (ice-with-no-advancement-tokens state)]
                                 (continue-ability
                                   state side
-                                  {:prompt (str "Select ICE with no advancement tokens to place "
+                                  {:prompt (str "Select a piece of ice with no advancement tokens to place "
                                                 (quantify agenda-points "advancement token") " on")
                                    :choices {:card #(selectable-ice? %)}
                                    :msg (msg "place " (quantify agenda-points "advancement token")
@@ -1521,8 +1521,8 @@
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (has-most-faction? state :corp "Jinteki")
                                     (<= 2 (count (filter ice? (all-installed state :corp))))))}
-   :abilities [{:prompt "Select two pieces of ICE to swap positions"
-                :label "swap two ice"
+   :abilities [{:prompt "Select two pieces of installed ice to swap"
+                :label "swap two pieces of installed ice"
                 :choices {:card #(and (installed? %)
                                       (ice? %))
                           :max 2

@@ -62,7 +62,7 @@
        (is (= 2 (count-tags state)) "Runner has 2 tags")))))
 
 (deftest amazon-industrial-zone
-  ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
+  ;; Amazon Industrial Zone - Immediately rez ice installed over its server at 3 credit discount
   (do-game
     (new-game {:corp {:deck ["Spiderweb" "Amazon Industrial Zone"]}})
     (take-credits state :corp 1)
@@ -890,7 +890,7 @@
        (is (= 2 (:credit (get-runner))) "No extra cost to run HQ")))))
 
 (deftest corporate-troubleshooter
-  ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
+  ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ice
   (do-game
     (new-game {:corp {:deck [(qty "Quandary" 2) "Corporate Troubleshooter"]}})
     (core/gain state :corp :credit 5)
@@ -1665,11 +1665,11 @@
         (click-draw state :corp)
         (click-prompt state :corp (first (prompt-buttons :corp)))
         (is (= 4 (:credit (get-corp))) "Not charged to install ice")
-        (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
+        (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " pieces of ice protecting Remote1")))
       (click-draw state :corp)
       (click-prompt state :corp (first (prompt-buttons :corp)))
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
-      (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
+      (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 pieces of ice protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
@@ -2404,7 +2404,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
-      (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
+      (is (= 2 (:credit (get-corp))) "No credit gained from advancing ice"))))
 
 (deftest nihongai-grid
   ;; Nihongai Grid
@@ -3075,7 +3075,7 @@
       (is (= 2 (core/get-advancement-requirement (get-content state :remote1 1)))))))
 
 (deftest satellite-grid
-  ;; Satellite Grid - Add 1 fake advancement on all ICE protecting server
+  ;; Satellite Grid - Add 1 fake advancement on all ice protecting server
   (do-game
     (new-game {:corp {:deck ["Satellite Grid" (qty "Ice Wall" 2)]}})
     (play-from-hand state :corp "Satellite Grid" "HQ")
@@ -3092,7 +3092,7 @@
       (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
       (is (= 3 (get-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
       (rez state :corp (refresh iw2))
-      (is (= 1 (get-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
+      (is (= 1 (get-strength (refresh iw2))) "Satellite Grid not impacting ice elsewhere")
       (derez state :corp sg)
       (is (= 2 (get-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
@@ -3260,7 +3260,7 @@
         (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
         (derez state :corp (refresh wrap))
         (rez state :corp enig)
-        (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
+        (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ice protecting HQ")))))
 
 (deftest tempus
   ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
@@ -3471,7 +3471,7 @@
       (click-card state :corp (find-card "Tranquility Home Grid" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
       (is (empty? (:prompt (get-corp))) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
-  (testing "THG interaction with ICE install"
+  (testing "THG interaction with ice install"
     (do-game
       (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
                         :hand ["Tranquility Home Grid" "PAD Campaign" "Ice Wall"]}})

@@ -950,7 +950,7 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
-    (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+    (is (= 7 (:credit (get-corp))) "Ignored remote with ice but no server contents")))
 
 (deftest divert-power
   (do-game
@@ -2526,7 +2526,7 @@
     (is (not (get-resource state 0)) "Kati should be trashed")))
 
 (deftest oversight-ai
-  ;; Oversight AI - Rez a piece of ICE ignoring all costs
+  ;; Oversight AI - Rez a piece of ice ignoring all costs
   (testing "Rez at no cost"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2539,7 +2539,7 @@
         (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
         (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
             "Archer hosting OAI as a condition")
-        (is (last-log-contains? state "Corp uses Oversight AI to rez ICE protecting R&D at position 0 at no cost.")
+        (is (last-log-contains? state "Corp uses Oversight AI to rez ice protecting R&D at position 0 at no cost.")
                   "The right information is printed to the log"))))
   (testing "Trash rezzed ice when all subs are broken. Issue #4752"
     (do-game
@@ -2598,7 +2598,7 @@
     (is (= 9 (:credit (get-corp))) "Gained 1 credit from successful run")))
 
 (deftest peak-efficiency
-  ;; Peak Efficiency - Gain 1 credit for each rezzed ICE
+  ;; Peak Efficiency - Gain 1 credit for each rezzed piece of ice
   (do-game
     (new-game {:corp {:deck ["Peak Efficiency" (qty "Paper Wall" 3) "Wraparound"]}})
     (core/gain state :corp :click 3)
@@ -2610,7 +2610,7 @@
     (rez state :corp (get-ice state :rd 0))
     (rez state :corp (get-ice state :remote1 0))
     (play-from-hand state :corp "Peak Efficiency")
-    (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed ICE; unrezzed ICE ignored")))
+    (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed pieces of ice; unrezzed ice ignored")))
 
 (deftest power-grid-overload
   ;; Power Grid Overload
@@ -3675,7 +3675,7 @@
     (is (= 11 (:credit (get-corp))))))
 
 (deftest sub-boost
-  ;; Sub Boost - Give ICE Barrier
+  ;; Sub Boost - Give ice Barrier
   (do-game
     (new-game {:corp {:deck ["Sub Boost" "Quandary"]}})
     (play-from-hand state :corp "Quandary" "HQ")
@@ -3686,7 +3686,7 @@
       (play-from-hand state :corp "Sub Boost")
       (click-card state :corp (refresh qu))
       (is (has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
-      (is (has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier")
+      (is (has-subtype? (refresh qu) "Barrier") "Quandary ice Barrier")
       (is (= 2 (count (:subroutines (refresh qu)))) "Quandry gains a subroutine"))))
 
 (deftest subcontract
@@ -4474,7 +4474,7 @@
       (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest wetwork-refit
-  ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
+  ;; Wetwork Refit - Only works on Bioroid ice and adds a subroutine
   (do-game
     (new-game {:corp {:deck ["Eli 1.0"
                              "Vanilla"

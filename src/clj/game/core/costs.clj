@@ -487,7 +487,7 @@
 (defmethod cost-name :ice [_] :ice)
 (defmethod value :ice [[_ cost-value]] cost-value)
 (defmethod label :ice [cost]
-  (str "trash " (str "trash " (quantify (value cost) "installed rezzed ICE" ""))))
+  (str "trash " (str "trash " (quantify (value cost) "installed rezzed ice" ""))))
 (defmethod payable? :ice
   [cost state side eid card]
   (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) (value cost))))
@@ -495,7 +495,7 @@
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "installed rezzed ICE" "") " to trash")
+    {:prompt (str "Choose " (quantify (value cost) "installed rezzed ice" "") " to trash")
      :choices {:all true
                :max (value cost)
                :card (every-pred installed? rezzed? ice?)}
@@ -503,7 +503,7 @@
      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                             (complete-with-result
                               state side eid
-                              {:msg (str "trashes " (quantify (count async-result) "installed rezzed ICE" "")
+                              {:msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")
                                          " (" (string/join ", " (map #(card-str state %) targets)) ")")
                                :type :ice
                                :value (count async-result)

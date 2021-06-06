@@ -468,7 +468,7 @@
                     (concat (first it) (-> it rest first rest))
                     (count it)
                     (pos? it))))}
-   :abilities [{:label "Move an advancement counter between ICE"
+   :abilities [{:label "Move an advancement counter between 2 pieces of ice"
                 :once :per-turn
                 :waiting-prompt "Corp to use Constellation Protocol"
                 :choices {:card #(and (ice? %)
@@ -972,11 +972,11 @@
                 :effect (effect (add-counter card :power 1))}
                {:cost [:power 1]
                 :keep-open :while-power-tokens-left
-                :label "Add strength to a rezzed ICE"
+                :label "Add strength to a rezzed piece of ice"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
                 :req (req (pos? (get-counters card :power)))
-                :msg (msg "add strength to a rezzed ICE")
+                :msg (msg "add strength to a rezzed piece of ice")
                 :effect (effect (register-floating-effect
                                   card
                                   (let [it-target target]
@@ -1102,10 +1102,10 @@
   (campaign 6 2))
 
 (defcard "Levy University"
-  {:abilities [{:prompt "Choose an ICE"
+  {:abilities [{:prompt "Choose a piece of ice"
                 :msg (msg "adds " (:title target) " to HQ")
                 :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
-                :label "Search R&D for a piece of ICE"
+                :label "Search R&D for a piece of ice"
                 :cost [:click 1 :credit 1]
                 :keep-open :while-clicks-left
                 :effect (effect (move target :hand)
@@ -1678,7 +1678,7 @@
                              (as-agenda eid (dissoc card :counter) 1))}]})
 
 (defcard "Quarantine System"
-  (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
+  (letfn [(rez-ice [cnt] {:prompt "Select a piece of ice to rez"
                           :async true
                           :choices {:card #(and (ice? %)
                                                 (not (rezzed? %)))}
@@ -1689,7 +1689,7 @@
                                                    (if (< cnt 3)
                                                      (continue-ability state side (rez-ice (inc cnt)) card nil)
                                                      (effect-completed state side eid)))))})]
-    {:abilities [{:label "Forfeit agenda to rez up to 3 ICE with a 2 [Credit] discount per agenda point"
+    {:abilities [{:label "Forfeit agenda to rez up to 3 pieces of ice with a 2 [Credit] discount per agenda point"
                   :req (req (pos? (count (:scored corp))))
                   :cost [:forfeit]
                   :effect (req (continue-ability state side (rez-ice 1) card nil))}]}))
@@ -2163,10 +2163,10 @@
                :effect (effect (gain-credits :corp eid 1))}]}))
 
 (defcard "Tenma Line"
-  {:abilities [{:label "Swap 2 pieces of installed ICE"
+  {:abilities [{:label "Swap 2 pieces of installed ice"
                 :cost [:click]
                 :keep-open :while-clicks-left
-                :prompt "Select two pieces of ICE to swap positions"
+                :prompt "Select two pieces of ice to swap positions"
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))

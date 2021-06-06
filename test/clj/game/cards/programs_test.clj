@@ -1195,7 +1195,7 @@
         (run-on state "HQ")
         (run-continue state)
         (is (refresh iw) "Ice Wall should still be around as it's unrezzed"))))
-  (testing "Chisel does not account for other sources of strength modification on hosted ICE #5391"
+  (testing "Chisel does not account for other sources of strength modification on hosted ice #5391"
     (do-game
       (new-game {:corp {:hand ["Ice Wall"]}
                  :runner {:hand ["Chisel" "Devil Charm"]}})
@@ -1546,7 +1546,7 @@
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
       (card-ability state :runner cres 0)
-      (is (nil? (get-program state 1)) "Crescentus could be used because the ICE is rezzed")
+      (is (nil? (get-program state 1)) "Crescentus could be used because the piece of ice is rezzed")
       (is (not (rezzed? (refresh iw))) "Ice Wall is no longer rezzed"))))
 
 (deftest crypsis
@@ -1788,7 +1788,7 @@
       (is (= 1 (get-strength (refresh darwin))) "Darwin is at 1 strength"))))
 
 (deftest datasucker
-  ;; Datasucker - Reduce strength of encountered ICE
+  ;; Datasucker - Reduce strength of encountered piece of ice
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Fire Wall"]}
@@ -3386,7 +3386,7 @@
       (is (empty? (get-program state)) "Lamprey trashed by purge"))))
 
 (deftest leech
-  ;; Leech - Reduce strength of encountered ICE
+  ;; Leech - Reduce strength of encountered piece of ice
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Fire Wall"]}
@@ -3979,7 +3979,7 @@
       (card-ability state :runner musaazi 0)
       (click-prompt state :runner "Trash a program")
       (click-card state :runner musaazi)
-      (click-prompt state :runner "Resolve a Grail ICE subroutine from HQ")
+      (click-prompt state :runner "Resolve a Grail ice subroutine from HQ")
       (click-card state :runner imp)
       (is (zero? (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
       (is (zero? (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
@@ -4133,7 +4133,7 @@
       (is (= 7 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest paintbrush
-  ;; Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run
+  ;; Paintbrush - Give rezzed piece of ice a chosen subtype until the end of the next run
   (do-game
     (new-game {:corp {:deck ["Ice Wall"]}
                :runner {:deck ["Paintbrush"]}})
@@ -4471,7 +4471,7 @@
                   updated-psite (first (:hosted updated-builder))]
               (is (= 2 (get-strength updated-builder)) "Builder strength still reduced")
               (is (= 2 (get-counters (refresh updated-psite) :virus)) "Parasite counters still incremented")))))))
-  (testing "Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
+  (testing "Use Hivemind counters when installed; instantly trash ice if counters >= ice strength"
     (do-game
       (new-game {:corp {:deck [(qty "Enigma" 3) (qty "Hedge Fund" 3)]}
                  :runner {:deck ["Parasite"
@@ -4492,7 +4492,7 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
           (is (= 4 (core/available-mu state)))
           (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
-  (testing "Trashed along with host ICE when its strength has been reduced to 0"
+  (testing "Trashed along with host ice when its strength has been reduced to 0"
     (do-game
       (new-game {:corp {:deck [(qty "Enigma" 3) (qty "Hedge Fund" 3)]}
                  :runner {:deck [(qty "Parasite" 3) "Grimoire"]}})
@@ -5553,7 +5553,7 @@
                            (run-continue state))))))
 
 (deftest surfer
-  ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
+  ;; Surfer - Swap position with ice before or after when encountering a piece of Barrier ice
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Quandary"]}
@@ -5812,7 +5812,7 @@
 
 (deftest tycoon
   ;; Tycoon
-  (testing "Tycoon gives 2c after using to break ICE"
+  (testing "Tycoon gives 2c after using to break ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
                  :runner {:deck ["Tycoon"]}})
@@ -5833,7 +5833,7 @@
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")
         (is (= 1 (get-strength (refresh tycoon))) "Tycoon strength back down to 1."))))
   ;; Issue #4220: Tycoon doesn't fire if Corp ends run before ice is passed
-  (testing "Tycoon gives 2c even if ICE wasn't passed"
+  (testing "Tycoon gives 2c even if ice wasn't passed"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Nisei MK II"]}
                  :runner {:deck ["Tycoon"]}})

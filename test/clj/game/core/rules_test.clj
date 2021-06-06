@@ -147,8 +147,8 @@
       (rez state :corp jh1)
       (click-card state :runner (refresh hqiwall0))
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
-      (is (= (core/card-str state (refresh hqiwall1)) "ICE protecting HQ at position 1"))
-      (is (= (core/card-str state (refresh rdiwall)) "ICE protecting R&D at position 0"))
+      (is (= (core/card-str state (refresh hqiwall1)) "ice protecting HQ at position 1"))
+      (is (= (core/card-str state (refresh rdiwall)) "ice protecting R&D at position 0"))
       (is (= (core/card-str state (refresh rdiwall) {:visible true})
              "Ice Wall protecting R&D at position 0"))
       (is (= (core/card-str state (refresh jh1)) "Jackson Howard in Server 1"))
@@ -259,7 +259,7 @@
     (is (not (:seen (get-content state :remote2 0))) "New asset is unseen")))
 
 (deftest all-installed-runner-test
-  ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
+  ;; Tests all-installed for programs hosted on ice, nested hosted programs, and non-installed hosted programs
   (do-game
     (new-game {:corp {:deck ["Wraparound"]}
                :runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
@@ -578,7 +578,7 @@
        (take-credits state :runner)
        (toggle-sso "Always")
        (take-credits state :corp)
-       (is (= "Select ICE with no advancement tokens to place 1 advancement token on"
+       (is (= "Select a piece of ice with no advancement tokens to place 1 advancement token on"
               (-> @state :corp :prompt first :msg))
            "SSO autoresolved first prompt")
        (click-card state :corp (get-ice state :remote2 0))

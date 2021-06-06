@@ -341,7 +341,7 @@
                                 (play-instant eid target nil))}]})
 
 (defcard "Cortez Chip"
-  {:abilities [{:prompt "Select a piece of ICE"
+  {:abilities [{:prompt "Select a piece of ice"
                 :label "increase rez cost of ice"
                 :choices {:card #(and (ice? %)
                                       (not (rezzed? %)))}
@@ -580,7 +580,7 @@
 
 (defcard "EMP Device"
   {:abilities [{:req (req run)
-                :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
+                :msg "prevent the Corp from rezzing more than 1 piece of ice for the remainder of the run"
                 :cost [:trash]
                 :effect (effect
                           (register-events
@@ -594,7 +594,7 @@
                                                 (fn [state side card]
                                                   (if (ice? card)
                                                     ((constantly false)
-                                                     (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
+                                                     (toast state :corp "Cannot rez ice the rest of this run due to EMP Device"))
                                                     true))))}]))}]})
 
 (defcard "Feedback Filter"
@@ -1435,7 +1435,7 @@
                         (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
-                              (= (:position run) 1) ; trigger when last ICE passed
+                              (= (:position run) 1) ; trigger when last piece of ice is passed
                               (pos? (count (:deck runner)))))
                :async true
                :once :per-turn

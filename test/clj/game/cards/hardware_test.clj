@@ -1050,7 +1050,7 @@
       (is (nil? (:comet-event (get-card state comet))) "Comet ability disabled"))))
 
 (deftest cortez-chip
-  ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn
+  ;; Cortez Chip - Trash to add 2 credits to rez cost of a piece of ice until end of turn
   (do-game
     (new-game {:corp {:deck ["Quandary"]}
                :runner {:deck ["Cortez Chip"]}})
@@ -3580,7 +3580,7 @@
     (is (nil? (:run @state)) "Run is over")))
 
 (deftest sifr
-  ;; Sifr - Once per turn drop encountered ICE to zero strenght
+  ;; Sifr - Once per turn drop encountered ice strength to zero
   ;; Also handle archangel then re-install sifr should not break the game #2576
   (do-game
     (new-game {:corp {:deck ["Archangel" "IP Block" "Hedge Fund"]}

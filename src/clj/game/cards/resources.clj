@@ -802,7 +802,7 @@
                                          idx
                                          (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
                                             (inc idx)))
-                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
+                                  ((constantly false) (toast state :corp "Cannot rez any outermost ice due to DDoS." "warning"))
                                   true)))))}]})
 
 (defcard "Dean Lister"
@@ -1587,11 +1587,11 @@
 (defcard "Maxwell James"
   {:constant-effects [(link+ 1)]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
-                :prompt "Choose a piece of ICE protecting a remote server"
+                :prompt "Choose a piece of ice protecting a remote server"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %)
                                       (is-remote? (second (get-zone %))))}
-                :msg "derez a piece of ICE protecting a remote server"
+                :msg "derez a piece of ice protecting a remote server"
                 :cost [:trash]
                 :effect (effect (derez target))}]})
 
@@ -1721,7 +1721,7 @@
                                 :type :credit}}})
 
 (defcard "Network Exchange"
-  {:on-install {:msg "increase the install cost of non-innermost ICE by 1"}
+  {:on-install {:msg "increase the install cost of non-innermost ice by 1"}
    :constant-effects [{:type :install-cost
                        :req (req (ice? target))
                        :value (req (when (pos? (count (:dest-zone (second targets)))) 1))}]})
@@ -2402,7 +2402,7 @@
                  (continue-ability
                    (let [passed-ice (:ice context)]
                      {:async true
-                      :prompt "Choose a piece of ICE protecting a central server at the same position"
+                      :prompt "Choose a piece of ice protecting a central server at the same position"
                       :choices {:req (req (and (ice? target)
                                                (not (protecting-same-server? passed-ice target))
                                                (= run-position (card-index state target))

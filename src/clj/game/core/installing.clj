@@ -38,7 +38,7 @@
   "Checks if the specified card can be installed.
    Returns true if there are no problems
    Returns :region if Region check fails
-   Returns :ice if ICE check fails
+   Returns :ice if ice check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
   [state side card slot]
   (cond
@@ -46,7 +46,7 @@
     (and (has-subtype? card "Region")
          (some #(has-subtype? % "Region") (get-in @state (cons :corp slot))))
     :region
-    ;; ICE install prevented by Unscheduled Maintenance
+    ;; ice install prevented by Unscheduled Maintenance
     (and (ice? card)
          (not (turn-flag? state side card :can-install-ice)))
     :ice
@@ -75,9 +75,9 @@
       ;; failed install lock check
       :lock-install
       (reason-toast (str "Unable to install " title ", installing is currently locked"))
-      ;; failed ICE check
+      ;; failed ice check
       :ice
-      (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn"))
+      (reason-toast (str "Unable to install " title ": can only install 1 piece of ice per turn"))
       ;; Earth station cannot have more than one remote server
       :earth-station
       (reason-toast (str "Unable to install " title " in new remote: Earth Station limit"))
@@ -109,7 +109,7 @@
                             (= :face-up install-state)
                             (rezzed? card))
                       (:title card)
-                      (if (ice? card) "ICE" "a card"))
+                      (if (ice? card) "ice" "a card"))
           server-name (if (= server "New remote")
                         (str (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)]

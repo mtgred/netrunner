@@ -65,7 +65,7 @@
     :help "Set your handsize to n"}
    {:name "/install-ice"
     :usage "/install-ice"
-    :help "Install a piece of ICE at any position in a server (Corp only)"}
+    :help "Install a piece of ice at any position in a server (Corp only)"}
    {:name "/jack-out"
     :usage "/jack-out"
     :help "Jack out (Runner only)"}
@@ -116,10 +116,10 @@
     :help "Add card \"n\" to your hand (from outside the game)"}
    {:name "/swap-ice"
     :usage "/swap-ice"
-    :help "Swap the position of two installed ICE (Corp only)"}
+    :help "Swap the position of two installed pieces of ice (Corp only)"}
    {:name "/swap-installed"
     :usage "/swap-installed"
-    :help "Swap the position of two installed non-ICE (Corp only)"}
+    :help "Swap the position of two installed non-ice (Corp only)"}
    {:name "/tag"
     :has-args :required
     :usage "/tag n"
@@ -177,12 +177,12 @@
                        [:p "There are two undo functions - undo to turn start, and undo the last click. "
                         "To undo the start of the current turn both players must use the /undo-turn command. "
                         "To undo to the start of the click the active player must use the /undo-click command. "]
-                       [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
+                       [:p "There are some non-click based interactions such as using clone-chip and rezzing ice or assets which are "
                         "not supported via the undo-click function and players will need to handle manually. "
                         " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
                         " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]]}
             {:id "breakice"
-             :title "How do I break ICE and fire ICE subroutines?"
+             :title "How do I break ice and fire ice subroutines?"
              :content [:ul
                        [:p "Once the Runner encounters a piece of ice, both the Runner and the Corp will see a menu. "
                         "To break subroutines, the Runner should click on their icebreakers and use their abilities. "
@@ -375,7 +375,7 @@
             {:id "nasir"
              :title "How do I use Nasir's ability?"
              :content [:ul
-                        [:p "Nasir's ability is currently triggered manually - when encountering a piece of ICE, click Nasir's "
+                        [:p "Nasir's ability is currently triggered manually - when encountering a piece of ice, click Nasir's "
                        "identity card to trigger the ability."]]}
             {:id "adam"
              :title "How do I install Adam's directives?"
