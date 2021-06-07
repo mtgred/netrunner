@@ -2589,7 +2589,7 @@
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
 
 (deftest high-stakes-job
-  ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
+  ;; High Stakes Job - run on server with at least 1 unrezzed piece of ice, gains 12 credits if successful
   (do-game
     (new-game {:corp {:deck ["Ice Wall"]}
                :runner {:deck ["High-Stakes Job"]}})
