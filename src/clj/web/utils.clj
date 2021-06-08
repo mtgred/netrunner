@@ -3,12 +3,19 @@
   (:import java.security.MessageDigest))
 
 (defn tick
-  "Call f with args every ms. First call will be after ms"
-  [callback ms]
+  "Call f with args every ms. First call will be after ms. Timeout is applied to each call and defaults to 5 minutes. Calls which timeout or error 3 times in a row will be cancelled."
+  ([callback ms] (tick callback ms 300000))
+  ([callback ms timeout]
   (future
-    (while true
-      (do (Thread/sleep ms)
-          (callback)))))
+    (let [failures (atom 0)]
+      (while (<= @failures 3)
+        (let [_ (Thread/sleep ms)
+              thread (future (try (callback) (catch Exception e (println "Caught an error in tick") (.printStackTrace e) ::failed)))
+              result (deref thread timeout ::failed)]
+             (if (= result ::failed)
+                 (do (future-cancel thread) (swap! failures inc))
+                 (reset! failures 0))))
+      (println "Tick task failed.")))))
 
 (defn response [status-code msg]
   (resp/status (resp/response msg) status-code))
