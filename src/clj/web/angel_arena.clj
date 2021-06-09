@@ -13,6 +13,7 @@
             [web.ws :as ws]
             [monger.collection :as mc]
             [monger.operators :refer :all]
+            [monger.query :as mq]
             [clj-time.core :as t]))
 
 (defonce arena-queue (atom []))
@@ -57,7 +58,8 @@
             form (keyword (lower-case (get-in deck [:status :format])))
             side (keyword (lower-case (get-in deck [:identity :side])))]
         (when (get-in runs [form side]) ; there's a run in this side and format
-          (finish-run db username runs deck)))
+          (finish-run db username runs deck)
+          (ws/broadcast-to! [client-id] :angel-arena/run-update {})))
       (catch Exception e
         (println "Caught exception while abandoning run: " (.getMessage e))))))
 
@@ -258,3 +260,14 @@
         (stats/game-finished db game)
         (swap-and-send-diffs! game)
         (close-lobby db game)))))
+
+(defn fetch-history
+  [{db :system/db
+    {username :username} :user}]
+  (if username
+    (let [runs (mq/with-collection db "angel-arena"
+                 (mq/find {:username username})
+                 (mq/sort (array-map :run-finished -1))
+                 (mq/limit 5))]
+      (json-response 200 runs))
+    (response 401 {:message "Unauthorized"})))

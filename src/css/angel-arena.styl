@@ -41,62 +41,93 @@
             &.current
                 color: orange
 
-    .run
-        margin: 0px 8px
-        .deck
-            height: 65px
+    .queue-time
+        margin-top: 4px
 
-            h4
-                margin: 0
-                text-overflow: ellipsis
-                white-space: nowrap
-                overflow: hidden
+    .run .deck
+        height: 65px
 
-            > img
-                float: left
-                height: 100%
-                margin-right: 10px
+        h4
+            margin: 0
+            text-overflow: ellipsis
+            white-space: nowrap
+            overflow: hidden
 
-            .time, .result
-                font-weight: bold
+        > img
+            float: left
+            height: 100%
+            margin-right: 10px
 
-        .buttons
-            padding: 0
+        .time, .result
+            font-weight: bold
+
+    .run .buttons
+        padding: 0
+        width: auto
+        overflow-y: auto
+
+        .button-row
+            margin-top: 4px
+
+        button
             width: auto
-            overflow-y: auto
 
-            .button-row
-                margin-top: 4px
+        .small
+            min-width:0
+            width: auto
+            padding: 0 2px
 
-            button
-                width: auto
+    >.run .games
+        margin-top: 4px
+        display-flex()
+        flex-direction(row)
 
-            .small
-                min-width:0
-                width: auto
-                padding: 0 2px
+        .match
+            width:auto
+            margin:4px
 
-        .queue-time
-            margin-top: 4px
+            &:first-child
+                margin-left:0
 
-        .games
-            margin-top: 4px
+            &.aborted
+                display:none
+
+            &>img.identity
+                width: 30px
+                border-radius: 2px
+
+                &.won
+                    box-shadow(0 0 4px 2px green-bright)
+
+                &.lost
+                    box-shadow(0 0 4px 2px red-light)
+
+                // &.aborted
+                    // filter: grayscale(100%);
+                    // box-shadow(0 0 4px 2px grey)
+
+    .latest-runs
+        .run
             display-flex()
-            flex-direction(row)
+            flex-wrap(wrap)
+            gap: 1rem
+            margin: 0
+
+            .deck
+                flex-grow:1
 
             .match
                 width:auto
                 margin:4px
 
-                &:first-child
-                    margin-left:0
-
                 &.aborted
                     display:none
 
                 &>img.identity
-                    width: 30px
+                    width: 45.8px
+                    height: 65px
                     border-radius: 2px
+                    margin: auto
 
                     &.won
                         box-shadow(0 0 4px 2px green-bright)
@@ -107,6 +138,50 @@
                     // &.aborted
                         // filter: grayscale(100%);
                         // box-shadow(0 0 4px 2px grey)
+
+                .name-area
+                    flex-grow: 0
+                    margin:.5rem
+
+            .unfold-button
+                content: ""
+                display: block
+
+                width: 0
+                height: 0
+                border-top: .5rem solid transparent
+                border-bottom: .5rem solid transparent
+                border-left: 1rem solid white
+
+                margin: auto 1rem auto 0
+                transition(transform .2s ease-in-out)
+
+                &.open
+                    transform: rotate(90deg)
+
+            .unfold
+                overflow: hidden
+                transition(max-height .2s ease-in-out)
+
+                min-width: 100%
+                max-height: 0
+                // max-height set to exact value by cljs, when opened
+
+            .games
+                display: block!important
+
+                .match
+                    display-flex()
+                    width:100%!important
+                    height: 5rem
+                    margin: .5rem
+
+                    .info
+                        margin:auto
+                        flex-grow: 1
+
+
+
 
 .lobby
     .player .standings

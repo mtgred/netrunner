@@ -101,6 +101,7 @@
 
            (GET "/profile/angel-arena/runs" [] angel-arena/fetch-runs)
            (GET "/profile/angel-arena/queue-times" [] angel-arena/fetch-queue-times)
+           (GET "/profile/angel-arena/history" [] angel-arena/fetch-history)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)

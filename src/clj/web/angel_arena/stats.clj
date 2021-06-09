@@ -21,7 +21,9 @@
                                      (partial map #(if (= (str gameid) (:game-id %))
                                                      {:game-id (str gameid)
                                                       :winner (:winner @state)
+                                                      :reason (:reason @state)
                                                       :opponent {:username (get-in other-player [:user :username])
+                                                                 :pronouns (get-in other-player [:user :options :pronouns])
                                                                  :identity (get-in @state [(keyword (lower-case (:side other-player))) :identity :title])}}
                                                      %)))]
       (mc/update db "users"
@@ -41,26 +43,6 @@
             side (keyword (lower-case (:side player)))]
         (when-let [runs (enter-winner db player game)]
           (when-let [deck (get-deck-from-id db username (get-in runs [form side :deck-id]))]
-            (if (<= max-losses (get-losses (get-in runs [form side])))
-              (let [run-id (finish-run db username runs deck)]
-                (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {:finished-run run-id}))
-              (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {}))))))))
-
-(defn add-new-game
-  [db player other-player game-id]
-  (try
-    (let [username (get-in player [:user :username])
-          runs (get-runs db username)
-          side (keyword (lower-case (:side player)))
-          form (:format player)
-          other-username (get-in other-player [:user :username])
-          other-identity (get-in other-player [:deck :identity :title])]
-      (mc/update db "users"
-                 {:username username}
-                 {"$set" {:angel-arena-runs
-                          (update-in runs [form side :games] conj {:game-id game-id
-                                                                   :winner nil
-                                                                   :opponent {:username other-username
-                                                                              :identity other-identity}})}}))
-    (catch Exception e
-      (println "Caught exception adding new game to Angel Arena history: " (.getMessage e)))))
+            (when (<= max-losses (get-losses (get-in runs [form side])))
+              (finish-run db username runs deck))
+            (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {})))))))

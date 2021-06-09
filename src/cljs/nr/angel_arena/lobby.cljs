@@ -10,9 +10,10 @@
             [nr.deckbuilder :refer [deck-name]]
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.game-row :refer [join-game]]
+            [nr.history :refer [navigate]]
             [nr.player-view :refer [user-status-span]]
             [nr.sounds :refer [resume-sound]]
-            [nr.translations :refer [tr tr-side tr-format]] ;XXX: Use tr-side and tr-format
+            [nr.translations :refer [tr tr-side tr-format tr-pronouns]]
             [nr.utils :refer [slug->format cond-button tristate-button faction-icon time-span-string]]
             [nr.ws :as ws]
             [reagent.core :as r]
@@ -21,6 +22,7 @@
 (defonce arena-supported-formats [:standard :startup])
 
 (defonce runs (r/atom nil))
+(defonce latest-runs (r/atom nil))
 (defonce chosen-format (r/atom (first arena-supported-formats)))
 (defonce queueing (r/atom nil))
 (defonce queue-times (r/atom nil))
@@ -34,6 +36,11 @@
   (go (let [{:keys [status json]} (<! (GET "/profile/angel-arena/queue-times"))]
         (when (= 200 status)
           (reset! queue-times (js->clj json))))))
+
+(defn- fetch-latest-runs []
+  (go (let [{:keys [status json]} (<! (GET "/profile/angel-arena/history"))]
+        (when (= 200 status)
+          (reset! latest-runs (js->clj json))))))
 
 ; XXX: Copied from utils.clj.. maybe make cljc
 (defn- get-wins
@@ -62,91 +69,142 @@
                                                            time-since-start)
                                                         1000)))]]))
 
-  (defn- deck-buttons [side s deck]
-    (r/with-let [abandon (r/atom false)]
-      [:div.buttons
-       [:div.button-row
-        [tristate-button
-         (tr [:angel-arena.queueing "Queueing..."])
-         (tr [:angel-arena.queue-for-match "Queue for match"])
-         (= (:_id deck) @queueing)
-         (and @queueing
-              (not= (:_id deck) @queueing))
-         #(if @queueing
-            (do (ws/ws-send! [:angel-arena/dequeue {:deck-id (:_id deck)}])
-                (reset! queueing nil))
-            (do (ws/ws-send! [:angel-arena/queue {:deck-id (:_id deck)}])
-                (reset! queueing (:_id deck))))]
-        "Average waiting time: " (time-span-string (get-in @queue-times [@chosen-format side]))]
-       [:div.button-row
-        (if @abandon
-          [:span (tr [:angel-arena.are-you-sure "Are you sure?"]) " "
-           [:button.small {:on-click #(do (ws/ws-send! [:angel-arena/abandon-run {:deck-id (:_id deck)}])
-                                          (fetch-runs))} (tr [:angel-arena.are-you-sure-yes "yes"])]
-           [:button.small {:on-click #(reset! abandon false)} (tr [:angel-arena.are-you-sure-no "no"])]]
+(defn- deck-buttons [side s deck]
+  (r/with-let [abandon (r/atom false)]
+    [:div.buttons
+     [:div.button-row
+      [tristate-button
+       (tr [:angel-arena.queueing "Queueing..."])
+       (tr [:angel-arena.queue-for-match "Queue for match"])
+       (= (:_id deck) @queueing)
+       (and @queueing
+            (not= (:_id deck) @queueing))
+       #(if @queueing
+          (do (ws/ws-send! [:angel-arena/dequeue {:deck-id (:_id deck)}])
+              (reset! queueing nil))
+          (do (ws/ws-send! [:angel-arena/queue {:deck-id (:_id deck)}])
+              (reset! queueing (:_id deck))))]
+      "Average waiting time: " (time-span-string (get-in @queue-times [@chosen-format side]))]
+     [:div.button-row
+      (if @abandon
+        [:span (tr [:angel-arena.are-you-sure "Are you sure?"]) " "
+         [:button.small {:on-click #(do (ws/ws-send! [:angel-arena/abandon-run {:deck-id (:_id deck)}])
+                                        (fetch-runs))} (tr [:angel-arena.are-you-sure-yes "yes"])]
+         [:button.small {:on-click #(reset! abandon false)} (tr [:angel-arena.are-you-sure-no "no"])]]
 
-          [cond-button (tr [:angel-arena.abandon-run "Abandon run"])
-           (not @queueing)
-           #(reset! abandon true)])]]))
+        [cond-button (tr [:angel-arena.abandon-run "Abandon run"])
+         (not @queueing)
+         #(reset! abandon true)])]]))
 
-  (defn- deck-games [side s deck]
-    (let [run-info (get-in @runs [@chosen-format side])]
-      [:div.games
-       (doall
-         (for [{:keys [game-id opponent winner] :as game} (:games run-info)]
-           (let [result (cond
-                          (nil? winner) "aborted"
-                          (= winner (name side)) "won"
-                          :else "lost")]
-             [:div.match {:key game-id :class [result]}
-              [:img.identity {:class [result]
-                              :src (image-url (get @all-cards (:identity opponent)))
-                              :alt (:identity opponent)
-                              :title (str (:identity opponent) "\nOpponent: " (:username opponent))}]])))]))
+(defn- deck-games [side s deck]
+  (let [run-info (get-in @runs [@chosen-format side])]
+    [:div.games
+     (doall
+       (for [{:keys [game-id opponent winner] :as game} (:games run-info)]
+         (let [result (cond
+                        (nil? winner) "aborted"
+                        (= winner (name side)) "won"
+                        :else "lost")]
+           [:div.match {:key game-id :class [result]}
+            [:img.identity {:class [result]
+                            :src (image-url (get @all-cards (:identity opponent)))
+                            :alt (:identity opponent)
+                            :title (str (:identity opponent) "\nOpponent: " (:username opponent))}]])))]))
 
-  (defn- deckselect-modal [user {:keys [side decks]}]
-    [:div
-     [:h3 (tr [:angel-arena.select-deck "Select your deck"])]
-     [:div.deck-collection.lobby-deck-selector
-      (let [same-side? (fn [deck] (= (capitalize (name side))
-                                     (get-in deck [:identity :side])))
-            correct-format? (fn [deck] (let [form (get-in deck [:status :format])]
-                                         (= (keyword form) @chosen-format)))
-            legal? (fn [deck] (let [form (get-in deck [:status :format])]
-                                (get-in deck [:status (keyword form) :legal])))]
-        [:div
-         (let [eligible-decks (->> @decks
-                                   (filter same-side?)
-                                   (filter correct-format?)
-                                   (filter legal?)
-                                   (sort-by :date >))]
-           (if (empty? eligible-decks)
-             [:div.infobox.one-line.blue-shade [:p (tr [:angel-arena.no-eligible-decks "No legal decks found for this side and format."])]]
-             (doall
-               (for [deck eligible-decks]
-                 ^{:key (:_id deck)}
-                 [:div.deckline {:on-click #(do (ws/ws-send! [:angel-arena/start-run
-                                                              {:deck-id (:_id deck)}])
-                                                (reagent-modals/close-modal!)
-                                                (fetch-runs))}
-                  [:img {:src (image-url (:identity deck))
-                         :alt (get-in deck [:identity :title] "")}]
-                  [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
-                  [:h4 (:name deck)]
-                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-                  [:p (get-in deck [:identity :title])]]))))])]])
+(defn- deckselect-modal [user {:keys [side decks]}]
+  [:div
+   [:h3 (tr [:angel-arena.select-deck "Select your deck"])]
+   [:div.deck-collection.lobby-deck-selector
+    (let [same-side? (fn [deck] (= (capitalize (name side))
+                                   (get-in deck [:identity :side])))
+          correct-format? (fn [deck] (let [form (get-in deck [:status :format])]
+                                       (= (keyword form) @chosen-format)))
+          legal? (fn [deck] (let [form (get-in deck [:status :format])]
+                              (get-in deck [:status (keyword form) :legal])))]
+      [:div
+       (let [eligible-decks (->> @decks
+                                 (filter same-side?)
+                                 (filter correct-format?)
+                                 (filter legal?)
+                                 (sort-by :date >))]
+         (if (empty? eligible-decks)
+           [:div.infobox.one-line.blue-shade [:p (tr [:angel-arena.no-eligible-decks "No legal decks found for this side and format."])]]
+           (doall
+             (for [deck eligible-decks]
+               ^{:key (:_id deck)}
+               [:div.deckline {:on-click #(do (ws/ws-send! [:angel-arena/start-run
+                                                            {:deck-id (:_id deck)}])
+                                              (reagent-modals/close-modal!)
+                                              (fetch-runs))}
+                [:img {:src (image-url (:identity deck))
+                       :alt (get-in deck [:identity :title] "")}]
+                [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
+                [:h4 (:name deck)]
+                [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+                [:p (get-in deck [:identity :title])]]))))])]])
 
-  (defn- new-run-button-bar [side decks user]
-    [:div.button-bar
-     [cond-button (tr [:angel-arena.start-new-run "Start new run"])
-      (not @queueing)
-      #(reagent-modals/modal!
-         [deckselect-modal user {:side side :decks decks}])]])
+(defn- new-run-button-bar [side decks user]
+  [:div.button-bar
+   [cond-button (tr [:angel-arena.start-new-run "Start new run"])
+    (not @queueing)
+    #(reagent-modals/modal!
+       [deckselect-modal user {:side side :decks decks}])]])
 
-  (defmethod ws/-msg-handler :angel-arena/run-update [{{:keys [finished-run] :as data} :?data}]
-    (when finished-run
-      (println "Run finished :" data "\nWould display dialog box now..."))
-    (fetch-runs))
+(defmethod ws/-msg-handler :angel-arena/run-update [{{:keys [finished-run] :as data} :?data}]
+  (when finished-run
+    (println "Run finished :" data "\nWould display dialog box now..."))
+  (fetch-runs)
+  (fetch-latest-runs))
+
+(defn latest-run-view [{:keys [_id deck-id identity deck-name format side games run-started run-finished] :as run}]
+  (let [wins (get-wins run)
+        losses (get-losses run)
+        opened (r/atom false)]
+    (fn []
+      [:div.run {:key _id}
+       [:div.unfold-button {:on-click #(swap! opened not)
+                            :class [(when @opened "open")]}]
+       [:div.deck
+        [:img {:src (image-url (get @all-cards identity))
+               :alt identity}]
+        [:h4 deck-name]
+        [:div.result.float-right (str wins " wins")]
+        [:div identity]
+        [:div.result.float-right (str losses " losses")]
+        [:div "Run started: " (.toLocaleString (js/Date. run-finished))]]
+       [:div.unfold {:class [(when @opened "open")]
+                     :style {:max-height (when @opened (* 100 (count games)))}}
+        [:div.games
+         (doall
+           (for [{:keys [game-id reason opponent winner] :as game} games]
+             (let [result (cond
+                            (nil? winner) "aborted"
+                            (= winner (name side)) "won"
+                            :else "lost")]
+               [:div.match {:key game-id :class [result]}
+                [:img.identity {:class [result]
+                                :src (image-url (get @all-cards (:identity opponent)))
+                                :alt (:identity opponent)
+                                :title (str (:identity opponent))}]
+
+                [:div.name-area [avatar (:username opponent) {:opts {:size 32}}]
+                 [:div.name-box
+                  [:div.username (:username opponent)]
+                  (if-let [pronouns (:pronouns opponent)]
+                    (let [pro-str (if (= "blank" pronouns) "" (tr-pronouns pronouns))]
+                      [:div.pronouns (lower-case pro-str)]))]]
+                [:div.info (case result
+                             "aborted" [:p "Aborted"]
+                             "won" (when reason [:p (str "Won by " reason)])
+                             "lost" (when reason [:p (str "Lost by " reason)]))
+                 [:p "Replay"]]])))]]])))
+
+(defn latest-runs-view []
+  (fn []
+    [:div.latest-runs {:key @chosen-format}
+     (doall
+       (for [run (filter #(= (name @chosen-format) (:format %)) @latest-runs)]
+         [latest-run-view run]))]))
 
 (defn game-panel [decks s user]
   (r/create-class
@@ -155,7 +213,8 @@
      :component-did-mount
      (fn []
        (fetch-runs)
-       (fetch-queue-times))
+       (fetch-queue-times)
+       (fetch-latest-runs))
 
      :reagent-render
      (fn []
@@ -193,7 +252,8 @@
                [deck-buttons :runner s deck]])
             [:div.run [new-run-button-bar :runner decks user]])
 
-          [:h3 (tr [:angel-arena.latest-runs "Latest runs"])]]))}))
+          [:h3 (tr [:angel-arena.latest-runs "Latest runs"])]
+          [latest-runs-view]]))}))
 
 (defn- player-view
   ([player] (player-view player nil))
