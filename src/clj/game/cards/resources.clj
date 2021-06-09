@@ -151,7 +151,7 @@
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
    :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                :prompt "Choose how many credits to move" :once :per-turn
+                :prompt "How many credits do you want to move?" :once :per-turn
                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                 :async true
                 :effect (effect (add-counter card :credit target)

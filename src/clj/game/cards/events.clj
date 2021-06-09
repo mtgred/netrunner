@@ -218,7 +218,7 @@
   {:makes-run true
    :on-play
    {:async true
-    :prompt "How many credits?"
+    :prompt "How many credits do you want to pay?"
     :choices :credit
     :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
     :effect (effect
@@ -2274,7 +2274,7 @@
   (letfn [(corp-choice [spent]
             {:player :corp
              :waiting-prompt "Corp to guess even or odd"
-             :prompt "Guess how many credits were spent"
+             :prompt "How many credits were spent?"
              :choices ["Even" "Odd"]
              :async true
              :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
@@ -2291,7 +2291,7 @@
                                       (gain-credits state :runner eid (* 2 spent))))))))})
           (runner-choice [choices]
             {:player :runner
-             :prompt "Spend how many credits?"
+             :prompt "How many credits do you want to spend?"
              :waiting-prompt "Runner to spend credits"
              :choices choices
              :async true
@@ -2504,7 +2504,7 @@
           (corp-choice [choices spent]
             {:player :corp
              :waiting-prompt "Corp to guess credits spent"
-             :prompt "Guess how many credits were spent"
+             :prompt "How many credits were spent?"
              :choices choices
              :async true
              :effect (req (wait-for
@@ -2518,7 +2518,7 @@
           (runner-choice [choices]
             {:player :runner
              :waiting-prompt "Runner to spend credits"
-             :prompt "Spend how many credits?"
+             :prompt "How many credits do you want to spend?"
              :choices choices
              :async true
              :effect (effect (continue-ability (corp-choice choices (str->int target)) card nil))})]

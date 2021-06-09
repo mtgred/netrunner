@@ -310,7 +310,7 @@
     {:waiting-prompt "Corp to use Brain Rewiring"
      :prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
      :yes-ability
-     {:prompt "How many credits?"
+     {:prompt "How many credits do you want to pay?"
       :choices {:number (req (min (:credit corp)
                                   (count (:hand runner))))}
       :async true

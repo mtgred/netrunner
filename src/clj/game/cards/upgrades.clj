@@ -1108,7 +1108,7 @@
                                            (from-same-server? card (:card %))))
                                  targets))
                  :waiting-prompt "Corp to use Overseer Matrix"
-                 :prompt "Pay how much to use Overseer Matrix's ability?"
+                 :prompt "How many credits do you want to pay?"
                  :player :corp
                  :choices {:number (req (min (->> targets
                                                   (filter #(or (in-same-server? card (:card %))
@@ -1201,7 +1201,7 @@
              :msg "remove a hosted power counter"
              :effect (effect (add-counter card :power -1))}]
    :on-rez {:waiting-prompt "Corp to place credits on Reduced Service"
-            :prompt "How many credits to spend?"
+            :prompt "How many credits do you want to pay?"
             :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
             :async true
             :effect (req (let [spent (str->int target)]
