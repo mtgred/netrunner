@@ -3169,6 +3169,22 @@
       (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (core/jack-out state :runner nil))))
+  (testing "Quetzal cannot break more than 1 Barrier sub during the same encounter #5944"
+    (do-game
+      (new-game {:corp {:deck [(qty "Spiderweb" 3)]}
+               :runner {:id "Quetzal: Free Spirit"
+                        :deck [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [q (get-in @state [:runner :identity])
+            spiderweb (get-ice state :hq 0)
+            qmsg "break 1 Barrier subroutine"]
+        (rez state :corp spiderweb)
+        (run-continue state)
+        (card-ability state :runner q 0)
+        (click-prompt state :runner "End the run")
+        (is (empty? (:prompt (get-runner))) "No prompt for further breaking"))))
 
 (deftest reina-roja-freedom-fighter
   ;; Reina Roja - Increase cost of first rezzed ICE

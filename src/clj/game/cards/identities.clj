@@ -1266,7 +1266,7 @@
              :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "Quetzal: Free Spirit"
-  {:abilities [(assoc (break-sub nil 1 "Barrier") :once :per-turn)]})
+  {:abilities [(assoc (break-sub nil 1 "Barrier" {:repeatable false}) :once :per-turn)]})
 
 (defcard "Reina Roja: Freedom Fighter"
   (letfn [(not-triggered? [state]
