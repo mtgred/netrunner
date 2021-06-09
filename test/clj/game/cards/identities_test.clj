@@ -1102,7 +1102,7 @@
 
 (deftest freedom-khumalo-crypto-anarchist
   ;; Freedom Khumalo - Can spend virus counters from other cards to trash accessed cards with play/rez costs
-  (testing "Only works with Assets, ICE, Operations, and Upgrades"
+  (testing "Only works with Assets, ice, Operations, and Upgrades"
     (letfn [(fk-test [card]
               (do-game
                 (new-game {:corp {:deck [card]}
@@ -2875,7 +2875,7 @@
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
 
 (deftest next-design-guarding-the-net
-  ;; Next Design.  Install up to 3 ICE before game starts, one per server max, and re-draw to 5
+  ;; Next Design.  Install up to 3 pieces of ice before game starts, one per server max, and re-draw to 5
   (do-game
     (new-game {:corp {:id "NEXT Design: Guarding the Net"
                       :deck [(qty "Snowflake" 10)]}
@@ -2981,7 +2981,7 @@
       (run-on state "HQ")
       (let [wrap1 (get-ice state :hq 0)
             wrap2 (get-ice state :hq 1)]
-        (is (empty? (:prompt (get-runner))) "Ability won't work on unrezzed ICE")
+        (is (empty? (:prompt (get-runner))) "Ability won't work on unrezzed ice")
         (rez state :corp wrap2)
         (run-continue state)
         (click-prompt state :runner "Yes")
@@ -3171,7 +3171,7 @@
       (core/jack-out state :runner nil))))
 
 (deftest reina-roja-freedom-fighter
-  ;; Reina Roja - Increase cost of first rezzed ICE
+  ;; Reina Roja - Increase cost of first rezzed piece of ice
   (do-game
     (new-game {:corp {:deck [(qty "Quandary" 3)]}
                :runner {:id "Reina Roja: Freedom Fighter"}})
@@ -3220,7 +3220,7 @@
    (is (= 2 (count (:hand (get-runner)))) "Runner doesn't draw 1 card")))
 
 (deftest rielle-kit-peddler-transhuman
-  ;; Rielle "Kit" Peddler - Give ICE Code Gate
+  ;; Rielle "Kit" Peddler - Give ice Code Gate
   (do-game
     (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
                :runner {:id "Rielle \"Kit\" Peddler: Transhuman"

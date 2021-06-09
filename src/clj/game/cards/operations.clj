@@ -1399,7 +1399,7 @@
                                                                               :install-state :rezzed-no-cost
                                                                               :display-message false
                                                                               :index index}))
-                                   (do (system-msg state side "does not find any ICE to install from R&D")
+                                   (do (system-msg state side "does not find any ice to install from R&D")
                                        (effect-completed state side eid))))))))}})
 
 (defcard "NAPD Cordon"
@@ -1604,11 +1604,11 @@
              :async true
              :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
     {:on-play
-     {:prompt "Choose a piece of ICE in HQ to install"
+     {:prompt "Choose a piece of ice in HQ to install"
       :choices {:card #(and (in-hand? %)
                          (corp? %)
                          (ice? %))}
-      :msg "install an ICE from HQ and place 3 advancements on it"
+      :msg "install a piece of ice from HQ and place 3 advancements on it"
       :cancel-effect (req (effect-completed state side eid))
       :async true
       :effect (effect (continue-ability (install-card target) card nil))}}))
@@ -2330,7 +2330,7 @@
 
 (defcard "Sunset"
   (letfn [(sun [serv]
-            {:prompt "Select two pieces of ICE to swap positions"
+            {:prompt "Select two pieces of ice to swap"
              :choices {:card #(and (= serv (get-zone %))
                                    (ice? %))
                        :max 2}
@@ -2343,12 +2343,12 @@
                                                  " with "
                                                  (card-str state (second targets))))
                                 (continue-ability state side (sun serv) card nil))
-                            (do (system-msg state side "has finished rearranging ICE")
+                            (do (system-msg state side "has finished rearranging ice")
                                 (effect-completed state side eid))))})]
     {:on-play
      {:prompt "Choose a server"
       :choices (req servers)
-      :msg (msg "rearrange ICE protecting " target)
+      :msg (msg "rearrange ice protecting " target)
       :async true
       :effect (req (let [serv (conj (server->zone state target) :ices)]
                      (continue-ability state side (sun serv) card nil)))}}))

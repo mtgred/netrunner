@@ -677,7 +677,7 @@
       (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
       (is (= 4 (count (:hand (get-runner)))) "Took 1 meat damage")
       (run-empty-server state "R&D")
-      (is (= 2 (count (:discard (get-corp)))) "ICE was trashed")
+      (is (= 2 (count (:discard (get-corp)))) "ice was trashed")
       (is (= 3 (count (:hand (get-runner)))) "Took 1 meat damage")
       (run-empty-server state "Server 1")
       (is (= 3 (count (:discard (get-corp)))) "Agenda was trashed")
@@ -825,10 +825,10 @@
       (is (:prompt (get-runner)) "Can't target card in central server")
       (click-card state :runner v2)
       (rez state :corp v2)
-      (is (not (rezzed? (refresh v2))) "Prevented remote ICE from rezzing")
+      (is (not (rezzed? (refresh v2))) "Prevented remote ice from rezzing")
       (take-credits state :runner)
       (rez state :corp (refresh v2))
-      (is (rezzed? (refresh v2)) "Rez prevention of ICE ended")
+      (is (rezzed? (refresh v2)) "Rez prevention of ice ended")
       (take-credits state :corp)
       (play-from-hand state :runner "Careful Planning")
       (click-card state :runner pad)
@@ -2589,7 +2589,7 @@
       (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
 
 (deftest high-stakes-job
-  ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
+  ;; High Stakes Job - run on server with at least 1 unrezzed piece of ice, gains 12 credits if successful
   (do-game
     (new-game {:corp {:deck ["Ice Wall"]}
                :runner {:deck ["High-Stakes Job"]}})
@@ -3388,7 +3388,7 @@
       (is (= 2 (core/get-strength (get-program state 0))) "Corroder doesn't gain any strength from Lean and Mean"))))
 
 (deftest leave-no-trace
-  ;; Leave No Trace should derez ICE that was rezzed during the run
+  ;; Leave No Trace should derez ice that was rezzed during the run
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
@@ -3409,7 +3409,7 @@
       (run-continue state)
       (is (not (rezzed? (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
       (is (rezzed? (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))
-  (testing "should not derez ICE that has changed during a run"
+  (testing "should not derez ice that has changed during a run"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
                  :runner {:deck ["Leave No Trace"]}})
@@ -4305,7 +4305,7 @@
       (click-prompt state :runner "Yes")
       (is (find-card "Burke Bugs" (:discard (get-corp))) "Burke Bugs is trashed")
       (is (not (get-ice state :hq 0)) "Burke Bugs is trashed")))
-  (testing "Prompt should be shown only until ICE is trashed."
+  (testing "Prompt should be shown only until ice is trashed."
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Burke Bugs" "Ice Wall"]}
@@ -4713,7 +4713,7 @@
         (click-prompt state :runner "Hedge Fund")))))
 
 (deftest reshape
-  ;; Reshape - Swap 2 pieces of unrezzed ICE
+  ;; Reshape - Swap 2 pieces of unrezzed ice
   (do-game
     (new-game {:corp {:deck [(qty "Vanilla" 2) "Paper Wall"]}
                :runner {:deck ["Reshape"]}})
@@ -5420,7 +5420,7 @@
         (click-card state :runner wrap)
         (is (= "Knight" (:title (first (:hosted (refresh wrap))))) "Knight hosted on Wraparound")
         (take-credits state :runner)
-        (is (= "Knight" (:title (first (:deck (get-runner))))) "Knight returned to Stack from host ICE"))))
+        (is (= "Knight" (:title (first (:deck (get-runner))))) "Knight returned to Stack from host ice"))))
   (testing "Make sure program remains installed if Scavenged"
     (do-game
       (new-game {:runner {:hand ["Test Run" "Scavenge" "Inti"]
@@ -5682,7 +5682,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Runner has played 2 and picked up 2 cards")))
 
 (deftest unscheduled-maintenance
-  ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn
+  ;; Unscheduled Maintenance - prevent Corp from installing more than 1 piece of ice per turn
   (do-game
     (new-game {:corp {:deck [(qty "Vanilla" 2) "Breaking News"]}
                :runner {:deck ["Unscheduled Maintenance"]}})
@@ -5691,12 +5691,12 @@
     (play-from-hand state :runner "Unscheduled Maintenance")
     (take-credits state :runner)
     (play-from-hand state :corp "Vanilla" "HQ")
-    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "First ICE install of turn allowed")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "First piece of ice install of turn allowed")
     (play-from-hand state :corp "Vanilla" "R&D")
-    (is (empty? (get-in @state [:corp :servers :rd :ices])) "Second ICE install of turn blocked")
+    (is (empty? (get-in @state [:corp :servers :rd :ices])) "Second piece of ice install of turn blocked")
     (score-agenda state :corp (get-content state :remote1 0))
     (play-from-hand state :corp "Vanilla" "R&D")
-    (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Current trashed; second ICE install of turn allowed")))
+    (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Current trashed; second piece of ice install of turn allowed")))
 
 (deftest vamp
   ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp

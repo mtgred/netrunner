@@ -497,7 +497,7 @@
                                    remote? (is-remote? (second (get-zone (:host b))))]
                                (continue-ability
                                  state side
-                                 {:prompt (msg "Host Bishop on a piece of ICE protecting "
+                                 {:prompt (msg "Host Bishop on a piece of ice protecting "
                                                (if hosted? (if remote? "a central" "a remote") "any") " server")
                                   :choices {:card #(if hosted?
                                                      (and (if remote?
@@ -911,7 +911,7 @@
              :req (req (is-central? (target-server context)))
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:virus 1]
-                :label "Give -1 strength to current ICE"
+                :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
                                (= :encounter-ice (:phase run))))
                 :msg (msg "give -1 strength to " (:title current-ice))
@@ -1179,7 +1179,7 @@
               :prompt "Trash False Echo?"
               :yes-ability
               {:async true
-               :msg "trashes False Echo to make the Corp rez the passed ICE or add it to HQ"
+               :msg "trashes False Echo to make the Corp rez the passed piece of ice or add it to HQ"
                :effect
                (req (wait-for
                       (trash state side card nil)
@@ -1194,7 +1194,7 @@
                                            ["Add to HQ"]))
                            :effect (req (if (= target "Rez")
                                           (rez state side eid ice)
-                                          (do (system-msg state :corp "chooses to add the passed ICE to HQ")
+                                          (do (system-msg state :corp "chooses to add the passed piece of ice to HQ")
                                               (move state :corp ice :hand)
                                               (effect-completed state side eid))))})
                         card target)))}}}]})
@@ -1216,7 +1216,7 @@
 (defcard "Femme Fatale"
   (auto-icebreaker
     {:on-install
-     {:prompt "Select a piece of ICE to target for bypassing"
+     {:prompt "Select a piece of ice to target for bypassing"
       :choices {:card ice?}
       :effect (req (let [ice target]
                      (add-icon state side card ice "F" "blue")
@@ -1413,8 +1413,8 @@
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
-  (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ICE"
-                                 :prompt (msg "Host Ika on a piece of ICE")
+  (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ice"
+                                 :prompt (msg "Host Ika on a piece of ice")
                                  :cost [:credit 2]
                                  :choices {:card #(and (ice? %)
                                                        (installed? %)
@@ -1505,15 +1505,15 @@
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
                              (<= (get-strength current-ice) (get-strength card))))]
-    {:abilities [{:label "Host Knight on a piece of ICE"
+    {:abilities [{:label "Host Knight on a piece of ice"
                   :async true
                   :effect (req (let [k (get-card state card)
                                      hosted (ice? (:host k))
                                      icepos (card-index state (get-card state (:host k)))]
                                  (continue-ability
                                    state side
-                                   {:prompt (msg "Host Knight on a piece of ICE"
-                                                 (when hosted " not before or after the current host ICE"))
+                                   {:prompt (msg "Host Knight on a piece of ice"
+                                                 (when hosted " not before or after the current host ice"))
                                     :cost [:click 1]
                                     :choices {:card #(if hosted
                                                        (and (or (when (= (get-zone %) (get-zone (:host k)))
@@ -1563,7 +1563,7 @@
              :effect (req (add-counter state side card :virus 1))}]
    :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
-                :label "Give -1 strength to current ICE"
+                :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
                                (= :encounter-ice (:phase run))))
                 :msg (msg "give -1 strength to " (:title current-ice))
@@ -1853,7 +1853,7 @@
              {:prompt "Give ice a subtype?"
               :req (req (not (get-in @state [:per-turn (:cid card)])))
               :yes-ability
-              {:prompt "Choose an ICE subtype"
+              {:prompt "Choose an ice subtype"
                :choices (req (->> (server-cards)
                                   (reduce (fn [acc card]
                                             (if (ice? card)
@@ -1934,17 +1934,17 @@
 
 (defcard "Pawn"
   {:implementation "All abilities are manual"
-   :abilities [{:label "Host Pawn on the outermost ICE of a central server"
+   :abilities [{:label "Host Pawn on the outermost piece of ice of a central server"
                 :cost [:click 1]
-                :prompt "Host Pawn on the outermost ICE of a central server"
+                :prompt "Host Pawn on the outermost piece of ice of a central server"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
                 :msg (msg "host it on " (card-str state target))
                 :effect (effect (host target card))}
-               {:label "Advance to next ICE"
-                :prompt "Choose the next innermost ICE to host Pawn on it"
+               {:label "Advance to next piece of ice"
+                :prompt "Choose the next innermost piece of ice to host Pawn on it"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
@@ -1981,7 +1981,7 @@
                                (= :encounter-ice (:phase run))))
                 :cost [:virus 1]
                 :label "Make ice gain a subtype"
-                :prompt "Choose an ICE subtype"
+                :prompt "Choose an ice subtype"
                 :choices (req (->> (server-cards)
                                    (reduce (fn [acc card]
                                              (if (ice? card)
@@ -2182,9 +2182,9 @@
                                (continue-ability
                                  state side
                                  {:prompt (if hosted?
-                                            (msg "Host Rook on a piece of ICE protecting this server or at position "
+                                            (msg "Host Rook on a piece of ice protecting this server or at position "
                                                  icepos " of a different server")
-                                            (msg "Host Rook on a piece of ICE protecting any server"))
+                                            (msg "Host Rook on a piece of ice protecting any server"))
                                   :choices {:card #(if hosted?
                                                      (and (or (= (get-zone %) (get-zone (:host r)))
                                                               (= (card-index state %) icepos))
@@ -2395,7 +2395,7 @@
 
 (defcard "Surfer"
   (letfn [(surf [state cice]
-            {:prompt (msg "Choose an ICE before or after " (:title cice))
+            {:prompt (msg "Choose a piece of ice before or after " (:title cice))
              :choices {:card #(and (ice? %)
                                    (= (get-zone %) (get-zone cice))
                                    (= 1 (abs (- (card-index state %)
@@ -2406,12 +2406,12 @@
                             (swap! state assoc-in [:run :position] (inc tgtndx))
                             (swap-ice state side cice target)))})]
     {:abilities [{:cost [:credit 2]
-                  :msg "swap a piece of Barrier ICE"
+                  :msg "swap a piece of Barrier ice"
                   :req (req (and run
                                  (= :encounter-ice (:phase run))
                                  (rezzed? current-ice)
                                  (has-subtype? current-ice "Barrier")))
-                  :label "Swap the Barrier ICE currently being encountered with a piece of ICE directly before or after it"
+                  :label "Swap the piece of Barrier ice currently being encountered with a piece of ice directly before or after it"
                   :async true
                   :effect (effect (continue-ability (surf state current-ice) card nil))}]}))
 
@@ -2629,14 +2629,14 @@
                                (some #(and (ice? %)
                                            (not (rezzed? %)))
                                      (all-installed state :corp))))
-                :prompt "Trash Wari to expose an ICE?"
+                :prompt "Trash Wari to expose a piece of ice?"
                 :yes-ability (prompt-for-subtype)}}]}))
 
 (defcard "Wyrm"
-  (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on ICE with 0 or less strength"
+  (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on a piece of ice with 0 or less strength"
                                                       :req (req (not (pos? (get-strength current-ice))))})
                                 {:cost [:credit 1]
-                                 :label "Give -1 strength to current ICE"
+                                 :label "Give -1 strength to current piece of ice"
                                  :req (req (rezzed? current-ice))
                                  :msg (msg "give -1 strength to " (:title current-ice))
                                  :effect (effect (pump-ice current-ice -1))}

@@ -578,7 +578,7 @@
         (is (not (:run @state)) "Run over")))))
 
 (deftest compromised-employee
-  ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
+  ;; Compromised Employee - Gain 1c every time Corp rezzes ice
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Snatch and Grab" (qty "Pup" 2) "Launch Campaign"]}
@@ -591,9 +591,9 @@
     (let [ce (get-resource state 0)]
       (is (= 1 (get-counters (refresh ce) :recurring)) "Has 1 recurring credit")
       (rez state :corp (get-ice state :hq 0))
-      (is (= 4 (:credit (get-runner))) "Gained 1c from ICE rez")
+      (is (= 4 (:credit (get-runner))) "Gained 1c from ice rez")
       (rez state :corp (get-ice state :rd 0))
-      (is (= 5 (:credit (get-runner))) "Gained 1c from ICE rez")
+      (is (= 5 (:credit (get-runner))) "Gained 1c from ice rez")
       (rez state :corp (get-content state :remote1 0))
       (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained")
       (take-credits state :runner)
@@ -2222,8 +2222,8 @@
     (is (= 3 (:click (get-runner))) "Lost 1 click")))
 
 (deftest hernando-cortez
-  ;; Herando Cortez - Increase all ICE rez cost by 1c if the Corp has 10c or more
-  (testing "Rezzing a one subroutine ICE"
+  ;; Herando Cortez - Increase all ice rez cost by 1c if the Corp has 10c or more
+  (testing "Rezzing a one subroutine piece of ice"
     (do-game
       (new-game {:corp {:deck [(qty "Paper Wall" 3) "Launch Campaign"]}
                  :runner {:deck ["Hernando Cortez"]}})
@@ -2245,14 +2245,14 @@
             pw3 (get-ice state :archives 0)
             lc (get-content state :remote1 0)]
         (rez state :corp lc)
-        (is (= 11 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (is (= 11 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ice")
         (rez state :corp pw1)
         (is (= 10 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
         (rez state :corp pw2)
         (is (= 9 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
         (rez state :corp pw3)
         (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall"))))
-  (testing "Rezzing a three subroutine ICE"
+  (testing "Rezzing a three subroutine piece of ice"
     (do-game
       (new-game {:corp {:deck [(qty "Ichi 1.0" 2) "Launch Campaign"]}
                  :runner {:deck ["Hernando Cortez"]}})
@@ -2272,12 +2272,12 @@
             ichi2 (get-ice state :rd 0)
             lc (get-content state :remote1 0)]
         (rez state :corp lc)
-        (is (= 13 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (is (= 13 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ice")
         (rez state :corp ichi1)
         (is (= 5 (:credit (get-corp))) "Paid 8 instead of 5 to rez Ichi 1.0")
         (rez state :corp ichi2)
         (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0"))))
-  (testing "Rezzing a zero subroutine ICE"
+  (testing "Rezzing a zero subroutine piece of ice"
     (do-game
       (new-game {:corp {:deck ["Tour Guide" "NEXT Silver" "Launch Campaign"]}
                  :runner {:deck ["Hernando Cortez"]}})
@@ -2297,7 +2297,7 @@
             next-silver (get-ice state :rd 0)
             lc (get-content state :remote1 0)]
         (rez state :corp lc)
-        (is (= 12 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (is (= 12 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ice")
         (rez state :corp tour-guide)
         (is (= 10 (:credit (get-corp))) "Paid 2 to rez Tour Guide")
         (rez state :corp next-silver)
@@ -3152,7 +3152,7 @@
         (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits")))))
 
 (deftest network-exchange
-  ;; ICE install costs 1 more except for inner most
+  ;; ice install costs 1 more except for inner most
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Paper Wall" 3)]}
@@ -5862,7 +5862,7 @@
        (is (= 1 (count (:scored (get-runner)))) "Agenda not added to runner score area yet")))))
 
 (deftest xanadu
-  ;; Xanadu - Increase all ICE rez cost by 1 credit
+  ;; Xanadu - Increase all ice rez cost by 1 credit
   (do-game
     (new-game {:corp {:deck [(qty "Paper Wall" 2) "Launch Campaign"]}
                :runner {:deck ["Xanadu"]}})
@@ -5879,7 +5879,7 @@
       (rez state :corp pw2)
       (is (= 3 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
       (rez state :corp lc)
-      (is (= 2 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE"))))
+      (is (= 2 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ice"))))
 
 (deftest zona-sul-shipping
   ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged

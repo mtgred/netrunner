@@ -154,7 +154,7 @@
    :on-play {:req (req (has-bad-pub? state))
              :prompt "Choose a server"
              :choices (req runnable-servers)
-             :msg "prevent ICE from being rezzed during this run"
+             :msg "prevent ice from being rezzed during this run"
              :async true
              :effect (effect (register-run-flag!
                                card
@@ -162,7 +162,7 @@
                                (fn [state side card]
                                  (if (ice? card)
                                    ((constantly false)
-                                    (toast state :corp "Cannot rez ICE on this run due to Blackmail"))
+                                    (toast state :corp "Cannot rez ice on this run due to Blackmail"))
                                    true)))
                              (make-run eid target card))}})
 
@@ -220,7 +220,7 @@
    {:async true
     :prompt "How many credits do you want to pay?"
     :choices :credit
-    :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
+    :msg (msg "increase the rez cost of the first unrezzed piece of ice approached by " target " [Credits]")
     :effect (effect
               (continue-ability
                 (let [bribery-x target]
@@ -448,7 +448,7 @@
                                           {:ignore-all-cost true}))})]
     {:makes-run true
      :on-play {:prompt "Choose a server"
-               :msg "make a run and install a program on encounter with the first piece of ICE"
+               :msg "make a run and install a program on encounter with the first piece of ice"
                :choices (req runnable-servers)
                :async true
                :effect (effect (make-run eid target card))}
@@ -568,9 +568,9 @@
                                                       [:credit (rez-cost state side %)]))
                                       (all-installed state :corp)))
                        {:optional
-                        {:prompt (msg "Rez a piece of ICE protecting " serv "?")
+                        {:prompt (msg "Rez a piece of ice protecting " serv "?")
                          :yes-ability {:async true
-                                       :prompt (msg "Select a piece of ICE protecting " serv " to rez")
+                                       :prompt (msg "Select a piece of ice protecting " serv " to rez")
                                        :player :corp
                                        :choices {:card #(and (installed? %)
                                                              (not (rezzed? %))
@@ -585,7 +585,7 @@
                                                  (fn [state side card]
                                                    (if (ice? card)
                                                      ((constantly false)
-                                                      (toast state :corp "Cannot rez ICE on this run due to Cyber Threat"))
+                                                      (toast state :corp "Cannot rez ice on this run due to Cyber Threat"))
                                                      true)))
                                                (make-run eid serv card))}
                          :no-ability {:async true
@@ -595,10 +595,10 @@
                                                         (fn [state side card]
                                                           (if (ice? card)
                                                             ((constantly false)
-                                                             (toast state :corp "Cannot rez ICE on this run due to Cyber Threat"))
+                                                             (toast state :corp "Cannot rez ice on this run due to Cyber Threat"))
                                                             true)))
                                                       (make-run eid serv card))
-                                      :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
+                                      :msg (msg "make a run on " serv " during which no ice can be rezzed")}}}
                        {:async true
                         :effect (effect (register-run-flag!
                                           card
@@ -606,10 +606,10 @@
                                           (fn [state side card]
                                             (if (ice? card)
                                               ((constantly false)
-                                               (toast state :corp "Cannot rez ICE on this run due to Cyber Threat"))
+                                               (toast state :corp "Cannot rez ice on this run due to Cyber Threat"))
                                               true)))
                                         (make-run eid serv card))
-                        :msg (msg "make a run on " serv " during which no ICE can be rezzed")})
+                        :msg (msg "make a run on " serv " during which no ice can be rezzed")})
                      card nil)))}})
 
 (defcard "Data Breach"
@@ -942,7 +942,7 @@
                         (keep #(get-card state (:ice (first %))))
                         (filter (complement rezzed?))
                         seq)))
-    :prompt "Choose an unrezzed piece of ICE that you passed on your last run"
+    :prompt "Choose an unrezzed piece of ice that you passed on your last run"
     :choices {:req (req (some #(same-card? target %)
                               (->> (:events (:last-run runner-reg))
                                    (filter #(= :pass-ice (first %)))
@@ -964,14 +964,14 @@
 
 (defcard "Escher"
   (letfn [(es [] {:async true
-                  :prompt "Select two pieces of ICE to swap positions"
+                  :prompt "Select two pieces of ice to swap positions"
                   :choices {:card #(and (installed? %)
                                         (ice? %))
                             :max 2}
                   :effect (req (if (= (count targets) 2)
                                  (do (swap-ice state side (first targets) (second targets))
                                      (continue-ability state side (es) card nil))
-                                 (do (system-msg state side "has finished rearranging ICE")
+                                 (do (system-msg state side "has finished rearranging ice")
                                      (effect-completed state side eid))))})]
     {:makes-run true
      :on-play {:req (req hq-runnable)
@@ -983,7 +983,7 @@
                  :mandatory true
                  :ability
                  {:async true
-                  :msg "rearrange installed ICE"
+                  :msg "rearrange installed ice"
                   :effect (effect (continue-ability (es) card nil))}})]}))
 
 (defcard "Eureka!"
@@ -1033,7 +1033,7 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :prompt "Choose up to 3 pieces of ICE to derez"
+    :prompt "Choose up to 3 pieces of ice to derez"
     :choices {:max 3
               :card #(and (rezzed? %)
                           (ice? %))}
@@ -1174,7 +1174,7 @@
                                           {:msg (msg "force the rez of " (:title ice))
                                            :async true
                                            :effect (effect (rez :corp eid ice))}
-                                          {:msg (msg "trash the ICE at position " icepos " of " serv)
+                                          {:msg (msg "trash the ice at position " icepos " of " serv)
                                            :async true
                                            :effect (effect (trash :corp eid ice))})
                                         card nil))}
@@ -1415,11 +1415,11 @@
    :events [{:event :pre-access
              :async true
              :req (req (and (= target :archives)
-                            ;; don't prompt unless there's at least 1 rezzed ICE matching one in Archives
+                            ;; don't prompt unless there's at least 1 rezzed piece of ice matching one in Archives
                             (not-empty (clojure.set/intersection
                                          (into #{} (map :title (filter ice? (:discard corp))))
                                          (into #{} (map :title (filter rezzed? (all-installed state :corp))))))))
-             :prompt "Choose a piece of ICE in Archives"
+             :prompt "Choose a piece of ice in Archives"
              :choices (req (filter ice? (:discard corp)))
              :effect (effect (continue-ability
                                (let [ice target]
@@ -1617,9 +1617,9 @@
                      (fn [state side card]
                        (if (and (= (:active-player @state) :runner) (not (ice? card)))
                          ((constantly false)
-                          (toast state :corp "Cannot rez non-ICE on the Runner's turn due to Interdiction"))
+                          (toast state :corp "Cannot rez non-ice on the Runner's turn due to Interdiction"))
                          true))))]
-    {:on-play {:msg "prevent the Corp from rezzing non-ICE cards on the Runner's turn"
+    {:on-play {:msg "prevent the Corp from rezzing non-ice cards on the Runner's turn"
                :effect ab}
      :events [{:event :runner-turn-begins
                :effect ab}]
@@ -1723,7 +1723,7 @@
    {:req (req (:stole-agenda runner-reg))
     :prompt "Choose a server"
     :choices (req servers)
-    :msg (msg "force the Corp to trash an ICE protecting " target)
+    :msg (msg "force the Corp to trash a piece of ice protecting " target)
     :async true
     :effect (effect
               (continue-ability
@@ -1731,7 +1731,7 @@
                       servname target]
                   {:player :corp
                    :async true
-                   :prompt (msg "Select a piece of ICE in " target " to trash")
+                   :prompt (msg "Select a piece of ice in " target " to trash")
                    :choices {:card #(and (ice? %)
                                          (= serv (second (get-zone %))))}
                    :effect (effect (system-msg (str "trashes " (card-str state target)))
@@ -1798,7 +1798,7 @@
                               ice)))]
     {:makes-run true
      :on-play {:prompt "Choose a server"
-               :msg "make a run and derez any ICE that are rezzed during this run"
+               :msg "make a run and derez all ice that is rezzed during this run"
                :choices (req runnable-servers)
                :async true
                :effect (req (let [old-ice-cids (get-rezzed-cids (all-installed state :corp))]
@@ -2458,7 +2458,7 @@
 
 (defcard "Reshape"
   {:on-play
-   {:prompt "Select two non-rezzed ICE to swap positions"
+   {:prompt "Select two pieces of unrezzed ice to swap positions"
     :choices {:card #(and (installed? %)
                           (not (rezzed? %))
                           (ice? %))
@@ -2489,7 +2489,7 @@
   (letfn [(choose-ice []
             {:player :runner
              :waiting-prompt "Runner to choose ice"
-             :prompt "Select a piece of ICE to bypass"
+             :prompt "Select a piece of ice to bypass"
              :choices {:card ice?}
              :msg (msg "make a run and bypass " (card-str state target))
              :async true
@@ -2728,7 +2728,7 @@
 
 (defcard "Social Engineering"
   {:on-play
-   {:prompt "Select an unrezzed piece of ICE"
+   {:prompt "Select an unrezzed piece of ice"
     :choices {:card #(and (not (rezzed? %))
                           (installed? %)
                           (ice? %))}
@@ -2778,7 +2778,7 @@
 (defcard "Spot the Prey"
   {:makes-run true
    :on-play
-   {:prompt "Select 1 non-ICE card to expose"
+   {:prompt "Select 1 non-ice card to expose"
     :msg "expose 1 card and make a run"
     :choices {:card #(and (installed? %)
                           (not (ice? %))
@@ -2972,7 +2972,7 @@
    {:req (req (some #(and (ice? %)
                           (installed? %))
                     (all-installed state :corp)))
-    :prompt "Select a piece of ICE"
+    :prompt "Select a piece of ice"
     :choices {:card #(and (installed? %)
                           (ice? %))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
@@ -3046,7 +3046,7 @@
                                (fn [state side card]
                                  (if (ice? card)
                                    ((constantly false)
-                                    (toast state :corp "Cannot install ICE the rest of this turn due to Unscheduled Maintenance"))
+                                    (toast state :corp "Cannot install ice the rest of this turn due to Unscheduled Maintenance"))
                                    true))))}]
    :leave-play (effect (clear-turn-flag! card :can-install-ice))})
 

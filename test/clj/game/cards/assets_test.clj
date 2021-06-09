@@ -448,7 +448,7 @@
       (is (= 1 (count (:scored (get-runner))))))))
 
 (deftest brain-taping-warehouse
-  ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
+  ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ice by 1 for each unspent Runner click
   (do-game
     (new-game {:corp {:deck ["Brain-Taping Warehouse" "Ichi 1.0"
                              "Eli 1.0"]}})
@@ -1405,7 +1405,7 @@
     (run-empty-server state "Server 2")
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
-    (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
+    (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no piece of ice protected Edge of World")))
 
 (deftest eliza-s-toybox
   ;; Eliza's Toybox - Rez a card ignoring all costs
@@ -2211,7 +2211,7 @@
       (is (= 1 (-> (get-corp) :hand count))))))
 
 (deftest it-department
-  ;; IT Department - Add strength to rezzed ICE until end of turn
+  ;; IT Department - Add strength to rezzed piece of ice until end of turn
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["IT Department" "Wall of Static"]}})
@@ -3724,7 +3724,7 @@
         (is (= 1 (:agendapoints scored-pub)))))))
 
 (deftest quarantine-system
-  ;; Forfeit agenda to rez up to 3 ICE with 2 credit discount per agenda point
+  ;; Forfeit agenda to rez up to 3 pieces of ice with 2 credit discount per agenda point
   (do-game
     (new-game {:corp {:deck [(qty "Chiyashi" 3) "Quarantine System" "Project Beale"]}})
     (core/gain state :corp :credit 100)
@@ -3742,7 +3742,7 @@
           beale (get-content state :remote2 0)]
       (rez state :corp qs)
       (card-ability state :corp qs 0)
-      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE")
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ice")
       (score-agenda state :corp beale)
       ; 1 on rez
       (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
@@ -3753,7 +3753,7 @@
       (click-card state :corp ch3)
       ; pay 8 per Chiyashi - 24 total
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
-      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ice"))))
 
 (deftest raman-rai
   ;; Raman Rai
@@ -4024,7 +4024,7 @@
       (is (zero? (count-bad-pub state)) "Removed 1 bad pub"))))
 
 (deftest sandburg
-  ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
+  ;; Sandburg - +1 strength to all ice for every 5c when Corp has over 10c
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -4148,19 +4148,19 @@
       (is (nil? (:corp-phase-12 @state)) "Sensie Actors Union doesn't trigger if protected by ice"))))
 
 (deftest server-diagnostics
-  ;; Server Diagnostics - Gain 2c when turn begins; trashed when ICE is installed
+  ;; Server Diagnostics - Gain 2c when turn begins; trashed when ice is installed
   (do-game
     (new-game {:corp {:deck ["Server Diagnostics" "Pup"
                              "Launch Campaign"]}})
     (play-from-hand state :corp "Server Diagnostics" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (play-from-hand state :corp "Launch Campaign" "New remote")
-    (is (= 1 (count (get-content state :remote1))) "Non-ICE install didn't trash Serv Diag")
+    (is (= 1 (count (get-content state :remote1))) "Non-ice install didn't trash Serv Diag")
     (take-credits state :corp)
     (take-credits state :runner)
     (is (= 5 (:credit (get-corp))) "Gained 2c at start of turn")
     (play-from-hand state :corp "Pup" "HQ")
-    (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
+    (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ice install")))
 
 (deftest shannon-claire
   ;; Shannon Claire
@@ -4771,7 +4771,7 @@
     (is (= 2 (:credit (get-runner))) "Runner did not spend an extra credit")))
 
 (deftest tenma-line
-  ;; Tenma Line - Swap 2 pieces of installed ICE
+  ;; Tenma Line - Swap 2 pieces of installed ice
   (do-game
     (new-game {:corp {:deck ["Tenma Line" "Harvester"
                              "Aimor" "Lockdown"]}})
@@ -5304,7 +5304,7 @@
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
 
 (deftest watchdog
-  ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags
+  ;; Watchdog - Reduce rez cost of first piece of ice per turn by number of Runner tags
   (do-game
     (new-game {:corp {:deck ["Watchdog" "Architect" "Wraparound"]}})
     (play-from-hand state :corp "Watchdog" "New remote")

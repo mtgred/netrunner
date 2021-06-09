@@ -5,7 +5,7 @@
             [clojure.string :as string]
             [cond-plus.core :refer [cond+]]))
 
-;;;; Helper functions specific for ICE
+;;;; Helper functions specific for ice
 (defn reset-variable-subs
   ([state side card total sub] (reset-variable-subs state side card total sub nil))
   ([state side card total sub args]
@@ -284,7 +284,7 @@
                        ((constantly (not (corp? card)))
                         (toast state :runner "Cannot trash due to subroutine." "warning")))))})
 
-;;; For Advanceable ICE
+;;; For Advanceable ice
 (defn wall-ice
   [subroutines]
   {:advanceable :always
@@ -292,13 +292,13 @@
    :strength-bonus (req (get-counters card :advancement))})
 
 (defn space-ice
-  "Creates data for Space ICE with specified abilities."
+  "Creates data for Space ice with specified abilities."
   [& abilities]
   {:advanceable :always
    :subroutines (vec abilities)
    :rez-cost-bonus (req (* -3 (get-counters card :advancement)))})
 
-;;; For Grail ICE
+;;; For Grail ice
 (defn grail-in-hand
   "Req that specified card is a Grail card in the Corp's hand."
   [card]
@@ -307,8 +307,8 @@
        (has-subtype? card "Grail")))
 
 (def reveal-grail
-  "Ability for revealing Grail ICE from HQ."
-  {:label "Reveal up to 2 Grail ICE from HQ"
+  "Ability for revealing Grail ice from HQ."
+  {:label "Reveal up to 2 pieces of Grail ice from HQ"
    :choices {:max 2
              :card grail-in-hand}
    :async true
@@ -317,30 +317,30 @@
           (msg "reveal " (string/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
-  "Ability for resolving a subroutine on a Grail ICE in HQ."
-  {:label "Resolve a Grail ICE subroutine from HQ"
+  "Ability for resolving a subroutine on a Grail ice in HQ."
+  {:label "Resolve a Grail ice subroutine from HQ"
    :choices {:card grail-in-hand}
    :effect (req (doseq [ice targets]
                   (let [subroutine (first (:subroutines (card-def ice)))]
                     (resolve-ability state side subroutine card nil))))})
 
 (defn grail-ice
-  "Creates data for grail ICE"
+  "Creates data for grail ice"
   [ability]
   {:abilities [reveal-grail]
    :subroutines [ability resolve-grail]})
 
-;;; For NEXT ICE
+;;; For NEXT ice
 (defn next-ice-count
-  "Counts number of rezzed NEXT ICE - for use with NEXT Bronze and NEXT Gold"
+  "Counts number of rezzed pieces of NEXT ice - for use with NEXT Bronze and NEXT Gold"
   [corp]
   (let [servers (flatten (seq (:servers corp)))
         rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
     (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
 
-;;; For Morph ICE
+;;; For Morph ice
 (defn morph-ice
-  "Creates the data for morph ICE with specified types and ability."
+  "Creates the data for morph ice with specified types and ability."
   [base other ability]
   {:advanceable :always
    :constant-effects [{:type :lose-subtype
@@ -353,15 +353,15 @@
                        :value other}]
    :subroutines [ability]})
 
-;;; For Constellation ICE
+;;; For Constellation ice
 (defn constellation-ice
-  "Generates map for Constellation ICE with specified effect."
+  "Generates map for Constellation ice with specified effect."
   [ability]
   {:subroutines [(-> (trace-ability 2 ability)
                      (assoc-in [:trace :kicker] ability)
                      (assoc-in [:trace :kicker-min] 5))]})
 
-;; For advance-only-while-rezzed, sub-growing ICE
+;; For advance-only-while-rezzed, sub-growing ice
 (defn zero-to-hero
   "Salvage, Tyrant, Woodcutter"
   [sub]
@@ -374,7 +374,7 @@
                :req (req (same-card? card (:card context)))
                :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
 
-;; For 7 Wonders ICE
+;; For 7 Wonders ice
 (defn wonder-sub
   "Checks total number of advancement counters on a piece of ice against number"
   [card number]
@@ -411,7 +411,7 @@
                          card nil))})
           card nil))})))
 
-;;; Helper function for adding implementation notes to ICE defined with functions
+;;; Helper function for adding implementation notes to ice defined with functions
 (defn- implementation-note
   "Adds an implementation note to the ice-definition"
   [note ice-def]
@@ -686,7 +686,7 @@
 (defcard "Bloom"
   {:subroutines
    [{:label "Install a piece of ice from HQ protecting another server, ignoring all costs"
-     :prompt "Choose ICE to install from HQ in another server"
+     :prompt "Choose a piece of ice to install from HQ in another server"
      :async true
      :choices {:card #(and (ice? %)
                            (in-hand? %))}
@@ -699,7 +699,7 @@
                                        :effect (effect (corp-install eid nice target {:ignore-all-cost true}))}
                                       card nil)))}
     {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
-     :prompt "Choose ICE to install from HQ in this server"
+     :prompt "Choose a piece of ice to install from HQ in this server"
      :async true
      :choices {:card #(and (ice? %)
                            (in-hand? %))}
@@ -730,7 +730,7 @@
              :effect (effect (reset-variable-subs card 0 nil))}]})
 
 (defcard "Builder"
-  (let [sub {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
+  (let [sub {:label "Place 1 advancement token on a piece of ice that can be advanced protecting this server"
              :msg (msg "place 1 advancement token on " (card-str state target))
              :choices {:card #(and (ice? %)
                                    (can-be-advanced? %))}
@@ -804,7 +804,7 @@
                  (trace-ability 2 end-the-run)]})
 
 (defcard "Cell Portal"
-  {:subroutines [{:msg "make the Runner approach the outermost ICE"
+  {:subroutines [{:msg "make the Runner approach the outermost piece of ice"
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
                                  (derez state side card)))}]})
@@ -874,9 +874,9 @@
 
 (defcard "Chum"
   {:subroutines
-   [{:label "Give +2 strength to next ICE Runner encounters"
+   [{:label "Give +2 strength to next piece of ice Runner encounters"
      :req (req this-server)
-     :msg (msg "give +2 strength to the next ICE the Runner encounters")
+     :msg (msg "give +2 strength to the next piece of ice the Runner encounters")
      :effect
      (effect (register-events
                card
@@ -1714,14 +1714,14 @@
 
 (defcard "Howler"
   {:subroutines
-   [{:label "Install a piece of Bioroid ICE from HQ or Archives"
+   [{:label "Install a piece of Bioroid ice from HQ or Archives"
      :req (req (some #(and (corp? %)
                            (or (in-hand? %)
                                (in-discard? %))
                            (has-subtype? % "Bioroid"))
                      (concat (:hand corp) (:discard corp))))
      :async true
-     :prompt "Install ICE from HQ or Archives?"
+     :prompt "Install a piece of Bioroid ice from HQ or Archives?"
      :show-discard true
      :choices {:card #(and (corp? %)
                            (or (in-hand? %)
@@ -1791,7 +1791,7 @@
 
 (defcard "Inazuma"
   {:subroutines
-   [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"
+   [{:msg "prevent the Runner from breaking subroutines on the next piece of ice they encounter this run"
      :effect
      (effect (register-events
               card
@@ -1806,7 +1806,7 @@
                                     :duration :end-of-encounter
                                     :req (req (same-card? encountered-ice target))
                                     :value true})))}]))}
-    {:msg "prevent the Runner from jacking out until after the next piece of ICE"
+    {:msg "prevent the Runner from jacking out until after the next piece of ice"
      :effect
      (req (prevent-jack-out state side)
           (register-events
@@ -2267,20 +2267,20 @@
    :strength-bonus (req (if (= (second (get-zone card)) :hq) 3 0))})
 
 (defcard "Metamorph"
-  {:subroutines [{:label "Swap two ICE or swap two installed non-ICE"
-                  :msg "swap two ICE or swap two installed non-ICE"
+  {:subroutines [{:label "Swap two pieces of ice or swap two installed non-ice"
+                  :msg "swap two pieces of ice or swap two installed non-ice"
                   :async true
                   :prompt "Choose one"
                   :req (req (or (<= 2 (count (filter ice? (all-installed state :corp))))
                                 (<= 2 (count (remove ice? (all-installed state :corp))))))
                   :choices (req [(when (<= 2 (count (filter ice? (all-installed state :corp))))
-                                   "Swap two ICE")
+                                   "Swap two pieces of ice")
                                  (when (<= 2 (count (remove ice? (all-installed state :corp))))
-                                   "Swap two non-ICE")])
+                                   "Swap two non-ice")])
                   :effect (effect
                             (continue-ability
-                              (if (= target "Swap two ICE")
-                                {:prompt "Select the two ICE to swap"
+                              (if (= target "Swap two pieces of ice")
+                                {:prompt "Select the two pieces of ice to swap"
                                  :choices {:card #(and (installed? %)
                                                        (ice? %))
                                            :not-self true
@@ -2328,11 +2328,11 @@
                                           (start-next-phase nil))})]})
 
 (defcard "Minelayer"
-  {:subroutines [{:msg "install an ICE from HQ"
+  {:subroutines [{:msg "install a piece of ice from HQ"
                   :async true
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
-                  :prompt "Choose an ICE to install from HQ"
+                  :prompt "Choose a piece of ice to install from HQ"
                   :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true}))}]})
 
 (defcard "Mirāju"
@@ -2728,8 +2728,8 @@
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (defcard "Red Tape"
-  {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
-                  :msg "give +3 strength to all ICE for the remainder of the run"
+  {:subroutines [{:label "Give +3 strength to all ice for the remainder of the run"
+                  :msg "give +3 strength to all ice for the remainder of the run"
                   :effect (effect (pump-all-ice 3 :end-of-run))}]})
 
 (defcard "Resistor"
@@ -3198,7 +3198,7 @@
 
 (defcard "TL;DR"
   {:subroutines
-   [{:label "Double subroutines on an ICE"
+   [{:label "Duplicate each subroutine on a piece of ice"
      :effect (effect
                (register-events
                  card

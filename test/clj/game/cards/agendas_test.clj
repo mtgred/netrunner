@@ -984,10 +984,10 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (some? (get-ice state :hq 1)) "Corp has two ice installed on HQ")
-    (is (= 6 (:credit (get-corp))) "Corp does not pay for installing the first ICE of the turn")
+    (is (= 6 (:credit (get-corp))) "Corp does not pay for installing the first piece of ice of the turn")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (some? (get-ice state :hq 2)) "Corp has three ice installed on HQ")
-    (is (= 4 (:credit (get-corp))) "Corp pays for installing the second ICE of the turn")))
+    (is (= 4 (:credit (get-corp))) "Corp pays for installing the second piece of ice of the turn")))
 
 (deftest efficiency-committee
   ;; Efficiency Committee
@@ -2681,7 +2681,7 @@
       (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
 (deftest project-yagi-uda
-  (testing "Swap ICE from HQ"
+  (testing "Swap ice from HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
                                "Eli 1.0"
@@ -2703,13 +2703,13 @@
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp eli1)
         (click-card state :corp "Hedge Fund")
-        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Operation")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Operation")
         (click-card state :corp "Jackson Howard")
-        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Asset")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Asset")
         (click-card state :corp "Prisec")
-        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Upgrade")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Upgrade")
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
-        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Agenda")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Agenda")
         (click-card state :corp "Eli 2.0")
         (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0"))))
   (testing "Swap cards in server with cards in HQ"
@@ -2738,7 +2738,7 @@
             "Couldn't swap Agenda for Operation")
         (click-card state :corp "Eli 2.0")
         (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
-            "Couldn't swap Agenda for ICE")
+            "Couldn't swap Agenda for ice")
         (click-card state :corp "Jackson Howard")
         (is (= (:title (get-content state :remote2 0)) "Jackson Howard")
             "Swapped Agenda for Asset")

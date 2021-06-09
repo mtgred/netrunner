@@ -463,7 +463,7 @@
         (is (nil? (:run @state)) "Sub is ETR")))))
 
 (deftest asteroid-belt
-  ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
+  ;; Asteroid Belt - Space ice rez cost reduced by 3 credits per advancement
   (do-game
     (new-game {:corp {:deck ["Asteroid Belt"]
                       :credits 10}})
@@ -709,7 +709,7 @@
         0 (:credit (get-corp))
         "Mausolus installed for free"
         (click-card state :corp "Mausolus"))
-      (is (= 2 (count (get-ice state :hq))) "2 ICE protecting HQ")
+      (is (= 2 (count (get-ice state :hq))) "2 pieces of ice protecting HQ")
       (is (= 2 (:position (get-run))) "Runner position moved along Bran position")
       (card-subroutine state :corp (get-ice state :hq 1) 1)
       (is (not (:run @state)) "Run ended"))))
@@ -971,10 +971,10 @@
       (card-subroutine state :corp cr2 0)
       (click-card state :corp "Ice Wall")
       (click-prompt state :corp "HQ")
-      (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd ICE over HQ"))))
+      (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd piece of ice over HQ"))))
 
 (deftest curtain-wall
-  ;; Curtain Wall - Strength boost when outermost ICE
+  ;; Curtain Wall - Strength boost when outermost piece of ice
   (do-game
     (new-game {:corp {:deck ["Curtain Wall" "Paper Wall"]}})
     (core/gain state :corp :credit 10)
@@ -982,7 +982,7 @@
     (let [curt (get-ice state :hq 0)]
       (rez state :corp curt)
       (is (= 10 (get-strength (refresh curt)))
-          "Curtain Wall has +4 strength as outermost ICE")
+          "Curtain Wall has +4 strength as outermost piece of ice")
       (play-from-hand state :corp "Paper Wall" "HQ")
       (let [paper (get-ice state :hq 1)]
         (rez state :corp paper)
@@ -1510,7 +1510,7 @@
         (is (not (:run @state)) "Run is ended")))))
 
 (deftest fenris
-  ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
+  ;; Fenris - Illicit ice give Corp 1 bad publicity when rezzed
   (do-game
     (new-game {:corp {:deck ["Fenris"]}})
     (play-from-hand state :corp "Fenris" "HQ")
@@ -1569,7 +1569,7 @@
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
-        (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
+        (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
         (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
         (card-subroutine state :corp (get-ice state :hq 0) 0)
         (click-prompt state :runner "2 net damage") ; take 2 net
@@ -2300,7 +2300,7 @@
 
 (deftest inazuma
   ;; Inazuma
-  (testing "Cannot jack out after encounter of next ICE"
+  (testing "Cannot jack out after encounter of next piece of ice"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
@@ -2324,7 +2324,7 @@
         (fire-subs state cl)
         (run-continue state)
         (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out"))))
- (testing "Cannot break subroutines of next ICE"
+ (testing "Cannot break subroutines of next piece of ice"
    (do-game
      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                        :hand ["Inazuma" "Ice Wall" "Cortex Lock"]
@@ -2349,13 +2349,13 @@
        (run-continue state)
        (rez state :corp cortex-lock)
        (run-continue state)
-       ;; Inazuma subs prevented break on next ICE
+       ;; Inazuma subs prevented break on next piece of ice
        (card-ability state :runner bukhgalter "Break 1 Sentry subroutine")
        (is (empty? (:prompt (get-runner))) "Bukhgalter can't break so no prompt")
        (changes-val-macro -2 (count (:hand (get-runner)))
                           "2 net damage from Cortex Lock"
                           (fire-subs state (refresh cortex-lock)))
-       ;; Next ICE is fine to break again
+       ;; Next piece of ice is fine to break again
        (run-continue state)
        (rez state :corp ice-wall)
        (run-continue state)
@@ -3192,7 +3192,7 @@
         (click-prompt state :runner "End the run")
         (is (not (:run @state)) "Run is ended")
         (is (empty? (:scored (get-runner))) "Not in runner score area")
-        (is (= 1 (count (get-ice state :hq))) "ICE still installed"))))
+        (is (= 1 (count (get-ice state :hq))) "ice still installed"))))
   (testing "Score as -1 point agenda"
     (do-game
       (new-game {:corp {:deck ["Meridian"]}})
@@ -3207,7 +3207,7 @@
         (is (:run @state) "Run is still live")
         (is (= 1 (count (:scored (get-runner)))) "In runner score area")
         (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
-        (is (empty? (get-ice state :hq)) "ICE uninstalled")))))
+        (is (empty? (get-ice state :hq)) "ice uninstalled")))))
 
 (deftest meru-mati
   (do-game
@@ -3234,8 +3234,8 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (fire-subs state (get-ice state :archives 0))
-      (is (= ["Swap two ICE"] (prompt-buttons :corp)) "Only ice option")
-      (click-prompt state :corp "Swap two ICE")
+      (is (= ["Swap two pieces of ice"] (prompt-buttons :corp)) "Only ice option")
+      (click-prompt state :corp "Swap two pieces of ice")
       (click-card state :corp "Ice Wall")
       (click-card state :corp "Vanilla")
       (is (= "Vanilla" (:title (get-ice state :hq 0))))
@@ -3253,8 +3253,8 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (fire-subs state (get-ice state :archives 0))
-      (is (= ["Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option")
-      (click-prompt state :corp "Swap two non-ICE")
+      (is (= ["Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option")
+      (click-prompt state :corp "Swap two non-ice")
       (click-card state :corp "Allele Repression")
       (click-card state :corp "Hostile Takeover")
       (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
@@ -3277,7 +3277,7 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (fire-subs state (get-ice state :archives 0))
-      (is (= ["Swap two ICE" "Swap two non-ICE"] (prompt-buttons :corp)) "Only non-ice option"))))
+      (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option"))))
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
@@ -3385,7 +3385,7 @@
       (is (last-log-contains? state "Runner encounters Ice Wall")))))
 
 (deftest minelayer
-  ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
+  ;; Minelayer - Install a piece of ice in outermost position of Minelayer's server at no cost
   (do-game
     (new-game {:corp {:deck ["Minelayer" "Fire Wall"]}})
     (play-from-hand state :corp "Minelayer" "HQ")
@@ -3396,8 +3396,8 @@
     (run-continue state)
     (card-subroutine state :corp (get-ice state :hq 0) 0)
     (click-card state :corp (find-card "Fire Wall" (:hand (get-corp))))
-    (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
-    (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second ICE")))
+    (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
+    (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second piece of ice")))
 
 (deftest miraju
   ;; Miraju
@@ -4400,11 +4400,11 @@
       (rez state :corp sab)
       (is (= 3 (get-strength (refresh sab))) "Seidr gained 1 strength for itself")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
+      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ice")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
+      (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ice")
       (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
-      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
+      (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ice"))))
 
 (deftest self-adapting-code-wall
   ;; Self-Adapting Code Wall
@@ -4828,9 +4828,9 @@
       (rez state :corp surv)
       (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength for itself")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE")
+      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ice")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 6 (get-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
+      (is (= 6 (get-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ice")
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -4849,7 +4849,7 @@
       (click-prompt state :runner "6")
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
-      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
+      (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ice"))))
 
 (deftest susanoo-no-mikoto
   ;;Susanoo-no-Mikoto

@@ -608,7 +608,7 @@
                                  (map #(:card (first %)))
                                  (filter ice?)
                                  empty?)))
-             :msg "ignore the install cost of the first ICE this turn"}]})
+             :msg "ignore the install cost of the first piece of ice this turn"}]})
 
 (defcard "Efficiency Committee"
   {:on-score {:silent (req true)
@@ -974,7 +974,7 @@
                       (toast state :corp "Cannot score cards this turn due to Luminal Transubstantiation." "warning")))))}})
 
 (defcard "Mandatory Seed Replacement"
-  (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
+  (letfn [(msr [] {:prompt "Select two pieces of ice to swap positions"
                    :choices {:card #(and (installed? %)
                                          (ice? %))
                              :max 2}
@@ -987,10 +987,10 @@
                                                        " and "
                                                        (card-str state (second targets))))
                                       (continue-ability state side (msr) card nil))
-                                  (do (system-msg state :corp (str "has finished rearranging ICE"))
+                                  (do (system-msg state :corp (str "has finished rearranging ice"))
                                       (effect-completed state side eid))))})]
     {:on-score {:async true
-                :msg "rearrange any number of ICE"
+                :msg "rearrange any number of ice"
                 :effect (effect (continue-ability (msr) card nil))}}))
 
 (defcard "Mandatory Upgrades"
@@ -1257,13 +1257,13 @@
                               (when-let [ice (get-card state i)]
                                 (remove-sub! state side ice #(= cid (:from-cid %))))))
                           (update! state side (dissoc-in card [:special :kusanagi])))}]
-   :abilities [{:label "Give a piece of ICE \"[Subroutine] Do 1 net damage\""
-                :prompt "Choose a piece of ICE"
+   :abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
+                :prompt "Choose a piece of ice"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
                 :cost [:agenda 1]
                 :keep-open :while-agenda-tokens-left
-                :msg (str "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" "
+                :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
                 :effect  (effect (add-extra-sub! (get-card state target)
                                                  (do-net-damage 1)
@@ -1322,7 +1322,7 @@
                                (= :approach-ice (:phase run))))
                 :cost [:agenda 1]
                 :keep-open :while-agenda-tokens-left
-                :msg (str "make the approached piece of Bioroid ICE gain \"[Subroutine] End the run\""
+                :msg (str "make the approached piece of Bioroid ice gain \"[Subroutine] End the run\""
                           "after all its other subroutines for the remainder of this run")
                 :effect  (effect (add-extra-sub! (get-card state current-ice)
                                                  {:label "End the run"
@@ -1695,7 +1695,7 @@
                                    (or (faceup? target)
                                        (not (facedown? target))))
                             (:title target)
-                            "ICE")
+                            "ice")
                           " from " (zone->name (get-zone target)))
                 :async true
                 :effect (effect
@@ -1762,9 +1762,9 @@
 
 (defcard "Unorthodox Predictions"
   {:implementation "Prevention of subroutine breaking is not enforced"
-   :on-score {:prompt "Choose an ICE type for Unorthodox Predictions"
+   :on-score {:prompt "Choose an ice type for Unorthodox Predictions"
               :choices ["Barrier" "Code Gate" "Sentry"]
-              :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}})
+              :msg (msg "prevent subroutines on " target " ice from being broken until next turn.")}})
 
 (defcard "Utopia Fragment"
   {:events [{:event :pre-steal-cost
