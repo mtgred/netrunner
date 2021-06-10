@@ -139,13 +139,15 @@
              state player nil (str "Prevent any of the " (- n already-prevented) " " (name type) " damage?") ["Done"]
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
                            damage-prevented (if prevent (- prevent already-prevented) false)]
-                       (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
                        (system-msg state player
                                    (if damage-prevented (str "prevents "
                                                              (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
                                                              " " (name type) " damage") "will not prevent damage"))
                        (clear-wait-prompt state other-player)
-                       (effect-completed state side eid)))))
+                       (if damage-prevented
+                           (wait-for (trigger-event-simult state side (make-eid state eid) :prevented-damage type prevent)
+                                     (effect-completed state side eid))
+                           (effect-completed state side eid))))))
        (effect-completed state side eid)))))
 
 (defn damage
