@@ -44,7 +44,7 @@
 (defn build-stats-kw
   "Take a stats prefix and add a side to it"
   [prefix side]
-  (keyword (apply str prefix (lower-case side))))
+  (keyword (apply str prefix (lower-case (or side "Corp")))))
 
 (defn inc-deck-stats
   "Update deck stats for a given counter"
@@ -112,9 +112,11 @@
   (let [start-players (get-in @all-games [gameid :original-players])
         end-players (get-in @all-games [gameid :ending-players])]
     (doseq [p start-players]
-      (inc-game-stats db (get-in p [:user :_id]) (game-record-start p)))
+      (when (:side p)
+        (inc-game-stats db (get-in p [:user :_id]) (game-record-start p))))
     (doseq [p end-players]
-      (inc-game-stats db (get-in p [:user :_id]) (game-record-end all-games gameid p)))))
+      (when (:side p)
+        (inc-game-stats db (get-in p [:user :_id]) (game-record-end all-games gameid p))))))
 
 (defn push-stats-update
   "Gather updated deck and user stats and send via web socket to clients"
