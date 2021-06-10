@@ -112,11 +112,13 @@
   (let [start-players (get-in @all-games [gameid :original-players])
         end-players (get-in @all-games [gameid :ending-players])]
     (doseq [p start-players]
-      (when (:side p)
-        (inc-game-stats db (get-in p [:user :_id]) (game-record-start p))))
+      (if (:side p)
+        (inc-game-stats db (get-in p [:user :_id]) (game-record-start p))
+        (println "NULL start player side in stats for gameid" gameid)))
     (doseq [p end-players]
-      (when (:side p)
-        (inc-game-stats db (get-in p [:user :_id]) (game-record-end all-games gameid p))))))
+      (if (:side p)
+        (inc-game-stats db (get-in p [:user :_id]) (game-record-end all-games gameid p))
+        (println "NULL end player side in stats for gameid" gameid)))))
 
 (defn push-stats-update
   "Gather updated deck and user stats and send via web socket to clients"
