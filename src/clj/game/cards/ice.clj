@@ -760,7 +760,9 @@
                                          (when (:run @state)
                                            (swap! state update-in [:run :position] inc)
                                            (set-current-ice state))
-                                         (effect-completed state side eid)))}
+                                         (effect-completed state side eid)))
+                  :cancel-effect (req (system-msg state :corp "chooses not to install a card with Brân 1.0")
+                                      (effect-completed state side eid))}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
