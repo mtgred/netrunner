@@ -350,7 +350,7 @@
                                          (protecting-same-server? card target)))}
                 :msg (msg "add " (cost-value eid :x-credits)
                           " strength to " (:title target))
-                :effect (effect (pump-ice target (cost-value eid :x-credits) :end-of-turn))}]})
+                :effect (effect (pump-ice eid target (cost-value eid :x-credits) :end-of-turn))}]})
 
 (defcard "Crisium Grid"
   {:constant-effects [{:type :block-successful-run
@@ -363,11 +363,13 @@
             {:waiting-prompt "Corp to use Cyberdex Virus Suite"
              :prompt "Purge virus counters with Cyberdex Virus Suite?"
              :yes-ability {:msg (msg "purge virus counters")
-                           :effect (effect (purge))}}}
+                           :async true
+                           :effect (effect (purge eid))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
                 :cost [:trash]
-                :effect (effect (purge))}]})
+                :async true
+                :effect (effect (purge eid))}]})
 
 (defcard "Daruma"
   (let [choose-swap
@@ -844,10 +846,9 @@
                :msg (msg "reveal " (:title target) " and add it to HQ")
                :async true
                :effect (req (wait-for
-                              (reveal state side target)
-                              (shuffle! state side :deck)
+                              (reveal state side (make-eid state eid) target)
                               (move state side target :hand)
-                              (effect-completed state side eid)))}}}]})
+                              (shuffle! state side eid :deck)))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server

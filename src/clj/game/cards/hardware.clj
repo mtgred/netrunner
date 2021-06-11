@@ -190,8 +190,9 @@
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                        :async true
                                         :effect (effect (move card :deck)
-                                                        (shuffle! :deck))}}}]))}}))
+                                                        (shuffle! eid :deck))}}}]))}}))
                           card nil))))]})
 
 (defcard "Box-E"
@@ -402,7 +403,8 @@
    :abilities [{:cost [:credit 2]
                 :label "add 4 strength for the remainder of the run"
                 :req (req run)
-                :effect (effect (pump (get-card state (:host card)) 4))
+                :async true
+                :effect (effect (pump eid (get-card state (:host card)) 4))
                 :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]})
 
 (defcard "Deep Red"
@@ -753,12 +755,13 @@
   (letfn [(shuffle-end [remove-from-game shuffle-back]
             {:msg (msg "shuffle " (string/join ", " (map :title shuffle-back)) " into the stack"
                        " and remove " (string/join ", " (map :title remove-from-game)) " from the game")
+             :async true
              :effect (req
                        (doseq [c remove-from-game]
                          (move state side c :rfg))
                        (doseq [c shuffle-back]
                          (move state side c :deck))
-                       (shuffle! state side :deck))})
+                       (shuffle! state side eid :deck))})
           (shuffle-next [set-aside target to-shuffle]
             (let [set-aside (remove-once #(= % target) set-aside)
                   to-shuffle (if target
@@ -997,7 +1000,8 @@
   {:events [{:event :runner-install
              :silent (req true)
              :req (req (has-subtype? (:card context) "Icebreaker"))
-             :effect (effect (pump (:card context) 1 :end-of-turn))}]})
+             :async true
+             :effect (effect (pump eid (:card context) 1 :end-of-turn))}]})
 
 (defcard "Lockpick"
   {:recurring 1
@@ -1014,9 +1018,10 @@
              :prompt "Choose a card"
              :msg "add 1 card to their Grip from their Stack"
              :choices (req (cancellable (:deck runner)))
-             :effect (effect (trigger-event :searched-stack nil)
-                             (shuffle! :deck)
-                             (move target :hand))}]})
+             :async true
+             :effect (req (wait-for (trigger-event-simult state side eid :searched-stack nil nil)
+                            (move target :hand)
+                            (shuffle! state side eid :deck)))}]})
 
 (defcard "Lucky Charm"
   {:interactions {:prevent [{:type #{:end-run}
@@ -1216,7 +1221,8 @@
              :choices {:card #(and (installed? %)
                                    (has-subtype? % "Icebreaker"))}
              :msg (msg "give " (:title target) " +1 strength")
-             :effect (effect (pump target 1 :end-of-run))}]})
+             :async true
+             :effect (effect (pump eid target 1 :end-of-run))}]})
 
 (defcard "NetChip"
   {:abilities [{:async true
@@ -1538,11 +1544,11 @@
      :prompt "Install another Rabbit Hole?"
      :msg "install another Rabbit Hole"
      :yes-ability {:async true
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state :runner :deck)
-                                (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
-                                                   (:deck runner))]
-                                  (runner-install state side eid c nil)))}}}})
+                   :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                  (wait-for (shuffle! state :runner (make-eid state eid) :deck)
+                                    (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                                       (:deck runner))]
+                                      (runner-install state side eid c nil)))))}}}})
 
 (defcard "Ramujan-reliant 550 BMI"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1610,9 +1616,10 @@
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
                 {:msg (msg "add a copy of " (:title (:card context)) " to their Grip")
-                 :effect (effect (trigger-event :searched-stack nil)
-                           (shuffle! :deck)
-                           (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))
+                 :async true
+                 :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                (move state side (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand)
+                                (shuffle! state side eid :deck)))}}}]}))
 
 (defcard "Respirocytes"
   (let [ability {:once :per-turn
@@ -1688,7 +1695,8 @@
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
                 :cost [:trash]
-                :effect (effect (pump target (get-link state) :end-of-run))}
+                :async true
+                :effect (effect (pump eid target (get-link state) :end-of-run))}
                {:label "Add [Link] strength to any Cloud icebreakers until the end of the run"
                 :msg (msg "add " (get-link state)
                           " strength to " (count targets)
@@ -1700,9 +1708,10 @@
                                       (has-subtype? % "Cloud")
                                       (installed? %))}
                 :cost [:trash]
-                :effect (req (doseq [t targets]
-                               (pump state side t (get-link state) :end-of-run)
-                               (update-breaker-strength state side t)))}]})
+                :effect (req (effect-seq state side eid [t targets]
+                               (wait-for (pump state side (make-eid state eid) t (get-link state) :end-of-run)
+                                         (update-breaker-strength state side t)
+                                         (effect-completed state side eid))))}]})
 
 (defcard "Security Nexus"
   {:constant-effects [(mu+ 1)

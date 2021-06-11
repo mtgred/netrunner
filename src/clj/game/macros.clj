@@ -91,12 +91,17 @@
 (defmacro msg [& expr]
   `(req (str ~@expr)))
 
+(defmacro effect-seq
+  [state side eid [bind seqs] & expr]
+    `(game.core.eid/effect-sequence ~state ~side ~eid ~seqs ~(concat ['fn ['state 'side 'eid bind]] expr)))
 
 (defmacro wait-for
   ([action & expr]
    (let [awaited-fn `(fn [eid#]
                        (let [~'async-result (:result eid#)]
                          ~@expr))
+         ;work nicely when waiting for a macro
+         action (macroexpand action)
          ;; this creates a five-argument function to be resolved later,
          ;; without overriding any local variables name state, card, etc.
          totake (if (#{'apply 'handler 'payable?} (first action)) 4 3)
@@ -107,6 +112,7 @@
         (if ~'use-eid#
           ~(concat (take totake action) (list 'new-eid#) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid#) (drop totake action)))))))
+
 
 (defmacro continue-ability
   [state side ability card targets]

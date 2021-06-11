@@ -4175,7 +4175,7 @@
         (is (= 1 (:agenda-point (get-corp))))
         (is (zero? (:agenda-point (get-runner))))
         (take-credits state :runner)
-        (core/purge state :corp)
+        (core/do-purge state :corp nil)
         (is (= 1 (:agenda-point (get-corp))))
         (is (= 1 (:agenda-point (get-runner)))))))
   (testing "Forfeiting agenda with Political Graffiti does not refund double points. Issue #2765"

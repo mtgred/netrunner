@@ -2,7 +2,6 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.effects :refer [register-floating-effect]]
-    [game.core.engine :refer [trigger-event]]
     [game.core.gaining :refer [base-mod-size deduct gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]

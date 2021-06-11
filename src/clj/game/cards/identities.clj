@@ -253,11 +253,12 @@
                                        :all true
                                        :card #(and (runner? %)
                                                    (in-play-area? %))}
+                             :async true
                              :effect (req (doseq [c targets]
                                             (host state side (get-card state card) c {:facedown true}))
                                           (doseq [c (get-in @state [:runner :play-area])]
                                             (move state side c :deck))
-                                          (shuffle! state side :deck))}
+                                          (shuffle! state side eid :deck))}
                             card nil))}]})
 
 (defcard "Az McCaffrey: Mechanical Prodigy"
@@ -786,9 +787,8 @@
                                      (damage state side eid :net 2 {:card card}))
                                  "The Tank"
                                  (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
-                                     (shuffle-into-deck state side :discard)
                                      (update! state side (assoc card :code "tank" :face :tank))
-                                     (effect-completed state side eid))
+                                     (shuffle-into-deck state side eid :discard))
                                  "The Greenhouse"
                                  (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
                                                                  "on a card that can be advanced"))
@@ -855,20 +855,20 @@
                                         (:deck runner))))
                 :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
                 :async true
-                :effect (effect (trigger-event :searched-stack nil)
-                                (shuffle! :deck)
-                                (register-events
-                                  card
-                                  [{:event :runner-turn-ends
-                                    :interactive (req true)
-                                    :duration :end-of-turn
-                                    :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
-                                    :msg (msg "remove " (:title target) " from the game")
-                                    :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
-                                                   (move state side program :rfg)))}])
-                                (runner-install (assoc eid :source card :source-type :runner-install)
-                                                (assoc-in target [:special :kabonesa] true)
-                                                {:cost-bonus -1}))}]})
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                               (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                 (register-events state side
+                                   card
+                                   [{:event :runner-turn-ends
+                                     :interactive (req true)
+                                     :duration :end-of-turn
+                                     :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
+                                     :msg (msg "remove " (:title target) " from the game")
+                                     :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
+                                                    (move state side program :rfg)))}])
+                                 (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                 (assoc-in target [:special :kabonesa] true)
+                                                 {:cost-bonus -1}))))}]})
 
 (defcard "Kate \"Mac\" McCaffrey: Digital Tinker"
   ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -1486,8 +1486,9 @@
              :show-discard true
              :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
                        " into R&D")
+             :async true
              :effect (effect (move :corp target :deck)
-                             (shuffle! :corp :deck))}]})
+                             (shuffle! :corp eid :deck))}]})
 
 (defcard "Sunny Lebeau: Security Specialist"
   ;; No special implementation
@@ -1572,13 +1573,14 @@
               :req (req (and (ice? (:card context))
                              (first-event? state :runner :rez #(ice? (:card (first %))))))
               :yes-ability
-              {:effect (req (if-let [found-card (some #(when (= (:title %) (:title (:card context))) %) (concat (:deck corp) (:play-area corp)))]
+              {:async true
+               :effect (req (if-let [found-card (some #(when (= (:title %) (:title (:card context))) %) (concat (:deck corp) (:play-area corp)))]
                               (do (move state side found-card :hand)
                                   (system-msg state side (str "uses The Foundry to add a copy of "
                                                               (:title found-card) " to HQ, and shuffles their deck"))
-                                  (shuffle! state side :deck))
+                                  (shuffle! state side eid :deck))
                               (do (system-msg state side (str "fails to find a target for The Foundry, and shuffles their deck"))
-                                  (shuffle! state side :deck))))}}}]})
+                                  (shuffle! state side eid :deck))))}}}]})
 
 (defcard "The Masque: Cyber General"
   {:events [{:event :pre-start-game
@@ -1664,9 +1666,9 @@
                             (pos? (count (:discard runner)))
                             (not (zone-locked? state :runner :discard))))
              :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
+             :async true
              :effect (effect (move :runner (last (:discard runner)) :deck)
-                             (shuffle! :runner :deck)
-                             (trigger-event :searched-stack nil))}]})
+                             (shuffle! :runner eid :deck))}]})
 
 (defcard "Zahya Sadeghi: Versatile Smuggler"
   {:events [{:event :run-ends

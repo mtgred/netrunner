@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.effects :refer [register-floating-effect]]
-    [game.core.engine :refer [resolve-ability trigger-event]]
+    [game.core.engine :refer [resolve-ability trigger-event-simult]]
     [game.core.flags :refer [is-scored?]]
     [game.core.hosting :refer [host]]
     [game.core.identities :refer [disable-identity]]
@@ -40,7 +40,7 @@
   (set-prop state side target :advance-counter value)
   (system-msg state side (str "sets advancement counters to " value " on "
                               (card-str state target)))
-  (trigger-event state side :advancement-placed target))
+  (wait-for (trigger-event-simult state side (make-eid state) :advancement-placed nil target)))
 
 (defn command-adv-counter [state side value]
   (let [value (constrain-value value 0 1000)]

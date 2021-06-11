@@ -27,9 +27,10 @@
   {:abilities [{:cost [:click 1]
                 :msg "shuffle 15 Minutes into R&D"
                 :label "Shuffle 15 Minutes into R&D"
-                :effect (effect (move :corp card :deck nil)
-                                (shuffle! :corp :deck)
-                                (update-all-agenda-points))}]
+                :async true
+                :effect (req (move state :corp card :deck nil)
+                             (wait-for (shuffle! state :corp (make-eid state eid) :deck)
+                                       (update-all-agenda-points state side)))}]
    :flags {:has-abilities-when-stolen true}})
 
 (defcard "Above the Law"
@@ -432,15 +433,16 @@
                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                              (corp-install-list state chosen-ice))
-                            :effect (effect (shuffle! :deck)
-                                            (corp-install eid chosen-ice target
-                                                          {:ignore-all-cost true
-                                                           :install-state :rezzed-no-rez-cost}))})
+                            :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                   (corp-install eid chosen-ice target
+                                                                 {:ignore-all-cost true
+                                                                  :install-state :rezzed-no-rez-cost})))})
                          card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
                      :prompt-type :bogus
-                     :effect (effect (shuffle! :deck))})
+                     :async true
+                     :effect (effect (shuffle! eid :deck))})
                   card nil))}}}})
 
 (defcard "Corporate Oversight B"
@@ -464,15 +466,16 @@
                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
                                              (corp-install-list state chosen-ice))
-                            :effect (effect (shuffle! :deck)
-                                            (corp-install eid chosen-ice target
-                                                          {:ignore-all-cost true
-                                                           :install-state :rezzed-no-rez-cost}))})
+                            :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                   (corp-install eid chosen-ice target
+                                                                 {:ignore-all-cost true
+                                                                  :install-state :rezzed-no-rez-cost})))})
                          card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
                      :prompt-type :bogus
-                     :effect (effect (shuffle! :deck))})
+                     :async true
+                     :effect (effect (shuffle! eid :deck))})
                   card nil))}}}})
 
 (defcard "Corporate Sales Team"
@@ -509,7 +512,8 @@
   {:on-score {:optional
               {:prompt "Purge virus counters with Cyberdex Sandbox?"
                :yes-ability {:msg (msg "purge virus counters")
-                             :effect (effect (purge))}}}
+                             :async true
+                             :effect (effect (purge eid))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
              :once :per-turn
@@ -643,8 +647,9 @@
                 :effect (effect (gain-credits eid (count-tags state)))}]})
 
 (defcard "Executive Retreat"
-  {:on-score {:effect (effect (add-counter card :agenda 1)
-                              (shuffle-into-deck :hand))
+  {:on-score {:async true
+              :effect (effect (add-counter card :agenda 1)
+                              (shuffle-into-deck eid :hand))
               :interactive (req true)}
    :abilities [{:cost [:click 1 :agenda 1]
                 :msg "draw 5 cards"
@@ -786,15 +791,14 @@
                       :async true
                       :choices (req (cancellable (:deck corp) :sorted))
                       :msg (msg "add " (:title target) " to HQ from R&D")
-                      :cancel-effect (req (shuffle! state side :deck)
-                                          (system-msg state side (str "shuffles R&D"))
-                                          (effect-completed state side eid))
+                      :cancel-effect {:async true
+                                      :effect (req (system-msg state side (str "shuffles R&D"))
+                                                   (shuffle! state side eid :deck))}
                       :effect (req (move state side target :hand)
                                    (if (< n 3)
                                      (continue-ability state side (graft (inc n)) card nil)
-                                     (do (shuffle! state side :deck)
-                                         (system-msg state side (str "shuffles R&D"))
-                                         (effect-completed state side eid))))})]
+                                     (do (system-msg state side (str "shuffles R&D"))
+                                         (shuffle! state side eid :deck))))})]
     {:on-score
      {:async true
       :msg "add up to 3 cards from R&D to HQ"
@@ -1236,8 +1240,9 @@
                 :msg (msg "add " (:title target) " to HQ from R&D")
                 :choices (req (cancellable (:deck corp) :sorted))
                 :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
-                :effect (effect (shuffle! :deck)
-                                (move target :hand))}]})
+                :async true
+                :effect (effect (move target :hand)
+                                (shuffle! eid :deck))}]})
 
 (defcard "Project Beale"
   {:agendapoints-runner (req 2)
@@ -1251,12 +1256,16 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 2)))}
    :events [{:event :run-ends
+             :async true
              :effect (req (let [cid (:cid card)
                                 ices (get-in card [:special :kusanagi])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :kusanagi])))}]
+                            (update! state side (dissoc-in card [:special :kusanagi]))
+                            (effect-seq state side eid
+                                        [i ices]
+                                        (let [ice (get-card state i)]
+                                          (if ice
+                                              (remove-sub! state side eid ice #(= cid (:from-cid %)))
+                                              (effect-completed state side eid))))))}]
    :abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
                 :prompt "Choose a piece of ice"
                 :choices {:card #(and (ice? %)
@@ -1265,10 +1274,11 @@
                 :keep-open :while-agenda-tokens-left
                 :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
-                :effect  (effect (add-extra-sub! (get-card state target)
-                                                 (do-net-damage 1)
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :kusanagi] #(conj % target))))}]})
+                :async true
+                :effect  (req (update! state side (update-in card [:special :kusanagi] #(conj % target)))
+                              (add-extra-sub! state side eid (get-card state target)
+                                              (do-net-damage 1)
+                                              (:cid card) {:back true}))}]})
 
 (defcard "Project Vacheron"
   (let [vacheron-ability
@@ -1310,12 +1320,15 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
    :events [{:event :run-ends
+             :async true
              :effect (req (let [cid (:cid card)
                                 ices (get-in card [:special :wotan])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :wotan])))}]
+                            (update! state side (dissoc-in card [:special :wotan]))
+                            (effect-seq state side eid [i ices]
+                                        (let [ice (get-card state i)]
+                                          (if ice
+                                              (remove-sub! state side eid ice #(= cid (:from-cid %)))
+                                              (effect-completed state side eid))))))}]
    :abilities [{:req (req (and current-ice
                                (rezzed? current-ice)
                                (has-subtype? current-ice "Bioroid")
@@ -1324,13 +1337,14 @@
                 :keep-open :while-agenda-tokens-left
                 :msg (str "make the approached piece of Bioroid ice gain \"[Subroutine] End the run\""
                           "after all its other subroutines for the remainder of this run")
-                :effect  (effect (add-extra-sub! (get-card state current-ice)
-                                                 {:label "End the run"
-                                                  :msg "end the run"
-                                                  :async true
-                                                  :effect (effect (end-run eid card))}
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :wotan] #(conj % current-ice))))}]})
+                :async true
+                :effect  (req (update! state side (update-in card [:special :wotan] #(conj % current-ice)))
+                              (add-extra-sub! state side eid (get-card state current-ice)
+                                              {:label "End the run"
+                                               :msg "end the run"
+                                               :async true
+                                               :effect (effect (end-run eid card))}
+                                              (:cid card) {:back true}))}]})
 
 (defcard "Project Yagi-Uda"
   (letfn [(put-back-counter [state side card]
@@ -1465,14 +1479,15 @@
                                     :prompt (str "Select a server to install " (:title chosen-ice) " on")
                                     :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                                      (corp-install-list state chosen-ice))
-                                    :effect (effect (shuffle! :deck)
-                                                    (corp-install eid chosen-ice target
-                                                                  {:install-state :rezzed-no-rez-cost}))})
+                                    :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                           (corp-install state side eid chosen-ice target
+                                                                         {:install-state :rezzed-no-rez-cost})))})
                                  card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
                      :prompt-type :bogus
-                     :effect (effect (shuffle! :deck))})
+                     :async true
+                     :effect (effect (shuffle! eid :deck))})
                   card nil))}}}})
 
 (defcard "Research Grant"
@@ -1666,8 +1681,9 @@
               :choices (req (:deck corp))
               :msg (msg "add a card from R&D to HQ and shuffle R&D")
               :req (req (pos? (count (:deck corp))))
-              :effect (effect (shuffle! :deck)
-                              (move target :hand))}})
+              :async true
+              :effect (effect (move target :hand)
+                              (shuffle! eid :deck))}})
 
 (defcard "The Future Perfect"
   {:flags {:rd-reveal (req true)}

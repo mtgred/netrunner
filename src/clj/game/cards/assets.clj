@@ -100,18 +100,20 @@
                              :msg (msg "shuffle "
                                        (quantify (- (count (:hand corp)) (quot target 2)) "card")
                                        " in HQ into R&D")
+                             :async true
                              :effect (req (if (pos? (quot target 2))
                                             (let [prevented (quot target 2)
                                                   unprevented (- (count (:hand corp)) prevented)]
                                               (doseq [c (take unprevented (shuffle (:hand corp)))]
                                                 (move state :corp c :deck))
-                                              (when (pos? unprevented)
-                                                (shuffle! state :corp :deck))
                                               (system-msg state :runner
                                                           (str "pays " target " [Credits] to prevent "
                                                                (quantify prevented "random card")
-                                                               " in HQ from being shuffled into R&D")))
-                                            (shuffle-into-deck state :corp :hand)))}
+                                                               " in HQ from being shuffled into R&D"))
+                                              (if (pos? unprevented)
+                                                (shuffle! state :corp eid :deck)
+                                                (effect-completed state side eid)))
+                                            (shuffle-into-deck state :corp eid :hand)))}
                             card nil))}]})
 
 (defcard "Alix T4LB07"
@@ -654,8 +656,7 @@
                                (wait-for
                                  (gain-credits state :corp (get-agenda-points target))
                                  (move state :corp target :deck)
-                                 (shuffle! state :corp :deck)
-                                 (effect-completed state side eid))))}]})
+                                 (shuffle! state :corp eid :deck))))}]})
 
 (defcard "Early Premiere"
   {:derezzed-events [corp-rez-toast]
@@ -759,9 +760,8 @@
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
-                               (shuffle! state side :deck)
                                (move state side target :hand)
-                               (effect-completed state side eid)))}]})
+                               (shuffle! state side eid :deck)))}]})
 
 (defcard "Executive Search Firm"
   {:abilities [{:prompt "Choose an Executive, Sysop, or Character to add to HQ"
@@ -775,8 +775,9 @@
                 :cost [:click 1]
                 :keep-open :while-clicks-left
                 :label "Search R&D for an Executive, Sysop, or Character"
+                :async true
                 :effect (effect (move target :hand)
-                                (shuffle! :deck))}]})
+                                (shuffle! eid :deck))}]})
 
 (defcard "Exposé"
   {:advanceable :always
@@ -1108,8 +1109,9 @@
                 :label "Search R&D for a piece of ice"
                 :cost [:click 1 :credit 1]
                 :keep-open :while-clicks-left
+                :async true
                 :effect (effect (move target :hand)
-                                (shuffle! :deck))}]})
+                                (shuffle! eid :deck))}]})
 
 (defcard "Lily Lockwell"
   {:on-rez {:async true
@@ -1124,13 +1126,11 @@
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")
-                               (do (shuffle! state :corp :deck)
-                                   (effect-completed state side eid))
-                               (wait-for
-                                 (reveal state side target)
-                                 (shuffle! state :corp :deck)
-                                 (move state :corp target :deck {:front true})
-                                 (effect-completed state side eid))))}]})
+                               (shuffle! state :corp eid :deck)
+                               (wait-for (shuffle! state :corp (make-eid state eid) :deck)
+                                 (wait-for (reveal state side (make-eid state eid) target)
+                                   (move state :corp target :deck {:front true})
+                                   (effect-completed state side eid)))))}]})
 
 (defcard "Long-Term Investment"
   {:derezzed-events [corp-rez-toast]
@@ -1195,8 +1195,9 @@
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
                  :yes-ability {:msg "shuffle it back into R&D"
+                               :async true
                                :effect (effect (move :corp card :deck)
-                                               (shuffle! :corp :deck))}}}}))
+                                               (shuffle! :corp eid :deck))}}}}))
 
 (defcard "Mark Yale"
   {:events [{:event :agenda-counter-spent
@@ -1283,12 +1284,11 @@
                           (if (= (:type target) "Operation") "play" "install")
                           " it")
                 :async true
-                :effect (req (wait-for
-                               (reveal state side target)
-                               (shuffle! state side :deck)
-                               (if (operation? target)
-                                 (play-instant state side eid target nil)
-                                 (corp-install state side eid target nil nil))))}]})
+                :effect (req (wait-for (reveal state side (make-eid state eid) target)
+                               (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                 (if (operation? target)
+                                   (play-instant state side eid target nil)
+                                   (corp-install state side eid target nil nil)))))}]})
 
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
@@ -1331,9 +1331,10 @@
                                    (str (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
                           " into R&D")
+                :async true
                 :effect (req (doseq [c targets]
                                (move state side c :deck))
-                             (shuffle! state side :deck))}]
+                             (shuffle! state side eid :deck))}]
    :implementation "Errata from FAQ 3.1: should be unique"})
 
 (defcard "Nanoetching Matrix"
@@ -1410,9 +1411,10 @@
                                                              (runner? %))
                                                  :max cnt}
                                        :msg (msg "shuffle " (string/join ", " (map :title targets)) " into the stack")
+                                       :async true
                                        :effect (req (doseq [c targets]
                                                       (move state :runner c :deck))
-                                                    (shuffle! state :runner :deck))}
+                                                    (shuffle! state :runner eid :deck))}
                                       card nil)))}
                   "Pay 3 [Credits] to use Neurostasis ability?"))
 
@@ -1956,11 +1958,9 @@
                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
                 :cost [:trash]
                 :async true
-                :effect (req (wait-for
-                               (reveal state side target)
-                               (shuffle! state side :deck)
-                               (move state side target :deck)
-                               (effect-completed state side eid)))}
+                :effect (req (wait-for (reveal state side (make-eid state eid) target)
+                                       (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                         (move state side target :deck))))}
                {:label "Search Archives for an agenda"
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
@@ -2139,11 +2139,12 @@
                 :choices (req (filter asset? (:deck corp)))
                 :async true
                 :effect (req (wait-for
-                               (trash state side card nil)
+                               (trash state side (make-eid state eid) card nil)
                                (wait-for
-                                 (reveal state side target)
-                                 (shuffle! state side :deck)
-                                 (corp-install state side eid target nil nil))))}]})
+                                 (reveal state side (make-eid state eid) target)
+                                 (wait-for
+                                   (shuffle! state side (make-eid state eid) :deck)
+                                   (corp-install state side eid target nil nil)))))}]})
 
 (defcard "TechnoCo"
   (letfn [(is-techno-target [card]
@@ -2357,25 +2358,27 @@
                             (has-subtype? % "Bioroid")
                             (rezzed? %))
                       (all-installed state :corp)))
-            (remove-one [cid state ice]
-              (remove-extra-subs! state :corp ice cid))
-            (add-one [cid state ice]
-              (add-extra-sub! state :corp ice new-sub cid {:front true}))
-            (update-all [state func]
-              (doseq [i (all-rezzed-bios state)]
-                (func state i)))]
-      {:on-rez {:effect (req (system-msg
+            (remove-one [cid state eid ice]
+              (remove-extra-subs! state :corp eid ice cid))
+            (add-one [cid state eid ice]
+              (add-extra-sub! state :corp eid ice new-sub cid {:front true}))
+            (update-all [state eid func]
+              (effect-seq state :corp eid [i (all-rezzed-bios state)]
+                (func state eid i)))]
+      {:on-rez {:async true
+                :effect (req (system-msg
                                state :corp
                                "uses Warden Fatuma to add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines")
-                          (update-all state (partial add-one (:cid card))))}
+                          (update-all state eid (partial add-one (:cid card))))}
        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
-                     (update-all state (partial remove-one (:cid card))))
+                     (update-all state eid (partial remove-one (:cid card))))
        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
                     :effect (req (lose state :runner :click 1))}
        :events [{:event :rez
                  :req (req (and (ice? (:card context))
                                 (has-subtype? (:card context) "Bioroid")))
-                 :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
+                 :async true
+                 :effect (req (add-one (:cid card) state eid (get-card state (:card context))))}]})))
 
 (defcard "Watchdog"
   (letfn [(not-triggered? [state card]

@@ -117,7 +117,10 @@
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+             (let [f (kw args)] (if f (if (fn? f)
+                                          (assoc args kw #(do (f state side (:eid ability) card [%]) (effect-completed state side (:eid ability))))
+                                          (assoc args kw #(resolve-ability state side (:eid ability) f card [%])))
+                                      (assoc args kw (fn [_] (effect-completed state side (:eid ability)))))))]
      (let [targets (:targets args)
            ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card targets) %))
            all (get-in ability [:choices :all])

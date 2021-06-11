@@ -439,9 +439,12 @@
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
-                  (if-let [f (:cancel-effect args)]
-                    (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
-                    args)))))
+                  (let [c (:cancel-effect args)]
+                    (assoc args :cancel-effect 
+                             (if c (if (fn? c)
+                                       #(do (c state side (:eid ability) card [%]) (effect-completed state side (:eid ability)))
+                                       #(resolve-ability state side (:eid ability) c card [%]))
+                                 (fn [_] (effect-completed state side (:eid ability))))))))))
 
 ;; EVENTS
 

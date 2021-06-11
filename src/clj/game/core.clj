@@ -750,4 +750,5 @@
    msg
    req
    wait-for
+   effect-seq
    when-let*])

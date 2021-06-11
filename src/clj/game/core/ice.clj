@@ -6,12 +6,12 @@
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
-    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event-simult]]
     [game.core.flags :refer [card-flag?]]
     [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [req effect msg continue-ability wait-for]]
+    [game.macros :refer [req effect msg continue-ability wait-for effect-seq]]
     [game.utils :refer [same-card? pluralize quantify remove-once]]
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]))
@@ -68,11 +68,11 @@
      (assoc ice :subroutines new-subs))))
 
 (defn add-sub!
-  ([state side ice sub] (add-sub! state side ice sub (:cid ice) nil))
-  ([state side ice sub cid] (add-sub! state side ice sub cid nil))
-  ([state side ice sub cid args]
+  ([state side eid ice sub] (add-sub! state side eid ice sub (:cid ice) nil))
+  ([state side eid ice sub cid] (add-sub! state side eid ice sub cid nil))
+  ([state side eid ice sub cid args]
    (update! state :corp (add-sub ice sub cid args))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
+   (trigger-event-simult state side eid :subroutines-changed nil (get-card state ice))))
 
 (defn remove-sub
   "Removes a single sub from a piece of ice for pred. By default removes the first subroutine
@@ -86,10 +86,10 @@
      (assoc ice :subroutines new-subs))))
 
 (defn remove-sub!
-  ([state side ice] (remove-sub! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
+  ([state side eid ice] (remove-sub! state side eid ice #(= (:cid ice) (:from-cid %))))
+  ([state side eid ice pred]
    (update! state :corp (remove-sub ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
+   (trigger-event-simult state side eid :subroutines-changed nil (get-card state ice))))
 
 (defn remove-subs
   "Removes all subs from a piece of ice for pred. By default removes the subroutines
@@ -103,21 +103,21 @@
      (assoc ice :subroutines new-subs))))
 
 (defn remove-subs!
-  ([state side ice] (remove-subs! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
+  ([state side eid ice] (remove-subs! state side eid ice #(= (:cid ice) (:from-cid %))))
+  ([state side eid ice pred]
    (update! state :corp (remove-subs ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
+   (trigger-event-simult state side eid :subroutines-changed nil (get-card state ice))))
 
 (defn add-extra-sub!
   "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc)"
-  ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) {:back true}))
-  ([state side ice sub cid] (add-extra-sub! state side ice sub cid {:back true}))
-  ([state side ice sub cid args]
-   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)))
+  ([state side eid ice sub] (add-extra-sub! state side eid ice sub (:cid ice) {:back true}))
+  ([state side eid ice sub cid] (add-extra-sub! state side eid ice sub cid {:back true}))
+  ([state side eid ice sub cid args]
+   (add-sub! state side eid (assoc-in ice [:special :extra-subs] true) sub cid args)))
 
 (defn remove-extra-subs!
   "Remove runtime subroutines assigned from the given cid from a piece of ice."
-  [state side ice cid]
+  [state side eid ice cid]
   (let [curr-subs (:subroutines ice)
         new-subs (remove #(= cid (:from-cid %)) curr-subs)
         extra-subs (some #(= (:cid ice) (:from-cid %)) new-subs)]
@@ -125,7 +125,7 @@
              (-> ice
                  (assoc :subroutines (vec new-subs))
                  (assoc-in [:special :extra-subs] extra-subs)))
-    (trigger-event state side :subroutines-changed (get-card state ice))))
+    (trigger-event-simult state side eid :subroutines-changed nil (get-card state ice))))
 
 (defn break-subroutine
   "Marks a given subroutine as broken"
@@ -316,15 +316,16 @@
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
-  [state side ice]
+  ([state side ice] (update-ice-strength state side (make-eid state) ice))
+  ([state side eid ice]
   (let [ice (get-card state ice)
         old-strength (get-strength ice)
         new-strength (ice-strength state side ice)
         changed? (not= old-strength new-strength)]
     (when (rezzed? ice)
       (update! state side (assoc ice :current-strength new-strength))
-      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
-      changed?)))
+      (trigger-event-simult state side eid :ice-strength-changed nil (get-card state ice) old-strength)
+      changed?))))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
@@ -346,21 +347,21 @@
 
 (defn pump-ice
   "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
-  ([state side card n] (pump-ice state side card n :end-of-encounter))
-  ([state side card n duration]
+  ([state side eid card n] (pump-ice state side eid card n :end-of-encounter))
+  ([state side eid card n duration]
    (register-floating-effect
      state side card
      {:type :ice-strength
       :duration duration
       :req (req (same-card? card target))
       :value n})
-   (update-ice-strength state side (get-card state card))))
+   (update-ice-strength state side eid (get-card state card))))
 
 (defn pump-all-ice
-  ([state side n] (pump-all-ice state side n :end-of-encounter))
-  ([state side n duration]
-   (doseq [ice (filter ice? (all-active-installed state :corp))]
-     (pump-ice state side ice n duration))))
+  ([state side eid n] (pump-all-ice state side eid n :end-of-encounter))
+  ([state side eid n duration]
+   (effect-seq state side eid [ice (filter ice? (all-active-installed state :corp))]
+     (pump-ice state side eid ice n duration))))
 
 ;;; Icebreaker functions
 (defn breaker-strength
@@ -375,14 +376,15 @@
 
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
-  [state side breaker]
+  ([state side breaker] (update-breaker-strength state side (make-eid state) breaker))
+  ([state side eid breaker]
   (let [breaker (get-card state breaker)
         old-strength (get-strength breaker)
         new-strength (breaker-strength state side breaker)
         changed? (not= old-strength new-strength)]
     (update! state side (assoc (get-card state breaker) :current-strength new-strength))
-    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)
-    changed?))
+    (trigger-event-simult state side eid :breaker-strength-changed nil (get-card state breaker) old-strength)
+    changed?)))
 
 (defn update-all-icebreakers
   [state side]
@@ -395,22 +397,22 @@
 
 (defn pump
   "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
-  ([state side card n] (pump state side card n :end-of-encounter))
-  ([state side card n duration]
+  ([state side eid card n] (pump state side eid card n :end-of-encounter))
+  ([state side eid card n duration]
    (let [floating-effect (register-floating-effect
                            state side (get-card state card)
                            {:type :breaker-strength
                             :duration duration
                             :req (req (same-card? card target))
                             :value n})]
-     (update-breaker-strength state side (get-card state card))
-     (trigger-event state side :pump-breaker (get-card state card) floating-effect))))
+     (wait-for (update-breaker-strength state side (make-eid state eid) (get-card state card))
+               (trigger-event-simult state side eid :pump-breaker nil (get-card state card) floating-effect)))))
 
 (defn pump-all-icebreakers
-  ([state side n] (pump-all-icebreakers state side n :end-of-encounter))
-  ([state side n duration]
-   (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-     (pump state side icebreaker n duration))))
+  ([state side eid n] (pump-all-icebreakers state side eid n :end-of-encounter))
+  ([state side eid n duration]
+   (effect-seq state side eid [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+     (pump state side eid icebreaker n duration))))
 
 ;; Break abilities
 (defn- break-subroutines-impl
@@ -588,7 +590,8 @@
       :cost cost
       :cost-req (:cost-req args)
       :pump strength
-      :effect (effect (pump card strength duration))})))
+      :async true
+      :effect (effect (pump eid card strength duration))})))
 
 
 (def breaker-auto-pump

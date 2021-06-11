@@ -761,15 +761,15 @@
                :card (every-pred installed? (if (= :corp side) corp? runner?))}
      :async true
      :effect (req (let [cards (keep #(move state side % :deck) targets)]
-                    (shuffle! state side :deck)
-                    (complete-with-result
-                      state side eid
-                      {:msg (str "shuffles " (quantify (count cards) "card")
-                                 " (" (string/join ", " (map :title cards)) ")"
-                                 " into " (if (= :corp side) "R&D" "the stack"))
-                       :type :shuffle-installed-to-stack
-                       :value (count cards)
-                       :targets cards})))}
+                    (wait-for (shuffle! state side (make-eid state eid) :deck)
+                              (complete-with-result
+                                state side eid
+                                {:msg (str "shuffles " (quantify (count cards) "card")
+                                           " (" (string/join ", " (map :title cards)) ")"
+                                           " into " (if (= :corp side) "R&D" "the stack"))
+                                 :type :shuffle-installed-to-stack
+                                 :value (count cards)
+                                 :targets cards}))))}
     nil nil))
 
 ;; AddInstalledToBottomOfDeck

@@ -212,9 +212,10 @@
                 :req (req (not (install-locked? state side)))
                 :cost [:forfeit]
                 :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
-                :effect (effect (trigger-event :searched-stack nil)
-                                (shuffle! :deck)
-                                (runner-install eid target nil))}]})
+                :async true
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                               (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                 (runner-install state side eid target nil))))}]})
 
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"
@@ -371,8 +372,9 @@
                                          {:prompt "Choose a card in your Grip to shuffle back into your Stack"
                                           :choices {:card #(and (in-hand? %)
                                                                 (runner? %))}
+                                          :async true
                                           :effect (effect (move target :deck)
-                                                          (shuffle! :deck))}
+                                                          (shuffle! eid :deck))}
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
@@ -715,9 +717,9 @@
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
                 :cost [:click 1 :virus 3 :trash]
-                :effect (effect (trigger-event :searched-stack nil)
-                                (shuffle! :deck)
-                                (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                               (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                 (runner-install state side (assoc eid :source card :source-type :runner-install) target nil))))}
                (set-autoresolve :auto-add "adding virus counters to Crypt")]})
 
 (defcard "Cybertrooper Talut"
@@ -726,7 +728,8 @@
              :silent (req true)
              :req (req (and (has-subtype? (:card context) "Icebreaker")
                             (not (has-subtype? (:card context) "AI"))))
-             :effect (effect (pump (:card context) 2 :end-of-turn))}]})
+             :async true
+             :effect (effect (pump eid (:card context) 2 :end-of-turn))}]})
 
 (defcard "Dadiana Chacon"
   (let [trash-effect {:async true
@@ -1873,13 +1876,13 @@
                :msg "shuffle their Stack"
                :async true
                :effect (req (let [target (str->int target)]
-                              (trigger-event state side :searched-stack nil)
-                              (shuffle! state :runner :deck)
-                              (when (pos? target)
-                                (system-msg state side (str "trashes "
-                                                            (quantify target "cop" "y" "ies")
-                                                            " of " title)))
-                              (trash-cards state side eid (take target cards) {:unpreventable true})))}}})]
+                              (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                (wait-for (shuffle! state :runner (make-eid state eid) :deck)
+                                  (when (pos? target)
+                                    (system-msg state side (str "trashes "
+                                                                (quantify target "cop" "y" "ies")
+                                                                " of " title)))
+                                  (trash-cards state side eid (take target cards) {:unpreventable true})))))}}})]
     {:events [{:event :runner-install
                :interactive (req true)
                :req (req (first-event? state side :runner-install))
@@ -2233,12 +2236,12 @@
                                    ", but does not find a program to install"
                                    (str "and install " (:title target)
                                         ", lowering its cost by " (:cost (find-rfg state card)))))
-                       :effect (req (trigger-event state side :searched-stack nil)
-                                    (shuffle! state side :deck)
-                                    (if (= target "No install")
-                                      (effect-completed state side eid)
-                                      (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                      target {:cost-bonus (- (:cost (find-rfg state card)))})))}
+                       :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil)
+                                      (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                        (if (= target "No install")
+                                          (effect-completed state side eid)
+                                          (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                          target {:cost-bonus (- (:cost (find-rfg state card)))})))))}
                       card nil))}]}))
 
 (defcard "Sacrificial Clone"
@@ -2657,9 +2660,9 @@
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (string/join ", " (map :title targets))
                           " into their Stack")
+                :async true
                 :effect (req (doseq [c targets] (move state side c :deck))
-                             (shuffle! state side :deck)
-                             (effect-completed state side eid))}]})
+                             (shuffle! state side eid :deck))}]})
 
 (defcard "The Black File"
   {:on-install {:msg "prevent the Corp from winning the game unless they are flatlined"}
@@ -2713,7 +2716,8 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
                 :cost [:trash]
-                :effect (effect (pump target 2 :end-of-turn))}]})
+                :async true
+                :effect (effect (pump eid target 2 :end-of-turn))}]})
 
 (defcard "The Masque A"
   {:abilities [{:cost [:click 1, :trash]
@@ -2954,9 +2958,10 @@
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :keep-open :while-2-clicks-left
-                :effect (effect (trigger-event :searched-stack nil)
-                                (shuffle! :deck)
-                                (move target :hand))}]})
+                :async true
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil)
+                               (move state side target :hand)
+                               (shuffle! state side eid :deck)))}]})
 
 (defcard "Underworld Contact"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"

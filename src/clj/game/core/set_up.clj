@@ -6,7 +6,7 @@
     [game.core.diffs :refer [public-states]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event-sync trigger-event-simult]]
     [game.core.gaining :refer [gain]]
     [game.core.initializing :refer [card-init make-card]]
     [game.core.player :refer [new-corp new-runner]]
@@ -35,7 +35,7 @@
 (defn mulligan
   "Mulligan starting hand."
   [state side _]
-  (shuffle-into-deck state side :hand)
+  (shuffle-into-deck state side (make-eid state) :hand)
   (draw state side 5 {:suppress-event true})
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
@@ -43,24 +43,28 @@
         (mul state side (make-eid state) card nil))))
   (swap! state assoc-in [side :keep] :mulligan)
   (system-msg state side "takes a mulligan")
-  (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
     (clear-wait-prompt state :runner)
     (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
   (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
+    (clear-wait-prompt state :corp)
+    ;TODO wait for these before starting the game
+    (trigger-event-simult state :corp (make-eid state) :pre-first-turn nil)
+    (trigger-event-simult state :runner (make-eid state) :pre-first-turn nil)))
 
 (defn keep-hand
   "Choose not to mulligan."
   [state side _]
   (swap! state assoc-in [side :keep] :keep)
   (system-msg state side "keeps their hand")
-  (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
     (clear-wait-prompt state :runner)
     (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
   (when (and (= side :runner)  (-> @state :corp :identity :title))
-    (clear-wait-prompt state :corp)))
+    (clear-wait-prompt state :corp)
+    ;TODO wait for these before starting the game
+    (trigger-event-simult state :corp (make-eid state) :pre-first-turn nil)
+    (trigger-event-simult state :runner (make-eid state) :pre-first-turn nil)))
 
 (defn- init-hands [state]
   (draw state :corp 5 {:suppress-event true})

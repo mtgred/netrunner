@@ -2023,8 +2023,8 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (= 5 (:credit (get-corp))) "Diwan charged 1cr + 1cr to install a second ice protecting the named server")
-    (core/gain state :corp :click 1)
-    (core/purge state :corp)
+    (core/gain state :corp :click 2)
+    (core/do-purge state :corp nil)
     (play-from-hand state :corp "Fire Wall" "HQ") ; 2cr cost from normal install cost
     (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
     (is (= 3 (:credit (get-corp))) "No charge for installs after Diwan purged")))
@@ -3382,7 +3382,7 @@
       (is (= 5 (:credit (get-corp))) "Corp lost 1 credit")
       (click-prompt state :runner "No action")
       (take-credits state :runner)
-      (core/purge state :corp)
+      (core/do-purge state :corp nil)
       (is (empty? (get-program state)) "Lamprey trashed by purge"))))
 
 (deftest leech

@@ -134,9 +134,10 @@
                :this-card-run true
                :ability
                {:msg "shuffle all cards in the server into R&D"
+                :async true
                 :effect (req (doseq [c (:content run-server)]
                                (move state :corp c :deck))
-                             (shuffle! state :corp :deck))}})]})
+                             (shuffle! state :corp eid :deck))}})]})
 
 (defcard "Black Hat"
   {:on-play
@@ -412,10 +413,10 @@
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                         [:credit (install-cost state side % {:cost-bonus (rd-ice state)})]))
                                         (:deck runner)))
-                  :effect (req (trigger-event state side :searched-stack nil)
-                               (shuffle! state side :deck)
-                               (wait-for (runner-install state side target {:cost-bonus (rd-ice state)})
-                                         (gain-tags state side eid 1)))}})]}))
+                  :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                         (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                   (wait-for (runner-install state side (make-eid state (assoc eid :source-type :runner-install)) target {:cost-bonus (rd-ice state)})
+                                                             (gain-tags state side eid 1)))))}})]}))
 
 (defcard "Cold Read"
   {:implementation "Used programs restriction not enforced"
@@ -440,12 +441,14 @@
             {:prompt "Choose a program to install"
              :choices (req (cancellable (filter program? (get runner where))))
              :async true
-             :effect (req (when (= :deck where)
-                            (trigger-event state side :searched-stack nil)
-                            (shuffle! state side :deck))
-                          (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                          (assoc-in target [:special :compile-installed] true)
-                                          {:ignore-all-cost true}))})]
+             :effect (req (let [install-fn (req (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                                (assoc-in target [:special :compile-installed] true)
+                                                                {:ignore-all-cost true}))]
+                            (if (= :deck where)
+                              (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                        (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                  (install-fn state side eid card targets)))
+                              (install-fn state side eid card targets))))})]
     {:makes-run true
      :on-play {:prompt "Choose a server"
                :msg "make a run and install a program on encounter with the first piece of ice"
@@ -777,8 +780,9 @@
                              {:prompt "Shuffle Direct Access into the Stack?"
                               :yes-ability
                               {:msg (msg "shuffles Direct Access into the Stack")
+                               :async true
                                :effect (effect (move (get-card state card) :deck)
-                                               (shuffle! :deck))}}}
+                                               (shuffle! eid :deck))}}}
                             card nil))}]})
 
 (defcard "Dirty Laundry"
@@ -910,10 +914,10 @@
                                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                                 [:credit (install-cost state side % {:cost-bonus (- trash-cost)})]))
                                                 (:deck runner)) :sorted))
-             :effect (req (trigger-event state side :searched-stack nil)
-                          (shuffle! state side :deck)
-                          (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                          target {:cost-bonus (- trash-cost)}))})]
+             :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                    (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                              (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                              target {:cost-bonus (- trash-cost)}))))})]
     {:on-play
      {:prompt "Choose Hardware and Programs to trash from your Grip"
       :choices {:card #(and (or (hardware? %)
@@ -1074,8 +1078,9 @@
    {:prompt "Choose a card to add to your Grip"
     :choices (req (take 4 (:deck runner)))
     :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
+    :async true
     :effect (effect (move target :hand)
-                    (shuffle! :deck))}})
+                    (shuffle! eid :deck))}})
 
 (defcard "Falsified Credentials"
   {:on-play
@@ -1303,10 +1308,11 @@
   (letfn [(choose-end [to-shuffle]
             (let [to-shuffle (sort to-shuffle)]
               {:msg (msg "shuffle " (count to-shuffle)" cards back into the stack: " (string/join ", " to-shuffle))
+               :async true
                :effect (req (doseq [c-title to-shuffle]
                               (let [c (some #(when (= (:title %) c-title) %) (:discard runner))]
                                 (move state side c :deck)))
-                            (shuffle! state side :deck))}))
+                            (shuffle! state side eid :deck))}))
           (choose-next [to-shuffle target remaining]
             (let [remaining (if (= "Done" target)
                               remaining
@@ -1345,8 +1351,7 @@
                             (pos? (count (:discard runner))))
                      (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil)
                      (do (system-msg state :runner (str "uses " (:title card) " to shuffle their Stack"))
-                         (shuffle! state :runner :deck)
-                         (effect-completed state side eid))))}}))
+                         (shuffle! state :runner eid :deck))))}}))
 
 (defcard "High-Stakes Job"
   {:makes-run true
@@ -1376,12 +1381,14 @@
                                       [:credit (install-cost state side connection)])
                           {:optional {:prompt (str "Install " (:title connection) "?")
                                       :yes-ability {:async true
-                                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection nil)
-                                                                    (shuffle! :deck))}
-                                      :no-ability {:effect (effect (move connection :hand)
-                                                                   (shuffle! :deck))}}}
-                          {:effect (effect (move connection :hand)
-                                           (shuffle! :deck))}))
+                                                    :effect (req (wait-for (runner-install state side (make-eid state (assoc eid :source card :source-type :runner-install)) connection nil)
+                                                                    (shuffle! state side eid :deck)))}
+                                      :no-ability {:async true
+                                                   :effect (effect (move connection :hand)
+                                                                   (shuffle! eid :deck))}}}
+                          {:async true
+                           :effect (effect (move connection :hand)
+                                           (shuffle! eid :deck))}))
                       card nil))}})
 
 (defcard "Hot Pursuit"
@@ -1582,8 +1589,8 @@
                          :choices {:card #(and (installed? %)
                                                (has-subtype? % "Icebreaker"))}
                          :async true
-                         :effect (effect (pump target 2 :end-of-run)
-                                         (make-run eid server card))})
+                         :effect (req (wait-for (pump state side (make-eid state eid) target 2 :end-of-run)
+                                                (make-run state side eid server card)))})
                       card nil))}})
 
 (defcard "Inside Job"
@@ -1702,9 +1709,8 @@
                               (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
                                                             (access-revealed revealed))
                                                card nil)
-                              (shuffle! state :corp :deck)
                               (system-msg state :runner "shuffles R&D")
-                              (effect-completed state side eid))))))}]
+                              (shuffle! state :corp eid :deck))))))}]
     {:makes-run true
      :on-play {:req (req rd-runnable)
                :async true
@@ -1762,13 +1768,12 @@
                                                    (move state side c :deck))
                                                  (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
                                                                                 " from their Heap into their Stack, and draws 1 card"))
-                                                 (shuffle! state :runner :deck)
-                                                 (draw state :runner eid 1 nil))}
+                                                 (wait-for (shuffle! state :runner (make-eid state eid) :deck)
+                                                           (draw state :runner eid 1 nil)))}
 
-                                   {:effect (effect
-                                              (do (system-msg state :runner "shuffles their Stack and draws 1 card")
-                                                  (shuffle! state :runner :deck)
-                                                  (draw state :runner eid 1 nil)))})
+                                   {:effect (req (system-msg state :runner "shuffles their Stack and draws 1 card")
+                                                 (wait-for (shuffle! state :runner (make-eid state eid) :deck)
+                                                           (draw state :runner eid 1 nil)))})
                                  card nil)))))}})
 
 (defcard "Lawyer Up"
@@ -1787,9 +1792,10 @@
               (when (<= (count (filter program? (all-active-installed state :runner))) 3)
                 ", adding +2 strength to all icebreakers"))
     :async true
-    :effect (req (when (<= (count (filter program? (all-active-installed state :runner))) 3)
-                   (pump-all-icebreakers state side 2 :end-of-run))
-                 (make-run state side eid target card))}})
+    :effect (req (if (<= (count (filter program? (all-active-installed state :runner))) 3)
+                   (wait-for (pump-all-icebreakers state side (make-eid state eid) 2 :end-of-run)
+                             (make-run state side eid target card))
+                   (make-run state side eid target card)))}})
 
 (defcard "Leave No Trace"
   (letfn [(get-rezzed-cids [ice]
@@ -1855,8 +1861,8 @@
                 "shuffle their Grip into their Stack and draw 5 cards"))
     :rfg-instead-of-trashing true
     :async true
-    :effect (effect (shuffle-into-deck :hand :discard)
-                    (draw eid 5 nil))}})
+    :effect (req (wait-for (shuffle-into-deck state side (make-eid state eid) :hand :discard)
+                           (draw state side eid 5 nil)))}})
 
 (defcard "Lucky Find"
   {:on-play
@@ -2032,13 +2038,15 @@
                             :yes-ability
                             {:async true
                              :msg (msg " install " (:title icebreaker))
-                             :effect (req (runner-install state side (assoc eid :source card :source-type :runner-install) icebreaker nil)
-                                          (shuffle! state side :deck))}
+                             :effect (req (wait-for (runner-install state side (make-eid state (assoc eid :source card :source-type :runner-install)) icebreaker nil)
+                                                    (shuffle! state side eid :deck)))}
                             :no-ability
-                            {:effect (req (move state side icebreaker :hand)
-                                          (shuffle! state side :deck))}}}
-                          {:effect (req (move state side icebreaker :hand)
-                                        (shuffle! state side :deck))}))
+                            {:async true
+                             :effect (req (move state side icebreaker :hand)
+                                          (shuffle! state side eid :deck))}}}
+                          {:async true
+                           :effect (req (move state side icebreaker :hand)
+                                        (shuffle! state side eid :deck))}))
                       card nil))}})
 
 (defcard "Net Celebrity"
@@ -2178,9 +2186,9 @@
                                    (:deck runner))))
     :msg (msg "play " (:title target))
     :async true
-    :effect (effect (trigger-event :searched-stack nil)
-                    (shuffle! :deck)
-                    (play-instant eid target {:no-additional-cost true}))}})
+    :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                           (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                     (play-instant state side eid target {:no-additional-cost true}))))}})
 
 (defcard "Political Graffiti"
   {:makes-run true
@@ -2222,7 +2230,8 @@
                                                           (:discard runner))))))}})
 
 (defcard "Power to the People"
-  {:events [{:event :pre-steal-cost
+  {:events [{:event :access
+             :req (req (= "Agenda" (:type target)))
              :duration :end-of-turn
              :once :per-turn
              :msg "gain 7 [Credits]"
@@ -2313,9 +2322,10 @@
                          "make a run, and adds +2 strength to installed icebreakers"
                          "make a run"))
              :async true
-             :effect (req (when (<= (count (:hand runner)) 2)
-                            (pump-all-icebreakers state side 2 :end-of-run))
-                          (make-run state side eid target))}})
+             :effect (req (if (<= (count (:hand runner)) 2)
+                            (wait-for (pump-all-icebreakers state side (make-eid state eid) 2 :end-of-run)
+                                      (make-run state side eid target))
+                            (make-run state side eid target)))}})
 
 (defcard "Quality Time"
   {:on-play
@@ -2768,9 +2778,10 @@
    {:prompt "Choose an Icebreaker"
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
     :msg (msg "add " (:title target) " to their grip and shuffle their stack")
-    :effect (effect (trigger-event :searched-stack nil)
-                    (shuffle! :deck)
-                    (move target :hand))}})
+    :async true
+    :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil)
+                           (move state side target :hand)
+                           (shuffle! state side eid :deck)))}})
 
 (defcard "Spooned"
   (cutlery "Code Gate"))
@@ -2896,21 +2907,21 @@
                    :choices (req (cancellable
                                    (filter program? ((if (= where "Heap") :discard :deck) runner))))
                    :async true
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state side :deck)
-                                (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                                          target {:ignore-all-cost true})
-                                          (if async-result
-                                            (let [installed-card (update! state side (assoc-in async-result [:special :test-run] true))]
-                                              (register-events
-                                                state side installed-card
-                                                [{:event :runner-turn-ends
-                                                  :duration :end-of-turn
-                                                  :req (req (get-in (find-latest state installed-card) [:special :test-run]))
-                                                  :msg (msg "move " (:title installed-card) " to the top of the stack")
-                                                  :effect (effect (move (find-latest state installed-card) :deck {:front true}))}])
-                                              (effect-completed state side eid))
-                                            (effect-completed state side eid))))})
+                   :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                          (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                    (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                                                              target {:ignore-all-cost true})
+                                                              (if async-result
+                                                                (let [installed-card (update! state side (assoc-in async-result [:special :test-run] true))]
+                                                                  (register-events
+                                                                    state side installed-card
+                                                                    [{:event :runner-turn-ends
+                                                                      :duration :end-of-turn
+                                                                      :req (req (get-in (find-latest state installed-card) [:special :test-run]))
+                                                                      :msg (msg "move " (:title installed-card) " to the top of the stack")
+                                                                      :effect (effect (move (find-latest state installed-card) :deck {:front true}))}])
+                                                                  (effect-completed state side eid))
+                                                                (effect-completed state side eid))))))})
                 card nil))}})
 
 (defcard "The Maker's Eye"
@@ -3001,9 +3012,10 @@
                                   :choices (req (filter hardware?
                                                         (:deck runner)))
                                   :msg (msg "add " (:title target) " to their Grip (and shuffle their Stack)")
-                                  :effect (effect (trigger-event :searched-stack nil)
-                                                  (shuffle! :deck)
-                                                  (move target :hand))}
+                                  :async true
+                                  :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil)
+                                                         (move state side target :hand)
+                                                         (shuffle! state side eid :deck)))}
                                  card nil))))}}))
 
 (defcard "Traffic Jam"
@@ -3118,9 +3130,10 @@
   (letfn [(finish-choice [choices]
             (let [choices (filter #(not= "None" %) choices)]
               (when (not-empty choices)
-                {:effect (req (doseq [c choices]
+                {:async true
+                 :effect (req (doseq [c choices]
                                 (move state :corp c :deck))
-                              (shuffle! state :corp :deck))
+                              (shuffle! state :corp eid :deck))
                  :msg (str "shuffle " (string/join ", " (map :title choices)) " into R&D")})))
           (choose-cards [hand chosen]
             {:prompt "Choose a card in HQ to shuffle into R&D"
@@ -3160,13 +3173,14 @@
 (defcard "Windfall"
   {:on-play
    {:async true
-    :effect (req (shuffle! state side :deck)
-                 (let [topcard (first (:deck (:runner @state)))
-                       cost (:cost topcard)]
-                   (wait-for (trash state side topcard nil)
-                             (wait-for (gain-credits state side (if (event? topcard) 0 cost))
-                                       (system-msg state side
-                                                   (str "shuffles their Stack and trashes " (:title topcard)
-                                                        (when-not (event? topcard)
-                                                          (str " to gain " cost " [Credits]"))))
-                                       (effect-completed state side eid)))))}})
+    :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
+                           (let [topcard (first (:deck (:runner @state)))
+                                 cost (:cost topcard)]
+                             (wait-for (trash state side topcard nil)
+                                       (wait-for (gain-credits state side (if (event? topcard) 0 cost))
+                                                 (system-msg state side
+                                                             (str "shuffles their Stack and trashes " (:title topcard)
+                                                                  (when-not (event? topcard)
+                                                                    (str " to gain " cost " [Credits]"))))
+                                                 (effect-completed state side eid))))))}})
+  

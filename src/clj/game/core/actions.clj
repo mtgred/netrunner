@@ -179,8 +179,7 @@
           (if (= (:value match) "Cancel")
             (do (if-let [cancel-effect (:cancel-effect prompt)]
                   ;; trigger the cancel effect
-                  (cancel-effect choice)
-                  (effect-completed state side (:eid prompt)))
+                  (cancel-effect choice))
                 (finish-prompt state side prompt card))
             (do (effect match)
                 (finish-prompt state side prompt card)))))
@@ -314,20 +313,19 @@
                        (repeat ability-uses-needed (:cost breaker-ability))))]
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay state side (make-eid state eid) card total-cost)
-                (if x-breaker
-                  (pump state side (get-card state card) x-number)
-                  (pump state side (get-card state card) (* pump-strength-at-once ability-uses-needed)))
-                (let [payment-str (:msg async-result)
-                      sub-groups-to-break (if (and (number? subs-broken-at-once) (pos? subs-broken-at-once))
-                                        (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
-                                        [(remove :broken (:subroutines current-ice))])]
-                  (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
-                            (system-msg state side
-                                        (str (build-spend-msg payment-str "increase")
-                                             "the strength of " (:title card)
-                                             " to " (get-strength (get-card state card))
-                                             " and break all subroutines on " (:title current-ice)))
-                            (continue state side nil)))))))
+                (let [pump-amount (if x-breaker x-number (* pump-strength-at-once ability-uses-needed))]
+                  (wait-for (pump state side (make-eid state eid) (get-card state card) pump-amount)
+                            (let [payment-str (:msg async-result)
+                                  sub-groups-to-break (if (and (number? subs-broken-at-once) (pos? subs-broken-at-once))
+                                                    (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
+                                                    [(remove :broken (:subroutines current-ice))])]
+                              (wait-for (resolve-ability state side (make-eid state eid) (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
+                                        (system-msg state side
+                                                    (str (build-spend-msg payment-str "increase")
+                                                         "the strength of " (:title card)
+                                                         " to " (get-strength (get-card state card))
+                                                         " and break all subroutines on " (:title current-ice)))
+                                        (continue state side nil)))))))))
 
 (defn- play-auto-pump-and-break-impl
   [state side sub-groups-to-break current-ice break-ability]

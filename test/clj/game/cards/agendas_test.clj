@@ -713,13 +713,13 @@
   ;; Cyberdex Sandbox
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
-      (play-and-score state "Cyberdex Sandbox")
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" (qty "Cyberdex Trial" 2)]}})
       (core/gain state :corp :click 10)
+      (play-and-score state "Cyberdex Sandbox")
       (is (changes-credits (get-corp) 4
                            (click-prompt state :corp "Yes")))
       (is (changes-credits (get-corp) 0
-                           (core/purge state :corp)))
+                           (play-from-hand state :corp "Cyberdex Trial")))
       (take-credits state :corp)
       (take-credits state :runner)
       (is (changes-credits (get-corp) 4
@@ -735,7 +735,7 @@
     (do-game
       (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
       (core/gain state :corp :click 10)
-      (core/purge state :corp)
+      (play-from-hand state :corp "Cyberdex Trial")
       (play-and-score state "Cyberdex Sandbox")
       (is (changes-credits
             (get-corp) 0

@@ -14,7 +14,7 @@
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [effect req]]
+    [game.macros :refer [effect req continue-ability]]
     [game.utils :refer [make-cid server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
@@ -49,8 +49,12 @@
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
   [state side {:keys [disabled installed rezzed facedown zone host] :as card}]
-  (when-let [leave-effect (:leave-play (card-def card))]
-    (when (and (not disabled)
+  (let [leave-play (:leave-play (card-def card))
+       leave-effect (if (fn? leave-play) 
+                        (req (leave-play state side eid card targets) (effect-completed state side eid))
+                        (req (continue-ability state side leave-play card targets)))]
+    (when (and leave-play
+               (not disabled)
                (not (and (runner? card) host (not installed) (not facedown)))
                (or (and (runner? card) installed (not facedown))
                    rezzed

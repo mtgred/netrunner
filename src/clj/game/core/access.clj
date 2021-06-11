@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint make-pending-event pay queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint make-pending-event pay queue-event register-events resolve-ability should-trigger? trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move trash]]
@@ -33,8 +33,8 @@
   ([state side eid c] (access-end state side eid c nil))
   ([state side eid c {:keys [trashed stolen]}]
    ;; Do not trigger :no-trash if card has already been trashed
-   (wait-for (trigger-event-sync state side (when-not trashed :no-trash) c)
-             (wait-for (trigger-event-sync state side (when-not stolen :no-steal) c)
+   (wait-for (trigger-event-simult state side (make-eid state eid) (when-not trashed :no-trash) nil c)
+             (wait-for (trigger-event-simult state side (when-not stolen :no-steal) nil c)
                        (when (and (not trashed)
                                   (not stolen)
                                   ;; Don't increment :no-trash-or-steal if accessing a card in Archives
@@ -42,7 +42,7 @@
                          (no-trash-or-steal state))
                        (let [accessed-card (:access @state)]
                          (swap! state dissoc :access)
-                         (trigger-event-sync state side eid :post-access-card c accessed-card))))))
+                         (trigger-event-simult state side eid :post-access-card nil c accessed-card))))))
 
 ;;; Accessing rules
 (defn interactions
@@ -65,7 +65,7 @@
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c & {:keys [skip-trigger-event]}]
   (wait-for
-    (trigger-event-sync state side (when-not skip-trigger-event :pre-trash) c)
+    (trigger-event-simult state side (make-eid state eid) (when-not skip-trigger-event :pre-trash) nil c)
     (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
     ; Don't show the access prompt if:
     (if (or ; 1) accessing cards in Archives
@@ -203,69 +203,69 @@
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
-  (trigger-event state side :pre-steal-cost card)
-  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
-  (let [cost (steal-cost state side card)
-        cost-strs (build-cost-string cost)
-        can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
-        can-steal (can-steal? state side card)
-        ; Access abilities are useless in the discard
-        access-ab-cards (when-not (in-discard? card)
-                          (seq (filter #(and (can-trigger? state :runner eid (access-ab %) % [card])
-                                             (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card])))
-                                       (all-active state :runner))))
-        ability-strs (mapv #(access-ab-label state %) access-ab-cards)
-        ;; strs
-        steal-str (when (and can-steal can-pay)
-                    (if (not (string/blank? cost-strs))
-                      ["Pay to steal"]
-                      ["Steal"]))
-        no-action-str (when-not (= steal-str ["Steal"])
-                        ["No action"])
-        prompt-str (if (not (string/blank? cost-strs))
-                     (str " " cost-strs " to steal?")
-                     "")
-        prompt-str (str "You accessed " (:title card) "." prompt-str)
-        choices (vec (concat ability-strs steal-str no-action-str))]
-    ;; Steal costs are additional costs and can be denied by the runner.
-    (continue-ability
-      state :runner
-      {:async true
-       :prompt prompt-str
-       :choices choices
-       :effect (req (cond
-                      ;; Can't steal or pay, or won't pay additional costs to steal
-                      (= target "No action")
-                      (do (when-not (find-cid (:cid card) (:deck corp))
-                            (system-msg state side (str "decides to not pay to steal " (:title card))))
-                          (access-end state side eid card))
-
-                      ;; Steal normally
-                      (= target "Steal")
-                      (steal-agenda state side eid card)
-
-                      ;; Pay additiional costs to steal
-                      (= target "Pay to steal")
-                      (wait-for (pay state side nil cost {:action :steal-cost})
-                                (system-msg state side (str (:msg async-result) " to steal "
-                                                            (:title card) " from "
-                                                            (name-zone :corp (get-zone card))))
-                                (steal-agenda state side eid card))
-
-                      ;; Use access ability
-                      (some #(= % target) ability-strs)
-                      (let [idx (.indexOf ability-strs target)
-                            ability-card (nth access-ab-cards idx)
-                            ability-eid (assoc eid :source ability-card :source-type :ability)
-                            ability (access-ab ability-card)]
-                        (when (and (:run @state)
-                                   (:trash? ability true))
-                          (swap! state assoc-in [:run :did-trash] true))
-                        (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
-                                  (let [card (first async-result)]
-                                    (trigger-event state side :no-steal card)
-                                    (access-end state side eid card {:stolen (in-scored? card)}))))))}
-      card nil)))
+  (wait-for (trigger-event-simult state side (make-eid state eid) :pre-steal-cost nil card)
+            (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
+            (let [cost (steal-cost state side card)
+                  cost-strs (build-cost-string cost)
+                  can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
+                  can-steal (can-steal? state side card)
+                  ; Access abilities are useless in the discard
+                  access-ab-cards (when-not (in-discard? card)
+                                    (seq (filter #(and (can-trigger? state :runner eid (access-ab %) % [card])
+                                                       (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card])))
+                                                 (all-active state :runner))))
+                  ability-strs (mapv #(access-ab-label state %) access-ab-cards)
+                  ;; strs
+                  steal-str (when (and can-steal can-pay)
+                              (if (not (string/blank? cost-strs))
+                                ["Pay to steal"]
+                                ["Steal"]))
+                  no-action-str (when-not (= steal-str ["Steal"])
+                                  ["No action"])
+                  prompt-str (if (not (string/blank? cost-strs))
+                               (str " " cost-strs " to steal?")
+                               "")
+                  prompt-str (str "You accessed " (:title card) "." prompt-str)
+                  choices (vec (concat ability-strs steal-str no-action-str))]
+              ;; Steal costs are additional costs and can be denied by the runner.
+              (continue-ability
+                state :runner
+                {:async true
+                 :prompt prompt-str
+                 :choices choices
+                 :effect (req (cond
+                                ;; Can't steal or pay, or won't pay additional costs to steal
+                                (= target "No action")
+                                (do (when-not (find-cid (:cid card) (:deck corp))
+                                      (system-msg state side (str "decides to not pay to steal " (:title card))))
+                                    (access-end state side eid card))
+          
+                                ;; Steal normally
+                                (= target "Steal")
+                                (steal-agenda state side eid card)
+          
+                                ;; Pay additiional costs to steal
+                                (= target "Pay to steal")
+                                (wait-for (pay state side nil cost {:action :steal-cost})
+                                          (system-msg state side (str (:msg async-result) " to steal "
+                                                                      (:title card) " from "
+                                                                      (name-zone :corp (get-zone card))))
+                                          (steal-agenda state side eid card))
+          
+                                ;; Use access ability
+                                (some #(= % target) ability-strs)
+                                (let [idx (.indexOf ability-strs target)
+                                      ability-card (nth access-ab-cards idx)
+                                      ability-eid (assoc eid :source ability-card :source-type :ability)
+                                      ability (access-ab ability-card)]
+                                  (when (and (:run @state)
+                                             (:trash? ability true))
+                                    (swap! state assoc-in [:run :did-trash] true))
+                                  (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
+                                            (let [card (first async-result)]
+                                              (wait-for (trigger-event-simult state side (make-eid state eid) :no-steal card)
+                                                        (access-end state side eid card {:stolen (in-scored? card)})))))))}
+                card nil))))
 
 (defn- reveal-access?
   "Check if the card should be revealed on access"

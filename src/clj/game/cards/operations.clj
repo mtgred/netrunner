@@ -68,8 +68,9 @@
     :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
     :msg "search R&D for a card and add it to HQ"
+    :async true 
     :effect (effect (move target :hand)
-                    (shuffle! :deck))}})
+                    (shuffle! eid :deck))}})
 
 (defcard "An Offer You Can't Refuse"
   {:on-play
@@ -149,7 +150,6 @@
                        (gain-credits state side (* 2 (count targets)))
                        (doseq [c targets]
                          (move state :corp c :deck))
-                       (shuffle! state :corp :deck)
                        (let [from-hq (map :title (filter in-hand? targets))
                              from-archives (map :title (filter in-discard? targets))]
                          (system-msg
@@ -166,7 +166,7 @@
                                                   " from Archives"))]))
                                 " into R&D and gain "
                                 (* 2 (count targets)) " [Credits]")))
-                       (effect-completed state side eid))))}
+                       (shuffle! state :corp eid :deck))))}
              card nil)))}})
 
 (defcard "Audacity"
@@ -430,21 +430,22 @@
                     :sorted))
     :msg (msg "search R&D for " (:title target) " and play it")
     :async true
-    :effect (effect (shuffle! :deck)
-                    (system-msg "shuffles their deck")
-                    (play-instant eid target nil))}})
+    :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
+                   (system-msg state side "shuffles their deck")
+                   (play-instant state side eid target nil)))}})
 
 (defcard "Corporate Shuffle"
   {:on-play
    {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
     :async true
-    :effect (effect (shuffle-into-deck :hand)
-                    (draw eid 5 nil))}})
+    :effect (req (wait-for (shuffle-into-deck state side (make-eid state eid) :hand)
+                           (draw state side eid 5 nil)))}})
 
 (defcard "Cyberdex Trial"
   {:on-play
    {:msg "purge virus counters"
-    :effect (effect (purge))}})
+    :async true
+    :effect (effect (purge eid))}})
 
 (defcard "Death and Taxes"
   {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
@@ -507,25 +508,25 @@
                                                  (move state side target :hand)
                                                  (effect-completed state side eid)))})
                        card targets)
-                     (shuffle! state side :deck)
-                     (continue-ability
-                       state side
-                       {:prompt "You may install a card in HQ"
-                        :choices {:card #(and (in-hand? %)
-                                              (corp? %)
-                                              (not (operation? %)))}
-                        :effect (req (wait-for (resolve-ability
-                                                 state side
-                                                 (let [card-to-install target]
-                                                   {:prompt (str "Choose a location to install " (:title target))
-                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
-                                                    :async true
-                                                    :effect (effect (corp-install eid card-to-install target nil))})
-                                                 target nil)
-                                               (end-effect state side eid card targets)))
-                        :cancel-effect (effect (system-msg "does not use Digital Rights Management to install a card")
-                                               (end-effect eid card targets))}
-                       card nil))))}})
+                     (wait-for (shuffle! state side (make-eid state eid) :deck)
+                       (continue-ability
+                         state side
+                         {:prompt "You may install a card in HQ"
+                          :choices {:card #(and (in-hand? %)
+                                                (corp? %)
+                                                (not (operation? %)))}
+                          :effect (req (wait-for (resolve-ability
+                                                   state side
+                                                   (let [card-to-install target]
+                                                     {:prompt (str "Choose a location to install " (:title target))
+                                                      :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
+                                                      :async true
+                                                      :effect (effect (corp-install eid card-to-install target nil))})
+                                                   target nil)
+                                                 (end-effect state side eid card targets)))
+                          :cancel-effect (effect (system-msg "does not use Digital Rights Management to install a card")
+                                                 (end-effect eid card targets))}
+                         card nil)))))}})
 
 (defcard "Distract the Masses"
   (let [shuffle-two {:async true
@@ -707,10 +708,9 @@
     :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
     :async true
     :effect (req (system-msg state side (str "adds " (:title target) " to HQ and shuffle R&D"))
-                 (wait-for (reveal state side target)
-                           (shuffle! state side :deck)
+                 (wait-for (reveal state side (make-eid state eid) target)
                            (move state side target :hand)
-                           (effect-completed state side eid)))}})
+                           (shuffle! state side eid :deck)))}})
 
 (defcard "Financial Collapse"
   (letfn [(count-resources [state]
@@ -1179,12 +1179,12 @@
       :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                              (doseq [c (:discard (:corp @state))]
                                (update! state side (assoc-in c [:seen] false)))
-                             (shuffle! state :corp :discard)
-                             (continue-ability state side install-abi card nil)))
+                             (wait-for (shuffle! state :corp (make-eid state eid) :discard)
+                               (continue-ability state side install-abi card nil))))
       :cancel-effect (req (doseq [c (:discard (:corp @state))]
                             (update! state side (assoc-in c [:seen] false)))
-                          (shuffle! state :corp :discard)
-                          (continue-ability state side install-abi card nil))}}))
+                          (wait-for (shuffle! state :corp (make-eid state eid) :discard)
+                            (continue-ability state side install-abi card nil)))}}))
 
 (defcard "Kill Switch"
   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) target)))
@@ -1256,9 +1256,9 @@
                   {:prompt "How many copies?"
                    :choices {:number (req (count copies))}
                    :msg (msg "add " (quantify target "cop" "y" "ies") " of " title " to HQ")
-                   :effect (req (shuffle! state :corp :deck)
-                                (doseq [copy (take target copies)]
-                                  (move state side copy :hand)))})
+                   :effect (req (doseq [copy (take target copies)]
+                                  (move state side copy :hand))
+                                (shuffle! state :corp eid :deck))})
                 card nil))}})
 
 (defcard "Manhunt"
@@ -1385,22 +1385,22 @@
                        titles (->> (conj (vec revealed-cards) (first r))
                                    (filter identity)
                                    (map :title))]
-                   (wait-for (trash state :corp target nil)
-                             (shuffle! state :corp :deck)
-                             (system-msg state side (str "uses Mutate to trash " (:title target)))
-                             (wait-for
-                               (reveal state side revealed-cards)
-                               (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D"))
-                               (let [ice (first r)
-                                     zone (zone->name (second (get-zone target)))]
-                                 (if ice
-                                   (do (system-msg state side (str "uses Mutate to install and rez " (:title ice) " from R&D at no cost"))
-                                       (corp-install state side eid ice zone {:ignore-all-cost true
-                                                                              :install-state :rezzed-no-cost
-                                                                              :display-message false
-                                                                              :index index}))
-                                   (do (system-msg state side "does not find any ice to install from R&D")
-                                       (effect-completed state side eid))))))))}})
+                   (wait-for (trash state :corp (make-eid state eid) target nil)
+                             (wait-for (shuffle! state :corp (make-eid state eid) :deck)
+                               (system-msg state side (str "uses Mutate to trash " (:title target)))
+                               (wait-for
+                                 (reveal state side revealed-cards)
+                                 (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D"))
+                                 (let [ice (first r)
+                                       zone (zone->name (second (get-zone target)))]
+                                   (if ice
+                                     (do (system-msg state side (str "uses Mutate to install and rez " (:title ice) " from R&D at no cost"))
+                                         (corp-install state side eid ice zone {:ignore-all-cost true
+                                                                                :install-state :rezzed-no-cost
+                                                                                :display-message false
+                                                                                :index index}))
+                                     (do (system-msg state side "does not find any ice to install from R&D")
+                                         (effect-completed state side eid)))))))))}})
 
 (defcard "NAPD Cordon"
   {:on-play {:trash-after-resolving false}
@@ -1748,7 +1748,8 @@
                                    state side
                                    (rt total (dec left) (cons (:title target) selected))
                                    card nil))}
-                   {:effect (effect (shuffle! :corp :deck))
+                   {:async true
+                    :effect (effect (shuffle! :corp eid :deck))
                     :msg (msg "shuffle R&D")}))]
     {:on-play
      {:prompt "How many Sysops?"
@@ -1918,18 +1919,17 @@
                              (system-msg state side "uses Reverse Infection to gain 2 [Credits]")
                              (effect-completed state side eid))
                    (let [pre-purge-virus (number-of-virus-counters state)]
-                     (purge state side)
-                     (let [post-purge-virus (number-of-virus-counters state)
-                           num-virus-purged (- pre-purge-virus post-purge-virus)
-                           num-to-trash (quot num-virus-purged 3)]
-                       (wait-for (mill state :corp :runner num-to-trash)
+                     (wait-for (purge state side (make-eid state eid))
+                               (let [post-purge-virus (number-of-virus-counters state)
+                                     num-virus-purged (- pre-purge-virus post-purge-virus)
+                                     num-to-trash (quot num-virus-purged 3)]
                                  (system-msg state side
-                                             (str "uses Reverse Infection to purge "
-                                                  (quantify num-virus-purged "virus counter")
-                                                  " and trash "
-                                                  (quantify num-to-trash "card")
-                                                  " from the top of the stack"))
-                                 (effect-completed state side eid))))))}})
+                                                   (str "uses Reverse Infection to purge "
+                                                        (quantify num-virus-purged "virus counter")
+                                                        " and trash "
+                                                        (quantify num-to-trash "card")
+                                                        " from the top of the stack"))
+                                 (mill state :corp eid :runner num-to-trash))))))}})
 
 (defcard "Rework"
   {:on-play
@@ -1937,8 +1937,9 @@
     :choices {:card #(and (corp? %)
                           (in-hand? %))}
     :msg "shuffle a card from HQ into R&D"
+    :async true
     :effect (effect (move target :deck)
-                    (shuffle! :deck))}})
+                    (shuffle! eid :deck))}})
 
 (defcard "Riot Suppression"
   {:on-play
@@ -2083,13 +2084,12 @@
                              :choices ["Archives" "R&D" "HQ"]
                              :msg (msg "reveal " (:title chosen-ice) " and install it, paying 3 [Credit] less")
                              :effect (req (wait-for
-                                            (reveal state side chosen-ice)
-                                            (shuffle! state side :deck)
-                                            (corp-install state side eid chosen-ice target {:cost-bonus -3})))})
+                                            (reveal state side (make-eid state eid) chosen-ice)
+                                            (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                              (corp-install state side eid chosen-ice target {:cost-bonus -3}))))})
                           card nil))}
                      card nil)
-                   (do (shuffle! state side :deck)
-                       (effect-completed state side eid))))}})
+                   (shuffle! state side eid :deck)))}})
 
 (defcard "Self-Growth Program"
   {:on-play
@@ -2208,8 +2208,8 @@
     :async true
     :effect (req (doseq [c targets]
                    (move state side c :deck))
-                 (shuffle! state side :deck)
-                 (draw state side eid (count targets) nil))}})
+                 (wait-for (shuffle! state side (make-eid state eid) :deck)
+                   (draw state side eid (count targets) nil)))}})
 
 (defcard "Sprint"
   {:on-play
@@ -2226,9 +2226,10 @@
                                 :card #(and (corp? %)
                                             (in-hand? %))}
                       :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")
+                      :async true
                       :effect (req (doseq [c targets]
                                      (move state side c :deck))
-                                   (shuffle! state side :deck))}
+                                   (shuffle! state side eid :deck))}
                      card nil)))}})
 
 (defcard "Standard Procedure"
@@ -2260,16 +2261,19 @@
      :on-play {:choices {:card #(and (ice? %)
                                      (rezzed? %))}
                :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
-                            (host state side (get-card state target) (assoc card :seen true :condition true)))}
+               :async true
+               :effect (req (wait-for (add-extra-sub! state :corp (make-eid state eid) (get-card state target) new-sub (:cid card))
+                                      (host state side (get-card state target) (assoc card :seen true :condition true))
+                                      (effect-completed state side eid)))}
      :constant-effects [{:type :gain-subtype
                          :req (req (and (same-card? target (:host card))
                                         (rezzed? target)))
                          :value "Barrier"}]
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
+     :leave-play (req (remove-extra-subs! state :corp (make-eid state eid) (:host card) (:cid card)))
      :events [{:event :rez
                :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
+               :async true
+               :effect (req (add-extra-sub! state :corp eid (get-card state (:card context)) new-sub (:cid card)))}]}))
 
 (defcard "Subcontract"
   (letfn [(sc [i sccard]
@@ -2629,13 +2633,16 @@
                                      (has-subtype? % "Bioroid")
                                      (rezzed? %))}
                :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
-               :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
-                            (host state side (get-card state target) (assoc card :seen true :condition true)))}
+               :async true
+               :effect (req (wait-for (add-extra-sub! state :corp (make-eid state eid) target new-sub (:cid card) {:front true})
+                                      (host state side (get-card state target) (assoc card :seen true :condition true))
+                                      (effect-completed state side eid)))}
      :sub-effect (do-brain-damage 1)
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
+     :leave-play (req (remove-extra-subs! state :corp (make-eid state eid) (:host card) (:cid card)))
      :events [{:event :rez
                :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
+               :async true
+               :effect (req (add-extra-sub! state :corp eid (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
 
 (defcard "Witness Tampering"
   {:on-play

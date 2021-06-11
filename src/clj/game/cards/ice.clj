@@ -1465,10 +1465,9 @@
                                            (reveal state side targets)
                                            (doseq [c targets]
                                              (move state :corp c :deck))
-                                           (shuffle! state :corp :deck)
-                                           (effect-completed state :corp eid)))
-                            :cancel-effect (effect (shuffle! :deck)
-                                                   (effect-completed eid))
+                                           (shuffle! state :corp eid :deck)))
+                            :cancel-effect {:async true
+                                            :effect (effect (shuffle! eid :deck))}
                             :msg (msg
                                    "shuffle "
                                    (string/join
@@ -1676,15 +1675,14 @@
                      :async true
                      :choices (req (cancellable (:deck corp) :sorted))
                      :msg "add 1 card to HQ from R&D"
-                     :cancel-effect (req (shuffle! state side :deck)
-                                         (system-msg state side (str "shuffles R&D"))
-                                         (effect-completed state side eid))
+                     :cancel-effect {:async true
+                                     :effect (req (system-msg state side (str "shuffles R&D"))
+                                         (shuffle! state side eid :deck))}
                      :effect (req (move state side target :hand)
                                   (if (< n 2)
                                     (continue-ability state side (hort (inc n)) card nil)
-                                    (do (shuffle! state side :deck)
-                                        (system-msg state side (str "shuffles R&D"))
-                                        (effect-completed state side eid))))})]
+                                    (do (system-msg state side (str "shuffles R&D"))
+                                        (shuffle! state side eid :deck))))})]
     (let [breakable-fn (req (when (or (> 3 (get-counters card :advancement))
                                       (not (has-subtype? target "AI")))
                               :unrestricted))]
@@ -2038,15 +2036,16 @@
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
                    (system-msg state :corp (str "chooses " (card-str state target) " for Loki's ability"))
-                   (doseq [sub (:subroutines target)]
-                     (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events
                      state side card
                      (let [cid (:cid target)]
                        [{:event :run-ends
                          :unregister-once-resolved true
                          :req (req (get-card state card))
-                         :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
+                         :async true
+                         :effect (effect (remove-subs! eid (get-card state card) #(= cid (:from-cid %))))}]))
+                  (effect-seq state side eid [sub (:subroutines target)]
+                    (add-sub! state side eid (get-card state card) sub (:cid target) {:front true}))))}
    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
                   :async true
                   :effect (req (if (and (zero? (count (:hand runner)))
@@ -2060,10 +2059,11 @@
                                      :prompt "Reshuffle your Grip into the Stack?"
                                      :player :runner
                                      :yes-ability
-                                     {:effect (req (doseq [c (:hand runner)]
+                                     {:async true
+                                      :effect (req (doseq [c (:hand runner)]
                                                      (move state :runner c :deck))
-                                                   (shuffle! state :runner :deck)
-                                                   (system-msg state :runner "shuffles their Grip into their Stack"))}
+                                                   (system-msg state :runner "shuffles their Grip into their Stack")
+                                                   (shuffle! state :runner eid :deck))}
                                      :no-ability
                                      {:async true
                                       :effect (effect (system-msg :runner "doesn't shuffle their Grip into their Stack. Loki ends the run")
@@ -2089,9 +2089,9 @@
                                              " [Credits] and shuffle the Stack. Loot Box is trashed")
                                    :async true
                                    :effect (req (move state :runner target :hand)
-                                                (wait-for (gain-credits state :corp (:cost target))
-                                                          (shuffle! state :runner :deck)
-                                                          (trash state side eid card {:cause :subroutine})))}
+                                                (wait-for (gain-credits state :corp (make-eid state eid) (:cost target))
+                                                          (wait-for (shuffle! state :runner (make-eid state eid) :deck)
+                                                                    (trash state side eid card {:cause :subroutine}))))}
                                   card nil)))}]}))
 
 (defcard "Lotus Field"
@@ -2126,7 +2126,8 @@
 (defcard "Macrophage"
   {:subroutines [(trace-ability 4 {:label  "Purge virus counters"
                                    :msg    "purge virus counters"
-                                   :effect (effect (purge))})
+                                   :async true
+                                   :effect (effect (purge eid))})
                  (trace-ability 3 {:label   "Trash a virus"
                                    :prompt  "Choose a virus to trash"
                                    :choices {:card #(and (installed? %)
@@ -2191,11 +2192,13 @@
                                 :duration :end-of-run
                                 :unregister-once-resolved true
                                 :req (req (rezzed? (:ice context)))
+                                :async true
                                 :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
-                                :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
+                                :effect (effect (add-sub! eid (:ice context) end-the-run (:cid card) {:back true}))}
                                {:event :end-of-encounter
                                 :duration :end-of-run
-                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
+                                :async true
+                                :effect (effect (remove-sub! eid (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
 
 (defcard "Markus 1.0"
   {:subroutines [runner-trash-installed-sub
@@ -2358,8 +2361,9 @@
                                             :choices {:card #(and (in-hand? %)
                                                                   (corp? %))}
                                             :msg "shuffle 1 card in HQ into R&D"
+                                            :async true
                                             :effect (effect (move target :deck)
-                                                            (shuffle! :deck))}
+                                                            (shuffle! eid :deck))}
                                            card nil)))}]})
 
 (defcard "Mlinzi"
@@ -2545,10 +2549,12 @@
                   :choices {:card #(and (corp? %)
                                         (in-hand? %))
                             :max (req (next-ice-count corp))}
+                  :async true
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
-                               (shuffle! state :corp :deck))
-                  :cancel-effect (effect (shuffle! :corp :deck))
+                               (shuffle! state :corp eid :deck))
+                  :cancel-effect {:async true
+                                  :effect (effect (shuffle! :corp eid :deck))}
                   :msg (msg "shuffle " (count targets) " cards from HQ into R&D")}]})
 
 (defcard "NEXT Silver"
@@ -2730,7 +2736,8 @@
 (defcard "Red Tape"
   {:subroutines [{:label "Give +3 strength to all ice for the remainder of the run"
                   :msg "give +3 strength to all ice for the remainder of the run"
-                  :effect (effect (pump-all-ice 3 :end-of-run))}]})
+                  :async true
+                  :effect (effect (pump-all-ice eid 3 :end-of-run))}]})
 
 (defcard "Resistor"
   {:strength-bonus (req (count-tags state))
@@ -2781,9 +2788,9 @@
                                                                        " of R&D"))
                                           (continue-ability state side maybe-draw-effect card nil))
                                         (do
-                                          (shuffle! state :corp :deck)
-                                          (system-msg state :corp (str "shuffles R&D"))
-                                          (continue-ability state side maybe-draw-effect card nil))))})
+                                          (wait-for (shuffle! state :corp (make-eid state eid) :deck)
+                                                    (system-msg state :corp (str "shuffles R&D"))
+                                                    (continue-ability state side maybe-draw-effect card nil)))))})
                               card nil))}
                    {:label "Trash 1 card in HQ"
                     :async true
@@ -2899,10 +2906,12 @@
                                 :duration :end-of-run
                                 :req (req (not (same-card? card (:ice context))))
                                 :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
-                                :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
+                                :async true
+                                :effect (effect (add-sub! eid (:ice context) end-the-run (:cid card) {:back true}))}
                                {:event :end-of-encounter
                                 :duration :end-of-run
-                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
+                                :async true
+                                :effect (effect (remove-sub! eid (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
 
 (defcard "Shadow"
   (wall-ice [(gain-credits-sub 2)
@@ -3224,7 +3233,8 @@
                                 :duration :end-of-encounter
                                 :unregister-once-resolved true
                                 :req (req (get-card state new-card))
-                                :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %))))}]))))}]))}]})
+                                :async true
+                                :effect (effect (remove-subs! eid (get-card state new-card) #(= cid (:from-cid %))))}]))))}]))}]})
 
 (defcard "TMI"
   {:on-rez {:trace {:base 2
@@ -3416,8 +3426,9 @@
                   :msg "add a card from R&D to HQ"
                   :choices (req (cancellable (:deck corp) :sorted))
                   :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
-                  :effect (effect (shuffle! :deck)
-                                  (move target :hand))}]})
+                  :async true
+                  :effect (effect (move target :hand)
+                                  (shuffle! eid :deck))}]})
 
 (defcard "Weir"
   {:subroutines [runner-loses-click

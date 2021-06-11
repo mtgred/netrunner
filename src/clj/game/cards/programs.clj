@@ -78,8 +78,8 @@
      :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
-     :effect (effect (pump card strength)
-                     (continue-ability (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil))
+     :effect (req (wait-for (pump state side (make-eid state eid) card strength)
+                            (continue-ability state side (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil)))
      :pump strength}))
 
 (def heap-breaker-auto-pump-and-break
@@ -393,8 +393,9 @@
                                       (not (rezzed? %))
                                       (zero? (get-counters % :advancement)))}
                 :msg (msg "shuffle " (card-str state target) " into R&D")
+                :async true
                 :effect (effect (move :corp target :deck)
-                                (shuffle! :corp :deck))}})]})
+                                (shuffle! :corp eid :deck))}})]})
 
 (defcard "Ankusa"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -486,7 +487,8 @@
   (auto-icebreaker {:events [{:event :encounter-ice
                               :req (req (has-subtype? (:ice context) "Barrier"))
                               :msg (msg "gain " (count (:subroutines (:ice context))) " strength")
-                              :effect (effect (pump card (count (:subroutines (:ice context)))))}]
+                              :async true
+                              :effect (effect (pump eid card (count (:subroutines (:ice context)))))}]
                     :abilities [(break-sub 2 2 "Barrier")]}))
 
 (defcard "Bishop"
@@ -842,9 +844,8 @@
                :choices (concat (filterv program? cards) ["Done"])
                :async true
                :effect (req (if (= target "Done")
-                              (do (shuffle! state side :deck)
-                                  (system-msg state side "shuffles the stack")
-                                  (effect-completed state side eid))
+                              (do (system-msg state side "shuffles the stack")
+                                  (shuffle! state side eid :deck))
                               (do (host state side (get-card state card) target)
                                   (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
                                   (continue-ability state side (custsec-host (remove-once #(= % target) cards))
@@ -915,7 +916,8 @@
                 :req (req (and (rezzed? current-ice)
                                (= :encounter-ice (:phase run))))
                 :msg (msg "give -1 strength to " (:title current-ice))
-                :effect (effect (pump-ice current-ice -1))}]})
+                :async true
+                :effect (effect (pump-ice eid current-ice -1))}]})
 
 (defcard "DaVinci"
   {:events [{:event :successful-run
@@ -1057,9 +1059,10 @@
                                                    (:deck runner)) :sorted))
                 :cost [:click 1 :credit 1]
                 :keep-open :while-clicks-left
-                :effect (effect (trigger-event :searched-stack nil)
-                                (shuffle! :deck)
-                                (move target :hand))}
+                :async true
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                       (move state side target :hand)
+                                       (shuffle! state side eid :deck)))}
                {:label "Install a non-Icebreaker program on Djinn"
                 :cost [:click 1]
                 :prompt "Choose a non-Icebreaker program in your grip"
@@ -1209,7 +1212,8 @@
                 :cost [:x-credits]
                 :cost-req (min-stealth 1)
                 :prompt "How many credits do you want to spend?"
-                :effect (effect (pump card (cost-value eid :x-credits) :end-of-run))
+                :async true
+                :effect (effect (pump eid card (cost-value eid :x-credits) :end-of-run))
                 :msg (msg "increase strength by " (cost-value eid :x-credits)
                           " for the remainder of the run")}]})
 
@@ -1499,8 +1503,8 @@
                 :msg (msg "trash " (:title target))
                 :choices (req (take 3 (:deck corp)))
                 :async true
-                :effect (effect (shuffle! :corp :deck)
-                                (trash eid (assoc target :seen true) nil))}})]})
+                :effect (req (wait-for (shuffle! state :corp (make-eid state eid) :deck)
+                                       (trash state side eid (assoc target :seen true) nil)))}})]})
 
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
@@ -1567,7 +1571,8 @@
                 :req (req (and (rezzed? current-ice)
                                (= :encounter-ice (:phase run))))
                 :msg (msg "give -1 strength to " (:title current-ice))
-                :effect (effect (pump-ice current-ice -1))}
+                :async true
+                :effect (effect (pump-ice eid current-ice -1))}
                (set-autoresolve :auto-fire "Leech")]})
 
 (defcard "Leprechaun"
@@ -1886,10 +1891,11 @@
                                          (rezzed? current-ice)
                                          (= :encounter-ice (:phase run))
                                          (has-subtype? current-ice "Barrier")))
-                    :effect (effect (pump card (cost-value eid :x-credits))
-                                    (continue-ability
-                                      (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
-                                      (get-card state card) nil))
+                    :async true
+                    :effect (req (wait-for (pump state side (make-eid state eid) card (cost-value eid :x-credits))
+                                           (continue-ability state side
+                                             (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
+                                             (get-card state card) nil)))
                     :msg (msg "increase its strength from " (get-strength card)
                               " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
     (assoc cdef
@@ -2281,11 +2287,11 @@
                                                                (vec (sort-by :title (filter program? (:deck runner)))))
                                                        "No install"))
                                    :async true
-                                   :effect (req (trigger-event state side :searched-stack nil)
-                                                (shuffle! state side :deck)
-                                                (if (not= target "No install")
-                                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                                  (effect-completed state side eid)))}
+                                   :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :searched-stack nil nil)
+                                                  (wait-for (shuffle! state side (make-eid state eid) :deck)
+                                                    (if (not= target "No install")
+                                                      (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                                      (effect-completed state side eid)))))}
                                   card nil))}]})
 
 (defcard "Sharpshooter"
@@ -2334,7 +2340,8 @@
 (defcard "Snowball"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
                                            {:additional-ability {:msg "gain +1 strength for the remainder of the run"
-                                                                 :effect (effect (pump card 1 :end-of-run))}})
+                                                                 :async true
+                                                                 :effect (effect (pump eid card 1 :end-of-run))}})
                                 (strength-pump 1 1)]}))
 
 (defcard "Spike"
@@ -2442,7 +2449,8 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                 :msg (msg "add +3 strength to " (:title target))
-                :effect (effect (pump target 3))}]})
+                :async true
+                :effect (effect (pump eid target 3))}]})
 
 (defcard "Tapwrm"
   (let [ability {:label "Gain [Credits] (start of turn)"
@@ -2509,8 +2517,9 @@
                                            (in-discard? %))}
                      :msg (msg "shuffle " (string/join ", " (map :title targets))
                                " into their Stack")
+                     :async true
                      :effect (req (doseq [c targets] (move state side c :deck))
-                                  (shuffle! state side :deck))}
+                                  (shuffle! state side eid :deck))}
                     card nil))}]})
 
 (defcard "Trypano"
@@ -2639,7 +2648,8 @@
                                  :label "Give -1 strength to current piece of ice"
                                  :req (req (rezzed? current-ice))
                                  :msg (msg "give -1 strength to " (:title current-ice))
-                                 :effect (effect (pump-ice current-ice -1))}
+                                 :async true
+                                 :effect (effect (pump-ice eid current-ice -1))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Yog.0"

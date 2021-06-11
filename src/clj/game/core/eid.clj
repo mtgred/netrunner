@@ -1,4 +1,5 @@
-(ns game.core.eid)
+(ns game.core.eid
+    (:require [game.macros :refer [wait-for]]))
 
 (defn make-eid
   ([state] (make-eid state nil))
@@ -37,6 +38,14 @@
     (let [results (handler eid)]
       (swap! state update :effect-completed dissoc (:eid eid))
       results)))
+
+
+(defn effect-sequence
+  [state side eid args func]
+    (if (empty? args)
+        (effect-completed state side eid)
+        (wait-for (func state side (make-eid state eid) (first args))
+                  (effect-sequence state side eid (rest args) func))))
 
 (defn make-result
   [eid result]
