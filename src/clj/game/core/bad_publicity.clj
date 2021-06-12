@@ -1,7 +1,7 @@
 (ns game.core.bad-publicity
   (:require
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-sync trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [gain lose]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -18,9 +18,9 @@
   [state side eid n]
   (trigger-event state side :pre-resolve-bad-publicity n)
   (if (pos? n)
-    (do (gain state :corp :bad-publicity n)
-        (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity n))
+    (wait-for (gain state :corp (make-eid state eid) :bad-publicity n)
+      (toast state :corp (str "Took " n " bad publicity!") "info")
+      (trigger-event-simult state side eid :corp-gain-bad-publicity nil n))
     (effect-completed state side eid)))
 
 (defn- bad-publicity-count
@@ -67,5 +67,5 @@
   ([state side eid n]
    (if (= n :all)
      (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity :base]))
-     (do (lose state :corp :bad-publicity n)
-         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
+     (wait-for (lose state :corp (make-eid state eid) :bad-publicity n)
+               (trigger-event-simult state side eid :corp-lose-bad-publicity nil n side)))))

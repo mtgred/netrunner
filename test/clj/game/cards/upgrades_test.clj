@@ -133,7 +133,7 @@
   (testing "No cost"
     (do-game
       (new-game {:corp {:deck ["Arella Salvatore" "TGTBT" (qty "Ice Wall" 2)]}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Arella Salvatore" "New remote")
       (play-from-hand state :corp "TGTBT" "Server 1")
       (play-from-hand state :corp "Ice Wall" "HQ")
@@ -149,8 +149,8 @@
   (testing "Overadvanced Vitruvius"
     (do-game
       (new-game {:corp {:deck ["Arella Salvatore" "Project Vitruvius" (qty "Hedge Fund" 2)]}})
-      (core/gain state :corp :click 6)
-      (core/gain state :corp :credit 10)
+      (gain state :corp :click 6)
+      (gain state :corp :credit 10)
       (play-from-hand state :corp "Arella Salvatore" "New remote")
       (play-from-hand state :corp "Project Vitruvius" "Server 1")
       (let [arella (get-content state :remote1 0)
@@ -335,7 +335,7 @@
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
       (take-credits state :corp 1)
-      (core/gain state :runner :credit 1)
+      (gain state :runner :credit 1)
       (let [bm (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
         (rez state :corp bm)
@@ -406,7 +406,7 @@
       (is (= 1 (count-tags state)))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
       (rez state :corp (get-content state :remote2 0))
-      (core/gain state :runner :credit 20)
+      (gain state :runner :credit 20)
       (run-empty-server state :remote2)
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
@@ -490,7 +490,7 @@
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
     (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "Off the Grid" "Strongbox"]}})
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Breaker Bay Grid" "New remote")
     (play-from-hand state :corp "Off the Grid" "Server 1")
     (let [bbg1 (get-content state :remote1 0)
@@ -526,7 +526,7 @@
       (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
       ; (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
       ; (take-credits state :runner)
-      ; (core/lose state :runner :credit 3)
+      ; (lose state :runner :credit 3)
       ; (trash-from-hand state :corp "Paywall Implementation")
       ; (card-ability state :corp (refresh bs) 0)
       ; (click-prompt state :corp (find-card "Paywall Implementation" (:discard (get-corp))))
@@ -539,7 +539,7 @@
       ; (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
       ; (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
       ; (take-credits state :runner)
-      ; (core/lose state :runner :credit 3)
+      ; (lose state :runner :credit 3)
       ; (card-ability state :corp (refresh bs) 0)
       ; (click-prompt state :corp (find-card "IPO" (:discard (get-corp))))
       ; (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game")
@@ -549,8 +549,8 @@
   ;; Calibration Testing - advanceable / non-advanceable
   (do-game
     (new-game {:corp {:deck [(qty "Calibration Testing" 2) "Project Junebug" "PAD Campaign"]}})
-    (core/gain state :corp :credit 10)
-    (core/gain state :corp :click 1)
+    (gain state :corp :credit 10)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Calibration Testing" "New remote")
     (play-from-hand state :corp "Project Junebug" "Server 1")
     (let [ct (get-content state :remote1 0)
@@ -702,7 +702,7 @@
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Cayambe Grid" (qty "Ice Wall" 2)]
                           :credits 10}})
-        (core/gain state :corp :click 10)
+        (gain state :corp :click 10)
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Cayambe Grid" "HQ")
@@ -726,7 +726,7 @@
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["Cayambe Grid" (qty "Ice Wall" 3)]
                           :credits 10}})
-        (core/gain state :corp :click 10)
+        (gain state :corp :click 10)
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Ice Wall" "HQ")
@@ -755,7 +755,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Cayambe Grid" 2) (qty "Ice Wall" 2)]
                         :credits 10}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Cayambe Grid" "HQ")
       (play-from-hand state :corp "Ice Wall" "New remote")
@@ -811,8 +811,8 @@
   (do-game
     (new-game {:corp {:deck [(qty "Ice Wall" 3) "Code Replicator"]}
                :runner {:hand ["Corroder"]}})
-    (core/gain state :corp :click 1)
-    (core/gain state :corp :credit 5)
+    (gain state :corp :click 1)
+    (gain state :corp :credit 5)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -844,7 +844,7 @@
     (do-game
      (new-game {:corp {:deck ["Cold Site Server" "Test Ground"]}
                 :runner {:deck ["Dirty Laundry"]}})
-     (core/gain state :corp :credit 10 :click 10)
+     (gain state :corp :credit 10 :click 10)
      (play-from-hand state :corp "Cold Site Server" "HQ")
      (play-from-hand state :corp "Test Ground" "New remote")
      (let [css (get-content state :hq 0)
@@ -865,7 +865,7 @@
        (card-ability state :corp (refresh tg) 0)
        (click-card state :corp (refresh css))
        (is (not (rezzed? (refresh css))) "CSS derezzed")
-       (core/gain state :runner :click 2)
+       (gain state :runner :click 2)
        (run-on state :hq)
        (is (= 3 (:credit (get-runner))) "0 creds spent to run HQ")
        (is (= 2 (:click (get-runner))) "Only 1 click spent to run HQ")
@@ -893,7 +893,7 @@
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ice
   (do-game
     (new-game {:corp {:deck [(qty "Quandary" 2) "Corporate Troubleshooter"]}})
-    (core/gain state :corp :credit 5)
+    (gain state :corp :credit 5)
     (play-from-hand state :corp "Corporate Troubleshooter" "HQ")
     (play-from-hand state :corp "Quandary" "HQ")
     (play-from-hand state :corp "Quandary" "HQ")
@@ -925,7 +925,7 @@
       (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (is (= 4 (:credit (get-corp))) "Corp has 4 credits")
-      (core/gain state :runner :credit 4)
+      (gain state :runner :credit 4)
       (play-from-hand state :runner "Desperado")
       (play-from-hand state :runner "Temüjin Contract")
       (click-prompt state :runner "HQ")
@@ -944,7 +944,7 @@
       (play-from-hand state :corp "Vanilla" "HQ")
       (rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
-      (core/gain state :runner :credit 4)
+      (gain state :runner :credit 4)
       (play-from-hand state :runner "The Gauntlet")
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
@@ -1080,7 +1080,7 @@
   (testing "Pay-credits prompt"
     (do-game
       (new-game {:corp {:hand ["Dedicated Technician Team" (qty "Enigma" 3)]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Enigma" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
       (play-from-hand state :corp "Dedicated Technician Team" "Server 1")
@@ -1530,7 +1530,7 @@
      (play-from-hand state :corp "Hired Help" "New remote")
      (play-from-hand state :corp "Accelerated Beta Test" "New remote")
      (take-credits state :corp)
-     (core/gain state :runner :click 1)
+     (gain state :runner :click 1)
      (rez state :corp (get-content state :remote1 0))
      (let [hh (get-content state :remote1 0)]
        (run-on state :remote1)
@@ -1596,7 +1596,7 @@
   ;; Increased Drop Rates
   (do-game
     (new-game {:corp {:deck [(qty "Increased Drop Rates" 2)]}})
-    (core/gain state :corp :bad-publicity 1)
+    (gain state :corp :bad-publicity 1)
     (starting-hand state :corp ["Increased Drop Rates"])
     (play-from-hand state :corp "Increased Drop Rates" "New remote")
     (take-credits state :corp)
@@ -1618,7 +1618,7 @@
     (starting-hand state :corp ["Intake" "Intake"])
     (play-from-hand state :corp "Intake" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :click 5 :credit 10)
+    (gain state :runner :click 5 :credit 10)
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Fester")
     (play-from-hand state :runner "Daily Casts")
@@ -1657,7 +1657,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Vanilla" 3) (qty "Ice Wall" 3)]
                         :hand ["Jinja City Grid"]}})
-      (core/gain state :corp :click 6)
+      (gain state :corp :click 6)
       (play-from-hand state :corp "Jinja City Grid" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
@@ -1729,7 +1729,7 @@
   (testing "Pay-credits prompt"
     (do-game
       (new-game {:corp {:hand ["Khondi Plaza" "Ice Wall" "Enigma" (qty "PAD Campaign" 3)]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Khondi Plaza" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
       (dotimes [c 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
@@ -2158,7 +2158,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       ;; Reset credits to 5
-      (core/gain state :runner :credit 2)
+      (gain state :runner :credit 2)
       (run-empty-server state "Server 1")
       ;; Runner not force to trash since Imp is installed
       (is (= 2 (count (prompt-buttons :runner))) "Runner has 2 choices when Imp is installed")
@@ -2175,20 +2175,20 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (is (= 3 (:credit (get-runner))) "Runner paid install costs")
-      (core/gain state :runner :credit 2)
+      (gain state :runner :credit 2)
       (run-empty-server state "Server 1")
       (is (= #{"[Imp] Hosted virus counter: Trash card" "Pay 5 [Credits] to trash"}
              (into #{} (prompt-buttons :runner))) "Should have Imp and MVT options")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (take-credits state :runner)
-      (core/lose state :runner :credit (:credit (get-runner)))
+      (lose state :runner :credit (:credit (get-runner)))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 2")
       (is (= ["[Imp] Hosted virus counter: Trash card"] (prompt-buttons :runner)) "Should only have Imp option")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (take-credits state :runner)
-      (core/lose state :runner :credit (:credit (get-runner)))
+      (lose state :runner :credit (:credit (get-runner)))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 3")
@@ -2387,7 +2387,7 @@
   (do-game
     (new-game {:corp {:deck ["NeoTokyo Grid" "Nisei MK II"
                              "Shipment from SanSan" "Ice Wall"]}})
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
     (play-from-hand state :corp "Nisei MK II" "Server 1")
     (rez state :corp (get-content state :remote1 0))
@@ -2643,7 +2643,7 @@
       (run-empty-server state "R&D")
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Apocalypse")
-      (core/gain state :runner :click 1)
+      (gain state :runner :click 1)
       (run-empty-server state "Archives")
       (click-prompt state :runner "Hostile Takeover")
       (is (= ["Steal"] (prompt-buttons :runner)))
@@ -2840,7 +2840,7 @@
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (play-from-hand state :corp "Prisec" "Archives")
       (play-from-hand state :corp "Prisec" "Archives")
-      (core/gain state :corp :click 1 :credit 14)
+      (gain state :corp :click 1 :credit 14)
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-empty-server state :archives)
@@ -2902,7 +2902,7 @@
       (play-from-hand state :corp "Red Herrings" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
       (take-credits state :corp 1)
-      (core/gain state :runner :credit 1)
+      (gain state :runner :credit 1)
       (let [rh (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
         (rez state :corp rh)
@@ -3084,7 +3084,7 @@
     (let [iw1 (get-ice state :hq 0)
           iw2 (get-ice state :rd 0)
           sg (get-content state :hq 0)]
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (advance state iw1)
       (rez state :corp sg)
       (rez state :corp (refresh iw1))
@@ -3100,7 +3100,7 @@
   ;; Self-destruct
   (do-game
     (new-game {:corp {:deck ["Self-destruct" "Dedicated Response Team" "Ice Wall"]}})
-    (core/gain state :corp :credit 100 :click 4)
+    (gain state :corp :credit 100 :click 4)
     (play-from-hand state :corp "Self-destruct" "New remote")
     (play-from-hand state :corp "Dedicated Response Team" "Server 1")
     (play-from-hand state :corp "Ice Wall" "Server 1")
@@ -3169,7 +3169,7 @@
   (testing "Pay-credits prompt"
     (do-game
       (new-game {:corp {:hand ["Simone Diego" "Ice Wall" "Project Junebug"]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Simone Diego" "New remote")
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (play-from-hand state :corp "Project Junebug" "Server 1")
@@ -3217,7 +3217,7 @@
       (play-from-hand state :corp "Strongbox" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
       (take-credits state :corp 1)
-      (core/gain state :runner :credit 1)
+      (gain state :runner :credit 1)
       (let [sb (get-content state :remote1 0)
             hok (get-content state :remote1 1)]
         (rez state :corp sb)
@@ -3234,7 +3234,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Surat City Grid" 2) (qty "Cyberdex Virus Suite" 2)
                              "Enigma" "Wraparound"]}})
-    (core/gain state :corp :credit 15 :click 8)
+    (gain state :corp :credit 15 :click 8)
     (play-from-hand state :corp "Surat City Grid" "New remote")
     (play-from-hand state :corp "Wraparound" "Server 1")
     (play-from-hand state :corp "Cyberdex Virus Suite" "Server 1")
@@ -3338,7 +3338,7 @@
     (do-game
       (new-game {:corp {:deck ["Pup" "Tori Hanzō"]}
                  :runner {:deck [(qty "Sure Gamble" 3) "Net Shield"]}})
-      (core/gain state :corp :credit 10)
+      (gain state :corp :credit 10)
       (play-from-hand state :corp "Pup" "HQ")
       (play-from-hand state :corp "Tori Hanzō" "HQ")
       (take-credits state :corp)
@@ -3370,7 +3370,7 @@
   (testing "with Hokusai Grid: Issue #2702"
     (do-game
       (new-game {:corp {:deck ["Tori Hanzō" "Hokusai Grid"]}})
-      (core/gain state :corp :credit 5)
+      (gain state :corp :credit 5)
       (play-from-hand state :corp "Hokusai Grid" "Archives")
       (play-from-hand state :corp "Tori Hanzō" "Archives")
       (take-credits state :corp)
@@ -3399,7 +3399,7 @@
   (testing "breaking subsequent net damage: Issue #3176"
     (do-game
       (new-game {:corp {:deck ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)]}})
-      (core/gain state :corp :credit 8)
+      (gain state :corp :credit 8)
       (play-from-hand state :corp "Tori Hanzō" "New remote")
       (play-from-hand state :corp "Pup" "Server 1")
       (take-credits state :corp)
@@ -3561,7 +3561,7 @@
                  :runner {:deck ["Corroder" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :runner "Corroder")
       (play-from-hand state :runner "Dyson Mem Chip")
       (let [war (get-content state :remote1 0)
@@ -3583,7 +3583,7 @@
                  :runner {:deck ["Clan Vengeance" "Corroder" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Warroid Tracker" "HQ")
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :runner "Corroder")
       (play-from-hand state :runner "Dyson Mem Chip")
       (play-from-hand state :runner "Clan Vengeance")
@@ -3657,7 +3657,7 @@
       (play-from-hand state :corp "Warroid Tracker" "New remote")
       (play-from-hand state :corp "PAD Campaign" "Remote 1")
       (take-credits state :corp)
-      (core/gain state :runner :click 10)
+      (gain state :runner :click 10)
       (dotimes [_ 5]
         (play-from-hand state :runner "Self-modifying Code"))
       (rez state :corp (get-content state :remote1 0))

@@ -1,7 +1,8 @@
 (ns game.core.gaining
   (:require
     [game.core.eid :refer [make-eid effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-sync trigger-event-simult]]
+    [game.macros :refer [effect-seq wait-for]]
     [game.core.toasts :refer [toast]]))
 
 (defn safe-inc-n
@@ -45,38 +46,40 @@
                    (pos? (get-in @state [:runner :run-credit] 0)))
           (swap! state update-in [:runner :run-credit] (sub->0 value))))))
 
-(defn gain [state side & args]
-  (doseq [[cost-type amount] (partition 2 args)]
-    (cond
-      ;; amount is a map, merge-update map
-      (map? amount)
-      (doseq [[subtype amount] amount]
-        (swap! state update-in [side cost-type subtype] (safe-inc-n amount))
-        (swap! state update-in [:stats side :gain cost-type subtype] (fnil + 0) amount))
+(defn gain [state side eid & args]
+  (effect-seq state side eid [[cost-type amount] (partition 2 args)]
+    (let [continuation #(trigger-event-simult state side eid (if (= side :corp) :corp-gain :runner-gain) nil [cost-type amount])]
+      (cond
+        ;; amount is a map, merge-update map
+        (map? amount)
+        (do (doseq [[subtype amount] amount]
+              (swap! state update-in [side cost-type subtype] (safe-inc-n amount))
+              (swap! state update-in [:stats side :gain cost-type subtype] (fnil + 0) amount))
+            (continuation))
 
-      ;; Default cases for the types that expect a map
-      (#{:hand-size :memory} cost-type)
-      (gain state side cost-type {:mod amount})
+        ;; Default cases for the types that expect a map
+        (#{:hand-size :memory} cost-type)
+        (gain state side eid cost-type {:mod amount})
 
-      ;; Default case for tags and bad publicity is `:base`
-      (#{:tag :bad-publicity} cost-type)
-      (gain state side cost-type {:base amount})
+        ;; Default case for tags and bad publicity is `:base`
+        (#{:tag :bad-publicity} cost-type)
+        (gain state side eid cost-type {:base amount})
 
-      ;; Else assume amount is a number and try to increment cost-type by it.
-      :else
-      (do (swap! state update-in [side cost-type] (safe-inc-n amount))
-          (swap! state update-in [:stats side :gain cost-type] (fnil + 0 0) amount)))
-    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) [cost-type amount])))
+        ;; Else assume amount is a number and try to increment cost-type by it.
+        :else
+        (do (swap! state update-in [side cost-type] (safe-inc-n amount))
+            (swap! state update-in [:stats side :gain cost-type] (fnil + 0 0) amount)
+            (continuation))))))
 
-(defn lose [state side & args]
-  (doseq [[cost-type amount] (partition 2 args)]
-    (if (= amount :all)
-      (do (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type]))
-          (swap! state assoc-in [side cost-type] 0))
-      (do (when (number? amount)
-            (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
-          (deduct state side [cost-type amount])))
-    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
+(defn lose [state side eid & args]
+ (effect-seq state side eid [[cost-type amount] (partition 2 args)]
+   (if (= amount :all)
+     (do (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type]))
+         (swap! state assoc-in [side cost-type] 0))
+     (do (when (number? amount)
+           (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
+         (deduct state side [cost-type amount])))
+   (trigger-event-simult state side eid (if (= side :corp) :corp-lose :runner-lose) nil [cost-type amount])))
 
 (defn gain-credits
   "Utility function for triggering events"
@@ -84,8 +87,8 @@
   ([state side eid amount args]
    (if (and amount
             (pos? amount))
-     (do (gain state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) amount args))
+     (do (wait-for (gain state side (make-eid state eid) :credit amount)
+           (trigger-event-simult state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) nil amount args)))
      (effect-completed state side eid))))
 
 (defn lose-credits
@@ -95,11 +98,12 @@
    (if (and amount
             (or (= :all amount)
                 (pos? amount)))
-     (do (lose state side :credit amount)
-         (when (and (= side :runner)
+     (wait-for (lose state side (make-eid state eid) :credit amount)
+         (if (and (= side :runner)
                     (= :all amount))
-           (lose state :runner :run-credit :all))
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) amount args))
+           (wait-for (lose state :runner (make-eid state eid) :run-credit :all)
+             (trigger-event-simult state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) nil amount args))
+         (trigger-event-simult state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) nil amount args)))
      (effect-completed state side eid))))
 
 ;;; Stuff for handling {:base x :mod y} data structures

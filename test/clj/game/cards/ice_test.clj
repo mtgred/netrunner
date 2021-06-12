@@ -110,7 +110,7 @@
     (do-game
       (new-game {:corp {:deck ["Akhet"]}})
       (play-from-hand state :corp "Akhet" "HQ")
-      (core/gain state :corp :click 1 :credit 1)
+      (gain state :corp :click 1 :credit 1)
       (let [akhet (get-ice state :hq 0)]
         (rez state :corp akhet)
         (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
@@ -158,11 +158,11 @@
           (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
           (run-jack-out state)
           (take-credits state :runner)
-          (core/gain state :corp :credit 1)
+          (gain state :corp :credit 1)
           (advance state akhet)
           (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet now has 3 adv tokens")
           (take-credits state :corp)
-          (core/gain state :runner :credit 5)
+          (gain state :runner :credit 5)
           (run-on state :hq)
           (run-continue state)
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
@@ -177,7 +177,7 @@
       (new-game {:corp {:deck ["Anansi"]}
                  :runner {:deck [(qty "Sure Gamble" 4) "Inside Job"]}})
       (play-from-hand state :corp "Anansi" "HQ")
-      (core/gain state :corp :credit 8)
+      (gain state :corp :credit 8)
       (take-credits state :corp)
       (let [anansi (get-ice state :hq 0)]
         (play-from-hand state :runner "Inside Job")
@@ -191,10 +191,10 @@
       (new-game {:corp {:deck ["Anansi"]}
                  :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
       (play-from-hand state :corp "Anansi" "HQ")
-      (core/gain state :corp :credit 8)
+      (gain state :corp :credit 8)
       (take-credits state :corp)
       (play-from-hand state :runner "Mongoose")
-      (core/gain state :runner :credit 7)
+      (gain state :runner :credit 7)
       (let [anansi (get-ice state :hq 0)
             mongoose (get-program state 0)]
         (run-on state :hq)
@@ -294,7 +294,7 @@
                                         :credits 100}
                                  :runner {:hand ["Corroder"]
                                           :credits 100}})
-                _ (do (core/gain state :corp :click 100)
+                _ (do (gain state :corp :click 100)
                       (play-from-hand state :corp "Ansel 1.0" "New remote"))
                 ansel (get-ice state :remote1 0)]
     (testing "Has 1.0 Bioroid runner ability"
@@ -538,7 +538,7 @@
     (do-game
       (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]
                         :credits 7}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Blockchain" "HQ")
       (let [bc (get-ice state :hq 0)]
         (rez state :corp bc)
@@ -564,7 +564,7 @@
       (new-game {:corp {:hand ["Blockchain" (qty "Beanstalk Royalties" 2)]
                         :discard [(qty "Beanstalk Royalties" 3)]
                         :credits 7}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Blockchain" "HQ")
       (let [bc (get-ice state :hq 0)]
         (rez state :corp bc)
@@ -581,7 +581,7 @@
     (do-game
       (new-game {:corp {:hand ["Blockchain" "Preemptive Action" (qty "Beanstalk Royalties" 4)]
                         :credits 7}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Blockchain" "HQ")
       (let [bc (get-ice state :hq 0)]
         (rez state :corp bc)
@@ -740,7 +740,7 @@
   (testing "Run on centrals"
     (do-game
       (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
-      (core/gain state :corp :credit 5)
+      (gain state :corp :credit 5)
       (play-from-hand state :corp "Cell Portal" "HQ")
       (play-from-hand state :corp "Paper Wall" "HQ")
       (play-from-hand state :corp "Paper Wall" "HQ")
@@ -758,7 +758,7 @@
   (testing "Run on servers"
     (do-game
       (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
-      (core/gain state :corp :credit 5)
+      (gain state :corp :credit 5)
       (play-from-hand state :corp "Cell Portal" "New remote")
       (play-from-hand state :corp "Paper Wall" "Server 1")
       (play-from-hand state :corp "Paper Wall" "Server 1")
@@ -809,7 +809,7 @@
     (do-game
       (new-game {:corp {:deck ["Chum" (qty "Enigma" 2) "Ice Wall"]}
                  :runner {:deck ["Corroder"]}})
-      (core/gain state :corp :click 1 :credit 6)
+      (gain state :corp :click 1 :credit 6)
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")
@@ -977,7 +977,7 @@
   ;; Curtain Wall - Strength boost when outermost piece of ice
   (do-game
     (new-game {:corp {:deck ["Curtain Wall" "Paper Wall"]}})
-    (core/gain state :corp :credit 10)
+    (gain state :corp :credit 10)
     (play-from-hand state :corp "Curtain Wall" "HQ")
     (let [curt (get-ice state :hq 0)]
       (rez state :corp curt)
@@ -1395,7 +1395,7 @@
       ; Check cannot run flag is cleared on next turn #2474
       (take-credits state :runner)
       (is (= :corp (:active-player @state)) "Corp turn")
-      (core/gain state :runner :click 1)
+      (gain state :runner :click 1)
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
 
@@ -1531,7 +1531,7 @@
     (new-game {:corp {:deck ["Flare"]}
                :runner {:deck ["Plascrete Carapace" "Clone Chip" (qty "Cache" 3)]}})
     (play-from-hand state :corp "Flare" "HQ")
-    (core/gain state :corp :credit 2)
+    (gain state :corp :credit 2)
     (take-credits state :corp)
     (play-from-hand state :runner "Plascrete Carapace")
     (play-from-hand state :runner "Clone Chip")
@@ -2007,7 +2007,7 @@
       (play-from-hand state :corp "Hagen" "HQ")
       (take-credits state :corp)
       (let [hag (get-ice state :hq 0)]
-        (core/gain state :corp :click 100)
+        (gain state :corp :click 100)
         (play-from-hand state :runner "Inti")
         (play-from-hand state :runner "Gordian Blade")
         (play-from-hand state :runner "Pipeline")
@@ -2031,8 +2031,8 @@
       (play-from-hand state :corp "Hagen" "HQ")
       (take-credits state :corp)
       (let [hag (get-ice state :hq 0)]
-        (core/gain state :runner :click 100)
-        (core/gain state :runner :credit 100)
+        (gain state :runner :click 100)
+        (gain state :runner :credit 100)
         (run-on state "HQ")
         (rez state :corp hag)
         (run-continue state)
@@ -2165,7 +2165,7 @@
   (do-game
     (new-game {:corp {:hand ["Hive" "Hostile Takeover" "Rebranding Team" "Government Takeover"]
                       :credits 50}})
-    (core/gain state :corp :click 20)
+    (gain state :corp :click 20)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (play-from-hand state :corp "Rebranding Team" "New remote")
     (play-from-hand state :corp "Government Takeover" "New remote")
@@ -2191,7 +2191,7 @@
   (do-game
     (new-game {:corp {:deck ["Holmegaard" "Hostile Takeover"]}
                :runner {:deck ["Cache" "Inti"]}})
-    (core/gain state :corp :credit 10)
+    (gain state :corp :credit 10)
     (play-from-hand state :corp "Holmegaard" "HQ")
     (let [holm (get-ice state :hq 0)]
       (rez state :corp holm)
@@ -2256,7 +2256,7 @@
     (new-game {:corp {:deck ["Hydra"]}})
     (play-from-hand state :corp "Hydra" "HQ")
     (take-credits state :corp)
-    (core/gain state :corp :credit 10)
+    (gain state :corp :credit 10)
     (run-on state :hq)
     (let [hydra (get-ice state :hq 0)
           corp-creds (:credit (get-corp))]
@@ -2512,7 +2512,7 @@
       (play-from-hand state :corp "Jua" "HQ")
       (take-credits state :corp)
       (let [jua (get-ice state :hq 0)]
-        (core/gain state :runner :credit 10)
+        (gain state :runner :credit 10)
         (play-from-hand state :runner "Desperado")
         (run-on state "HQ")
         (rez state :corp jua)
@@ -3266,7 +3266,7 @@
                                "Ice Wall" "Vanilla"
                                "Allele Repression" "Hostile Takeover"]
                         :credits 20}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Metamorph" "Archives")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Vanilla" "R&D")
@@ -3497,7 +3497,7 @@
   ;; Mother Goddess - Gains other ice subtypes
   (do-game
     (new-game {:corp {:deck ["Mother Goddess" "NEXT Bronze"]}})
-    (core/gain state :corp :credit 1)
+    (gain state :corp :credit 1)
     (play-from-hand state :corp "Mother Goddess" "HQ")
     (play-from-hand state :corp "NEXT Bronze" "R&D")
     (let [mg (get-ice state :hq 0)
@@ -3586,7 +3586,7 @@
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game
     (new-game {:corp {:deck [(qty "NEXT Bronze" 2) "NEXT Silver"]}})
-    (core/gain state :corp :credit 2)
+    (gain state :corp :credit 2)
     (play-from-hand state :corp "NEXT Bronze" "HQ")
     (play-from-hand state :corp "NEXT Bronze" "R&D")
     (play-from-hand state :corp "NEXT Silver" "Archives")
@@ -3612,7 +3612,7 @@
   (testing "Base rez cost"
     (do-game
       (new-game {:corp {:deck ["NEXT Diamond"]}})
-      (core/gain state :corp :credit 5)
+      (gain state :corp :credit 5)
       (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
       (play-from-hand state :corp "NEXT Diamond" "HQ")
       (rez state :corp (get-ice state :hq 0))
@@ -3620,7 +3620,7 @@
   (testing "Lowered rez cost"
     (do-game
       (new-game {:corp {:deck ["NEXT Diamond" "NEXT Opal" "NEXT Bronze" "Kakugo"]}})
-      (core/gain state :corp :credit 13 :click 1)
+      (gain state :corp :credit 13 :click 1)
       (play-from-hand state :corp "NEXT Diamond" "HQ")
       (play-from-hand state :corp "NEXT Opal" "HQ")
       (play-from-hand state :corp "NEXT Bronze" "R&D")
@@ -3883,7 +3883,7 @@
       (play-from-hand state :corp "Pachinko" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (run-on state "HQ")
       (let [pachinko (get-ice state :hq 0)
             corroder (get-program state 0)
@@ -4084,7 +4084,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                       :hand [(qty "Rime" 2) (qty "Ice Wall" 2)]}})
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
     (let [iw1 (get-ice state :hq 0)
@@ -4318,7 +4318,7 @@
    (new-game {:corp {:deck ["Sandstone"]}})
    (play-from-hand state :corp "Sandstone" "HQ")
    (take-credits state :corp)
-   (core/gain state :runner :click 10)
+   (gain state :runner :click 10)
    (let [snd (get-ice state :hq 0)]
      (rez state :corp snd)
      (dotimes [i 6]
@@ -4394,7 +4394,7 @@
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
   (do-game
     (new-game {:corp {:deck ["Seidr Adaptive Barrier" (qty "Ice Wall" 2)]}})
-    (core/gain state :corp :credit 10)
+    (gain state :corp :credit 10)
     (play-from-hand state :corp "Seidr Adaptive Barrier" "HQ")
     (let [sab (get-ice state :hq 0)]
       (rez state :corp sab)
@@ -4632,7 +4632,7 @@
       (play-from-hand state :corp "Mwanza City Grid" "R&D")
       (play-from-hand state :corp "Shiro" "R&D")
       (take-credits state :corp)
-      (core/gain state :corp :credit 100)
+      (gain state :corp :credit 100)
       (play-from-hand state :runner "R&D Interface")
       (let [shiro (get-ice state :rd 0)
             mwanza (get-content state :rd 0)]
@@ -4821,8 +4821,8 @@
   ;; Surveyor ice strength
   (do-game
     (new-game {:corp {:deck [(qty "Surveyor" 1) (qty "Ice Wall" 2)]}})
-    (core/gain state :corp :credit 10)
-    (core/gain state :runner :credit 10)
+    (gain state :corp :credit 10)
+    (gain state :runner :credit 10)
     (play-from-hand state :corp "Surveyor" "HQ")
     (let [surv (get-ice state :hq 0)]
       (rez state :corp surv)
@@ -5017,7 +5017,7 @@
     (do-game
       (new-game {:corp {:hand ["Drafter" "Border Control" "Vanilla" "Thimblerig"]
                         :credits 100}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Border Control" "R&D")
       (play-from-hand state :corp "Drafter" "R&D")
       (play-from-hand state :corp "Thimblerig" "HQ")
@@ -5047,7 +5047,7 @@
                  :runner {:id "Leela Patel: Trained Pragmatist"
                           :hand ["Gordian Blade"]
                           :credits 10}})
-      (core/gain state :corp :click 3)
+      (gain state :corp :click 3)
       (play-from-hand state :corp "Vanilla" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Thimblerig" "HQ")
@@ -5089,7 +5089,7 @@
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Tithonium" "Patch"]}
                  :runner {:deck ["Wasteland"]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (play-from-hand state :corp "Tithonium" "HQ")
       (let [ht (get-content state :remote1 0)
@@ -5117,7 +5117,7 @@
         (play-from-hand state :runner "Wasteland")
         (let [wast (get-resource state 0)]
           (run-on state "HQ")
-          (core/gain state :corp :credit 9)
+          (gain state :corp :credit 9)
           (rez state :corp (refresh ti))
           (run-continue state)
           (card-subroutine state :corp ti 2)
@@ -5210,7 +5210,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tour Guide" (qty "NGO Front" 3)]
                         :credits 10}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Tour Guide" "HQ")
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
@@ -5228,7 +5228,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tour Guide" (qty "NGO Front" 3)]
                         :credits 10}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
@@ -5244,7 +5244,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tour Guide" (qty "NGO Front" 3)]
                         :credits 10}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
@@ -5409,7 +5409,7 @@
     (do-game
       (new-game {:corp {:deck ["Týr"]}})
       (play-from-hand state :corp "Týr" "HQ")
-      (core/gain state :corp :credit 10)
+      (gain state :corp :credit 10)
       (take-credits state :corp)
       (let [tyr (get-ice state :hq 0)]
         (run-on state "HQ")
@@ -5461,7 +5461,7 @@
   (do-game
     (new-game {:corp {:deck ["Wendigo" "Shipment from SanSan" "Superior Cyberwalls"]
                       :credits 100}})
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (play-from-hand state :corp "Superior Cyberwalls" "New remote")
     (let [sc (get-content state :remote1 0)]
       (score-agenda state :corp sc)

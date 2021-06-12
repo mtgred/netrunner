@@ -39,7 +39,7 @@
       (is (empty? (:prompt (get-corp))) "Cannot expose faceup agendas")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/lose state :corp :credit (:credit (get-corp)))
+      (lose state :corp :credit (:credit (get-corp)))
       (is (zero? (:credit (get-corp))) "Corp has no credits")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (click-prompt state :runner "Yes")
@@ -157,7 +157,7 @@
       (new-game {:corp {:id "Acme Consulting: The Truth You Need"
                         :deck [(qty "Hedge Fund" 5)]
                         :hand ["Data Ward"]}})
-      (core/gain state :corp :credit 10)
+      (gain state :corp :credit 10)
       (play-from-hand state :corp "Data Ward" "Archives")
       (take-credits state :corp)
       (run-on state "Archives")
@@ -773,7 +773,7 @@
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
                         :deck [(qty "Obokata Protocol" 5)]}
                  :runner {:deck [(qty "Sure Gamble" 3) "Inti" "Feedback Filter"]}})
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :corp "Obokata Protocol" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
@@ -855,7 +855,7 @@
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (take-credits state :corp)
-        (core/gain state :runner :credit 10)
+        (gain state :runner :credit 10)
         (changes-val-macro -6 (:credit (get-runner))
                            "Paid nothing to run on HQ"
                            (run-on state :remote1))))
@@ -866,7 +866,7 @@
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (take-credits state :corp)
-        (core/gain state :runner :credit 10)
+        (gain state :runner :credit 10)
         (changes-val-macro 0 (:credit (get-runner))
                            "Paid nothing to run on HQ"
                            (run-on state :hq))))
@@ -877,7 +877,7 @@
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (take-credits state :corp)
-        (core/gain state :runner :credit 10)
+        (gain state :runner :credit 10)
         (is (:flipped (get-in @state [:corp :identity])) "Corp ID is on the flip side")
         (changes-val-macro 0 (:credit (get-runner))
                            "Paid nothing to run on HQ"
@@ -896,7 +896,7 @@
       (new-game {:corp {:id "Earth Station: SEA Headquarters"
                         :hand ["PAD Campaign" "NASX" "Project Atlas" (qty "Bio Vault" 2) (qty "Vanilla" 5)]}
                  :runner {:deck ["Employee Strike"]}})
-      (core/gain state :corp :click 3)
+      (gain state :corp :click 3)
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (play-from-hand state :corp "Vanilla" "Server 1")
       (play-from-hand state :corp "Bio Vault" "Server 1")
@@ -909,7 +909,7 @@
       (play-from-hand state :corp "NASX" "New remote")
       (play-from-hand state :corp "Vanilla" "Server 2")
       (play-from-hand state :corp "Bio Vault" "Server 2")
-      (core/gain state :corp :click 4)
+      (gain state :corp :click 4)
       (play-and-score state "Project Atlas")
       (click-prompt state :corp "Server 2")
       (is (= 3 (count (:discard (get-corp)))) "Contents of server 1 were trashed")
@@ -1346,7 +1346,7 @@
   (do-game
     (new-game {:corp {:id "Gagarin Deep Space: Expanding the Horizon"
                       :deck ["PAD Campaign" "Caprice Nisei"]}})
-    (core/lose state :runner :credit 4)
+    (lose state :runner :credit 4)
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
@@ -1406,7 +1406,7 @@
                         :deck [(qty "15 Minutes" 3)]}
                  :runner {:deck ["Employee Strike" "Scrubbed"]}})
       (take-credits state :corp)
-      (core/gain state :runner :click 5)
+      (gain state :runner :click 5)
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))))
@@ -1425,7 +1425,7 @@
   (do-game
     (new-game {:corp {:id "Haas-Bioroid: Architects of Tomorrow"
                       :deck [(qty "Eli 1.0" 2) "Pup"]}})
-    (core/gain state :corp :credit 3)
+    (gain state :corp :credit 3)
     (play-from-hand state :corp "Eli 1.0" "Archives")
     (play-from-hand state :corp "Pup" "Archives")
     (play-from-hand state :corp "Eli 1.0" "HQ")
@@ -1737,7 +1737,7 @@
      (is (changes-credits (get-corp) 0
                           (run-empty-server state "Archives")))
      (take-credits state :runner)
-     (core/gain state :corp :click 3)
+     (gain state :corp :click 3)
      (play-from-hand state :corp "Celebrity Gift")
      (is (changes-credits (get-corp) 2 ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike
                           (do (click-card state :corp (first (:hand (get-corp))))
@@ -1749,7 +1749,7 @@
      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
                        :deck ["Slot Machine" (qty "Galahad" 2) "Fast Track" "House of Knives"]}
                 :runner {:deck ["Reflection"]}})
-     (core/gain state :corp :credit 20)
+     (gain state :corp :credit 20)
      (play-from-hand state :corp "Galahad" "HQ")
      (play-from-hand state :corp "Slot Machine" "R&D")
      (let [gal (get-ice state :hq 0)
@@ -1866,7 +1866,7 @@
       (new-game {:corp {:id "Jemison Astronautics: Sacrifice. Audacity. Success."
                         :deck ["Ice Wall" "Archer" "Gene Splicer"]
                         :credits 10}})
-      (core/gain state :corp :click 3)
+      (gain state :corp :click 3)
       (play-from-hand state :corp "Ice Wall" "R&D")
       (play-from-hand state :corp "Archer" "HQ")
       (play-from-hand state :corp "Gene Splicer" "New remote")
@@ -2133,7 +2133,7 @@
       (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"
                           :deck ["Magnum Opus"]}})
       (take-credits state :corp)
-      (core/lose state :runner :credit 1)
+      (lose state :runner :credit 1)
       (is (= 4 (:credit (get-runner))))
       (play-from-hand state :runner "Magnum Opus")
       (is (= 1 (count (get-program state))) "Magnum Opus installed")
@@ -2202,7 +2202,7 @@
                           :deck [(qty "Sure Gamble" 6)]}
                  :corp {:deck [(qty "Hedge Fund" 5)]}
                  :options {:start-as :runner}})
-      (core/lose state :runner :click 4)
+      (lose state :runner :click 4)
       (core/end-turn state :runner nil)
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (is (= 5 (count (:hand (get-runner)))))
@@ -2214,7 +2214,7 @@
                           :deck [(qty "Sure Gamble" 6)]}
                  :corp {:deck [(qty "Hedge Fund" 5)]}
                  :options {:start-as :runner}})
-      (core/lose state :runner :click 4)
+      (lose state :runner :click 4)
       (core/end-turn state :runner nil)
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (is (= 5 (count (:hand (get-runner)))))
@@ -2226,7 +2226,7 @@
                           :deck [(qty "Sure Gamble" 3)]}
                  :corp {:deck [(qty "Hedge Fund" 4)]}
                  :options {:start-as :runner}})
-      (core/lose state :runner :click 4)
+      (lose state :runner :click 4)
       (core/end-turn state :runner nil)
       (is (empty? (:prompt (get-runner))) "No prompt"))))
 
@@ -2676,7 +2676,7 @@
       (click-prompt state :runner "0")
       (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (core/gain state :runner :credit 2)
+      (gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
@@ -3001,7 +3001,7 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Spiderweb" "HQ")
       (take-credits state :corp)
-      (core/gain state :corp :credit 10)
+      (gain state :corp :credit 10)
       (let [spider (get-ice state :hq 1)
             iw (get-ice state :hq 0)]
         (rez state :corp spider)
@@ -3665,7 +3665,7 @@
                         :deck ["Project Atlas"]}})
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atl (get-content state :remote1 0)]
-        (core/gain state :corp :click 1)
+        (gain state :corp :click 1)
         (core/advance state :corp {:card (refresh atl)})
         (core/advance state :corp {:card (refresh atl)})
         (core/advance state :corp {:card (refresh atl)})
@@ -3680,7 +3680,7 @@
       (play-from-hand state :corp "Mark Yale" "New remote")
       (let [cst (get-content state :remote1 0)
             my (get-content state :remote2 0)]
-        (core/gain state :corp :click 3)
+        (gain state :corp :click 3)
         (core/advance state :corp {:card (refresh cst)})
         (core/advance state :corp {:card (refresh cst)})
         (core/advance state :corp {:card (refresh cst)})
@@ -3799,7 +3799,7 @@
     (do-game
       (new-game {:corp {:id "Weyland Consortium: Built to Last"
                         :hand [(qty "NGO Front" 2) "Oaktown Renovation"]}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "Oaktown Renovation" "New remote")

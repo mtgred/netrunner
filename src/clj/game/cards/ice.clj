@@ -191,7 +191,8 @@
   ; Runner loses a click effect
   {:label "Force the Runner to lose 1 [Click]"
    :msg "force the Runner to lose 1 [Click] if able"
-   :effect (effect (lose :runner :click 1))})
+   :async true
+   :effect (effect (lose :runner eid :click 1))})
 
 (defn runner-loses-credits
   "Runner loses credits effect"
@@ -805,9 +806,10 @@
 
 (defcard "Cell Portal"
   {:subroutines [{:msg "make the Runner approach the outermost piece of ice"
+                  :async true
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
-                                 (derez state side card)))}]})
+                                 (derez state side eid card)))}]})
 
 (defcard "Changeling"
   (morph-ice "Barrier" "Sentry" end-the-run))
@@ -844,10 +846,12 @@
                        :value (req (:subtype-target card))}]
    :events [{:event :runner-turn-ends
              :req (req (rezzed? card))
-             :effect (effect (derez :corp card))}
+             :async true
+             :effect (effect (derez :corp eid card))}
             {:event :corp-turn-ends
              :req (req (rezzed? card))
-             :effect (effect (derez :corp card))}]
+             :async true
+             :effect (effect (derez :corp eid card))}]
    :subroutines [end-the-run]})
 
 (defcard "Chiyashi"
@@ -1735,8 +1739,8 @@
                                 [{:event :run-ends
                                   :duration :end-of-run
                                   :async true
-                                  :effect (effect (derez new-ice)
-                                                  (trash eid card {:cause :subroutine}))}]))))}]})
+                                  :effect (req (wait-for (derez state side (make-eid state eid) new-ice)
+                                                         (trash state side eid card {:cause :subroutine})))}]))))}]})
 
 (defcard "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
@@ -2120,8 +2124,8 @@
                  {:label "Runner loses 1[click], if able. End the run."
                   :msg "make the Runner lose 1[click] and end the run"
                   :async true
-                  :effect (req (lose state :runner :click 1)
-                               (end-run state :corp eid card))}]})
+                  :effect (req (wait-for (lose state :runner (make-eid state eid) :click 1)
+                                         (end-run state :corp eid card)))}]})
 
 (defcard "Macrophage"
   {:subroutines [(trace-ability 4 {:label  "Purge virus counters"
@@ -2343,8 +2347,9 @@
              :req (req (and (same-card? card (:ice context))
                             (:broken (first (filter :printed (:subroutines (:ice context)))))))
              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
+             :async true
              :effect (req (redirect-run state side "Archives" :approach-ice)
-                          (derez state side card))}]
+                          (derez state side eid card))}]
    :subroutines [{:async true
                   :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                   :effect (req (wait-for (resolve-ability
@@ -2572,8 +2577,9 @@
                          "You have an additional [Click] to spend during your next turn.")
              :msg (str "force the runner to lose a [Click], if able. "
                        "Corp gains an additional [Click] to spend during their next turn")
-             :effect (req (lose state :runner :click 1)
-                          (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
+             :async true
+             :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0))
+                          (lose state :runner eid :click 1))}]
     {:subroutines [sub
                    sub]}))
 
@@ -3240,7 +3246,8 @@
   {:on-rez {:trace {:base 2
                     :msg "keep TMI rezzed"
                     :label "Keep TMI rezzed"
-                    :unsuccessful {:effect (effect (derez card))}}}
+                    :async true
+                    :unsuccessful {:effect (effect (derez eid card))}}}
    :subroutines [end-the-run]})
 
 (defcard "Tollbooth"
@@ -3299,8 +3306,7 @@
                      :effect (req (if (and (= target "Lose [Click]")
                                            (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
                                     (do (system-msg state :runner "loses [Click]")
-                                        (lose state :runner :click 1)
-                                        (effect-completed state :runner eid))
+                                        (lose state :runner eid :click 1))
                                     (do (system-msg state :corp "ends the run")
                                         (end-run state :corp eid card))))})})
 

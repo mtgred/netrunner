@@ -23,7 +23,7 @@
                    (update-hand-size state :corp)
                    (update-hand-size state :runner)
                    (update-all-subtypes state)
-                   (update-tag-status state)]]
+                   (update-tag-status state :runner)]]
       (when (and (some true? changed)
                  (< i 10))
         (recur (inc i)))))

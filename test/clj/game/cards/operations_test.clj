@@ -87,7 +87,7 @@
                                "Hedge Fund" "Back Channels"]}})
       (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
       (play-from-hand state :corp "Cerebral Overwriter" "New remote")
-      (core/gain state :corp :credit 1)
+      (gain state :corp :credit 1)
       (play-from-hand state :corp "Accelerated Diagnostics")
       (click-prompt state :corp "OK")
       (let [co (get-content state :remote1 0)]
@@ -107,7 +107,7 @@
                                "Hedge Fund"]}})
       (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
       (play-from-hand state :corp "Cerebral Overwriter" "New remote")
-      (core/gain state :corp :credit 3)
+      (gain state :corp :credit 3)
       (play-from-hand state :corp "Accelerated Diagnostics")
       (click-prompt state :corp "OK")
       (let [co (get-content state :remote1 0)]
@@ -385,7 +385,7 @@
                :runner {:deck [(qty "Fan Site" 5)]}})
     (take-credits state :corp)
     (starting-hand state :runner (repeat 5 "Fan Site"))
-    (core/gain state :runner :click 10)
+    (gain state :runner :click 10)
     (dotimes [_ 5]
       (play-from-hand state :runner "Fan Site"))
     (take-credits state :runner)
@@ -457,7 +457,7 @@
   (testing "Basic behavior"
     (do-game
       (new-game {:corp {:deck ["Building Blocks" "Ice Wall"]}})
-      (core/gain state :corp :credit 1)
+      (gain state :corp :credit 1)
       (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
       (play-from-hand state :corp "Building Blocks")
       (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
@@ -469,7 +469,7 @@
   (testing "Select invalid card"
     (do-game
       (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
-      (core/gain state :corp :credit 1)
+      (gain state :corp :credit 1)
       (play-from-hand state :corp "Building Blocks")
       (is (empty? (:prompt (get-corp))) "Can't play Building Blocks without a Barrier in hand"))))
 
@@ -478,7 +478,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Casting Call" 2) "Oaktown Renovation"
                              "Improved Tracers" "Hunter"]}})
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Hunter" "HQ")
     (let [hunter (get-ice state :hq 0)]
       (rez state :corp hunter)
@@ -837,7 +837,7 @@
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
       (is (= 1 (count (prompt-buttons :corp))) "No option to install on centrals")
       (click-prompt state :corp "New remote")
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
         (score state :corp (refresh beale))
@@ -867,7 +867,7 @@
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
         (score state :corp (refresh beale))
@@ -882,7 +882,7 @@
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/gain state :corp :click 3)
+      (gain state :corp :click 3)
       (play-from-hand state :corp "Project Beale" "New remote")
       (let [beale (get-content state :remote1 0)]
         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
@@ -944,7 +944,7 @@
     (new-game {:corp {:deck ["Diversified Portfolio"
                              "Paper Wall"
                              (qty "PAD Campaign" 3)]}})
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (play-from-hand state :corp "Paper Wall" "New remote")
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "PAD Campaign" "New remote")
@@ -955,7 +955,7 @@
 (deftest divert-power
   (do-game
     (new-game {:corp {:deck [(qty "Divert Power" 2) "Paper Wall" (qty "Eve Campaign" 3) ]}})
-    (core/gain state :corp :click 3 :credit 11)
+    (gain state :corp :click 3 :credit 11)
     (play-from-hand state :corp "Paper Wall" "HQ")
     (play-from-hand state :corp "Eve Campaign" "New remote")
     (play-from-hand state :corp "Eve Campaign" "New remote")
@@ -1032,7 +1032,7 @@
   (testing "Fire only for hosted ice"
     (do-game
       (new-game {:corp {:hand ["Eavesdrop" "Ice Wall" "Wall of Static"]}})
-      (core/gain state :corp :credit 10)
+      (gain state :corp :credit 10)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Eavesdrop")
       (click-card state :corp "Ice Wall")
@@ -1201,7 +1201,7 @@
                  :runner {:deck ["Hades Shard"]}})
       (trash-from-hand state :corp "Breaking News")
       (take-credits state :corp)
-      (core/gain state :runner :credit 2)
+      (gain state :runner :credit 2)
       (play-from-hand state :runner "Hades Shard")
       (card-ability state :runner (get-resource state 0) 0)
       (click-prompt state :runner "Steal")
@@ -1221,7 +1221,7 @@
     (take-credits state :corp)
     (run-empty-server state :hq)
     (click-prompt state :runner "No action")
-    (core/gain state :runner :credit 2)
+    (gain state :runner :credit 2)
     (play-from-hand state :runner "Hades Shard")
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Steal")
@@ -1425,7 +1425,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain state :runner :credit 6)
+      (gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))]
         (play-from-hand state :corp "Financial Collapse")
@@ -1439,7 +1439,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Kati Jones")
       (play-from-hand state :runner "Net Mercur")
-      (core/gain state :runner :credit 6)
+      (gain state :runner :credit 6)
       (take-credits state :runner)
       (let [credits (:credit (get-runner))
             kati (get-resource state 0)]
@@ -1491,7 +1491,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Focus Group")
       (click-prompt state :corp "Resource")
-      (core/lose state :corp :credit 3)
+      (lose state :corp :credit 3)
       (is (= 2 (:credit (get-corp))))
       (click-prompt state :corp "3") ;; want to place 3 advancement tokens
       (is (empty? (:prompt (get-corp))) "Corp can't afford to pay so just end the interaction")
@@ -1503,7 +1503,7 @@
     (new-game {:corp {:deck [(qty "Foxfire" 2)]}
                :runner {:deck ["Dyson Mem Chip" "Ice Carver"]}})
     (take-credits state :corp)
-    (core/gain state :runner :credit 100)
+    (gain state :runner :credit 100)
     (play-from-hand state :runner "Dyson Mem Chip")
     (play-from-hand state :runner "Ice Carver")
     (take-credits state :runner)
@@ -1571,7 +1571,7 @@
   (testing "Extra choices from remote servers"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Breaker Bay Grid" 2) "Fully Operational"]}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
@@ -1589,7 +1589,7 @@
               (new-game {:corp {:deck ["Game Changer" "Hostile Takeover"]}
                          :runner {:deck [(qty "Fan Site" num-agenda)]}})
               (take-credits state :corp)
-              (core/gain state :runner :click num-agenda)
+              (gain state :runner :click num-agenda)
               (dotimes [_ num-agenda]
                 (play-from-hand state :runner "Fan Site"))
               (take-credits state :runner)
@@ -1619,8 +1619,8 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
-      (core/gain state :runner :click 3)
-      (core/gain state :runner :credit 12)
+      (gain state :runner :click 3)
+      (gain state :runner :credit 12)
       (play-from-hand state :runner "Nyashia")
       (play-from-hand state :runner "Takobi")
       (play-from-hand state :runner "Misdirection")
@@ -1830,7 +1830,7 @@
                  :runner {:deck ["Daily Casts" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (take-credits state :corp)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :credit 100)
       (play-from-hand state :runner "Daily Casts")
       (play-from-hand state :runner "Dyson Mem Chip")
       (run-empty-server state :remote1)
@@ -1849,7 +1849,7 @@
                  :runner {:deck ["Daily Casts" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (take-credits state :corp)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :credit 100)
       (play-from-hand state :runner "Daily Casts")
       (play-from-hand state :runner "Dyson Mem Chip")
       (run-empty-server state :remote1)
@@ -1985,7 +1985,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Invasion of Privacy" 3)]}
                :runner {:deck [(qty "Sure Gamble" 2) "Fall Guy" (qty "Cache" 2)]}})
-    (core/gain state :corp :click 3 :credit 6)
+    (gain state :corp :click 3 :credit 6)
     ;; trash 2 cards
     (play-from-hand state :corp "Invasion of Privacy")
     (click-prompt state :corp "0") ; default trace
@@ -2137,7 +2137,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Liquidation" "PAD Campaign" "Launch Campaign" "Marilyn Campaign"]
                       :credits 10}})
-    (core/gain state :corp :click 5)
+    (gain state :corp :click 5)
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Marilyn Campaign" "New remote")
@@ -2395,7 +2395,7 @@
     (do-game
       (new-game {:corp {:deck ["NAPD Cordon" "Project Atlas"]}
                  :runner {:credits 8}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "NAPD Cordon")
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atlas (get-content state :remote1 0)]
@@ -2601,7 +2601,7 @@
   ;; Peak Efficiency - Gain 1 credit for each rezzed piece of ice
   (do-game
     (new-game {:corp {:deck ["Peak Efficiency" (qty "Paper Wall" 3) "Wraparound"]}})
-    (core/gain state :corp :click 3)
+    (gain state :corp :click 3)
     (play-from-hand state :corp "Paper Wall" "HQ")
     (play-from-hand state :corp "Paper Wall" "R&D")
     (play-from-hand state :corp "Paper Wall" "New remote")
@@ -2743,7 +2743,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)
                                "Preemptive Action"]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -2757,7 +2757,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)
                                (qty "Preemptive Action" 1)]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -2832,21 +2832,21 @@
     (is (= "Caprice Nisei" (:title (get-content state :remote1 0)))
         "Caprice Nisei installed by Psychokinesis")
     ;; Test installing an Asset
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
     (click-prompt state :corp (find-card "Adonis Campaign" (:deck (get-corp))))
     (click-prompt state :corp "New remote")
     (is (= "Adonis Campaign" (:title (get-content state :remote2 0)))
         "Adonis Campaign installed by Psychokinesis")
     ;; Test installing an Agenda
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
     (click-prompt state :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     (click-prompt state :corp "New remote")
     (is (= "Global Food Initiative" (:title (get-content state :remote3 0)))
         "Global Food Initiative installed by Psychokinesis")
     ;; Test selecting "None"
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (core/move state :corp (find-card "Psychokinesis" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Psychokinesis")
     (click-prompt state :corp "None")
@@ -2935,7 +2935,7 @@
     (do-game
      (new-game {:corp {:deck ["Red Planet Couriers" (qty "Ice Wall" 2)
                               "GRNDL Refinery" "Government Takeover"]}})
-     (core/gain state :corp :click 4)
+     (gain state :corp :click 4)
      (play-from-hand state :corp "Government Takeover" "New remote")
      (play-from-hand state :corp "GRNDL Refinery" "New remote")
      (play-from-hand state :corp "Ice Wall" "HQ")
@@ -2956,8 +2956,8 @@
   (testing "interaction with masvingo - should correctly reset subs issue #5090"
     (do-game
      (new-game {:corp {:deck ["Red Planet Couriers" (qty "Masvingo" 2)]}})
-     (core/gain state :corp :click 2)
-     (core/gain state :corp :credit 6)
+     (gain state :corp :click 2)
+     (gain state :corp :credit 6)
      (play-from-hand state :corp "Masvingo" "HQ")
      (play-from-hand state :corp "Masvingo" "R&D")
      (let [mas-hq (get-ice state :hq 0)
@@ -3177,7 +3177,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall" "Vanilla" "Rover Algorithm" "Sunset"]
                         :credits 10}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (rez state :corp (get-ice state :hq 0))
@@ -3214,12 +3214,12 @@
     (do-game
       (new-game {:corp {:deck ["Standoff" "Hostile Takeover" "Sacrifice"]}})
       (play-and-score state "Standoff")
-      (core/gain state :corp :bad-publicity 1)
+      (gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Sacrifice")
       (is (= 2 (count (:hand (get-corp)))) "Can not play Sacrifice with no 1+ agenda in score area")
       (play-and-score state "Hostile Takeover")
       ;; Remove BP
-      (core/gain state :corp :bad-publicity -2)
+      (gain state :corp :bad-publicity -2)
       (play-from-hand state :corp "Sacrifice")
       (is (= 1 (count (:hand (get-corp)))) "Can not play Sacrifice with no bad publicity in score area"))))
 
@@ -3349,7 +3349,7 @@
               (do-game
                 (new-game {:corp {:hand ["Secure and Protect" (qty "Ice Wall" amt)]
                                   :deck [(qty "Hedge Fund" 10) "Ice Wall" "Afshar"]}})
-                (core/gain state :corp :click amt :credit amt)
+                (gain state :corp :click amt :credit amt)
                 (doseq [_ (range amt)]
                   (play-from-hand state :corp "Ice Wall" "HQ"))
                 (play-from-hand state :corp "Secure and Protect")
@@ -3398,7 +3398,7 @@
          "Runner doesn't spend 1 credit to make the second run")
      (take-credits state :runner)
      (take-credits state :corp)
-     (core/lose state :runner :credit 6)
+     (lose state :runner :credit 6)
      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
      (is (zero? (:credit (get-runner))) "Runner has 0 credits")
      (run-on state :archives)
@@ -3407,7 +3407,7 @@
      (is (zero? (:credit (get-runner))) "Runner has 0 credits")
      (take-credits state :runner)
      (take-credits state :corp)
-     (core/lose state :runner :credit 2)
+     (lose state :runner :credit 2)
      (play-from-hand state :runner "Employee Strike")
      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
      (run-on state :archives)
@@ -3448,7 +3448,7 @@
      (take-credits state :runner)
      (take-credits state :corp)
      (click-prompt state :runner "No") ; Out of the Ashes prompt
-     (core/lose state :runner :credit 4)
+     (lose state :runner :credit 4)
      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
      (play-from-hand state :runner "Out of the Ashes")
@@ -3461,7 +3461,7 @@
                 :runner {:deck ["Hades Shard"]}})
      (trash-from-hand state :corp "Breaking News")
      (take-credits state :corp)
-     (core/gain state :runner :credit 3)
+     (gain state :runner :credit 3)
      (play-from-hand state :runner "Hades Shard")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Steal")
@@ -3483,7 +3483,7 @@
      (take-credits state :corp)
      (run-empty-server state :hq)
      (click-prompt state :runner "No action")
-     (core/gain state :runner :credit 3)
+     (gain state :runner :credit 3)
      (play-from-hand state :runner "Hades Shard")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Steal")
@@ -3842,9 +3842,9 @@
       (new-game {:corp {:deck ["NAPD Contract" "Project Beale" "Success"]}})
       (play-from-hand state :corp "NAPD Contract" "New remote")
       (play-from-hand state :corp "Project Beale" "New remote")
-      (core/gain state :corp :bad-publicity 9)
-      (core/gain state :corp :credit 8)
-      (core/gain state :corp :click 15)
+      (gain state :corp :bad-publicity 9)
+      (gain state :corp :credit 8)
+      (gain state :corp :click 15)
       (let [napd (get-content state :remote1 0)
             beale (get-content state :remote2 0)]
         (dotimes [_ 13] (core/advance state :corp {:card (refresh napd)}))
@@ -3861,7 +3861,7 @@
   (testing "Works with public agendas"
     (do-game
       (new-game {:corp {:deck ["Oaktown Renovation" "Vanity Project" "Success"]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (score-agenda state :corp (find-card "Vanity Project" (:hand (get-corp))))
       (is (= 4 (:agenda-point (get-corp))))
       (play-from-hand state :corp "Oaktown Renovation" "New remote")
@@ -3881,7 +3881,7 @@
                         :deck ["Success"
                                "High-Risk Investment"
                                "Government Takeover"]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (score-agenda state :corp (find-card "High-Risk Investment" (:hand (get-corp))))
       (play-from-hand state :corp "Government Takeover" "New remote")
       (play-from-hand state :corp "Success")
@@ -3917,7 +3917,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Enigma" "HQ")
     (play-from-hand state :corp "Hunter" "HQ")
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Sunset")
     (click-prompt state :corp "HQ")
     (click-card state :corp "Ice Wall")
@@ -3973,7 +3973,7 @@
     (do-game
       (new-game {:corp {:hand ["Surveillance Sweep" "Breaking News" "Forced Connection" "Data Raven"]
                         :credits 20}})
-      (core/gain state :corp :click 4)
+      (gain state :corp :click 4)
       (play-from-hand state :corp "Surveillance Sweep")
       (play-from-hand state :corp "Breaking News" "New remote")
       (play-from-hand state :corp "Forced Connection" "Server 1")
@@ -4145,7 +4145,7 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (play-from-hand state :runner "Desperado")
       (play-from-hand state :runner "Corroder")
       (take-credits state :runner)
@@ -4196,8 +4196,8 @@
   ;; Threat Level Alpha - Win trace to give tags = Runner tags; or 1 tag if 0
   (do-game
     (new-game {:corp {:deck [(qty "Threat Level Alpha" 2)]}})
-    (core/gain state :corp :click 2)
-    (core/gain state :corp :credit 2)
+    (gain state :corp :click 2)
+    (gain state :corp :credit 2)
     (is (zero? (count-tags state)))
     (play-from-hand state :corp "Threat Level Alpha")
     (click-prompt state :corp "0")
@@ -4241,7 +4241,7 @@
   (do-game
     (new-game {:corp {:deck ["Transparency Initiative" "Oaktown Renovation"
                              "Project Atlas" "Hostile Takeover" "Casting Call"]}})
-    (core/gain state :corp :click 10)
+    (gain state :corp :click 10)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (play-from-hand state :corp "Casting Call")
     (click-card state :corp (find-card "Project Atlas" (:hand (get-corp))))
@@ -4278,7 +4278,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Trick of Light" "Ice Wall" "NGO Front"]
                         :credits 10}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "NGO Front" "New remote")
       (let [ngo (get-content state :remote1 0)
@@ -4296,7 +4296,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Trick of Light" 2) "Ice Wall" "NGO Front"]
                         :credits 10}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "NGO Front" "New remote")
       (let [ngo (get-content state :remote1 0)
@@ -4337,7 +4337,7 @@
   ;; Ultraviolet Clearance - Only allow agenda to be installed in remote servers
   (do-game
     (new-game {:corp {:deck [(qty "Ultraviolet Clearance" 2) "Improved Tracers" "Remote Enforcement"]}})
-    (core/gain state :corp :click 3 :credit 7)
+    (gain state :corp :click 3 :credit 7)
     (play-from-hand state :corp "Ultraviolet Clearance")
     (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
     (is (= 1 (count (prompt-buttons :corp))) "Wrong number of options in install prompt")
@@ -4479,8 +4479,8 @@
     (new-game {:corp {:deck ["Eli 1.0"
                              "Vanilla"
                              (qty "Wetwork Refit" 3)]}})
-    (core/gain state :corp :credit 20)
-    (core/gain state :corp :click 10)
+    (gain state :corp :credit 20)
+    (gain state :corp :click 10)
     (play-from-hand state :corp "Eli 1.0" "R&D")
     (play-from-hand state :corp "Vanilla" "HQ")
     (let [eli (get-ice state :rd 0)

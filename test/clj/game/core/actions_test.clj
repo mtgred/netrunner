@@ -77,7 +77,7 @@
                              (qty "Public Support" 2)
                              "Oaktown Renovation"]}})
     ;; Turn 1 Corp, install oaktown and assets
-    (core/gain state :corp :click 4)
+    (gain state :corp :click 4)
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (play-from-hand state :corp "Public Support" "New remote")
     (play-from-hand state :corp "Public Support" "New remote")

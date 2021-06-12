@@ -5,6 +5,7 @@
     [game.core.gaining :refer [base-mod-size deduct gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]
+    [game.core.eid :refer [make-eid]]
     [game.core.memory :refer [available-mu update-mu]]
     [game.core.say :refer [system-msg]]
     [game.core.tags :refer [update-tag-status]]
@@ -21,7 +22,7 @@
 (defn- change-map
   "Change a player's property using the :mod system"
   [state side key delta]
-  (gain state side key {:mod delta})
+  (gain state side (make-eid state) key {:mod delta})
   (change-msg state side key (base-mod-size state side key) delta))
 
 (defn- change-mu
@@ -39,8 +40,8 @@
 (defn- change-tags
   "Change a player's tag count"
   [state delta]
-  (gain state :runner :tag delta)
-  (update-tag-status state)
+  (gain state :runner (make-eid state) :tag delta)
+  (update-tag-status state :runner (make-eid state))
   (system-msg state :runner
               (str "sets Tags to " (get-in @state [:runner :tag :total])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
@@ -50,7 +51,7 @@
   [state delta]
   (if (neg? delta)
     (deduct state :corp [:bad-publicity (Math/abs delta)])
-    (gain state :corp :bad-publicity delta))
+    (gain state :corp (make-eid state) :bad-publicity delta))
   (system-msg state :corp
               (str "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))

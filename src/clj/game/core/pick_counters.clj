@@ -110,11 +110,11 @@
                                            remainder-str
                                            (when (and card-strs remainder-str)
                                              " from their credit pool"))]
-                          (lose state side :credit remainder)
-                          (let [cards (map :card (vals selected-cards))]
-                            (wait-for (trigger-spend-credits-from-cards state side cards)
-                                      ; Now we trigger all of the :counter-added events we'd neglected previously
-                                      (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
+                          (wait-for (lose state side (make-eid state eid) :credit remainder)
+                                    (let [cards (map :card (vals selected-cards))]
+                                      (wait-for (trigger-spend-credits-from-cards state side cards)
+                                                ; Now we trigger all of the :counter-added events we'd neglected previously
+                                                (pick-counter-triggers state side eid selected-cards selected-cards target-count message)))))
                         (continue-ability
                           state side
                           (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards)

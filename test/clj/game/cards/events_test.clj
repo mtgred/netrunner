@@ -36,9 +36,9 @@
     (do-game
       (new-game {:runner {:deck ["Account Siphon"
                                  "New Angeles City Hall"]}})
-      (core/gain state :corp :bad-publicity 1)
+      (gain state :corp :bad-publicity 1)
       (is (= 1 (count-bad-pub state)) "Corp has 1 bad publicity")
-      (core/lose state :runner :credit 1)
+      (lose state :runner :credit 1)
       (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
       (take-credits state :corp) ; pass to runner's turn by taking credits
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
@@ -153,8 +153,8 @@
       (play-from-hand state :corp "Launch Campaign" "New remote")
       (play-from-hand state :corp "Launch Campaign" "New remote")
       (take-credits state :corp)
-      (core/gain state :runner :click 3)
-      (core/gain state :runner :credit 2)
+      (gain state :runner :click 3)
+      (gain state :runner :credit 2)
       (play-from-hand state :runner "Scheherazade")
       (let [scheherazade (get-program state 0)]
         (card-ability state :runner scheherazade 0)
@@ -206,7 +206,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)]}
                  :runner {:deck ["Apocalypse" (qty "Sure Gamble" 9)]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
@@ -239,7 +239,7 @@
       (play-from-hand state :runner "Origami")
       (is (= 10 (hand-size :runner)) "Hand-size increased from Logos and Origami")
       (is (= 3 (core/available-mu state)) "Memory decreased from Origamis")
-      (core/gain state :runner :click 3 :credit 2)
+      (gain state :runner :click 3 :credit 2)
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
       (run-empty-server state "HQ")
@@ -259,7 +259,7 @@
       (play-from-hand state :corp "Launch Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Tri-maf Contact")
-      (core/gain state :runner :click 2)
+      (gain state :runner :click 2)
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
       (run-empty-server state "HQ")
@@ -347,7 +347,7 @@
                         :hand ["Hedge Fund"]}
                  :runner {:deck [(qty "Black Hat" 3)]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :runner "Black Hat")
       (click-prompt state :corp "0")
       (click-prompt state :runner "4")
@@ -621,7 +621,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Tollbooth" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :click 10)
+    (gain state :runner :click 10)
     (let [iw (get-ice state :hq 0)
           tb (get-ice state :hq 1)]
       (rez state :corp iw)
@@ -633,7 +633,7 @@
       (click-card state :runner iw)
       (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall")
       (play-from-hand state :runner "Xanadu")
-      (core/gain state :runner :credit 7)
+      (gain state :runner :credit 7)
       (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
       (play-from-hand state :runner "Brute-Force-Hack")
       (is (empty? (:prompt (get-runner))) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
@@ -670,7 +670,7 @@
       (play-from-hand state :corp "Project Junebug" "New remote")
       (core/add-counter state :corp (get-content state :remote3 0) :advancement 2)
       (take-credits state :corp)
-      (core/gain state :runner :click 3)
+      (gain state :runner :click 3)
       (core/draw state :runner)
       (play-from-hand state :runner "By Any Means")
       (run-empty-server state "HQ")
@@ -781,7 +781,7 @@
     (let [credits (:credit (get-runner))]
       (play-from-hand state :runner "Calling in Favors")
       (is (= credits (:credit (get-runner))) "Don't gain credits with nothing installed"))
-    (core/gain state :runner :click 10)
+    (gain state :runner :click 10)
     (dotimes [_ 5]
       (play-from-hand state :runner "Aeneas Informant"))
     (let [credits (:credit (get-runner))]
@@ -1077,7 +1077,7 @@
     (do-game
       (new-game {:runner {:deck ["Yusuf" "Chrome Parlor" (qty "Contaminate" 3)]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 5 :click 2)
+      (gain state :runner :credit 5 :click 2)
       (play-from-hand state :runner "Yusuf")
       (play-from-hand state :runner "Chrome Parlor")
       (let [yus (get-program state 0)
@@ -1098,7 +1098,7 @@
     (do-game
       (new-game {:runner {:deck ["Aumakua" "Friday Chip" "Hivemind" "Contaminate"]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 5 :click 2)
+      (gain state :runner :credit 5 :click 2)
       (play-from-hand state :runner "Aumakua")
       (play-from-hand state :runner "Hivemind")
       (play-from-hand state :runner "Friday Chip")
@@ -1118,7 +1118,7 @@
     (do-game
       (new-game {:runner {:deck ["Corporate \"Grant\"" (qty "Daily Casts" 2)]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (play-from-hand state :runner "Corporate \"Grant\"")
       (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
       (play-from-hand state :runner "Daily Casts")
@@ -1131,7 +1131,7 @@
       (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
                           :deck ["Corporate \"Grant\"" (qty "Clone Chip" 2)]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (play-from-hand state :runner "Corporate \"Grant\"")
       (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
       (play-from-hand state :runner "Clone Chip")
@@ -1147,7 +1147,7 @@
                                "Raymond Flint" "Investigative Journalism"]}})
     (play-from-hand state :corp "Elizabeth Mills" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :credit 5 :click 1)
+    (gain state :runner :credit 5 :click 1)
     (play-from-hand state :runner "Raymond Flint")
     (play-from-hand state :runner "Corporate Scandal")
     (is (empty? (:prompt (get-runner))) "No BP taken, so no HQ access from Raymond")
@@ -1649,7 +1649,7 @@
       (starting-hand state :corp (concat "Hostile Takeover" (repeat 5 "Ice Wall")))
       (trash-from-hand state :corp "Ice Wall")
       (take-credits state :corp)
-      (core/gain state :runner :click 10)
+      (gain state :runner :click 10)
       (play-from-hand state :runner "Black Hat")
       (click-prompt state :corp "0")
       (click-prompt state :runner "5")
@@ -1691,7 +1691,7 @@
                                "Product Placement"
                                "Project Atlas"]}
                  :runner {:deck [(qty "Drive By" 2)]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Eve Campaign" "New remote")
       (play-from-hand state :corp "Eve Campaign" "New remote")
       (play-from-hand state :corp "Project Atlas" "New remote")
@@ -1942,7 +1942,7 @@
                  :runner {:deck [(qty "Encore" 2)]}})
       (play-from-hand state :corp "Hedge Fund")
       (take-credits state :corp)
-      (core/gain state :runner :click 1)
+      (gain state :runner :click 1)
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
       (run-empty-server state "HQ")
@@ -1962,7 +1962,7 @@
                       :hand ["Ice Wall" "Enigma" "IP Block" "Data Raven"]
                       :credits 20}
                :runner {:hand ["Escher"]}})
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Enigma" "New remote")
     (play-from-hand state :corp "IP Block" "New remote")
@@ -1988,7 +1988,7 @@
   (do-game
     (new-game {:runner {:deck [(qty "Eureka!" 2) "Torch" "Sure Gamble"]}})
     (take-credits state :corp)
-    (core/gain state :runner :credit 1)
+    (gain state :runner :credit 1)
     (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
     (play-from-hand state :runner "Eureka!")
     (click-prompt state :runner "Yes")
@@ -2113,7 +2113,7 @@
                                (qty "Product Placement" 2)
                                "Project Atlas"]}
                  :runner {:deck [(qty "Falsified Credentials" 3)]}})
-      (core/gain state :corp :click 2)
+      (gain state :corp :click 2)
       (play-from-hand state :corp "Eve Campaign" "New remote")
       (play-from-hand state :corp "Eve Campaign" "New remote")
       (play-from-hand state :corp "Project Atlas" "New remote")
@@ -2284,7 +2284,7 @@
                :runner {:hand ["Forked" "Mimic"]}})
     (play-from-hand state :corp "Rototurret" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :credit 2)
+    (gain state :runner :credit 2)
     (play-from-hand state :runner "Mimic")
     (play-from-hand state :runner "Forked")
     (click-prompt state :runner "HQ")
@@ -2595,7 +2595,7 @@
                :runner {:deck ["High-Stakes Job"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :credit 1)
+    (gain state :runner :credit 1)
     (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
     (play-from-hand state :runner "High-Stakes Job")
     (is (= ["HQ"] (prompt-buttons :runner)) "Only has 1 server to choose from")
@@ -2760,7 +2760,7 @@
      (take-credits state :corp)
      (play-from-hand state :runner "In the Groove")
      ;; the below is just to ensure we don't get weird bugs with event registration if card is somewhere else
-     (core/gain state :runner :click 3)
+     (gain state :runner :click 3)
      (core/move state :runner (first (:discard (get-runner))) :deck)
      (is (= 0 (count (:discard (get-runner)))) "Runner discard is empty")
      (dotimes [_ 2]
@@ -3091,8 +3091,8 @@
       (is (= (:title (nth (-> @state :corp :deck) 5)) "Fire Wall"))
       ;; R&D is now from top to bottom: A B C D E F
       (take-credits state :corp)
-      (core/gain state :runner :click 100)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :click 100)
+      (gain state :runner :credit 100)
       (dotimes [_ 4] (core/draw state :runner))
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
@@ -3117,8 +3117,8 @@
       (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
       ;; R&D is now from top to bottom: A B C
       (take-credits state :corp)
-      (core/gain state :runner :click 100)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :click 100)
+      (gain state :runner :credit 100)
       (dotimes [_ 3] (core/draw state :runner))
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
@@ -3142,8 +3142,8 @@
       ;; R&D is now from top to bottom: A B C
       (play-from-hand state :corp "Dedicated Technician Team" "R&D")
       (take-credits state :corp)
-      (core/gain state :runner :click 100)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :click 100)
+      (gain state :runner :credit 100)
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (play-from-hand state :runner "R&D Interface")
       (play-run-event state "Khusyuk" :rd)
@@ -3193,8 +3193,8 @@
       (let [ash (get-content state :rd 0)]
         (rez state :corp ash)
         (take-credits state :corp)
-        (core/gain state :runner :click 100)
-        (core/gain state :runner :credit 100)
+        (gain state :runner :click 100)
+        (gain state :runner :credit 100)
         (dotimes [_ 3] (play-from-hand state :runner "Cache"))
         (play-run-event state "Khusyuk" :rd)
         (click-prompt state :corp "0")
@@ -3217,8 +3217,8 @@
       ;; R&D is now from top to bottom: A B C
       (play-from-hand state :corp "Ice Wall" "R&D")
       (take-credits state :corp)
-      (core/gain state :runner :click 100)
-      (core/gain state :runner :credit 100)
+      (gain state :runner :click 100)
+      (gain state :runner :credit 100)
       (play-from-hand state :runner "Eater")
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (play-from-hand state :runner "Khusyuk")
@@ -3361,7 +3361,7 @@
                :runner {:hand [(qty "Lean and Mean" 3) (qty "Corroder" 5)]
                         :credits 100}})
     (take-credits state :corp)
-    (core/gain state :runner :click 10)
+    (gain state :runner :click 10)
     (testing "Duration and bonus"
       (play-from-hand state :runner "Corroder")
       (is (= 2 (core/get-strength (get-program state 0))) "Corroder starts with 2 str")
@@ -3959,7 +3959,7 @@
               (new-game {:runner {:deck [(qty "Office Supplies" 2)
                                          (qty "Access to Globalsec" 100)]}})
               (take-credits state :corp)
-              (core/gain state :runner :credit 1000 :click link)
+              (gain state :runner :credit 1000 :click link)
               (starting-hand state :runner (concat (repeat 2 "Office Supplies")
                                                    (repeat 4 "Access to Globalsec")))
               (dotimes [_ link]
@@ -3983,7 +3983,7 @@
       (new-game {:corp {:deck ["SEA Source"]}
                  :runner {:deck ["Daily Casts" "On the Lam"]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :runner "Daily Casts")
       (play-from-hand state :runner "On the Lam")
       (click-card state :runner (get-resource state 0))
@@ -4001,7 +4001,7 @@
       (new-game {:corp {:deck ["Show of Force"]}
                  :runner {:deck ["Daily Casts" "On the Lam"]}})
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (play-from-hand state :runner "Daily Casts")
       (play-from-hand state :runner "On the Lam")
       (click-card state :runner (get-resource state 0))
@@ -4016,7 +4016,7 @@
                  :runner {:hand ["Daily Casts" "On the Lam" "Apocalypse"]
                           :credits 10}})
       (take-credits state :corp)
-      (core/gain state :runner :click 10)
+      (gain state :runner :click 10)
       (play-from-hand state :runner "Daily Casts")
       (play-from-hand state :runner "On the Lam")
       (click-card state :runner (get-resource state 0))
@@ -4220,7 +4220,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
                :runner {:hand [(qty "Power Nap" 3)]}})
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (gain state :runner :click 2)
     (let [credits (:credit (get-runner))]
       (play-from-hand state :runner "Power Nap")
       (is (= (+ credits 2) (:credit (get-runner))) "Runner should gain 2"))
@@ -4240,7 +4240,7 @@
                :runner {:deck ["Power to the People"]}})
     (play-from-hand state :corp "NAPD Contract" "New remote")
     (take-credits state :corp)
-    (core/lose state :runner :credit 2)
+    (lose state :runner :credit 2)
     (play-from-hand state :runner "Power to the People")
     (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
     (run-empty-server state "Server 1")
@@ -4264,7 +4264,7 @@
       (rez state :corp (get-ice state :hq 0))
       (rez state :corp (get-ice state :rd 0))
       (take-credits state :corp)
-      (core/gain state :runner :click 5)
+      (gain state :runner :click 5)
       (dotimes [_ 3]
         (play-from-hand state :runner "Clone Chip"))
       (play-from-hand state :runner "Prey")
@@ -4377,8 +4377,8 @@
   (do-game
     (new-game {:runner {:deck [(qty "Pushing the Envelope" 3) (qty "Corroder" 2) "Atman"]}})
     (take-credits state :corp)
-    (core/gain state :runner :credit 20)
-    (core/gain state :runner :click 10)
+    (gain state :runner :credit 20)
+    (gain state :runner :click 10)
     (core/draw state :runner)
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Atman")
@@ -4865,7 +4865,7 @@
                                "Elizabeth Mills" "Ibrahim Salem"
                                "Housekeeping" "Director Haas" "Oberth Protocol"]}
                  :runner {:deck ["Rumor Mill"]}})
-      (core/gain state :corp :credit 100 :click 100 :bad-publicity 1)
+      (gain state :corp :credit 100 :click 100 :bad-publicity 1)
       (core/draw state :corp 100)
       (play-from-hand state :corp "Caprice Nisei" "New remote")
       (play-from-hand state :corp "Chairman Hiro" "New remote")
@@ -4879,7 +4879,7 @@
       (rez state :corp (get-content state :remote3 0))
       (score-agenda state :corp (get-content state :remote5 0))
       (take-credits state :corp)
-      (core/gain state :runner :credit 100 :click 100)
+      (gain state :runner :credit 100 :click 100)
       (is (= 9 (hand-size :corp)) "Corp has +4 hand size")
       (is (= 3 (hand-size :runner)) "Runner has -2 hand size")
       (play-from-hand state :runner "Rumor Mill")
@@ -5170,7 +5170,7 @@
                :runner {:deck ["Spooned" "Gordian Blade"]}})
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :credit 10)
+    (gain state :runner :credit 10)
     (play-from-hand state :runner "Gordian Blade")
     (play-from-hand state :runner "Spooned")
     (click-prompt state :runner "HQ")
@@ -5329,7 +5329,7 @@
                         :credits 20}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (gain state :runner :click 2)
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "System Seizure")
@@ -5394,7 +5394,7 @@
       (let [wrap (get-ice state :hq 0)]
         (rez state :corp wrap))
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (trash-from-hand state :runner "Morning Star")
       (trash-from-hand state :runner "Knight")
       (let [ms (find-card "Morning Star" (:discard (get-runner)))]
@@ -5583,7 +5583,7 @@
     (new-game {:runner {:deck [(qty "Trade-In" 3) (qty "Astrolabe" 2) (qty "Sports Hopper" 2)]}
                :options {:start-as :runner}})
     (starting-hand state :runner ["Trade-In" "Trade-In" "Astrolabe" "Sports Hopper"])
-    (core/gain state :runner :click 5 :credit 5)
+    (gain state :runner :click 5 :credit 5)
     (play-from-hand state :runner "Astrolabe")
     (play-from-hand state :runner "Sports Hopper")
     (testing "Trade-in works with Hardware costing 0 or 1 credits (issue #3750)"
@@ -5623,7 +5623,7 @@
     (let [tg (get-content state :remote3 0)]
       (play-from-hand state :runner "Traffic Jam")
       (take-credits state :runner)
-      (core/gain state :corp :click 2)
+      (gain state :corp :click 2)
       (advance state tg 3)
       (score state :corp (refresh tg))
       (is (= 2 (:agenda-point (get-corp))) "Last TGTBT not scored")
@@ -5786,7 +5786,7 @@
                         (run-empty-server state "Server 3"))
      (click-prompt state :runner "No action")
      (core/move state :runner (find-card "Watch the World Burn" (:discard (get-runner))) :hand)
-     (core/gain state :runner :credit 3) ;need to be able to play the card
+     (gain state :runner :credit 3) ;need to be able to play the card
      (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
                         "Server 3 Launch Campaign RFGed"
                         (play-from-hand state :runner "Watch the World Burn")

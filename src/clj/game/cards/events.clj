@@ -79,8 +79,8 @@
   {:on-play
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
     :async true
-    :effect (effect (gain :click 3)
-                    (damage eid :brain 1 {:unpreventable true :card card}))}})
+    :effect (req (wait-for (gain state side (make-eid state eid) :click 3)
+                   (damage state side eid :brain 1 {:unpreventable true :card card})))}})
 
 (defcard "Another Day, Another Paycheck"
   {:events [{:event :agenda-stolen
@@ -281,7 +281,8 @@
                                                                           (<= (second c) target)))
                                                              affordable-ice))}
                                  :msg (msg "derez " (card-str state target))
-                                 :effect (effect (derez target))}
+                                 :async true
+                                 :effect (effect (derez eid target))}
                                 card nil))}
              card nil)))}})
 
@@ -502,9 +503,10 @@
                        (when (pos? (:click runner))
                          " and lose [Click]"))
              :async true
-             :effect (req (when (pos? (:click runner))
-                            (lose state :runner :click 1))
-                          (gain-credits state :runner eid 5))}})
+             :effect (req (wait-for (gain-credits state :runner (make-eid state eid) 5)
+                            (if (pos? (:click runner))
+                              (lose state :runner eid :click 1)
+                              (effect-completed state side eid))))}})
 
 (defcard "Credit Crash"
   {:makes-run true
@@ -850,8 +852,8 @@
     :choices (req runnable-servers)
     :msg (msg "make a run on " target " and gain [Click]")
     :async true
-    :effect (effect (gain :click 1)
-                    (make-run eid target card))}})
+    :effect (req (wait-for (gain state side (make-eid state eid) :click 1)
+                           (make-run state side eid target card)))}})
 
 (defcard "Easy Mark"
   {:on-play
@@ -900,7 +902,8 @@
     :msg (msg "derez " (:title target))
     :choices {:card #(and (ice? %)
                           (rezzed? %))}
-    :effect (effect (derez target))}})
+    :async true
+    :effect (effect (derez eid target))}})
 
 (defcard "Emergent Creativity"
   (letfn [(ec [trash-cost to-trash]
@@ -1042,8 +1045,9 @@
               :card #(and (rezzed? %)
                           (ice? %))}
     :msg (msg "derez " (string/join ", " (map :title targets)))
-    :effect (req (doseq [c targets]
-                   (derez state side c)))}})
+    :async true
+    :effect (req (effect-seq state side eid [c targets]
+                   (derez state side eid c)))}})
 
 (defcard "Exploratory Romp"
   {:makes-run true
@@ -1815,10 +1819,10 @@
                                   old (set (get-in (get-card state card) [:special :leave-no-trace]))
                                   diff-cid (seq (clojure.set/difference new old))
                                   diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
-                              (doseq [ice diff]
-                                (derez state :runner ice))
                               (when-not (empty? diff)
-                                (system-msg state :runner (str "uses Leave No Trace to derez " (string/join ", " (map :title diff)))))))}]}))
+                                (system-msg state :runner (str "uses Leave No Trace to derez " (string/join ", " (map :title diff)))))
+                              (effect-seq state side eid [ice diff]
+                                (derez state :runner eid ice))))}]}))
 
 (defcard "Legwork"
   {:makes-run true
@@ -1923,9 +1927,9 @@
              :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
                             (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
-                            (gain state :runner :click 1)
-                            (move state :runner card :hand)
-                            (unregister-events state side card)))}]})
+                            (wait-for (gain state :runner (make-eid state eid) :click 1)
+                                      (move state :runner card :hand)
+                                      (unregister-events state side card))))}]})
 
 (defcard "Mars for Martians"
   (letfn [(count-clan [state] (count (filter #(and (has-subtype? % "Clan") (resource? %))
@@ -2217,10 +2221,12 @@
 (defcard "Populist Rally"
   {:on-play {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
              :msg "give the Corp 1 fewer [Click] to spend on their next turn"
-             :effect (effect (lose :corp :click-per-turn 1))}
+             :async true
+             :effect (effect (lose :corp eid :click-per-turn 1))}
    :events [{:event :corp-turn-ends
              :duration :until-corp-turn-ends
-             :effect (effect (gain :corp :click-per-turn 1))}]})
+             :async true
+             :effect (effect (gain :corp eid :click-per-turn 1))}]})
 
 (defcard "Power Nap"
   {:on-play
@@ -3084,9 +3090,10 @@
               (when (pos? (:click runner))
                 " and lose [Click]"))
     :async true
-    :effect (req (when (pos? (:click runner))
-                   (lose state :runner :click 1))
-                 (draw state :runner eid 4 nil))}})
+    :effect (req (wait-for (draw state :runner (make-eid state eid) 4 nil)
+                   (if (pos? (:click runner))
+                     (lose state :runner eid :click 1)
+                     (effect-completed state side eid))))}})
 
 (defcard "Wanton Destruction"
   {:makes-run true

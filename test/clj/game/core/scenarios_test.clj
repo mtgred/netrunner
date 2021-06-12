@@ -14,7 +14,7 @@
                  :runner {:hand ["Aumakua" (qty "Clone Chip" 2)]
                           :credits 10}})
       (take-credits state :corp)
-      (core/gain state :runner :click 10)
+      (gain state :runner :click 10)
       (play-from-hand state :runner "Aumakua")
       (play-from-hand state :runner "Clone Chip")
       (play-from-hand state :runner "Clone Chip")
@@ -48,7 +48,7 @@
       (play-from-hand state :corp "Hedge Fund")
       (take-credits state :corp 1)
       (is (= 14 (:credit (get-corp))))
-      (core/gain state :runner :click 2)
+      (gain state :runner :click 2)
       (run-empty-server state "Archives") ; enable Corp play of Neural and SEA next turn
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Off-Campus Apartment")
@@ -95,7 +95,7 @@
                                  "Data Folding"
                                  "Career Fair"]}})
       (core/draw state :corp 1)
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Adonis Campaign" "New remote")
       (is (= 10 (:credit (get-corp))) "HB:EtF ability paid 1 credit")
@@ -129,13 +129,13 @@
         (play-from-hand state :corp "Turing" "Server 1")
         (take-credits state :corp 1)
         (is (= 3 (:credit (get-runner))) "Gained 1 from Data Folding")
-        (core/gain state :runner :click 2)
+        (gain state :runner :click 2)
         (run-empty-server state "HQ")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
-        (core/gain state :runner :credit 1)
+        (gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")
         (click-prompt state :runner "HQ")
         (run-continue state)

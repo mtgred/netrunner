@@ -14,7 +14,7 @@
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [effect req continue-ability]]
+    [game.macros :refer [effect req continue-ability wait-for]]
     [game.utils :refer [make-cid server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
@@ -76,7 +76,7 @@
               (or rezzed
                   installed))
      (when-let [in-play (:in-play (card-def card))]
-       (apply lose state side in-play)))
+       (apply lose state side (make-eid state) in-play)))
    (dissoc-card card keep-counter)))
 
 
@@ -139,11 +139,13 @@
           :duration :constant
           :value (:memoryunits c)})
        (update-mu state))
-     (if (and resolve-effect (is-ability? cdef))
-       (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
-       (effect-completed state side eid))
-     (when-let [in-play (:in-play cdef)]
-       (apply gain state side in-play))
+     (let [continuation #(if-let [in-play (:in-play cdef)]
+                                 (apply gain state side eid in-play)
+                                 (effect-completed state side eid))]
+       (if (and resolve-effect (is-ability? cdef))
+         (wait-for (resolve-ability state side (make-eid state eid) (dissoc cdef :cost :additional-cost) c nil)
+                   (continuation))
+         (continuation)))
      (get-card state c))))
 
 (defn update-ability-cost-str

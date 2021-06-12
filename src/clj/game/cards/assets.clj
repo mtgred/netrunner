@@ -244,7 +244,8 @@
 (defcard "Bass CH1R180G4"
   {:abilities [{:cost [:click 1 :trash]
                 :msg "gain [Click][Click]"
-                :effect (effect (gain :click 2))}]})
+                :async true
+                :effect (effect (gain eid :click 2))}]})
 
 (defcard "Bio-Ethics Association"
   (let [ability {:req (req unprotected)
@@ -883,7 +884,8 @@
                 :once :per-turn
                 :msg "gain [Click][Click]"
                 :cost [:click 1 :advancement 1]
-                :effect (effect (gain :click 2))}]})
+                :async true
+                :effect (effect (gain eid :click 2))}]})
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
@@ -1001,7 +1003,8 @@
   (let [ability {:label "Gain [Click]"
                  :msg "gain [Click]"
                  :once :per-turn
-                 :effect (effect (gain :click 1))}
+                 :async true
+                 :effect (effect (gain eid :click 1))}
         cleanup (effect (update! (dissoc card :seen-this-turn)))]
     {:abilities [ability]
      :leave-play cleanup
@@ -1237,7 +1240,8 @@
                              (add-counter state side card :power 1))}
                {:cost [:click 1 :power 3 :trash]
                 :msg "gain 4 [Click] and trash itself"
-                :effect (effect (gain :click 4))}]})
+                :async true
+                :effect (effect (gain eid :click 4))}]})
 
 (defcard "Melange Mining Corp."
   {:abilities [{:cost [:click 3]
@@ -1702,33 +1706,33 @@
                 :req (req (and (pos? (:click corp))
                                (not-empty (turn-events state side :corp-draw))))
                 :async true
-                :effect (effect
-                          (lose :corp :click 1)
-                          (continue-ability
-                            (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
-                              {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                               :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
-                               :async true
-                               :effect
-                               (effect
-                                 (continue-ability
-                                   (let [hq-card target
-                                         t (:type hq-card)]
-                                     {:show-discard true
-                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
-                                      :choices {:card #(and (corp? %)
-                                                            (= (:type %) t)
-                                                            (in-discard? %))}
-                                      :msg (msg "lose [Click], reveal " (:title hq-card)
-                                                " from HQ, and swap it for " (:title target)
-                                                " from Archives")
-                                      :async true
-                                      :effect (req (wait-for
-                                                     (reveal state side target)
-                                                     (swap-cards state side hq-card target)
-                                                     (effect-completed state side eid)))})
-                                   card nil))})
-                            card nil))}]})
+                :effect (req
+                          (wait-for (lose state :corp (make-eid state eid) :click 1)
+                            (continue-ability state side
+                              (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
+                                {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                                 :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
+                                 :async true
+                                 :effect
+                                 (effect
+                                   (continue-ability
+                                     (let [hq-card target
+                                           t (:type hq-card)]
+                                       {:show-discard true
+                                        :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                                        :choices {:card #(and (corp? %)
+                                                              (= (:type %) t)
+                                                              (in-discard? %))}
+                                        :msg (msg "lose [Click], reveal " (:title hq-card)
+                                                  " from HQ, and swap it for " (:title target)
+                                                  " from Archives")
+                                        :async true
+                                        :effect (req (wait-for
+                                                       (reveal state side target)
+                                                       (swap-cards state side hq-card target)
+                                                       (effect-completed state side eid)))})
+                                     card nil))})
+                              card nil)))}]})
 
 (defcard "Rashida Jaheem"
   (let [ability {:once :per-turn
@@ -1839,7 +1843,8 @@
                  :req (req (and (corp? (:card target))
                                 (pos? (:click runner))))
                  :msg "force the runner to lose 1 [Click]"
-                 :effect (effect (lose :runner :click 1))}]
+                 :async true
+                 :effect (effect (lose :runner eid :click 1))}]
     {:events [ability]
      :on-trash ability}))
 
@@ -2187,8 +2192,8 @@
                :prompt "Derez a card"
                :choices {:card #(and (installed? %)
                                      (rezzed? %))}
-               :effect (req (derez state side target)
-                            (continue-ability state side (derez-card (dec advancements)) card nil))}))]
+               :effect (req (wait-for (derez state side (make-eid state eid) target)
+                              (continue-ability state side (derez-card (dec advancements)) card nil)))}))]
     {:advanceable :always
      :abilities [{:label "Derez 1 card for each advancement token"
                   :req (req (pos? (get-counters card :advancement)))
@@ -2306,8 +2311,8 @@
                 :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
 
 (defcard "Victoria Jenkins"
-  {:on-rez {:effect (req (lose state :runner :click-per-turn 1))}
-   :leave-play (req (gain state :runner :click-per-turn 1))
+  {:on-rez {:async true :effect (req (lose state :runner eid :click-per-turn 1))}
+   :leave-play {:async true :effect (req (gain state :runner eid :click-per-turn 1))}
    :on-trash executive-trash-effect})
 
 (defcard "Wall to Wall"
@@ -2373,7 +2378,8 @@
        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
                      (update-all state eid (partial remove-one (:cid card))))
        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
-                    :effect (req (lose state :runner :click 1))}
+                    :async true
+                    :effect (req (lose state :runner eid :click 1))}
        :events [{:event :rez
                  :req (req (and (ice? (:card context))
                                 (has-subtype? (:card context) "Bioroid")))

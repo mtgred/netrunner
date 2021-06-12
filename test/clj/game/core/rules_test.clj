@@ -33,7 +33,7 @@
     (new-game {:runner {:deck [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
                                "Off-Campus Apartment" (qty "Hivemind" 2)]}})
     (take-credits state :corp)
-    (core/gain state :runner :click 1 :memory 2)
+    (gain state :runner :click 1 :memory 2)
     (core/draw state :runner 2)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
@@ -123,7 +123,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)]}
                :runner {:deck ["Corroder" "Clone Chip" "Paparazzi" "Parasite"]}})
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
     (play-from-hand state :corp "Jackson Howard" "New remote")
@@ -203,7 +203,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
                :runner {:deck [(qty "Imp" 2) "Scavenge"]}})
     (take-credits state :corp)
-    (core/gain state :runner :click 1)
+    (gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
@@ -268,7 +268,7 @@
       (rez state :corp wrap)
       (take-credits state :corp)
       (core/draw state :runner)
-      (core/gain state :runner :credit 7)
+      (gain state :runner :credit 7)
       (play-from-hand state :runner "Knight")
       (play-from-hand state :runner "Personal Workshop")
       (play-from-hand state :runner "Omni-drive")
@@ -364,7 +364,7 @@
     (new-game {:corp {:deck ["Cyberdex Trial"]}
                :runner {:deck ["Djinn" "Imp" "Leprechaun"]}})
     (take-credits state :corp)
-    (core/gain state :runner :credit 100)
+    (gain state :runner :credit 100)
     (play-from-hand state :runner "Leprechaun")
     (let [lep (get-program state 0)]
       (card-ability state :runner lep 0)
@@ -416,7 +416,7 @@
                  :runner {:deck ["Laamb"]}})
       (play-from-hand state :corp "Masvingo" "HQ")
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (play-from-hand state :runner "Laamb")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
@@ -433,7 +433,7 @@
                  :runner {:deck ["Ankusa"]}})
       (play-from-hand state :corp "Masvingo" "HQ")
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
+      (gain state :runner :credit 5)
       (play-from-hand state :runner "Ankusa")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
@@ -452,7 +452,7 @@
                 :runner {:deck [(qty "Aeneas Informant" 2)]}})
      (play-from-hand state :corp "Jackson Howard" "New remote")
      (take-credits state :corp)
-     (core/gain state :runner :click 50)
+     (gain state :runner :click 50)
      (play-from-hand state :runner "Aeneas Informant")
      (letfn [(run-jackson []
                (run-empty-server state "Server 1")
@@ -619,7 +619,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["IPO" "Hostile Takeover"]
                       :credits 15}})
-    (core/gain state :corp :click 1)
+    (gain state :corp :click 1)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (let [ht (get-content state :remote1 0)]
       (advance state ht 2)

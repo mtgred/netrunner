@@ -589,10 +589,12 @@
                       (conceal-hand state :runner)))})
 
 (defcard "Harmony Medtech: Biomedical Pioneer"
-  {:effect (effect (lose :agenda-point-req 1)
-                   (lose :runner :agenda-point-req 1))
-   :leave-play (effect (gain :agenda-point-req 1)
-                       (gain :runner :agenda-point-req 1))})
+  {:async true
+   :effect (req (wait-for (lose state :corp (make-eid state eid) :agenda-point-req 1)
+                          (lose state :runner eid :agenda-point-req 1)))
+   :leave-play {:async true
+                :effect (req (wait-for (gain state :corp (make-eid state eid) :agenda-point-req 1)
+                                          (gain state :runner eid :agenda-point-req 1)))}})
 
 (defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
@@ -1001,9 +1003,8 @@
                     :label "Manually trigger ability"
                     :async true
                     :effect (req (if (= "Gain [Click]" target)
-                                   (do (gain state side :click 1)
-                                       (update! state side (assoc-in (get-card state card) [:special :mm-click] true))
-                                       (effect-completed state side eid))
+                                   (do (update! state side (assoc-in (get-card state card) [:special :mm-click] true))
+                                       (gain state side eid :click 1))
                                    (gain-credits state side eid 1)))}]
     {:implementation "Does not work with terminal Operations"
      :abilities [mm-ability]
@@ -1614,7 +1615,8 @@
              :req (req (and (= side :runner)
                             (zero? (count-bad-pub state))))
              ;; This doesn't use `gain-bad-publicity` to avoid the event
-             :effect (effect (gain :corp :bad-publicity 1))}]})
+             :async true
+             :effect (effect (gain :corp eid :bad-publicity 1))}]})
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1

@@ -245,6 +245,18 @@
   [state side]
   (core/process-action "remove-tag" state side nil))
 
+(defn gain
+  [state side & args]
+  (let [waitable (fn [state side eid args] (apply core/gain (concat [state side eid] args)))]
+    (wait-for (waitable state side args)
+              (core/fake-checkpoint state))))
+              
+(defn lose
+  [state side & args]
+  (let [waitable (fn [state side eid args] (apply core/lose (concat [state side eid] args)))]
+    (wait-for (waitable state side args)
+              (core/fake-checkpoint state))))
+
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
   ([state server]
@@ -527,7 +539,7 @@
         advancementcost (:advancementcost card)]
     (is' (some? card) (str (:title card) " exists"))
     (when (some? card)
-      (core/gain state :corp :click advancementcost :credit advancementcost)
+      (gain state :corp :click advancementcost :credit advancementcost)
       (core/fake-checkpoint state)
       (dotimes [_ advancementcost]
         (core/process-action "advance" state :corp {:card card}))

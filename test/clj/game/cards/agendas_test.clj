@@ -124,8 +124,8 @@
   (do-game
     (new-game {:corp {:deck ["AR-Enhanced Security" (qty "NGO Front" 3)]}})
     (testing "set up"
-      (core/gain state :corp :click 10 :credit 10)
-      (core/gain state :runner :credit 10)
+      (gain state :corp :click 10 :credit 10)
+      (gain state :runner :credit 10)
       (dotimes [_ 3]
         (play-from-hand state :corp "NGO Front" "New remote"))
       (take-credits state :corp))
@@ -153,7 +153,7 @@
   (do-game
    (new-game {:corp {:deck [(qty "Architect Deployment Test" 5) "Oaktown Renovation" "Enigma" "Rashida Jaheem"]}})
    (starting-hand state :corp (repeat 5 "Architect Deployment Test"))
-   (core/gain state :corp :click 4)
+   (gain state :corp :click 4)
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Enigma")
@@ -290,7 +290,7 @@
   ;; AstroScript token placement
   (do-game
     (new-game {:corp {:deck [(qty "AstroScript Pilot Program" 3) (qty "Ice Wall" 2)]}})
-    (core/gain state :corp :click 3)
+    (gain state :corp :click 3)
     (letfn [(try-place [from to]
               (card-ability state :corp (refresh from) 0)
               (click-card state :corp (refresh to)))
@@ -390,7 +390,7 @@
       (let [bell (get-content state :remote1 0)]
         (advance state bell 2)
         (take-credits state :corp)
-        (core/lose state :runner :credit 1)
+        (lose state :runner :credit 1)
         (run-empty-server state "Server 1")
         (click-prompt state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Bellona")
@@ -411,7 +411,7 @@
                                  (qty "Wyrm" 2)]}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
+      (gain state :runner :credit 10)
       (is (zero? (count-tags state)) "Runner starts with 0 tags")
       (play-from-hand state :runner "The Maker's Eye")
       (click-prompt state :corp "Yes")
@@ -521,7 +521,7 @@
   (testing "deal damage"
     (do-game
       (new-game {:corp {:deck ["Broad Daylight"]}})
-      (core/gain state :corp :bad-publicity 3)
+      (gain state :corp :bad-publicity 3)
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
       (is (= 4 (count-bad-pub state)) "Corp gains 1 bad pub")
@@ -534,7 +534,7 @@
   (testing "bad pub triggers"
     (do-game
       (new-game {:corp {:deck ["Broad Daylight" "Broadcast Square"]}})
-      (core/gain state :corp :bad-publicity 1)
+      (gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
@@ -548,7 +548,7 @@
   (testing "bad pub triggers - more cases"
     (do-game
       (new-game {:corp {:deck ["Broad Daylight" "Broadcast Square"]}})
-      (core/gain state :corp :bad-publicity 1)
+      (gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
@@ -592,7 +592,7 @@
   (dotimes [n 5]
     (do-game
       (new-game {:corp {:deck ["CFC Excavation Contract" (qty "Eli 1.0" n)]}})
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       (is (= 15 (:credit (get-corp))) "Should start with 5 credits")
       (dotimes [_ n]
         (play-from-hand state :corp "Eli 1.0" "New remote")
@@ -692,7 +692,7 @@
     (is (= 5 (:credit (get-corp))))
     (play-and-score state "Corporate War")
     (is (zero? (:credit (get-corp))) "Lost all credits")
-    (core/gain state :corp :credit 7)
+    (gain state :corp :credit 7)
     (play-and-score state "Corporate War")
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
@@ -714,7 +714,7 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" (qty "Cyberdex Trial" 2)]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-and-score state "Cyberdex Sandbox")
       (is (changes-credits (get-corp) 4
                            (click-prompt state :corp "Yes")))
@@ -734,7 +734,7 @@
   (testing "Only triggers on the first purge each turn #5174"
     (do-game
       (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Cyberdex Trial")
       (play-and-score state "Cyberdex Sandbox")
       (is (changes-credits
@@ -951,7 +951,7 @@
     (do-game
       (new-game {:corp {:deck ["Domestic Sleepers"]}})
       (play-and-score state "Domestic Sleepers")
-      (core/gain state :corp :click 3)
+      (gain state :corp :click 3)
       (let [ds_scored (get-scored state :corp 0)]
         (is (zero? (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
         (is (zero? (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
@@ -963,7 +963,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Domestic Sleepers" "Mark Yale"]
                         :credits 10}})
-      (core/gain state :corp :click 5)
+      (gain state :corp :click 5)
       (play-from-hand state :corp "Mark Yale" "New remote")
       (play-and-score state "Domestic Sleepers")
       (let [sleepers (get-scored state :corp 0)
@@ -994,7 +994,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Efficiency Committee" 3) (qty "Shipment from SanSan" 2)
                              "Ice Wall"]}})
-    (core/gain state :corp :click 4)
+    (gain state :corp :click 4)
     (play-from-hand state :corp "Efficiency Committee" "New remote")
     (play-from-hand state :corp "Efficiency Committee" "New remote")
     (play-from-hand state :corp "Efficiency Committee" "New remote")
@@ -1070,7 +1070,7 @@
   ;; Escalate Vitriol
   (do-game
     (new-game {:corp {:deck ["Escalate Vitriol"]}})
-    (core/lose state :corp :credit 5)
+    (lose state :corp :credit 5)
     (play-and-score state "Escalate Vitriol")
     (let [ev-scored (get-scored state :corp 0)]
       (dotimes [tag 10]
@@ -1081,7 +1081,7 @@
         (is (= tag (:credit (get-corp))) (str "Should gain " tag " credits"))
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/lose state :corp :credit (:credit (get-corp)))
+        (lose state :corp :credit (:credit (get-corp)))
         (core/lose-tags state :runner (game.core.eid/make-eid state) tag)))))
 
 (deftest executive-retreat
@@ -1173,7 +1173,7 @@
                    :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]}})
         (play-from-hand state :corp "Fetal AI" "New remote")
         (take-credits state :corp 2)
-        (core/lose state :runner :credit 5)
+        (lose state :runner :credit 5)
         (run-empty-server state "Server 1")
         (click-prompt state :runner "No action")
         (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
@@ -1333,7 +1333,7 @@
     (play-and-score state "Gila Hands Arcology")
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (let [gha-scored (get-scored state :corp 0)]
       (card-ability state :corp gha-scored 0)
       (is (= 2 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
@@ -1530,7 +1530,7 @@
   ;; Hollywood Renovation
   (do-game
     (new-game {:corp {:deck ["Hollywood Renovation" "Ice Wall"]}})
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Hollywood Renovation" "New remote")
     (let [hr (get-content state :remote1 0)
@@ -1601,7 +1601,7 @@
       (play-from-hand state :corp "Ikawah Project" "New remote")
       (testing "No credits"
         (take-credits state :corp)
-        (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+        (lose state :runner :credit (:credit (get-runner)) :click 3)
         (run-empty-server state :remote1)
         (click-prompt state :runner "No action")
         (is (zero? (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
@@ -1609,7 +1609,7 @@
       (testing "No clicks"
         (take-credits state :runner)
         (take-credits state :corp)
-        (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+        (lose state :runner :credit (:credit (get-runner)) :click 3)
         (run-empty-server state :remote1)
         (click-prompt state :runner "No action")
         (is (zero? (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
@@ -1617,8 +1617,8 @@
       (testing "Enough of both"
         (take-credits state :runner)
         (take-credits state :corp)
-        (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
-        (core/gain state :runner :credit 5 :click 4)
+        (lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
+        (gain state :runner :credit 5 :click 4)
         (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
         (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
         (run-empty-server state :remote1)
@@ -1647,7 +1647,7 @@
               (do-game
                 (new-game {:corp {:deck ["Illicit Sales"]}})
                 (let [credits (:credit (get-corp))]
-                  (core/gain state :corp :bad-publicity starting-bp)
+                  (gain state :corp :bad-publicity starting-bp)
                   (play-and-score state "Illicit Sales")
                   (click-prompt state :corp answer)
                   (is (= (:credit (get-corp)) (+ credits credits-gained)))))))]
@@ -1678,7 +1678,7 @@
   ;; Improved Tracers
   (do-game
     (new-game {:corp {:deck ["Improved Tracers" "News Hound" "Information Overload"]}})
-    (core/gain state :corp :credit 10)
+    (gain state :corp :credit 10)
     (play-from-hand state :corp "News Hound" "HQ")
     (play-from-hand state :corp "Information Overload" "R&D")
     (let [nh (get-ice state :hq 0)
@@ -1792,7 +1792,7 @@
                                   "Adonis Campaign" "Strongbox"])
       (core/move state :corp (find-card "Eve Campaign" (:deck (get-corp))) :discard)
       (core/move state :corp (find-card "Corporate Troubleshooter" (:deck (get-corp))) :discard)
-      (core/gain state :corp :click 4))
+      (gain state :corp :click 4))
     (testing "Asset & HQ"
       (play-and-score state "License Acquisition")
       (click-card state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
@@ -1880,7 +1880,7 @@
                              "Kakugo" "Chum"
                              "RSVP" "Sensei"]}})
     (click-draw state :corp)
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "Archives")
     (play-from-hand state :corp "Fire Wall" "R&D")
     (play-from-hand state :corp "Kakugo" "HQ")
@@ -2076,13 +2076,13 @@
       (let [napd (get-content state :remote1 0)]
         (advance state napd 2)
         (take-credits state :corp)
-        (core/lose state :runner :credit 2)
+        (lose state :runner :credit 2)
         (run-empty-server state "Server 1")
         (click-prompt state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
         (is (= 3 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
         (take-credits state :runner)
-        (core/gain state :corp :bad-publicity 1)
+        (gain state :corp :bad-publicity 1)
         (advance state napd 2)
         (score state :corp (refresh napd))
         (is (some? (get-content state :remote1 0))
@@ -2113,7 +2113,7 @@
   (do-game
     (new-game {:corp {:deck ["Net Quarantine"]}})
     (swap! state assoc-in [:runner :identity :baselink] 1)
-    (core/gain state :corp :click 3)
+    (gain state :corp :click 3)
     (play-and-score state "Net Quarantine")
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
@@ -2135,7 +2135,7 @@
   (do-game
     (new-game {:corp {:deck ["New Construction" (qty "Commercial Bankers Group" 10)]}})
     (starting-hand state :corp (vec (cons "New Construction" (repeat 10 "Commercial Bankers Group"))))
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "New Construction" "New remote")
     (let [nc (get-content state :remote1 0)]
       (is (zero? (get-counters (refresh nc) :advancement)))
@@ -2202,7 +2202,7 @@
   ;; Oaktown Renovation
   (do-game
     (new-game {:corp {:deck ["Oaktown Renovation" "Shipment from SanSan"]}})
-    (core/gain state :corp :click 3)
+    (gain state :corp :click 3)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (let [oak (get-content state :remote1 0)]
       (is (rezzed? (refresh oak)) "Oaktown installed face up")
@@ -2276,7 +2276,7 @@
                                "Rosetta 2.0" "Magnum Opus"
                                "Astrolabe"]}})
     (take-credits state :corp)
-    (core/gain state :runner :click 10 :credit 10)
+    (gain state :runner :click 10 :credit 10)
     (play-from-hand state :runner "Aeneas Informant")
     (play-from-hand state :runner "Bank Job")
     (play-from-hand state :runner "Rosetta 2.0")
@@ -2424,7 +2424,7 @@
     (take-credits state :runner)
     (play-and-score state "Project Ares")
     (is (empty? (:prompt (get-runner))) "No prompt for Runner if scored with 4 advancement tokens")
-    (core/gain state :corp :click 5)
+    (gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
     (let [ares (get-content state :remote2 0)]
       (advance state ares 6)
@@ -2446,7 +2446,7 @@
       ;; Set up
       (starting-hand state :corp ["Project Atlas"])
       (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       ;; Should gain 1 counter
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atlas (get-content state :remote1 0)]
@@ -2466,7 +2466,7 @@
       ;; Set up
       (starting-hand state :corp ["Project Atlas" "Project Atlas"])
       (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       ;; Should gain 1 counter
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atlas (get-content state :remote1 0)]
@@ -2496,7 +2496,7 @@
   ;; Project Beale
   (do-game
     (new-game {:corp {:deck [(qty "Project Beale" 2)]}})
-    (core/gain state :corp :click 8 :credit 8)
+    (gain state :corp :click 8 :credit 8)
     (play-from-hand state :corp "Project Beale" "New remote")
     (let [pb1 (get-content state :remote1 0)]
       (advance state pb1 4)
@@ -2514,7 +2514,7 @@
     (new-game {:corp {:deck [(qty "Project Kusanagi" 2) "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (rez state :corp (get-ice state :hq 0))
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     (play-and-score state "Project Kusanagi")
     (let [pk-scored (get-scored state :corp 0)]
       (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should start with 0 agenda counters"))
@@ -2643,7 +2643,7 @@
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
     (is (= 1 (count (:discard (get-corp)))) "Corp should have 1 cards in hand")
     (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
-    (core/gain state :corp :click 10 :credit 10)
+    (gain state :corp :click 10 :credit 10)
     ;; Should gain 1 counter
     (play-from-hand state :corp "Project Vitruvius" "New remote")
     (let [vit (get-content state :remote1 0)]
@@ -2689,7 +2689,7 @@
                                "Jackson Howard"
                                "Prisec"
                                "Hedge Fund"]}})
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Eli 1.0" "New remote")
@@ -2720,7 +2720,7 @@
                                "Jackson Howard"
                                "Prisec"
                                "Hedge Fund"]}})
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       (click-draw state :corp)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
@@ -2757,7 +2757,7 @@
       (new-game {:corp {:deck ["Project Yagi-Uda"
                                "Eli 1.0"
                                "Eli 2.0" ]}})
-      (core/gain state :corp :click 10 :credit 10)
+      (gain state :corp :click 10 :credit 10)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (play-from-hand state :corp "Eli 1.0" "New remote")
       (let [pyu (get-content state :remote1 0)]
@@ -2781,7 +2781,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Project Yagi-Uda" "Eli 1.0" (qty "Ice Wall" 2)]
                         :credits 20}})
-      (core/gain state :corp :click 10)
+      (gain state :corp :click 10)
       (play-from-hand state :corp "Project Yagi-Uda" "New remote")
       (let [pyu (get-content state :remote1 0)]
         (advance state pyu 4)
@@ -2913,7 +2913,7 @@
   ;; Remastered Edition
   (do-game
     (new-game {:corp {:deck [(qty "Remastered Edition" 2) (qty "Enigma" 1)]}})
-    (core/gain state :corp :click 3)
+    (gain state :corp :click 3)
     (letfn [(try-place [from to]
               (card-ability state :corp (refresh from) 0)
               (click-card state :corp (refresh to)))
@@ -3015,7 +3015,7 @@
       (new-game {:corp {:deck [(qty "Research Grant" 2) (qty "Ice Wall" 2)]}
                  :runner {:id "Leela Patel: Trained Pragmatist"
                           :deck ["Sure Gamble"]}})
-      (core/gain state :corp :click 1)
+      (gain state :corp :click 1)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Ice Wall" "R&D")
       (play-from-hand state :corp "Research Grant" "New remote")
@@ -3397,7 +3397,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Superconducting Hub"]
                       :credits 10}})
-    (core/gain state :corp :click 10)
+    (gain state :corp :click 10)
     (play-from-hand state :corp "Superconducting Hub" "New remote")
     (changes-val-macro
       2 (count (:hand (get-corp)))
@@ -3685,7 +3685,7 @@
   ;; Underway Renovation
   (do-game
     (new-game {:corp {:deck ["Underway Renovation" "Shipment from SanSan"]}})
-    (core/gain state :corp :click 2)
+    (gain state :corp :click 2)
     (starting-hand state :runner [])
     (play-from-hand state :corp "Underway Renovation" "New remote")
     (let [ur (get-content state :remote1 0)]

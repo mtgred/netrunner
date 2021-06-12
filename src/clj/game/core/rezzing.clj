@@ -6,7 +6,7 @@
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler card-as-handler make-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event trigger-event-simult unregister-events]]
+    [game.core.engine :refer [ability-as-handler card-as-handler make-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event-simult unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
@@ -128,18 +128,18 @@
          (complete-rez state side eid card args))
        (effect-completed state side eid)))))
 
-;; TODO: make async
 (defn derez
   "Derez a corp card."
-  [state side card]
+  [state side eid card]
   (let [card (get-card state card)]
     (system-msg state side (str "derezzes " (:title card)))
     (unregister-events state side card)
     (update! state :corp (deactivate state :corp card true))
     (let [cdef (card-def card)]
-      (when-let [derez-effect (:derez-effect cdef)]
-        (resolve-ability state side derez-effect (get-card state card) nil))
       (when-let [derezzed-events (:derezzed-events cdef)]
-        (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
-    (unregister-constant-effects state side card)
-    (trigger-event state side :derez card side)))
+        (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events)))
+      (unregister-constant-effects state side card)
+      (if-let [derez-effect (:derez-effect cdef)]
+        (wait-for (resolve-ability state side derez-effect (get-card state card) nil)
+                  (trigger-event-simult state side eid :derez nil card side))
+        (trigger-event-simult state side eid :derez nil card side)))))

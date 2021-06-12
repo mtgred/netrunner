@@ -5,7 +5,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [complete-with-result make-eid]]
-    [game.core.engine :refer [resolve-ability trigger-event trigger-event-sync]]
+    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
@@ -136,15 +136,15 @@
                                                       :value (:number async-result)
                                                       :targets (:targets async-result)}))
       (pos? (value cost))
-      (do (lose state side :credit (value cost))
-          (wait-for (trigger-event-sync
-                      state side (make-eid state eid)
-                      (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                      (value cost))
-                    (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
-                    (complete-with-result state side eid {:msg (str "pays " (value cost) " [Credits]")
-                                                          :type :credit
-                                                          :value (value cost)})))
+      (wait-for (lose state side (make-eid state eid) :credit (value cost))
+        (wait-for (trigger-event-simult
+                    state side (make-eid state eid)
+                    (if (= side :corp) :corp-spent-credits :runner-spent-credits)
+                    nil (value cost))
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
+                  (complete-with-result state side eid {:msg (str "pays " (value cost) " [Credits]")
+                                                        :type :credit
+                                                        :value (value cost)})))
       :else
       (complete-with-result state side eid {:msg (str "pays 0 [Credits]")
                                             :type :credit
@@ -182,15 +182,15 @@
                                                            :value (:number async-result)
                                                            :targets (:targets async-result)}))
            (pos? cost)
-           (do (lose state side :credit cost)
-               (wait-for (trigger-event-sync
-                           state side (make-eid state eid)
-                           (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                           cost)
-                         (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
-                         (complete-with-result state side eid {:msg (str "pays " cost " [Credits]")
-                                                               :type :x-credits
-                                                               :value cost})))
+           (wait-for (lose state side (make-eid state eid) :credit cost)
+             (wait-for (trigger-event-simult
+                         state side (make-eid state eid)
+                         (if (= side :corp) :corp-spent-credits :runner-spent-credits)
+                         nil cost)
+                       (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+                       (complete-with-result state side eid {:msg (str "pays " cost " [Credits]")
+                                                             :type :x-credits
+                                                             :value cost})))
            :else
            (complete-with-result state side eid {:msg (str "pays 0 [Credits]")
                                                  :type :x-credits

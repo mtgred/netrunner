@@ -288,16 +288,17 @@
              :async true
              :req (req (and (same-card? (:ice context) (:host card))
                             (empty? (remove :broken (:subroutines (:ice context))))))
-             :effect (effect (system-msg :corp
+             :effect (req (system-msg state :corp
                                          (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context))
-                             (trash :corp eid card {:unpreventable true}))}]})
+                             (wait-for (derez state :corp (make-eid state eid) (:ice context))
+                                       (trash state :corp eid card {:unpreventable true})))}]})
 
 (defcard "Biotic Labor"
   {:on-play
    {:msg "gain [Click][Click]"
-    :effect (effect (gain :click 2))}})
+    :async true
+    :effect (effect (gain eid :click 2))}})
 
 (defcard "Blue Level Clearance"
   {:on-play
@@ -566,19 +567,19 @@
                           (rezzed? %))
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :async true
-    :effect (req (doseq [c targets]
-                   (derez state side c))
-                 (let [discount (* -3 (count targets))]
-                   (continue-ability
-                     state side
-                     {:async true
-                      :prompt "Select a card to rez"
-                      :choices {:card #(and (installed? %)
-                                            (corp? %)
-                                            (not (rezzed? %))
-                                            (not (agenda? %)))}
-                      :effect (effect (rez eid target {:cost-bonus discount}))}
-                     card nil)))}})
+    :effect (req (wait-for (effect-seq state side (make-eid state eid) [c targets]
+                                       (derez state side eid c))
+                   (let [discount (* -3 (count targets))]
+                     (continue-ability
+                       state side
+                       {:async true
+                        :prompt "Select a card to rez"
+                        :choices {:card #(and (installed? %)
+                                              (corp? %)
+                                              (not (rezzed? %))
+                                              (not (agenda? %)))}
+                        :effect (effect (rez eid target {:cost-bonus discount}))}
+                       card nil))))}})
 
 (defcard "Door to Door"
   {:events [{:event :runner-turn-begins
@@ -844,7 +845,8 @@
 (defcard "Game Changer"
   {:on-play
    {:rfg-instead-of-trashing true
-    :effect (effect (gain :click (count (:scored runner))))}})
+    :async true
+    :effect (effect (gain eid :click (count (:scored runner))))}})
 
 (defcard "Game Over"
   {:on-play
@@ -1242,7 +1244,8 @@
    :events [{:event :runner-turn-begins
              :duration :until-runner-turn-begins
              :msg "make the Runner lose [Click]"
-             :effect (effect (lose :runner :click 1))}]})
+             :async true
+             :effect (effect (lose :runner eid :click 1))}]})
 
 (defcard "Localized Product Line"
   {:on-play
@@ -1442,9 +1445,8 @@
   {:on-play
    {:async true
     :effect (req (if (empty? (:hand runner))
-                   (do (gain state :corp :click 2)
-                       (system-msg state side "uses O₂ Shortage to gain [Click][Click]")
-                       (effect-completed state side eid))
+                   (do (system-msg state side "uses O₂ Shortage to gain [Click][Click]")
+                       (gain state :corp eid :click 2))
                    (continue-ability
                      state side
                      {:optional
@@ -1454,7 +1456,8 @@
                        :yes-ability {:async true
                                      :effect (effect (trash-cards :runner eid (take 1 (shuffle (:hand runner))) nil))}
                        :no-ability {:msg "gain [Click][Click]"
-                                    :effect (effect (gain :corp :click 2))}}}
+                                    :async true
+                                    :effect (effect (gain :corp eid :click 2))}}}
                      card nil)))}})
 
 (defcard "Observe and Destroy"
@@ -1766,7 +1769,8 @@
               :async true
               :effect (effect (draw eid 2 nil))}
              {:msg "gain [Click]"
-              :effect (effect (gain :click 1))}
+              :async true
+              :effect (effect (gain eid :click 1))}
              {:prompt "Choose a non-agenda to install"
               :msg "install a non-agenda from hand"
               :choices {:card #(and (not (agenda? %))
@@ -2269,7 +2273,7 @@
                          :req (req (and (same-card? target (:host card))
                                         (rezzed? target)))
                          :value "Barrier"}]
-     :leave-play (req (remove-extra-subs! state :corp (make-eid state eid) (:host card) (:cid card)))
+     :leave-play {:async true :effect (req (remove-extra-subs! state :corp eid (:host card) (:cid card)))}
      :events [{:event :rez
                :req (req (same-card? (:card context) (:host card)))
                :async true
@@ -2301,7 +2305,8 @@
                                       {:once :per-turn
                                        :once-key :subliminal-messaging
                                        :msg "gain [Click]"
-                                       :effect (effect (gain :corp :click 1))}
+                                       :async true
+                                       :effect (effect (gain :corp eid :click 1))}
                                       card nil)))}
    :events [{:event :corp-phase-12
              :location :discard

@@ -1,8 +1,8 @@
 (ns game.core.tags
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
-    [game.core.eid :refer [effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.engine :refer [trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -18,8 +18,8 @@
      (sum-effects state :runner nil :tags nil)))
 
 (defn update-tag-status
-  ([state] (update-tag-status state nil))
-  ([state _]
+  ([state side] (update-tag-status state side (make-eid state)))
+  ([state side eid]
    (let [old-total (get-in @state [:runner :tag :total])
          new-total (sum-tag-effects state)
          is-tagged? (or (any-effects state :runner :is-tagged)
@@ -28,15 +28,16 @@
          new-tags {:total new-total
                    :is-tagged is-tagged?}
          changed? (not= old-tags new-tags)]
-     (when changed?
-       (swap! state update-in [:runner :tag] merge new-tags)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+     (if changed?
+       (do (swap! state update-in [:runner :tag] merge new-tags)
+           (trigger-event-simult state side eid :tags-changed nil new-total old-total is-tagged?))
+       (effect-completed state side eid))
      changed?)))
 
 (defn tag-prevent
   [state side eid n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
+  (trigger-event-simult state side eid (if (= side :corp) :corp-prevent :runner-prevent) nil (list :tag n)))
 
 (defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
@@ -50,10 +51,10 @@
   "Resolve runner gain tags. Always gives `:base` tags."
   [state side eid n]
   (if (pos? n)
-    (do (gain state :runner :tag {:base n})
-        (toast state :runner (str "Took " (quantify n "tag") "!") "info")
-        (update-tag-status state)
-        (trigger-event-sync state side eid :runner-gain-tag n))
+    (do (wait-for (gain state :runner (make-eid state eid) :tag {:base n})
+          (toast state :runner (str "Took " (quantify n "tag") "!") "info")
+          (wait-for (update-tag-status state side (make-eid state eid))
+                    (trigger-event-simult state side eid :runner-gain-tag nil n))))
     (effect-completed state side eid)))
 
 (defn gain-tags
@@ -92,5 +93,5 @@
     (lose-tags state side eid (get-in @state [:runner :tag :base]))
     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
-        (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag n side))))
+        (wait-for (update-tag-status state side (make-eid state eid))
+          (trigger-event-simult state side eid :runner-lose-tag nil n side)))))

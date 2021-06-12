@@ -63,14 +63,14 @@
                                           (when (= zone :rfg)
                                             (system-msg state side
                                                         (str "removes " (:title c) " from the game instead of trashing it")))
-                                          (when (has-subtype? card "Terminal")
-                                            (lose state side :click (-> @state side :click))
-                                            (swap! state assoc-in [:corp :register :terminal] true))
-                                          (effect-completed state side eid)))
-                              (do (when (has-subtype? card "Terminal")
-                                    (lose state side :click (-> @state side :click))
-                                    (swap! state assoc-in [:corp :register :terminal] true))
-                                  (effect-completed state side eid)))))))))
+                                          (if (has-subtype? card "Terminal")
+                                            (do (swap! state assoc-in [:corp :register :terminal] true)
+                                                (lose state side eid :click (-> @state side :click)))
+                                            (effect-completed state side eid))))
+                              (do (if (has-subtype? card "Terminal")
+                                    (do (swap! state assoc-in [:corp :register :terminal] true)
+                                        (lose state side eid :click (-> @state side :click)))
+                                    (effect-completed state side eid))))))))))
 
 (defn play-instant-costs
   [state side eid card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]

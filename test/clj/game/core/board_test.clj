@@ -31,7 +31,7 @@
                         :discard ["IPO"]
                         :credits 100}
                  :runner {:hand ["Film Critic"]}})
-      (core/gain state :corp :click 100)
+      (gain state :corp :click 100)
       ;; Agendas
       (play-and-score state "Hostile Takeover")
       (is (not (find-card "Hostile Takeover" (core/all-installed state :corp))))

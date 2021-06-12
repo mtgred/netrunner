@@ -49,7 +49,7 @@
    "corp-ability" play-corp-ability
    "corp-phase-43" corp-phase-43
    "credit" click-credit
-   "derez" #(derez %1 %2 (:card %3))
+   "derez" #(derez %1 %2 (make-eid %1) (:card %3))
    "draw" click-draw
    "dynamic-ability" play-dynamic-ability
    "end-phase-12" end-phase-12

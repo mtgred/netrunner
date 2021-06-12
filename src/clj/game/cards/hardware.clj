@@ -96,7 +96,8 @@
                                             (and (some #{:hand} (:previous-zone (:card context)))
                                                  (program? (:card context)))))))
              :msg "gain [Click]"
-             :effect (effect (gain :click 1))}
+             :async true
+             :effect (effect (gain eid :click 1))}
             {:event :unsuccessful-run
              :async true
              :effect (effect (system-msg "trashes Autoscripter")
@@ -423,9 +424,8 @@
                               :choices {:card #(= cid (:cid %))}
                               :msg (msg "trigger the [Click] ability of " (:title target)
                                         " without spending [Click]")
-                              :effect (req (gain state :runner :click 1)
-                                           (play-ability state side {:card target :ability 0})
-                                           (effect-completed state side eid))})
+                              :effect (req (gain eid state :runner :click 1)
+                                           (play-ability state side {:card target :ability 0}))})
                            card nil))}}}]})
 
 (defcard "Demolisher"
@@ -1525,7 +1525,8 @@
              :effect (effect (update! (dissoc card :qianju-active)))}
             {:event :runner-turn-begins
              :req (req (:qianju-active card))
-             :effect (effect (lose :click 1))}
+             :async true
+             :effect (effect (lose eid :click 1))}
             {:event :pre-tag
              :async true
              :req (req (:qianju-active card))
@@ -1680,7 +1681,8 @@
                                   {:choices {:card #(and (ice? %)
                                                          (= :this-turn (:rezzed %))
                                                          (<= (:cost %) target))}
-                                   :effect (effect (derez target))
+                                   :async true
+                                   :effect (effect (derez eid target))
                                    :msg (msg "derez " (:title target))}
                                   card nil))}]})
 
@@ -1912,7 +1914,8 @@
              :req (req (and (has-subtype? (:card context) "Run")
                             (first-event? state side :play-event #(has-subtype? (:card (first %)) "Run"))))
              :msg "gain a [click]"
-             :effect (effect (gain :click 1))}]})
+             :async true
+             :effect (effect (gain eid :click 1))}]})
 
 (defcard "T400 Memory Diamond"
   {:constant-effects [(mu+ 1)

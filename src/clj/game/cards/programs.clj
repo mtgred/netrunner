@@ -254,7 +254,8 @@
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
                     :msg (msg "derez " (:title current-ice))
-                    :effect (effect (derez current-ice))}]})))
+                    :async true
+                    :effect (effect (derez eid current-ice))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -343,8 +344,9 @@
       :player :runner
       :yes-ability {:cost [:credit 2]
                     :msg "gain [Click]"
-                    :effect (req (gain state :runner :click 1)
-                                 (update! state :runner (assoc-in (get-card state card) [:special :used-algernon] true)))}}}
+                    :async true
+                    :effect (req (update! state :runner (assoc-in (get-card state card) [:special :used-algernon] true))
+                                 (gain state :runner eid :click 1))}}}
     {:event :runner-turn-ends
      :async true
      :effect (req (if (get-in card [:special :used-algernon])
@@ -813,7 +815,8 @@
                 :label "derez an ice"
                 :cost [:trash]
                 :msg (msg "derez " (:title current-ice))
-                :effect (effect (derez current-ice))}]})
+                :async true
+                :effect (effect (derez eid current-ice))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1260,7 +1263,8 @@
                                  :req (req (and (= :encounter-ice (:phase run))
                                                 (has-subtype? current-ice "Sentry")))
                                  :msg (msg "derez " (:title current-ice))
-                                 :effect (effect (derez current-ice))}
+                                 :async true
+                                 :effect (effect (derez eid current-ice))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Force of Nature"
@@ -1412,8 +1416,9 @@
   {:flags {:runner-phase-12 (req true)}
    :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                 :req (req (:runner-phase-12 @state))
+                :async true
                 :effect (effect (move card :rfg)
-                                (gain :click 3))
+                                (gain eid :click 3))
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
@@ -2492,11 +2497,12 @@
   (let [action (req (add-counter state side card :virus 1)
                     (if (and (rezzed? (get-card state (:host card)))
                              (<= 3 (get-virus-counters state (get-card state card))))
-                      (derez state side (get-card state (:host card)))))]
+                      (derez state side eid (get-card state (:host card)))))]
     {:hosting {:card #(and (ice? %)
                            (can-host? %))}
-     :on-install {:effect action}
+     :on-install {:async true :effect action}
      :events [{:event :runner-turn-begins
+               :async true
                :effect action}]}))
 
 (defcard "Trope"
@@ -2583,7 +2589,8 @@
    :abilities [{:cost [:click 1 :power 3]
                 :once :per-turn
                 :msg "gain [Click][Click]"
-                :effect (effect (gain :click 2))}]})
+                :async true
+                :effect (effect (gain eid :click 2))}]})
 
 (defcard "Utae"
   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]

@@ -29,8 +29,8 @@
                 :label "Shuffle 15 Minutes into R&D"
                 :async true
                 :effect (req (move state :corp card :deck nil)
-                             (wait-for (shuffle! state :corp (make-eid state eid) :deck)
-                                       (update-all-agenda-points state side)))}]
+                             (update-all-agenda-points state side)
+                             (shuffle! state :corp eid :deck))}]
    :flags {:has-abilities-when-stolen true}})
 
 (defcard "Above the Law"
@@ -344,7 +344,8 @@
    :events (let [event {:unregister-once-resolved true
                         :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
                         :msg "make the Runner lose 2 tags"
-                        :effect (effect (lose :runner :tag 2))}]
+                        :async true
+                        :effect (effect (lose :runner eid :tag 2))}]
              [(assoc event :event :corp-turn-ends)
               (assoc event :event :runner-turn-ends)])})
 
@@ -434,7 +435,7 @@
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                              (corp-install-list state chosen-ice))
                             :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
-                                                   (corp-install eid chosen-ice target
+                                                   (corp-install state side eid chosen-ice target
                                                                  {:ignore-all-cost true
                                                                   :install-state :rezzed-no-rez-cost})))})
                          card nil))}
@@ -467,7 +468,7 @@
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
                                              (corp-install-list state chosen-ice))
                             :effect (req (wait-for (shuffle! state side (make-eid state eid) :deck)
-                                                   (corp-install eid chosen-ice target
+                                                   (corp-install state side eid chosen-ice target
                                                                  {:ignore-all-cost true
                                                                   :install-state :rezzed-no-rez-cost})))})
                          card nil))}
@@ -618,12 +619,13 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
    :abilities [{:cost [:click 1 :agenda 1]
-                :effect (effect (gain :click 2)
-                                (register-turn-flag!
+                :async true
+                :effect (effect (register-turn-flag!
                                   card :can-advance
                                   (fn [state side card]
                                     ((constantly false)
-                                     (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
+                                     (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning"))))
+                                (gain eid :click 2))
                 :keep-open :while-agenda-tokens-left
                 :msg "gain [Click][Click]"}]})
 
@@ -632,7 +634,8 @@
               :effect (effect (add-counter card :agenda 2))}
    :abilities [{:cost [:click 1 :agenda 1]
                 :once :per-turn
-                :effect (effect (gain :click 2))
+                :async true
+                :effect (effect (gain eid :click 2))
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Encrypted Portals"
@@ -671,7 +674,8 @@
                 :label "runner loses [Click][Click]"
                 :msg "force the Runner to lose [Click][Click]"
                 :cost [:forfeit-self]
-                :effect (effect (lose :runner :click 2))}]})
+                :async true
+                :effect (effect (lose :runner eid :click 2))}]})
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
@@ -970,12 +974,13 @@
 (defcard "Luminal Transubstantiation"
   {:on-score
    {:silent (req true)
-    :effect (req (gain state :corp :click 3)
-                 (register-turn-flag!
+    :async true
+    :effect (req (register-turn-flag!
                    state side card :can-score
                    (fn [state side card]
                      ((constantly false)
-                      (toast state :corp "Cannot score cards this turn due to Luminal Transubstantiation." "warning")))))}})
+                      (toast state :corp "Cannot score cards this turn due to Luminal Transubstantiation." "warning"))))
+                 (gain state :corp eid :click 3))}})
 
 (defcard "Mandatory Seed Replacement"
   (letfn [(msr [] {:prompt "Select two pieces of ice to swap positions"
@@ -1000,14 +1005,17 @@
 (defcard "Mandatory Upgrades"
   {:on-score {:msg "gain an additional [Click] per turn"
               :silent (req true)
-              :effect (req (gain state :corp :click-per-turn 1))}
+              :async true
+              :effect (req (gain state :corp eid :click-per-turn 1))}
    :swapped {:msg "gain an additional [Click] per turn"
-             :effect (req (when (= (:active-player @state) :corp)
-                            (gain state :corp :click 1))
-                          (gain state :corp :click-per-turn 1))}
-   :leave-play (req (lose state :corp
+             :async true
+             :effect (req (wait-for (gain state :corp :click-per-turn 1)
+                                    (when (= (:active-player @state) :corp)
+                                      (gain state :corp eid :click 1))))}
+   :leave-play {:async true
+                :effect (req (lose state :corp eid
                           :click 1
-                          :click-per-turn 1))})
+                          :click-per-turn 1))}})
 
 (defcard "Market Research"
   {:on-score {:interactive (req true)
@@ -1561,7 +1569,8 @@
                                            [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
-                                             :effect (effect (derez c))}])
+                                             :async true
+                                             :effect (effect (derez eid c))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -1821,8 +1830,9 @@
               :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
               :yes-ability
               {:msg "make the Runner lose 1 [Click]"
-               :effect (effect (lose :runner :click 1)
-                               (add-counter card :agenda -1))}}}]})
+               :async true
+               :effect (effect (add-counter card :agenda -1)
+                               (lose :runner eid :click 1))}}}]})
 
 (defcard "Vulcan Coverup"
   {:on-score {:interactive (req true)
