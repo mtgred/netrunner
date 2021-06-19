@@ -911,7 +911,7 @@
              :req (req (and this-server
                             (seq (filter :broken (:subroutines (:ice context))))))
              :msg "force the Runner to lose [Click]"
-             :effect (effect (lose :runner :click 1))}]})
+             :effect (effect (lose-clicks :runner 1))}]})
 
 (defcard "Midori"
   {:events [{:event :approach-ice
@@ -1367,7 +1367,7 @@
                                                   (damage state side eid :brain 1 {:card tempus}))
                                                 (do
                                                   (system-msg state side "chooses to lose [Click][Click]")
-                                                  (lose state :runner :click 2)
+                                                  (lose-clicks state :runner 2)
                                                   (effect-completed state side eid))))}
                                         card nil))))}}}})
 

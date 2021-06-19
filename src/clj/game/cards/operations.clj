@@ -297,7 +297,7 @@
 (defcard "Biotic Labor"
   {:on-play
    {:msg "gain [Click][Click]"
-    :effect (effect (gain :click 2))}})
+    :effect (effect (gain-clicks 2))}})
 
 (defcard "Blue Level Clearance"
   {:on-play
@@ -844,7 +844,7 @@
 (defcard "Game Changer"
   {:on-play
    {:rfg-instead-of-trashing true
-    :effect (effect (gain :click (count (:scored runner))))}})
+    :effect (effect (gain-clicks (count (:scored runner))))}})
 
 (defcard "Game Over"
   {:on-play
@@ -1242,7 +1242,7 @@
    :events [{:event :runner-turn-begins
              :duration :until-runner-turn-begins
              :msg "make the Runner lose [Click]"
-             :effect (effect (lose :runner :click 1))}]})
+             :effect (effect (lose-clicks :runner 1))}]})
 
 (defcard "Localized Product Line"
   {:on-play
@@ -1442,7 +1442,7 @@
   {:on-play
    {:async true
     :effect (req (if (empty? (:hand runner))
-                   (do (gain state :corp :click 2)
+                   (do (gain-clicks state :corp 2)
                        (system-msg state side "uses O₂ Shortage to gain [Click][Click]")
                        (effect-completed state side eid))
                    (continue-ability
@@ -1454,7 +1454,7 @@
                        :yes-ability {:async true
                                      :effect (effect (trash-cards :runner eid (take 1 (shuffle (:hand runner))) nil))}
                        :no-ability {:msg "gain [Click][Click]"
-                                    :effect (effect (gain :corp :click 2))}}}
+                                    :effect (effect (gain-clicks :corp 2))}}}
                      card nil)))}})
 
 (defcard "Observe and Destroy"
@@ -1765,7 +1765,7 @@
               :async true
               :effect (effect (draw eid 2 nil))}
              {:msg "gain [Click]"
-              :effect (effect (gain :click 1))}
+              :effect (effect (gain-clicks 1))}
              {:prompt "Choose a non-agenda to install"
               :msg "install a non-agenda from hand"
               :choices {:card #(and (not (agenda? %))
@@ -2297,7 +2297,7 @@
                                       {:once :per-turn
                                        :once-key :subliminal-messaging
                                        :msg "gain [Click]"
-                                       :effect (effect (gain :corp :click 1))}
+                                       :effect (effect (gain-clicks :corp 1))}
                                       card nil)))}
    :events [{:event :corp-phase-12
              :location :discard

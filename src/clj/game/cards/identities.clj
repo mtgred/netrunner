@@ -1001,7 +1001,7 @@
                     :label "Manually trigger ability"
                     :async true
                     :effect (req (if (= "Gain [Click]" target)
-                                   (do (gain state side :click 1)
+                                   (do (gain-clicks state side 1)
                                        (update! state side (assoc-in (get-card state card) [:special :mm-click] true))
                                        (effect-completed state side eid))
                                    (gain-credits state side eid 1)))}]

@@ -343,7 +343,7 @@
       :player :runner
       :yes-ability {:cost [:credit 2]
                     :msg "gain [Click]"
-                    :effect (req (gain state :runner :click 1)
+                    :effect (req (gain-clicks state :runner 1)
                                  (update! state :runner (assoc-in (get-card state card) [:special :used-algernon] true)))}}}
     {:event :runner-turn-ends
      :async true
@@ -1409,7 +1409,7 @@
    :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                 :req (req (:runner-phase-12 @state))
                 :effect (effect (move card :rfg)
-                                (gain :click 3))
+                                (gain-clicks 3))
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
@@ -2574,7 +2574,7 @@
    :abilities [{:cost [:click 1 :power 3]
                 :once :per-turn
                 :msg "gain [Click][Click]"
-                :effect (effect (gain :click 2))}]})
+                :effect (effect (gain-clicks 2))}]})
 
 (defcard "Utae"
   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]

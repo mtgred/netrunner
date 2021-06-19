@@ -108,14 +108,13 @@
                             (effect-completed state :runner eid)))}]})
 
 (defcard "Adjusted Chronotype"
-  {:events [{:event :runner-lose
-             :req (req (and (some #{:click} target)
-                            (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
-                              (or (= 1 click-losses)
-                                  (and (= 2 click-losses)
-                                       (has-flag? state side :persistent :genetics-trigger-twice))))))
+  {:events [{:event :runner-click-loss
+             :req (req (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
+                            (or (= 1 click-losses)
+                                (and (= 2 click-losses)
+                                     (has-flag? state side :persistent :genetics-trigger-twice)))))
              :msg "gain [Click]"
-             :effect (effect (gain :runner :click 1))}]})
+             :effect (effect (gain-clicks :runner 1))}]})
 
 (defcard "Aeneas Informant"
   {:events [{:event :no-trash
@@ -169,7 +168,7 @@
 
 (defcard "All-nighter"
   {:abilities [{:cost [:click 1 :trash]
-                :effect (effect (gain :click 2))
+                :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Always Be Running"
@@ -303,7 +302,7 @@
   {:constant-effects [(runner-hand-size+ 5)]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
-             :effect (effect (lose :click 1))}]})
+             :effect (effect (lose-clicks 1))}]})
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
@@ -324,7 +323,7 @@
                                   ;; gain 1 click
                                   (<= 15 c)
                                   (do (system-msg state side (str "uses " b " to gain [Click]"))
-                                      (gain state side :click 1)
+                                      (gain-clicks state side 1)
                                       (effect-completed state side eid))
                                   :else (effect-completed state side eid))))}]
     {:flags {:drip-economy true}
@@ -1006,7 +1005,7 @@
                  :msg "gain [Click]"
                  :label "Gain [Click] (start of turn)"
                  :once :per-turn
-                 :effect (effect (gain :click 1))}]
+                 :effect (effect (gain-clicks 1))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
@@ -1158,7 +1157,7 @@
                                                    (:title (first (:deck corp)))) ["OK"] {}))}]
    :events [{:event :runner-turn-begins
              :req (req (get-in @state [:per-turn (:cid card)]))
-             :effect (effect (lose :click 1))}]})
+             :effect (effect (lose-clicks 1))}]})
 
 (defcard "Grifter"
   {:events [{:event :runner-turn-ends
@@ -1209,7 +1208,7 @@
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
                  :once :per-turn
                  :async true
-                 :effect (effect (lose :click 1)
+                 :effect (effect (lose-clicks 1)
                                  (gain-credits eid 2))}]
     {:flags {:drip-economy true}
      :events [(assoc ability :event :runner-turn-begins)]
@@ -1404,7 +1403,7 @@
   (let [ability {:msg "gain [Click]"
                  :once :per-turn
                  :label "Gain [Click] (start of turn)"
-                 :effect (effect (gain :click 1)
+                 :effect (effect (gain-clicks 1)
                                  (update! (assoc-in card [:special :joshua-b] true)))}]
     {:flags {:runner-phase-12 (req true)}
      :events [{:event :runner-turn-begins
@@ -1560,7 +1559,7 @@
                                  (apply str (repeat (:click runner) "[Click]")))))
                 :cost [:trash]
                 :effect (req (bypass-ice state)
-                             (lose state :runner :click (:click runner)))}]})
+                             (lose-clicks state :runner (:click runner)))}]})
 
 (defcard "London Library"
   {:abilities [{:async true
@@ -2431,7 +2430,7 @@
                 :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))}
    :events [{:event :runner-turn-begins
              :msg "lose [Click] and ignore additional costs on Double events"
-             :effect (req (lose state :runner :click 1)
+             :effect (req (lose-clicks state :runner 1)
                           (swap! state assoc-in [:runner :register :double-ignore-additional] true))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))})
 
@@ -2442,7 +2441,7 @@
                                 (damage state side eid :brain 1 {:unpreventable true :card card})
                                 (system-msg state side "takes 1 brain damage from Stim Dealer"))
                             (do (add-counter state side card :power 1)
-                                (gain state side :click 1)
+                                (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
 
 (defcard "Street Magic"
@@ -2573,7 +2572,7 @@
                 :cost [:power 1]
                 :req (req (= (:active-player @state) :runner))
                 :msg "gain [Click]" :once :per-turn
-                :effect (effect (gain :click 1))}]})
+                :effect (effect (gain-clicks 1))}]})
 
 (defcard "Temüjin Contract"
   {:data {:counter {:credit 20}}
@@ -2723,7 +2722,7 @@
                 :msg (msg "make a run on " target " and gain [click]")
                 :async true
                 :effect (effect
-                          (gain :runner :click 1)
+                          (gain-clicks :runner 1)
                           (register-events
                             card
                             [{:event :successful-run
@@ -2742,7 +2741,7 @@
                 :choices (req runnable-servers)
                 :msg (msg "make a run on " target " and gain [click]")
                 :async true
-                :effect (effect (gain :click 1)
+                :effect (effect (gain-clicks 1)
                                 (make-run eid target card))}]})
 
 (defcard "The Nihilist"
@@ -3074,7 +3073,7 @@
                                                            (all-active-installed state :runner))))))}
    :events [{:event :runner-turn-begins
              :async true
-             :effect (req (lose state side :click 1)
+             :effect (req (lose-clicks state side 1)
                           (if (get-in @state [:per-turn (:cid card)])
                             (effect-completed state side eid)
                             (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")

@@ -416,8 +416,10 @@
    deduct
    gain
    gain-credits
+   gain-clicks
    lose
    lose-credits
+   lose-clicks
    safe-inc-n
    sub->0]
 

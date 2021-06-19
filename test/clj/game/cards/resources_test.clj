@@ -54,6 +54,19 @@
         (take-credits state :corp)
         ; runner does not lose a click
         (is (= 4 (:click (get-runner)))))))
+  (testing "Chronotype doesn't trigger from Riot Suppression"
+    (do-game
+      (new-game {:corp {:deck ["Riot Suppression" "Thomas Haas"]} :runner {:deck ["Adjusted Chronotype"]}})
+      (play-from-hand state :corp "Thomas Haas" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (play-from-hand state :runner "Adjusted Chronotype")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Riot Suppression")
+      (click-prompt state :runner "No")
+      (take-credits state :corp)
+      (is (= 1 (:click (get-runner))) "Runner still has 3 fewer clicks following turn")))
   (testing "Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed"
     (do-game
       (new-game {:runner {:deck ["Adjusted Chronotype"
