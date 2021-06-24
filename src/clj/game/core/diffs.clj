@@ -5,6 +5,7 @@
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer :all]
     [game.core.cost-fns :refer [card-ability-cost]]
+    [game.core.engine :refer [can-trigger?]]
     [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
     [game.core.payment :refer [can-pay?]]
     [game.core.play-instants :refer [can-play-instant?]]
@@ -42,15 +43,20 @@
     (assoc card :playable true)
     card))
 
-(defn ability-playable? [state side card ability]
-  (let [cost (card-ability-cost state side ability card)]
-    (if (can-pay? state side nil cost)
+(defn ability-playable? [state side card ability-idx ability]
+  (let [cost (card-ability-cost state side ability card)
+        eid {:source card
+             :source-type :ability
+             :source-info {:ability-idx ability-idx}}]
+    (if (and (can-pay? state side eid card nil cost)
+             (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)
       ability)))
 
 (defn abilities-playable? [state side card ability-kw]
-  (into [] (for [ability (get card ability-kw)]
-             (ability-playable? state side card ability))))
+  (->> (get card ability-kw)
+       (map-indexed (partial ability-playable? state side card))
+       (into [])))
 
 (defn card-abilities-playable? [card state side]
   (if (or (active? card)

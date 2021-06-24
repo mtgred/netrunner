@@ -1501,24 +1501,25 @@
             [:div.panel.blue-shade
              (when-let [card (:card prompt)]
                (when (not= "Basic Action" (:type card))
-                 (let [get-nested-host (fn [card] (if (:host card)
-                                                    (recur (:host card))
-                                                    card))
-                       get-zone (fn [card] (:zone (get-nested-host card)))
-                       in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
-                       in-scored? (fn [card] (= (get-zone card) ["scored"]))
-                       installed? (fn [card] (or (:installed card)
-                                                 (= "servers" (first (get-zone card)))))]
-                   (if (or (nil? (:side card))
-                           (installed? card)
-                           (in-scored? card)
-                           (in-play-area? card))
-                     [:div {:style {:text-align "center"}
-                            :on-mouse-over #(card-highlight-mouse-over % card button-channel)
-                            :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-                      (tr [:game.card "Card"]) ": " (render-message (:title card))]
-                     [:div.prompt-card-preview [card-view card false]])
-                   [:hr])))
+                 [:<>
+                  (let [get-nested-host (fn [card] (if (:host card)
+                                                     (recur (:host card))
+                                                     card))
+                        get-zone (fn [card] (:zone (get-nested-host card)))
+                        in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+                        in-scored? (fn [card] (= (get-zone card) ["scored"]))
+                        installed? (fn [card] (or (:installed card)
+                                                  (= "servers" (first (get-zone card)))))]
+                    (if (or (nil? (:side card))
+                            (installed? card)
+                            (in-scored? card)
+                            (in-play-area? card))
+                      [:div {:style {:text-align "center"}
+                             :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                             :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+                       (tr [:game.card "Card"]) ": " (render-message (:title card))]
+                      [:div.prompt-card-preview [card-view card false]]))
+                  [:hr]]))
              [:h4 (render-message (:msg prompt))]
              (cond
                ;; number prompt
@@ -1605,8 +1606,9 @@
                         (pos? (get-in @me [:tag :base])))
                    #(send-command "remove-tag")]
                   [:div.run-button
-                   [cond-button (tr [:game.run "Run"]) (and (not (or @runner-phase-12 @corp-phase-12))
-                                                            (pos? (:click @me)))
+                   [cond-button (tr [:game.run "Run"])
+                    (and (not (or @runner-phase-12 @corp-phase-12))
+                         (pos? (:click @me)))
                     #(do (send-command "generate-runnable-zones")
                          (swap! s update :servers not))]
                    [:div.panel.blue-shade.servers-menu {:style (when (:servers @s) {:display "inline"})}
