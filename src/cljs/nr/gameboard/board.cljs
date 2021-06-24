@@ -130,7 +130,9 @@
   [c-state]
   (swap! c-state dissoc :abilities :corp-abilities :runner-abilities :keep-menu-open))
 
-(defn playable? [card] (:playable card))
+(defn playable? "Checks whether a card or ability is playable"
+  [action]
+  (:playable action))
 
 (defn handle-card-click [{:keys [type zone] :as card} c-state]
   (let [side (:side @game-state)]
@@ -1498,25 +1500,25 @@
           (if-let [prompt (first (:prompt @me))]
             [:div.panel.blue-shade
              (when-let [card (:card prompt)]
-               (let [get-nested-host (fn [card] (if (:host card)
-                                                  (recur (:host card))
-                                                  card))
-                     get-zone (fn [card] (:zone (get-nested-host card)))
-                     in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
-                     in-scored? (fn [card] (= (get-zone card) ["scored"]))
-                     installed? (fn [card] (or (:installed card)
-                                               (= "servers" (first (get-zone card)))))]
-                 (if (or (nil? (:side card))
-                         (installed? card)
-                         (in-scored? card)
-                         (in-play-area? card))
-                   [:div {:style {:text-align "center"}
-                          :on-mouse-over #(card-highlight-mouse-over % card button-channel)
-                          :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
-                    (tr [:game.card "Card"]) ": " (render-message (:title card))]
-                   [:div.prompt-card-preview [card-view card false]])))
-             (when (:card prompt)
-               [:hr])
+               (when (not= "Basic Action" (:type card))
+                 (let [get-nested-host (fn [card] (if (:host card)
+                                                    (recur (:host card))
+                                                    card))
+                       get-zone (fn [card] (:zone (get-nested-host card)))
+                       in-play-area? (fn [card] (= (get-zone card) ["play-area"]))
+                       in-scored? (fn [card] (= (get-zone card) ["scored"]))
+                       installed? (fn [card] (or (:installed card)
+                                                 (= "servers" (first (get-zone card)))))]
+                   (if (or (nil? (:side card))
+                           (installed? card)
+                           (in-scored? card)
+                           (in-play-area? card))
+                     [:div {:style {:text-align "center"}
+                            :on-mouse-over #(card-highlight-mouse-over % card button-channel)
+                            :on-mouse-out #(card-highlight-mouse-out % card button-channel)}
+                      (tr [:game.card "Card"]) ": " (render-message (:title card))]
+                     [:div.prompt-card-preview [card-view card false]])
+                   [:hr])))
              [:h4 (render-message (:msg prompt))]
              (cond
                ;; number prompt
@@ -1599,8 +1601,7 @@
                  [:div
                   [cond-button (tr [:game.remove-tag "Remove Tag"])
                    (and (not (or @runner-phase-12 @corp-phase-12))
-                        (pos? (:click @me))
-                        (>= (:credit @me) 2)
+                        (playable? (get-in @me [:basic-action-card :abilities 5]))
                         (pos? (get-in @me [:tag :base])))
                    #(send-command "remove-tag")]
                   [:div.run-button
@@ -1619,23 +1620,22 @@
                (when (= side :corp)
                  [cond-button (tr [:game.purge "Purge"])
                   (and (not (or @runner-phase-12 @corp-phase-12))
-                       (>= (:click @me) 3))
+                       (playable? (get-in @me [:basic-action-card :abilities 6])))
                   #(send-command "purge")])
                (when (= side :corp)
                  [cond-button (tr [:game.trash-resource "Trash Resource"])
                   (and (not (or @runner-phase-12 @corp-phase-12))
-                       (pos? (:click @me))
-                       (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
+                       (playable? (get-in @me [:basic-action-card :abilities 5]))
                        (is-tagged? game-state))
                   #(send-command "trash-resource")])
                [cond-button (tr [:game.draw "Draw"])
                 (and (not (or @runner-phase-12 @corp-phase-12))
-                     (pos? (:click @me))
+                     (playable? (get-in @me [:basic-action-card :abilities 1]))
                      (pos? (:deck-count @me)))
                 #(send-command "draw")]
                [cond-button (tr [:game.gain-credit "Gain Credit"])
                 (and (not (or @runner-phase-12 @corp-phase-12))
-                     (pos? (:click @me)))
+                     (playable? (get-in @me [:basic-action-card :abilities 0])))
                 #(send-command "credit")]]))])})))
 
 (defn- time-until
