@@ -81,7 +81,7 @@
      :value delta})
   (update-link state)
   (system-msg state side
-              (str "sets their link to " (get-link state)
+              (str "sets their [link] to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-hand-size
