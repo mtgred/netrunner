@@ -3075,6 +3075,7 @@
         (changes-val-macro -1 (count (:hand (get-runner)))
                            "Trashed one card from grip"
                            (click-prompt state :runner "Card from grip"))
+        (is (last-log-contains? state "Runner trashes 1 card randomly from the grip to avoid trashing Mystic Maemi"))
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
         (changes-val-macro 5 (:credit (get-runner))

@@ -1681,7 +1681,7 @@
                     (wait-for (pay state :runner
                                    (make-eid state {:source card :source-type :ability})
                                    card [:randomly-trash-from-hand 1])
-                              (system-msg state :runner (build-spend-msg (:msg async-result) "avoid" "trashing Mystic Maemi"))
+                              (system-msg state :runner (build-spend-msg (:msg async-result) "avoid trashing Mystic Maemi"))
                               (effect-completed state side eid))))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
