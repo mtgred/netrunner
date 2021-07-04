@@ -242,7 +242,7 @@
 
 (defn resolve-subroutine!
   ([state side ice sub]
-   (let [eid (make-eid state {:source (:title ice)
+   (let [eid (make-eid state {:source ice
                               :source-type :subroutine})]
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
@@ -251,7 +251,7 @@
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]
-   (let [eid (make-eid state {:source (:title ice)
+   (let [eid (make-eid state {:source ice
                               :source-type :subroutine})]
      (resolve-next-unbroken-sub state side eid ice subroutines nil)))
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
@@ -272,7 +272,7 @@
 
 (defn resolve-unbroken-subs!
   ([state side ice]
-   (let [eid (make-eid state {:source (:title ice)
+   (let [eid (make-eid state {:source ice
                               :source-type :subroutine})]
      (resolve-unbroken-subs! state side eid ice)))
   ([state side eid ice]

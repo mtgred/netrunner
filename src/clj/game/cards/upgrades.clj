@@ -158,11 +158,11 @@
                         :req (req (or (= (get-zone target) (:previous-zone card))
                                       (= (central->zone (get-zone target))
                                          (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:net 2]))}]))}
+                        :effect (effect (steal-cost-bonus [:net 2] {:source card :source-type :ability}))}]))}
    :events [{:event :pre-steal-cost
              :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:net 2]))}]})
+             :effect (effect (steal-cost-bonus [:net 2] {:source card :source-type :ability}))}]})
 
 (defcard "Bernice Mai"
   {:events [{:event :successful-run
@@ -296,7 +296,7 @@
                                   (str "force the runner to pay " cost " [Credits]")))
                       :effect (req (if (= target "End the run")
                                      (end-run state side eid card)
-                                     (wait-for (pay state :runner card :credit cost)
+                                     (wait-for (pay state :runner (make-eid state eid) card :credit cost)
                                                (system-msg state :runner (:msg async-result))
                                                (effect-completed state side eid))))})
                    card nil))}]
@@ -576,7 +576,7 @@
              :msg "force the Runner to pay or end the run"
              :effect (effect
                        (continue-ability
-                         (let [credits (total-available-credits state :runner (assoc eid :source-type :ability :source card) card)
+                         (let [credits (total-available-credits state :runner eid card)
                                cost (* 2 (count (:scored runner)))
                                pay-str (str "pay " cost " [Credits]")
                                c-pay-str (capitalize pay-str)]
@@ -588,7 +588,7 @@
                                         c-pay-str)
                                       "End the run"]
                             :effect (req (if (= c-pay-str target)
-                                           (wait-for (pay state :runner card :credit cost)
+                                           (wait-for (pay state :runner (make-eid state eid) card :credit cost)
                                                      (system-msg state :runner (:msg async-result))
                                                      (effect-completed state side eid))
                                            (do (system-msg state :corp "ends the run")
@@ -855,21 +855,21 @@
              :player :runner
              :prompt "Choose one"
              :req (req this-server)
-             :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2])
+             :choices (req [(when (can-pay? state :runner eid card nil [:click 2])
                               "Spend [Click][Click]")
-                            (when (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5])
+                            (when (can-pay? state :runner eid card nil [:credit 5])
                               "Pay 5 [Credits]")
                             "End the run"])
              :async true
              :effect (req (cond+
                             [(and (= target "Spend [Click][Click]")
-                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 2]))
-                             (wait-for (pay state side card :click 2)
+                                  (can-pay? state :runner eid card nil [:click 2]))
+                             (wait-for (pay state side (make-eid state eid) card :click 2)
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [(and (= target "Pay 5 [Credits]")
-                                  (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:credit 5]))
-                             (wait-for (pay state side card :credit 5)
+                                  (can-pay? state :runner eid card nil [:credit 5]))
+                             (wait-for (pay state side (make-eid state eid) card :credit 5)
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
@@ -1185,11 +1185,11 @@
                         :req (req (or (= (get-zone target) (:previous-zone card))
                                       (= (central->zone (get-zone target))
                                          (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:credit 5]))}]))}
+                        :effect (effect (steal-cost-bonus [:credit 5] {:source card :source-type :ability}))}]))}
    :events [{:event :pre-steal-cost
              :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:credit 5]))}]})
+             :effect (effect (steal-cost-bonus [:credit 5] {:source card :source-type :ability}))}]})
 
 (defcard "Reduced Service"
   {:constant-effects [{:type :run-additional-cost
@@ -1309,11 +1309,11 @@
                         :req (req (or (= (get-zone target) (:previous-zone card))
                                       (= (central->zone (get-zone target))
                                          (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:click 1]))}]))}
+                        :effect (effect (steal-cost-bonus [:click 1] {:source card :source-type :ability}))}]))}
    :events [{:event :pre-steal-cost
              :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:click 1]))}]})
+             :effect (effect (steal-cost-bonus [:click 1] {:source card :source-type :ability}))}]})
 
 (defcard "Surat City Grid"
   {:events [{:event :rez
@@ -1414,7 +1414,7 @@
               {:async true
                :msg "do 1 brain damage instead of net damage"
                :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
-                            (wait-for (pay state :corp card :credit 2)
+                            (wait-for (pay state :corp (make-eid state eid) card :credit 2)
                                       (system-msg state side (:msg async-result))
                                       (wait-for (damage state side :brain 1 {:card card})
                                                 (swap! state assoc-in [:damage :damage-replace] true)

@@ -316,7 +316,7 @@
       :async true
       :effect (req (if (pos? target)
                      (wait-for
-                       (pay state :corp card :credit target)
+                       (pay state :corp (make-eid state eid) card :credit target)
                        (let [from (take target (shuffle (:hand runner)))]
                          (doseq [c from]
                            (move state :runner c :deck))
@@ -1770,7 +1770,7 @@
   {:events [{:event :pre-steal-cost
              :req (req (pos? (get-counters target :advancement)))
              :effect (req (let [counter (get-counters target :advancement)]
-                            (steal-cost-bonus state side [:credit (* 2 counter)])))}]})
+                            (steal-cost-bonus state side [:credit (* 2 counter)] {:source card :source-type :ability})))}]})
 
 (defcard "Vanity Project"
   ;; No special implementation

@@ -155,17 +155,16 @@
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
   for example [:credit 2 :click 1]."
-  [state side costs]
-  (swap! state update-in [:bonus :steal-cost] #(merge-costs (concat % costs))))
+  ([state side costs] (steal-cost-bonus state side costs nil))
+  ([state side costs source]
+    (swap! state update-in [:bonus :steal-cost] #(conj % [costs source]))))
 
 (defn steal-cost
-  "Gets a vector of costs for stealing the given agenda."
+  "Gets a vector of costs and their sources for stealing the given agenda."
   [state side card]
   (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
-        (costfun state side (make-eid state) card nil))
+        [[(costfun state side (make-eid state) card nil) {:source card :source-type :ability}]])
       (concat (get-in @state [:bonus :steal-cost]))
-      merge-costs
-      flatten
       vec))
 
 (defn steal
@@ -205,9 +204,10 @@
   [state side eid card]
   (trigger-event state side :pre-steal-cost card)
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
-  (let [cost (steal-cost state side card)
+  (let [additional-costs (steal-cost state side card)
+        cost (merge-costs (mapv first additional-costs))
         cost-strs (build-cost-string cost)
-        can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
+        can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
         access-ab-cards (when-not (in-discard? card)
@@ -246,7 +246,9 @@
 
                       ;; Pay additiional costs to steal
                       (= target "Pay to steal")
-                      (wait-for (pay state side nil cost {:action :steal-cost})
+                      (wait-for (pay state side (make-eid state
+                                                  (assoc eid :additional-costs additional-costs :source card :source-type :runner-steal))
+                                  nil cost {:action :steal-cost})
                                 (system-msg state side (str (:msg async-result) " to steal "
                                                             (:title card) " from "
                                                             (name-zone :corp (get-zone card))))

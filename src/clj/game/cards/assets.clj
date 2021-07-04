@@ -371,7 +371,7 @@
              :async true
              :effect (req (case target
                             "Pay 1 [Credits]"
-                            (wait-for (pay state :runner card :credit 1)
+                            (wait-for (pay state :runner (make-eid state eid) card :credit 1)
                                       (when-let [payment-str (:msg async-result)]
                                         (system-msg state :runner payment-str))
                                       (effect-completed state side eid))
@@ -427,7 +427,7 @@
                  :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
                  :effect (req (case target
                                 "Pay 1 [Credits]"
-                                (wait-for (pay state side card :credit 1)
+                                (wait-for (pay state side (make-eid state eid) card :credit 1)
                                           (when-let [payment-str (:msg async-result)]
                                             (system-msg state side payment-str))
                                           (effect-completed state side eid))

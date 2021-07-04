@@ -1165,18 +1165,10 @@
                                    (all-active state :runner))))
               :prompt "Pay 1 [Credits] to access 1 additional card?"
               :yes-ability
-              {:async true
-               :effect
-               (effect
-                 (continue-ability
-                   {:eid (assoc eid :source-type :ability)
-                    :async true
-                    :cost [:credit 1]
-                    :cost-req all-stealth
-                    :msg "access 1 additional card from HQ"
-                    :effect (effect (access-bonus :hq 1)
-                                    (effect-completed eid))}
-                   card nil))}}}
+              {:cost [:credit 1]
+               :cost-req all-stealth
+               :msg "access 1 additional card from HQ"
+               :effect (effect (access-bonus :hq 1))}}}
             {:event :successful-run
              :optional
              {:req (req (and (= :rd (target-server context))
@@ -1184,18 +1176,10 @@
                                    (all-active state :runner))))
               :prompt "Pay 2 [Credits] to access 1 additional card?"
               :yes-ability
-              {:async true
-               :effect
-               (effect
-                 (continue-ability
-                   {:eid (assoc eid :source-type :ability)
-                    :async true
-                    :cost [:credit 2]
-                    :cost-req all-stealth
-                    :msg "access 1 additional card from R&D"
-                    :effect (effect (access-bonus :rd 1)
-                                    (effect-completed eid))}
-                   card nil))}}}]})
+              {:cost [:credit 2]
+               :cost-req all-stealth
+               :msg "access 1 additional card from R&D"
+               :effect (effect (access-bonus :rd 1))}}}]})
 
 (defcard "Muresh Bodysuit"
   {:events [{:event :pre-damage

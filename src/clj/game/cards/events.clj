@@ -2279,7 +2279,7 @@
              :async true
              :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
                             (wait-for
-                              (lose-credits state :runner spent)
+                              (lose-credits state :runner (make-eid state eid) spent)
                               (system-msg state :runner (str "spends " spent " [Credit]"))
                               (system-msg state :corp (str (if correct-guess " " " in")
                                                            "correctly guesses " (string/lower-case target)))
@@ -2508,7 +2508,7 @@
              :choices choices
              :async true
              :effect (req (wait-for
-                            (lose-credits state :runner spent)
+                            (lose-credits state :runner (make-eid state eid) spent)
                             (system-msg state :runner (str "spends " spent " [Credit]"))
                             (system-msg state :corp (str " guesses " target " [Credit]"))
                             (wait-for (trigger-event-simult state side :reveal-spent-credits nil nil spent)
@@ -3063,7 +3063,7 @@
                 :prompt "How many [Credits]?"
                 :choices :credit
                 :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                :effect (req (wait-for (lose-credits state :corp target)
+                :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
                                        (gain-tags state side eid 1)))}} )]})
 
 (defcard "VRcation"
@@ -3090,7 +3090,7 @@
                 :choices (req (map str (range 0 (inc (:click runner)))))
                 :async true
                 :effect (req (let [n (str->int target)]
-                               (wait-for (pay state :runner card :click n)
+                               (wait-for (pay state :runner (make-eid state eid) card :click n)
                                          (system-msg state :runner (:msg async-result))
                                          (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}})]})
 

@@ -198,8 +198,7 @@
                :effect
                (effect
                  (continue-ability
-                   {:eid (assoc eid :source-type :ability)
-                    :optional
+                   {:optional
                     {:prompt (str "Pay " cost
                                   " [Credits] to make " (:title (:ice context))
                                   " gain " ice-type "?")
@@ -312,20 +311,14 @@
                               :interactive (req true)
                               :optional
                               {:req (req (and (has-subtype? (:ice context) "Sentry")
-                                              (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
+                                              (can-pay? state :runner eid card nil [:credit 2])))
                                :once :per-turn
                                :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)))
                                :yes-ability
-                               {:async true
-                                :effect
-                                (effect
-                                  (continue-ability
-                                    {:eid (assoc eid :source-type :ability)
-                                     :cost [:credit 2]
-                                     :cost-req all-stealth
-                                     :msg (msg "bypass " (:title (:ice context)))
-                                     :effect (req (bypass-ice state))}
-                                    card targets))}}}]
+                               {:cost [:credit 2]
+                                :cost-req all-stealth
+                                :msg (msg "bypass " (:title (:ice context)))
+                                :effect (req (bypass-ice state))}}}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 1 2 {:cost-req (min-stealth 1)})]}))
 
@@ -408,12 +401,9 @@
                                               (continue :runner nil))}]}))
 
 (defcard "Atman"
-  {:on-install {:effect (effect
-                          (continue-ability {:eid (assoc eid :source-type :ability :source card)
-                                             :cost [:x-credits]
-                                             :msg (msg "add " (cost-value eid :x-credits) " power counters")
-                                             :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
-                                            card targets))}
+  {:on-install {:cost [:x-credits]
+                :msg (msg "add " (cost-value eid :x-credits) " power counters")
+                :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
    :strength-bonus (req (get-counters card :power))})
 
@@ -785,7 +775,7 @@
                               :msg (msg "swap the positions of " (card-str state first-ice)
                                         " and " (card-str state target))
                               :async true
-                              :effect (req (wait-for (pay state side card [:virus 1])
+                              :effect (req (wait-for (pay state side (make-eid state eid) card [:virus 1])
                                                      (system-msg state side (:msg async-result))
                                                      (swap-ice state side first-ice target)
                                                      (effect-completed state side eid)))})
@@ -829,7 +819,7 @@
                                           "remove a virus token from Crypsis"
                                           "trash Crypsis"))
                               :async true
-                              :effect (req (wait-for (pay state :runner card [:virus 1])
+                              :effect (req (wait-for (pay state :runner (make-eid state eid) card [:virus 1])
                                                      (if-let [payment-str (:msg async-result)]
                                                        (do (system-msg state :runner payment-str)
                                                            (effect-completed state side eid))

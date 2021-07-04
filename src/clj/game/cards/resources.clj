@@ -442,7 +442,7 @@
                        :yes-ability
                        {:async true
                         :effect (req (let [ice (:ice context)]
-                                       (wait-for (pay state :runner card [:credit (get-strength ice)])
+                                       (wait-for (pay state :runner (make-eid state eid) card [:credit (get-strength ice)])
                                                  (if-let [payment-str (:msg async-result)]
                                                    (do (system-msg state :runner
                                                                    (str (build-spend-msg payment-str "use")
@@ -1052,7 +1052,7 @@
      :effect (req (if (= target "Trash")
                     (do (system-msg state :runner "trashes Fencer Fueno")
                         (trash state :runner eid card nil))
-                    (wait-for (pay state :runner card :credit 1)
+                    (wait-for (pay state :runner (make-eid state eid) card :credit 1)
                               (system-msg state :runner (str (:msg async-result) " to avoid trashing Fencer Fueno"))
                               (effect-completed state side eid))))}
     ;; companion-builder: ability
@@ -2043,7 +2043,7 @@
                                  :choices {:number (req (min num-counters
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for
-                                                (pay state :runner card [:credit target])
+                                                (pay state :runner (make-eid state eid) card [:credit target])
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
                                                                   (str (build-spend-msg payment-str "use") (:title card)
@@ -2266,7 +2266,7 @@
                                          (filter #(not (has-subtype? % "Virtual"))
                                                  (get-in runner [:rig :resource]))
                                          (:hand runner)))
-                               (wait-for (lose-credits state side :all)
+                               (wait-for (lose-credits state side (make-eid state eid) :all)
                                          (lose-tags state side eid :all))))}]})
 
 (defcard "Sacrificial Construct"
@@ -2452,7 +2452,7 @@
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
-                            (wait-for (resolve-ability state :corp (make-eid state {:source-type :subroutine})
+                            (wait-for (resolve-ability state :corp (make-eid state {:source current-ice :source-type :subroutine})
                                                        (:sub-effect sub) current-ice nil)
                                       (if (and (:run @state)
                                                (not (:ended (:run @state)))
@@ -2797,7 +2797,7 @@
              :async true
              :effect (effect (trash eid card nil))}
             {:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 3]))}]})
+             :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 
 (defcard "The Supplier"
   (let [ability {:label "Install a hosted card (start of turn)"

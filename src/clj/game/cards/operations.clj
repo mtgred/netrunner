@@ -870,7 +870,7 @@
                                           :card #(and (installed? %)
                                                       (is-type? % card-type)
                                                       (not (has-subtype? % "Icebreaker")))}
-                                :effect (req (wait-for (pay state :runner card :credit (* 3 (count targets)))
+                                :effect (req (wait-for (pay state :runner (make-eid state eid) card :credit (* 3 (count targets)))
                                                        (system-msg
                                                          state :runner
                                                          (str (:msg async-result) " to prevent the trashing of "
@@ -1280,7 +1280,7 @@
                   (str "make the runner lose " c " [Credits], and gain " c " [Credits]")))
       :async true
       :effect (req (let [c (credit-diff state)]
-                     (wait-for (lose-credits state :runner c)
+                     (wait-for (lose-credits state :runner (make-eid state eid) c)
                                (gain-credits state :corp eid c))))}}))
 
 (defcard "Mass Commercialization"
@@ -1406,7 +1406,7 @@
   {:on-play {:trash-after-resolving false}
    :events [{:event :pre-steal-cost
              :effect (req (let [counter (get-counters target :advancement)]
-                            (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))])))}
+                            (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))] {:source card :source-type :ability})))}
             {:event :corp-turn-begins
              :async true
              :effect (effect (trash eid card nil))}]})
@@ -1570,7 +1570,7 @@
 
 (defcard "Predictive Algorithm"
   {:events [{:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 2]))}]})
+             :effect (effect (steal-cost-bonus [:credit 2] {:source card :source-type :ability}))}]})
 
 (defcard "Predictive Planogram"
   {:on-play
@@ -1685,7 +1685,7 @@
                      "Pay 8 [Credits]")])
     :async true
     :effect (req (if (= target "Pay 8 [Credits]")
-                   (wait-for (pay state :runner card :credit 8)
+                   (wait-for (pay state :runner (make-eid state eid) card :credit 8)
                              (system-msg state :runner (:msg async-result))
                              (effect-completed state side eid))
                    (gain-tags state :corp eid 1)))}})
@@ -2374,7 +2374,7 @@
              :prompt "Pay 4 [Credits] or take 1 tag?"
              :choices ["Pay 4 [Credits]" "Take 1 tag"]
              :effect (req (if (= target "Pay 4 [Credits]")
-                            (wait-for (pay state :runner card :credit 4)
+                            (wait-for (pay state :runner (make-eid state eid) card :credit 4)
                                       (system-msg state :runner (:msg async-result))
                                       (effect-completed state side eid))
                             (gain-tags state :corp eid 1 nil)))}
