@@ -280,3 +280,13 @@
     (if status
       status
       (calculate-deck-status deck)))
+
+(defn legal-deck?
+ ([deck] (legal-deck? deck (:format deck)))
+ ([deck fmt]
+   (get-in deck
+     [:status (keyword fmt) :legal]
+     (get-in (trusted-deck-status (assoc deck :format fmt))
+         [(keyword fmt) :legal]
+         false))))
+  

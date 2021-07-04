@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
-            [jinteki.validator :refer [trusted-deck-status]]
+            [jinteki.validator :refer [trusted-deck-status legal-deck?]]
             [jinteki.utils :refer [str->int superuser?]]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [GET]]
@@ -237,17 +237,12 @@
     [:div.deck-collection.lobby-deck-selector
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
-           same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-           legal? (fn [deck] (get-in deck
-                                     [:status (keyword format) :legal]
-                                     (get-in (trusted-deck-status (assoc deck :format format))
-                                         [(keyword format) :legal]
-                                         false)))]
+           same-side? (fn [deck] (= side (get-in deck [:identity :side])))]
        [:div
         (doall
           (for [deck (->> @decks
-                          (filter same-side?)
-                          (sort-by (juxt legal? :date) >))]
+                          (filter #(and (same-side? %) (or (legal-deck? %) (= format "casual"))))
+                          (sort-by (juxt legal-deck? :date) >))]
             ^{:key (:_id deck)}
             [:div.deckline {:on-click #(do (ws/ws-send! [:lobby/deck (:_id deck)])
                                            (reagent-modals/close-modal!))}
