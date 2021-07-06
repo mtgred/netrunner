@@ -335,7 +335,7 @@
           is-visible (some-fn
                        #(contains? (get % :players) (:username user))
                        (every-pred (partial blocking-from-game blocked-users) (partial hidden-formats visible-formats)))]
-      (filter #(is-visible %) blocked-games))))
+      (filter is-visible blocked-games))))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")
