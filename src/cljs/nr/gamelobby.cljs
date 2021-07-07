@@ -51,6 +51,8 @@
                                 (:update diff))
                   delete-diff (apply dissoc update-diff (:delete diff))]
               (sort-games-list (vals delete-diff)))))
+  (when-let [current-game (first (filter :selected (:games @app-state)))]
+    (swap! app-state update :gameid #(:gameid current-game)))
   (when (and notification (not (:gameid @app-state)))
     (play-sound notification)))
 

@@ -270,7 +270,7 @@
                                  {:tournament-organizer true}]}))
 
 (defn handle-lobby-list [{:keys [client-id]}]
-  (ws/broadcast-to! [client-id] :games/list (mapv #(game-public-view (first %) (second %)) @all-games)))
+  (ws/broadcast-to! [client-id] :games/list (mapv #(assoc (game-public-view (first %) (second %)) :selected (some (fn [id] (= id client-id)) (lobby-clients (first %)))) @all-games)))
 
 (defmethod ws/-msg-handler :chsk/uidport-open [event] (handle-lobby-list event))
 (defmethod ws/-msg-handler :lobby/list [event] (handle-lobby-list event))
@@ -280,30 +280,31 @@
     client-id :client-id
     {:keys [title format timer allow-spectator save-replay api-access
             spectatorhands password room side]} :?data}]
-  (let [gameid (java.util.UUID/randomUUID)
-        game {:date            (java.util.Date.)
-              :gameid          gameid
-              :title           title
-              :allow-spectator allow-spectator
-              :save-replay     save-replay
-              :api-access      api-access
-              :spectatorhands  spectatorhands
-              :mute-spectators false
-              :password        (when (not-empty password) (bcrypt/encrypt password))
-              :room            room
-              :format          format
-              :players         [{:user    user
-                                 :ws-id   client-id
-                                 :side    side}]
-              :spectators      []
-              :spectator-count 0
-              :timer           timer
-              :messages        [{:user "__system__"
-                                 :text (str username " has created the game.")}]
-              :last-update     (t/now)}]
-    (refresh-lobby gameid game)
-    (swap! client-gameids assoc client-id gameid)
-    (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid})))
+  (when-not (game-for-client client-id)
+    (let [gameid (java.util.UUID/randomUUID)
+          game {:date            (java.util.Date.)
+                :gameid          gameid
+                :title           title
+                :allow-spectator allow-spectator
+                :save-replay     save-replay
+                :api-access      api-access
+                :spectatorhands  spectatorhands
+                :mute-spectators false
+                :password        (when (not-empty password) (bcrypt/encrypt password))
+                :room            room
+                :format          format
+                :players         [{:user    user
+                                   :ws-id   client-id
+                                   :side    side}]
+                :spectators      []
+                :spectator-count 0
+                :timer           timer
+                :messages        [{:user "__system__"
+                                   :text (str username " has created the game.")}]
+                :last-update     (t/now)}]
+      (refresh-lobby gameid game)
+      (swap! client-gameids assoc client-id gameid)
+      (ws/broadcast-to! [client-id] :lobby/select {:gameid gameid}))))
 
 (defn- lobby-say
   [gameid {:keys [user text]}]

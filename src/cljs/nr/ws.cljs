@@ -5,6 +5,8 @@
     [cljs.core.async :as async :refer [<! >! put! chan]]
     [nr.utils :refer [non-game-toast]]
     [nr.ajax :refer [?csrf-token]]
+    [nr.appstate :refer [app-state]]
+    [nr.gameboard.state :refer [lock game-state]]
     [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
 (if-not ?csrf-token
@@ -41,17 +43,25 @@
 (defmethod -msg-handler :chsk/ws-ping [event]
   nil)
 
+(defn resync []
+  (ws-send! [:netrunner/resync {:gameid-str (:gameid @game-state)}]))
+
 (defmethod -msg-handler :chsk/state
   [{[old-state new-state] :?data}]
     (when (= (:type old-state) (:type new-state))
       (when (and (:open? old-state)
                  (not (:open? new-state))
                  (not (:first-open? new-state)))
+        (reset! lock true)
         (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
       (when (and (not (:open? old-state))
                  (:open? new-state)
                  (not (:first-open? new-state)))
         (.clear js/toastr)
+        (ws-send! [:lobby/list])
+        (when (and (:gameid @app-state)
+                   (@game-state))
+              (resync))
         (non-game-toast "Reconnected to server" "success" nil))))
 
 (defonce router_ (atom nil))
