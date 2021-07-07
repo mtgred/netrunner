@@ -618,8 +618,8 @@
   This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
   http://nisei.net/files/Comprehensive_Rules_1.1.pdf"
   ([state side event targets] (gather-events state side event targets nil))
-  ([state side event targets card-abilities] (gather-events state side event targets nil (make-eid state)))
-  ([state side event targets card-abilities eid]
+  ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets nil))
+  ([state side eid event targets card-abilities]
    (->> (:events @state)
         (filter #(= event (:event %)))
         (concat card-abilities)
@@ -668,7 +668,7 @@
   (if (nil? event)
     (effect-completed state side eid)
     (do (log-event state event targets)
-        (let [handlers (gather-events state side event targets nil eid)]
+        (let [handlers (gather-events state side eid event targets nil)]
           (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player
@@ -804,7 +804,7 @@
                                       (not (sequential? card-abilities)))
                                [card-abilities]
                                card-abilities)
-              handlers (gather-events state side event targets card-abilities eid)
+              handlers (gather-events state side eid event targets card-abilities)
               get-handlers (fn [player-side]
                              (filterv (partial is-player player-side) handlers))
               active-player-events (get-handlers active-player)

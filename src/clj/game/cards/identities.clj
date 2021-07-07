@@ -509,7 +509,7 @@
                                         (= (:side (:source eid)) "Corp")
                                         (or (and (not= (:source-type eid) :runner-trash-corp-cards)
                                                  (not= (:source-type eid) :runner-steal))
-                                            (some (fn [[cost source]] (and (some #(or (= (first %) :credit) (= (first %) :x-credits)) (merge-costs cost))
+                                            (some (fn [[cost source]] (and (some #(or (= (cost-name %) :credit) (= (cost-name %) :x-credits)) (merge-costs cost))
                                                                            (= (:side (:source source)) "Corp")))
                                                   (:additional-costs eid)))))
                          :async true
