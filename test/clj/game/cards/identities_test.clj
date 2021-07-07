@@ -1366,7 +1366,8 @@
 (deftest gamenet-where-dreams-are-real
   (testing "Gain credits from gold farmer"
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Gold Farmer"]} :runner {:hand ["Corroder"] :credits 10}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"] :credits 10}})
       (play-from-hand state :corp "Gold Farmer" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
@@ -1445,7 +1446,8 @@
         (click-prompt state :runner "Pay 4 [Credits] to trash"))))
   (testing "No credits from runner cards"
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real"} :runner {:hand ["Corroder"]}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"}
+                 :runner {:hand ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
@@ -1454,7 +1456,8 @@
         (card-ability state :runner (get-program state 0) 1))))
   (testing "No credits from the source"
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message"]} :runner {:hand ["The Source"]}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message"]}
+                 :runner {:hand ["The Source"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Source")
       (run-on state "HQ")
