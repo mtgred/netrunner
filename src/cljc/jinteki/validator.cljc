@@ -284,9 +284,8 @@
 (defn legal-deck?
  ([deck] (legal-deck? deck (:format deck)))
  ([deck fmt]
-   (get-in deck
-     [:status (keyword fmt) :legal]
+   (if-let [deck (get-in deck [:status (keyword fmt) :legal])]
+     deck
      (get-in (trusted-deck-status (assoc deck :format fmt))
-         [(keyword fmt) :legal]
-         false))))
-  
+       [(keyword fmt) :legal]
+       false))))
