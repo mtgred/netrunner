@@ -17,6 +17,10 @@
     [web.utils :refer [response md5]])
   (:import java.security.SecureRandom))
 
+(defn active-user?
+  [user]
+  (and user (not (:banned user)) user))
+
 (def auth-config (:auth server-config))
 
 (defn create-token [{:keys [_id emailhash]}]
@@ -29,35 +33,41 @@
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception _ (prn "Received invalid cookie " token))))
 
-(defn wrap-authorization-required [handler]
+(defn wrap-authentication-required [handler]
   (fn [{user :user :as req}]
-    (if (:isadmin user)
+    (if (active-user? user)
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
-(defn wrap-authentication-required [handler]
+(defn wrap-authorization-required [handler]
   (fn [{user :user :as req}]
-    (if user
+    (if (and (active-user? user)
+             (:isadmin user))
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
 (defn wrap-tournament-auth-required [handler]
   (fn [{user :user :as req}]
-    (if (:tournament-organizer user)
+    (if (and (active-user? user)
+             (:tournament-organizer user))
       (handler req)
       (response 401 {:message "Not authorized"}))))
+
+(def user-keys
+  [:_id :username :emailhash
+   :isadmin :ismoderator :tournament-organizer
+   :special :options :stats :has-api-keys :banned])
 
 (defn wrap-user [handler]
   (fn [{db :system/db
         :keys [cookies] :as req}]
-    (let [user-keys [:_id :username :emailhash :isadmin :ismoderator :tournament-organizer :special :options :stats :has-api-keys]
-          auth-cookie (get cookies "session")
+    (let [auth-cookie (get cookies "session")
           user (when auth-cookie
                  (unsign-token (:value auth-cookie)))
           u (when user
               (mc/find-one-as-map db "users" {:_id (object-id (:_id user))
                                               :emailhash (:emailhash user)}))]
-      (if u
+      (if (active-user? u)
         (handler (-> req
                      (assoc :user (select-keys u user-keys))
                      (update-in [:user :_id] str)))
@@ -107,10 +117,15 @@
                                          demo-decks)))
       (response 200 {:message "ok"}))))
 
+(defn find-non-banned-user
+  [db query]
+  (when-let [user (mc/find-one-as-map db "users" query)]
+    (active-user? user)))
+
 (defn login-handler
   [{db :system/db
     {:keys [username password]} :params}]
-  (let [user (mc/find-one-as-map db "users" {:username username})]
+  (let [user (find-non-banned-user db {:username username})]
     (if (and user
              (password/check password (:password user)))
 
@@ -124,8 +139,8 @@
 
 (defn logout-handler [_]
   (assoc (response 200 {:message "ok"})
-    :cookies {"session" {:value 0
-                         :max-age -1}}))
+         :cookies {"session" {:value 0
+                              :max-age -1}}))
 
 (defn check-username-handler
   [{db :system/db
@@ -213,7 +228,7 @@
   [{db :system/db
     {:keys [email]} :params
     headers         :headers}]
-  (if (mc/find-one-as-map db "users" {:email email})
+  (if (find-non-banned-user {:email email})
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 (:email server-config)
@@ -233,8 +248,8 @@
   [{db :system/db
     {:keys [password confirm token]} :params}]
   (if-let [{:keys [username email]}
-           (mc/find-one-as-map db "users" {:resetPasswordToken   token
-                                           :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+           (find-non-banned-user {:resetPasswordToken   token
+                                  :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
     (if (= password confirm)
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"
