@@ -372,23 +372,23 @@
 
 (defn format-visible? [slug] (contains? (:visible-formats @app-state) slug))
 
+(defn- on-change-format-visibility
+  "Handle change event for format-toggle input"
+  [slug evt]
+  (do
+    (.preventDefault evt)
+    (if (format-visible? slug)
+      (swap! app-state update-in [:visible-formats] difference #{slug})
+      (swap! app-state update-in [:visible-formats] union #{slug}))
+    (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state))))))
+
 (defn format-toggle [slug]
   (r/with-let [id (str "filter-" slug)]
     [:div
-     [:input.visible-formats
-      {
-       :id   id
-       :type "checkbox"
-       :on-change
-         #(do
-           (.preventDefault %)
-           (if (format-visible? slug)
-             (swap! app-state update-in [:visible-formats] difference #{slug})
-             (swap! app-state update-in [:visible-formats] union #{slug})
-             )
-           (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state)))))
-       :checked (format-visible? slug)
-       }]
+     [:input.visible-formats {:id id
+                              :type "checkbox"
+                              :on-change (partial on-change-format-visibility slug)
+                              :checked (format-visible? slug)}]
      [:label {:for id} (-> slug slug->format tr-format)]]))
 
 (defn games-list-panel [s games gameid password-gameid user visible-formats]
