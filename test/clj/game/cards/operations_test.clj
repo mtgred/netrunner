@@ -119,7 +119,21 @@
         (click-card state :corp co)
         (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
         (click-prompt state :corp "Hedge Fund")
-        (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")))))
+        (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund"))))
+  (testing "No additional costs"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Diagnostics" "Breaking News"
+                               "24/7 News Cycle" "BOOM!"]}})
+      (starting-hand state :corp ["Accelerated Diagnostics" "Breaking News"])
+      (play-and-score state "Breaking News")
+      (core/gain state :corp :credit 10)
+      (core/lose state :runner :tag 2)
+      (play-from-hand state :corp "Accelerated Diagnostics")
+      (click-prompt state :corp "OK")
+      (click-prompt state :corp "24/7 News Cycle")
+      (is (= "Select an agenda in your score area to trigger its \"when scored\" ability" (:msg (prompt-map :corp))))
+      (click-card state :corp "Breaking News")
+      (click-prompt state :corp "BOOM!"))))
 
 (deftest ad-blitz
   ;; Launch Campaign
