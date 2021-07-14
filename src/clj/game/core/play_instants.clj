@@ -94,7 +94,7 @@
 
 (defn can-play-instant?
   ([state side eid card] (can-play-instant? state side eid card nil))
-  ([state side eid card {:keys [targets] :as args}]
+  ([state side eid card {:keys [targets silent] :as args}]
    (let [on-play (or (:on-play (card-def card)) {})
          costs (play-instant-costs state side eid card args)]
      (and ;; req is satisfied
@@ -109,7 +109,7 @@
           ;; This is a run event or makes a run, and running is allowed
           (not (and (or (:makes-run (card-def card))
                         (has-subtype? card "Run"))
-                    (not (can-run? state :runner))))
+                    (not (can-run? state :runner silent))))
           ;; if priority, have not spent a click
           (not (and (has-subtype? card "Priority")
                     (get-in @state [side :register :spent-click])))
