@@ -477,7 +477,7 @@
                            total-cost (when (seq broken-subs)
                                         (break-sub-ability-cost state side
                                                                 (assoc args
-                                                                       :cost cost
+                                                                       :break-cost cost
                                                                        :broken-subs broken-subs)
                                                                 card ice))
                            message (when (seq broken-subs)
@@ -546,6 +546,7 @@
         :breaks subtype
         :break-cost cost
         :cost-req (:cost-req args)
+        :break-cost-bonus (:break-cost-bonus args)
         :additional-ability (:additional-ability args)
         :label (str (or (:label args)
                         (str "break "
@@ -559,7 +560,7 @@
                                           card nil
                                           (break-sub-ability-cost
                                             state side
-                                            (assoc args :cost cost :broken-subs (take n (:subroutines current-ice)))
+                                            (assoc args :break-cost cost :broken-subs (take n (:subroutines current-ice)))
                                             card current-ice))
                             (break-subroutines current-ice card cost n (assoc args :ability-idx (:ability-idx (:source-info eid)))))
                           card nil))}))))
@@ -622,6 +623,7 @@
                           (when (:break-req ability)
                             ((:break-req ability) state side eid card nil)))
               break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+              break-cost (break-sub-ability-cost state side break-ability card current-ice)
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
@@ -634,9 +636,9 @@
                             (if (pos? subs-broken-at-once)
                               (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                               1))
-              total-break-cost (when (and break-ability
+              total-break-cost (when (and break-cost
                                           times-break)
-                                 (repeat times-break (:break-cost break-ability)))
+                                 (repeat times-break break-cost))
               total-cost (merge-costs (conj total-pump-cost total-break-cost))]
           (update! state side
                    (assoc card :abilities

@@ -3,7 +3,7 @@
     [game.core.board :refer [all-active all-active-installed]]
     [game.core.card :refer [get-card get-counters has-subtype? program? runner? map->Card]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [card-ability-cost]]
+    [game.core.cost-fns :refer [card-ability-cost break-sub-ability-cost]]
     [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
@@ -146,7 +146,7 @@
   [state side card ability-kw]
   (into [] (for [ab (get card ability-kw)
                  :let [ab-cost (if (:break-cost ab)
-                                 (assoc ab :cost (:break-cost ab))
+                                 (assoc ab :cost (break-sub-ability-cost state side ab card))
                                  ab)]]
              (add-cost-label-to-ability ab (card-ability-cost state side ab-cost card)))))
 
