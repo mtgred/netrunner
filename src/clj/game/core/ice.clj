@@ -296,6 +296,14 @@
         (:strength card)
         0)))
 
+(defn get-pump-strength
+  ([state side ability card] (get-pump-strength state side ability card nil))
+  ([state side ability card targets]
+   ((fnil + 0 0)
+    (:pump ability)
+    (when-let [pump-fn (:pump-bonus ability)]
+      (pump-fn state side (make-eid state) card targets)))))
+
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
   [state side ice]
@@ -583,13 +591,23 @@
       :req (req (if-let [str-req (:req args)]
                   (str-req state side eid card targets)
                   true))
-      :msg (msg "increase its strength from " (get-strength card)
-                " to " (+ strength (get-strength card))
-                duration-string)
       :cost cost
       :cost-req (:cost-req args)
       :pump strength
-      :effect (effect (pump card strength duration))})))
+      :pump-bonus (:pump-bonus args)
+      :msg (msg "increase its strength from " (get-strength card)
+                " to " (+ (get-pump-strength
+                            state side
+                            (assoc args :pump strength)
+                            card)
+                          (get-strength card))
+                duration-string)
+      :effect (effect (pump card
+                            (get-pump-strength
+                              state side
+                              (assoc args :pump strength)
+                              card)
+                            duration))})))
 
 
 (def breaker-auto-pump
@@ -608,13 +626,15 @@
                          (when (:pump ability)
                            ((:req ability) state side eid card nil)))
               pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              pump-strength (get-pump-strength state side pump-ability card)
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
                                        (get-strength card))
                               (max 0 (- (get-strength current-ice)
                                         (get-strength card))))
-              times-pump (when strength-diff
-                           (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
+              times-pump (when (and strength-diff
+                                    (pos? pump-strength))
+                           (int (Math/ceil (/ strength-diff pump-strength))))
               total-pump-cost (when (and pump-ability
                                          times-pump)
                                 (repeat times-pump (:cost pump-ability)))
