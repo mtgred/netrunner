@@ -3652,6 +3652,7 @@
           -2 (:credit (get-runner))
           "Break costs 2"
           (card-ability state :runner marjanah 0)
+          (is (= "2 [Credits]" (get-in (refresh marjanah) [:abilities 0 :cost-label])) "Break label lists cost as 2 credits")
           (click-prompt state :runner "End the run"))))
     (testing "discount after successful run"
       (do-game state
@@ -3663,6 +3664,7 @@
           -1 (:credit (get-runner))
           "Break costs 1 after run"
           (card-ability state :runner marjanah 0)
+          (is (= "1 [Credits]" (get-in (refresh marjanah) [:abilities 0 :cost-label])) "Break label lists cost as 1 credit")
           (click-prompt state :runner "End the run"))))))
 
 (deftest mass-driver

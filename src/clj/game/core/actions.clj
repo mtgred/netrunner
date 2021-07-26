@@ -234,9 +234,10 @@
                                  (get-strength card))
                         (max 0 (- (get-strength current-ice)
                                   (get-strength card))))
-        times-pump (when (and strength-diff
+        times-pump (if (and strength-diff
                               (pos? pump-strength))
-                     (int (Math/ceil (/ strength-diff pump-strength))))
+                     (int (Math/ceil (/ strength-diff pump-strength)))
+                     0)
         total-pump-cost (when (and pump-ability
                                    times-pump)
                           (repeat times-pump (cost-req [(:cost pump-ability)])))]
@@ -376,9 +377,10 @@
                                    (get-strength card))
                           (max 0 (- (get-strength current-ice)
                                     (get-strength card))))
-          times-pump (when (and strength-diff
+          times-pump (if (and strength-diff
                                 (pos? pump-strength))
-                       (int (Math/ceil (/ strength-diff pump-strength))))
+                       (int (Math/ceil (/ strength-diff pump-strength)))
+                       0)
           total-pump-cost (when (and pump-ability
                                      times-pump)
                             (repeat times-pump (pump-cost-req [(:cost pump-ability)])))
