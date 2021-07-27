@@ -614,7 +614,7 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
    :abilities [{:cost [:click 1 :agenda 1]
-                :effect (effect (gain :click 2)
+                :effect (effect (gain-clicks 2)
                                 (register-turn-flag!
                                   card :can-advance
                                   (fn [state side card]
@@ -628,7 +628,7 @@
               :effect (effect (add-counter card :agenda 2))}
    :abilities [{:cost [:click 1 :agenda 1]
                 :once :per-turn
-                :effect (effect (gain :click 2))
+                :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Encrypted Portals"
@@ -666,7 +666,7 @@
                 :label "runner loses [Click][Click]"
                 :msg "force the Runner to lose [Click][Click]"
                 :cost [:forfeit-self]
-                :effect (effect (lose :runner :click 2))}]})
+                :effect (effect (lose-clicks :runner 2))}]})
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
@@ -966,7 +966,7 @@
 (defcard "Luminal Transubstantiation"
   {:on-score
    {:silent (req true)
-    :effect (req (gain state :corp :click 3)
+    :effect (req (gain-clicks state :corp 3)
                  (register-turn-flag!
                    state side card :can-score
                    (fn [state side card]
@@ -999,7 +999,7 @@
               :effect (req (gain state :corp :click-per-turn 1))}
    :swapped {:msg "gain an additional [Click] per turn"
              :effect (req (when (= (:active-player @state) :corp)
-                            (gain state :corp :click 1))
+                            (gain-clicks state :corp 1))
                           (gain state :corp :click-per-turn 1))}
    :leave-play (req (lose state :corp
                           :click 1
@@ -1805,7 +1805,7 @@
               :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
               :yes-ability
               {:msg "make the Runner lose 1 [Click]"
-               :effect (effect (lose :runner :click 1)
+               :effect (effect (lose-clicks :runner 1)
                                (add-counter card :agenda -1))}}}]})
 
 (defcard "Vulcan Coverup"

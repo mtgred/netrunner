@@ -96,7 +96,7 @@
                                             (and (some #{:hand} (:previous-zone (:card context)))
                                                  (program? (:card context)))))))
              :msg "gain [Click]"
-             :effect (effect (gain :click 1))}
+             :effect (effect (gain-clicks 1))}
             {:event :unsuccessful-run
              :async true
              :effect (effect (system-msg "trashes Autoscripter")
@@ -421,7 +421,7 @@
                               :choices {:card #(= cid (:cid %))}
                               :msg (msg "trigger the [Click] ability of " (:title target)
                                         " without spending [Click]")
-                              :effect (req (gain state :runner :click 1)
+                              :effect (req (gain-clicks state :runner 1)
                                            (play-ability state side {:card target :ability 0})
                                            (effect-completed state side eid))})
                            card nil))}}}]})
@@ -1519,7 +1519,7 @@
              :effect (effect (update! (dissoc card :qianju-active)))}
             {:event :runner-turn-begins
              :req (req (:qianju-active card))
-             :effect (effect (lose :click 1))}
+             :effect (effect (lose-clicks 1))}
             {:event :pre-tag
              :async true
              :req (req (:qianju-active card))
@@ -1903,7 +1903,7 @@
              :req (req (and (has-subtype? (:card context) "Run")
                             (first-event? state side :play-event #(has-subtype? (:card (first %)) "Run"))))
              :msg "gain a [click]"
-             :effect (effect (gain :click 1))}]})
+             :effect (effect (gain-clicks 1))}]})
 
 (defcard "T400 Memory Diamond"
   {:constant-effects [(mu+ 1)

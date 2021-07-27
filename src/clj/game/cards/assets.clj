@@ -242,7 +242,7 @@
 (defcard "Bass CH1R180G4"
   {:abilities [{:cost [:click 1 :trash]
                 :msg "gain [Click][Click]"
-                :effect (effect (gain :click 2))}]})
+                :effect (effect (gain-clicks 2))}]})
 
 (defcard "Bio-Ethics Association"
   (let [ability {:req (req unprotected)
@@ -882,7 +882,7 @@
                 :once :per-turn
                 :msg "gain [Click][Click]"
                 :cost [:click 1 :advancement 1]
-                :effect (effect (gain :click 2))}]})
+                :effect (effect (gain-clicks 2))}]})
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
@@ -1000,7 +1000,7 @@
   (let [ability {:label "Gain [Click]"
                  :msg "gain [Click]"
                  :once :per-turn
-                 :effect (effect (gain :click 1))}
+                 :effect (effect (gain-clicks 1))}
         cleanup (effect (update! (dissoc card :seen-this-turn)))]
     {:abilities [ability]
      :leave-play cleanup
@@ -1232,11 +1232,15 @@
   {:abilities [{:cost [:click 1]
                 :once :per-turn
                 :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
-                :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                :effect (req (register-events state side card
+                                              [{:event :runner-turn-begins
+                                                :unregister-once-resolved true
+                                                :duration :until-runner-turn-begins
+                                                :effect (effect (lose-clicks :runner 1))}])
                              (add-counter state side card :power 1))}
                {:cost [:click 1 :power 3 :trash]
                 :msg "gain 4 [Click] and trash itself"
-                :effect (effect (gain :click 4))}]})
+                :effect (effect (gain-clicks 4))}]})
 
 (defcard "Melange Mining Corp."
   {:abilities [{:cost [:click 3]
@@ -1701,7 +1705,7 @@
                                (not-empty (turn-events state side :corp-draw))))
                 :async true
                 :effect (effect
-                          (lose :corp :click 1)
+                          (lose-clicks :corp 1)
                           (continue-ability
                             (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
                               {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
@@ -1837,7 +1841,7 @@
                  :req (req (and (corp? (:card target))
                                 (pos? (:click runner))))
                  :msg "force the runner to lose 1 [Click]"
-                 :effect (effect (lose :runner :click 1))}]
+                 :effect (effect (lose-clicks :runner 1))}]
     {:events [ability]
      :on-trash ability}))
 
@@ -2371,7 +2375,7 @@
        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
                      (update-all state (partial remove-one (:cid card))))
        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
-                    :effect (req (lose state :runner :click 1))}
+                    :effect (req (lose-clicks state :runner 1))}
        :events [{:event :rez
                  :req (req (and (ice? (:card context))
                                 (has-subtype? (:card context) "Bioroid")))

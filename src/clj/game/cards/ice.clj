@@ -191,7 +191,7 @@
   ; Runner loses a click effect
   {:label "Force the Runner to lose 1 [Click]"
    :msg "force the Runner to lose 1 [Click] if able"
-   :effect (effect (lose :runner :click 1))})
+   :effect (effect (lose-clicks :runner 1))})
 
 (defn runner-loses-credits
   "Runner loses credits effect"
@@ -2122,7 +2122,7 @@
                  {:label "Runner loses 1[click], if able. End the run."
                   :msg "make the Runner lose 1[click] and end the run"
                   :async true
-                  :effect (req (lose state :runner :click 1)
+                  :effect (req (lose-clicks state :runner 1)
                                (end-run state :corp eid card))}]})
 
 (defcard "Macrophage"
@@ -2568,7 +2568,7 @@
                          "You have an additional [Click] to spend during your next turn.")
              :msg (str "force the runner to lose a [Click], if able. "
                        "Corp gains an additional [Click] to spend during their next turn")
-             :effect (req (lose state :runner :click 1)
+             :effect (req (lose-clicks state :runner 1)
                           (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
     {:subroutines [sub
                    sub]}))
@@ -3291,7 +3291,7 @@
                      :effect (req (if (and (= target "Lose [Click]")
                                            (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
                                     (do (system-msg state :runner "loses [Click]")
-                                        (lose state :runner :click 1)
+                                        (lose-clicks state :runner 1)
                                         (effect-completed state :runner eid))
                                     (do (system-msg state :corp "ends the run")
                                         (end-run state :corp eid card))))})})

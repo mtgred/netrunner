@@ -79,7 +79,7 @@
   {:on-play
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
     :async true
-    :effect (effect (gain :click 3)
+    :effect (effect (gain-clicks 3)
                     (damage eid :brain 1 {:unpreventable true :card card}))}})
 
 (defcard "Another Day, Another Paycheck"
@@ -500,7 +500,7 @@
                          " and lose [Click]"))
              :async true
              :effect (req (when (pos? (:click runner))
-                            (lose state :runner :click 1))
+                            (lose-clicks state :runner 1))
                           (gain-credits state :runner eid 5))}})
 
 (defcard "Credit Crash"
@@ -846,7 +846,7 @@
     :choices (req runnable-servers)
     :msg (msg "make a run on " target " and gain [Click]")
     :async true
-    :effect (effect (gain :click 1)
+    :effect (effect (gain-clicks 1)
                     (make-run eid target card))}})
 
 (defcard "Easy Mark"
@@ -1917,7 +1917,7 @@
              :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
                             (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
-                            (gain state :runner :click 1)
+                            (gain-clicks state :runner 1)
                             (move state :runner card :hand)
                             (unregister-events state side card)))}]})
 
@@ -3073,7 +3073,7 @@
                 " and lose [Click]"))
     :async true
     :effect (req (when (pos? (:click runner))
-                   (lose state :runner :click 1))
+                   (lose-clicks state :runner 1))
                  (draw state :runner eid 4 nil))}})
 
 (defcard "Wanton Destruction"

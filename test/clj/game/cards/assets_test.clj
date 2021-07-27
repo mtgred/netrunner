@@ -2839,7 +2839,25 @@
       ; Fire MCA
       (is (= 2 (:click (get-corp))))
       (card-ability state :corp (refresh mca) 1)
-      (is (= 5 (:click (get-corp)))))))
+      (is (= 5 (:click (get-corp))))))
+  (do-game
+    (new-game {:corp {:deck [(qty "MCA Austerity Policy" 2)]}})
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+    (let [mca (get-content state :remote1 0)]
+      (rez state :corp mca)
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      ; once per turn only
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      (play-from-hand state :corp "MCA Austerity Policy" "Server 1")
+      (click-prompt state :corp "OK")
+      (let [mca (get-content state :remote1 0)]
+        (rez state :corp mca)
+        (card-ability state :corp mca 0)
+        (take-credits state :corp)
+        (is (= 2 (:click (get-runner))) "Runner loses 2 clicks")))))
 
 (deftest melange-mining-corp
   ;; Melange Mining Corp.
