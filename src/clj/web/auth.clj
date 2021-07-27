@@ -17,10 +17,6 @@
     [web.utils :refer [response md5]])
   (:import java.security.SecureRandom))
 
-(defn active-user?
-  [user]
-  (and user (not (:banned user)) user))
-
 (def auth-config (:auth server-config))
 
 (defn create-token [{:keys [_id emailhash]}]
@@ -32,6 +28,12 @@
 (defn unsign-token [token]
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception _ (prn "Received invalid cookie " token))))
+
+(defn active-user?
+  "Returns the given user if it exists and is not banned"
+  [user]
+  (when (and user (not (:banned user)))
+    user))
 
 (defn wrap-authentication-required [handler]
   (fn [{user :user :as req}]
@@ -228,7 +230,7 @@
   [{db :system/db
     {:keys [email]} :params
     headers         :headers}]
-  (if (find-non-banned-user {:email email})
+  (if (find-non-banned-user db {:email email})
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 (:email server-config)
@@ -248,8 +250,8 @@
   [{db :system/db
     {:keys [password confirm token]} :params}]
   (if-let [{:keys [username email]}
-           (find-non-banned-user {:resetPasswordToken   token
-                                  :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+           (find-non-banned-user db {:resetPasswordToken   token
+                                     :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
     (if (= password confirm)
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"
