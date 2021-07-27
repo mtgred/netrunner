@@ -1,9 +1,11 @@
 (ns game.cards.resources
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.pprint :as pprint]
-            [clojure.string :as string]))
+  (:require
+    [clojure.pprint :as pprint]
+    [clojure.string :as string]
+    [medley.core :refer [find-first]]
+    [game.core :refer :all]
+    [game.utils :refer :all]
+    [jinteki.utils :refer :all]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -1359,8 +1361,10 @@
                  :makes-run true
                  :async true
                  ;; TODO: This is a hack to avoid failures in tests
-                 :effect (req (swap! state update-in [:corp :prompt]
-                                     (fn [pr] (remove #(= "Waiting for Runner to resolve runner-turn-begins triggers" (:msg %)) pr)))
+                 :effect (req (let [wait-prompt
+                                    (find-first #(= (:msg %) "Waiting for Runner to resolve runner-turn-begins triggers")
+                                                (get-in @state [:corp :prompt]))]
+                                (remove-from-prompt-queue state :corp wait-prompt))
                               (wait-for (make-run state :runner (make-eid state eid) target card)
                                         (show-wait-prompt state :corp "Runner to resolve runner-turn-begins triggers")
                                         (effect-completed state side eid)))}]

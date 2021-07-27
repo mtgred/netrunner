@@ -200,5 +200,5 @@
                 coll))
 
 (defn prune-null-fields
-  [card]
-  (apply dissoc card (for [[k v] card :when (nil? v)] k)))
+  [m]
+  (apply dissoc m (for [[k v] m :when (nil? v)] k)))
