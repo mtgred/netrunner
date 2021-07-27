@@ -696,23 +696,53 @@
 (deftest bran-1-0
   ;; Bran 1.0
   ;; Brân 1.0
-  (do-game
-    (new-game {:corp {:hand ["Brân 1.0" "Mausolus"]}})
-    (play-from-hand state :corp "Brân 1.0" "HQ")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (let [bran (get-ice state :hq 0)]
-      (rez state :corp bran)
-      (run-continue state)
-      (card-subroutine state :corp bran 0)
-      (changes-val-macro
-        0 (:credit (get-corp))
-        "Mausolus installed for free"
-        (click-card state :corp "Mausolus"))
-      (is (= 2 (count (get-ice state :hq))) "2 pieces of ice protecting HQ")
-      (is (= 2 (:position (get-run))) "Runner position moved along Bran position")
-      (card-subroutine state :corp (get-ice state :hq 1) 1)
-      (is (not (:run @state)) "Run ended"))))
+  (testing "Basic Testing"
+    (do-game
+      (new-game {:corp {:hand ["Brân 1.0" "Mausolus"]}})
+      (play-from-hand state :corp "Brân 1.0" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [bran (get-ice state :hq 0)]
+        (rez state :corp bran)
+        (run-continue state)
+        (card-subroutine state :corp bran 0)
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Mausolus installed for free"
+          (click-card state :corp "Mausolus"))
+        (is (= 2 (count (get-ice state :hq))) "2 pieces of ice protecting HQ")
+        (is (= 2 (:position (get-run))) "Runner position moved along Bran position")
+        (card-subroutine state :corp (get-ice state :hq 1) 1)
+        (is (not (:run @state)) "Run ended"))))
+  (testing "Install ice log messages display correctly"
+    (do-game
+      (new-game {:corp {:hand ["Brân 1.0"]
+                        :discard ["Mausolus" "Ice Wall"]}})
+      (play-from-hand state :corp "Brân 1.0" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [bran (get-ice state :hq 0)
+            unrezzed-msg "Corp uses Brân 1.0 to install an unseen card from Archives."
+            rezzed-msg "Corp uses Brân 1.0 to install Ice Wall from Archives."
+            declined-msg "Corp chooses not to install a card with Brân 1.0."]
+        (rez state :corp bran)
+        (run-continue state)
+        (card-subroutine state :corp bran 0)
+        (click-card state :corp "Mausolus")
+        (is (second-last-log-contains? state unrezzed-msg) "Mausolus is face down and should not be revealed in the log")
+        (card-subroutine state :corp bran 1)
+        (run-empty-server state :archives)
+        (run-on state :hq)
+        (run-continue state)
+        (card-subroutine state :corp bran 0)
+        (click-card state :corp "Ice Wall")
+        (is (second-last-log-contains? state rezzed-msg) "Ice Wall is face up and should be revealed in the log")
+        (card-subroutine state :corp bran 1)
+        (run-on state :hq)
+        (run-continue state)
+        (card-subroutine state :corp bran 0)
+        (click-prompt state :corp "Done")
+        (is (last-log-contains? state declined-msg) "Log should indicate the corp declined to install a card")))))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
