@@ -13,6 +13,7 @@
     [game.core.initializing :refer [card-init deactivate make-card]]
     [game.core.installing :refer [corp-install runner-install]]
     [game.core.moving :refer [move swap-ice swap-installed trash]]
+    [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [show-prompt]]
     [game.core.props :refer [set-prop]]
     [game.core.psi :refer [psi-game]]
@@ -186,10 +187,10 @@
                    (map->Card {:title "/unique command" :side side}) nil))
 
 (defn command-close-prompt [state side]
-  (when-let [fprompt (-> @state side :prompt first)]
-    (swap! state update-in [side :prompt] rest)
+  (when-let [prompt (-> @state side :prompt first)]
+    (remove-from-prompt-queue state side prompt)
     (swap! state dissoc-in [side :selected])
-    (effect-completed state side (:eid fprompt))))
+    (effect-completed state side (:eid prompt))))
 
 (defn command-install-ice
   [state side]

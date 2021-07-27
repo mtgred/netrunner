@@ -4,7 +4,7 @@
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [can-trigger? register-ability-type register-once resolve-ability]]
     [game.core.payment :refer [can-pay?]]
-    [game.core.prompts :refer [add-to-prompt-queue show-prompt]]
+    [game.core.prompts :refer [show-prompt]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]

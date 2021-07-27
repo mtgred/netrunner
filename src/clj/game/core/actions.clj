@@ -13,6 +13,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue total-run-cost]]
@@ -91,10 +92,11 @@
                                                      (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
-          (do (when (not (zero? (count card-prompts)))
-                  ;remove all prompts associated with the trashed card
-                  (swap! state update-in [side :prompt] #(filter (fn [p] (not= (get-in p [:card :title]) (:title c))) %))
-                  (map #(effect-completed state side (:eid %)) card-prompts))
+          (do (when (pos? (count card-prompts))
+                ;; Remove all prompts associated with the trashed card
+                (doseq [prompt card-prompts]
+                  (remove-from-prompt-queue state side prompt)
+                  (effect-completed state side (:eid prompt))))
               (if (= :hand (first (:zone c)))
                 ;; Discard from hand, do not trigger trash
                 (do (move-card-to :discard {:force true})
@@ -142,7 +144,7 @@
           (:counter choices)
           (:number choices))
       (if (number? choice)
-        (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+        (do (remove-from-prompt-queue state side prompt)
             (wait-for (maybe-pay state side card choices choice)
                       (when (:counter choices)
                         ;; :Counter prompts deduct counters from the card
@@ -160,7 +162,7 @@
               found (some #(when (= (string/lower-case choice) (string/lower-case (:title % ""))) %) (server-cards))]
           (if found
             (if (title-fn state side (make-eid state) card [found])
-              (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+              (do (remove-from-prompt-queue state side prompt)
                   (when effect
                     (effect (or choice card)))
                   (finish-prompt state side prompt card))
@@ -174,8 +176,7 @@
       (let [uuid (uuid/as-uuid (:uuid choice))
             match (first (filter #(= uuid (:uuid %)) choices))]
         (when match
-          ;; remove the prompt from the queue
-          (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+          (remove-from-prompt-queue state side prompt)
           (if (= (:value match) "Cancel")
             (do (if-let [cancel-effect (:cancel-effect prompt)]
                   ;; trigger the cancel effect

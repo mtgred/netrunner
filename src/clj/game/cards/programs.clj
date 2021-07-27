@@ -691,7 +691,7 @@
              {:req (req (and (:successful context)
                              (= :rd (target-server context))))
               :player :runner
-              :waiting-prompt "Runner to decide if they will use Conduit"
+              :waiting-prompt "Runner to choose an option"
               :autoresolve (get-autoresolve :auto-conduit)
               :prompt "Use Conduit?"
               :yes-ability {:msg "add 1 virus counter to Conduit"
@@ -852,7 +852,7 @@
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
                   :msg (msg "reveal the top 5 cards of their Stack: " (string/join ", " (map :title (take 5 (:deck runner)))))
-                  :waiting-prompt "Runner to host programs on Customized Secretary"
+                  :waiting-prompt "Runner to make a decision"
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
@@ -932,7 +932,7 @@
                 :async true
                 :effect (effect
                           (continue-ability
-                            {:waiting-prompt "Runner to use DaVinci"
+                            {:waiting-prompt "Runner to make a decision"
                              :prompt "Choose a card to install from your Grip"
                              :msg (msg "install " (:title target) " at no cost")
                              :choices {:req (req (and (in-hand? target)
@@ -1028,7 +1028,7 @@
      :trash-icon true
      :optional
      {:player :runner
-      :waiting-prompt "Runner to use Disruptor"
+      :waiting-prompt "Runner to choose an option"
       :prompt "Use Disrupter's ability?"
       :yes-ability
       {:cost [:trash]
@@ -1134,7 +1134,7 @@
                :req (req (= :rd (target-server context)))
                :async true
                :interactive (req true)
-               :waiting-prompt "Runner to use Equivocation"
+               :waiting-prompt "Runner to make a decision"
                :effect (effect (continue-ability reveal card nil))}]}))
 
 (defcard "Euler"
@@ -1382,7 +1382,7 @@
                 :async true
                 :effect (req (continue-ability
                                state :corp
-                               {:waiting-prompt "Corp to trash a card"
+                               {:waiting-prompt "Corp to make a decision"
                                 :prompt "Choose a card to trash"
                                 :choices (req (filter corp? (:hand corp)))
                                 :async true
@@ -1791,7 +1791,7 @@
              :optional
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
-              :waiting-prompt "Runner to use Nyashia"
+              :waiting-prompt "Runner to choose an option"
               :prompt "Spend a power counter on Nyashia to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-nyashia)
               :yes-ability {:msg "access 1 additional card from R&D"

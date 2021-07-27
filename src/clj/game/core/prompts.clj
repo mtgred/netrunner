@@ -1,12 +1,8 @@
 (ns game.core.prompts
   (:require [clj-uuid :as uuid]
             [game.core.eid :refer [effect-completed make-eid]]
+            [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
             [game.core.toasts :refer [toast]]))
-
-(defn add-to-prompt-queue
-  "Adds a newly created prompt to the current prompt queue"
-  [state side prompt]
-  (swap! state update-in [side :prompt] #(cons prompt %)))
 
 (defn choice-parser
   [choices]
@@ -101,7 +97,7 @@
         prompt (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt])))]
     (swap! state update-in [side :selected] #(vec (rest %)))
     (when prompt
-      (swap! state update-in [side :prompt] (fn [prompts] (remove #(= % prompt) prompts))))
+      (remove-from-prompt-queue state side prompt))
     (if (seq cards)
       (do (doseq [card cards]
             (update! state side card))
@@ -165,7 +161,7 @@
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
   (when-let [wait (first (filter #(= :waiting (:prompt-type %)) (-> @state side :prompt)))]
-    (swap! state update-in [side :prompt] (fn [pr] (remove #(= % wait) pr)))))
+    (remove-from-prompt-queue state side wait)))
 
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
