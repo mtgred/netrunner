@@ -83,14 +83,16 @@
    :agenda-point-req])
 
 (defn player-summary
-  [player state side]
+  [player state side same-side?]
   (-> (select-keys player (player-keys))
+      (update :prompt #(if same-side? % nil))
       (update :identity prune-null-fields)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
       (update :rfg card-summary-vec state side)
       (update :scored card-summary-vec state side)
-      (update :register select-keys [:spent-click])))
+      (update :register select-keys [:spent-click])
+      (prune-null-fields)))
 
 (defn corp-keys []
   [:servers
@@ -127,7 +129,7 @@
         open-hands? (:openhand corp)
         discard (:discard corp)
         install-list (:install-list corp)]
-    (-> (player-summary corp state side)
+    (-> (player-summary corp state side corp-player?)
         (merge (select-keys corp (corp-keys)))
         (assoc
           :deck (if (and corp-player? view-deck) (prune-vec deck) [])
@@ -147,7 +149,7 @@
    :brain-damage])
 
 (defn rig-summary
-  [state side]
+  [state]
   (let [runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
@@ -163,7 +165,7 @@
         open-hands? (:openhand runner)
         discard (:discard runner)
         runnable-list (:runnable-list runner)]
-    (-> (player-summary runner state side)
+    (-> (player-summary runner state side runner-player?)
         (merge (select-keys runner (runner-keys)))
         (assoc
           :deck (if (and runner-player? view-deck) (prune-vec deck) [])
@@ -171,7 +173,7 @@
           :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
           :hand-count (count hand)
           :discard (prune-vec discard)
-          :rig (rig-summary state side))
+          :rig (rig-summary state))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
 (defn run-keys []
