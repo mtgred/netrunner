@@ -23,7 +23,7 @@
                  {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
                   :label "Swap with a deva program from your Grip"
                   :cost [:credit 2]
-                  :prompt (str "Select a deva program in your Grip to swap with " card-name)
+                  :prompt (str "Choose a deva program in your Grip to swap with " card-name)
                   :choices {:card #(and (in-hand? %)
                                         (has-subtype? % "Deva"))}
                   :msg (msg "swap in " (:title target) " from their Grip")
@@ -770,7 +770,7 @@
               :once :per-turn
               :prompt "Use Cordyceps to swap ice?"
               :yes-ability
-              {:prompt "Select ice protecting this server"
+              {:prompt "Choose ice protecting this server"
                :choices {:req (req (and (installed? target)
                                         (ice? target)
                                         (= (target-server (:run @state)) (second (get-zone target)))))}
@@ -778,7 +778,7 @@
                :effect (effect
                          (continue-ability
                            (let [first-ice target]
-                             {:prompt "Select ice to swap with"
+                             {:prompt "Choose ice to swap with"
                               :choices {:req (req (and (installed? target)
                                                        (ice? target)
                                                        (not= first-ice target)))}
@@ -1216,7 +1216,7 @@
 (defcard "Femme Fatale"
   (auto-icebreaker
     {:on-install
-     {:prompt "Select a piece of ice to target for bypassing"
+     {:prompt "Choose a piece of ice to target for bypassing"
       :choices {:card ice?}
       :effect (req (let [ice target]
                      (add-icon state side card ice "F" "blue")
@@ -1321,7 +1321,7 @@
                   :breaks "All"
                   :break-cost [:trash]
                   :cost [:trash]
-                  :prompt "Select the subroutine to NOT break"
+                  :prompt "Choose the subroutine to NOT break"
                   :choices (req (unbroken-subroutines-choice current-ice))
                   :msg (msg (let [subroutines (:subroutines current-ice)
                                   target (->> subroutines
@@ -1465,7 +1465,7 @@
                                     {:optional
                                      {:prompt (str "Swap " (:title ice) " with another ice?")
                                       :yes-ability
-                                      {:prompt "Select another ice"
+                                      {:prompt "Choose another ice"
                                        :choices {:card #(and (installed? %)
                                                              (ice? %)
                                                              (not (same-card? % ice)))}

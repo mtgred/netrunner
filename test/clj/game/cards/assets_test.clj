@@ -2514,7 +2514,7 @@
         (is (= 3 (:agenda-point (get-corp))) "Gained 3 agenda points")
         (take-credits state :corp)
         (run-empty-server state "HQ")
-        (is (= "Select a card to place 1 advancement token on" (:msg (prompt-map :corp))) "Puppet Master event fired")))))
+        (is (= "Choose a card to place 1 advancement token on" (:msg (prompt-map :corp))) "Puppet Master event fired")))))
 
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
@@ -2687,7 +2687,7 @@
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (empty? (:prompt (get-runner))) "Select credit source prompt did not come up")
+        (is (empty? (:prompt (get-runner))) "Choose credit source prompt did not come up")
         (is (nil? (refresh malia1)) "Malia has been trashed")))))
 
 (deftest marilyn-campaign

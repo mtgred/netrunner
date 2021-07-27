@@ -813,7 +813,7 @@
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt "Select an agenda with a counter"
+    {:prompt "Choose an agenda with a counter"
      :choices {:card #(and (agenda? %)
                            (is-scored? state side %)
                            (pos? (get-counters % :agenda)))}

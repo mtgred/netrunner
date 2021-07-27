@@ -5041,7 +5041,7 @@
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Corroder")
         (click-card state :runner "Mass-Driver")
-        (is (= "Select a program to install from your Grip" (:msg (prompt-map :runner))) "Grip is only option")
+        (is (= "Choose a program to install from your Grip" (:msg (prompt-map :runner))) "Grip is only option")
         (click-card state :runner "Engolo")
         (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
         (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount")))))

@@ -626,7 +626,7 @@
         (click-card state :corp marilyn)
         (click-prompt state :corp "New remote")
         (is (= "Marilyn Campaign" (:title (get-content state :remote1 0))) "Marilyn is installed as first card")
-        (is (= "Select a non-agenda in HQ to install" (:msg (prompt-map :corp))))
+        (is (= "Choose a non-agenda in HQ to install" (:msg (prompt-map :corp))))
         (click-card state :corp herrings)
         (is (= "Red Herrings" (:title (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
         (click-card state :corp vitruvius)
@@ -3292,7 +3292,7 @@
       (run-on state :hq)
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
       (is (prompt-map :corp))
-      (is (= "Select a card to add to the top of R&D" (:msg (prompt-map :corp))))
+      (is (= "Choose a card to add to the top of R&D" (:msg (prompt-map :corp))))
       (click-card state :corp "IPO")
       (is (find-card "IPO" (:deck (get-corp))))))
   (testing "Must be used during a run"

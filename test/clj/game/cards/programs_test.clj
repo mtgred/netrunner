@@ -1471,11 +1471,11 @@
       (run-continue state)
       (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (= "Select ice protecting this server" (:msg (prompt-map :runner))))
+      (is (= "Choose ice protecting this server" (:msg (prompt-map :runner))))
       (is (= :select (prompt-type :runner)))
       (click-card state :runner "Ice Wall")
       (click-card state :runner "Enigma")
-      (is (= "Select a card with virus counters (0 of 1 virus counters)" (:msg (prompt-map :runner))))
+      (is (= "Choose a card with virus counters (0 of 1 virus counters)" (:msg (prompt-map :runner))))
       (click-card state :runner "Hivemind")
       (is (= "Enigma" (:title (get-ice state :hq 0))))
       (is (= "Ice Wall" (:title (get-ice state :hq 1))))
@@ -3853,7 +3853,7 @@
           "Using recurring credits"
           (card-ability state :runner mis 0)
           (click-prompt state :runner "2")
-          (is (= "Select a credit providing card (0 of 2 [Credits])"
+          (is (= "Choose a credit providing card (0 of 2 [Credits])"
                  (:msg (prompt-map :runner)))
               "Runner has pay-credit prompt")
           (click-card state :runner multi)
@@ -3875,7 +3875,7 @@
           "Using recurring credits and credits from credit pool"
           (card-ability state :runner mis 0)
           (click-prompt state :runner "4")
-          (is (= "Select a credit providing card (0 of 4 [Credits])"
+          (is (= "Choose a credit providing card (0 of 4 [Credits])"
                  (:msg (prompt-map :runner)))
               "Runner has pay-credit prompt")
           (click-card state :runner mantle))
@@ -3946,7 +3946,7 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credits from Multithreader"
                            (card-ability state :runner ab 1)
-                           (is (= "Select a credit providing card (0 of 2 [Credits])"
+                           (is (= "Choose a credit providing card (0 of 2 [Credits])"
                                   (:msg (prompt-map :runner)))
                                "Runner has pay-credit prompt")
                            (click-card state :runner mt)
@@ -5291,7 +5291,7 @@
           (card-ability state :runner sb 0)
           (run-continue state)
           (fire-subs state (refresh ichi))
-          (is (= :select (prompt-type :corp)) "Corp has a prompt to select program to delete")
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
           (click-card state :corp "Sneakdoor Beta")
           (click-prompt state :corp "Done")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
@@ -5314,7 +5314,7 @@
           (card-ability state :runner sb 0)
           (run-continue state)
           (fire-subs state (refresh roto))
-          (is (= :select (prompt-type :corp)) "Corp has a prompt to select program to delete")
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
           (click-card state :corp "Sneakdoor Beta")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
           (run-on state "Archives")
@@ -5654,9 +5654,9 @@
         (run-continue state)
         (card-ability state :runner tako 0)
         (click-card state :runner (refresh faus))
-        (is (not-empty (:prompt (get-runner))) "Can't select AI breakers")
+        (is (not-empty (:prompt (get-runner))) "Can't choose AI breakers")
         (click-card state :runner (refresh corr))
-        (is (empty? (:prompt (get-runner))) "Can select non-AI breakers")
+        (is (empty? (:prompt (get-runner))) "Can choose non-AI breakers")
         (is (= 5 (get-strength (refresh corr))) "Corroder at +3 strength")
         (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
         (card-ability state :runner tako 0)

@@ -3187,7 +3187,7 @@
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
       (is (prompt-is-type? state :runner :select))
-      (is (= "Select a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
+      (is (= "Choose a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
           "Credit selection prompt is opened"))))
 
 (deftest public-terminal
@@ -3682,7 +3682,7 @@
           (is (= "Choose 1 installed program to trash" (:msg (prompt-map :runner)))
               "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
-        (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+        (is (= "Choose a target for Simulchip" (:msg (prompt-map :runner)))
             "Runner chooses ability target first")
         (click-card state :runner "Mantle")
         (is (get-program state 0) "Mantle is installed for free")
@@ -3794,7 +3794,7 @@
       (run-jack-out state)
       (play-from-hand state :runner "Simulchip")
       (card-ability state :runner (get-hardware state 0) 0)
-      (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+      (is (= "Choose a target for Simulchip" (:msg (prompt-map :runner)))
           "Runner has ability target prompt"))))
 
 (deftest spinal-modem

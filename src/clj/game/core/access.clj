@@ -573,7 +573,7 @@
               (continue-ability
                 state side
                 {:async true
-                 :prompt "Choose an upgrade in root of R&D to access."
+                 :prompt "Choose an upgrade in root of R&D to access"
                  :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
                  :effect (req (wait-for (access-card state side target)
                                         (continue-ability
@@ -596,7 +596,7 @@
 
         :else
         {:async true
-         :prompt "Select a card to access."
+         :prompt "Choose a card to access"
          :choices choices
          :effect (req (cond
 
@@ -722,7 +722,7 @@
               (continue-ability
                 state side
                 {:async true
-                 :prompt "Choose an upgrade in root of HQ to access."
+                 :prompt "Choose an upgrade in root of HQ to access"
                  :choices {:card (fn [card] (some #(same-card? card %) unrezzed))}
                  :effect (req (wait-for (access-card state side target)
                                         (continue-ability
@@ -757,7 +757,7 @@
 
         :else
         {:async true
-         :prompt "Select a card to access."
+         :prompt "Choose a card to access"
          :choices choices
          :effect (req (cond
 
@@ -803,10 +803,10 @@
                     (and pos-total?
                          pos-total-cards-count?
                          (any-effects state side :corp-choose-hq-access))
-                    (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
+                    (do (show-wait-prompt state :runner "Corp to choose cards in HQ to be accessed")
                         (continue-ability
                           state :corp
-                          {:prompt (str "Select " (min base (-> @state :corp :hand count))
+                          {:prompt (str "Choose " (min base (-> @state :corp :hand count))
                                         " cards in HQ for the Runner to access")
                            :choices {:card #(and (in-hand? %)
                                                  (corp? %))
@@ -933,7 +933,7 @@
                  (continue-ability
                    state side
                    {:async true
-                    :prompt "Choose an upgrade in Archives to access."
+                    :prompt "Choose an upgrade in Archives to access"
                     :choices {:card #(and (= :archives (second (get-zone %)))
                                           (not (already-accessed %)))}
                     :effect (req (let [already-accessed (conj already-accessed (:cid target))
@@ -986,7 +986,7 @@
         ;; Present the normal options
         :else
         {:async true
-         :prompt (str "Select a card to access. You must access all cards.")
+         :prompt (str "Choose a card to access. You must access all cards")
          :choices choices
          :effect (req (cond
 

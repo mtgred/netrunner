@@ -99,13 +99,13 @@
     :help "Replace your ID with the card \"n\""}
    {:name "/rez"
     :usage "/rez"
-    :help "Select a card to rez, ignoring all costs (Corp only)"}
+    :help "Choose a card to rez, ignoring all costs (Corp only)"}
    {:name "/rez-all"
     :usage "/rez-all"
     :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
    {:name "/rfg"
     :usage "/rfg"
-    :help "Select a card to remove from the game"}
+    :help "Choose a card to remove from the game"}
    {:name "/roll"
     :has-args :required
     :usage "/roll n"
@@ -160,7 +160,7 @@
              :title "How do I perform actions in a game?"
              :content [:ul
                        [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
-                        "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to select a target. "
+                        "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to choose a target. "
                         "You will be prompted discard down to your hand size after you choose \"End Turn\"."]
                        [:p "Most cards in the game are now automated, but be aware that some cards' restrictions or trigger conditions are not implemented. "
                         "If you want to spend credits from a card, but the game is not giving you the option, just click the card with credits and take some."]]}

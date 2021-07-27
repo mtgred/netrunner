@@ -32,7 +32,7 @@
   ([specific-card target-count] (pick-virus-counters-to-spend specific-card target-count (hash-map) 0))
   ([specific-card target-count selected-cards counter-count]
    {:async true
-    :prompt (str "Select a card with virus counters ("
+    :prompt (str "Choose a card with virus counters ("
                  counter-count (str " of " target-count)
                  " virus counters)")
     :choices {:card #(and (if specific-card
@@ -125,7 +125,7 @@
          {:async true
           :effect pay-rest}
          {:async true
-          :prompt (str "Select a credit providing card ("
+          :prompt (str "Choose a credit providing card ("
                       counter-count (when (and target-count (pos? target-count))
                                       (str " of " target-count))
                       " [Credits]"

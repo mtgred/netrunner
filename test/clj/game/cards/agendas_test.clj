@@ -2430,7 +2430,7 @@
       (advance state ares 6)
       (is (= 6 (get-counters (refresh ares) :advancement)))
       (score state :corp (refresh ares))
-      (is (= "Select 2 installed cards installed cards to trash" (:msg (prompt-map :runner)))
+      (is (= "Choose 2 installed cards installed cards to trash" (:msg (prompt-map :runner)))
           "Runner has Ares prompt to trash installed cards"))
     (click-card state :runner "Clone Chip")
     (is (empty? (:prompt (get-runner))) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
