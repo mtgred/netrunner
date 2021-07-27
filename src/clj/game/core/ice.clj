@@ -666,7 +666,8 @@
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
                                    (= :encounter-ice (:phase run))
-                                   break-ability)
+                                   (or break-ability
+                                       pump-ability))
                             (vec (concat abs
                                          (when (and break-ability
                                                     (or pump-ability (zero? strength-diff))

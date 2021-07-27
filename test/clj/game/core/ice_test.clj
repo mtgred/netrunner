@@ -173,8 +173,7 @@
       (play-from-hand state :runner "Unity")
       (play-from-hand state :runner "Unity")
       (play-from-hand state :runner "Unity")
-      (let [unity (get-program state 0)
-            ice (get-ice state :hq 0)]
+      (let [unity (get-program state 0)]
         (run-on state :hq)
         (run-continue state)
         (is (= "2 [Credits]" (get-in (refresh unity) [:abilities 3 :cost-label])) "Auto Break label lists cost as 2 credits")
@@ -182,7 +181,23 @@
           -2 (:credit (get-runner))
           "Auto pump costs 2"
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh unity)}))
-        (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice")))))
+        (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice"))))
+  (testing "Auto pump available even with no active break ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["DNA Tracker"]
+                        :credits 20}
+                 :runner {:deck ["Utae"]
+                          :credits 20}})
+      (play-from-hand state :corp "DNA Tracker" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Utae")
+      (let [utae (get-program state 0)]
+        (run-on state :hq)
+        (run-continue state)
+        (is (not-empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh utae)))) "Auto pump is active")
+        (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh utae)))) "No auto break dynamic ability")))))
 
 (deftest bioroid-break-abilities
   ;; The click-to-break ablities on bioroids shouldn't create an undo-click
