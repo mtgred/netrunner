@@ -38,7 +38,7 @@
                             (pos? (:turn @state))
                             (not (rezzed? (:card context)))
                             (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :face-up} (:install-state context)))))
-             :waiting-prompt "Runner to use 419: Amoral Scammer"
+             :waiting-prompt "Runner to choose an option"
              :effect
              (effect
                (continue-ability
@@ -56,7 +56,7 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:waiting-prompt "Corp to decide about 419: Amoral Scammer"
+                                      {:waiting-prompt "Corp to choose an option"
                                        :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
                                        :player :corp
                                        :no-ability
@@ -91,7 +91,7 @@
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :waiting-prompt "Runner to choose starting directives"
+             :waiting-prompt "Runner to make a decision"
              :effect (req (let [directives (->> (server-cards)
                                                 (filter #(has-subtype? % "Directive"))
                                                 (map make-card)
@@ -150,7 +150,7 @@
              :req (req (and (= :archives (target-server context))
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
-             :waiting-prompt "Corp to trash 1 card from HQ"
+             :waiting-prompt "Corp to make a decision"
              :prompt "Choose a card in HQ to discard"
              :player :corp
              :choices {:all true
@@ -243,7 +243,7 @@
    :events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :waiting-prompt "Runner to choose cards to be hosted"
+             :waiting-prompt "Runner to make a decision"
              :effect (req (doseq [c (take 6 (:deck runner))]
                             (move state side c :play-area))
                           (continue-ability
@@ -341,7 +341,7 @@
                              (pos? (last targets))
                              (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))
                              (pos? (count (:hand runner)))))
-              :waiting-prompt "Corp to use Chronos Protocol: Selective Mind-mapping"
+              :waiting-prompt "Corp to make a decision"
               :prompt "Use Chronos Protocol to select the first card trashed?"
               :yes-ability
               {:async true
@@ -454,7 +454,7 @@
                     (not (agenda? target))
                     (<= (play-cost state side target)
                         (number-of-runner-virus-counters state))))
-     :waiting-prompt "Runner to use Freedom Khumalo's ability"
+     :waiting-prompt "Runner to make a decision"
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
                     (if (zero? play-or-rez)
@@ -538,7 +538,7 @@
                                               (and (rezzed? ice)
                                                    (installed? ice)
                                                    (has-subtype? ice "Bioroid")))))))
-             :waiting-prompt "Corp to use Haas-Bioroid: Architects of Tomorrow"
+             :waiting-prompt "Corp to make a decision"
              :prompt "Select a Bioroid to rez"
              :player :corp
              :choices
@@ -601,7 +601,7 @@
                             (not (:facedown context))))
              :once :per-turn
              :async true
-             :waiting-prompt "Runner to use Hayley's ability"
+             :waiting-prompt "Runner to make a decision"
              :effect
              (effect (continue-ability
                        (let [itarget (:card context)
@@ -735,7 +735,7 @@
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
              :async true
-             :waiting-prompt "Corp to place advancement tokens"
+             :waiting-prompt "Corp to make a decision"
              :effect
              (effect
                (continue-ability
@@ -1109,7 +1109,7 @@
                                              (some #(and (installed? (:card %))
                                                          (corp? (:card %)))
                                                    targets)))))
-              :waiting-prompt "Corp to use NBN: Controlling the Message"
+              :waiting-prompt "Corp to make a decision"
               :prompt "Trace the Runner with NBN: Controlling the Message?"
               :autoresolve (get-autoresolve :auto-ctm)
               :yes-ability
@@ -1130,7 +1130,7 @@
              :req (req (first-event? state :runner :runner-gain-tag))
              :player :corp
              :async true
-             :waiting-prompt "Corp to use NBN: Reality Plus"
+             :waiting-prompt "Corp to choose an option"
              :prompt "Select option"
              :choices ["Gain 2 [Credits]" "Draw 2 cards"]
              :msg (msg (decapitalize target))
@@ -1367,7 +1367,7 @@
 (defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                :waiting-prompt "Corp to use Skorpios' ability"
+                :waiting-prompt "Corp to make a decision"
                 :prompt "Choose a card in the Runner's Heap that was just trashed"
                 :once :per-turn
                 :choices (req (cancellable (:discard runner)))
@@ -1414,7 +1414,7 @@
                :optional
                {:req (req (and (not-empty (installed-faceup-agendas state))
                                (not-empty (ice-with-no-advancement-tokens state))))
-                :waiting-prompt "Corp to use SSO Industries"
+                :waiting-prompt "Corp to make a decision"
                 :prompt "Place advancement tokens?"
                 :autoresolve (get-autoresolve :auto-sso)
                 :yes-ability
@@ -1456,7 +1456,7 @@
                (effect (continue-ability
                          (let [c1 (first targets)
                                c2 (second targets)]
-                           {:waiting-prompt "Corp to choose which card to remove from the game"
+                           {:waiting-prompt "Corp to make a decision"
                             :prompt "Choose which card to remove from the game"
                             :player :corp
                             :choices [c1 c2]

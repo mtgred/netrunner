@@ -15,7 +15,7 @@
             {:event :purge
              :optional
              {:player :runner
-              :waiting-prompt "Runner to decide if they will use Acacia"
+              :waiting-prompt "Runner to choose an option"
               :prompt "Use Acacia?"
               :yes-ability
               {:async true
@@ -680,7 +680,7 @@
   {:events [{:event :pre-init-trace
              :optional
              {:req (req (= :runner (:active-player @state)))
-              :waiting-prompt "Runner to use Flip Switch"
+              :waiting-prompt "Runner to choose an option"
               :prompt "Use Flip Switch to reduce base trace strength to 0?"
               :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
@@ -796,7 +796,7 @@
                   :cost [:trash]
                   :msg "install a card from the top of the stack"
                   :async true
-                  :waiting-prompt "Runner to resolve Gachapon"
+                  :waiting-prompt "Runner to make a decision"
                   :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
                                  (wait-for
                                    (resolve-ability state side
@@ -1294,7 +1294,7 @@
 (defcard "Pantograph"
   (let [install-ability
         {:optional
-         {:waiting-prompt "Runner to decide if they will use Pantograph"
+         {:waiting-prompt "Runner to make a decision"
           :prompt "Install card with Pantograph ability?"
           :player :runner
           :yes-ability
@@ -1338,7 +1338,7 @@
              {:req (req (first-event? state side :successful-run))
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
-              :waiting-prompt "Runner to decide if they will use Paragon"
+              :waiting-prompt "Runner to make a decision"
               :prompt "Use Paragon?"
               :yes-ability
               {:msg "gain 1 [Credit] and look at the top card of Stack"
@@ -1865,7 +1865,7 @@
                 :async true
                 :label "Look at the top X cards of your Stack"
                 :msg "look at the top X cards of their Stack and rearrange them"
-                :waiting-prompt "Runner to rearrange the top cards of their stack"
+                :waiting-prompt "Runner to make a decision"
                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
                                                     (all-active-installed state :runner)))
                                    from (take n (:deck runner))]
@@ -1887,7 +1887,7 @@
              :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (= (:credit runner) (:credit corp)))
-              :waiting-prompt "Runner to decide if they will gain credits from Supercorridor"
+              :waiting-prompt "Runner to choose an option"
               :prompt "Gain credits from Supercorridor?"
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
@@ -1964,7 +1964,7 @@
                               state :runner
                               (if (< (count hand) dmg)
                                 {:effect (effect (chosen-damage :runner hand))}
-                                {:waiting-prompt "Runner to use Titanium Ribs to choose cards to be trashed"
+                                {:waiting-prompt "Runner to make a decision"
                                  :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
                                  :choices {:max dmg
                                            :all true

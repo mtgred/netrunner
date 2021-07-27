@@ -77,7 +77,7 @@
 
 (defcard "Aggressive Secretary"
   (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to use Aggressive Secretary"
+                     :waiting-prompt "Corp to make a decision"
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "program") " to trash")
                      :cost [:credit 2]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
@@ -93,7 +93,7 @@
                 :cost [:trash]
                 :effect (effect
                           (continue-ability
-                            {:waiting-prompt "Runner to decide whether or not to prevent Alexa Belsky"
+                            {:waiting-prompt "Runner to make a decision"
                              :prompt "How many credits do you want to pay?"
                              :choices :credit
                              :player :runner
@@ -151,7 +151,7 @@
                                    "card")
                          " in HQ and Archives")
                   :async true
-                  :waiting-prompt "Corp to use Allele Repression"
+                  :waiting-prompt "Corp to make a decision"
                   :effect (req (let [total (min (count (:discard corp))
                                                 (count (:hand corp))
                                                 (get-counters card :advancement))]
@@ -203,7 +203,7 @@
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:waiting-prompt "Corp to use Anson Rose"
+                                 {:waiting-prompt "Corp to make a decision"
                                   :prompt (str "Move advancement tokens from Anson Rose to " icename "?")
                                   :yes-ability
                                   {:prompt "Choose how many advancement tokens to remove from Anson Rose"
@@ -324,7 +324,7 @@
    :on-trash {:interactive (req true)
               :optional
               {:req (req (= :runner side))
-               :waiting-prompt "Corp to use Calvin B4L3Y"
+               :waiting-prompt "Corp to choose an option"
                :prompt "Draw 2 cards?"
                :player :corp
                :yes-ability {:msg "draw 2 cards"
@@ -339,7 +339,7 @@
 
 (defcard "Cerebral Overwriter"
   (advance-ambush 3 {:async true
-                     :waiting-prompt "Corp to use Cerebral Overwriter"
+                     :waiting-prompt "Corp to choose an option"
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :msg (msg "do " (get-counters (get-card state card) :advancement) " brain damage")
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
@@ -408,7 +408,7 @@
    :abilities [(into
                  (corp-recur operation?)
                  {:label "Add 1 operation from Archives to HQ"
-                  :waiting-prompt "Corp to use Clone Suffrage Movement"
+                  :waiting-prompt "Corp to make a decision"
                   :prompt "Select an operation in Archives to add to HQ"
                   :once :per-turn})]})
 
@@ -470,7 +470,7 @@
                     (pos? it))))}
    :abilities [{:label "Move an advancement counter between 2 pieces of ice"
                 :once :per-turn
-                :waiting-prompt "Corp to use Constellation Protocol"
+                :waiting-prompt "Corp to make a decision"
                 :choices {:card #(and (ice? %)
                                       (get-counters % :advancement))}
                 :effect (effect
@@ -571,7 +571,7 @@
                                 drawn (get-in @state [:corp :register :most-recent-drawn])]
                             (continue-ability
                               state side
-                              {:waiting-prompt "Corp to use Daily Business Show"
+                              {:waiting-prompt "Corp to make a decision"
                                :prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
                                :choices {:max dbs
                                          :card #(some (fn [c] (same-card? c %)) drawn)
@@ -863,7 +863,7 @@
 
 (defcard "Ghost Branch"
   (advance-ambush 0 {:async true
-                     :waiting-prompt "Corp to use Ghost Branch"
+                     :waiting-prompt "Corp to choose an option"
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :msg (msg "give the Runner " (quantify (get-counters (get-card state card) :advancement) "tag"))
                      :effect (effect (gain-tags :corp eid (get-counters (get-card state card) :advancement)))}))
@@ -1055,7 +1055,7 @@
                             (some #(and (agenda? %)
                                         (= counters (:agendapoints %)))
                                   (:hand corp))))
-                :waiting-prompt "Corp to select an agenda for Lady Liberty"
+                :waiting-prompt "Corp to make a decision"
                 :prompt "Select an Agenda in HQ to move to score area"
                 :choices {:req (req (and (agenda? target)
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
@@ -1190,7 +1190,7 @@
      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
      :on-trash {:interactive (req true)
                 :optional
-                {:waiting-prompt "Corp to use Marilyn Campaign"
+                {:waiting-prompt "Corp to choose an option"
                  :prompt "Shuffle Marilyn Campaign into R&D?"
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
@@ -1345,7 +1345,7 @@
    :on-trash {:optional
               {:req (req (= :runner side))
                :player :corp
-               :waiting-prompt "Corp to use Nanoetching Matrix"
+               :waiting-prompt "Corp to choose an option"
                :prompt "Gain 2 [credits]?"
                :yes-ability
                {:msg (msg "gain 2 [Credits]")
@@ -1379,7 +1379,7 @@
 (defcard "Net Analytics"
   (let [ability {:optional
                  {:player :corp
-                  :waiting-prompt "Corp to use Net Analytics"
+                  :waiting-prompt "Corp to choose an option"
                   :prompt "Draw from Net Analytics?"
                   :yes-ability
                   {:msg "draw a card"
@@ -1398,7 +1398,7 @@
 
 (defcard "Neurostasis"
   (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to use Neurostasis"
+                     :waiting-prompt "Corp to make a decision"
                      :async true
                      :effect (req (let [cnt (get-counters (get-card state card) :advancement)]
                                     (continue-ability
@@ -1552,7 +1552,7 @@
   (advance-ambush
     0
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
-     :waiting-prompt "Corp to select an agenda to score with Plan B"
+     :waiting-prompt "Corp to make a decision"
      :prompt "Select an Agenda in HQ to score"
      :choices {:req (req (and (agenda? target)
                               (<= (get-advancement-requirement target)
@@ -1628,7 +1628,7 @@
 
 (defcard "Project Junebug"
   (advance-ambush 1 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to use Project Junebug"
+                     :waiting-prompt "Corp to choose an option"
                      :msg (msg "do " (* 2 (get-counters (get-card state card) :advancement)) " net damage")
                      :async true
                      :effect (effect (damage eid :net (* 2 (get-counters (get-card state card) :advancement))
@@ -1974,7 +1974,7 @@
 
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
-                     :waiting-prompt "Corp to use Shattered Remains"
+                     :waiting-prompt "Corp to make a decision"
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Select " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (string/join ", " (map :title targets)))
@@ -1988,7 +1988,7 @@
   {:access
    {:optional
     {:req (req (not (in-deck? card)))
-     :waiting-prompt "Corp to use Shi.Kyū"
+     :waiting-prompt "Corp to make a decision"
      :prompt "Pay [Credits] to use Shi.Kyū?"
      :yes-ability
      {:prompt "How many [Credits] for Shi.Kyū?"
@@ -2036,7 +2036,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:req (req (not (in-discard? card)))
-             :waiting-prompt "Corp to use Snare!"
+             :waiting-prompt "Corp to choose an option"
              :prompt "Pay 4 [Credits] to use Snare! ability?"
              :yes-ability {:async true
                            :cost [:credit 4]
@@ -2047,7 +2047,7 @@
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
    :access {:optional
-            {:waiting-prompt "Corp to use Space Camp"
+            {:waiting-prompt "Corp to make a decision"
              :prompt "Place 1 advancement token with Space Camp?"
              :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                            :prompt "Select a card to place an advancement token on with Space Camp"
@@ -2236,7 +2236,7 @@
   (advance-ambush
     0
     {:async true
-     :waiting-prompt "Corp to use Toshiyuki Sakai"
+     :waiting-prompt "Corp to make a decision"
      :prompt "Select an asset or agenda in HQ"
      :choices {:card #(and (or (agenda? %)
                                (asset? %))
@@ -2398,7 +2398,7 @@
                 :async true
                 :cost [:trash-from-hand 1]
                 :effect (effect (continue-ability
-                                  {:waiting-prompt "Corp to use Whampoa Reclamation"
+                                  {:waiting-prompt "Corp to make a decision"
                                    :prompt "Select a card in Archives to add to the bottom of R&D"
                                    :show-discard true
                                    :choices {:card #(and (in-discard? %)

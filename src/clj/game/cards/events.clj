@@ -384,7 +384,7 @@
                  :ability
                  {:msg "force the Corp to add all cards in HQ to the top of R&D"
                   :player :corp
-                  :waiting-prompt "Corp to add all cards in HQ to the top of R&D"
+                  :waiting-prompt "Corp to make a decision"
                   :async true
                   :effect (effect
                             (continue-ability
@@ -525,7 +525,7 @@
                               (continue-ability
                                 state :corp
                                 {:optional
-                                 {:waiting-prompt "Corp to decide whether or not to prevent the trash"
+                                 {:waiting-prompt "Corp to choose an option"
                                   :prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
                                   :player :corp
                                   :yes-ability {:async true
@@ -1057,7 +1057,7 @@
                 :prompt "Advancements to remove from a card in or protecting this server?"
                 :choices ["0" "1" "2" "3"]
                 :async true
-                :waiting-prompt "Runner to use Exploratory Romp"
+                :waiting-prompt "Runner to choose an option"
                 :effect (req (let [c (str->int target)]
                                (continue-ability
                                  state side
@@ -1166,7 +1166,7 @@
                                    " of " serv " or trash it?")
                       :choices ["Rez" "Trash"]
                       :async true
-                      :waiting-prompt "Corp to decide to rez or trash ice"
+                      :waiting-prompt "Corp to choose an option"
                       :effect (effect (continue-ability
                                         (if (and (= target "Rez")
                                                  (<= (rez-cost state :corp ice)
@@ -1266,7 +1266,7 @@
                 :show-discard true
                 :async true
                 :player :corp
-                :waiting-prompt "Corp to choose which cards to pick up from Archives"
+                :waiting-prompt "Corp to make a decision"
                 :prompt "Select 5 cards from Archives to add to HQ"
                 :choices {:max 5
                           :all true
@@ -1339,7 +1339,7 @@
                               (continue-ability state side (choose-next to-shuffle target remaining) card nil)))}))]
     {:on-play
      {:rfg-instead-of-trashing true
-      :waiting-prompt "Runner to use Harmony AR Therapy"
+      :waiting-prompt "Runner to make a decision"
       :async true
       :effect (req (if (and (not (zone-locked? state :runner :discard))
                             (pos? (count (:discard runner))))
@@ -1471,7 +1471,7 @@
                :this-card-run true
                :ability
                {:msg "rearrange the top 5 cards of R&D"
-                :waiting-prompt "Runner to rearrange the top cards of R&D"
+                :waiting-prompt "Runner to make a decision"
                 :async true
                 :effect (effect
                           (continue-ability
@@ -1511,7 +1511,7 @@
                               (effect-completed state side eid))))})
           (which-pile [p1 p2]
             {:player :runner
-             :waiting-prompt "Runner to select a pile"
+             :waiting-prompt "Runner to choose an option"
              :prompt "Choose a pile to access"
              :choices [(str "Pile 1 (" (quantify (count p1) "card") ")")
                        (str "Pile 2 (" (quantify (count p2) "card") ")")]
@@ -1526,7 +1526,7 @@
           {:player :corp
            :req (req (<= 1 (count (:hand corp))))
            :async true
-           :waiting-prompt "Corp to create two piles"
+           :waiting-prompt "Corp to make a decision"
            :prompt (msg "Select up to " (dec (count (:hand corp))) " cards for the first pile")
            :choices {:card #(and (in-hand? %)
                                  (corp? %))
@@ -1602,7 +1602,7 @@
   {:on-play
    {:async true
     :player :corp
-    :waiting-prompt "Corp to rearrange the top 4 cards of R&D"
+    :waiting-prompt "Corp to make a decision"
     :effect (req (wait-for
                    (resolve-ability state :corp (reorder-choice :corp (take 4 (:deck corp))) card targets)
                    (let [top-4 (take 4 (get-in @state [:corp :deck]))]
@@ -1903,7 +1903,7 @@
     {:on-play
      {:msg "look at and trash or rearrange the top 6 cards of their Stack"
       :async true
-      :waiting-prompt "Runner to rearrange the top cards of their stack"
+      :waiting-prompt "Runner to make a decision"
       :effect (effect (continue-ability (entrance-trash (take 6 (:deck runner))) card nil))}}))
 
 (defcard "Marathon"
@@ -1958,7 +1958,7 @@
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :rfg-instead-of-trashing true
     :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"
-    :waiting-prompt "Corp to choose to pay or take bad publicity"
+    :waiting-prompt "Corp to choose an option"
     :player :corp
     :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
     :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
@@ -2273,8 +2273,8 @@
 (defcard "Push Your Luck"
   (letfn [(corp-choice [spent]
             {:player :corp
-             :waiting-prompt "Corp to guess even or odd"
-             :prompt "How many credits were spent?"
+             :waiting-prompt "Corp to choose an option"
+             :prompt "Even or odd?"
              :choices ["Even" "Odd"]
              :async true
              :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
@@ -2292,7 +2292,7 @@
           (runner-choice [choices]
             {:player :runner
              :prompt "How many credits do you want to spend?"
-             :waiting-prompt "Runner to spend credits"
+             :waiting-prompt "Runner to make a decision"
              :choices choices
              :async true
              :effect (effect (continue-ability :corp (corp-choice (str->int target)) card nil))})]
@@ -2488,7 +2488,7 @@
 (defcard "Rigged Results"
   (letfn [(choose-ice []
             {:player :runner
-             :waiting-prompt "Runner to choose ice"
+             :waiting-prompt "Runner to make a decision"
              :prompt "Select a piece of ice to bypass"
              :choices {:card ice?}
              :msg (msg "make a run and bypass " (card-str state target))
@@ -2503,7 +2503,7 @@
                              (make-run eid (second (get-zone target)) card))})
           (corp-choice [choices spent]
             {:player :corp
-             :waiting-prompt "Corp to guess credits spent"
+             :waiting-prompt "Corp to make a decision"
              :prompt "How many credits were spent?"
              :choices choices
              :async true
@@ -2517,7 +2517,7 @@
                                         (effect-completed state side eid)))))})
           (runner-choice [choices]
             {:player :runner
-             :waiting-prompt "Runner to spend credits"
+             :waiting-prompt "Runner to make a decision"
              :prompt "How many credits do you want to spend?"
              :choices choices
              :async true
@@ -2828,7 +2828,7 @@
 (defcard "SYN Attack"
   {:on-play
    {:player :corp
-    :waiting-prompt "Corp to choose an option for SYN Attack"
+    :waiting-prompt "Corp to choose an option"
     :prompt "Discard 2 cards or draw 4 cards?"
     :choices (req [(when (<= 2 (count (:hand corp)))
                      "Discard 2")
@@ -3147,7 +3147,7 @@
 (defcard "Wildcat Strike"
   {:on-play
    {:player :corp
-    :waiting-prompt "Corp to choose Wildcat Strike effect"
+    :waiting-prompt "Corp to choose an option"
     :prompt "Choose one"
     :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
     :async true

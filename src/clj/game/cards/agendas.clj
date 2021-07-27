@@ -104,7 +104,7 @@
      :player :corp
      :once :per-turn
      :async true
-     :waiting-prompt "Corp to use Advanced Concept Hopper"
+     :waiting-prompt "Corp to choose an option"
      :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?"
      :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
      :effect (req (case target
@@ -157,7 +157,7 @@
   {:on-score
    {:player :runner
     :async true
-    :waiting-prompt "Runner to suffer 5 meat damage or take 2 tags"
+    :waiting-prompt "Runner to choose an option"
     :prompt "Choose Armed Intimidation score effect"
     :choices ["Suffer 5 meat damage" "Take 2 tags"]
     :effect (req (case target
@@ -201,7 +201,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:async true
             :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
-            :waiting-prompt "Corp to place advancement tokens with Award Bait"
+            :waiting-prompt "Corp to choose an option"
             :prompt "How many advancement tokens?"
             :choices ["0" "1" "2"]
             :effect (effect (continue-ability
@@ -244,7 +244,7 @@
     (let [arrange-rd
           {:interactive (req true)
            :optional
-           {:waiting-prompt "Corp to use Bacterial Programming"
+           {:waiting-prompt "Corp to make a decision"
             :prompt "Arrange top 7 cards of R&D?"
             :yes-ability
             {:async true
@@ -268,7 +268,7 @@
               :req (req (and (has-subtype? (:card context) "Run")
                              (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
                              (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))))
-              :waiting-prompt "Corp to use Better Citizen Program"
+              :waiting-prompt "Corp to choose an option"
               :prompt "Give the runner 1 tag?"
               :yes-ability
               {:async true
@@ -282,7 +282,7 @@
                              (has-subtype? (:card context) "Icebreaker")
                              (first-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
-              :waiting-prompt "Corp to use Better Citizen Program"
+              :waiting-prompt "Corp to choose an option"
               :prompt "Give the runner 1 tag?"
               :yes-ability
               {:async true
@@ -307,7 +307,7 @@
 (defcard "Brain Rewiring"
   {:on-score
    {:optional
-    {:waiting-prompt "Corp to use Brain Rewiring"
+    {:waiting-prompt "Corp to make a decision"
      :prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
      :yes-ability
      {:prompt "How many credits do you want to pay?"
@@ -575,7 +575,7 @@
                       (continue-ability
                         state side
                         {:optional
-                         {:waiting-prompt "Corp to use Divested Trust"
+                         {:waiting-prompt "Corp to choose an option"
                           :prompt prompt
                           :yes-ability
                           {:msg message
@@ -654,7 +654,7 @@
 (defcard "Explode-a-palooza"
   {:flags {:rd-reveal (req true)}
    :access {:optional
-            {:waiting-prompt "Corp to use Explode-a-palooza"
+            {:waiting-prompt "Corp to choose an option"
              :prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
              :yes-ability
              {:msg "gain 5 [Credits]"
@@ -696,7 +696,7 @@
                 :once :per-turn
                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
                 :async true
-                :waiting-prompt "Corp to use Flower Sermon"
+                :waiting-prompt "Corp to make a decision"
                 :effect (req (wait-for
                                (reveal state side (first (:deck corp)))
                                (wait-for
@@ -1212,7 +1212,7 @@
                 :silent (req true)
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
-                :waiting-prompt "Runner to trash installed cards"
+                :waiting-prompt "Runner to make a decision"
                 :prompt (msg "Select " (trash-count-str (:card context)) " installed cards to trash")
                 :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
@@ -1349,7 +1349,7 @@
              :effect (effect (swap-cards to-swap target))
              :cancel-effect (effect (put-back-counter card))})
           (choose-card [run-server]
-            {:waiting-prompt "Corp to use Project Yagi-Uda"
+            {:waiting-prompt "Corp to make a decision"
              :prompt "Choose a card in or protecting the attacked server."
              :choices {:card #(= (first run-server) (second (get-zone %)))}
              :effect (effect (continue-ability (choose-swap target) card nil))
@@ -1366,7 +1366,7 @@
   {:events [{:event :successful-run
              :player :corp
              :interactive (req true)
-             :waiting-prompt "Corp to use Puppet Master"
+             :waiting-prompt "Corp to make a decision"
              :prompt "Select a card to place 1 advancement token on"
              :choices {:card can-be-advanced?}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -1423,7 +1423,7 @@
                                 (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                                     (effect-completed state side eid))))))})]
     {:on-score {:async true
-                :waiting-prompt "Corp to add cards from HQ to bottom of R&D"
+                :waiting-prompt "Corp to make a decision"
                 :effect (req (let [from (get-in @state [:corp :hand])]
                                (if (pos? (count from))
                                  (continue-ability state :corp (corp-choice from '() from) card nil)
@@ -1501,7 +1501,7 @@
 (defcard "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
    :on-score {:req (req (seq (all-installed-runner-type state :program)))
-              :waiting-prompt "Corp to trash a card"
+              :waiting-prompt "Corp to make a decision"
               :prompt "Select a program to trash"
               :choices {:card #(and (installed? %)
                                     (program? %))
@@ -1801,7 +1801,7 @@
              :optional
              {:player :corp
               :req (req (pos? (get-counters card :agenda)))
-              :waiting-prompt "Corp to use Voting Machine Initiative"
+              :waiting-prompt "Corp to choose an option"
               :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
               :yes-ability
               {:msg "make the Runner lose 1 [Click]"

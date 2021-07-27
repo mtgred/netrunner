@@ -1977,7 +1977,7 @@
       (is (= "Waiting for Runner to resolve pending triggers" (:msg (prompt-map :corp))) "No Marilyn Shuffle Prompt")
       (click-prompt state :runner "OK")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (= "Waiting for Corp to use Marilyn Campaign" (:msg (prompt-map :runner))) "Now Corp gets shuffle choice")
+      (is (= "Waiting for Corp to choose an option" (:msg (prompt-map :runner))) "Now Corp gets shuffle choice")
       (is (= "Shuffle Marilyn Campaign into R&D?" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn)))
 

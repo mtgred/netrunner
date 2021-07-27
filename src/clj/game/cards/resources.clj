@@ -597,7 +597,7 @@
                (continue-ability
                  {:optional
                   {:player :runner
-                   :waiting-prompt "Runner to use Councilman"
+                   :waiting-prompt "Runner to choose an option"
                    :prompt (msg "Trash Councilman and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
@@ -873,7 +873,7 @@
                                                        (not (is-draft-id? %))))
                                          (sort-by :title)))
         fenris-effect {:async true
-                       :waiting-prompt "Runner to pick identity to host on DJ Fenris"
+                       :waiting-prompt "Runner to choose an option"
                        :prompt "Choose a g-mod identity to host on DJ Fenris"
                        :choices (req (sorted-id-list runner))
                        :msg (msg "host " (:title target))
@@ -1335,7 +1335,7 @@
 (defcard "Jackpot!"
   (let [jackpot {:interactive (req true)
                  :optional
-                 {:waiting-prompt "Runner to use Jackpot!"
+                 {:waiting-prompt "Runner to choose an option"
                   :prompt "Trash Jackpot!?"
                   :yes-ability
                   {:prompt "Choose how many [Credit] to take"
@@ -1468,7 +1468,7 @@
 
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
-            {:waiting-prompt "Runner to choose card to keep"
+            {:waiting-prompt "Runner to make a decision"
              :prompt "Choose a Program to keep"
              :choices (cons "None" (filter program? cards))
              :async true
@@ -1534,7 +1534,7 @@
                 (effect (continue-ability
                           (if (seq (:scored corp))
                             {:optional
-                             {:waiting-prompt "Corp to decide whether or not to prevent Liberated Chela"
+                             {:waiting-prompt "Corp to make a decision"
                               :prompt "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?"
                               :player :corp
                               :async true
@@ -1643,7 +1643,7 @@
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
-                :waiting-prompt "Corp to select a card to derez"
+                :waiting-prompt "Corp to make a decision"
                 :prompt "Select a card to derez"
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
@@ -1653,7 +1653,7 @@
    (effect
      (continue-ability
        {:player :corp
-        :waiting-prompt "Corp to select a card to rez"
+        :waiting-prompt "Corp to make a decision"
         :prompt "Select a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
@@ -1705,7 +1705,7 @@
    :events [{:event :spent-credits-from-card
              :req (req (and run (has-subtype? target "Stealth")))
              :once :per-run
-             :waiting-prompt "Runner to use Net Mercur"
+             :waiting-prompt "Runner to choose an option"
              :prompt "Place 1 [Credits] on Net Mercur or draw 1 card?"
              :player :runner
              :choices ["Place 1 [Credits]" "Draw 1 card"]
@@ -2194,7 +2194,7 @@
 (defcard "Rolodex"
   {:on-install {:async true
                 :msg "look at the top 5 cards of their Stack"
-                :waiting-prompt "Runner to rearrange the top cards of their Stack"
+                :waiting-prompt "Runner to make a decision"
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
                                     (if (pos? (count from))
@@ -2315,7 +2315,7 @@
   {:events [{:event :damage
              :trash-icon true
              :optional
-             {:waiting-prompt "Runner to use Salvaged Vanadis Armory"
+             {:waiting-prompt "Runner to choose an option"
               :prompt "Use Salvaged Vanadis Armory?"
               :yes-ability {:async true
                             :cost [:trash]
@@ -2526,7 +2526,7 @@
              :optional
              {:req (req (or (has-subtype? (:card context) "Black Ops")
                             (has-subtype? (:card context) "Gray Ops")))
-              :waiting-prompt "Runner to use Tallie Perrault"
+              :waiting-prompt "Runner to choose an option"
               :prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
               :player :runner
               :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
@@ -2700,7 +2700,7 @@
                            (let [n (+ target (get-in @state [:bonus :draw] 0))
                                  to-draw (take (inc n) (:deck (:runner @state)))]
                              {:player :runner
-                              :waiting-prompt "Runner to use The Class Act"
+                              :waiting-prompt "Runner to choose an option"
                               :prompt "Select 1 card to add to the bottom of the stack"
                               :choices to-draw
                               :effect (effect (move target :deck)
@@ -2752,7 +2752,7 @@
 (defcard "The Nihilist"
   (let [corp-choice {:optional
                      {:player :corp
-                      :waiting-prompt "Corp to decide"
+                      :waiting-prompt "Corp to choose an option"
                       :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
                       :yes-ability {:async true
                                     :effect (effect (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
@@ -3059,7 +3059,7 @@
                                   state side
                                   {:optional
                                    {:player :corp
-                                    :waiting-prompt "Corp to decide whether or not to draw with Woman in the Red Dress"
+                                    :waiting-prompt "Corp to choose an option"
                                     :prompt (msg "Draw " (:title (first (:deck corp))) "?")
                                     :yes-ability
                                     {:async true
