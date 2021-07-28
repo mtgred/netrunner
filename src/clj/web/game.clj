@@ -183,25 +183,46 @@
             side (some #(when (= client-id (:ws-id %)) (:side %)) players)
             spectator (spectator? client-id game)]
         (if (and state side)
-          (do
-            (main/handle-action user command state (side-from-str side) args)
-            (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
-            (swap-and-send-diffs! game))
-          (when-not spectator
-            (println "handle-game-action unknown state or side")
-            (println "\tGameID:" gameid)
-            (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
-            (println "\tClientID:" client-id)
-            (println "\tSide:" side)
-            (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
-            (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
-            (println "\tCommand:" command)
-            (println "\tArgs:" args "\n"))))
-      (catch clojure.lang.ExceptionInfo e
-        (println "Caught custom exception")
-        (println (str "Exception Data: " (ex-data e)))
+            (let [old-state @state]
+              (try
+                (do (main/handle-action user command state (side-from-str side) args)
+                    (lobby/refresh-lobby-assoc-in gameid [:last-update] (t/now))
+                    (swap-and-send-diffs! game))
+                (catch Exception e
+                  (reset! state old-state)
+                  (throw e))))
+            (when-not spectator
+              (println "handle-game-action unknown state or side")
+              (println "\tGameID:" gameid)
+              (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
+              (println "\tClientID:" client-id)
+              (println "\tSide:" side)
+              (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+              (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
+              (println "\tCommand:" command)
+              (println "\tArgs:" args "\n"))))
+      (catch Exception e
+        (ws/broadcast-to! [client-id] :netrunner/error nil)
+        (println "Caught exception")
+        (println (str "Exception Data: " (or (ex-data e) (.getMessage e))))
         (println (str "Command: " command))
         (println (str "GameId: " gameid-str))))))
+
+(defmethod ws/-msg-handler :netrunner/resync
+  [{{user :user} :ring-req
+    client-id    :client-id
+    {:keys [gameid-str]} :?data}]
+  (when (active-game? gameid-str client-id)
+    (let [gameid (java.util.UUID/fromString gameid-str)
+          {:keys [players state] :as game} (lobby/game-for-id gameid)]
+      (if state
+          (send-state! :netrunner/state game (public-states (:state game)) client-id)
+          (do (println "resync request unknown state")
+              (println "\tGameID:" gameid)
+              (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
+              (println "\tClientID:" client-id)
+              (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+              (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game))))))))
 
 (defmethod ws/-msg-handler :lobby/watch
   ;; Handles a watch command when a game has started.

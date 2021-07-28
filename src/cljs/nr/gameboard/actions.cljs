@@ -7,6 +7,11 @@
             [nr.utils :refer [toastr-options]]
             [nr.ws :as ws]))
 
+(defn reset-game [state]
+  (reset! game-state (assoc state :side (get-side state)))
+  (reset! last-state @game-state)
+  (reset! lock false))
+
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -22,6 +27,7 @@
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
+
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))
     (swap! game-state #(differ/patch @last-state diff))
@@ -33,10 +39,15 @@
   (when (= gameid (:gameid @game-state))
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
-(defmethod ws/-msg-handler :netrunner/state [{data :?data}] (init-game (parse-state data)))
+(defn handle-error []
+  (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."]) "error" {:time-out 0 :close-button true})
+  (reset! lock false))
+
+(defmethod ws/-msg-handler :netrunner/state [{data :?data}] (reset-game (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/start [{data :?data}] (launch-game (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/diff [{data :?data}] (handle-diff (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout (parse-state data)))
+(defmethod ws/-msg-handler :netrunner/error [{data :?data}] (handle-error))
 
 (defn send-command
   ([command] (send-command command nil))
