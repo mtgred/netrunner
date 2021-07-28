@@ -1,6 +1,7 @@
 (ns nr.gamelobby
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
+            [clojure.set :refer [union difference]]
             [clojure.string :refer [join]]
             [jinteki.validator :refer [trusted-deck-status]]
             [jinteki.utils :refer [str->int superuser?]]
@@ -320,13 +321,21 @@
         intersect (clojure.set/intersection (set blocked-users) (set player-names))]
     (empty? intersect)))
 
+(defn- hidden-formats
+  "Remove games which the user has opted to hide"
+  [visible-formats game]
+  (contains? visible-formats (get game :format)))
+
 (defn filter-blocked-games
-  [user games]
+  [user games visible-formats]
   (if (= "tournament" (:room (first games)))
     games
     (let [blocked-games (filter #(blocked-from-game user %) games)
-          blocked-users (get-in user [:options :blocked-users] [])]
-      (filter #(blocking-from-game blocked-users %) blocked-games))))
+          blocked-users (get-in user [:options :blocked-users] [])
+          is-visible (some-fn
+                       #(contains? (get % :players) (:username user))
+                       (every-pred (partial blocking-from-game blocked-users) (partial hidden-formats visible-formats)))]
+      (filter is-visible blocked-games))))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")
@@ -335,10 +344,10 @@
   "Creates the room tab for the specified room"
   [user s games room room-name]
   (r/with-let [room-games (r/track (fn [] (filter #(= room (:room %)) @games)))
-               filtered-games (r/track (fn [] (filter-blocked-games @user @room-games)))
+               filtered-games (r/track (fn [] (filter-blocked-games @user @room-games (:visible-formats @app-state))))
                closed-games (r/track (fn [] (count (filter #(:started %) @filtered-games))))
                open-games (r/track (fn [] (- (count @filtered-games) @closed-games)))]
-    [:span.roomtab
+    [:div.roomtab
      (if (= room (:room @s))
        {:class "current"}
        {:on-click #(swap! s assoc :room room)})
@@ -352,7 +361,7 @@
 
 (defn game-list [user {:keys [room games gameid password-game editing]}]
   (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
-        filtered-games (r/track #(filter-blocked-games @user @roomgames))]
+        filtered-games (r/track #(filter-blocked-games @user @roomgames (:visible-formats @app-state)))]
     [:div.game-list
      (if (empty? @filtered-games)
        [:h4 (tr [:lobby.no-games "No games"])]
@@ -361,7 +370,28 @@
            ^{:key (:gameid game)}
            [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]))
 
-(defn games-list-panel [s games gameid password-gameid user]
+(defn format-visible? [slug] (contains? (:visible-formats @app-state) slug))
+
+(defn- on-change-format-visibility
+  "Handle change event for format-toggle input"
+  [slug evt]
+  (do
+    (.preventDefault evt)
+    (if (format-visible? slug)
+      (swap! app-state update-in [:visible-formats] difference #{slug})
+      (swap! app-state update-in [:visible-formats] union #{slug}))
+    (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state))))))
+
+(defn format-toggle [slug]
+  (r/with-let [id (str "filter-" slug)]
+    [:div
+     [:input.visible-formats {:id id
+                              :type "checkbox"
+                              :on-change (partial on-change-format-visibility slug)
+                              :checked (format-visible? slug)}]
+     [:label {:for id} (-> slug slug->format tr-format)]]))
+
+(defn games-list-panel [s games gameid password-gameid user visible-formats]
   [:div.games
    (when-let [params (:replay-id @app-state)]
      (swap! app-state dissoc :replay-id)
@@ -385,9 +415,17 @@
          nil)))
    [:div.button-bar
     [:div.rooms
-     [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
+     [:div#filter.dropdown
+      [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
+       "Filter"
+       [:b.caret]]
+       [:div.dropdown-menu.blue-shade
+        (doall (for [[k] slug->format]
+                 ^{:key k}
+                 [format-toggle k (contains? visible-formats k)]))]]
+     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
      [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
-     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]]
+     [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]]
     [:div.lobby-buttons
      [cond-button (tr [:lobby.new-game "New game"])
       (and (not (or @gameid
@@ -410,7 +448,18 @@
                 (filter #(= (-> % :user :_id) (:_id @user)))
                 empty?))
       #(do (replay-game s)
-           (resume-sound))]]]
+           (resume-sound))]
+     [cond-button (tr [:lobby.filter-games "Filter games"])
+      (and (not (or @gameid
+                    (:editing @s)
+                    (= "tournament" (:room @s))))
+           (->> @games
+                (mapcat :players)
+                (filter #(= (-> % :user :_id) (:_id @user)))
+                empty?))
+      #(do (replay-game s)
+           (resume-sound))]
+     ]]
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
@@ -657,7 +706,8 @@
                sets (r/cursor app-state [:sets])
                user (r/cursor app-state [:user])
                cards-loaded (r/cursor app-state [:cards-loaded])
-               active (r/cursor app-state [:active-page])]
+               active (r/cursor app-state [:active-page])
+               visible-formats (r/cursor app-state [:visible-formats])]
     (when (and (= "/play" (first @active)) @cards-loaded)
       (authenticated (fn [_] nil))
       (when (and (not (or @gameid (:editing @s)))
@@ -666,5 +716,5 @@
       [:div.container
         [:div.lobby-bg]
         [:div.lobby.panel.blue-shade
-          [games-list-panel s games gameid password-gameid user]
+          [games-list-panel s games gameid password-gameid user visible-formats]
           [right-panel decks s games gameid password-gameid sets user]]])))

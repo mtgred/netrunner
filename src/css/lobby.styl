@@ -86,18 +86,19 @@
         padding: 0 15px 15px
 
         .rooms
-            overflow-y: auto
+            overflow-y: visible
             margin-bottom: 10px
+            display: flex
+            line-height: 1.5rem
 
-        .roomtab
-            float: right
+        .rooms #filter
+            flex: auto;
 
         .rooms .roomtab
-            display: block
             color: white-solid
             margin: 0 10px
-            line-height: 1.5rem
             transition(all 0.2s ease-in-out)
+            flex: 0 0 fit-content;
 
             &:hover
                 color: gold-base

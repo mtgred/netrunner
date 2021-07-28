@@ -8,6 +8,21 @@
   (let [rtn (js->clj (.getItem js/localStorage k))]
     (if (nil? rtn) default-value rtn)))
 
+(defn- load-visible-formats
+  "Loading visible formats from localStorage. Accounting for the fact that js->clj doesn't handle sets"
+  []
+  (let [default-visible-formats #{"standard"
+                                  "system-gateway"
+                                  "startup"
+                                  "eternal"
+                                  "snapshot"
+                                  "snapshot-plus"
+                                  "classic"
+                                  "casual"}
+        serialized (get-local-value "visible-formats" "")]
+    (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))
+
+
 (def app-state
   (r/atom {:active-page "/"
            :user (js->clj js/user :keywordize-keys true)
@@ -41,6 +56,7 @@
            :sets [] :mwl [] :cycles []
            :decks [] :decks-loaded false
            :stats (:stats (js->clj js/user :keywordize-keys true))
+           :visible-formats (load-visible-formats)
            :games [] :gameid nil :messages []
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}

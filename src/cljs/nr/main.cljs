@@ -30,7 +30,7 @@
                gameid (r/cursor app-state [:gameid])]
     [:div
      [:div.float-right
-      (let [c (count (filter-blocked-games @user @games))]
+      (let [c (count (filter-blocked-games @user @games (:visible-formats @app-state)))]
         (tr [:nav/game-count] c))]
      (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (let [user-id (-> @user :_id)
