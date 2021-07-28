@@ -4,7 +4,10 @@
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer :all]
+    [game.core.cost-fns :refer [card-ability-cost]]
+    [game.core.engine :refer [can-trigger?]]
     [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
+    [game.core.payment :refer [can-pay?]]
     [game.core.play-instants :refer [can-play-instant?]]
     [game.utils :refer [dissoc-in prune-null-fields]]))
 
@@ -40,6 +43,30 @@
     (assoc card :playable true)
     card))
 
+(defn ability-playable? [state side card ability-idx ability]
+  (let [cost (card-ability-cost state side ability card)
+        eid {:source card
+             :source-type :ability
+             :source-info {:ability-idx ability-idx}}]
+    (if (and (can-pay? state side eid card nil cost)
+             (can-trigger? state side eid ability card nil))
+      (assoc ability :playable true)
+      ability)))
+
+(defn abilities-playable? [state side card ability-kw]
+  (->> (get card ability-kw)
+       (map-indexed (partial ability-playable? state side card))
+       (into [])))
+
+(defn card-abilities-playable? [card state side]
+  (if (or (active? card)
+          (is-type? card "Basic Action"))
+    (-> card
+        (assoc :abilities (abilities-playable? state side card :abilities))
+        (assoc :corp-abilities (abilities-playable? state side card :corp-abilities))
+        (assoc :runner-abilities (abilities-playable? state side card :runner-abilities)))
+    card))
+
 (defn card-summary [card state side]
   (cond+
     [(not (is-public? card side))
@@ -49,6 +76,7 @@
     [:else
      (-> card
          (playable? state side)
+         (card-abilities-playable? state side)
          (prune-null-fields))]))
 
 (defn card-summary-vec [cards state side]
@@ -111,6 +139,7 @@
   [player state side same-side?]
   (-> (select-keys player (player-keys))
       (update :identity prune-null-fields)
+      (update :basic-action-card card-abilities-playable? state side)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
       (update :rfg card-summary-vec state side)
