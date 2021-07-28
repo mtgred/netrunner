@@ -88,7 +88,7 @@
                                 (not no-additional-cost)
                                 (not (get-in @state [side :register :double-ignore-additional])))
                        [:click 1])
-                     (when-not (and no-additional-cost ignore-cost)
+                     (when-not (or no-additional-cost ignore-cost)
                        [additional-costs])])]
         costs)))
 
