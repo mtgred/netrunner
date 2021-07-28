@@ -1,9 +1,7 @@
 (ns game.core-test
-  (:require [clojure.string :as string]
-            [clojure.edn :as edn]
+  (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.test :refer :all]
-            [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
@@ -61,6 +59,14 @@
     (when (zero? (get-in @state [side :click]))
       (core/process-action "end-turn" state side nil)
       (core/process-action "start-turn" state other nil))))
+
+(defmacro start-turn
+  [state side]
+  `(do (is (and (empty? (get-in @~state [:corp :prompt]))
+                (empty? (get-in @~state [:runner :prompt]))) "Players have prompts open")
+       (when (and (empty? (get-in @~state [:corp :prompt]))
+                  (empty? (get-in @~state [:runner :prompt])))
+         (core/process-action "start-turn" ~state ~side nil))))
 
 
 ;; Deck construction helpers
@@ -407,10 +413,10 @@
   [state]
   `(error-wrapper (run-jack-out-impl ~state)))
 
-(defn run-empty-server-impl
+(defmacro run-empty-server-impl
   [state server]
-  (when (run-on state server)
-    (run-continue state)))
+  `(when (run-on ~state ~server)
+     (run-continue ~state)))
 
 (defmacro run-empty-server
   "Make a successful run on specified server, assumes no ice in place."
@@ -432,7 +438,7 @@
   `(error-wrapper (fire-subs-impl ~state ~card)))
 
 (defn play-run-event-impl
-  [state card server & show-prompt]
+  [state card server]
   (when (play-from-hand state :runner card)
     (is' (:run @state) "There is a run happening")
     (is' (= [server] (get-in @state [:run :server])) "Correct server is run")
@@ -445,8 +451,8 @@
 (defmacro play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
   Advances the run timings to the point where replace-access occurs."
-  [state card server & show-prompt]
-  `(error-wrapper (play-run-event-impl ~state ~card ~server ~@show-prompt)))
+  [state card server]
+  `(error-wrapper (play-run-event-impl ~state ~card ~server)))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))
