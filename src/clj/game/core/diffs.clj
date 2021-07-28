@@ -38,7 +38,7 @@
                   (operation? card))
               (can-play-instant?
                 state side {:source :action :source-type :play}
-                card {:base-cost [:click 1]})])
+                card {:base-cost [:click 1] :silent true})])
            true)
     (assoc card :playable true)
     card))

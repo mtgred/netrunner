@@ -271,12 +271,13 @@
 
 (defn can-run?
   "Checks if the runner is allowed to run"
-  [state side]
+  ([state side] (can-run? state side false))
+  ([state side silent]
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
-        false))))
+      (do (when-not silent (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
+        false))))))
 
 (defn can-access?
   "Checks if the runner can access the specified card"
