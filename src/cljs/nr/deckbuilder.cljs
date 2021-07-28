@@ -774,7 +774,10 @@
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)} (tr [:deck-builder.clear-stats "Clear Stats"])])
-   (let [disabled (or (:editing-game @app-state false) (:gameid @app-state false))]
+   (let [disabled (or (:editing-game @app-state false)
+                      (:gameid @app-state false)
+                      (and (not= (:format deck) "casual")
+                           (not (validator/legal-deck? deck))))]
      [:button.float-right {:on-click #(do
                                         (swap! app-state assoc :create-game-deck (:deck @s))
                                         (.setToken history "/play"))

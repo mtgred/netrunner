@@ -4,10 +4,10 @@
             [web.ws :as ws]
             [web.stats :as stats]
             [web.diffs :refer [game-internal-view]]
-            [game.utils :refer [remove-once]]
+            [game.utils :refer [remove-once to-keyword]]
             [game.core :as core]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status]]
+            [jinteki.validator :refer [calculate-deck-status legal-deck?]]
             [jinteki.utils :refer [superuser?]]
             [crypto.password.bcrypt :as bcrypt]
             [monger.collection :as mc]
@@ -412,7 +412,9 @@
                    (update-in d [:identity] #(@all-cards (:title %)))
                    (assoc d :status (calculate-deck-status d)))]
     (when (and (:identity deck)
-               (player? client-id game))
+               (player? client-id game)
+               (or (= (:format game) "casual")
+                   (legal-deck? deck (:format game))))
       (when (= "tournament" (:room game))
         (lobby-say gameid {:user "__system__"
                            :text (str username " has selected deck with tournament hash " (:hash deck))}))
