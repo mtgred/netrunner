@@ -514,7 +514,7 @@
                 :async true
                 :req (req (pos? (get-counters card :power)))
                 :cost [:trash]
-                :msg (msg "trash " (quantify "card" (min (get-counters card :power) (count (:hand corp))))
+                :msg (msg "trash " (quantify (min (get-counters card :power) (count (:hand corp))) "card")
                           " from HQ")
                 :effect (effect (trash-cards eid (take (min (get-counters card :power) (count (:hand corp)))
                                                        (shuffle (:hand corp)))))}]})

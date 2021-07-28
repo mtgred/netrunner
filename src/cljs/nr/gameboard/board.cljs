@@ -1173,12 +1173,12 @@
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
-  [my-ident my-user my-hand promp-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
+  [my-ident my-user my-hand prompt-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
   (let [visible-quote (r/atom true)
         mulliganed (r/atom false)
         start-shown (r/cursor app-state [:start-shown])
         card-back (get-in @app-state [:options :card-back])]
-    (fn [my-ident my-user my-hand promp-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
+    (fn [my-ident my-user my-hand prompt-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
       (when (and (not @start-shown)
                  (:username @op-user)
                  (pos? (count @my-hand)))
@@ -1543,7 +1543,7 @@
      ;; choice of specified counters on card
      (:counter choices)
      (let [counter-type (keyword (:counter choices))
-           num-counters (get-in prompt [:card :counter counter-type] 0)]
+           num-counters (get-in prompt-state [:card :counter counter-type] 0)]
        [:div
         [:div.credit-select
          [:select#credit
