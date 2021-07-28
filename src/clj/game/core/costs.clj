@@ -558,7 +558,7 @@
                                 {:msg (str "trashes " (quantify (count async-result) "card")
                                            (when (and (= :runner side)
                                                       (pos? (count async-result)))
-                                             " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                             (str " (" (string/join ", " (map #(card-str state %) targets)) ")"))
                                            " from " hand)
                                  :type :trash-from-hand
                                  :value (count async-result)
