@@ -58,7 +58,7 @@
       (card-ability state :runner scheh 0)
       (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
-      (is (= 3 (:click (get-runner))) "Not charged a click"))))
+      (is (= 4 (:click (get-runner))) "Not charged a click"))))
 
 (deftest deactivate-program
   ;; deactivate - Program; ensure MU are restored

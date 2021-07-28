@@ -2098,6 +2098,7 @@
           (changes-val-macro 2 (:credit (get-runner))
                              "Got 1c from Keiko for using Trickster Taka"
                              (card-ability state :runner tt 0))
+          (run-jack-out state)
           (changes-val-macro -1 (:credit (get-runner))
                              "Did not get 1c back from installing Mystic Maemi"
                              (play-from-hand state :runner "Mystic Maemi")))))))

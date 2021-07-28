@@ -1,4 +1,4 @@
-(ns gate.cards.resources-test
+(ns game.cards.resources-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]

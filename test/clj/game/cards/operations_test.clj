@@ -131,7 +131,7 @@
       (play-from-hand state :corp "Accelerated Diagnostics")
       (click-prompt state :corp "OK")
       (click-prompt state :corp "24/7 News Cycle")
-      (is (= "Select an agenda in your score area to trigger its \"when scored\" ability" (:msg (prompt-map :corp))))
+      (is (= "Choose an agenda in your score area to trigger its \"when scored\" ability" (:msg (prompt-map :corp))))
       (click-card state :corp "Breaking News")
       (click-prompt state :corp "BOOM!"))))
 
