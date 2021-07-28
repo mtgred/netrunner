@@ -2543,16 +2543,12 @@
                               :effect (effect (gain-credits :corp eid 2))}]}))
 
 (defcard "Unity"
-  {:abilities [(break-sub 1 1 "Code Gate")
-               {:label "1 [Credits]: Add 1 strength for each installed icebreaker"
-                :async true
-                :effect (effect (continue-ability
-                                  (strength-pump
-                                    1
-                                    (count (filter #(and (program? %)
-                                                         (has-subtype? % "Icebreaker"))
-                                                   (all-active-installed state :runner))))
-                                  card nil))}]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
+                                (strength-pump 1 0 :end-of-encounter
+                                               {:label "Add 1 strength for each installed icebreaker"
+                                                :pump-bonus (req (count (filter #(and (program? %)
+                                                                                      (has-subtype? % "Icebreaker"))
+                                                                                (all-active-installed state :runner))))})]}))
 
 (defcard "Upya"
   {:implementation "Power counters added automatically"

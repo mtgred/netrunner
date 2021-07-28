@@ -296,6 +296,14 @@
         (:strength card)
         0)))
 
+(defn get-pump-strength
+  ([state side ability card] (get-pump-strength state side ability card nil))
+  ([state side ability card targets]
+   ((fnil + 0 0)
+    (:pump ability)
+    (when-let [pump-fn (:pump-bonus ability)]
+      (pump-fn state side (make-eid state) card targets)))))
+
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
   [state side ice]
@@ -477,7 +485,7 @@
                            total-cost (when (seq broken-subs)
                                         (break-sub-ability-cost state side
                                                                 (assoc args
-                                                                       :cost cost
+                                                                       :break-cost cost
                                                                        :broken-subs broken-subs)
                                                                 card ice))
                            message (when (seq broken-subs)
@@ -546,6 +554,7 @@
         :breaks subtype
         :break-cost cost
         :cost-req (:cost-req args)
+        :break-cost-bonus (:break-cost-bonus args)
         :additional-ability (:additional-ability args)
         :label (str (or (:label args)
                         (str "break "
@@ -559,7 +568,7 @@
                                           card nil
                                           (break-sub-ability-cost
                                             state side
-                                            (assoc args :cost cost :broken-subs (take n (:subroutines current-ice)))
+                                            (assoc args :break-cost cost :broken-subs (take n (:subroutines current-ice)))
                                             card current-ice))
                             (break-subroutines current-ice card cost n (assoc args :ability-idx (:ability-idx (:source-info eid)))))
                           card nil))}))))
@@ -582,13 +591,23 @@
       :req (req (if-let [str-req (:req args)]
                   (str-req state side eid card targets)
                   true))
-      :msg (msg "increase its strength from " (get-strength card)
-                " to " (+ strength (get-strength card))
-                duration-string)
       :cost cost
       :cost-req (:cost-req args)
       :pump strength
-      :effect (effect (pump card strength duration))})))
+      :pump-bonus (:pump-bonus args)
+      :msg (msg "increase its strength from " (get-strength card)
+                " to " (+ (get-pump-strength
+                            state side
+                            (assoc args :pump strength)
+                            card)
+                          (get-strength card))
+                duration-string)
+      :effect (effect (pump card
+                            (get-pump-strength
+                              state side
+                              (assoc args :pump strength)
+                              card)
+                            duration))})))
 
 
 (def breaker-auto-pump
@@ -607,13 +626,16 @@
                          (when (:pump ability)
                            ((:req ability) state side eid card nil)))
               pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              pump-strength (get-pump-strength state side pump-ability card)
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
                                        (get-strength card))
                               (max 0 (- (get-strength current-ice)
                                         (get-strength card))))
-              times-pump (when strength-diff
-                           (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
+              times-pump (if (and strength-diff
+                                  (pos? pump-strength))
+                           (int (Math/ceil (/ strength-diff pump-strength)))
+                           0)
               total-pump-cost (when (and pump-ability
                                          times-pump)
                                 (repeat times-pump (:cost pump-ability)))
@@ -622,6 +644,7 @@
                           (when (:break-req ability)
                             ((:break-req ability) state side eid card nil)))
               break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+              break-cost (break-sub-ability-cost state side break-ability card current-ice)
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
@@ -634,16 +657,17 @@
                             (if (pos? subs-broken-at-once)
                               (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                               1))
-              total-break-cost (when (and break-ability
+              total-break-cost (when (and break-cost
                                           times-break)
-                                 (repeat times-break (:break-cost break-ability)))
+                                 (repeat times-break break-cost))
               total-cost (merge-costs (conj total-pump-cost total-break-cost))]
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
                                    (= :encounter-ice (:phase run))
-                                   break-ability)
+                                   (or break-ability
+                                       pump-ability))
                             (vec (concat abs
                                          (when (and break-ability
                                                     (or pump-ability (zero? strength-diff))
