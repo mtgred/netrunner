@@ -619,7 +619,8 @@
   This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
   http://nisei.net/files/Comprehensive_Rules_1.1.pdf"
   ([state side event targets] (gather-events state side event targets nil))
-  ([state side event targets card-abilities]
+  ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets nil))
+  ([state side eid event targets card-abilities]
    (->> (:events @state)
         (filter #(= event (:event %)))
         (concat card-abilities)
@@ -627,7 +628,7 @@
         (filter (fn [ability]
                   (let [card (card-for-ability state ability)]
                     (and (not (apply trigger-suppress state side event card targets))
-                         (can-trigger? state side (make-eid state) (:ability ability) card targets)))))
+                         (can-trigger? state side eid (:ability ability) card targets)))))
         (sort-by (complement #(is-active-player state %)))
         doall)))
 
@@ -654,7 +655,7 @@
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
-      (wait-for (resolve-ability state side (make-eid state eid) (dissoc-req (:ability to-resolve)) card targets)
+      (wait-for (resolve-ability state side (make-eid state (assoc eid :source card :source-type :ability)) (dissoc-req (:ability to-resolve)) card targets)
                 (when (:unregister-once-resolved to-resolve)
                   (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
@@ -668,7 +669,7 @@
   (if (nil? event)
     (effect-completed state side eid)
     (do (log-event state event targets)
-        (let [handlers (gather-events state side event targets)]
+        (let [handlers (gather-events state side eid event targets nil)]
           (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player
@@ -712,6 +713,7 @@
                     (if-let [the-card (card-for-ability state to-resolve)]
                       {:async true
                        :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
+                                                               (make-eid state (assoc eid :source the-card :source-type :ability))
                                                                ability-to-resolve
                                                                the-card event-targets)
                                               (when (:unregister-once-resolved to-resolve)
@@ -732,6 +734,7 @@
                                       the-card (card-for-ability state to-resolve)]
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
+                                                     (make-eid state (assoc eid :source the-card :source-type :ability))
                                                      ability-to-resolve the-card event-targets)
                                     (when (:unregister-once-resolved to-resolve)
                                       (unregister-event-by-uuid state side (:uuid to-resolve)))
@@ -802,7 +805,7 @@
                                       (not (sequential? card-abilities)))
                                [card-abilities]
                                card-abilities)
-              handlers (gather-events state side event targets card-abilities)
+              handlers (gather-events state side eid event targets card-abilities)
               get-handlers (fn [player-side]
                              (filterv (partial is-player player-side) handlers))
               active-player-events (get-handlers active-player)
@@ -907,7 +910,7 @@
               ability-card (card-for-ability state to-resolve)]
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
-                                       (make-eid state eid)
+                                       (make-eid state (assoc eid :source ability-card :source-type :ability))
                                        (dissoc-req ability)
                                        ability-card
                                        context)
@@ -928,7 +931,7 @@
                                 ability-card (card-for-ability state to-resolve)]
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
-                                               (make-eid state eid)
+                                               (make-eid state (assoc eid :source ability-card :source-type :ability))
                                                (dissoc-req ability)
                                                ability-card
                                                context)

@@ -1363,6 +1363,109 @@
     (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
+(deftest gamenet-where-dreams-are-real
+  (testing "Gain credits from gold farmer"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Gold Farmer"]}
+                 :runner {:hand ["Corroder"] :credits 10}})
+      (play-from-hand state :corp "Gold Farmer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (changes-val-macro 2 (:credit (get-corp))
+        "Corp gains credits when gold farmer is broken"
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)}))))
+  (testing "Gain credits from F2P"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["F2P"]}})
+      (play-from-hand state :corp "F2P" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (changes-val-macro 1 (:credit (get-corp))
+        "Corp gains credits when F2P is used"
+        (card-side-ability state :runner (get-ice state :hq 0) 0)
+        (click-prompt state :runner "Add an installed Runner card to the grip"))))
+  (testing "Gain credits from Bellona steal"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Bellona"]}})
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro 1 (:credit (get-corp))
+        "Corp gains credits when Bellona is stolen"
+        (click-prompt state :runner "Pay to steal"))))
+  (testing "Gain credits from NAPD cordon steal"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message" "NAPD Cordon"]}})
+      (play-from-hand state :corp "NAPD Cordon")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro 1 (:credit (get-corp))
+        "Corp gains credits when agenda is stolen with NAPD Cordon"
+        (click-prompt state :runner "Pay to steal"))))
+  (testing "Gain credits from traces"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Uroboros"]}})
+      (play-from-hand state :corp "Uroboros" "HQ")
+      (let [uroboros (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp uroboros)
+        (run-continue state)
+        (changes-val-macro 1 (:credit (get-corp))
+          "Corp gains credits when a trace is paid into"
+          (card-subroutine state :corp (refresh uroboros) 0)
+          (click-prompt state :corp "0")
+          (click-prompt state :runner "1")))))
+  (testing "Gain credits from psi games"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Caprice Nisei"]}})
+      (play-from-hand state :corp "Caprice Nisei" "New remote")
+      (let [caprice (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (rez state :corp caprice)
+        (run-on state "Server 1")
+        (changes-val-macro 1 (:credit (get-corp))
+          "Corp gains credits when a psi game is paid into"
+          (click-prompt state :corp "0 [Credits]")
+          (click-prompt state :runner "1 [Credits]")))))
+  (testing "No credits from trashing"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["PAD Campaign"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-continue state)
+      (changes-val-macro 0 (:credit (get-corp))
+        "Corp gains no credits when a trash cost is paid"
+        (click-prompt state :runner "Pay 4 [Credits] to trash"))))
+  (testing "No credits from runner cards"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"}
+                 :runner {:hand ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (changes-val-macro 0 (:credit (get-corp))
+        "Corp gains no credits when an icebreaker is used"
+        (card-ability state :runner (get-program state 0) 1))))
+  (testing "No credits from the source"
+    (do-game
+      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message"]}
+                 :runner {:hand ["The Source"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Source")
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro 0 (:credit (get-corp))
+        "Corp gains no credits when the source's additional cost is paid"
+        (click-prompt state :runner "Pay to steal")))))
+
 (deftest grndl-power-unleashed
   ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
   (testing "Basic test"

@@ -49,7 +49,7 @@
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
                    :yes-ability
                    {:async true
-                    :effect (req (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
+                    :effect (req (if (not (can-pay? state :corp eid card nil :credit 1))
                                    (do
                                      (toast state :corp "Cannot afford to pay 1 [Credit] to block card exposure" "info")
                                      (expose state :runner eid (:card context)))
@@ -66,7 +66,7 @@
                                        {:async true
                                         :effect
                                         (req (wait-for
-                                               (pay state :corp card [:credit 1])
+                                               (pay state :corp (make-eid state eid) card [:credit 1])
                                                (system-msg state :corp
                                                            (str (:msg async-result)
                                                                 " to prevent "
@@ -505,10 +505,18 @@
              :msg "make the Runner spend 1 [Credits] to access"}]})
 
 (defcard "GameNET: Where Dreams are Real"
-  {:implementation "Credit gain not implemented. You can use shortcut ability."
-   :abilities [{:msg "gain 1 [Credits] (shortcut)"
-                :async true
-                :effect (effect (gain-credits :corp eid 1))}]})
+  (let [gamenet-ability {:req (req (and (:run @state)
+                                        (= (:side (:source eid)) "Corp")
+                                        (or (and (not= (:source-type eid) :runner-trash-corp-cards)
+                                                 (not= (:source-type eid) :runner-steal))
+                                            (some (fn [[cost source]] (and (some #(or (= (cost-name %) :credit) (= (cost-name %) :x-credits)) (merge-costs cost))
+                                                                           (= (:side (:source source)) "Corp")))
+                                                  (:additional-costs eid)))))
+                         :async true
+                         :msg "gain 1 [Credits]"
+                         :effect (effect (gain-credits :corp eid 1))}]
+    {:events [(assoc gamenet-ability :event :runner-credit-loss)
+              (assoc gamenet-ability :event :runner-spent-credits)]}))
 
 (defcard "GRNDL: Power Unleashed"
   {:events [{:event :pre-start-game
@@ -665,7 +673,7 @@
                :req (req (:flipped card))
                :async true
                :effect (req (wait-for (draw state :runner 1 nil)
-                                      (wait-for (lose-credits state :runner 1)
+                                      (wait-for (lose-credits state :runner (make-eid state eid) 1)
                                                 (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
                                                 (effect-completed state side eid))))}]
      :abilities [{:label "flip ID"
@@ -1076,7 +1084,7 @@
                              :msg (msg "lose all credits and gain " cost
                                        " [Credits] from the rez of " (:title ice))
                              :async true
-                             :effect (req (wait-for (lose-credits state :runner :all)
+                             :effect (req (wait-for (lose-credits state :runner (make-eid state eid) :all)
                                                     (gain-credits state :runner eid cost)))}])))}]})
 
 (defcard "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
