@@ -244,7 +244,7 @@
        [:div
         (doall
           (for [deck (->> @decks
-                          (filter #(and (same-side? %) (or (legal-deck? %) (= format "casual"))))
+                          (filter #(and (same-side? %) (or (legal-deck? % format) (= format "casual"))))
                           (sort-by (juxt legal-deck? :date) >))]
             ^{:key (:_id deck)}
             [:div.deckline {:on-click #(do (ws/ws-send! [:lobby/deck (:_id deck)])
