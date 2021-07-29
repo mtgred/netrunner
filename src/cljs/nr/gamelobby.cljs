@@ -445,18 +445,8 @@
                 (filter #(= (-> % :user :_id) (:_id @user)))
                 empty?))
       #(do (replay-game s)
-           (resume-sound))]
-     [cond-button (tr [:lobby.filter-games "Filter games"])
-      (and (not (or @gameid
-                    (:editing @s)
-                    (= "tournament" (:room @s))))
-           (->> @games
-                (mapcat :players)
-                (filter #(= (-> % :user :_id) (:_id @user)))
-                empty?))
-      #(do (replay-game s)
-           (resume-sound))]
-     ]]
+           (resume-sound))]]]
+
    (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
      [game-list user {:password-game password-game
                       :editing (:editing @s)
