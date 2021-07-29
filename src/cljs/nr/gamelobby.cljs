@@ -358,14 +358,20 @@
 
 (defn game-list [user {:keys [room games gameid password-game editing]}]
   (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
-        filtered-games (r/track #(filter-blocked-games @user @roomgames (:visible-formats @app-state)))]
-    [:div.game-list
-     (if (empty? @filtered-games)
-       [:h4 (tr [:lobby.no-games "No games"])]
-       (doall
-         (for [game @filtered-games]
-           ^{:key (:gameid game)}
-           [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]))
+        filtered-games (r/track #(filter-blocked-games @user @roomgames (:visible-formats @app-state)))
+        is_filtered (not= (count slug->format) (count (:visible-formats @app-state)))
+        n (count @filtered-games)
+        game-count-str (tr [:lobby.game-count] n)]
+    [:<>
+     [:div.game-count
+      [:h4 (str game-count-str (when is_filtered (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
+     [:div.game-list
+      (if (empty? @filtered-games)
+        [:h4 (tr [:lobby.no-games "No games"])]
+        (doall
+          (for [game @filtered-games]
+            ^{:key (:gameid game)}
+            [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]]))
 
 (defn format-visible? [slug] (contains? (:visible-formats @app-state) slug))
 
