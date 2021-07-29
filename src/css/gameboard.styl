@@ -46,7 +46,7 @@
         top: 100%
         transform: translate(0, -100%)
 
-    .card-frame, .deck, .identity, .discard
+    .card-frame, .deck-container, .identity, .discard-container
         pointer-events: auto
 
     .card-frame
@@ -241,7 +241,8 @@
 
         .card
             float: left
-            margin: 2px
+            margin-right: 4px
+            margin-bottom: 2px
 
         a
         label
@@ -305,10 +306,7 @@
         margin-left: 16px
         margin-right: 16px
 
-    .discard
-        position: relative
-
-    .hand-container
+    .hand-container, .deck-container, .discard-container
         position: relative
 
     .hand-controls
@@ -683,7 +681,7 @@
                 padding: 5px 0
                 display-flex()
 
-                .deck, .discard, .identity
+                .deck-container, .discard-container, .identity
                     margin-left: 16px
                     margin-right: 16px
 

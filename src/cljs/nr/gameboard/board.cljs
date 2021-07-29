@@ -591,14 +591,14 @@
     facedown))
 
 (defn card-view
-  [card flipped]
+  [card flipped disable-click]
   (let [c-state (r/atom {})]
     (fn [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
                  subtype subtypes advanceable rezzed strength current-strength title selected hosted
                  side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
                  corp-abilities]
           :as card}
-         flipped]
+         flipped disable-click]
       [:div.card-frame
        [:div.blue-shade.card {:class (str (when selected "selected")
                                           (when new " new")
@@ -614,7 +614,8 @@
                                                          (= (:side @game-state) (keyword (lower-case side))))
                                                  (put! zoom-channel card))
                               :on-mouse-leave #(put! zoom-channel false)
-                              :on-click #(handle-card-click card c-state)}
+                              :on-click #(when (not disable-click)
+                                           (handle-card-click card c-state))}
         (if (or (not code) flipped facedown)
           (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                        (spectator-view-hidden?)
@@ -804,12 +805,12 @@
      (fn [render-side player-side identity deck]
        ; deck-count is only sent to live games and does not exist in the replay
        (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
-         [:div.blue-shade.deck
-          (drop-area title {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
-          (when (pos? deck-count-number)
-            [facedown-card (:side @identity) ["bg"] nil])
-          [:div.header {:class "darkbg server-label"}
-           (str title " (" deck-count-number ")")]
+         [:div.deck-container (drop-area title {})
+          [:div.blue-shade.deck {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)}
+           (when (pos? deck-count-number)
+             [facedown-card (:side @identity) ["bg"] nil])
+           [:div.header {:class "darkbg server-label"}
+            (str title " (" deck-count-number ")")]]
           (when (= render-side player-side)
             [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
              [:div {:on-click #(do (send-command "shuffle")
@@ -830,12 +831,12 @@
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
     (fn [player-side discard]
-      [:div.blue-shade.discard
-       (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
-       (when-not (empty? @discard)
-         [card-view (last @discard)])
-       [:div.header {:class "darkbg server-label"}
-        (str (tr [:game.heap "Heap"]) " (" (count @discard) ")")]
+      [:div.discard-container (drop-area "Heap" {})
+       [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
+        (when-not (empty? @discard)
+          [card-view (last @discard) nil true])
+        [:div.header {:class "darkbg server-label"}
+         (str (tr [:game.heap "Heap"]) " (" (count @discard) ")")]]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
@@ -849,22 +850,22 @@
   (let [s (r/atom {})]
     (fn [player-side discard]
       (let [faceup? #(or (:seen %) (:rezzed %))
-            draw-card #(if (faceup? %)
-                         [card-view %]
+            draw-card #(if (faceup? %1)
+                         [card-view %1 nil %2]
                          (if (or (= player-side :corp)
                                  (spectator-view-hidden?))
-                           [:div.unseen [card-view %]]
+                           [:div.unseen [card-view %1 nil %2]]
                            [facedown-card "corp"]))]
-        [:div.blue-shade.discard
-         (drop-area "Archives" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
-         (when-not (empty? @discard)
-           [:<> {:key "discard"} (draw-card (last @discard))])
-         [:div.header {:class "darkbg server-label"}
-          (let [total (count @discard)
-                face-up (count (filter faceup? @discard))]
-            (str (tr [:game.archives "Archives"])
-                 ;; use non-breaking space to keep counts on same line
-                 " (" (tr [:game.up-down-count] total face-up) ")"))]
+        [:div.discard-container (drop-area "Archives" {})
+         [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
+          (when-not (empty? @discard)
+            [:<> {:key "discard"} (draw-card (last @discard) true)])
+          [:div.header {:class "darkbg server-label"}
+           (let [total (count @discard)
+                 face-up (count (filter faceup? @discard))]
+             (str (tr [:game.archives "Archives"])
+                  ;; use non-breaking space to keep counts on same line
+                  " (" (tr [:game.up-down-count] total face-up) ")"))]]
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                        :class (if (= (:side @game-state) :runner) "opponent" "me")}
           [:div
@@ -875,7 +876,7 @@
           (doall
             (for [[idx c] (map-indexed vector @discard)]
               ^{:key idx}
-              [:div (draw-card c)]))]]))))
+              [:div (draw-card c false)]))]]))))
 
 (defn rfg-view [cards name popup]
   (let [dom (atom {})]
@@ -1635,7 +1636,7 @@
          (when (pos? (count @autocomp))
            (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
          (when @show-discard?
-           (-> ".me .discard .popup" js/$ .fadeIn))
+           (-> ".me .discard-container .popup" js/$ .fadeIn))
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))
