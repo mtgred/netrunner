@@ -49,11 +49,22 @@
                                                               runner-state))))
    (ws/broadcast-to! (map #(:ws-id %) spectators) event (json/generate-string spect-state))))
 
+(defn finalize-state
+  [state]
+  (doseq [side [:corp :runner]]
+    (let [prompt-show-discard (get-in @state [side :prompt-state :show-discard])
+          side-show-discard (get-in @state [side :show-discard])
+          set-show-discard #(swap! state assoc-in [side :show-discard] %)]
+      (cond prompt-show-discard (set-show-discard :show)
+            (= :show side-show-discard) (set-show-discard :close)
+            (= :close side-show-discard) (set-show-discard nil)))))
+
 (defn swap-and-send-diffs!
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
   [{:keys [gameid state] :as game}]
   (when (and state @state)
+    (finalize-state state)
     (let [old-state (get @old-states gameid)
           diffs (public-diffs old-state state)]
       (swap! state update :history conj (:hist-diff diffs))

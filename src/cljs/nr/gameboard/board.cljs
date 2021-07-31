@@ -1624,9 +1624,9 @@
              (playable? (get-in @me [:basic-action-card :abilities 0])))
         #(send-command "credit")]])))
 
-(defn button-pane [{:keys [side prompt-state]}]
+(defn button-pane [{:keys [me side prompt-state]}]
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
-        show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
+        show-discard? (r/track (fn [] (get-in @me [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))]
     (r/create-class
       {:display-name "button-pane"
@@ -1635,8 +1635,9 @@
        (fn []
          (when (pos? (count @autocomp))
            (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
-         (when @show-discard?
-           (-> ".me .discard-container .popup" js/$ .fadeIn))
+         (cond
+           (= "show" @show-discard?) (-> ".me .discard-container .popup" js/$ .fadeIn)
+           (= "close" @show-discard?) (-> ".me .discard-container .popup" js/$ .fadeOut))
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))

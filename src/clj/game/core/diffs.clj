@@ -90,7 +90,6 @@
    :choices
    :card
    :prompt-type
-   :show-discard
    ;; traces
    :player
    :base
@@ -132,6 +131,7 @@
    :quote
    :register
    :prompt-state
+   :show-discard
    :agenda-point
    :agenda-point-req])
 
@@ -146,6 +146,7 @@
       (update :scored card-summary-vec state side)
       (update :register select-keys [:spent-click])
       (prompt-summary same-side?)
+      (update :show-discard #(when same-side? %))
       (prune-null-fields)))
 
 (defn corp-keys []
