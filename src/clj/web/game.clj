@@ -9,7 +9,7 @@
     [web.lobby :refer [old-states already-in-game? spectator? handle-lobby-watch] :as lobby]
     [web.stats :as stats]
     [game.main :as main]
-    [game.core.diffs :refer [public-diffs public-states finalize-state]]
+    [game.core.diffs :refer [public-diffs public-states]]
     [game.core :as core]
     [jinteki.utils :refer [side-from-str]]))
 
@@ -54,7 +54,6 @@
   message to game clients."
   [{:keys [gameid state] :as game}]
   (when (and state @state)
-    (finalize-state state)
     (let [old-state (get @old-states gameid)
           diffs (public-diffs old-state state)]
       (swap! state update :history conj (:hist-diff diffs))
