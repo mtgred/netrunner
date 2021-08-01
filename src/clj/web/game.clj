@@ -9,7 +9,7 @@
     [web.lobby :refer [old-states already-in-game? spectator? handle-lobby-watch] :as lobby]
     [web.stats :as stats]
     [game.main :as main]
-    [game.core.diffs :refer [public-diffs public-states]]
+    [game.core.diffs :refer [public-diffs public-states finalize-state]]
     [game.core :as core]
     [jinteki.utils :refer [side-from-str]]))
 
@@ -48,16 +48,6 @@
                                                               corp-state
                                                               runner-state))))
    (ws/broadcast-to! (map #(:ws-id %) spectators) event (json/generate-string spect-state))))
-
-(defn finalize-state
-  [state]
-  (doseq [side [:corp :runner]]
-    (let [prompt-show-discard (get-in @state [side :prompt-state :show-discard])
-          side-show-discard (get-in @state [side :show-discard])
-          set-show-discard #(swap! state assoc-in [side :show-discard] %)]
-      (cond prompt-show-discard (set-show-discard :show)
-            (= :show side-show-discard) (set-show-discard :close)
-            (= :close side-show-discard) (set-show-discard nil)))))
 
 (defn swap-and-send-diffs!
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff

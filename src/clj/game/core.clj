@@ -272,7 +272,8 @@
 
   [game.core.diffs
    public-states
-   public-diffs]
+   public-diffs
+   finalize-state]
 
   [game.core.drawing
    draw

@@ -334,3 +334,13 @@
      :corp-diff (differ/diff old-corp new-corp)
      :spect-diff (differ/diff old-spect new-spect)
      :hist-diff (differ/diff old-hist new-hist)}))
+
+(defn finalize-state
+  [state]
+  (doseq [side [:corp :runner]]
+    (let [prompt-show-discard (get-in @state [side :prompt-state :show-discard])
+          side-show-discard (get-in @state [side :show-discard])
+          set-show-discard #(swap! state assoc-in [side :show-discard] %)]
+      (cond prompt-show-discard (set-show-discard :show)
+            (= :show side-show-discard) (set-show-discard :close)
+            (= :close side-show-discard) (set-show-discard nil)))))
