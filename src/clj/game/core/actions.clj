@@ -43,8 +43,8 @@
                                  :source-type :ability
                                  :source-info {:ability-idx ability-idx}
                                  :resolving-action true})]
-        (when (:action ability)
-          (swap! state assoc :resolving-action eid))
+        ; (when (:action ability)
+        ;   (swap! state assoc :resolving-action eid))
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability

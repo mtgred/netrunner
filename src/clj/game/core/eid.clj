@@ -8,6 +8,10 @@
   ([state existing-eid]
    (assoc existing-eid :eid (:eid (swap! state update :eid inc)))))
 
+(defn make-action-eid
+  [state card]
+  (assoc (make-eid state) :source card :source-type :action))
+
 (defn eid-set-defaults
   "Set default values for fields in the `eid` if they are not already set."
   [eid & args]

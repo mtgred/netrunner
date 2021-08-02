@@ -1,7 +1,7 @@
 (ns game.cards.assets-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.utils :as utils]
+            [game.core.psi :as psi]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -1757,9 +1757,9 @@
     (play-from-hand state :corp "Fumiko Yamamori" "New remote")
     (let [fumiko (get-content state :remote1 0)]
       (rez state :corp (refresh fumiko))
-      (core/psi-game state :corp (refresh fumiko)
-                     {:equal {:msg "resolve equal bets effect"}
-                      :not-equal {:msg "resolve unequal bets effect"}})
+      (psi/psi-game state :corp (refresh fumiko)
+                    {:equal {:msg "resolve equal bets effect"}
+                     :not-equal {:msg "resolve unequal bets effect"}})
       (click-prompt state :corp "2 [Credits]")
       (click-prompt state :runner "0 [Credits]")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard a card to meat damage"))))
@@ -2506,7 +2506,7 @@
       (play-from-hand state :corp "Lady Liberty" "New remote")
       (let [ll (get-content state :remote1 0)]
         (rez state :corp ll)
-        (dotimes [i 3]
+        (dotimes [_ 3]
           (take-credits state :corp)
           (take-credits state :runner))
         (card-ability state :corp (refresh ll) 0)
@@ -2681,8 +2681,7 @@
       (play-from-hand state :corp "Malia Z0L0K4" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Miss Bones")
-      (let [malia1 (get-content state :remote1 0)
-            missbones (get-resource state 0)]
+      (let [malia1 (get-content state :remote1 0)]
         (run-empty-server state :remote1)
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
@@ -3357,8 +3356,8 @@
      (core/end-turn state :runner nil)
      (is (= 5 (count (prompt-buttons :runner))) "Runner has 5 card choices")
      (is (= 6 (count (:deck (get-runner)))) "No cards have been drawn yet")
-     (is (not (empty? (:prompt (get-runner)))) "Runner prompted to be classy")
-     (is (not (empty? (:prompt (get-corp)))) "Corp waiting for Runner to be classy")
+     (is (seq (:prompt (get-runner))) "Runner prompted to be classy")
+     (is (seq (:prompt (get-corp))) "Corp waiting for Runner to be classy")
      (click-prompt state :runner "Motivation")
      (is (empty? (:prompt (get-runner))) "Runner done being classy")
      (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy")
@@ -3622,8 +3621,7 @@
                  :runner {:deck [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (play-from-hand state :corp "Psychic Field" "New remote")
-      (let [psyf1 (get-content state :remote1 0)
-            psyf2 (get-content state :remote2 0)]
+      (let [psyf1 (get-content state :remote1 0)]
         (take-credits state :corp)
         (starting-hand state :runner ["Infiltration" "Sure Gamble" "Sure Gamble"])
         (play-from-hand state :runner "Infiltration")
@@ -3675,8 +3673,7 @@
                           :credit 10}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (play-from-hand state :corp "Fumiko Yamamori" "New remote")
-      (let [field (get-content state :remote1 0)
-            fumiko (get-content state :remote2 0)]
+      (let [fumiko (get-content state :remote2 0)]
         (rez state :corp fumiko)
         (take-credits state :corp)
         (run-empty-server state :remote1)
@@ -4224,8 +4221,7 @@
     (take-credits state :runner)
     (let [remains1 (get-content state :remote1 0)
           remains2 (get-content state :remote2 0)
-          cyber (get-hardware state 0)
-          lemuria (get-hardware state 1)]
+          cyber (get-hardware state 0)]
       (rez state :corp remains1)
       (advance state remains2 1)
       (take-credits state :corp)
@@ -5120,9 +5116,8 @@
    (advance state (get-content state :remote1 0) 2)
    (take-credits state :corp)
    (run-empty-server state "Server 1")
-   (let [credits (:credit (get-corp))]
-     (click-prompt state :corp "Yes")
-     (is (= 4 (-> (get-runner) :discard count)) "Urtica Cipher should do 4 net damage"))))
+   (click-prompt state :corp "Yes")
+   (is (= 4 (-> (get-runner) :discard count)) "Urtica Cipher should do 4 net damage")))
 
 (deftest vaporframe-fabricator
   ;; Vaporframe Fabricator

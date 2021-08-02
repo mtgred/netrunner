@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.test :refer :all]
             [game.core :as core]
+            [game.core.winning :as win]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
@@ -163,7 +164,7 @@
                         :discard)))
          (when (:credits side-map)
            (swap! state assoc-in [side :credit] (:credits side-map))))
-       (core/clear-win state side))
+       (win/clear-win state side))
      ;; These are side independent so they happen ouside the loop
      (when-let [bad-pub (:bad-pub corp)]
        (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))

@@ -1,11 +1,10 @@
 (ns game.core.play-instants
   (:require
-    [game.core.board :refer [all-active]]
-    [game.core.card :refer [get-card has-subtype?]]
+    [game.core.card :refer [event? has-subtype? operation?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
-    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid make-result]]
+    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [dissoc-req checkpoint queue-event merge-costs-paid pay resolve-ability should-trigger? unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
@@ -24,7 +23,7 @@
      (complete-with-result state side eid card))))
 
 (defn- current-handler
-  [state side card]
+  [state _ card]
   (if (has-subtype? card "Current")
     (move state (to-keyword (:side card)) card :current)
     card))
@@ -97,7 +96,9 @@
   ([state side eid card {:keys [targets silent] :as args}]
    (let [on-play (or (:on-play (card-def card)) {})
          costs (play-instant-costs state side eid card args)]
-     (and ;; req is satisfied
+     (and (or (event? card)
+              (operation? card))
+       ;; req is satisfied
           (should-trigger? state side eid card targets on-play)
           ;; can pay all costs
           (can-pay? state side eid card nil costs)
@@ -134,7 +135,7 @@
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
                      (if payment-str
-                       (complete-play-instant state side (assoc eid :cost-paid (:cost-paid async-result)) moved-card payment-str ignore-cost)
+                       (complete-play-instant state side (assoc eid :cost-paid cost-paid) moved-card payment-str ignore-cost)
                        ;; could not pay the card's price; put it back and mark the effect as being over.
                        (let [returned-card (move state side moved-card original-zone)]
                          (update! state :runner (-> returned-card

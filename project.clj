@@ -43,7 +43,9 @@
                  [org.clojure/data.csv "1.0.0"]
                  [medley "1.3.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
-                 [integrant "0.8.0"]]
+                 [integrant "0.8.0"]
+                 [com.clojure-goes-fast/clj-java-decompiler "0.3.0"]
+                 [metosin/malli "0.5.1"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]

@@ -1,5 +1,6 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.utils :refer :all]
             [game.core.cost-fns :refer [all-stealth min-stealth]]
             [jinteki.utils :refer :all]

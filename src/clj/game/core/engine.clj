@@ -243,9 +243,10 @@
 
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
-  [state side eid ability card targets]
-  (and (not-used-once? state ability card)
-       (should-trigger? state side eid card targets ability)))
+  ([state side eid ability card] (can-trigger? state side eid ability card nil))
+  ([state side eid ability card targets]
+   (and (not-used-once? state ability card)
+        (should-trigger? state side eid card targets ability))))
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability."

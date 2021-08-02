@@ -1,11 +1,11 @@
 (ns web.core
   (:require
     [monger.collection :as mc]
+    [web.system :refer [start stop]]
     [tasks.index :refer [create-indexes]]
     [tasks.nrdb :refer [fetch-data]]
     [web.config :refer [frontend-version server-mode]]
     [web.lobby :as lobby]
-    [web.system :refer [start stop]]
     [web.utils :refer [tick]])
   (:gen-class :main true))
 

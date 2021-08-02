@@ -103,16 +103,17 @@
                                         (update-in [:deck] #(select-keys % [:_id :identity :name :hash]))
                                         (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
-            start-date (t/now)
-            game (as-> game g
-                   (assoc g :started true
-                          :original-players stripped-players
-                          :ending-players stripped-players
-                          :start-date (java.util.Date.)
-                          :last-update start-date
-                          :state (core/init-game g))
-                   (check-for-starter-decks g)
-                   (update-in g [:players] #(mapv strip-deck %)))]
+            game-state (core/init-game game)
+            _ (swap! game-state assoc :history [(:hist-state (public-states game-state))])
+            game (-> game
+                     (assoc :started true
+                            :original-players stripped-players
+                            :ending-players stripped-players
+                            :start-date (java.util.Date.)
+                            :last-update (t/now)
+                            :state game-state)
+                     (check-for-starter-decks)
+                     (update :players #(mapv strip-deck %)))]
         (stats/game-started db game)
         (lobby/refresh-lobby gameid game)
         (swap! old-states assoc gameid @(:state game))

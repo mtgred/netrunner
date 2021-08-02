@@ -164,6 +164,10 @@
   [card]
   (is-type? card "Asset"))
 
+(defn basic?
+  [card]
+  (is-type? card "Basic Action"))
+
 (defn event?
   [card]
   (and (not (facedown? card))

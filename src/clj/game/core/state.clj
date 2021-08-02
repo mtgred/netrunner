@@ -14,6 +14,7 @@
    end-turn
    events
    gameid
+   gp
    history
    log
    loser
@@ -25,6 +26,7 @@
    psi
    queued-events
    reason
+   resolving-action
    rid
    room
    run
@@ -62,6 +64,9 @@
      :history []
      :room room
      :rid 1 :turn 0 :eid 0
+     :resolving-action false
+     :gp {:pipeline []
+          :queue []}
      :sfx [] :sfx-current-id 0
      :stats {:time {:started now}}
      :start-date now

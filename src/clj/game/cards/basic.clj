@@ -1,5 +1,6 @@
 (ns game.cards.basic
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]))
 
@@ -79,13 +80,32 @@
                 :cost [:click 1 :credit 2]
                 :action true
                 :async true
-                :req (req tagged)
+                :req (req (let [all-active-installed-runner (all-active-installed state :runner)
+                                num-resources (count (filter resource? all-active-installed-runner))
+                                untrashable? (and (->> (all-active-installed state :runner)
+                                                       (filter untrashable-while-resources?)
+                                                       (seq))
+                                                  (< 1 num-resources))]
+                            (and tagged
+                                 (pos? num-resources)
+                                 (some
+                                   (fn [target]
+                                     (if untrashable?
+                                       (and (resource? target)
+                                            (not (untrashable-while-resources? target)))
+                                       (resource? target)))
+                                   all-active-installed-runner))))
                 :prompt "Choose a resource to trash"
                 :msg (msg "trash " (:title target))
-                :choices {:req (req (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                             (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                      (and (resource? target) (not (untrashable-while-resources? target)))
-                                      (resource? target)))}
+                :choices {:req (req (let [all-active-installed-runner (all-active-installed state :runner)
+                                          untrashable? (and (->> (all-active-installed state :runner)
+                                                                 (filter untrashable-while-resources?)
+                                                                 (seq))
+                                                            (< 1 (count (filter resource? all-active-installed-runner))))]
+                                      (if untrashable?
+                                        (and (resource? target)
+                                             (not (untrashable-while-resources? target)))
+                                        (resource? target))))}
                 :effect (effect (trash eid target nil))}
                {:label "Purge virus counters"
                 :cost [:click 3]

@@ -1,5 +1,6 @@
 (ns game.core.runs-test
   (:require [game.core :as core]
+            [game.core.runs :as sut]
             [game.core-test :refer :all]
             [game.core.card :refer :all]
             [game.utils-test :refer :all]
@@ -357,7 +358,7 @@
         (rez state :corp v0)
         (rez state :corp v1)
         (run-on state :hq)
-        (core/toggle-auto-no-action state :corp nil)
+        (sut/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (is (= (refresh v1) (core/get-current-ice state)) "Approaching v1")
         (core/continue state :runner nil)
@@ -391,7 +392,7 @@
             cor (get-program state 0)]
         (rez state :corp v1)
         (run-on state :hq)
-        (core/toggle-auto-no-action state :corp nil)
+        (sut/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (is (= (refresh v1) (core/get-current-ice state)) "Approaching v1")
         (core/continue state :runner nil)
@@ -419,7 +420,7 @@
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/toggle-auto-no-action state :corp nil)
+        (sut/toggle-auto-no-action state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
   (testing "no auto-no-action on toggling setting on unrezzed ice"
     (do-game
@@ -436,7 +437,7 @@
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/toggle-auto-no-action state :corp nil)
+        (sut/toggle-auto-no-action state :corp nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, because ice is unrezzed")))))
 
 (deftest hide-continue-msg

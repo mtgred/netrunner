@@ -1,11 +1,12 @@
 (ns game.cards.resources
-  (:require
-    [clojure.pprint :as pprint]
-    [clojure.string :as string]
-    [medley.core :refer [find-first]]
-    [game.core :refer :all]
-    [game.utils :refer :all]
-    [jinteki.utils :refer :all]))
+  (:require [game.core :refer :all]
+            [game.core.card :refer :all]
+            [game.core.prompt-state :refer [remove-from-prompt-queue]]
+            [game.utils :refer :all]
+            [jinteki.utils :refer :all]
+            [clojure.pprint :as pprint]
+            [clojure.string :as string]
+            [medley.core :refer [find-first]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"

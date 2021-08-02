@@ -1,5 +1,6 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
             [clojure.string :as string]
