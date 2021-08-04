@@ -160,6 +160,7 @@
      :max "maximum"
      :influence "Influence"
      :agenda-points "Agenda points"
+     :deck-points "Deck points"
      :hash "Tournament hash"
      :why "Why?"
      :legal "legal"
