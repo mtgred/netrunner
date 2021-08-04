@@ -45,7 +45,6 @@
    [game.core.say]
    [game.core.servers]
    [game.core.shuffling]
-   [game.core.step]
    [game.core.subtypes]
    [game.core.tags]
    [game.core.to-string]
@@ -570,8 +569,11 @@
 (import-vars
   [game.core.say
    play-sfx
+   say
    system-msg
-   system-say])
+   system-say
+   typing
+   typingstop])
 
 (import-vars
   [game.core.servers
@@ -607,10 +609,6 @@
    shuffle-into-rd-effect])
 
 (import-vars
-  [game.core.step
-   ->SimpleStep])
-
-(import-vars
   [game.core.subtypes
    update-all-subtypes])
 
@@ -635,6 +633,7 @@
 
 (import-vars
   [game.core.turns
+   begin-turn
    end-turn
    start-turn])
 
@@ -652,7 +651,8 @@
 
 (import-vars
   [game.core.winning
-   check-win-by-agenda])
+   check-win-by-agenda
+   concede])
 
 (import-vars
   [game.macros

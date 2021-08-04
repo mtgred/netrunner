@@ -8,13 +8,14 @@
     [game.core.eid :refer [make-eid register-effect-completed]]
     [game.core.engine :refer [trigger-event trigger-event-sync]]
     [game.core.initializing :refer [card-init make-card]]
-    [game.core.pipeline :refer [continue-gp! queue-step!]]
+    [game.core.pipeline :refer [continue-gp! queue-step! queue-steps!]]
     [game.core.player :refer [new-corp new-runner]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.shuffling :refer [shuffle-into-deck]]
     [game.core.state :refer [new-state]]
-    [game.core.step :refer [complete! ->SimpleStep]]
+    [game.core.steps.step :refer [complete! ->SimpleStep]]
+    [game.core.turns :refer [begin-turn]]
     [game.quotes :as quotes]
     [game.utils :refer [server-card]]))
 
@@ -111,8 +112,29 @@
   (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
   (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
 
-(defn init-game
+(defn set-up-phase
   "Initializes a new game with the given players vector."
+  [state]
+  (->SimpleStep
+    (fn [set-up-step]
+      (queue-step! state (->SimpleStep (fn [_] (fake-checkpoint state))))
+      (doseq [side [:corp :runner]]
+        (queue-step!
+          state
+          (->SimpleStep
+            (fn init-game-fn [step]
+              (let [eid (make-eid state)]
+                (register-effect-completed
+                  state eid (fn [_] (complete! step)))
+                (trigger-event-sync state side eid :pre-start-game nil)
+                false)))))
+      (queue-steps!
+        state
+        [(->SimpleStep (fn [step] (init-hands state step) false))
+         (->SimpleStep (fn [_] (fake-checkpoint state)))
+         (->SimpleStep (fn [_] (complete! set-up-step)))]))))
+
+(defn init-game
   [game]
   (let [state (init-game-state game)
         corp-identity (get-in @state [:corp :identity])
@@ -122,18 +144,7 @@
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (create-basic-action-cards state)
-    (fake-checkpoint state)
-    (doseq [side [:corp :runner]]
-      (queue-step!
-        state
-        (->SimpleStep
-          (fn init-game-fn [step state]
-            (let [eid (make-eid state)]
-              (register-effect-completed
-                state eid (fn [_] (complete! step)))
-              (trigger-event-sync state side eid :pre-start-game nil)
-              false)))))
-    (queue-step! state (->SimpleStep (fn init-hands-fn [step state] (init-hands state step) false)))
-    (queue-step! state (->SimpleStep (fn checkpoint-fn [_ state] (fake-checkpoint state) true)))
+    (queue-step! state (set-up-phase state))
+    (queue-step! state (->SimpleStep (fn [_] (begin-turn state))))
     (continue-gp! state)
     state))

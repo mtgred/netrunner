@@ -358,7 +358,7 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost player waiting-prompt action label] :as ability} card targets]
+  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
   (when waiting-prompt
     (add-to-prompt-queue
       state (cond

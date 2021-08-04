@@ -61,15 +61,6 @@
       (core/process-action "end-turn" state side nil)
       (core/process-action "start-turn" state other nil))))
 
-(defmacro start-turn
-  [state side]
-  `(do (is (and (empty? (get-in @~state [:corp :prompt]))
-                (empty? (get-in @~state [:runner :prompt]))) "Players have prompts open")
-       (when (and (empty? (get-in @~state [:corp :prompt]))
-                  (empty? (get-in @~state [:runner :prompt])))
-         (core/process-action "start-turn" ~state ~side nil))))
-
-
 ;; Deck construction helpers
 (defn qty [card amt]
   (when (pos? amt)
@@ -88,11 +79,11 @@
 (defn transform
   [side cards]
   (->> cards
-       flatten
+       (flatten)
        (filter string?)
-       frequencies
+       (frequencies)
        (map #(card-vec->card-map side %))
-       seq))
+       (seq)))
 
 (defn make-decks
   [{:keys [corp runner options]}]
@@ -147,7 +138,8 @@
        (if (#{:both :runner} mulligan)
          (click-prompt state :runner "Mulligan")
          (click-prompt state :runner "Keep"))
-       (when-not dont-start-turn (core/start-turn state :corp nil)))
+       (when-not dont-start-turn (core/start-turn state :corp nil))
+       )
      ;; Gotta move cards where they need to go
      (doseq [side [:corp :runner]]
        (let [side-map (if (= :corp side) corp runner)]

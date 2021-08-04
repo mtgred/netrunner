@@ -1,24 +1,28 @@
 (ns game.core.turns
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements]]
+    [game.core.action-window :refer [action-phase]]
     [game.core.board :refer [all-active all-active-installed all-installed]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-floating-effects]]
-    [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.eid :refer [effect-completed make-eid register-effect-completed]]
+    [game.core.engine :refer [resolve-ability trigger-event trigger-event-simult unregister-floating-events]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]
     [game.core.ice :refer [update-all-ice update-breaker-strength]]
     [game.core.moving :refer [move]]
+    [game.core.pipeline :refer [queue-steps!]]
     [game.core.say :refer [system-msg]]
-    [game.core.toasts :refer [toast]]
+    [game.core.steps.active-step :refer [->ActiveStep]]
+    [game.core.steps.phase-step :refer [->PhaseStep]]
+    [game.core.steps.step :refer [complete! ->SimpleStep]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [abs dissoc-in quantify]]
-    [clojure.string :as string]))
+    [clojure.string :as str]))
 
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
@@ -30,65 +34,7 @@
         text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
-(defn end-phase-12
-  "End phase 1.2 and trigger appropriate events for the player."
-  ([state side _] (end-phase-12 state side (make-eid state) nil))
-  ([state side eid _]
-   (turn-message state side true)
-   (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
-             (unregister-floating-effects state side :start-of-turn)
-             (unregister-floating-events state side :start-of-turn)
-             (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
-             (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
-             (when (= side :corp)
-               (system-msg state side "makes mandatory start of turn draw")
-               (wait-for (draw state side 1 nil)
-                         (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
-             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-             (when (= side :corp)
-               (update-all-advancement-requirements state)))))
-
-(defn start-turn
-  "Start turn."
-  [state side _]
-  ; Don't clear :turn-events until the player clicks "Start Turn"
-  ; Fix for Hayley triggers
-  (swap! state assoc :turn-events nil)
-
-  ; Functions to set up state for undo-turn functionality
-  (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
-  (swap! state assoc :turn-state (dissoc @state :log :turn-state))
-
-  (when (= side :corp)
-    (swap! state update-in [:turn] inc))
-
-  (doseq [c (filter :new (all-installed state side))]
-    (update! state side (dissoc c :new)))
-
-  (swap! state assoc :active-player side :per-turn nil :end-turn false)
-  (doseq [s [:runner :corp]]
-    (swap! state assoc-in [s :register] nil))
-
-  (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
-        start-cards (filter #(card-flag-fn? state side % phase true)
-                            (distinct (concat (all-active state side)
-                                              (remove facedown? (all-installed state side)))))
-        extra-clicks (get-in @state [side :extra-click-temp] 0)]
-    (gain state side :click (get-in @state [side :click-per-turn]))
-    (cond
-      (neg? extra-clicks) (lose state side :click (abs extra-clicks))
-      (pos? extra-clicks) (gain state side :click extra-clicks))
-    (swap! state dissoc-in [side :extra-click-temp])
-    (swap! state assoc phase true)
-    (trigger-event state side phase nil)
-    (if (not-empty start-cards)
-      (toast state side
-             (str "You may use " (string/join ", " (map :title start-cards))
-                  (if (= side :corp)
-                    " between the start of your turn and your mandatory draw."
-                    " before taking your first click."))
-             "info")
-      (end-phase-12 state side _))))
+(defn end-phase-12 [& _])
 
 (defn- handle-end-of-turn-discard
   [state side eid _]
@@ -107,7 +53,7 @@
              :effect (req (system-msg state side
                                       (str "discards "
                                            (if (= :runner side)
-                                             (string/join ", " (map :title targets))
+                                             (str/join ", " (map :title targets))
                                              (quantify (count targets) "card"))
                                            " from " (if (= :runner side) "their Grip" "HQ")
                                            " at end of turn"))
@@ -117,6 +63,8 @@
             nil nil)
           :else
           (effect-completed state side eid))))
+
+(defn start-turn [& _])
 
 (defn end-turn
   ([state side _] (end-turn state side (make-eid state) nil))
@@ -157,5 +105,166 @@
                  (when (pos? extra-turns)
                    (start-turn state side nil)
                    (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+                   (system-msg state side (str/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
                (effect-completed state side eid)))))
+
+(defn clear-new-from-installed
+  [state active-player]
+  (doseq [c (all-installed state active-player)
+          :when (:new c)]
+    (update! state active-player (dissoc c :new))))
+
+(defn init-turn-state
+  "Put new state info in :turn-state"
+  [state]
+  ;; Can't be inlined cuz we need state for both halves, and not an atom
+  (update state assoc :turn-state (dissoc state :log :turn-state)))
+
+(defn reset-state-for-turn
+  [state]
+  (let [last-turn-player (:active-player @state)
+        active-player (if (= :corp last-turn-player) :runner :corp)]
+    (clear-new-from-installed state active-player)
+    (reset! state
+            (-> @state
+                (dissoc-in [:corp :undo-turn])
+                (dissoc-in [:runner :undo-turn])
+                (assoc-in [:corp :register] nil)
+                (assoc-in [:runner :register] nil)
+                (assoc :active-player active-player
+                       :end-turn false
+                       :per-turn nil
+                       ; Don't clear :turn-events until the player clicks "Start Turn"
+                       ; Fix for Hayley triggers
+                       :turn-events nil)
+                ; Turn counter only increments on corps turn
+                (update :turn #(if (= :corp active-player) (inc %) %))
+                (init-turn-state)))))
+
+(defn gain-allotted-clicks
+  [state side]
+  (->SimpleStep
+    (fn [_step]
+      (let [default (get-in @state [side :click-per-turn])
+            extra-clicks (get-in @state [side :extra-click-temp] 0)
+            total (+ default extra-clicks)]
+        (cond
+          (pos? total) (gain state side :click total)
+          (neg? total) (lose state side :click (abs total)))
+        (swap! state dissoc-in [side :extra-click-temp])))))
+
+(defn start-of-turn-paw
+  [state side]
+  (->ActiveStep
+    (fn [step]
+      (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
+            start-cards (filter #(card-flag-fn? state side % phase true)
+                                (distinct (concat (all-active state side)
+                                                  (remove facedown? (all-installed state side)))))]
+        (swap! state assoc phase true)
+        (trigger-event state side phase nil)
+        (if (empty? start-cards)
+          (complete! step)
+          (do (resolve-ability
+                state side
+                {:prompt (str "You may use " (str/join ", " (map :title start-cards))
+                              (if (= side :corp)
+                                " between the start of your turn and your mandatory draw."
+                                " before taking your first click."))
+                 :choices ["Done"]
+                 :effect (req (complete! step))}
+                nil nil)
+              false))))))
+
+(defn when-turn-begins-trigger
+  "End phase 1.2 and trigger appropriate events for the player."
+  [state side]
+  (->ActiveStep
+    (fn [step]
+      (let [new-eid (make-eid state)]
+        (register-effect-completed
+          state new-eid (fn [_] (complete! step)))
+        (trigger-event-simult state side new-eid (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)))))
+
+(defn pre-checkpoint-cleanup
+  [state side]
+  (->SimpleStep
+    (fn [_]
+      (unregister-floating-effects state side :start-of-turn)
+      (unregister-floating-events state side :start-of-turn)
+      (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+      (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins)))))
+
+(defn corp-mandatory-draw
+  [state side]
+  (when (= side :corp)
+    (->SimpleStep
+      (fn [step]
+        (let [new-eid (make-eid state)]
+          (register-effect-completed
+            state new-eid (fn [_] (complete! step)))
+          (system-msg state :corp "makes mandatory start of turn draw")
+          (wait-for (draw state :corp 1 nil)
+                    (trigger-event-simult state :corp new-eid :corp-mandatory-draw nil nil))
+          false)))))
+
+(defn pre-action-phase
+  [state side]
+  (->SimpleStep
+    (fn [_]
+      (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+      (when (= side :corp)
+        (update-all-advancement-requirements state)))))
+
+(defn start-of-turn-phase
+  "* click allotment
+  * PAW
+  * recurring credits
+  * “when your turn begins”
+  * checkpoint"
+  [state]
+  (->PhaseStep
+    :phase/start-of-turn
+    (fn [step]
+      (let [side (:active-player @state)]
+        (queue-steps!
+          state
+          [(gain-allotted-clicks state side)
+           (start-of-turn-paw state side)
+           (->SimpleStep (fn [_] (turn-message state side true)))
+           (when-turn-begins-trigger state side)
+           (pre-checkpoint-cleanup state side)
+           (->SimpleStep (fn [_] (complete! step)))])
+        false))))
+
+(defn draw-phase
+  "Runner doesn't have a 'draw phase' so we can skip it here"
+  [state]
+  (->PhaseStep
+    :phase/draw
+    (fn [step]
+      (let [last-turn-player (:active-player @state)
+            side (if (= :corp last-turn-player) :runner :corp)]
+        (queue-steps!
+          state
+          [(corp-mandatory-draw state side)
+           (pre-action-phase state side)
+           (->SimpleStep (fn [_] (complete! step)))])
+        false))))
+
+(defn discard-phase
+  ;; TODO
+  [_]
+  (->SimpleStep
+    (fn [_] true)))
+
+(defn begin-turn
+  [state]
+  (reset-state-for-turn state)
+  (queue-steps!
+    state
+    [(start-of-turn-phase state)
+     (draw-phase state)
+     (action-phase state)
+     (discard-phase state)
+     (->SimpleStep (fn [_] (begin-turn state)))]))

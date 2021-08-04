@@ -12,11 +12,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                       :hand ["Melange Mining Corp."]
                       :credits 10}})
-    (core/gain state :corp :click 2)
-    (play-from-hand state :corp "Melange Mining Corp." "New remote")
-    (rez state :corp (get-content state :remote1 0))
-    (sut/start-action-phase state)
-    (continue-gp! state)
+    (core/gain state :corp :click 1)
     (is (= [
             "[Click]: Gain 1 [Credits]"
             "[Click]: Draw 1 card"
@@ -34,6 +30,5 @@
         1 (:credit (get-corp))
         "msg"
         (click-prompt state :corp "[Click]: Gain 1 [Credits]"))
-    (is (nil? (get-current-step state)))
-    (is (empty? (:prompt (get-corp))))
-    ))
+    (is (some? (get-current-step state)))
+    (is (= [] (map :title (prompt-buttons :corp))))))

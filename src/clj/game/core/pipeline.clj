@@ -1,7 +1,7 @@
 (ns game.core.pipeline
   (:require
     [cond-plus.core :refer [cond+]]
-    [game.core.step :refer [completed? continue! SimpleStep?]]))
+    [game.core.steps.step :refer [complete? continue! validate-step]]))
 
 (defn get-current-step
   [state]
@@ -9,7 +9,15 @@
 
 (defn queue-step!
   [state step]
-  (swap! state update-in [:gp :queue] conj (SimpleStep? step))
+  (swap! state update-in [:gp :queue] conj (validate-step step))
+  state)
+
+(defn queue-steps!
+  [state steps]
+  (let [steps (->> steps
+                   (filter identity)
+                   (map validate-step))]
+    (swap! state update-in [:gp :queue] #(apply conj % steps)))
   state)
 
 (defn drop-current-step!
@@ -35,9 +43,9 @@
       [(not step)
        true]
       ;; If the current step is done, drop and move to the next
-      [(or (completed? step)
-           (true? (continue! step state))
-           (completed? step))
+      [(or (complete? step)
+           (not (false? (continue! step)))
+           (complete? step))
        (drop-current-step! state)
        (recur state)]
       ;; If continue-fn is false and queue is empty, we're waiting

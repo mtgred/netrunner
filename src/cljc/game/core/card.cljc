@@ -149,6 +149,14 @@
   [card]
   (card-is? card :side "Corp"))
 
+; (defn card-side
+;   "keyword card side"
+;   [card]
+;   (when card
+;     (cond
+;       (corp? card) :corp
+;       (runner? card) :runner)))
+
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
   [card type]
