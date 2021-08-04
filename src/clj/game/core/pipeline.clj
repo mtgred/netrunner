@@ -44,11 +44,11 @@
        true]
       ;; If the current step is done, drop and move to the next
       [(or (complete? step)
-           (not (false? (continue! step)))
+           (not (false? (continue! step state)))
            (complete? step))
        (drop-current-step! state)
        (recur state)]
-      ;; If continue-fn is false and queue is empty, we're waiting
+      ;; If continue! is false and queue is empty, we're waiting
       ;; on the user for input
       [(zero? (count (get-in @state [:gp :queue])))
        false]

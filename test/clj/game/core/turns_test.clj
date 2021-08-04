@@ -7,10 +7,12 @@
             [game.core.pipeline :refer :all]
             [clojure.test :refer :all]))
 
-(deftest turns-test
+(deftest whole-turn
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                       :hand ["Melange Mining Corp."]
                       :credits 10}})
+    (click-prompt state :corp "[Click][Click][Click]: Purge virus counters")
+    (println (prompt-fmt :corp))
     )
   )

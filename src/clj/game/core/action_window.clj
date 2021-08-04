@@ -47,9 +47,9 @@
   (let [card (get-in @state [side :basic-action-card])]
     (keep-indexed (partial label-ability state side card) (:abilities card))))
 
-(defn action-window-step [state]
+(defn action-window-step []
   (->ActiveStep
-    (fn [step]
+    (fn [step state]
       (let [active-player (:active-player @state)
             clicks-left (get-in @state [active-player :click])
             new-eid (make-eid state)]
@@ -65,16 +65,16 @@
           nil nil)
         false))))
 
-(defn action-phase [state]
+(defn action-phase []
   (->PhaseStep
     :phase/action
-    (fn [step]
+    (fn [step state]
       (let [active-player (:active-player @state)
             clicks-left (get-in @state [active-player :click])]
         ;; if there's clicks left and we're not in a terminal,
         ;; load up another action window
         (if (and (pos? clicks-left)
                  (not (get-in @state [active-player :register :terminal])))
-          (do (queue-step! state (action-window-step state))
+          (do (queue-step! state (action-window-step))
               false)
           (complete! step))))))

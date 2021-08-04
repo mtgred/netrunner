@@ -1,6 +1,6 @@
 (ns game.core.steps.phase-step
   (:require
-   [game.core.steps.step :refer [make-base-step BaseStepSchema validate-step]]
+   [game.core.steps.step :refer [BaseStepSchema make-base-step validate-step]]
    [malli.core :as m]
    [malli.error :as me]
    [malli.util :as mu]))
@@ -24,7 +24,7 @@
 
 (defn ->PhaseStep
   "Create a new phase step volatile map with validation."
-  [phase-name continue-fn]
-  (let [step (make-base-step :step/phase continue-fn)]
+  [phase-name continue]
+  (let [step (make-base-step :step/phase continue)]
     (vswap! step assoc :phase phase-name)
     (validate-step step)))

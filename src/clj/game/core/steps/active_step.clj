@@ -24,18 +24,18 @@
                       explained-error)))))
 
 (defmethod continue! :step/active
-  [step]
+  [step state]
   (cond
     (complete? step) true
     (active? step) false
-    :else (let [continue-fn (:continue-fn @step)]
+    :else (let [continue (:continue @step)]
             (activate! step)
-            (continue-fn step))))
+            (continue step state))))
 
 (defn ->ActiveStep
-  "Creates a new step meant to wrap `resolve-ability` or `show-prompt` continue-fns
+  "Creates a new step meant to wrap `resolve-ability` or `show-prompt` continue
   that should only be executed once."
-  [continue-fn]
-  (let [step (make-base-step :step/active continue-fn)]
+  [continue]
+  (let [step (make-base-step :step/active continue)]
     (vswap! step assoc :active? false)
     (validate-step step)))

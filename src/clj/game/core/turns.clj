@@ -154,9 +154,9 @@
         (swap! state dissoc-in [side :extra-click-temp])))))
 
 (defn start-of-turn-paw
-  [state side]
+  [side]
   (->ActiveStep
-    (fn [step]
+    (fn [step state]
       (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
             start-cards (filter #(card-flag-fn? state side % phase true)
                                 (distinct (concat (all-active state side)
@@ -178,13 +178,14 @@
 
 (defn when-turn-begins-trigger
   "End phase 1.2 and trigger appropriate events for the player."
-  [state side]
+  [side]
   (->ActiveStep
-    (fn [step]
+    (fn [step state]
       (let [new-eid (make-eid state)]
         (register-effect-completed
           state new-eid (fn [_] (complete! step)))
-        (trigger-event-simult state side new-eid (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)))))
+        (trigger-event-simult state side new-eid (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
+        false))))
 
 (defn pre-checkpoint-cleanup
   [state side]
@@ -196,10 +197,10 @@
       (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins)))))
 
 (defn corp-mandatory-draw
-  [state side]
+  [side]
   (when (= side :corp)
-    (->SimpleStep
-      (fn [step]
+    (->ActiveStep
+      (fn [step state]
         (let [new-eid (make-eid state)]
           (register-effect-completed
             state new-eid (fn [_] (complete! step)))
@@ -213,8 +214,8 @@
   (->SimpleStep
     (fn [_]
       (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-      (when (= side :corp)
-        (update-all-advancement-requirements state)))))
+      (update-all-advancement-requirements state)
+      true)))
 
 (defn start-of-turn-phase
   "* click allotment
@@ -222,39 +223,36 @@
   * recurring credits
   * “when your turn begins”
   * checkpoint"
-  [state]
+  []
   (->PhaseStep
     :phase/start-of-turn
-    (fn [step]
+    (fn [step state]
       (let [side (:active-player @state)]
         (queue-steps!
           state
           [(gain-allotted-clicks state side)
-           (start-of-turn-paw state side)
+           (start-of-turn-paw side)
            (->SimpleStep (fn [_] (turn-message state side true)))
-           (when-turn-begins-trigger state side)
+           (when-turn-begins-trigger side)
            (pre-checkpoint-cleanup state side)
            (->SimpleStep (fn [_] (complete! step)))])
         false))))
 
 (defn draw-phase
   "Runner doesn't have a 'draw phase' so we can skip it here"
-  [state]
+  []
   (->PhaseStep
     :phase/draw
-    (fn [step]
-      (let [last-turn-player (:active-player @state)
-            side (if (= :corp last-turn-player) :runner :corp)]
+    (fn [step state]
+      (let [side (:active-player @state)]
         (queue-steps!
           state
-          [(corp-mandatory-draw state side)
+          [(corp-mandatory-draw side)
            (pre-action-phase state side)
            (->SimpleStep (fn [_] (complete! step)))])
         false))))
 
-(defn discard-phase
-  ;; TODO
-  [_]
+(defn discard-phase []
   (->SimpleStep
     (fn [_] true)))
 
@@ -263,8 +261,8 @@
   (reset-state-for-turn state)
   (queue-steps!
     state
-    [(start-of-turn-phase state)
-     (draw-phase state)
-     (action-phase state)
-     (discard-phase state)
+    [(start-of-turn-phase)
+     (draw-phase)
+     (action-phase)
+     ; (discard-phase)
      (->SimpleStep (fn [_] (begin-turn state)))]))
