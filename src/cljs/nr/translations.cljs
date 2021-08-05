@@ -970,6 +970,7 @@
      :max "aximummay"
      :influence "Influenceyay"
      :agenda-points "Agendayay ointspay"
+     :deck-points "Eckday ointspay"
      :hash "Ournamenttay ashhay"
      :why "Whyay?"
      :legal "egallay"
