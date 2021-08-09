@@ -143,11 +143,26 @@
                       :run-info run-info
                       :queue-start (t/now)}
               other-side (if (= :corp side) "Runner" "Corp")
+              played-them-fn (fn [other-player]
+                               (in-coll?
+                                 (map #(get-in % [:opponent :username])
+                                      (remove #(nil? (:winner %))
+                                              (get-in player [:run-info :games])))
+                                 (get-in other-player [:user :username])))
+              they-played-us-fn (fn [other-player]
+                                  (in-coll?
+                                    (map #(get-in % [:opponent :username])
+                                         (remove #(nil? (:winner %))
+                                                 (get-in other-player [:run-info :games])))
+                                    username))
               eligible-players (->> @arena-queue
                                     ; Players in the same format playing the other side
                                     (filter #(and (= form (:format %))
                                                   (= other-side (:side %))))
-                                    ;XXX: Remove players you already played against from eligible pool
+                                    ; Players that we didn't already play
+                                    (remove played-them-fn)
+                                    ; Players that didn't already play us
+                                    (remove they-played-us-fn)
                                     ; Players that didn't block us
                                     (remove #(in-coll?
                                                (get-in % [:user :options :blocked-users])
