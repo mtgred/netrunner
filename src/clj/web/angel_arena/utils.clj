@@ -1,4 +1,4 @@
-(ns web.angelarena.utils
+(ns web.angel-arena.utils
   (:require [clojure.string :refer [lower-case capitalize]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.validator :refer [calculate-deck-status]]
@@ -13,12 +13,12 @@
 (defn get-runs
   [db username]
   (try
-    (let [{:keys [angelarena-runs]}
-          (mc/find-one-as-map db "users" {:username username} ["angelarena-runs"])]
+    (let [{:keys [angel-arena-runs]}
+          (mc/find-one-as-map db "users" {:username username} ["angel-arena-runs"])]
       (merge (into (hash-map)
                    (map (fn [form] [form {:corp nil :runner nil}])
                         supported-formats))
-             angelarena-runs))
+             angel-arena-runs))
     (catch Exception e
       (println "Caught exception searching for run: " (.getMessage e)))))
 

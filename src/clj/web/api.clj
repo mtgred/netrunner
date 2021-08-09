@@ -7,7 +7,7 @@
             [web.game :as game]
             [web.chat :as chat]
             [web.stats :as stats]
-            [web.angelarena :as angelarena]
+            [web.angel-arena :as angel-arena]
             [web.admin :as admin]
             [web.tournament :as tournament]
             [web.decks :as decks]
@@ -99,8 +99,8 @@
            (GET "/profile/history/share/:gameid" [] stats/share-replay)
            (GET "/profile/history/full/:gameid" [] stats/fetch-replay)
 
-           (GET "/profile/angelarena/runs" [] angelarena/fetch-runs)
-           (GET "/profile/angelarena/queue-times" [] angelarena/fetch-queue-times)
+           (GET "/profile/angel-arena/runs" [] angel-arena/fetch-runs)
+           (GET "/profile/angel-arena/queue-times" [] angel-arena/fetch-queue-times)
 
            (GET "/data/decks" [] decks/decks-handler)
            (POST "/data/decks" [] decks/decks-create-handler)

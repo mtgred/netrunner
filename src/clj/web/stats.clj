@@ -5,7 +5,7 @@
             [monger.result :refer [acknowledged?]]
             [monger.operators :refer :all]
             [monger.query :as mq]
-            [web.angelarena.stats :as angelarena-stats]
+            [web.angel-arena.stats :as angel-arena-stats]
             [web.pages :as pages]
             [web.ws :as ws]
             [web.utils :refer [response json-response]]
@@ -204,9 +204,9 @@
                           :log (:log @state)}})
       (delete-old-replay db (get-in @state [:corp :user]))
       (delete-old-replay db (get-in @state [:corp :runner]))
-      (when (and (= "angelarena" room)
+      (when (and (= "angel-arena" room)
                  (:winner @state))
-        (angelarena-stats/game-finished db game))
+        (angel-arena-stats/game-finished db game))
       (catch Exception e
         (println "Caught exception saving game stats: " (.getMessage e))
         (println "Stats: " (:stats @state))))))

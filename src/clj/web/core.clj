@@ -3,7 +3,7 @@
     [monger.collection :as mc]
     [tasks.index :refer [create-indexes]]
     [tasks.nrdb :refer [fetch-data]]
-    [web.angelarena :as angelarena]
+    [web.angel-arena :as angel-arena]
     [web.config :refer [frontend-version server-mode]]
     [web.lobby :as lobby]
     [web.system :refer [start stop]]
@@ -31,7 +31,7 @@
 
     ;; Clear inactive lobbies after 30 minutes
     (tick #(lobby/clear-inactive-lobbies db 1800) 1000)
-    (tick #(angelarena/check-for-inactivity db) 1000)
+    (tick #(angel-arena/check-for-inactivity db) 1000)
     (tick #(lobby/reset-send-lobby) 1000)
 
     (println "Jinteki server running in" @server-mode "mode on port" port)

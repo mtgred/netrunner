@@ -1,6 +1,6 @@
 (ns nr.gameboard.log
   (:require [clojure.string :as string]
-            [nr.angelarena.log :as angelarena-log]
+            [nr.angel-arena.log :as angel-arena-log]
             [nr.appstate :refer [app-state]]
             [nr.avatar :refer [avatar]]
             [nr.gameboard.actions :refer [send-command]]
@@ -214,7 +214,7 @@
 (defn log-pane []
   (fn []
     [:div.log
-     [angelarena-log/inactivity-pane]
+     [angel-arena-log/inactivity-pane]
      [log-messages]
      [log-typing]
      [log-input]]))

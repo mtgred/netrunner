@@ -1,4 +1,4 @@
-(ns nr.angelarena.log
+(ns nr.angel-arena.log
   (:require [clojure.string :as string]
             [nr.appstate :refer [app-state]]
             [nr.gameboard.state :refer [game-state not-spectator?]]
@@ -9,7 +9,7 @@
 
 (defn inactivity-pane
   []
-  (r/with-let [inactivity-warning (r/cursor game-state [:angelarena-info :inactivity-warning])
+  (r/with-let [inactivity-warning (r/cursor game-state [:angel-arena-info :inactivity-warning])
                interval (r/atom nil)
                update-me (r/atom 0)] ; For some reason, r/force-update did not work, but this does...
     (r/create-class
@@ -27,10 +27,10 @@
                   @inactivity-warning]
            (let [inactive-side (keyword inactive-side)
                  warning-time (js/Date. warning-time)
-                 more-time #(ws/ws-send! [:angelarena/more-time {:gameid (:gameid @game-state)}])
-                 claim-victory #(ws/ws-send! [:angelarena/claim-victory {:gameid (:gameid @game-state)}])
-                 cancel-match #(ws/ws-send! [:angelarena/cancel-match {:gameid (:gameid @game-state)}])
-                 inactivities-remaining (get-in @game-state [:angelarena-info :inactivity-counter inactive-side] 1)]
+                 more-time #(ws/ws-send! [:angel-arena/more-time {:gameid (:gameid @game-state)}])
+                 claim-victory #(ws/ws-send! [:angel-arena/claim-victory {:gameid (:gameid @game-state)}])
+                 cancel-match #(ws/ws-send! [:angel-arena/cancel-match {:gameid (:gameid @game-state)}])
+                 inactivities-remaining (get-in @game-state [:angel-arena-info :inactivity-counter inactive-side] 1)]
              (when-not @interval
                (reset! interval (js/setInterval #(swap! update-me inc) 1000)))
              @update-me

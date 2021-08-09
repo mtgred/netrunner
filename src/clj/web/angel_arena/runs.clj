@@ -1,6 +1,6 @@
-(ns web.angelarena.runs
+(ns web.angel-arena.runs
   (:require [clojure.string :refer [lower-case]]
-            [web.angelarena.utils :refer [get-runs]]
+            [web.angel-arena.utils :refer [get-runs]]
             [web.mongodb :refer [object-id]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -16,7 +16,7 @@
       ;add run to user account
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:angelarena-runs
+                 {"$set" {:angel-arena-runs
                           (assoc-in runs [form side]
                                     {:deck-id deck-id
                                      :format form
@@ -37,7 +37,7 @@
     ; remove run from user account
     (mc/update db "users"
                {:username username}
-               {"$set" {:angelarena-runs
+               {"$set" {:angel-arena-runs
                         (assoc-in runs [form side] nil)}})
     ; unlock deck
     (mc/update db "decks"
@@ -61,7 +61,7 @@
           other-identity (get-in other-player [:deck :identity :title])]
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:angelarena-runs
+                 {"$set" {:angel-arena-runs
                           (update-in runs [form side :games] conj {:game-id game-id
                                                                    :winner nil
                                                                    :opponent {:username other-username

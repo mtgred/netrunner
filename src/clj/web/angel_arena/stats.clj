@@ -1,7 +1,7 @@
-(ns web.angelarena.stats
+(ns web.angel-arena.stats
   (:require [clojure.string :refer [lower-case]]
-            [web.angelarena.runs :refer [finish-run]]
-            [web.angelarena.utils :refer [get-runs get-losses get-deck-from-id]]
+            [web.angel-arena.runs :refer [finish-run]]
+            [web.angel-arena.utils :refer [get-runs get-losses get-deck-from-id]]
             [web.mongodb :refer [object-id]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -26,7 +26,7 @@
                                                      %)))]
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:angelarena-runs new-runs}})
+                 {"$set" {:angel-arena-runs new-runs}})
       new-runs)
     (catch Exception e
       (println "Caught exception entering winner: " (.getMessage e)))))
@@ -43,8 +43,8 @@
           (when-let [deck (get-deck-from-id db username (get-in runs [form side :deck-id]))]
             (if (<= max-losses (get-losses (get-in runs [form side])))
               (let [run-id (finish-run db username runs deck)]
-                (ws/broadcast-to! [(:ws-id end-player)] :angelarena/run-update {:finished-run run-id}))
-              (ws/broadcast-to! [(:ws-id end-player)] :angelarena/run-update {}))))))))
+                (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {:finished-run run-id}))
+              (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {}))))))))
 
 (defn add-new-game
   [db player other-player game-id]
@@ -57,7 +57,7 @@
           other-identity (get-in other-player [:deck :identity :title])]
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:angelarena-runs
+                 {"$set" {:angel-arena-runs
                           (update-in runs [form side :games] conj {:game-id game-id
                                                                    :winner nil
                                                                    :opponent {:username other-username
