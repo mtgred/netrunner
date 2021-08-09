@@ -152,7 +152,7 @@
 
 (defmethod ws/-msg-handler :angel-arena/run-update [{{:keys [finished-run] :as data} :?data}]
   (when finished-run
-    (println "Run finished :" data "\nWould display dialog box now..."))
+    (println "Run finished :" data "\nWould display dialog box now...")) ;XXX: Implement this
   (fetch-runs)
   (fetch-latest-runs))
 
@@ -197,7 +197,7 @@
                              "aborted" [:p "Aborted"]
                              "won" (when reason [:p (str "Won by " reason)])
                              "lost" (when reason [:p (str "Lost by " reason)]))
-                 [:p "Replay"]]])))]]])))
+                 [:p [:a {:href (str "/replay/" game-id)} "Replay"]]]])))]]])))
 
 (defn latest-runs-view []
   (fn []

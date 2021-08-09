@@ -200,7 +200,7 @@
                                             (:bug-reported @state))
                                     (generate-replay state))
                           :has-replay (get-in @state [:options :save-replay] false)
-                          :replay-shared false
+                          :replay-shared (if (= "angel-arena" room) true false) ; Angel arena always shares replays, otherwise players can opt-in
                           :log (:log @state)}})
       (delete-old-replay db (get-in @state [:corp :user]))
       (delete-old-replay db (get-in @state [:corp :runner]))
