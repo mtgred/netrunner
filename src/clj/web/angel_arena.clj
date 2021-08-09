@@ -198,33 +198,42 @@
                           (:active-player @state))
           inactive-user (get-in @state [inactive-side :user])]
       (when-not (or (nil? gameid)
-                    (zero? (:turn @state))
                     (:run @state))
-        (case (get-in @state [:angel-arena-info :inactivity-warning :stage] 0)
-          0 (when (t/after? (t/now) (t/plus last-update-only-actions (t/seconds (first inactivity-periods))))
-              ; no action for longer than first inactivity-period
-              (swap! state assoc-in [:angel-arena-info :inactivity-warning]
-                     {:stage 1
-                      :inactive-side inactive-side
-                      :inactive-user inactive-user
-                      :warning-time (t/now)
-                      :period-to-react (second inactivity-periods)})
-              (swap-and-send-diffs! game))
-          1 (when-let [{:keys [warning-time period-to-react]} (get-in @state [:angel-arena-info :inactivity-warning])]
-              (if (t/after? last-update-only-actions warning-time)
+        (if (zero? (:turn @state))
+          (when (t/after? (t/now) (t/plus last-update-only-actions (t/seconds (second inactivity-periods))))
+            (swap! state assoc-in [:angel-arena-info :inactivity-warning]
+                   {:stage -1
+                    :inactive-side nil
+                    :inactive-user nil
+                    :warning-time (t/now)
+                    :period-to-react -1})
+            (swap-and-send-diffs! game))
+
+          (case (get-in @state [:angel-arena-info :inactivity-warning :stage] 0)
+            0 (when (t/after? (t/now) (t/plus last-update-only-actions (t/seconds (first inactivity-periods))))
+                ; no action for longer than first inactivity-period
+                (swap! state assoc-in [:angel-arena-info :inactivity-warning]
+                       {:stage 1
+                        :inactive-side inactive-side
+                        :inactive-user inactive-user
+                        :warning-time (t/now)
+                        :period-to-react (second inactivity-periods)})
+                (swap-and-send-diffs! game))
+            1 (when-let [{:keys [warning-time period-to-react]} (get-in @state [:angel-arena-info :inactivity-warning])]
+                (if (t/after? last-update-only-actions warning-time)
+                  ; there was an action after the warning
+                  (do (swap! state update-in [:angel-arena-info] dissoc :inactivity-warning)
+                      (swap-and-send-diffs! game))
+                  ; still no action
+                  (when (t/after? (t/now) (t/plus warning-time (t/seconds period-to-react)))
+                    ; reaction period over
+                    (do (swap! state assoc-in [:angel-arena-info :inactivity-warning :stage] 2)
+                        (swap-and-send-diffs! game)))))
+            (when-let [{:keys [warning-time]} (get-in @state [:angel-arena-info :inactivity-warning])]
+              (when (t/after? last-update-only-actions warning-time)
                 ; there was an action after the warning
-                (do (swap! state update-in [:angel-arena-info] dissoc :inactivity-warning)
-                    (swap-and-send-diffs! game))
-                ; still no action
-                (when (t/after? (t/now) (t/plus warning-time (t/seconds period-to-react)))
-                  ; reaction period over
-                  (do (swap! state assoc-in [:angel-arena-info :inactivity-warning :stage] 2)
-                      (swap-and-send-diffs! game)))))
-          (when-let [{:keys [warning-time]} (get-in @state [:angel-arena-info :inactivity-warning])]
-            (when (t/after? last-update-only-actions warning-time)
-              ; there was an action after the warning
-              (swap! state update-in [:angel-arena-info] dissoc :inactivity-warning)
-              (swap-and-send-diffs! game))))))))
+                (swap! state update-in [:angel-arena-info] dissoc :inactivity-warning)
+                (swap-and-send-diffs! game)))))))))
 
 (defmethod ws/-msg-handler :angel-arena/more-time
   [{{db :system/db
@@ -269,8 +278,9 @@
   (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
     (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
                (get-in @state [:angel-arena-info :inactivity-warning])]
-      (when (and (= 2 stage)
-                 (= username (get-in @state [(other-side inactive-side) :user :username])))
+      (when (or (= -1 stage)
+                (and (= 2 stage)
+                     (= username (get-in @state [(other-side inactive-side) :user :username]))))
         (system-msg state (other-side inactive-side) "cancels the match")
         (stats/game-finished db game)
         (swap-and-send-diffs! game)

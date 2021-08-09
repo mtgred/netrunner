@@ -8,8 +8,12 @@
             [monger.operators :refer :all]
             [clj-time.core :as t]))
 
-(defonce supported-formats [:standard :startup])
+(defonce supported-formats [:standard :startup :eternal])
 
+; First period: After this time without any activity, a warning is issued.
+; Second period: This period starts counting when the first period runs out. After this period,
+;                the game can be cancelled or claimed as a victory.
+;                This period is also used for the initial period on turn 0.
 (defonce inactivity-periods [180 60])
 (defonce max-inactivity-count 3)
 
