@@ -10,6 +10,9 @@
 
 (defonce supported-formats [:standard :startup])
 
+(defonce inactivity-periods [180 60])
+(defonce max-inactivity-count 3)
+
 (defn get-runs
   [db username]
   (try

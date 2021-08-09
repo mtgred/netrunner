@@ -5,7 +5,8 @@
             [game.utils :refer [in-coll?]]
             [jinteki.utils :refer [other-side]]
             [web.angel-arena.runs :refer [start-run finish-run add-new-match]]
-            [web.angel-arena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
+            [web.angel-arena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck
+                                           inactivity-periods max-inactivity-count]]
             [web.game :refer [swap-and-send-diffs!]]
             [web.lobby :refer [all-games client-gameids game-for-id close-lobby refresh-lobby refresh-lobby-assoc-in]]
             [web.stats :as stats]
@@ -20,8 +21,6 @@
 (defonce arena-queue-times (atom (into (hash-map)
                                        (map (fn [form] [form {:corp [] :runner []}])
                                             supported-formats))))
-(defonce inactivity-periods [5 5])
-(defonce max-inactivity-count 3)
 
 (defn fetch-runs
   [{db :system/db
@@ -192,6 +191,7 @@
 (defn check-for-inactivity
   "Called by a background thread to notify lobbies without activity."
   [db]
+  ;TODO: Turn this into an option for all games, if it is liked by the community
   (doseq [{:keys [state gameid last-update-only-actions started] :as game} (filter #(= "angel-arena" (:room %)) (vals @all-games))]
     (let [inactive-side (if (:end-turn @state)
                           (other-side (:active-player @state))
