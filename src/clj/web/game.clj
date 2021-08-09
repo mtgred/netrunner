@@ -110,6 +110,7 @@
                           :ending-players stripped-players
                           :start-date (java.util.Date.)
                           :last-update start-date
+                          :last-update-only-actions start-date
                           :state (core/init-game g))
                    (check-for-starter-decks g)
                    (update-in g [:players] #(mapv strip-deck %)))]

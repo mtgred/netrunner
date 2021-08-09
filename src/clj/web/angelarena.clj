@@ -1,9 +1,11 @@
 (ns web.angelarena
   (:require [clojure.string :refer [lower-case capitalize]]
+            [game.core.say :refer [unsafe-say]]
             [game.utils :refer [in-coll?]]
             [web.angelarena.runs :refer [start-run finish-run add-new-match]]
             [web.angelarena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
-            [web.lobby :refer [client-gameids refresh-lobby]]
+            [web.game :refer [swap-and-send-diffs!]]
+            [web.lobby :refer [all-games client-gameids refresh-lobby]]
             [web.utils :refer [response json-response average]]
             [web.ws :as ws]
             [monger.collection :as mc]
@@ -14,6 +16,7 @@
 (defonce arena-queue-times (atom (into (hash-map)
                                        (map (fn [form] [form {:corp [] :runner []}])
                                             supported-formats))))
+(defonce seconds-inactive-before-asking 5)
 
 (defn fetch-runs
   [{db :system/db
@@ -164,3 +167,20 @@
     client-id :client-id}]
   (when username
     (remove-from-queue username)))
+
+(defn check-for-inactivity
+  "Called by a background thread to notify lobbies without activity."
+  [db]
+  (doseq [{:keys [state gameid last-update-only-actions started] :as game} (filter #(= "angelarena" (:room %)) (vals @all-games))]
+    (when (and gameid (t/after? (t/now) (t/plus last-update-only-actions (t/seconds seconds-inactive-before-asking))))
+      (let [inactive-side (:active-player @state)
+            inactive-user (get-in @state [inactive-side :user])]
+        (when-not (:run @state)
+          (case (get-in @state [:angelarena-info :inactivity-warning :stage] 0)
+            0 (do
+                (swap! state assoc-in [:angelarena-info :inactivity-warning]
+                       {:stage 1
+                        :inactive-side inactive-side
+                        :inactive-user inactive-user
+                        :warning-time (t/now)}))
+          (swap-and-send-diffs! game)))))))
