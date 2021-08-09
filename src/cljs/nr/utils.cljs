@@ -336,3 +336,17 @@
     (:images card) (:images card)
     (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
     :else (get-in card [:faces :front :images])))
+
+(defn time-span-string [delta]
+  (let [days (Math/floor (/ delta (* 60 60 24)))
+        delta (mod delta (* 60 60 24))
+        hours (Math/floor (/ delta (* 60 60)))
+        delta (mod delta (* 60 60))
+        minutes (Math/floor (/ delta (* 60)))
+        delta (mod delta 60)
+        seconds (Math/floor delta)]
+    (cond
+      (pos? days) (str days " days, " hours " hours")
+      (pos? hours) (str hours " hours, " minutes " minutes")
+      (pos? minutes) (str minutes " minutes, " seconds " seconds")
+      :else (str seconds " seconds"))))

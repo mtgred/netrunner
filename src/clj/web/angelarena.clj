@@ -2,6 +2,7 @@
   (:require [clojure.string :refer [lower-case capitalize]]
             [game.core.say :refer [unsafe-say]]
             [game.utils :refer [in-coll?]]
+            [jinteki.utils :refer [other-side]]
             [web.angelarena.runs :refer [start-run finish-run add-new-match]]
             [web.angelarena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck]]
             [web.game :refer [swap-and-send-diffs!]]
@@ -16,7 +17,7 @@
 (defonce arena-queue-times (atom (into (hash-map)
                                        (map (fn [form] [form {:corp [] :runner []}])
                                             supported-formats))))
-(defonce seconds-inactive-before-asking 5)
+(defonce inactivity-periods [5 5])
 
 (defn fetch-runs
   [{db :system/db
@@ -172,15 +173,32 @@
   "Called by a background thread to notify lobbies without activity."
   [db]
   (doseq [{:keys [state gameid last-update-only-actions started] :as game} (filter #(= "angelarena" (:room %)) (vals @all-games))]
-    (when (and gameid (t/after? (t/now) (t/plus last-update-only-actions (t/seconds seconds-inactive-before-asking))))
-      (let [inactive-side (:active-player @state)
-            inactive-user (get-in @state [inactive-side :user])]
-        (when-not (:run @state)
-          (case (get-in @state [:angelarena-info :inactivity-warning :stage] 0)
-            0 (do
-                (swap! state assoc-in [:angelarena-info :inactivity-warning]
-                       {:stage 1
-                        :inactive-side inactive-side
-                        :inactive-user inactive-user
-                        :warning-time (t/now)})))
-          (swap-and-send-diffs! game))))))
+    (let [inactive-side (if (:end-turn @state)
+                          (other-side (:active-player @state))
+                          (:active-player @state))
+          inactive-user (get-in @state [inactive-side :user])]
+      (when-not (or (nil? gameid)
+                    (zero? (:turn @state))
+                    (:run @state))
+        (case (get-in @state [:angelarena-info :inactivity-warning :stage] 0)
+          0 (when (t/after? (t/now) (t/plus last-update-only-actions (t/seconds (first inactivity-periods))))
+              ; no action for longer than first inactivity-period
+              (swap! state assoc-in [:angelarena-info :inactivity-warning]
+                     {:stage 1
+                      :inactive-side inactive-side
+                      :inactive-user inactive-user
+                      :warning-time (t/now)
+                      :period-to-react (second inactivity-periods)}))
+          1 (when-let [{:keys [warning-time period-to-react]} (get-in @state [:angelarena-info :inactivity-warning])]
+              (if (t/after? last-update-only-actions warning-time)
+                ; there was an action after the warning
+                (swap! state update-in [:angelarena-info] dissoc :inactivity-warning)
+                ; still no action
+                (when (t/after? (t/now) (t/plus warning-time (t/seconds period-to-react)))
+                  ; reaction period over
+                  (swap! state assoc-in [:angelarena-info :inactivity-warning :stage] 2))))
+          (when-let [{:keys [warning-time]} (get-in @state [:angelarena-info :inactivity-warning])]
+            (if (t/after? last-update-only-actions warning-time)
+              ; there was an action after the warning
+              (swap! state update-in [:angelarena-info] dissoc :inactivity-warning))))
+        (swap-and-send-diffs! game)))))
