@@ -173,7 +173,7 @@
         [:div.result.float-right (str losses " losses")]
         [:div "Run started: " (.toLocaleString (js/Date. run-finished))]]
        [:div.unfold {:class [(when @opened "open")]
-                     :style {:max-height (when @opened (* 100 (count games)))}}
+                     :style {:max-height (when @opened (* 100 (count (remove #(nil? (:winner %)) games))))}}
         [:div.games
          (doall
            (for [{:keys [game-id reason opponent winner] :as game} games]
