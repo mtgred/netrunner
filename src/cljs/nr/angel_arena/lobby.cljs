@@ -280,7 +280,7 @@
   [{:keys [title format room started players gameid current-game original-players] :as game}]
   (r/with-let [s (r/atom {:show-mod-menu false})
                user (:user @app-state)
-               join (fn [action] (join-game gameid s action nil))]
+               join (fn [action] (join-game gameid s action nil "Any Side"))]
     [:div.gameline {:class (when (= current-game gameid) "active")}
      (when (or (superuser? user)
                (and (:allow-spectator game)

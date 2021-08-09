@@ -433,10 +433,13 @@
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
-     [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
-     [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
+     ; The real "tournament" lobby can be reenabled, once its functionality is complete. For now the old "competitive" lobby just got renamed. -- lostgeek, 9th August 2021
+     ;
+     ; [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
+     ; [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
+     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
      [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
-     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]]
+     [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
     (when (not= "angel-arena" (:room @s))
       [:div.lobby-buttons
        [cond-button (tr [:lobby.new-game "New game"])
