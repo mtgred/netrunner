@@ -214,8 +214,7 @@
   (->SimpleStep
     (fn [_]
       (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-      (update-all-advancement-requirements state)
-      true)))
+      (update-all-advancement-requirements state))))
 
 (defn start-of-turn-phase
   "* click allotment

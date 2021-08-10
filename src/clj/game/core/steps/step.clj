@@ -51,7 +51,10 @@
 (defn simple-step-continue
   "Wrapper to remove state from call"
   [continue]
-  (fn simple-step-continue [step _state] (continue step)))
+  (fn simple-step-continue
+    [step _state]
+    (continue step)
+    true))
 
 (defn ->SimpleStep
   "Create a new step volatile map with validation."

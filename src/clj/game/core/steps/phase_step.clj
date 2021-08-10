@@ -23,7 +23,7 @@
                       explained-error)))))
 
 (defn ->PhaseStep
-  "Create a new phase step volatile map with validation."
+  "Phases must queue their own complete! at the end of the steps they queue."
   [phase-name continue]
   (let [step (make-base-step :step/phase continue)]
     (vswap! step assoc :phase phase-name)

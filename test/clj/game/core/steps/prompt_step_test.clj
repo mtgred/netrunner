@@ -14,7 +14,16 @@
     (testing "heck"
       (queue-step!
         state
-        (sut/->PromptStep))
+        (sut/->PromptStep
+          :corp
+          (fn keep-mulligan-prompt [_state]
+            {:prompt-title "Corp Mulligan"
+             :prompt-text "Keep or mulligan this hand?"
+             :buttons [{:text "Keep" :arg "keep"}
+                       {:text "Mulligan" :arg "mulligan"}]})
+          (fn keep-mulligan-waiting [_state]
+            {:prompt-title "Waiting for Corp to keep or mulligan starting hand"})))
+      (continue-gp! state)
       (println (get-in @state [:corp :prompt-state]))
       )
     ))

@@ -15,6 +15,7 @@
     [game.core.shuffling :refer [shuffle-into-deck]]
     [game.core.state :refer [new-state]]
     [game.core.steps.step :refer [complete! ->SimpleStep]]
+    [game.core.steps.active-step :refer [->ActiveStep]]
     [game.core.turns :refer [begin-turn]]
     [game.quotes :as quotes]
     [game.utils :refer [server-card]]))
@@ -69,10 +70,13 @@
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"
                    ["Keep" "Mulligan"]
-                   #(do (if (= (:value %) "Keep")
-                          (keep-hand state side nil)
-                          (mulligan state side nil))
-                        (complete! step))
+                   (fn [choice]
+                      (if (= "Keep" (:value choice))
+                        (keep-hand state side nil)
+                        (mulligan state side nil))
+                      (vswap! step update :chosen (fnil conj #{}) side)
+                      (when (= #{:corp :runner} (:chosen @step))
+                        (complete! step)))
                    {:prompt-type :mulligan})))
   (when (and (-> @state :corp :identity :title)
              (-> @state :runner :identity :title))
@@ -130,7 +134,7 @@
                 false)))))
       (queue-steps!
         state
-        [(->SimpleStep (fn [step] (init-hands state step) false))
+        [(->ActiveStep (fn set-up-phase-active-step [step state] (init-hands state step) false))
          (->SimpleStep (fn [_] (fake-checkpoint state)))
          (->SimpleStep (fn [_] (complete! set-up-step)))]))))
 

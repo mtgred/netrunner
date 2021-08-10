@@ -40,7 +40,7 @@
                                  (println "Deck id:" deck-id))))))
     (newline)
     (println "Updated" @cnt "decks")
-    (disconnect))
+    (disconnect)))
 
 (defn- get-all-users
   "Get all users in the database. Takes a list of fields."

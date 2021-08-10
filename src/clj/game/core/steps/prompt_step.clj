@@ -1,7 +1,7 @@
 (ns game.core.steps.prompt-step
   "Prompt Steps are steps that "
   (:require
-   [game.core.steps.step :refer [BaseStepSchema complete? continue! make-base-step validate-step]]
+   [game.core.steps.step :refer [BaseStepSchema complete? make-base-step validate-step]]
    [malli.core :as m]
    [malli.error :as me]
    [malli.util :as mu]))
@@ -28,17 +28,18 @@
 (def ButtonSchema
   [:map
    [:text string?]
-   [:command string?]
-   [:uuid uuid?]])
+   [:arg {:optional? true} string?]
+   [:command {:optional? true} string?]
+   [:uuid {:optional? true} uuid?]])
 
 (def PromptSchema
   [:map
-   [:msg string?]
+   [:prompt-title {:optional? true} string?]
+   [:prompt-text {:optional? true} string?]
    [:buttons [:* ButtonSchema]]
-   [:effect [:fn fn?]]
-   [:card map?]
-   [:prompt-type keyword?]
-   [:show-discard boolean?]])
+   [:card {:optional? true} map?]
+   [:prompt-type {:optional? true} keyword?]
+   [:show-discard {:optional? true} boolean?]])
 
 (def validate-prompt (m/validator PromptSchema))
 
@@ -65,14 +66,24 @@
     (doseq [player [:corp :runner]]
       (if (= player active-player)
         (let [prompt (add-default-commands-to-buttons (active-prompt state))]
-          (assert (validate-prompt prompt) "Active prompt isn't valid")
+          (assert (validate-prompt prompt)
+                  (str "Active prompt isn't valid "
+                       (->> prompt
+                            (m/explain PromptSchema)
+                            (me/humanize)
+                            (pr-str))))
           (swap! state assoc-in [player :prompt-state] prompt))
         (let [prompt (waiting-prompt state)]
-          (assert (validate-prompt prompt) "Waiting prompt isn't valid")
+          (assert (validate-prompt prompt)
+                  (str "Waiting prompt isn't valid "
+                       (->> prompt
+                            (m/explain PromptSchema)
+                            (me/humanize)
+                            (pr-str))))
           (swap! state assoc-in [player :prompt-state] prompt))))))
 
 (defn default-prompt-continue
-  [step & state]
+  [step state]
   (if (complete? step)
       (do (clear-prompt state)
           true)
