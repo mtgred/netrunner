@@ -25,9 +25,10 @@
 
 (defn get-current-ice
   [state]
-  (when-let [run (:run @state)]
-    (let [ice (:current-ice run)]
-      (or (get-card state ice) ice))))
+  (let [ice (get-in @state [:run :current-ice])]
+    (or (get-card state (-> @state :encounters peek :ice))
+        (get-card state ice)
+        ice)))
 
 (defn set-current-ice
   ([state]
@@ -531,7 +532,7 @@
          args (assoc args :subtype subtype :break n)
          break-req (req (and current-ice
                              (rezzed? current-ice)
-                             (= :encounter-ice (:phase run))
+                             (-> @state :encounters peek)
                              (if subtype
                                (or (= subtype "All")
                                    (has-subtype? current-ice subtype))
@@ -619,8 +620,7 @@
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
-              current-ice (when-not (get-in @state [:run :ended])
-                            (get-card state current-ice))
+              current-ice (get-card state current-ice)
               ;; match strength
               can-pump (fn [ability]
                          (when (:pump ability)
@@ -665,7 +665,7 @@
                    (assoc card :abilities
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
-                                   (= :encounter-ice (:phase run))
+                                   (-> @state :encounters peek)
                                    (or break-ability
                                        pump-ability))
                             (vec (concat abs

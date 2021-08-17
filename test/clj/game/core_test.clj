@@ -354,25 +354,47 @@
   [state]
   `(error-wrapper (run-next-phase-impl ~state)))
 
-(defn run-continue-impl
-  ([state] (run-continue-impl state :any))
+(defn encounter-continue-impl
+  ([state] (encounter-continue-impl state :any))
   ([state phase]
-   (let [run (:run @state)]
-     (is' (some? run) "There is a run happening")
+   (let [encounter (-> @state :encounters peek)]
+     (is' (some? encounter) "There is an encounter happening")
      (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
      (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
-     (is' (not (:no-action run)) "No player has pressed continue yet")
-     (is' (not= :access-server (:phase run))
-          "The run has not reached the server yet")
-     (when (and (some? run)
-                (empty? (get-in @state [:runner :prompt]))
-                (empty? (get-in @state [:corp :prompt]))
-                (not (:no-action run))
-                (not= :access-server (:phase run)))
+     (is' (not (:no-action encounter)) "No player has pressed continue yet")
+     (when (and (some? encounter)
+                (not (:no-action encounter)))
        (core/process-action "continue" state :corp nil)
        (core/process-action "continue" state :runner nil)
        (when-not (= :any phase)
          (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase"))))))
+
+(defmacro encounter-continue
+  "No action from corp and continue for runner to proceed in current encounter."
+  ([state] `(error-wrapper (encounter-continue-impl ~state :any)))
+  ([state phase] `(error-wrapper (encounter-continue-impl ~state ~phase))))
+
+(defn run-continue-impl
+  ([state] (run-continue-impl state :any))
+  ([state phase]
+   (if (-> @state :encounters peek)
+     (encounter-continue-impl state)
+     (let [run (:run @state)]
+       (is' (some? run) "There is a run happening")
+       (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
+       (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
+       (is' (not (:no-action run)) "No player has pressed continue yet")
+       (is' (not= :access-server (:phase run))
+            "The run has not reached the server yet")
+       (when (and (some? run)
+                  (empty? (get-in @state [:runner :prompt]))
+                  (empty? (get-in @state [:corp :prompt]))
+                  (not (:no-action run))
+                  (not= :access-server (:phase run)))
+         (core/process-action "continue" state :corp nil)
+         (core/process-action "continue" state :runner nil)
+         (when-not (= :any phase)
+           (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase")))))))
 
 (defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."

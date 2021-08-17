@@ -40,6 +40,21 @@
           cost
           additional-costs])))))
 
+(defn get-current-encounter
+  [state]
+  (-> @state :encounters peek))
+
+(defn update-current-encounter
+  [state key value]
+  (when-let [encounter (get-current-encounter state)]
+    (swap! state update :encounters #(conj (pop %)
+                                           (assoc encounter key value)))))
+
+(defn clear-encounter
+  [state]
+  (when (get-current-encounter state)
+    (swap! state update :encounters pop)))
+
 (defn set-phase
   [state phase]
   (swap! state assoc-in [:run :phase] phase)
@@ -54,11 +69,19 @@
 
 (defmulti start-next-phase
   (fn [state _ _]
-    (:next-phase (:run @state))))
+    (if-let [encounter (get-current-encounter state)]
+      (wait-for (end-of-phase-checkpoint state nil (make-eid state (:eid encounter))
+                                         :end-of-encounter
+                                         {:ice (get-current-ice state)})
+                (clear-encounter state)
+                (:next-phase (:run @state)))
+      (:next-phase (:run @state)))))
 
 (defmulti continue
   (fn [state _ _]
-    (:phase (:run @state))))
+    (if (get-current-encounter state)
+      :encounter-ice
+      (:phase (:run @state)))))
 
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
@@ -206,24 +229,23 @@
 
 (defn bypass-ice
   [state]
-  (swap! state assoc-in [:run :bypass] true))
+  (update-current-encounter state :bypass true))
 
 (defn can-bypass-ice
   [state side ice]
   (when-not (any-effects state side :bypass-ice false? ice)
-    (:bypass (:run @state))))
+    (:bypass (get-current-encounter state))))
 
 (defn encounter-ends
   [state side]
-  (swap! state assoc-in [:run :no-action] false)
-  (let [eid (:eid (:run @state))
+  (let [encounter (get-current-encounter state)
         ice (get-current-ice state)]
-    (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
+    (wait-for (end-of-phase-checkpoint state nil (make-eid state (:eid encounter))
                                        :end-of-encounter
                                        {:ice ice})
-              (when (get-in @state [:run :bypass])
-                (system-msg state :runner (str "bypasses " (:title ice)))
-                (swap! state dissoc-in [:run :bypass]))
+              (clear-encounter state)
+              (when (:bypass encounter)
+                (system-msg state :runner (str "bypasses " (:title ice))))
               (cond
                 (or (check-for-empty-server state)
                     (:ended (:run @state)))
@@ -231,13 +253,12 @@
                 (not (get-in @state [:run :next-phase]))
                 (pass-ice state side)))))
 
-(defmethod start-next-phase :encounter-ice
-  [state side _]
-  (set-phase state :encounter-ice)
+(defn encounter-ice
+  [state side eid ice]
+  (swap! state update :encounters conj {:eid eid
+                                        :ice ice})
   (check-auto-no-action state)
-  (let [eid (:eid (:run @state))
-        ice (get-current-ice state)
-        on-encounter (:on-encounter (card-def ice))
+  (let [on-encounter (:on-encounter (card-def ice))
         current-server (:server (:run @state))]
     (system-msg state :runner (str "encounters " (card-str state ice)))
     (when on-encounter
@@ -266,17 +287,25 @@
                     (not= current-server (:server (:run @state))))
                 (encounter-ends state side)))))
 
+(defmethod start-next-phase :encounter-ice
+  [state side _]
+  (set-phase state :encounter-ice)
+  (let [eid (:eid (:run @state))
+        ice (get-current-ice state)]
+    (encounter-ice state side eid ice)))
+
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out]}]
   (when (some? jack-out)
     ; TODO: Do not transmit this to the Corp (same with :no-action)
     (swap! state assoc-in [:run :jack-out-after-pass] jack-out))
-  (if (or (get-in @state [:run :no-action])
-          (get-in @state [:run :bypass]))
-    (encounter-ends state side)
-    (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :runner side)
-          (system-msg state side "has no further action")))))
+  (let [encounter (get-current-encounter state)]
+    (if (or (:no-action encounter)
+            (:bypass encounter))
+      (encounter-ends state side)
+      (do (update-current-encounter state :no-action side)
+          (when (= :runner side)
+            (system-msg state side "has no further action"))))))
 
 (defn pass-ice
   [state side]
@@ -657,27 +686,27 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [event (when (= :encounter-ice (get-in @state [:run :phase]))
-                :end-of-encounter)]
-    (queue-event state event {:ice (get-current-ice state)})
-    (swap! state assoc-in [:run :ended] true)
-    (let [run (:run @state)
-          eid (:eid run)]
-      (swap! state assoc-in [:runner :register :last-run] run)
-      (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-      (swap! state assoc-in [:runner :run-credit] 0)
-      (swap! state assoc :run nil)
-      (queue-event state :run-ends run)
-      (wait-for (checkpoint state nil (make-eid state eid) nil)
-                (unregister-floating-effects state side :end-of-encounter)
-                (unregister-floating-events state side :end-of-encounter)
-                (unregister-floating-effects state side :end-of-run)
-                (unregister-floating-events state side :end-of-run)
-                (unregister-floating-effects state side :end-of-next-run)
-                (unregister-floating-events state side :end-of-next-run)
-                (reset-all-ice state side)
-                (clear-run-register! state)
-                (run-end-fx state side run)))))
+  (swap! state assoc-in [:run :ended] true)
+  (when (get-current-encounter state)
+    (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
+  (let [run (:run @state)
+        eid (:eid run)]
+    (swap! state assoc-in [:runner :register :last-run] run)
+    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap! state assoc-in [:runner :run-credit] 0)
+    (swap! state assoc :run nil)
+    (queue-event state :run-ends run)
+    (wait-for (checkpoint state nil (make-eid state eid) nil)
+              (unregister-floating-effects state side :end-of-encounter)
+              (unregister-floating-events state side :end-of-encounter)
+              (unregister-floating-effects state side :end-of-run)
+              (unregister-floating-events state side :end-of-run)
+              (unregister-floating-effects state side :end-of-next-run)
+              (unregister-floating-events state side :end-of-next-run)
+              (clear-encounter state)
+              (reset-all-ice state side)
+              (clear-run-register! state)
+              (run-end-fx state side run))))
 
 (defn handle-end-run
   "Initiate run resolution."

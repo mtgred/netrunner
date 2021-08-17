@@ -186,6 +186,30 @@
       (is (= "Ice Wall" (:title (:ice (ffirst (core/turn-events state :corp :approach-ice))))))
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
       (is (last-log-contains? state "Runner approaches Ice Wall"))))
+  (testing "Changing phases fires end of encounter events"
+    (do-game
+     (new-game {:runner {:hand ["Corroder"]}
+                :corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Vanilla" "Ice Wall"]}})
+     (play-from-hand state :corp "Vanilla" "HQ")
+     (rez state :corp (get-ice state :hq 0))
+     (play-from-hand state :corp "Ice Wall" "Archives")
+     (rez state :corp (get-ice state :archives 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (run-on state :hq)
+     (run-continue state :encounter-ice)
+     (let [cor (get-program state 0)]
+       (card-ability state :runner cor 1)
+       (is (= "Vanilla" (-> @state :encounters peek :ice :title)))
+       (is (= 3 (:current-strength (refresh cor))))
+       (core/redirect-run state :corp "Archives" :approach-ice)
+       (run-next-phase state)
+       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
+       (run-continue state :encounter-ice)
+       (is (= 1 (-> @state :encounters count)))
+       (is (= "Ice Wall" (-> @state :encounters peek :ice :title)))
+       (is (= 2 (:current-strength (refresh cor)))))))
   (testing "cr 1.4 6.8.2c: any other priority window is closed normally"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -315,10 +339,10 @@
         (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
-        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (is (not (-> @state :encounters peek :no-action)) "no-action is not set yet")
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
-        (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
+        (is (= :runner (-> @state :encounters peek :no-action)) "Runner pressed Continue button")
         (core/continue state :corp nil)
         (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset"))))
@@ -333,10 +357,10 @@
         (rez state :corp iw)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
-        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (is (not (-> @state :encounters peek :no-action)) "no-action is not set yet")
         (core/continue state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
-        (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
+        (is (= :corp (-> @state :encounters peek :no-action)) "Corp pressed Continue button")
         (core/continue state :runner nil)
         (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))))

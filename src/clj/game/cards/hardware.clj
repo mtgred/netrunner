@@ -1704,7 +1704,7 @@
                                     :effect (req (wait-for (gain-tags state :runner 1)
                                                            (end-run state side eid card)))}
                        :unsuccessful {:msg (msg "bypass " (card-str state current-ice))
-                                      :effect (req (swap! state assoc-in [:run :bypass] true))}}}}}]})
+                                      :effect (req (bypass-ice state))}}}}}]})
 
 (defcard "Severnius Stim Implant"
   (letfn [(implant-fn [srv kw]
