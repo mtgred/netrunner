@@ -29,9 +29,11 @@
     (decks/update-deck (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}))
     nil))
 
-(defn deck-handler [{db :system/db
+(defn- api-handler [{db :system/db
                      scheme :scheme
-                     headers :headers}]
+                     headers :headers
+                     :as ctx}
+                    action]
   (if-let [api-key (get headers "x-jnet-api")]
     (let [api-uuid (try
                      (java.util.UUID/fromString api-key)
@@ -42,13 +44,50 @@
         (let [game (lobby/game-for-username username)
               allow-access (:api-access game)]
           (if (and game allow-access)
-            (if-let [deck (get-deck db username game)]
-              (let [host (str (name scheme) "://" (get headers "host"))]
-                (response 200 {:name (:name deck)
-                               :identity {:title (get-in deck [:identity :title])
-                                          :details (make-card-details host (:identity deck))}
-                               :cards (map #(make-card-info host %) (:cards deck))}))
-              (response 204 {:message "No deck selected"}))
+            (action username game ctx)
             (response 403 {:message "No game for key or API Access not enabled"})))
         (response 404 {:message "Unknown X-JNet-API key"})))
     (response 400 {:message "No X-JNet-API header specified"})))
+
+(defn decklist-handler [ctx]
+  (api-handler ctx
+               (fn [username game
+                    {db :system/db
+                     scheme :scheme
+                     headers :headers}]
+                 (if-let [deck (get-deck db username game)]
+                   (let [host (str (name scheme) "://" (get headers "host"))]
+                     (response 200 {:name (:name deck)
+                                    :identity {:title (get-in deck [:identity :title])
+                                               :details (make-card-details host (:identity deck))}
+                                    :cards (map #(make-card-info host %) (:cards deck))}))
+                   (response 204 {:message "No deck selected"})))))
+
+(defn- get-side [username state]
+  (cond
+    (= username (get-in @state [:corp :user :username])) :corp
+    (= username (get-in @state [:runner :user :username])) :runner
+    :else nil))
+
+(defn- area-handler [ctx area]
+  (api-handler ctx
+               (fn [username game ctx]
+                 (if-let [side (get-side username (:state game))]
+                   (let [stack (sort (map :code (get-in @(:state game) [side area])))]
+                     (response 200 {:cards stack}))
+                   (response 204 {:message "No deck selected"})))))
+
+(defn deck-handler [ctx]
+  (area-handler ctx :deck))
+
+(defn hand-handler [ctx]
+  (area-handler ctx :hand))
+
+(defn discard-handler [ctx]
+  (area-handler ctx :discard))
+
+(defn log-handler [ctx]
+  (api-handler ctx
+               (fn [username game ctx]
+                 (response 200 {:messages (:log @(:state game))}))))
+

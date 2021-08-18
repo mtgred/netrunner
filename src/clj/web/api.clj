@@ -61,7 +61,11 @@
            (POST "/login" [] auth/login-handler)
            (POST "/forgot" [] auth/forgot-password-handler)
            (POST "/reset/:token" [] auth/reset-password-handler)
-           (GET "/game/deck" [] game-api/deck-handler))
+           (GET "/game/decklist" [] game-api/decklist-handler)
+           (GET "/game/hand" [] game-api/hand-handler)
+           (GET "/game/discard" [] game-api/discard-handler)
+           (GET "/game/deck" [] game-api/deck-handler)
+           (GET "/game/log" [] game-api/log-handler))
 
 (defroutes admin-routes
            (POST "/admin/announce" [] admin/announce-create-handler)
