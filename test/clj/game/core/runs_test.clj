@@ -747,3 +747,53 @@
           (is (= "You accessed Advanced Assembly Lines." (:msg (prompt-map :runner))) "Accessed A")
           (click-prompt state :runner "No action")
           (is (empty? (:prompt (get-runner))) "No more accesses"))))))
+
+(deftest forced-encounters
+  (testing "Forced encounters during access continues access after completion"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Ice Wall" "Ganked!"]}})
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (play-from-hand state :corp "Ganked!" "R&D")
+     (let [iw (get-ice state :rd 0)]
+       (rez state :corp iw)
+       (take-credits state :corp)
+       (run-on state :rd)
+       (run-continue state)
+       (run-continue state)
+       (run-continue state)
+       (is (not (-> @state :encounters peek)) "The runner should not be encountering an ice before access")
+       (click-prompt state :runner "Unrezzed upgrade")
+       (click-prompt state :corp "Yes")
+       (click-card state :corp iw)
+       (is (-> @state :encounters peek) "The runner should be encountering an ice")
+       (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+       (is (not= (:msg (prompt-map :runner)) "You are encountering Ice Wall.") "Access paused while encounter is active")
+       (encounter-continue state)
+       (is (= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Continue access after encounter ends")
+       (click-prompt state :runner "No action"))))
+  (testing "Forced encounters during access that end the run stop further access"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Ice Wall" "Ganked!"]}})
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (play-from-hand state :corp "Ganked!" "R&D")
+     (let [iw (get-ice state :rd 0)]
+       (rez state :corp iw)
+       (take-credits state :corp)
+       (run-on state :rd)
+       (run-continue state)
+       (run-continue state)
+       (run-continue state)
+       (is (not (-> @state :encounters peek)) "The runner should not be encountering an ice before access")
+       (click-prompt state :runner "Unrezzed upgrade")
+       (click-prompt state :corp "Yes")
+       (click-card state :corp iw)
+       (is (-> @state :encounters peek) "The runner should be encountering an ice")
+       (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+       (is (not= (:msg (prompt-map :runner)) "You are encountering Ice Wall.") "Access paused while encounter is active")
+       (fire-subs state (refresh iw))
+       (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+       (is (true? (empty? (:run @state))) "The run has ended")
+       (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
+       (is (nil? (-> @state :stats :runner :access :cards)) "No cards were directly accessed (Ganked! is trashed before this increments)")))))

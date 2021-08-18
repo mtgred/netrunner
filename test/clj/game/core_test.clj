@@ -200,12 +200,10 @@
 
 (defn card-subroutine-impl
   [state _ card ability]
-  (let [ice (get-card state card)
-        run (:run @state)]
+  (let [ice (get-card state card)]
     (is' (rezzed? ice) (str (:title ice) " is active"))
-    (is' (some? run) "There is a run happening")
-    (is' (= :encounter-ice (:phase run)) "Subroutines can be resolved")
-    (when (and (rezzed? ice) (some? run) (= :encounter-ice (:phase run)))
+    (is' (-> @state :encounters peek) "Subroutines can be resolved")
+    (when (and (rezzed? ice) (-> @state :encounters peek))
       (core/process-action "subroutine" state :corp {:card ice :subroutine ability})
       true)))
 
@@ -359,10 +357,16 @@
   ([state phase]
    (let [encounter (-> @state :encounters peek)]
      (is' (some? encounter) "There is an encounter happening")
-     (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
-     (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
+     (is' (or (empty? (get-in @state [:runner :prompt]))
+              (= :encounter (-> @state :runner :prompt first :prompt-type))) "No open prompts for the runner")
+     (is' (or (empty? (get-in @state [:corp :prompt]))
+              (= :encounter (-> @state :corp :prompt first :prompt-type))) "No open prompts for the corp")
      (is' (not (:no-action encounter)) "No player has pressed continue yet")
      (when (and (some? encounter)
+                (or (empty? (get-in @state [:runner :prompt]))
+                    (= :encounter (-> @state :runner :prompt first :prompt-type)))
+                (or (empty? (get-in @state [:corp :prompt]))
+                    (= :encounter (-> @state :corp :prompt first :prompt-type)))
                 (not (:no-action encounter)))
        (core/process-action "continue" state :corp nil)
        (core/process-action "continue" state :runner nil)
@@ -447,12 +451,10 @@
 
 (defn fire-subs-impl
   [state card]
-  (let [ice (get-card state card)
-        run (:run @state)]
+  (let [ice (get-card state card)]
     (is' (rezzed? ice) (str (:title ice) " is active"))
-    (is' (some? run) "There is a run happening")
-    (is' (= :encounter-ice (:phase run)) "Subroutines can be resolved")
-    (when (and (rezzed? ice) (some? run)) (= :encounter-ice (:phase run))
+    (is' (-> @state :encounters peek) "Subroutines can be resolved")
+    (when (and (rezzed? ice) (-> @state :encounters peek))
       (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
 
 (defmacro fire-subs

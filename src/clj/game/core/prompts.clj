@@ -2,7 +2,8 @@
   (:require [clj-uuid :as uuid]
             [game.core.eid :refer [effect-completed make-eid]]
             [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
-            [game.core.toasts :refer [toast]]))
+            [game.core.toasts :refer [toast]]
+            [game.macros :refer [when-let*]]))
 
 (defn choice-parser
   [choices]
@@ -34,6 +35,7 @@
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
+               (= prompt-type :encounter)
                (:number choices)
                (:card-title choices)
                (#{:credit :counter} choices)
@@ -162,6 +164,20 @@
   [state side]
   (when-let [wait (first (filter #(= :waiting (:prompt-type %)) (-> @state side :prompt)))]
     (remove-from-prompt-queue state side wait)))
+
+(defn show-encounter-prompts
+  "Adds a dummy prompt to both side's prompt queues.
+   The prompt cannot be closed except by a later call to clear-encounter-prompts."
+  [state card]
+  (show-prompt state :runner card (str "You are encountering " (:title card)) nil nil {:prompt-type :encounter})
+  (show-prompt state :corp card (str "The Runner is encountering " (:title card)) nil nil {:prompt-type :encounter}))
+
+(defn clear-encounter-prompts
+  [state]
+  (when-let* [runner-encounter (first (filter #(= :encounter (:prompt-type %)) (-> @state :runner :prompt)))
+              corp-encounter (first (filter #(= :encounter (:prompt-type %)) (-> @state :corp :prompt)))]
+             (remove-from-prompt-queue state :runner runner-encounter)
+             (remove-from-prompt-queue state :corp corp-encounter)))
 
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,

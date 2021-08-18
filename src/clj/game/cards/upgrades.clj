@@ -526,26 +526,20 @@
    :access
    {:optional
     {:req (req (and (not (in-discard? card))
-                    (some ice? (all-active-installed state :corp))))
+                    (some #(and (ice? %)
+                                (protecting-same-server? card %)) 
+                          (all-active-installed state :corp))))
      :waiting-prompt "Corp to make a decision"
      :prompt "Trash Ganked! to force the Runner to encounter a piece of ice?"
      :yes-ability
      {:async true
-      :choices {:card #(and (ice? %)
-                            (installed? %)
-                            (rezzed? %))}
+      :choices {:req (req (and (ice? target)
+                               (installed? target)
+                               (rezzed? target)
+                               (protecting-same-server? card target)))}
       :msg (msg "to encounter " (:title target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
-                             (continue-ability
-                               state side
-                               {:optional
-                                {:player :runner
-                                 :waiting-prompt (str "Runner to decide about encountering " (:title target))
-                                 :prompt (str "You are encountering " (:title target)". Allow its subroutine to fire?")
-                                 :yes-ability
-                                 {:async true
-                                  :effect (effect (resolve-unbroken-subs! :corp eid target))}}}
-                               card targets)))}
+                             (force-ice-encounter state side eid target)))}
      :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter " (:title target))))}}}})
 
 (defcard "Georgia Emelyov"

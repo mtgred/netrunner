@@ -12,7 +12,7 @@
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+    [game.core.prompts :refer [clear-encounter-prompts clear-wait-prompt show-encounter-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
     [game.core.to-string :refer [card-str]]
@@ -52,8 +52,9 @@
 
 (defn clear-encounter
   [state]
-  (when (get-current-encounter state)
-    (swap! state update :encounters pop)))
+  (when-let [encounter (get-current-encounter state)]
+    (swap! state update :encounters pop)
+    (effect-completed state nil (:eid encounter))))
 
 (defn set-phase
   [state phase]
@@ -250,7 +251,9 @@
                 (or (check-for-empty-server state)
                     (:ended (:run @state)))
                 (handle-end-run state side)
-                (not (get-in @state [:run :next-phase]))
+                (and (not (get-current-encounter state))
+                     (not (get-in @state [:run :next-phase]))
+                     (not (get-in @state [:run :phase :access-server])))
                 (pass-ice state side)))))
 
 (defn encounter-ice
@@ -292,7 +295,14 @@
   (set-phase state :encounter-ice)
   (let [eid (:eid (:run @state))
         ice (get-current-ice state)]
-    (encounter-ice state side eid ice)))
+    (encounter-ice state side (make-eid state eid) ice)))
+
+(defn force-ice-encounter
+  [state side eid ice]
+  (show-encounter-prompts state ice)
+  (wait-for (encounter-ice state side (make-eid state eid) ice)
+            (clear-encounter-prompts state)
+            (effect-completed state side eid)))
 
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out]}]
@@ -697,13 +707,13 @@
     (swap! state assoc :run nil)
     (queue-event state :run-ends run)
     (wait-for (checkpoint state nil (make-eid state eid) nil)
+              (clear-encounter state)
               (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
               (unregister-floating-effects state side :end-of-run)
               (unregister-floating-events state side :end-of-run)
               (unregister-floating-effects state side :end-of-next-run)
               (unregister-floating-events state side :end-of-next-run)
-              (clear-encounter state)
               (reset-all-ice state side)
               (clear-run-register! state)
               (run-end-fx state side run))))
@@ -714,7 +724,9 @@
   (if (and (empty? (get-in @state [:runner :prompt]))
            (empty? (get-in @state [:corp :prompt])))
     (run-cleanup state side)
-    (swap! state assoc-in [:run :ended] true)))
+    (do (swap! state assoc-in [:run :ended] true)
+        (when (get-current-encounter state)
+          (encounter-ends state side)))))
 
 (defn total-cards-accessed
   ([run]

@@ -393,17 +393,18 @@
   ([state side eid card] (access-card state side eid card (:title card) nil))
   ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
-    ;; Indicate that we are in the access step.
-   (swap! state assoc :access card)
-    ;; Reset counters for increasing costs of trash, steal, and access.
-   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
-   (when (:run @state)
-     (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                    (second (get-zone card)))]
-       (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
-   ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-   (wait-for (trigger-event-sync state side :pre-access-card card)
-             (access-pay state side eid card title args))))
+   (when-not (-> @state :run :ended)
+     ;; Indicate that we are in the access step.
+     (swap! state assoc :access card)
+     ;; Reset counters for increasing costs of trash, steal, and access.
+     (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
+     (when (:run @state)
+       (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                      (second (get-zone card)))]
+         (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+     ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+     (wait-for (trigger-event-sync state side :pre-access-card card)
+               (access-pay state side eid card title args)))))
 
 
 

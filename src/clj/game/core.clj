@@ -646,8 +646,10 @@
   [game.core.prompts
    cancellable
    choice-parser
+   clear-encounter-prompts
    clear-wait-prompt
    resolve-select
+   show-encounter-prompts
    show-prompt
    show-prompt-with-dice
    show-select
@@ -687,6 +689,7 @@
    encounter-ends
    end-run
    end-run-prevent
+   force-ice-encounter
    gain-next-run-credits
    gain-run-credits
    handle-end-run
