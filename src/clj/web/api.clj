@@ -19,6 +19,7 @@
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
+            [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.response :refer [resource-response]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]))
@@ -60,7 +61,9 @@
            (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
            (POST "/forgot" [] auth/forgot-password-handler)
-           (POST "/reset/:token" [] auth/reset-password-handler)
+           (POST "/reset/:token" [] auth/reset-password-handler))
+
+(defroutes api-routes
            (GET "/game/decklist" [] game-api/decklist-handler)
            (GET "/game/hand" [] game-api/hand-handler)
            (GET "/game/discard" [] game-api/discard-handler)
@@ -123,6 +126,10 @@
   (wrap-routes private-routes wrap-anti-forgery)
   (wrap-routes public-CSRF-routes wrap-anti-forgery)
   public-routes
+  (-> api-routes
+      (wrap-cors :access-control-allow-origin [#".*"]
+                 :access-control-allow-methods [:get]
+                 :access-control-allow-headers #{"X-JNet-API" "accept" "accept-encoding" "accept-language" "authorization" "content-type" "origin"}))
   (route/resources "/")
   missing-resource-routes
   (wrap-routes public-CSRF-page-routes wrap-anti-forgery)
