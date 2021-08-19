@@ -21,6 +21,7 @@
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.response :refer [resource-response]]
+            [puppetlabs.ring-middleware.core :refer [wrap-add-cache-headers]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]))
 
@@ -129,7 +130,9 @@
   (-> api-routes
       (wrap-cors :access-control-allow-origin [#".*"]
                  :access-control-allow-methods [:get]
-                 :access-control-allow-headers #{"X-JNet-API" "accept" "accept-encoding" "accept-language" "authorization" "content-type" "origin"}))
+                 :access-control-allow-headers #{"X-JNet-API" "accept" "accept-encoding" "accept-language" "authorization" "content-type" "origin"})
+      (wrap-add-cache-headers))
+
   (route/resources "/")
   missing-resource-routes
   (wrap-routes public-CSRF-page-routes wrap-anti-forgery)
