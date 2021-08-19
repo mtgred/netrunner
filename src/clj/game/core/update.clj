@@ -1,9 +1,17 @@
 (ns game.core.update
-  (:require [game.core.card :refer [get-card]]
+  (:require [game.core.card :refer [get-card ice?]]
             [game.core.finding :refer [get-scoring-owner]]
-            [game.utils :refer [to-keyword]]))
+            [game.utils :refer [to-keyword same-card?]]))
 
 (declare update-hosted!)
+
+(defn update-encounters
+  "If the given ice is in the encounters stack, update the encounter's ice to match."
+  [encounters ice]
+  (mapv #(if (same-card? (:ice %) ice)
+           (assoc % :ice ice)
+           %)
+        encounters))
 
 (defn update!
   "Updates the state so that its copy of the given card matches the argument given."
@@ -23,6 +31,9 @@
               [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
           (when (not-empty tail)
             (swap! state assoc-in z (vec (concat head [card] (rest tail))))
+            (when (and (ice? card)
+                       (-> @state :encounters peek))
+              (swap! state update :encounters update-encounters card))
             card))))
 
 (defn update-hosted!

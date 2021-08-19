@@ -10,7 +10,7 @@
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint make-pending-event pay queue-event resolve-ability unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice set-current-ice]]
+    [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [clear-encounter-prompts clear-wait-prompt show-encounter-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -47,8 +47,7 @@
 (defn update-current-encounter
   [state key value]
   (when-let [encounter (get-current-encounter state)]
-    (swap! state update :encounters #(conj (pop %)
-                                           (assoc encounter key value)))))
+    (swap! state update :encounters #(conj (pop %) (assoc encounter key value)))))
 
 (defn clear-encounter
   [state]
@@ -252,9 +251,11 @@
                     (:ended (:run @state)))
                 (handle-end-run state side)
                 (and (not (get-current-encounter state))
+                     (:run @state)
                      (not (get-in @state [:run :next-phase]))
-                     (not (get-in @state [:run :phase :access-server])))
-                (pass-ice state side)))))
+                     (not (= :access-server (get-in @state [:run :phase]))))
+                (pass-ice state side)
+                :else (reset-all-subs! state ice)))))
 
 (defn encounter-ice
   [state side eid ice]

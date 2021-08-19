@@ -10,6 +10,7 @@
    effects
    effect-completed
    eid
+   encounters
    end-run
    end-time
    end-turn
@@ -67,5 +68,6 @@
      :stats {:time {:started now}}
      :start-date now
      :options options
+     :encounters []
      :corp corp
      :runner runner}))

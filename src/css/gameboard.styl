@@ -79,6 +79,19 @@
     .card.selected
         box-shadow(0 0 1px 2px green-bright)
 
+    @keyframes encountered-card {
+        0% {
+            box-shadow: 0 0 10px 4px red-light, 0px 0px 12px 12px lighten(alpha(red-light, 30%), 80%)
+        }
+        100% {
+            box-shadow: 0 0 1px 2px red-light, 0px 0px 0px 0px lighten(alpha(red-light, 30%), 80%)
+        }
+    }
+
+    .card.encountered
+        animation: encountered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
+        border-color: red-light
+
     @keyframes hovered-card {
         0% {
             box-shadow: 0 0 10px 4px blue-light, 0px 0px 12px 12px lighten(alpha(blue-light, 30%), 80%)
@@ -87,6 +100,7 @@
             box-shadow: 0 0 1px 2px blue-light, 0px 0px 0px 0px lighten(alpha(blue-light, 30%), 80%)
         }
     }
+
     .card.hovered
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
         border-color: blue-light

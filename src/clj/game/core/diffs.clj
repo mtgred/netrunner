@@ -246,11 +246,20 @@
   (when-let [run (:run @state)]
     (select-keys run (run-keys))))
 
+(defn encounter-keys []
+  [:ice
+   :no-action])
+
+(defn encounters-summary
+  [encounters]
+  (mapv #(select-keys % (encounter-keys)) encounters))
+
 (defn state-keys []
   [:active-player
    :angel-arena-info
    :corp
    :corp-phase-12
+   :encounters
    :end-turn
    :gameid
    :log
@@ -274,7 +283,8 @@
 (defn strip-state
   [state]
   (-> (select-keys @state (state-keys))
-      (assoc :run (run-summary state))))
+      (assoc :run (run-summary state))
+      (update :encounters encounters-summary)))
 
 (defn state-summary
   [stripped-state state side]
