@@ -24,7 +24,7 @@
   (fake-checkpoint state)
   ;; End the run if running an empty remote
   (when (or (check-for-empty-server state)
-            (:ended (:run @state)))
+            (:ended (:end-run @state)))
     (handle-end-run state :corp)
     (fake-checkpoint state)))
 

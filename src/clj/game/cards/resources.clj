@@ -2458,7 +2458,7 @@
                             (wait-for (resolve-ability state :corp (make-eid state {:source current-ice :source-type :subroutine})
                                                        (:sub-effect sub) current-ice nil)
                                       (if (and (:run @state)
-                                               (not (:ended (:run @state)))
+                                               (not (:ended (:end-run @state)))
                                                (rest unbroken-subs))
                                         (continue-ability
                                           state side

@@ -393,7 +393,7 @@
   ([state side eid card] (access-card state side eid card (:title card) nil))
   ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
-   (when-not (-> @state :run :ended)
+   (when-not (-> @state :run :prevent-access)
      ;; Indicate that we are in the access step.
      (swap! state assoc :access card)
      ;; Reset counters for increasing costs of trash, steal, and access.

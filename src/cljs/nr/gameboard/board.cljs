@@ -1344,7 +1344,8 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))])
       [:hr]])
-   [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))]
+   (when @run
+     [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
 
    (cond
      (= "approach-ice" (:phase @run))
@@ -1370,19 +1371,32 @@
       (:corp-phase-43 @run)
       #(send-command "corp-phase-43")])
 
-   [cond-button
-    (let [next-phase (:next-phase @run)]
-      (if (or next-phase (zero? (:position @run)))
-        (tr [:game.no-further "No further actions"])
-        (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))))
-    (and (not= "initiation" (:phase @run))
-         (not= "pass-ice" (:phase @run))
-         (or (not= "access-server" (:phase @run))
-             (peek @encounters))
-         (not= "corp" (:no-action @run)))
-    #(send-command "continue")]
+   (if (peek @encounters)
+     ;;Encounter continue button
+     (let [pass-ice? (and (= "encounter-ice" (:phase @run))
+                          (= 1 (count @encounters)))]
+       [cond-button
+        (if pass-ice?
+          (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))
+          (tr [:game.continue "Continue"]))
+        (not= "corp" (:no-action (peek @encounters)))
+        #(send-command "continue")])
+     ;;Non-encounter continue button
+     [cond-button
+      (let [next-phase (:next-phase @run)]
+        (if (or next-phase
+                (zero? (:position @run)))
+          (tr [:game.no-further "No further actions"])
+          (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))))
+      (and (not= "initiation" (:phase @run))
+           (not= "pass-ice" (:phase @run))
+           (not= "access-server" (:phase @run))
+           (not= "corp" (:no-action @run)))
+      #(send-command "continue")])
 
-   (when (and (not= "approach-server" (:phase @run))
+   (when (and @run
+              (<= (count @encounters) 1)
+              (not= "approach-server" (:phase @run))
               (not= "corp-phase-43" (:phase @run))
               (not= "access-server" (:phase @run)))
      [checkbox-button
@@ -1404,7 +1418,9 @@
                  :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
            (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))])
         [:hr]])
-     [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)]
+     (when @run
+       [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
+
      (cond
        (:next-phase @run)
        [cond-button
@@ -1447,14 +1463,15 @@
           #(send-msg (r/atom {:msg "/undo-click"})))])
 
      (when (peek @encounters)
-       [cond-button
-        (if (and (= "encounter-ice" (:phase @run))
-                 (= 1 (count @encounters)))
-          (tr [:game.pass-continue "Pass ice and continue"])
-          (tr [:game.continue "Continue"]))
-        (or (not= "runner" (:no-action (peek @encounters)))
-            (:jack-out-after-pass @run))
-        #(send-command "continue" {:jack-out false})])
+       (let [pass-ice? (and (= "encounter-ice" (:phase @run))
+                            (= 1 (count @encounters)))]
+         [cond-button
+          (if pass-ice?
+            (tr [:game.pass-continue "Pass ice and continue"])
+            (tr [:game.continue "Continue"]))
+          (or (not= "runner" (:no-action (peek @encounters)))
+              (:jack-out-after-pass @run))
+          #(send-command "continue" (when pass-ice? {:jack-out false}))]))
 
      (when (and (peek @encounters)
                 (= "encounter-ice" (:phase @run)))
@@ -1686,7 +1703,8 @@
             (and @prompt-state
                  (not= "encounter" @prompt-type))
             [prompt-div me @prompt-state]
-            @run
+            (or @run
+                (peek @encounters))
             [run-div side run encounters]
             :else
             [basic-actions button-pane-args])])})))

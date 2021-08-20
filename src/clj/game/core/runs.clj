@@ -164,7 +164,10 @@
 (defn check-auto-no-action
   "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
   [state]
-  (when (and (get-in @state [:run :corp-auto-no-action])
+  (when (and (:run @state)
+             (not (= :access-server (get-in @state [:run :phase])))
+             (<= (count (:encounters @state)) 1)
+             (get-in @state [:run :corp-auto-no-action])
              (rezzed? (get-current-ice state)))
     (continue state :corp nil)))
 
@@ -196,15 +199,15 @@
                           ;; * run ends
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
-                                        (or (:ended (:run @state))
+                                        (or (:ended (:end-run @state))
                                             (check-for-empty-server state)))})
               (if (get-in @state [:run :jack-out-after-pass])
                 (wait-for (jack-out state :runner (make-eid state eid))
                           (when (or (check-for-empty-server state)
-                                    (:ended (:run @state)))
+                                    (:ended (:end-run @state)))
                             (handle-end-run state side)))
                 (when (or (check-for-empty-server state)
-                          (:ended (:run @state)))
+                          (:ended (:end-run @state)))
                   (handle-end-run state side))))))
 
 (defmethod continue :approach-ice
@@ -219,7 +222,7 @@
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
                 (cond
                   (or (check-for-empty-server state)
-                      (:ended (:run @state)))
+                      (:ended (:end-run @state)))
                   (handle-end-run state side)
                   (rezzed? (get-current-ice state))
                   (do (set-next-phase state :encounter-ice)
@@ -248,7 +251,7 @@
                 (system-msg state :runner (str "bypasses " (:title ice))))
               (cond
                 (or (check-for-empty-server state)
-                    (:ended (:run @state)))
+                    (:ended (:end-run @state)))
                 (handle-end-run state side)
                 (and (not (get-current-encounter state))
                      (:run @state)
@@ -277,14 +280,14 @@
                           ;; * run is moved to another server
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
-                                        (or (:ended (:run @state))
+                                        (or (:ended (:end-run @state))
                                             (can-bypass-ice state side (get-card state ice))
                                             (not (rezzed? (get-card state ice)))
                                             (not= current-server (:server (:run @state)))
                                             (check-for-empty-server state)))})
               (cond
                 (or (check-for-empty-server state)
-                    (:ended (:run @state)))
+                    (:ended (:end-run @state)))
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
                     (not (rezzed? (get-card state ice)))
@@ -303,6 +306,9 @@
   (show-encounter-prompts state ice)
   (wait-for (encounter-ice state side (make-eid state eid) ice)
             (clear-encounter-prompts state)
+            (when (and (not (:run @state))
+                       (empty? (:encounters @state)))
+              (run-cleanup state :runner))
             (effect-completed state side eid)))
 
 (defmethod continue :encounter-ice
@@ -340,14 +346,14 @@
                           ;; * ice moves
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
-                                        (or (:ended (:run @state))
+                                        (or (:ended (:end-run @state))
                                             (not= current-server (:server (:run @state)))
                                             (not (same-card? ice (nth (get-run-ices state) (dec pos) nil)))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
               (cond
                 (or (check-for-empty-server state)
-                    (:ended (:run @state)))
+                    (:ended (:end-run @state)))
                 (handle-end-run state side)
                 (not (get-in @state [:run :next-phase]))
                 (if (pos? (get-in @state [:run :position]))
@@ -378,18 +384,18 @@
                           ;; * position is no longer 0
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
-                                        (or (:ended (:run @state))
+                                        (or (:ended (:end-run @state))
                                             (pos? (:position (:run @state)))
                                             (check-for-empty-server state)))})
               (cond
                 (or (check-for-empty-server state)
-                    (:ended (:run @state)))
+                    (:ended (:end-run @state)))
                 (handle-end-run state side)
                 (and (not (get-in @state [:run :next-phase]))
                      (get-in @state [:run :jack-out-after-pass]))
                 (wait-for (jack-out state :runner (make-eid state))
                           (when (or (check-for-empty-server state)
-                                    (:ended (:run @state)))
+                                    (:ended (:end-run @state)))
                             (handle-end-run state side)))))))
 
 (defmethod continue :approach-server
@@ -411,7 +417,7 @@
   [state side _]
   (if-not (get-in @state [:run :no-action])
     (swap! state assoc-in [:run :no-action] side)
-    (if-not (:ended (:run @state))
+    (if-not (:ended (:end-run @state))
       (do (set-next-phase state :access-server)
           (start-next-phase state side nil))
       (handle-end-run state side))))
@@ -544,7 +550,7 @@
 (defn complete-run
   "This does all of the access related stuff"
   [state side]
-  (if (:ended (:run @state))
+  (if (:ended (:end-run @state))
     (run-cleanup state :runner)
     (let [the-run (:run @state)
           server (:server the-run)
@@ -613,7 +619,8 @@
 (defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
   ([state side eid]
-   (if (get-in @state [:run :successful])
+   (if (or (not (:run @state))
+           (get-in @state [:run :successful]))
      (do (handle-end-run state side)
          (effect-completed state side eid))
      (register-unsuccessful-run state side eid))))
@@ -697,16 +704,18 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (swap! state assoc-in [:run :ended] true)
+  (swap! state assoc-in [:end-run :ended] true)
   (when (get-current-encounter state)
     (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
   (let [run (:run @state)
         eid (:eid run)]
-    (swap! state assoc-in [:runner :register :last-run] run)
-    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-    (swap! state assoc-in [:runner :run-credit] 0)
-    (swap! state assoc :run nil)
-    (queue-event state :run-ends run)
+    (when run
+      (swap! state assoc-in [:runner :register :last-run] run)
+      (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+      (swap! state assoc-in [:runner :run-credit] 0)
+      (swap! state assoc :run nil)
+      (queue-event state :run-ends run))
+    (swap! state dissoc-in [:end-run :ended])
     (wait-for (checkpoint state nil (make-eid state eid) nil)
               (clear-encounter state)
               (unregister-floating-effects state side :end-of-encounter)
@@ -722,10 +731,13 @@
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if (and (empty? (get-in @state [:runner :prompt]))
+  (if (and (:run @state)
+           (empty? (get-in @state [:runner :prompt]))
            (empty? (get-in @state [:corp :prompt])))
     (run-cleanup state side)
-    (do (swap! state assoc-in [:run :ended] true)
+    (do (swap! state assoc-in [:end-run :ended] true)
+        (when (:run @state)
+          (prevent-access state side))
         (when (get-current-encounter state)
           (encounter-ends state side)))))
 

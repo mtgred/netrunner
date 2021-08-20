@@ -261,8 +261,9 @@
             (if (installed? ice)
               (rezzed? ice)
               true)
-            (:run @state)
-            (not (get-in @state [:run :ended])))
+            (or (:run @state)
+                (-> @state :encounters peek))
+            (not (get-in @state [:end-run :ended])))
      (let [sub (first subroutines)]
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
                  (resolve-next-unbroken-sub state side eid
