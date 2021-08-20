@@ -776,7 +776,7 @@
        (is (= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Continue access after encounter ends")
        (click-prompt state :runner "No action")
        (is (empty? (:run @state)) "The run has ended"))))
-  (testing "Forced encounters during access that end the run stop further access"
+  (testing "Central - Forced encounters during access that end the run stop further access"
     (do-game
      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                        :hand ["Ice Wall" "Ganked!"]}})
@@ -802,6 +802,29 @@
        (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
        (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
        (is (nil? (-> @state :stats :runner :access :cards)) "No cards were directly accessed (Ganked! is trashed before this increments)"))))
+  (testing "Remote - Forced encounters during access that end the run stop further access"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Ganked!" "PAD Campaign"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Ganked!" "Server 1")
+      (play-from-hand state :corp "PAD Campaign" "Server 1")
+      (take-credits state :corp)
+      (let [iw (get-ice state :remote1 0)]
+        (rez state :corp iw)
+        (run-on state :remote1)
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (is (not (-> @state :encounters peek)) "The runner should not be encountering an ice before access")
+        (click-card state :runner (get-content state :remote1 0))
+        (click-prompt state :corp "Yes")
+        (click-card state :corp iw)
+        (is (-> @state :encounters peek) "The runner should be encountering an ice")
+        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+        (fire-subs state (refresh iw))
+        (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+        (is (empty? (:run @state)) "The run has ended"))))
   (testing "Ice breakers and broken subroutines reset after a forced encounter ends"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

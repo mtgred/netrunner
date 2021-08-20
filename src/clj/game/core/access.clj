@@ -393,20 +393,17 @@
   ([state side eid card] (access-card state side eid card (:title card) nil))
   ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
-   (when-not (-> @state :run :prevent-access)
-     ;; Indicate that we are in the access step.
-     (swap! state assoc :access card)
-     ;; Reset counters for increasing costs of trash, steal, and access.
-     (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
-     (when (:run @state)
-       (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                      (second (get-zone card)))]
-         (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
-     ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-     (wait-for (trigger-event-sync state side :pre-access-card card)
-               (access-pay state side eid card title args)))))
-
-
+   ;; Indicate that we are in the access step.
+   (swap! state assoc :access card)
+   ;; Reset counters for increasing costs of trash, steal, and access.
+   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
+   (when (:run @state)
+     (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                    (second (get-zone card)))]
+       (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+   ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+   (wait-for (trigger-event-sync state side :pre-access-card card)
+             (access-pay state side eid card title args))))
 
 (defn set-only-card-to-access
   [state side card]
@@ -432,7 +429,8 @@
 
 (defmethod must-continue? :remote
   [state already-accessed-fn access-amount args]
-  (and (pos? (:total access-amount))
+  (and (not (get-in @state [:run :prevent-access]))
+       (pos? (:total access-amount))
        (pos? (->> (get-in @state [:corp :servers (first (:server args)) :content])
                   get-all-content
                   (remove already-accessed-fn)
@@ -504,7 +502,8 @@
 
 (defmethod must-continue? :rd
   [state already-accessed-fn access-amount {:keys [no-root] :as args}]
-  (and (pos? (:total access-amount))
+  (and (not (get-in @state [:run :prevent-access]))
+       (pos? (:total access-amount))
        (pos? (count (concat (let [deck (access-cards-from-rd state)
                                   card-to-see (first (drop-while already-accessed-fn deck))]
                               (when card-to-see
@@ -655,7 +654,8 @@
 
 (defmethod must-continue? :hq
   [state already-accessed-fn access-amount {:keys [no-root] :as args}]
-  (and (pos? (:total access-amount))
+  (and (not (get-in @state [:run :prevent-access]))
+       (pos? (:total access-amount))
        (pos? (->> (concat (get-in @state [:corp :hand])
                           (when-not no-root
                             (get-in @state [:corp :servers :hq :content])))
@@ -881,7 +881,8 @@
 
 (defmethod must-continue? :archives
   [state already-accessed-fn access-amount {:keys [no-root] :as args}]
-  (and (pos? (:total access-amount))
+  (and (not (get-in @state [:run :prevent-access]))
+       (pos? (:total access-amount))
        (pos? (->> (concat (get-in @state [:corp :discard])
                           (when-not no-root
                             (get-in @state [:corp :servers :archives :content])))
