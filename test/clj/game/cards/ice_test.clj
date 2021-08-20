@@ -2771,6 +2771,48 @@
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh ko)))))))))
 
+(deftest konjin
+  (testing "Return to encountering Konjin after forced encounter"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Konjin"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [konjin (get-ice state :rd 0)
+            iw (get-ice state :hq 0)]
+        (rez state :corp konjin)
+        (rez state :corp iw)
+        (run-on state :rd)
+        (run-continue state)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Konjin")
+        (is (= "Choose an amount to spend for Konjin" (:msg (prompt-map :corp))) "Psi Game")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
+        (click-card state :corp iw)
+        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+        (run-continue state :rd)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be back to encountering Konjin"))))
+  (testing "End run completely if forced encounter ends the run"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Konjin"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [konjin (get-ice state :rd 0)
+            iw (get-ice state :hq 0)]
+        (rez state :corp konjin)
+        (rez state :corp iw)
+        (run-on state :rd)
+        (run-continue state)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Konjin")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp iw)
+        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+        (fire-subs state (refresh iw))
+        (is (not (:run @state)) "The run should have ended")))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game

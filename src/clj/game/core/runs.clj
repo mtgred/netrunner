@@ -69,13 +69,7 @@
 
 (defmulti start-next-phase
   (fn [state _ _]
-    (if-let [encounter (get-current-encounter state)]
-      (wait-for (end-of-phase-checkpoint state nil (make-eid state (:eid encounter))
-                                         :end-of-encounter
-                                         {:ice (get-current-ice state)})
-                (clear-encounter state)
-                (:next-phase (:run @state)))
-      (:next-phase (:run @state)))))
+    (:next-phase (:run @state))))
 
 (defmulti continue
   (fn [state _ _]
@@ -180,8 +174,31 @@
          (empty? (get-in @state [:corp :servers server :content]))
          (empty? (get-in @state [:corp :servers server :ices])))))
 
+(defn encounter-ends
+  [state side]
+  (let [encounter (get-current-encounter state)
+        ice (get-current-ice state)]
+    (wait-for (end-of-phase-checkpoint state nil (make-eid state (:eid encounter))
+                                       :end-of-encounter
+                                       {:ice ice})
+              (clear-encounter state)
+              (when (:bypass encounter)
+                (system-msg state :runner (str "bypasses " (:title ice))))
+              (cond
+                (or (check-for-empty-server state)
+                    (:ended (:end-run @state)))
+                (handle-end-run state side)
+                (and (not (get-current-encounter state))
+                     (:run @state)
+                     (not (get-in @state [:run :next-phase]))
+                     (not (= :access-server (get-in @state [:run :phase]))))
+                (pass-ice state side)
+                :else (reset-all-subs! state ice)))))
+
 (defmethod start-next-phase :approach-ice
   [state side _]
+  (when (get-current-encounter state)
+    (encounter-ends state side))
   (set-phase state :approach-ice)
   (set-current-ice state)
   (reset-all-ice state side)
@@ -238,27 +255,6 @@
   [state side ice]
   (when-not (any-effects state side :bypass-ice false? ice)
     (:bypass (get-current-encounter state))))
-
-(defn encounter-ends
-  [state side]
-  (let [encounter (get-current-encounter state)
-        ice (get-current-ice state)]
-    (wait-for (end-of-phase-checkpoint state nil (make-eid state (:eid encounter))
-                                       :end-of-encounter
-                                       {:ice ice})
-              (clear-encounter state)
-              (when (:bypass encounter)
-                (system-msg state :runner (str "bypasses " (:title ice))))
-              (cond
-                (or (check-for-empty-server state)
-                    (:ended (:end-run @state)))
-                (handle-end-run state side)
-                (and (not (get-current-encounter state))
-                     (:run @state)
-                     (not (get-in @state [:run :next-phase]))
-                     (not (= :access-server (get-in @state [:run :phase]))))
-                (pass-ice state side)
-                :else (reset-all-subs! state ice)))))
 
 (defn encounter-ice
   [state side eid ice]
@@ -371,6 +367,8 @@
   (let [eid (:eid (:run @state))
         no-ice? (zero? (count (get-run-ices state)))
         initiation-phase? (= :initiation (get-in @state [:run :phase]))]
+    (when (get-current-encounter state)
+      (encounter-ends state side))
     (set-current-ice state nil)
     (set-phase state :approach-server)
     (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
@@ -429,6 +427,14 @@
     (handle-end-run state side)
     (successful-run state :runner)))
 
+(defmethod start-next-phase :default
+  [state _ _]
+  (when-not (= :access-server (-> @state :run :phase))
+    (.println *err* (with-out-str
+                      (print-stack-trace
+                        (Exception. "no phase found and not accessing cards")
+                        2500)))))
+
 (defmethod continue :default
   [state _ _]
   (.println *err* (with-out-str
@@ -439,20 +445,22 @@
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))
   ([state side server phase]
-   (let [dest (server->zone state server)
-         num-ice (count (get-in (:corp @state) (conj dest :ices)))
-         phase (if (= phase :approach-ice)
-                 (if (pos? num-ice)
-                   :approach-ice
-                   :approach-server)
-                 phase)]
-     (swap! state update :run
-            assoc
-            :position num-ice
-            :server [(second dest)])
-     (when phase
-       (set-next-phase state phase)))
-   (set-current-ice state)))
+   (when (and (:run @state)
+              (not= :access-server (-> @state :run :phase)))
+     (let [dest (server->zone state server)
+           num-ice (count (get-in (:corp @state) (conj dest :ices)))
+           phase (if (= phase :approach-ice)
+                   (if (pos? num-ice)
+                     :approach-ice
+                     :approach-server)
+                   phase)]
+       (swap! state update :run
+              assoc
+              :position num-ice
+              :server [(second dest)])
+       (when phase
+         (set-next-phase state phase)))
+     (set-current-ice state))))
 
 ;; Non timing stuff
 (defn gain-run-credits

@@ -1989,13 +1989,13 @@
              :effect (effect (reset-variable-subs card 0 nil))}]})
 
 (defcard "Konjin"
-  {:implementation "Encounter effect is manual"
-   :on-encounter (do-psi {:label "Force the runner to encounter another ice"
+  {:on-encounter (do-psi {:label "Force the runner to encounter another ice"
                           :prompt "Choose a piece of ice"
-                          :choices {:card ice?
+                          :choices {:card #(and (ice? %)
+                                                (rezzed? %))
                                     :not-self true}
                           :msg (msg "force the Runner to encounter " (card-str state target))
-                          :effect (req (effect-completed state side eid))})})
+                          :effect (req (force-ice-encounter state side eid target))})})
 
 (defcard "Lab Dog"
   {:subroutines [{:label "Force the Runner to trash an installed piece of hardware"
@@ -2317,6 +2317,7 @@
   {:subroutines [(do-psi {:label "Redirect the run to another server"
                           :player :corp
                           :prompt "Choose a server"
+                          :waiting-prompt "Corp to choose a server"
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                           :msg (msg "redirect the run to " target
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")

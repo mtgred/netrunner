@@ -521,8 +521,7 @@
              :effect (effect (mill :corp eid :runner 2))}]})
 
 (defcard "Ganked!"
-  {:implementation "Forced encounter is completely manual. All breaking and costs must be done manually"
-   :flags {:rd-reveal (req true)}
+  {:flags {:rd-reveal (req true)}
    :access
    {:optional
     {:req (req (and (not (in-discard? card))
@@ -537,10 +536,10 @@
                                (installed? target)
                                (rezzed? target)
                                (protecting-same-server? card target)))}
-      :msg (msg "force the runner to encounter " (:title target))
+      :msg (msg "force the runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter " (:title target))))}}}})
+     :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter a piece of ice")))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run

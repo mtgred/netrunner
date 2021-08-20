@@ -1473,8 +1473,8 @@
               (:jack-out-after-pass @run))
           #(send-command "continue" (when pass-ice? {:jack-out false}))]))
 
-     (when (and (peek @encounters)
-                (= "encounter-ice" (:phase @run)))
+     (when (and (= "encounter-ice" (:phase @run))
+                (= 1 (count @encounters)))
        [cond-button
         (tr [:game.pass-jack "Pass ice and jack out"])
         (and (not (:cannot-jack-out @run))
