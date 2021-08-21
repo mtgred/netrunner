@@ -809,7 +809,8 @@
   {:subroutines [{:msg "make the Runner approach the outermost piece of ice"
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
-                                 (derez state side card)))}]})
+                                 (derez state side card)
+                                 (start-next-phase state side nil)))}]})
 
 (defcard "Changeling"
   (morph-ice "Barrier" "Sentry" end-the-run))
@@ -2321,14 +2322,19 @@
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                           :msg (msg "redirect the run to " target
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
-                          :effect (effect (redirect-run target :approach-ice)
-                                          (register-floating-effect
-                                            card
-                                            {:type :jack-out-additional-cost
-                                             :duration :end-of-run
-                                             :value [:add-installed-to-bottom-of-deck 1]})
-                                          (effect-completed eid)
-                                          (start-next-phase nil))})]})
+                          :effect (req (let [can-redirect? (and (:run @state)
+                                                                (= 1 (count (:encounters @state)))
+                                                                (not= :access-server (-> @state :run :phase)))]
+                                         (when can-redirect?
+                                           (redirect-run state side target :approach-ice))
+                                         (register-floating-effect
+                                           state side card
+                                           {:type :jack-out-additional-cost
+                                            :duration :end-of-run
+                                            :value [:add-installed-to-bottom-of-deck 1]})
+                                         (effect-completed state side eid)
+                                         (when can-redirect?
+                                           (start-next-phase state side nil))))})]})
 
 (defcard "Minelayer"
   {:subroutines [{:msg "install a piece of ice from HQ"
@@ -2343,7 +2349,10 @@
              :req (req (and (same-card? card (:ice context))
                             (:broken (first (filter :printed (:subroutines (:ice context)))))))
              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
-             :effect (req (redirect-run state side "Archives" :approach-ice)
+             :effect (req (when (and (:run @state)
+                                     (= 1 (count (:encounters @state)))
+                                     (not= :access-server (-> @state :run :phase)))
+                            (redirect-run state side "Archives" :approach-ice))
                           (derez state side card))}]
    :subroutines [{:async true
                   :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
@@ -3071,20 +3080,18 @@
 (defcard "Susanoo-no-Mikoto"
   {:subroutines [{:req (req (not= (:server run) [:discard]))
                   :msg "make the Runner continue the run on Archives"
-                  :effect (req (redirect-run state side "Archives" :approach-ice)
-                               (register-events
-                                 state side card
-                                 [{:event :approach-ice
-                                   :duration :end-of-run
-                                   :unregister-once-resolved true
-                                   :msg "prevent the runner from jacking out"
-                                   :effect (req (prevent-jack-out state side)
-                                                (register-events
-                                                  state side card
-                                                  [{:event :end-of-encounter
-                                                    :duration :end-of-encounter
-                                                    :unregister-once-resolved true
-                                                    :effect (req (swap! state update :run dissoc :cannot-jack-out))}]))}]))}]})
+                  :effect (req (when (:run @state)
+                                 (prevent-jack-out state side)
+                                 (register-events
+                                   state side card
+                                   [{:event :encounter-ice
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :effect (req (swap! state update :run dissoc :cannot-jack-out))}])
+                                 (when (and (= 1 (count (:encounters @state)))
+                                            (not= :access-server (-> @state :run :phase)))
+                                   (redirect-run state side "Archives" :approach-ice)
+                                   (start-next-phase state side nil))))}]})
 
 (defcard "Swarm"
   (let [sub {:player :runner

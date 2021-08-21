@@ -477,7 +477,6 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
-        (run-next-phase state)
         (dotimes [_ 3]
           (run-continue state))
         (changes-val-macro 9 (:credit (get-runner))
@@ -514,7 +513,6 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
-        (run-next-phase state)
         ;; Enigma
         (run-continue state)
         ;; Ice Wall

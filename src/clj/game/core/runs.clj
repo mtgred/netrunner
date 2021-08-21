@@ -261,8 +261,7 @@
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
   (check-auto-no-action state)
-  (let [on-encounter (:on-encounter (card-def ice))
-        current-server (:server (:run @state))]
+  (let [on-encounter (:on-encounter (card-def ice))]
     (system-msg state :runner (str "encounters " (card-str state ice)))
     (when on-encounter
       (make-pending-event state :encounter-ice ice on-encounter))
@@ -273,13 +272,13 @@
                           ;; * run ends
                           ;; * ice is not rezzed
                           ;; * ice is bypassed
-                          ;; * run is moved to another server
+                          ;; * phase of run changes
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (can-bypass-ice state side (get-card state ice))
                                             (not (rezzed? (get-card state ice)))
-                                            (not= current-server (:server (:run @state)))
+                                            (:next-phase (:run @state))
                                             (check-for-empty-server state)))})
               (cond
                 (or (check-for-empty-server state)
@@ -287,7 +286,7 @@
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
                     (not (rezzed? (get-card state ice)))
-                    (not= current-server (:server (:run @state))))
+                    (:next-phase (:run @state)))
                 (encounter-ends state side)))))
 
 (defmethod start-next-phase :encounter-ice
@@ -730,8 +729,9 @@
               (unregister-floating-events state side :end-of-encounter)
               (unregister-floating-effects state side :end-of-run)
               (unregister-floating-events state side :end-of-run)
-              (unregister-floating-effects state side :end-of-next-run)
-              (unregister-floating-events state side :end-of-next-run)
+              (when run
+                (unregister-floating-effects state side :end-of-next-run)
+                (unregister-floating-events state side :end-of-next-run))
               (reset-all-ice state side)
               (clear-run-register! state)
               (run-end-fx state side run))))

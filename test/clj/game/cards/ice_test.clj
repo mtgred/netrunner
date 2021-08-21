@@ -3454,7 +3454,51 @@
       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (last-log-contains? state "Runner encounters Ice Wall")))))
+      (is (last-log-contains? state "Runner encounters Ice Wall"))))
+  (testing "Server redirection"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)]
+        (run-on state :hq)
+        (rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
+      (click-prompt state :corp "Archives")
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
+  (testing "Redirection does not occur if Mind Game would not be passed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game" "Konjin"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)
+            konjin (get-ice state :rd 0)]
+        (run-on state :rd)
+        (rez state :corp mindgame)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp mindgame)
+        (card-subroutine state :corp mindgame 0)
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (click-prompt state :corp "Archives")
+        (is (= :rd (-> @state :run :server first)) "Run not redirected")
+        (is (= (refresh mindgame) (core/get-current-ice state)) "Still encountering Mind Game")
+        (run-jack-out state)
+        (is (get-run) "Jack out cost still applied")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ice in outermost position of Minelayer's server at no cost
@@ -3473,8 +3517,9 @@
 
 (deftest miraju
   ;; Miraju
-  (do-game
-    (new-game {:corp {:hand ["Mirāju"]}
+  (testing "Breaking sub redirects run"
+   (do-game
+     (new-game {:corp {:hand ["Mirāju"]}
                :runner {:hand ["Force of Nature"]
                         :credits 10}})
     (play-from-hand state :corp "Mirāju" "HQ")
@@ -3486,7 +3531,31 @@
     (card-ability state :runner (get-program state 0) 0)
     (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
     (run-continue state)
-    (is (= [:archives] (:server (get-run))))))
+    (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+     (is (= :this-turn (rezzed? (get-ice state :hq 0))) "Mirāju is derezzed")))
+  (testing "Breaking sub in forced encounter does not redirect run"
+    (do-game
+      (new-game {:corp {:hand ["Mirāju" "Konjin"]}
+                 :runner {:hand ["Force of Nature"]
+                          :credits 10}})
+      (play-from-hand state :corp "Mirāju" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Force of Nature")
+      (let [miraju (get-ice state :hq 0)
+            konjin (get-ice state :rd 0)]
+        (run-on state "R&D")
+        (rez state :corp miraju)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp miraju)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+        (run-continue state)
+        (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
+        (is (= :this-turn (rezzed? (refresh miraju))) "Mirāju is derezzed")))))
 
 (deftest mlinzi
   ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
@@ -4941,11 +5010,37 @@
         (run-continue state)
         (fire-subs state susanoo)
         (is (= [:archives] (get-in @state [:run :server])) "Deflected to archives")
-        (run-next-phase state)
         (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
         (rez state :corp cl)
         (run-continue state)
         (fire-subs state cl)
+        (run-continue state)
+        (run-continue state)
+        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again"))))
+  (testing "Redirection does not occur during a forced encounter"
+    (do-game
+      (new-game {:corp {:deck ["Susanoo-no-Mikoto" "Konjin" "Cortex Lock"]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Cortex Lock" "R&D")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (play-from-hand state :corp "Susanoo-no-Mikoto" "HQ")
+      (take-credits state :corp)
+      (let [susanoo (get-ice state :hq 0)
+            konjin (get-ice state :rd 1)
+            cl (get-ice state :rd 0)]
+        (run-on state "R&D")
+        (rez state :corp susanoo)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp susanoo)
+        (fire-subs state susanoo)
+        (is (= [:rd] (get-in @state [:run :server])) "Run still on R&D")
+        (run-continue state)
+        (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+        (rez state :corp cl)
         (run-continue state)
         (run-continue state)
         (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again")))))

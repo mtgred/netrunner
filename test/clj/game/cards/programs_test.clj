@@ -4136,27 +4136,56 @@
 
 (deftest paintbrush
   ;; Paintbrush - Give rezzed piece of ice a chosen subtype until the end of the next run
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Paintbrush"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Paintbrush")
-    (is (= 2 (core/available-mu state)))
-    (let [iwall (get-ice state :hq 0)
-          pb (get-program state 0)]
-      (card-ability state :runner pb 0)
-      (click-card state :runner iwall)
-      (is (= 3 (:click (get-runner))) "Ice Wall not rezzed, so no click charged")
-      (click-prompt state :runner "Done") ; cancel out
-      (rez state :corp iwall)
-      (card-ability state :runner pb 0)
-      (click-card state :runner iwall)
-      (click-prompt state :runner "Code Gate")
-      (is (= 2 (:click (get-runner))) "Click charged")
-      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
-      (run-empty-server state "Archives")
-      (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Paintbrush"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paintbrush")
+      (is (= 2 (core/available-mu state)))
+      (let [iwall (get-ice state :hq 0)
+            pb (get-program state 0)]
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (is (= 3 (:click (get-runner))) "Ice Wall not rezzed, so no click charged")
+        (click-prompt state :runner "Done") ; cancel out
+        (rez state :corp iwall)
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (click-prompt state :runner "Code Gate")
+        (is (= 2 (:click (get-runner))) "Click charged")
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
+        (run-empty-server state "Archives")
+        (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+  (testing "Encounters outside of a run do not end Paintbrush's effect"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Ganked!"]}
+                 :runner {:deck ["Paintbrush" "Quest Completed"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Ganked!" "Server 1")
+      (take-credits state :corp)
+      (core/gain-clicks state :runner 3)
+      (play-from-hand state :runner "Paintbrush")
+      (let [iwall (get-ice state :remote1 0)
+            pb (get-program state 0)]
+        (run-empty-server state "Archives")
+        (run-empty-server state "R&D")
+        (run-empty-server state "HQ")
+        (rez state :corp iwall)
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (click-prompt state :runner "Code Gate")
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
+        (play-from-hand state :runner "Quest Completed")
+        (click-card state :runner (get-content state :remote1 0))
+        (click-prompt state :corp "Yes")
+        (click-card state :corp iwall)
+        (is (= (refresh iwall) (core/get-current-ice state)) "Runner is encountering Ice Wall")
+        (fire-subs state (refresh iwall))
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall still has the Code Gate subtype")
+        (run-empty-server state "Archives")
+        (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run")))))
 
 (deftest panchatantra
   ;; Panchatantra
