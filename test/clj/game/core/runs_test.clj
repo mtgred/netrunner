@@ -205,7 +205,7 @@
        (is (= "Vanilla" (-> @state :encounters peek :ice :title)))
        (is (= 3 (:current-strength (refresh cor))))
        (core/redirect-run state :corp "Archives" :approach-ice)
-       (run-next-phase state)
+       (run-continue state)
        (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
        (run-continue state :encounter-ice)
        (is (= 1 (-> @state :encounters count)))

@@ -810,7 +810,7 @@
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
                                  (derez state side card)
-                                 (start-next-phase state side nil)))}]})
+                                 (encounter-ends state side)))}]})
 
 (defcard "Changeling"
   (morph-ice "Barrier" "Sentry" end-the-run))
@@ -2334,7 +2334,7 @@
                                             :value [:add-installed-to-bottom-of-deck 1]})
                                          (effect-completed state side eid)
                                          (when can-redirect?
-                                           (start-next-phase state side nil))))})]})
+                                           (encounter-ends state side))))})]})
 
 (defcard "Minelayer"
   {:subroutines [{:msg "install a piece of ice from HQ"
@@ -2856,8 +2856,10 @@
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
                   :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
-                  :effect (effect (redirect-run target :approach-ice)
-                                  (trash eid card {:unpreventable true :cause :subroutine}))}]})
+                  :effect (req (let [moved-ice (move state side card (conj (server->zone state target) :ices))]
+                                 (redirect-run state side target)
+                                 (trash state side (make-eid state eid) moved-ice {:unpreventable true :cause :subroutine})
+                                 (encounter-ends state side)))}]})
 
 (defcard "Sandman"
   {:subroutines [add-runner-card-to-grip
@@ -3091,7 +3093,7 @@
                                  (when (and (= 1 (count (:encounters @state)))
                                             (not= :access-server (-> @state :run :phase)))
                                    (redirect-run state side "Archives" :approach-ice)
-                                   (start-next-phase state side nil))))}]})
+                                   (encounter-ends state side))))}]})
 
 (defcard "Swarm"
   (let [sub {:player :runner
