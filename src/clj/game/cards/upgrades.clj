@@ -99,27 +99,31 @@
                                       (in-hand? %))}
                 :msg "host a piece of Bioroid ice"
                 :async true
-                :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}
-               {:req (req (and this-server
-                               (zero? (get-in @state [:run :position]))
-                               (some #(can-pay? state side (assoc eid :source card :source-type :rez) % nil
-                                                [:credit (rez-cost state side % {:cost-bonus -7})])
-                                     (:hosted card))))
-                :label "Rez a hosted piece of Bioroid ice"
-                :prompt "Choose a piece of Bioroid ice to rez"
-                :choices (req (:hosted card))
-                :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
-                :async true
-                :effect (req (wait-for (rez state side target {:cost-bonus -7})
-                                       (register-events
-                                         state side card
-                                         (let [ice (:card async-result)]
-                                           [{:event :run-ends
-                                             :duration :end-of-run
-                                             :async true
-                                             :req (req (get-card state ice))
-                                             :effect (effect (trash eid (get-card state ice) nil))}]))
-                                       (effect-completed state side eid)))}]})
+                :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}]
+   :events [{:event :pass-all-ice
+             :optional
+             {:req (req (and this-server
+                             (some #(can-pay? state side (assoc eid :source card :source-type :rez) % nil
+                                              [:credit (rez-cost state side % {:cost-bonus -7})])
+                                   (:hosted card))))
+              :prompt "Rez and force the Runner to encounter a hosted piece of ice?"
+              :waiting-prompt "Corp to make a decision"
+              :yes-ability
+              {:async true
+               :prompt "Choose a hosted piece of Bioroid ice to rez"
+               :choices (req (:hosted card))
+               :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
+               :effect (req (wait-for (rez state side target {:cost-bonus -7})
+                                      (let [ice (:card async-result)]
+                                        (register-events
+                                          state side card
+                                          [{:event :run-ends
+                                            :duration :end-of-run
+                                            :async true
+                                            :req (req (get-card state ice))
+                                            :effect (effect (trash eid (get-card state ice) nil))}])
+                                        (force-ice-encounter state side eid ice))))}
+              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice")))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -536,7 +540,7 @@
                                (installed? target)
                                (rezzed? target)
                                (protecting-same-server? card target)))}
-      :msg (msg "force the runner to encounter " (card-str state target))
+      :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                              (force-ice-encounter state side eid target)))}
      :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter a piece of ice")))}}}})
@@ -1381,12 +1385,8 @@
                :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
                :effect (req (wait-for
                               (reveal state side target)
-                              (swap! state update-in [:run :position] inc)
-                              (set-next-phase state :encounter-ice)
-                              (update-all-ice state side)
-                              (update-all-icebreakers state side)
-                              (trash state side eid (assoc target :seen true) nil)
-                              (start-next-phase state side nil)))}}}]})
+                              (wait-for (trash state side (make-eid state eid) (assoc target :seen true))
+                                        (force-ice-encounter state side eid current-ice))))}}}]})
 
 (defcard "Tori Hanzō"
   {:events [{:event :pre-resolve-damage

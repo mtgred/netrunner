@@ -1450,7 +1450,7 @@
         (not= "runner" (:no-action @run))
         #(send-command "continue")])
 
-     (when (peek @encounters)
+     (when encounter
        (let [current-ice (get-current-ice)
              title (:title current-ice)]
          [cond-button
@@ -1460,8 +1460,9 @@
           #(send-command "system-msg"
                          {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
 
-     (when (or (= "approach-server" (:phase @run))
-               (= "approach-ice" (:phase @run)))
+     (when (and (not encounter)
+                (or (= "approach-server" (:phase @run))
+                    (= "approach-ice" (:phase @run))))
        [cond-button
         (if (:jack-out @run) (tr [:game.jack-out "Jack Out"]) (tr [:game.undo-click "Undo click"]))
         (not (:cannot-jack-out @run))

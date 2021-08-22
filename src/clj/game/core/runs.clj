@@ -325,8 +325,10 @@
   (when (some? jack-out)
     ; TODO: Do not transmit this to the Corp (same with :no-action)
     (swap! state assoc-in [:run :jack-out-after-pass] jack-out))
-  (let [encounter (get-current-encounter state)]
-    (if (or (:no-action encounter)
+  (let [encounter (get-current-encounter state)
+        no-action (:no-action encounter)]
+    (if (or (and no-action
+                 (not= side no-action))
             (:bypass encounter))
       (encounter-ends state side)
       (do (update-current-encounter state :no-action side)
