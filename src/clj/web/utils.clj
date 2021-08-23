@@ -34,5 +34,5 @@
 (defn average
   [numbers]
   (if (empty? numbers)
-    nil
+    0
     (/ (reduce + numbers) (count numbers))))
