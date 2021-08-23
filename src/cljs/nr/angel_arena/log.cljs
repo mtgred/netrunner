@@ -36,17 +36,19 @@
              @update-me
              (case stage
                -1 [:div.angel-arena-time-warning
-                   [:div.infobox
-                    "There was no activity in this game yet. You may cancel the match, if your opponent does not respond."
-                    [:div.button-bar.centered
-                     [:button {:on-click cancel-match} (tr [:angel-arena.cancel-match "Cancel match"])]]]]
+                   (when (not-spectator?)
+                     [:div.infobox
+                      "There was no activity in this game yet. You may cancel the match, if your opponent does not respond."
+                      [:div.button-bar.centered
+                       [:button {:on-click cancel-match} (tr [:angel-arena.cancel-match "Cancel match"])]]])]
 
                -2 [:div.angel-arena-time-warning
-                   [:div.infobox
-                    "Your opponent has left the game. You can wait for them to return, you may claim this game as a victory, or cancel the match."
-                    [:div.button-bar.centered
-                     [:button {:on-click claim-victory} (tr [:angel-arena.claim-victory "Claim victory"])]
-                     [:button {:on-click cancel-match} (tr [:angel-arena.cancel-match "Cancel match"])]]]]
+                   (when (not-spectator?)
+                     [:div.infobox
+                      "Your opponent has left the game. You can wait for them to return, you may claim this game as a victory, or cancel the match."
+                      [:div.button-bar.centered
+                       [:button {:on-click claim-victory} (tr [:angel-arena.claim-victory "Claim victory"])]
+                       [:button {:on-click cancel-match} (tr [:angel-arena.cancel-match "Cancel match"])]]])]
 
                1 (let [time-inactive (/ (- (js/Date.now) warning-time) 1000)
                        time-remaining (- period-to-react time-inactive)]

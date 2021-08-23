@@ -21,7 +21,8 @@
 
 (defn other-side [side]
   (cond (= side :corp) :runner
-        (= side :runner) :corp))
+        (= side :runner) :corp
+        :else nil))
 
 (defn count-bad-pub
   "Counts number of bad pub corp has (real + additional)"
