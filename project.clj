@@ -16,6 +16,7 @@
                  [ring "1.7.1"]
                  [ring/ring-defaults "0.3.2"] ; Includes `ring-anti-forgery`, etc.
                  [ring/ring-json "0.4.0"]
+                 [puppetlabs/ring-middleware "1.3.0"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
                  [aero "1.1.3"]

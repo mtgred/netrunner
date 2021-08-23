@@ -1,0 +1,464 @@
+---
+openapi: 3.0.0
+info:
+  title: JNet Game API
+  description: "Game state API for the Jinteki.net Netrunner server.\n\nTo enable API access, a user must create an API key in the `Settings` page and select the `Allow API access to game information` checkbox when creating a new game. \n"
+  license:
+    name: MIT License
+    url: https://github.com/mtgred/netrunner/blob/master/LICENSE.txt
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/jinteki/GameAPI/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://jinteki.net
+  description: Jinetki.net Production Server
+security:
+- ApiKeyAuth: []
+tags:
+- name: Board Info
+  description: Information about the user's game board state
+- name: Meta Info
+  description: Generic game information
+paths:
+  /game/decklist:
+    get:
+      tags:
+      - Board Info
+      summary: list user's deck information
+      description: |
+        Return extended information about the deck the user has selected for the game.
+      operationId: listDecklist
+      responses:
+        "200":
+          description: deck information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeckList'
+        "404":
+          description: Unknown x-jnet-api-key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "403":
+          description: No game for API key or API access not enabled for game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "204":
+          description: Player has not yet selected a deck
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /game/deck:
+    get:
+      tags:
+      - Board Info
+      summary: list user's cards that have not been drawn
+      description: |
+        Return the card codes that are in the user's R&D or Stack. This list is explicitly *not* ordered to match the draw order.
+      operationId: listDeck
+      responses:
+        "200":
+          description: undrawn card codes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardList'
+        "404":
+          description: Unknown x-jnet-api-key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "403":
+          description: No game for API key or API access not enabled for game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "204":
+          description: Player has not yet selected a deck
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /game/hand:
+    get:
+      tags:
+      - Board Info
+      summary: list user's cards that are in their hand
+      description: |
+        Return the card codes that are in the user's HQ or Grip
+      operationId: listHand
+      responses:
+        "200":
+          description: card codes in hand
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardList'
+        "404":
+          description: Unknown x-jnet-api-key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "403":
+          description: No game for API key or API access not enabled for game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "204":
+          description: Player has not yet selected a deck
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /game/discard:
+    get:
+      tags:
+      - Board Info
+      summary: list user's cards that are in their discard pile
+      description: |
+        Return the card codes that are in the user's Archives or Heap
+      operationId: listDiscard
+      responses:
+        "200":
+          description: card codes in discard pile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardList'
+        "404":
+          description: Unknown x-jnet-api-key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "403":
+          description: No game for API key or API access not enabled for game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "204":
+          description: Player has not yet selected a deck
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /game/log:
+    get:
+      tags:
+      - Meta Info
+      summary: list game log messages
+      description: Returns a text representation of the in-game message log
+      operationId: listLog
+      responses:
+        "200":
+          description: Game log messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageList'
+        "404":
+          description: Unknown x-jnet-api-key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "403":
+          description: No game for API key or API access not enabled for game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+components:
+  schemas:
+    ErrorMessage:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: Informative error message
+    DeckList:
+      required:
+      - cards
+      - identity
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: Test Deck
+        identity:
+          $ref: '#/components/schemas/DeckList_identity'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeckList_cards'
+    CardDetail:
+      required:
+      - code
+      - cost
+      - cycle_code
+      - deck-limit
+      - faction
+      - factioncost
+      - image
+      - number
+      - set_code
+      - setname
+      - side
+      - subtype
+      - subtypes
+      - text
+      - title
+      - type
+      - uniqueness
+      type: object
+      properties:
+        faction:
+          type: string
+          example: Apex
+        cycle_code:
+          type: string
+          example: terminal-directive
+        factioncost:
+          type: integer
+          example: 0
+        setname:
+          type: string
+          example: Terminal Directive Cards
+        number:
+          type: integer
+          example: 25
+        type:
+          type: string
+          example: Resource
+        title:
+          type: string
+          example: Dean Lister
+        uniqueness:
+          type: boolean
+          example: true
+        code:
+          pattern: ^\d{5}$
+          type: string
+          example: "13025"
+        side:
+          type: string
+          example: Runner
+        image:
+          type: string
+          format: url
+          example: https://jinteki.net/img/cards/en/default/stock/13025.png
+        cost:
+          type: integer
+          example: 2
+        deck-limit:
+          type: integer
+          example: 3
+        set_code:
+          type: string
+          example: td
+        subtype:
+          type: string
+          example: Connection
+        text:
+          type: string
+          example: '[trash]: Choose an <strong>icebreaker</strong>. Until the end of the run, that <strong>icebreaker</strong> has +1 strength for each card in your grip.'
+        subtypes:
+          type: array
+          items:
+            type: string
+            example: Connection
+    IdentityDetail:
+      required:
+      - baselink
+      - code
+      - cycle_code
+      - deck-limit
+      - faction
+      - image
+      - influencelimit
+      - minimumdecksize
+      - number
+      - set_code
+      - setname
+      - side
+      - subtype
+      - subtypes
+      - text
+      - title
+      - type
+      - uniqueness
+      type: object
+      properties:
+        faction:
+          type: string
+          example: Apex
+        cycle_code:
+          type: string
+          example: data-and-destiny
+        setname:
+          type: string
+          example: Data and Destiny
+        influencelimit:
+          type: integer
+          example: 25
+        number:
+          type: integer
+          example: 29
+        type:
+          type: string
+          example: Identity
+        title:
+          type: string
+          example: 'Apex: Invasive Predator'
+        uniqueness:
+          type: boolean
+          example: false
+        baselink:
+          type: integer
+          example: 0
+        code:
+          pattern: ^\d{5}$
+          type: string
+          example: "13025"
+        side:
+          type: string
+          example: Runner
+        image:
+          type: string
+          format: url
+          example: https://jinteki.net/img/cards/en/default/stock/09029.png
+        deck-limit:
+          type: integer
+          example: 1
+        set_code:
+          type: string
+          example: dad
+        subtype:
+          type: string
+          example: Digital
+        minimumdecksize:
+          type: integer
+          example: 45
+        text:
+          type: string
+          example: |-
+            You cannot install non-<strong>virtual</strong> resources.
+            When your turn begins, you may install 1 card from your grip facedown.
+        subtypes:
+          type: array
+          items:
+            type: string
+            example: Digital
+    CardList:
+      required:
+      - cards
+      type: object
+      properties:
+        cards:
+          type: array
+          items:
+            pattern: ^\d{5}$
+            type: string
+            example: "11075"
+      example:
+        cards:
+        - "11075"
+        - "26048"
+        - "30041"
+        - "30056"
+        - "30069"
+    MessageItem:
+      required:
+      - text
+      - user
+      type: object
+      properties:
+        user:
+          type: string
+          example: test1
+        text:
+          type: string
+          example: test1 has created the game.
+      example:
+        user: __system__
+        text: test1 has created the game.
+    MessageList:
+      required:
+      - messages
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageItem'
+      example:
+        messages:
+        - user: __system__
+          text: test1 has created the game.
+        - user: __system__
+          text: '[hr]'
+        - user: __system__
+          text: test1 takes a mulligan.
+    DeckList_identity:
+      required:
+      - details
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+          example: 'Apex: Invasive Predator'
+        details:
+          $ref: '#/components/schemas/IdentityDetail'
+    DeckList_cards:
+      required:
+      - details
+      - qty
+      - title
+      type: object
+      properties:
+        qty:
+          type: integer
+          example: 3
+        title:
+          type: string
+          example: Assimilator
+        details:
+          $ref: '#/components/schemas/CardDetail'
+  responses:
+    UnknownKey:
+      description: Unknown x-jnet-api-key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+    UnknownGame:
+      description: No game for API key or API access not enabled for game
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+    NoDeckSelected:
+      description: Player has not yet selected a deck
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: X-JNET-API
+      in: header
