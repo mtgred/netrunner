@@ -532,7 +532,9 @@
          subtype (or subtype "All")
          args (assoc args :subtype subtype :break n)
          break-req (req (and current-ice
-                             (rezzed? current-ice)
+                             (if (installed? current-ice)
+                               (rezzed? current-ice)
+                               true)
                              (-> @state :encounters peek)
                              (if subtype
                                (or (= subtype "All")
@@ -665,7 +667,9 @@
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
-                                   (rezzed? current-ice)
+                                   (if (installed? current-ice)
+                                     (rezzed? current-ice)
+                                     true)
                                    (-> @state :encounters peek)
                                    (or break-ability
                                        pump-ability))

@@ -692,6 +692,7 @@
    force-ice-encounter
    gain-next-run-credits
    gain-run-credits
+   get-current-encounter
    handle-end-run
    jack-out
    jack-out-prevent

@@ -2,7 +2,7 @@
   (:require
     [game.core.access :refer [do-access]]
     [game.core.board :refer [server->zone]]
-    [game.core.card :refer [get-card rezzed?]]
+    [game.core.card :refer [get-card installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
@@ -276,7 +276,7 @@
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))]
-    (system-msg state :runner (str "encounters " (card-str state ice)))
+    (system-msg state :runner (str "encounters " (card-str state ice {:visible true})))
     (when on-encounter
       (make-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
@@ -284,14 +284,18 @@
                           (make-eid state eid)
                           ;; Immediately end encounter step if:
                           ;; * run ends
-                          ;; * ice is not rezzed
                           ;; * ice is bypassed
+                          ;; * ice has been moved
+                          ;; * ice is installed but not rezzed
                           ;; * phase of run changes
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (can-bypass-ice state side (get-card state ice))
-                                            (not (rezzed? (get-card state ice)))
+                                            (not (get-card state ice))
+                                            (not (if (installed? ice)
+                                                   (rezzed? ice)
+                                                   true))
                                             (:next-phase (:run @state))
                                             (check-for-empty-server state)))})
               (cond
@@ -299,7 +303,10 @@
                     (:ended (:end-run @state)))
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
-                    (not (rezzed? (get-card state ice)))
+                    (not (get-card state ice))
+                    (not (if (installed? ice)
+                           (rezzed? ice)
+                           true))
                     (:next-phase (:run @state)))
                 (encounter-ends state side)))))
 

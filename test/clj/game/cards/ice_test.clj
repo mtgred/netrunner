@@ -406,11 +406,14 @@
       (play-from-hand state :runner "Bank Job")
       (run-empty-server state "HQ")
       (click-prompt state :corp "Yes")
-      (click-prompt state :runner "Yes")
+      (is (= "Archangel" (:title (core/get-current-ice state))) "The Runner is encountering Archangel")
+      (fire-subs state (core/get-current-ice state))
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-card state :corp (get-resource state 0))
-      (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
+      (is (nil? (get-resource state 0)) "Bank Job is trashed")
+      (encounter-continue state)
+      (is (= "You accessed Archangel." (:msg (prompt-map :runner))) "Return to accessing Archangel"))))
 
 (deftest architect
   ;; Architect
@@ -832,6 +835,32 @@
         (rez state :corp (refresh ch))
         (take-credits state :runner)
         (is (not (rezzed? (refresh ch))))))))
+
+(deftest chrysalis
+  ;; Chrysalis
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chrysalis"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Chrysalis" "HQ")
+      (let [chrysalis (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp chrysalis)
+        (run-continue state)
+        (card-subroutine state :corp chrysalis 0)
+        (is (= 2 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chrysalis"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= "Chrysalis" (:title (core/get-current-ice state))) "Encountering Chrysalis on access")
+      (fire-subs state (core/get-current-ice state))
+      (is (= 2 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
 
 (deftest chum
   ;; Chum
@@ -2183,12 +2212,31 @@
         (take-credits state :corp)
         (run-empty-server state :hq)
         (= 4 (:credit (get-corp)))
-        (click-prompt state :runner "Yes")
+        (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
+        (fire-subs state (core/get-current-ice state))
         (= 6 (:credit (get-corp)))
         (click-prompt state :corp "2")
         (click-card state :corp beale)
         (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
-        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Partial break"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Herald" "Project Beale"]}
+                 :runner {:hand ["Unity"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Unity")
+      (let [unity (get-program state 0)]
+        (run-empty-server state :hq)
+        (= 4 (:credit (get-corp)))
+        (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
+        (is (= 3 (count (:abilities (refresh unity)))) "Has auto break abilities")
+        (card-ability state :runner unity 0)
+        (click-prompt state :runner "Pay up to 2 [Credits] to place up to 2 advancement tokens")
+        (fire-subs state (core/get-current-ice state))
+        (= 6 (:credit (get-corp)))
+        (is (not= "How many advancement tokens?" (:msg (prompt-map :corp))) "Second subroutine did not fire")))))
 
 (deftest hive
   ;; Hive - 5x ETR. Lose an ETR for each agenda point in corp's score area
@@ -4506,7 +4554,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (run-empty-server state :hq)
-      (click-prompt state :runner "Yes")
+      (is (= "Sapper" (:title (core/get-current-ice state))) "Encountering Sapper on access")
+      (fire-subs state (core/get-current-ice state))
       (click-card state :corp "Corroder")
       (is (nil? (get-program state 0)) "Corroder is trashed"))))
 

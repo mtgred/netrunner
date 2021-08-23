@@ -527,14 +527,7 @@
      {:cost [:credit 3]
       :async true
       :msg "force the Runner to encounter Archangel"
-      :effect (effect (continue-ability
-                        :runner
-                        {:optional
-                         {:player :runner
-                          :prompt "You are encountering Archangel. Allow its subroutine to fire?"
-                          :yes-ability {:async true
-                                        :effect (effect (resolve-unbroken-subs! eid card))}}}
-                        card nil))}
+      :effect (req (force-ice-encounter state side eid card))}
      :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel"))}}}
    :subroutines [(trace-ability 6 add-runner-card-to-grip)]})
 
@@ -867,13 +860,10 @@
 (defcard "Chrysalis"
   {:flags {:rd-reveal (req true)}
    :subroutines [(do-net-damage 2)]
-   :access {:optional
-            {:req (req (not (in-discard? card)))
-             :player :runner
-             :waiting-prompt "Runner to make a decision"
-             :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
-             :yes-ability {:async true
-                           :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
+   :access {:async true
+            :req (req (not (in-discard? card)))
+            :msg "force the Runner to encounter Chrysalis"
+            :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Chum"
   {:subroutines
@@ -1627,13 +1617,10 @@
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
-   :access {:optional
-            {:req (req (not (in-discard? card)))
-             :player :runner
-             :waiting-prompt "Runner to make a decision"
-             :prompt "You are encountering Herald. Allow its subroutines to fire?"
-             :yes-ability {:async true
-                           :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
+   :access {:async true
+            :req (req (not (in-discard? card)))
+            :msg "force the Runner to encounter Herald"
+            :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Himitsu-Bako"
   {:abilities [{:msg "add it to HQ"
@@ -2876,15 +2863,9 @@
   {:flags {:rd-reveal (req true)}
    :subroutines [trash-program-sub]
    :access {:async true
-            :optional
-            {:req (req (and (not (in-discard? card))
-                            (some program? (all-active-installed state :runner))))
-             :player :runner
-             :waiting-prompt "Runner to make a decision"
-             :prompt "Allow Sapper subroutine to fire?"
-             :yes-ability
-             {:async true
-              :effect (effect (resolve-unbroken-subs! :corp eid card))}}}})
+            :req (req (not (in-discard? card)))
+            :msg "force the Runner to encounter Sapper"
+            :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"
