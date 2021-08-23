@@ -5,6 +5,7 @@
             [clojure.string :refer [join]]
             [jinteki.validator :refer [trusted-deck-status legal-deck?]]
             [jinteki.utils :refer [str->int superuser?]]
+            [nr.angel-arena :as angel-arena]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [GET]]
             [nr.auth :refer [authenticated] :as auth]
@@ -83,6 +84,7 @@
 (defmethod ws/-msg-handler :lobby/select
   [{{:keys [gameid started state]} :?data}]
   (swap! app-state assoc :gameid gameid)
+  (reset! angel-arena/queueing false)
   (when started
     (launch-game (parse-state state))))
 
@@ -240,12 +242,17 @@
     [:div.deck-collection.lobby-deck-selector
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
-           same-side? (fn [deck] (= side (get-in deck [:identity :side])))]
+           same-side? (fn [deck] (= side (get-in deck [:identity :side])))
+           legal? (fn [deck] (get-in deck
+                                     [:status (keyword format) :legal]
+                                     (get-in (trusted-deck-status (assoc deck :format format))
+                                         [(keyword format) :legal]
+                                         false)))]
        [:div
         (doall
           (for [deck (->> @decks
-                          (filter #(and (same-side? %) (or (legal-deck? % format) (= format "casual"))))
-                          (sort-by (juxt legal-deck? :date) >))]
+                          (filter same-side?)
+                          (sort-by (juxt legal? :date) >))]
             ^{:key (:_id deck)}
             [:div.deckline {:on-click #(do (ws/ws-send! [:lobby/deck (:_id deck)])
                                            (reagent-modals/close-modal!))}
@@ -426,39 +433,49 @@
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
+     ; The real "tournament" lobby can be reenabled, once its functionality is complete. For now the old "competitive" lobby just got renamed. -- lostgeek, 9th August 2021
+     ;
+     ; [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
+     ; [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
      [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
-     [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
-     [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]]
-    [:div.lobby-buttons
-     [cond-button (tr [:lobby.new-game "New game"])
-      (and (not (or @gameid
-                    (:editing @s)
-                    (= "tournament" (:room @s))))
-           (->> @games
-                (mapcat :players)
-                (filter #(= (-> % :user :_id) (:_id @user)))
-                empty?))
-      #(do (new-game s)
-           (resume-sound))]
-     [:button.reload-button {:type "button"
-                             :on-click #(ws/ws-send! [:lobby/list])} (tr [:lobby.reload "Reload list"])]
-     [cond-button (tr [:lobby.load-replay "Load replay"])
-      (and (not (or @gameid
-                    (:editing @s)
-                    (= "tournament" (:room @s))))
-           (->> @games
-                (mapcat :players)
-                (filter #(= (-> % :user :_id) (:_id @user)))
-                empty?))
-      #(do (replay-game s)
-           (resume-sound))]]]
+     [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
+     [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
+    (when (not= "angel-arena" (:room @s))
+      [:div.lobby-buttons
+       [cond-button (tr [:lobby.new-game "New game"])
+        (and (not (or @gameid
+                      (:editing @s)
+                      (= "tournament" (:room @s))))
+             (->> @games
+                  (mapcat :players)
+                  (filter #(= (-> % :user :_id) (:_id @user)))
+                  empty?))
+        #(do (new-game s)
+             (resume-sound))]
+       [:button.reload-button {:type "button"
+                               :on-click #(ws/ws-send! [:lobby/list])} (tr [:lobby.reload "Reload list"])]
+       [cond-button (tr [:lobby.load-replay "Load replay"])
+        (and (not (or @gameid
+                      (:editing @s)
+                      (= "tournament" (:room @s))))
+             (->> @games
+                  (mapcat :players)
+                  (filter #(= (-> % :user :_id) (:_id @user)))
+                  empty?))
+        #(do (replay-game s)
+             (resume-sound))]])]
+   (case (:room @s)
+     "angel-arena"
+     [angel-arena/game-list user {:games games
+                                 :gameid gameid
+                                 :room (:room @s)}]
 
-   (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
-     [game-list user {:password-game password-game
-                      :editing (:editing @s)
-                      :games games
-                      :gameid gameid
-                      :room (:room @s)}])])
+     (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
+       [game-list user {:password-game password-game
+                        :editing (:editing @s)
+                        :games games
+                        :gameid gameid
+                        :room (:room @s)}]))])
 
 (defn create-new-game
   [s user]
@@ -686,9 +703,11 @@
 
 (defn right-panel
   [decks s games gameid password-gameid sets user]
-  [:div.game-panel
-   [create-new-game s user]
-   [pending-game s decks games gameid password-gameid sets user]])
+  (if (= "angel-arena" (:room @s))
+    [angel-arena/game-panel decks s user]
+    [:div.game-panel
+     [create-new-game s user]
+     [pending-game s decks games gameid password-gameid sets user]]))
 
 (defn game-lobby []
   (r/with-let [s (r/atom {:room "casual"})

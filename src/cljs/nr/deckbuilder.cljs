@@ -354,8 +354,9 @@
                   new-deck (if new? (assoc deck :_id new-id) deck)
                   json (:json (<! (GET "/data/decks")))
                   all-decks (load-decks-from-json json)]
-              (set-deck-on-state s new-deck)
-              (load-decks all-decks)))))))
+              (when (= 200 (:status response))
+                (set-deck-on-state s new-deck)
+                (load-decks all-decks))))))))
 
 (defn clear-deck-stats [s]
   (authenticated
@@ -769,7 +770,9 @@
 (defn view-buttons
   [s deck]
   [:div.button-bar
-   [:button {:on-click #(edit-deck s)} (tr [:deck-builder.edit "Edit"])]
+   [cond-button (tr [:deck-builder.edit "Edit"])
+    (not (:locked deck))
+    #(edit-deck s)]
    [:button {:on-click #(delete-deck s)} (tr [:deck-builder.delete "Delete"])]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))

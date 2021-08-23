@@ -282,6 +282,14 @@
     [:button.on {:on-click f :key on-text} on-text]
     [:button.off {:on-click f :key off-text} off-text]))
 
+(defn tristate-button [on-text off-text on-cond disable-cond f]
+  (let [text (if on-cond on-text off-text)]
+    (if disable-cond
+      [:button.disabled {:key text} text]
+      (if on-cond
+        [:button.on {:on-click f :key text} text]
+        [:button.off {:on-click f :key text} text]))))
+
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
@@ -328,3 +336,17 @@
     (:images card) (:images card)
     (:face card) (get-in card [:faces (keyword (str (:face card))) :images])
     :else (get-in card [:faces :front :images])))
+
+(defn time-span-string [delta]
+  (let [days (Math/floor (/ delta (* 60 60 24)))
+        delta (mod delta (* 60 60 24))
+        hours (Math/floor (/ delta (* 60 60)))
+        delta (mod delta (* 60 60))
+        minutes (Math/floor (/ delta (* 60)))
+        delta (mod delta 60)
+        seconds (Math/floor delta)]
+    (cond
+      (pos? days) (str days " days, " hours " hours")
+      (pos? hours) (str hours " hours, " minutes " minutes")
+      (pos? minutes) (str minutes " minutes, " seconds " seconds")
+      :else (str seconds " seconds"))))

@@ -145,6 +145,10 @@ button.on
 button.off
     background-color: alpha(gold-base, o-40)
 
+.centered
+    text-align: center
+    margin: 0 auto
+
 .block-link
     cursor: pointer
     border: 1px solid transparent
@@ -164,22 +168,25 @@ button.off
     margin:15px
     border-radius: 4px
 
-.infobox::before
-    display: block;
-    position: relative;
-    float: left;
-    left: -2px;
-    top: 4px;
-    margin: 5px
-    content: "!";
-    border-radius: 50%;
-    border: 1px solid lighten(gold-base, 25);
-    color: lighten(gold-base, 25);
-    width: 20px;
-    height: 20px;
-    line-height: 21px;
-    text-align: center;
-    font-weight: normal;
+    &::before
+        display: block;
+        float: left;
+        margin: 10px 5px 10px 0px
+        content: "!";
+        border-radius: 50%;
+        border: 1px solid lighten(gold-base, 25);
+        color: lighten(gold-base, 25);
+        width: 20px;
+        height: 20px;
+        line-height: 21px;
+        text-align: center;
+        font-weight: normal;
+
+    &.one-line::before
+        margin: -2px 5px 5px 0px
+
+    &>p
+        margin: 0px 4px 0px 0px
 
 [draggable]
     -moz-user-select: none
