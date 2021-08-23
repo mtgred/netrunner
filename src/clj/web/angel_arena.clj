@@ -109,7 +109,7 @@
               :messages        [{:user "__system__"
                                  :text "Angel Arena lobby has been created."}
                                 {:user "__system__"
-                                 :text "Here will be some explanations about the rules of Angel Arena."} ]
+                                 :text "This game is played in the Angel Arena, a competitive matchmaking system. Wins and losses of your run are being tracked. If by any error, the game should prematurely register a win, please use the /clear-win command to continue playing the game. Good luck and have fun!"} ]
               :last-update     (t/now)}]
     (refresh-lobby gameid game)
     (swap! client-gameids assoc (:ws-id player1) gameid (:ws-id player2) gameid)
