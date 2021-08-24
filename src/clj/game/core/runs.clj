@@ -276,7 +276,9 @@
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))]
-    (system-msg state :runner (str "encounters " (card-str state ice {:visible true})))
+    (system-msg state :runner (str "encounters " (card-str state ice {:visible (if (installed? ice)
+                                                                                 (rezzed? ice)
+                                                                                 true)})))
     (when on-encounter
       (make-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
