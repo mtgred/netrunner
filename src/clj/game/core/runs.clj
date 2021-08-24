@@ -10,7 +10,7 @@
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint make-pending-event pay queue-event resolve-ability unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [get-current-ice get-run-ices reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.ice :refer [get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [clear-encounter-prompts clear-wait-prompt show-encounter-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -198,6 +198,7 @@
                       (not run)
                       (:successful run))
                   (do (reset-all-subs! state (get-card state ice))
+                      (update-ice-strength state :corp (get-card state ice))
                       (clear-encounter state))
                   ;; change phase
                   (get-in @state [:run :next-phase])
@@ -209,6 +210,7 @@
                       (pass-ice state side))
                   ;; unknown
                   :else (do (reset-all-subs! state (get-card state ice))
+                            (update-ice-strength state :corp (get-card state ice))
                             (clear-encounter state)))))))
 
 (defmethod start-next-phase :approach-ice

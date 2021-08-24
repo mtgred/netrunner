@@ -3454,7 +3454,27 @@
         (card-ability state :runner (refresh leech) 0)
         (card-ability state :runner (refresh leech) 0)
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Leech")
-        (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Leech")))))
+        (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Leech"))))
+  (testing "Works during access encounter"
+    (do-game
+      (new-game {:corp {:hand ["Chrysalis"]}
+                 :runner {:hand ["Leech" "Bukhgalter"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Leech")
+      (play-from-hand state :runner "Bukhgalter")
+      (run-empty-server state "HQ")
+      (let [leech (get-program state 0)
+            bukh (get-program state 1)
+            chry (core/get-current-ice state)]
+        (is chry "Encountering Chrysalis")
+        (is (= 2 (get-strength (refresh chry))) "Chrysalis at base 2 strength")
+        (card-ability state :runner (refresh leech) 0)
+        (is (= 1 (get-strength (refresh chry))) "Chrysalis reduced to 1 strength")
+        (card-ability state :runner (refresh bukh) 0)
+        (click-prompt state :runner "Do 2 net damage")
+        (encounter-continue state)
+        (is (= 2 (get-strength (refresh chry))) "Chrysalis's strength reset after encounter")
+        (click-prompt state :runner "No action")))))
 
 (deftest leprechaun
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly

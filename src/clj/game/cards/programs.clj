@@ -909,7 +909,7 @@
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
+                               (get-current-encounter state)))
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 

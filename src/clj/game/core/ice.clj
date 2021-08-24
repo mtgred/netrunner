@@ -331,7 +331,9 @@
         old-strength (get-strength ice)
         new-strength (ice-strength state side ice)
         changed? (not= old-strength new-strength)]
-    (when (rezzed? ice)
+    (when (if (installed? ice)
+            (rezzed? ice)
+            true)
       (update! state side (assoc ice :current-strength new-strength))
       (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
       changed?)))
