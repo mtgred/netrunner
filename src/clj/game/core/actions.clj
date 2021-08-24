@@ -266,14 +266,9 @@
 (defn play-heap-breaker-auto-pump-and-break
   "Play auto-pump-and-break for heap breakers"
   [state side args]
-  (let [run (:run @state)
-        card (get-card state (:card args))
+  (let [card (get-card state (:card args))
         eid (make-eid state {:source card :source-type :ability})
-        run-ice (get-run-ices state)
-        ice-cnt (count run-ice)
-        ice-idx (dec (:position run 0))
-        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
-        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
+        current-ice (get-current-ice state)
         ;; match strength
         can-pump (fn [ability]
                    (when (:heap-breaker-pump ability)

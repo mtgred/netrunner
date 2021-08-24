@@ -85,7 +85,7 @@
 (def heap-breaker-auto-pump-and-break
   "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
   abilities with a pseudo-ability to trigger the auto-pump routine in core,
-  IF we are encountering a rezzed ice with a subtype we can break."
+  IF we are encountering an ice with a subtype we can break."
   {:effect
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))

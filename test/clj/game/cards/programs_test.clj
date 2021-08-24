@@ -654,7 +654,27 @@
         (let [bo (get-program state 0)]
           (run-on state :hq)
           (run-continue state)
-          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar")))))
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar"))))
+    (testing "Install and Auto-pump-and-break for forced encounters"
+      (do-game
+        (new-game {:corp {:deck [(qty "Archangel" 5)]
+                          :hand ["Archangel"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (take-credits state :corp)
+        (trash-from-hand state :runner "Black Orchestra")
+        (run-empty-server state :hq)
+        (click-prompt state :corp "Yes")
+        (is (= "Install Black Orchestra?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
+        (click-prompt state :runner "Yes")
+        (let [bo (get-program state 0)]
+          (is (installed? bo) "Black Orchestra is installed")
+          (changes-val-macro -6 (:credit (get-runner))
+                             "Paid 6 to fully break Macrophage with Black Orchestra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+          (is (= 6 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
+          (is (= 0 (count (remove :broken (:subroutines (core/get-current-ice state))))) "Broken all subroutines")))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp {:deck ["Enigma" "Blacklist"]}
