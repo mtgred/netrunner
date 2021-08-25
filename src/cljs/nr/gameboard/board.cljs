@@ -475,6 +475,39 @@
        [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
      (list-abilities :corp card c-state corp-abilities)]))
 
+(defn encounter-info-div
+  "Displays encounter information including current ice strength and subroutines"
+  [ice]
+  (let [subtypes (sort-by #(case %
+                             "Mythic" 1
+                             ("Barrier" "Code Gate" "Sentry") 2
+                             ("Bioroid" "Trap") 3
+                             4) (:subtypes ice))
+        current-strength (or (:current-strength ice)
+                             (:strength ice)
+                             0)
+        subroutines (:subroutines ice)]
+    [:div.panel.blue-shade.encounter-info {:style {:display "inline"}}
+     [:span.info {:style {:display "block"}} (join " - " subtypes)]
+     [:span.float-center (tr [:card-browser.strength] "Strength") ": " current-strength]
+     [:hr]
+     (when (seq subroutines)
+       [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
+     (map-indexed
+       (fn [i sub]
+         [:div {:key i}
+          [:span (cond (:broken sub)
+                       {:class :disabled
+                        :style {:font-style :italic}}
+                       (false? (:resolve sub))
+                       {:class :dont-resolve
+                        :style {:text-decoration :line-through}})
+           (render-icons (str " [Subroutine] " (:label sub)))]
+          [:span.float-right
+           (cond (:broken sub) banned-span
+                 (:fired sub) "✅")]])
+       subroutines)]))
+
 ;; TODO (2020-10-08): We're using json as the transport layer for server-client
 ;; communication, so every non-key keyword is converted to a string, which blows.
 ;; Until this is changed, it's better to redefine this stuff in here and just not
@@ -1337,14 +1370,15 @@
 (defn corp-run-div
   [run encounters]
   [:div.panel.blue-shade
-   (when (peek @encounters)
+   (when-let [ice (:ice (peek @encounters))]
      [:<>
-      (let [ice (-> @encounters peek :ice)]
-        [:div {:style {:text-align "center"}
-               :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
-               :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
-         (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))])
-      [:hr]])
+      [:div {:style {:text-align "center"}
+             :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
+             :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
+       (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))]
+      [:hr]
+      (when (:button @app-state)
+        [encounter-info-div ice])])
    (when @run
      [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
 
@@ -1361,8 +1395,8 @@
      (let [current-ice (get-current-ice)]
        [cond-button
         (tr [:game.fire-unbroken "Fire unbroken subs"])
-        (and (seq (remove :fired (:subroutines current-ice)))
-             (not (every? :broken (:subroutines current-ice))))
+        (and (seq (:subroutines current-ice))
+             (some #(and (not (:broken %)) (not (:fired %))) (:subroutines current-ice)))
         #(send-command "unbroken-subroutines" {:card current-ice})])
 
      (= "approach-server" (:phase @run))
@@ -1417,14 +1451,16 @@
                        (= 1 (count @encounters)))
         same-server? (= (-> @encounters peek :ice :zone second) (-> @run :server first))]
     [:div.panel.blue-shade
-     (when (peek @encounters)
-       [:<>
-        (let [ice (-> @encounters peek :ice)]
+     (when encounter
+       (let [ice (:ice encounter)]
+         [:<>
           [:div {:style {:text-align "center"}
                  :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
                  :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
-           (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))])
-        [:hr]])
+           (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (:title ice))]
+          [:hr]
+          (when (:button @app-state)
+            [encounter-info-div ice])]))
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
 
@@ -1456,7 +1492,7 @@
          [cond-button
           (tr [:game.let-subs-fire "Let unbroken subroutines fire"])
           (and (seq (:subroutines current-ice))
-               (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
+               (some #(and (not (:broken %)) (not (:fired %))) (:subroutines current-ice)))
           #(send-command "system-msg"
                          {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
 

@@ -211,12 +211,12 @@
     .additional-subtypes
         background-color: gray-mid
 
-    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
+    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .encounter-info, .popup
         left: 0
         bottom: 100%
         margin: 6px -1px
 
-    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities
+    .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .encounter-info
         display: none
         position: absolute
         z-index: 30
@@ -627,6 +627,8 @@
                         font-style: italic
 
                     button
+                        min-height: 1.75rem
+                        height: auto
                         width: 100%
                         font-size: .75rem
                         margin: 0 0 5px 0
@@ -641,6 +643,10 @@
 
                         select
                             margin-right: 5px
+
+                    .encounter-info
+                        width: 100%
+                        margin: 6px 0px
 
     .centralpane
         flex(1)
