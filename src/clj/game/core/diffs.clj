@@ -247,13 +247,39 @@
   (when-let [run (:run @state)]
     (select-keys run (run-keys))))
 
+(defn encounter-ice-keys []
+  [:cid
+   :current-strength
+   :host
+   :hosted
+   :rezzed
+   :side
+   :strength
+   :subroutines
+   :subtypes
+   :title
+   :type
+   :zone])
+
+(defn encounter-ice-summary
+  [ice state]
+  (-> (get-card state ice)
+      (select-keys (encounter-ice-keys))
+      (prune-null-fields)))
+
 (defn encounter-keys []
   [:ice
    :no-action])
 
 (defn encounters-summary
-  [encounters]
-  (mapv #(select-keys % (encounter-keys)) encounters))
+  [state]
+  (let [encounters (:encounters @state)
+        current-encounter (peek encounters)
+        encounter-count (count encounters)]
+    (when current-encounter
+      (-> (select-keys current-encounter (encounter-keys))
+          (update :ice encounter-ice-summary state)
+          (assoc :encounter-count encounter-count)))))
 
 (defn state-keys []
   [:active-player
@@ -285,7 +311,7 @@
   [state]
   (-> (select-keys @state (state-keys))
       (assoc :run (run-summary state))
-      (update :encounters encounters-summary)))
+      (assoc :encounters (encounters-summary state))))
 
 (defn state-summary
   [stripped-state state side]

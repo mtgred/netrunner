@@ -2435,7 +2435,8 @@
                         :yes-ability
                         {:msg "add 1 power counter to Takobi"
                          :effect (effect (add-counter card :power 1))}}}]
-   :abilities [{:cost [:power 2]
+   :abilities [{:req (req (get-current-encounter state))
+                :cost [:power 2]
                 :label "Give non-AI icebreaker +3 strength"
                 :prompt "Choose an installed non-AI icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")

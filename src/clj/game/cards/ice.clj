@@ -1977,7 +1977,8 @@
              :effect (effect (reset-variable-subs card 0 nil))}]})
 
 (defcard "Konjin"
-  {:on-encounter (do-psi {:label "Force the runner to encounter another ice"
+  {:on-encounter (do-psi {:async true
+                          :label "Force the runner to encounter another ice"
                           :prompt "Choose a piece of ice"
                           :choices {:card #(and (ice? %)
                                                 (rezzed? %))
@@ -2845,8 +2846,9 @@
                   :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
                   :effect (req (let [moved-ice (move state side card (conj (server->zone state target) :ices))]
                                  (redirect-run state side target)
-                                 (trash state side (make-eid state eid) moved-ice {:unpreventable true :cause :subroutine})
-                                 (encounter-ends state side)))}]})
+                                 (wait-for (trash state side (make-eid state eid) moved-ice {:unpreventable true :cause :subroutine})
+                                           (encounter-ends state side)
+                                           (effect-completed state side eid))))}]})
 
 (defcard "Sandman"
   {:subroutines [add-runner-card-to-grip
