@@ -35,8 +35,8 @@
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
-    [game.core.player]
     [game.core.play-instants]
+    [game.core.player]
     [game.core.process-actions]
     [game.core.prompt-state]
     [game.core.prompts]
@@ -64,7 +64,6 @@
     [potemkin :refer [import-vars]]))
 
 (import-vars
-
   [game.core.access
    access-bonus
    access-bonus-count
@@ -98,8 +97,9 @@
    steal
    steal-cost
    steal-cost-bonus
-   turn-archives-faceup]
+   turn-archives-faceup])
 
+(import-vars
   [game.core.actions
    advance
    click-advance
@@ -127,20 +127,23 @@
    score
    select
    trash-resource
-   view-deck]
+   view-deck])
 
+(import-vars
   [game.core.agendas
    get-advancement-requirement
    get-agenda-points
    update-advancement-requirement
    update-all-advancement-requirements
-   update-all-agenda-points]
+   update-all-agenda-points])
 
+(import-vars
   [game.core.bad-publicity
    bad-publicity-prevent
    gain-bad-publicity
-   lose-bad-publicity]
+   lose-bad-publicity])
 
+(import-vars
   [game.core.board
    all-active
    all-active-installed
@@ -157,8 +160,9 @@
    installable-servers
    installed-byname
    server->zone
-   server-list]
+   server-list])
 
+(import-vars
   [game.core.card
    active?
    agenda?
@@ -209,25 +213,30 @@
    rezzed?
    runner?
    upgrade?
-   virus-program?]
+   virus-program?])
 
+(import-vars
   [game.core.card-defs
    card-def
-   defcard-impl]
+   defcard-impl])
 
+(import-vars
   [game.core.change-vals
-   change]
+   change])
 
+(import-vars
   [game.core.checkpoint
-   fake-checkpoint]
+   fake-checkpoint])
 
+(import-vars
   [game.core.commands
    command-adv-counter
    command-counter
    command-undo-click
    command-undo-turn
-   parse-command]
+   parse-command])
 
+(import-vars
   [game.core.cost-fns
    break-sub-ability-cost
    card-ability-cost
@@ -242,11 +251,13 @@
    rez-cost
    run-additional-cost-bonus
    run-cost
-   trash-cost]
+   trash-cost])
 
+(import-vars
   [game.core.costs
-   total-available-credits]
+   total-available-credits])
 
+(import-vars
   [game.core.damage
    chosen-damage
    corp-can-choose-damage?
@@ -256,8 +267,9 @@
    damage-prevent
    enable-corp-damage-choice
    enable-runner-damage-choice
-   runner-can-choose-damage?]
+   runner-can-choose-damage?])
 
+(import-vars
   [game.core.def-helpers
    combine-abilities
    corp-rez-toast
@@ -268,18 +280,21 @@
    make-recurring-ability
    reorder-choice
    trash-on-empty
-   corp-recur]
+   corp-recur])
 
+(import-vars
   [game.core.diffs
    public-states
-   public-diffs]
+   public-diffs])
 
+(import-vars
   [game.core.drawing
    draw
    draw-bonus
    max-draw
-   remaining-draws]
+   remaining-draws])
 
+(import-vars
   [game.core.effects
    any-effects
    gather-effects
@@ -291,16 +306,18 @@
    sum-effects
    unregister-constant-effects
    unregister-effects-for-card
-   unregister-floating-effects]
+   unregister-floating-effects])
 
+(import-vars
   [game.core.eid
    complete-with-result
    effect-completed
    eid-set-defaults
    make-eid
    make-result
-   register-effect-completed]
+   register-effect-completed])
 
+(import-vars
   [game.core.engine
    ability-as-handler
    can-trigger?
@@ -332,8 +349,9 @@
    unregister-floating-events
    unregister-floating-events-for-card
    unregister-suppress
-   unregister-suppress-by-uuid]
+   unregister-suppress-by-uuid])
 
+(import-vars
   [game.core.events
    event-count
    first-event?
@@ -351,18 +369,21 @@
    run-event-count
    run-events
    second-event?
-   turn-events]
+   turn-events])
 
+(import-vars
   [game.core.expose
    expose
-   expose-prevent]
+   expose-prevent])
 
+(import-vars
   [game.core.finding
    find-card
    find-cid
    find-latest
-   get-scoring-owner]
+   get-scoring-owner])
 
+(import-vars
   [game.core.flags
    ab-can-prevent?
    any-flag-fn?
@@ -410,8 +431,9 @@
    untrashable-while-resources?
    untrashable-while-rezzed?
    when-scored?
-   zone-locked?]
+   zone-locked?])
 
+(import-vars
   [game.core.gaining
    base-mod-size
    deduct
@@ -422,20 +444,23 @@
    lose-credits
    lose-clicks
    safe-inc-n
-   sub->0]
+   sub->0])
 
+(import-vars
   [game.core.hand-size
    corp-hand-size+
    hand-size
    hand-size+
    runner-hand-size+
    sum-hand-size-effects
-   update-hand-size]
+   update-hand-size])
 
+(import-vars
   [game.core.hosting
    host
-   remove-from-host]
+   remove-from-host])
 
+(import-vars
   [game.core.ice
    add-extra-sub!
    add-sub
@@ -487,14 +512,16 @@
    update-all-icebreakers
    update-breaker-strength
    update-ice-in-server
-   update-ice-strength]
+   update-ice-strength])
 
+(import-vars
   [game.core.identities
    disable-card
    disable-identity
    enable-card
-   enable-identity]
+   enable-identity])
 
+(import-vars
   [game.core.initializing
    ability-init
    card-init
@@ -503,8 +530,9 @@
    subroutines-init
    update-abilities-cost-str
    update-ability-cost-str
-   update-all-card-labels]
+   update-all-card-labels])
 
+(import-vars
   [game.core.installing
    corp-can-pay-and-install?
    corp-install
@@ -514,20 +542,23 @@
    install-locked?
    runner-can-install?
    runner-can-pay-and-install?
-   runner-install]
+   runner-install])
 
+(import-vars
   [game.core.link
    get-link
    link+
-   update-link]
+   update-link])
 
+(import-vars
   [game.core.memory
    available-mu
    caissa-mu+
    mu+
    update-mu
-   virus-mu+]
+   virus-mu+])
 
+(import-vars
   [game.core.moving
    as-agenda
    discard-from-hand
@@ -547,14 +578,16 @@
    trash-resource-bonus
    uninstall
    update-current-ice-to-trash
-   update-installed-card-indices]
+   update-installed-card-indices])
 
+(import-vars
   [game.core.optional
    get-autoresolve
    never?
    optional-ability
-   set-autoresolve]
+   set-autoresolve])
 
+(import-vars
   [game.core.payment
    add-cost-label-to-ability
    build-cost-label
@@ -571,38 +604,45 @@
    label
    merge-costs
    payable?
-   value]
+   value])
 
+(import-vars
   [game.core.play-instants
    can-play-instant?
    play-instant
-   play-instant-costs]
+   play-instant-costs])
 
+(import-vars
   [game.core.pick-counters
    pick-credit-providing-cards
-   pick-virus-counters-to-spend]
+   pick-virus-counters-to-spend])
 
+(import-vars
   [game.core.process-actions
    command-parser
-   process-action]
+   process-action])
 
+(import-vars
   [game.core.props
    add-counter
    add-icon
    add-prop
    remove-icon
-   set-prop]
+   set-prop])
 
+(import-vars
   [game.core.player
    map->Corp
    map->Runner
    new-corp
-   new-runner]
+   new-runner])
 
+(import-vars
   [game.core.prompt-state
    add-to-prompt-queue
-   remove-from-prompt-queue]
+   remove-from-prompt-queue])
 
+(import-vars
   [game.core.prompts
    cancellable
    choice-parser
@@ -612,24 +652,29 @@
    show-prompt-with-dice
    show-select
    show-trace-prompt
-   show-wait-prompt]
+   show-wait-prompt])
 
+(import-vars
   [game.core.psi
-   psi-game]
+   psi-game])
 
+(import-vars
   [game.core.purging
-   purge]
+   purge])
 
+(import-vars
   [game.core.revealing
    conceal-hand
    reveal
-   reveal-hand]
+   reveal-hand])
 
+(import-vars
   [game.core.rezzing
    derez
    get-rez-cost
-   rez]
+   rez])
 
+(import-vars
   [game.core.runs
    add-run-effect
    bypass-ice
@@ -658,8 +703,9 @@
    successful-run-replace-access
    toggle-auto-no-action
    total-cards-accessed
-   total-run-cost]
+   total-run-cost])
 
+(import-vars
   [game.core.say
    enforce-msg
    indicate-action
@@ -668,8 +714,9 @@
    system-msg
    system-say
    typing
-   typingstop]
+   typingstop])
 
+(import-vars
   [game.core.servers
    central->name
    central->zone
@@ -689,68 +736,81 @@
    unknown->kw
    zone->name
    zone->sort-key
-   zones->sorted-names]
+   zones->sorted-names])
 
+(import-vars
   [game.core.set-up
    build-card
    create-deck
    init-game
    keep-hand
-   mulligan]
+   mulligan])
 
+(import-vars
   [game.core.shuffling
    shuffle!
    shuffle-deck
    shuffle-into-deck
-   shuffle-into-rd-effect]
+   shuffle-into-rd-effect])
 
+(import-vars
   [game.core.state
    make-rid
    map->State
-   new-state]
+   new-state])
 
+(import-vars
   [game.core.subtypes
-   update-all-subtypes]
+   update-all-subtypes])
 
+(import-vars
   [game.core.tags
    gain-tags
    lose-tags
-   tag-prevent]
+   tag-prevent])
 
+(import-vars
   [game.core.to-string
-   card-str]
+   card-str])
 
+(import-vars
   [game.core.toasts
    show-error-toast
-   toast]
+   toast])
 
+(import-vars
   [game.core.trace
    init-trace
-   init-trace-bonus]
+   init-trace-bonus])
 
+(import-vars
   [game.core.turns
    end-phase-12
    end-turn
-   start-turn]
+   start-turn])
 
+(import-vars
   [game.core.update
    update!
-   update-hosted!]
+   update-hosted!])
 
+(import-vars
   [game.core.virus
    count-virus-programs
    get-virus-counters
    number-of-virus-counters
-   number-of-runner-virus-counters]
+   number-of-runner-virus-counters])
 
+(import-vars
   [game.core.winning
    check-win-by-agenda
    clear-win
    concede
    flatline
    win
-   win-decked]
+   win-decked])
 
+(import-vars
   [game.macros
    continue-ability
    effect
