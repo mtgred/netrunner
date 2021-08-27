@@ -4,6 +4,7 @@
             [clojure.test :refer :all]
             [game.core :as core]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
+            [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt error-wrapper is']]
@@ -201,9 +202,9 @@
 (defn card-subroutine-impl
   [state _ card ability]
   (let [ice (get-card state card)]
-    (is' (core/active-ice? state ice) (str (:title ice) " is active"))
+    (is' (active-ice? state ice) (str (:title ice) " is active"))
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
-    (when (and (core/active-ice? state ice)
+    (when (and (active-ice? state ice)
                (core/get-current-encounter state))
       (core/process-action "subroutine" state :corp {:card ice :subroutine ability})
       true)))
@@ -453,9 +454,9 @@
 (defn fire-subs-impl
   [state card]
   (let [ice (get-card state card)]
-    (is' (core/active-ice? state ice) (str (:title ice) " is active"))
+    (is' (active-ice? state ice) (str (:title ice) " is active"))
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
-    (when (and (core/active-ice? state ice) 
+    (when (and (active-ice? state ice)
                (core/get-current-encounter state))
       (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
 

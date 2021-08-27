@@ -1,6 +1,7 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
             [game.core.cost-fns :refer [all-stealth min-stealth]]
+            [game.core.runs :refer [active-encounter?]]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
             [clojure.string :as string]))
