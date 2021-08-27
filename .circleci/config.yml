@@ -16,6 +16,6 @@ jobs:
       - run: lein do fetch --no-db --no-card-images, eftest
       - save_cache:
           paths:
-            - ~/project/.m2
-            - ~/project/.lein
+            - ~/.m2
+            - ~/.lein
           key: lein-deps-{{ checksum "project.clj" }}

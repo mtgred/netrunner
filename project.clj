@@ -75,7 +75,7 @@
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]}
 
-  ;; Compilation
+  ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and (most of the) task namespaces.
   :aot [#"web.core"
@@ -91,7 +91,6 @@
   ;; Misc
   :test-paths ["test/clj"]
   :eftest {:report eftest.report.pretty/report
-           ; :capture-output? false
            :fail-fast? false}
 
   :ring {:handler web.api/app}
