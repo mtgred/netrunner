@@ -3477,7 +3477,7 @@
         (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
         (click-prompt state :corp "Archives")
         (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
-        (is (= :approach-ice (get-in @state [:run :phase])) "Runner is in correct state")
+        (is (= :approach-ice (:phase (:run @state))) "Runner is in correct state")
         (run-jack-out state)
         (click-card state :runner "Daily Casts")
         (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck"))))
@@ -3586,7 +3586,7 @@
        (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
        (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")
        (run-continue state)
-       (is (= :encounter-ice (-> @state :run :phase)))
+       (is (= :encounter-ice (:phase (:run @state))))
        (is (= (refresh iw) (core/get-current-ice state))))))
   (testing "Breaking sub in forced encounter does not redirect run"
     (do-game

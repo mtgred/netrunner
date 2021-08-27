@@ -201,13 +201,9 @@
 (defn card-subroutine-impl
   [state _ card ability]
   (let [ice (get-card state card)]
-    (is' (if (installed? ice)
-           (rezzed? ice)
-           true) (str (:title ice) " is active"))
+    (is' (core/active-ice? state ice) (str (:title ice) " is active"))
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
-    (when (and (if (installed? ice)
-                 (rezzed? ice)
-                 true)
+    (when (and (core/active-ice? state ice)
                (core/get-current-encounter state))
       (core/process-action "subroutine" state :corp {:card ice :subroutine ability})
       true)))
@@ -376,7 +372,7 @@
        (core/process-action "continue" state :corp nil)
        (core/process-action "continue" state :runner nil)
        (when-not (= :any phase)
-         (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase"))))))
+         (is (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
 
 (defmacro encounter-continue
   "No action from corp and continue for runner to proceed in current encounter."
@@ -403,7 +399,7 @@
          (core/process-action "continue" state :corp nil)
          (core/process-action "continue" state :runner nil)
          (when-not (= :any phase)
-           (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase")))))))
+           (is (= phase (:phase (:run @state))) "Run is in the correct phase")))))))
 
 (defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."
@@ -457,13 +453,9 @@
 (defn fire-subs-impl
   [state card]
   (let [ice (get-card state card)]
-    (is' (if (installed? ice)
-           (rezzed? ice)
-           true) (str (:title ice) " is active"))
+    (is' (core/active-ice? state ice) (str (:title ice) " is active"))
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
-    (when (and (if (installed? ice)
-                 (rezzed? ice)
-                 true)
+    (when (and (core/active-ice? state ice) 
                (core/get-current-encounter state))
       (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
 

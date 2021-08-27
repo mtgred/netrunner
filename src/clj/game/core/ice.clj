@@ -43,6 +43,16 @@
    (when (:run @state)
      (swap! state assoc-in [:run :current-ice] (get-card state card)))))
 
+(defn active-ice?
+  "Ice is active when installed and rezzed or is the current encounter"
+  ([state] (active-ice? state (get-current-ice state)))
+  ([state ice]
+   (let [encounter (peek (:encounters @state))
+         encounter-ice (get-card state (:ice encounter))]
+     (if (installed? ice)
+       (rezzed? ice)
+       (same-card? ice encounter-ice)))))
+
 ;;; Ice subroutine functions
 (defn add-sub
   ([ice sub] (add-sub ice sub (:cid ice) nil))
@@ -258,11 +268,9 @@
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
   ([state side eid ice subroutines msgs]
    (if (and (seq subroutines)
-            (if (installed? ice)
-              (rezzed? ice)
-              true)
             (or (:run @state)
-                (-> @state :encounters peek))
+                (peek (:encounters @state)))
+            (active-ice? state ice)
             (not (get-in @state [:end-run :ended])))
      (let [sub (first subroutines)]
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
@@ -331,9 +339,7 @@
         old-strength (get-strength ice)
         new-strength (ice-strength state side ice)
         changed? (not= old-strength new-strength)]
-    (when (if (installed? ice)
-            (rezzed? ice)
-            true)
+    (when (active-ice? state ice)
       (update! state side (assoc ice :current-strength new-strength))
       (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
       changed?)))
@@ -534,10 +540,8 @@
          subtype (or subtype "All")
          args (assoc args :subtype subtype :break n)
          break-req (req (and current-ice
-                             (if (installed? current-ice)
-                               (rezzed? current-ice)
-                               true)
-                             (-> @state :encounters peek)
+                             (peek (:encounters @state))
+                             (active-ice? state current-ice)
                              (if subtype
                                (or (= subtype "All")
                                    (has-subtype? current-ice subtype))
@@ -669,10 +673,8 @@
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
-                                   (if (installed? current-ice)
-                                     (rezzed? current-ice)
-                                     true)
-                                   (-> @state :encounters peek)
+                                   (peek (:encounters @state))
+                                   (active-ice? state current-ice)
                                    (or break-ability
                                        pump-ability))
                             (vec (concat abs

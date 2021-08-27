@@ -462,6 +462,7 @@
 
 (import-vars
   [game.core.ice
+   active-ice?
    add-extra-sub!
    add-sub
    add-sub!
@@ -678,6 +679,7 @@
 
 (import-vars
   [game.core.runs
+   active-encounter?
    add-run-effect
    bypass-ice
    can-bypass-ice

@@ -10,7 +10,7 @@
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint make-pending-event pay queue-event resolve-ability unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [clear-encounter-prompts clear-wait-prompt show-encounter-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -23,7 +23,7 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
 
-(declare handle-end-run jack-out run-cleanup gain-run-credits pass-ice successful-run)
+(declare handle-end-run jack-out forced-encounter-cleanup run-cleanup gain-run-credits pass-ice successful-run)
 
 (defn total-run-cost
   ([state side card] (total-run-cost state side card nil))
@@ -42,12 +42,19 @@
 
 (defn get-current-encounter
   [state]
-  (-> @state :encounters peek))
+  (peek (:encounters @state)))
+
+(defn active-encounter?
+  "Encounter is active when there is a current encounter and there is an active ice"
+  [state]
+  (and (get-current-encounter state)
+       (active-ice? state)))
 
 (defn update-current-encounter
   [state key value]
   (when-let [encounter (get-current-encounter state)]
-    (swap! state update :encounters #(conj (pop %) (assoc encounter key value)))))
+    (let [updated-encounter (assoc encounter key value)]
+      (swap! state update :encounters #(conj (pop %) updated-encounter)))))
 
 (defn clear-encounter
   [state]
@@ -151,15 +158,15 @@
   [state _ _]
   (swap! state update-in [:run :corp-auto-no-action] not)
   (when (and (rezzed? (get-current-ice state))
-             (or (= :approach-ice (get-in @state [:run :phase]))
-                 (= :encounter-ice (get-in @state [:run :phase]))))
+             (or (= :approach-ice (:phase (:run @state)))
+                 (= :encounter-ice (:phase (:run @state)))))
     (continue state :corp nil)))
 
 (defn check-auto-no-action
   "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
   [state]
   (when (and (:run @state)
-             (not (= :access-server (get-in @state [:run :phase])))
+             (not (= :access-server (:phase (:run @state))))
              (<= (count (:encounters @state)) 1)
              (get-in @state [:run :corp-auto-no-action])
              (rezzed? (get-current-ice state)))
@@ -278,9 +285,7 @@
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))]
-    (system-msg state :runner (str "encounters " (card-str state ice {:visible (if (installed? ice)
-                                                                                 (rezzed? ice)
-                                                                                 true)})))
+    (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (when on-encounter
       (make-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
@@ -297,9 +302,7 @@
                                         (or (:ended (:end-run @state))
                                             (can-bypass-ice state side (get-card state ice))
                                             (not (get-card state ice))
-                                            (not (if (installed? ice)
-                                                   (rezzed? ice)
-                                                   true))
+                                            (not (active-ice? state (get-card state ice)))
                                             (:next-phase (:run @state))
                                             (check-for-empty-server state)))})
               (cond
@@ -308,9 +311,7 @@
                 (handle-end-run state side)
                 (or (can-bypass-ice state side (get-card state ice))
                     (not (get-card state ice))
-                    (not (if (installed? ice)
-                           (rezzed? ice)
-                           true))
+                    (not (active-ice? state (get-card state ice)))
                     (:next-phase (:run @state)))
                 (encounter-ends state side)))))
 
@@ -326,10 +327,10 @@
   (show-encounter-prompts state ice)
   (wait-for (encounter-ice state side (make-eid state eid) ice)
             (clear-encounter-prompts state)
-            (when (and (not (:run @state))
-                       (empty? (:encounters @state)))
-              (run-cleanup state :runner))
-            (effect-completed state side eid)))
+            (if (and (not (:run @state))
+                     (empty? (:encounters @state)))
+              (forced-encounter-cleanup state :runner eid)
+              (effect-completed state side eid))))
 
 (defmethod continue :encounter-ice
   [state side {:keys [jack-out]}]
@@ -395,7 +396,7 @@
   [state side _]
   (let [eid (:eid (:run @state))
         no-ice? (zero? (count (get-run-ices state)))
-        initiation-phase? (= :initiation (get-in @state [:run :phase]))]
+        initiation-phase? (= :initiation (:phase (:run @state)))]
     (when (get-current-encounter state)
       (encounter-ends state side))
     (set-current-ice state nil)
@@ -458,7 +459,7 @@
 
 (defmethod start-next-phase :default
   [state _ _]
-  (when-not (= :access-server (-> @state :run :phase))
+  (when-not (= :access-server (:phase (:run @state)))
     (.println *err* (with-out-str
                       (print-stack-trace
                         (Exception. "no phase found and not accessing cards")
@@ -475,7 +476,7 @@
   ([state side server] (redirect-run state side server nil))
   ([state side server phase]
    (when (and (:run @state)
-              (not= :access-server (-> @state :run :phase)))
+              (not= :access-server (:phase (:run @state))))
      (let [dest (server->zone state server)
            num-ice (count (get-in (:corp @state) (conj dest :ices)))
            phase (if (= phase :approach-ice)
@@ -746,25 +747,36 @@
     (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
   (let [run (:run @state)
         eid (:eid run)]
-    (when run
-      (swap! state assoc-in [:runner :register :last-run] run)
-      (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-      (swap! state assoc-in [:runner :run-credit] 0)
-      (swap! state assoc :run nil)
-      (queue-event state :run-ends run))
+    (swap! state assoc-in [:runner :register :last-run] run)
+    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap! state assoc-in [:runner :run-credit] 0)
+    (swap! state assoc :run nil)
     (swap! state dissoc-in [:end-run :ended])
+    (queue-event state :run-ends run)
     (wait-for (checkpoint state nil (make-eid state eid) nil)
               (clear-encounter state)
               (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
               (unregister-floating-effects state side :end-of-run)
               (unregister-floating-events state side :end-of-run)
-              (when run
-                (unregister-floating-effects state side :end-of-next-run)
-                (unregister-floating-events state side :end-of-next-run))
+              (unregister-floating-effects state side :end-of-next-run)
+              (unregister-floating-events state side :end-of-next-run)
               (reset-all-ice state side)
               (clear-run-register! state)
               (run-end-fx state side run))))
+
+(defn forced-encounter-cleanup
+  "Trigger appropriate events for the end of an encounter outside of a run"
+  [state side eid]
+  (swap! state dissoc-in [:end-run :ended])
+  (wait-for (checkpoint state nil (make-eid state eid) nil)
+            (unregister-floating-effects state side :end-of-encounter)
+            (unregister-floating-events state side :end-of-encounter)
+            (unregister-floating-effects state side :end-of-run)
+            (unregister-floating-events state side :end-of-run)
+            (reset-all-ice state side)
+            (clear-run-register! state)
+            (effect-completed state side eid)))
 
 (defn handle-end-run
   "Initiate run resolution."
