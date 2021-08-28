@@ -803,6 +803,41 @@
          (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
          (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
          (is (nil? (-> @state :stats :runner :access :cards)) "No cards were directly accessed (Ganked! is trashed before this increments)"))))
+    (testing "Central - Stacked forced encounters during access that end the run stop further access"
+      (do-game
+       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                         :hand ["Konjin" "Ice Wall" "Ganked!"]}})
+       (play-from-hand state :corp "Konjin" "R&D")
+       (play-from-hand state :corp "Ice Wall" "HQ")
+       (play-from-hand state :corp "Ganked!" "R&D")
+       (let [iw (get-ice state :hq 0)
+             konjin (get-ice state :rd 0)]
+         (rez state :corp iw)
+         (rez state :corp konjin)
+         (take-credits state :corp)
+         (run-on state :rd)
+         (run-continue state)
+         (click-prompt state :corp "0 [Credits]")
+         (click-prompt state :runner "0 [Credits]")
+         (run-continue state)
+         (run-continue state)
+         (is (not (core/get-current-encounter state)) "The runner should not be encountering an ice before access")
+         (click-prompt state :runner "Unrezzed upgrade")
+         (click-prompt state :corp "Yes")
+         (click-card state :corp konjin)
+         (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+         (click-prompt state :corp "0 [Credits]")
+         (click-prompt state :runner "1 [Credits]")
+         (click-card state :corp iw)
+         (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+         (is (= 2 (count (:encounters @state))))
+         (is (not= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Access paused while encounter is active")
+         (fire-subs state (refresh iw))
+         (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+         (is (empty? (:run @state)) "The run has ended")
+         (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
+         (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
+         (is (nil? (-> @state :stats :runner :access :cards)) "No cards were directly accessed (Ganked! is trashed before this increments)"))))
     (testing "Remote - Forced encounters during access that end the run stop further access"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

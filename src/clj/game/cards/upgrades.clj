@@ -1481,10 +1481,7 @@
                                    (installed? %))}
              :msg (msg "force the Runner to trash " (string/join ", " (map :title targets)))
              :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true})
-                                    (effect-completed state side eid)
-                                    ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
-                                    (when (not (get-only-card-to-access state))
-                                      (handle-end-run state side))))})
+                                    (effect-completed state side eid)))})
           (ability []
             {:trace {:base 4
                      :successful
