@@ -18,7 +18,7 @@
     [game.core.props :refer [set-prop]]
     [game.core.psi :refer [psi-game]]
     [game.core.rezzing :refer [rez]]
-    [game.core.runs :refer [end-run jack-out]]
+    [game.core.runs :refer [end-run get-current-encounter jack-out]]
     [game.core.say :refer [system-msg system-say unsafe-say]]
     [game.core.servers :refer [zones->sorted-names]]
     [game.core.set-up :refer [build-card]]
@@ -341,7 +341,8 @@
         "/install-ice" command-install-ice
         "/jack-out"   (fn [state side]
                         (when (and (= side :runner)
-                                    (:run @state))
+                                   (or (:run @state)
+                                       (get-current-encounter state)))
                           (jack-out state side (make-eid state))))
         "/link"       (fn [state side]
                         (when (= side :runner)

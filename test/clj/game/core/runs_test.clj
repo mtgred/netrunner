@@ -968,6 +968,37 @@
           (is (not= 8 (@state :runner :credits)) "Little Engine's third subroutine should not have fired")
           (is (empty? (prompt-map :runner)) "Encounter has ended")
           (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
+          (is (not (get-in @state [:runner :register :unsuccessful-run :remote1])) "Not a run"))))
+    (testing "Forced encounters outside of a run end properly when a 'Jack out' event occurs"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Little Engine" "Ganked!"]}
+                   :runner {:hand ["Flip Switch" "Quest Completed"]}})
+        (play-from-hand state :corp "Little Engine" "New remote")
+        (play-from-hand state :corp "Ganked!" "Server 1")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Flip Switch")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (let [le (get-ice state :remote1 0)
+              fs (get-hardware state 0)]
+          (rez state :corp le)
+          (run-empty-server state :archives)
+          (run-empty-server state :rd)
+          (click-prompt state :runner "No action")
+          (run-empty-server state :hq)
+          (click-prompt state :runner "No action")
+          (play-from-hand state :runner "Quest Completed")
+          (click-card state :runner (get-content state :remote1 0))
+          (click-prompt state :corp "Yes")
+          (click-card state :corp le)
+          (is (core/get-current-encounter state) "The runner should be encountering an ice")
+          (is (= (refresh le) (core/get-current-ice state)) "The runner should be encountering Little Engine")
+          (is (last-log-contains? state "Runner encounters Little Engine protecting Server 1 at position 0.") "Encounter message sent")
+          (card-ability state :runner fs 0)
+          (is (not= 9 (@state :runner :credits)) "Little Engine's third subroutine should not have fired")
+          (is (empty? (prompt-map :runner)) "Encounter has ended")
+          (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
           (is (not (get-in @state [:runner :register :unsuccessful-run :remote1])) "Not a run")))))
   (testing "Forced Encounters - Redirection"
     (testing "Forced encounter into redirection outside of access changes position"
