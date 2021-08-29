@@ -824,6 +824,9 @@
                             .counters
                                 transform(rotate(-90deg))
 
+                            .strength
+                                transform(initial)
+
                         .abilities, .runner-abilities, .corp-abilities
                             top: auto
                             bottom: 100%
@@ -872,11 +875,14 @@
             .content
                 transform(initial)
 
-            .strength
-                transform(rotate(-90deg))
-
             .icon
                 transform(rotate(-90deg))
+
+            .hosted
+
+                .abilities, .runner-abilities, .corp-abilities
+                    top: 100%
+                    bottom: auto
 
             .ices
                 opacity: 0.99
@@ -892,11 +898,13 @@
                     .counters
                         transform(rotate(90deg))
 
-                    .abilities, .runner-abilities, .corp-abilities
-                        top: 100%
-                        bottom: auto
+                    .strength
+                        transform(initial)
 
                 .counter
+                    transform(rotate(-90deg))
+
+                .strength
                     transform(rotate(-90deg))
 
                 .run-card
