@@ -488,6 +488,7 @@
                              0)
         subroutines (:subroutines ice)]
     [:div.panel.blue-shade.encounter-info {:style {:display "inline"}}
+     [:span.active.float-center (:title ice)]
      [:span.info {:style {:display "block"}} (join " - " subtypes)]
      [:span.float-center (tr [:card-browser.strength] "Strength") ": " current-strength]
      [:hr]
