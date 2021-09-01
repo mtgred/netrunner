@@ -685,7 +685,6 @@
    check-for-empty-server
    complete-run
    continue
-   corp-phase-43
    encounter-ends
    end-run
    end-run-prevent

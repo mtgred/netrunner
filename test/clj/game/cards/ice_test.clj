@@ -360,8 +360,8 @@
         (run-continue state :encounter-ice)
         (card-subroutine state :corp ansel 2)
         (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
-        (run-continue state :approach-server)
-        (run-continue state :access-server)
+        (run-continue state :movement)
+        (run-continue state :success)
         (is (= "You accessed Merger." (:msg (prompt-map :runner))))
         (is (= ["No action"] (prompt-buttons :runner)))))
     (testing "Third sub blocks stealing and trashing: stealing"
@@ -373,8 +373,8 @@
         (run-continue state :encounter-ice)
         (card-subroutine state :corp ansel 2)
         (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
-        (run-continue state :approach-server)
-        (run-continue state :access-server)
+        (run-continue state :movement)
+        (run-continue state :success)
         (is (= "You accessed NGO Front." (:msg (prompt-map :runner))))
         (is (= ["No action"] (prompt-buttons :runner)))))))
 
@@ -1626,6 +1626,7 @@
         (run-on state "HQ")
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
+        (run-continue state)
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
@@ -1634,13 +1635,14 @@
         (click-prompt state :runner "2 net damage") ; take 2 net
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
         (run-continue state)
-        (click-prompt state :corp "No")
         (run-continue state)
+        (click-prompt state :corp "No")
         (click-prompt state :runner "No action")
         (let [cards-in-hand (count (:hand (get-runner)))]
           (card-ability state :runner responders 0)
           (is (= (inc cards-in-hand) (count (:hand (get-runner)))) "First Responders was able to trigger"))
         (run-on state "Archives")
+        (run-continue state)
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
         (card-subroutine state :corp (get-ice state :archives 0) 0)
@@ -1657,6 +1659,7 @@
         (run-continue state) ; pass the first ice
         (run-continue state) ; pass the second ice
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
+        (run-continue state)
         (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
         (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
         (click-prompt state :corp "Yes") ; Move Formicary
@@ -2623,6 +2626,7 @@
         (is (= :encounter-ice (:phase (:run @state))) "Jua encounter effect happens")
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+        (run-continue state)
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Kakugo" (:hand (get-corp))))
         (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")

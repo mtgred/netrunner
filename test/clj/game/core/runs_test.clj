@@ -46,7 +46,7 @@
       (card-ability state :runner (get-program state 0) 0) ; Icebreaker
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (= :approach-server (:phase (:run @state))))
+      (is (= :movement (:phase (:run @state))))
       (run-continue state)
       (click-prompt state :runner "No action") ; Access Hedge Fund
       (is (nil? (:run @state)))))
@@ -99,7 +99,7 @@
       (click-prompt state :runner "Server 1")
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
-      (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
+      (is (= :movement (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
       (run-jack-out state)))
   (testing "with bypass vs cannot be bypassed"
     (do-game
@@ -130,7 +130,7 @@
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
+        (is (= :movement (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
         (is (= credits (:credit (get-runner)))))
       (run-jack-out state)
       (is (nil? (:run @state)))))
@@ -312,7 +312,7 @@
         (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
         (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
         (core/continue state :corp nil)
-        (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
+        (is (= :movement (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -327,7 +327,7 @@
         (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
         (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
         (core/continue state :runner nil)
-        (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
+        (is (= :movement (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset"))))
   (testing "Buffered continue on encountering ice"
     (do-game
@@ -345,7 +345,7 @@
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
         (is (= :runner (:no-action (core/get-current-encounter state))) "Runner pressed Continue button")
         (core/continue state :corp nil)
-        (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
+        (is (= :movement (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset"))))
   (testing "Buffered continue on encountering ice"
     (do-game
@@ -363,7 +363,7 @@
         (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
         (is (= :corp (:no-action (core/get-current-encounter state))) "Corp pressed Continue button")
         (core/continue state :runner nil)
-        (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
+        (is (= :movement (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset")))))
 
 (deftest auto-no-action
@@ -395,11 +395,11 @@
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (is (= :approach-server (:phase (:run @state))) "Approaching server")
+        (is (= :movement (:phase (:run @state))) "Movement before approaching server")
         (core/continue state :runner nil)
-        (is (= :approach-server (:phase (:run @state))) "Still approaching server, waiting on Corp")
+        (is (= :movement (:phase (:run @state))) "Still before approaching server, waiting on Corp")
         (core/continue state :corp nil)
-        (is (= :access-server (:phase (:run @state))) "Accessing server")
+        (is (= :success (:phase (:run @state))) "Accessing server")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run ended"))))
   (testing "stop at unrezzed ice"
@@ -515,7 +515,7 @@
         (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter")))))
 
 (deftest continue-and-jack-out
-  (testing "Approach next ice still happens on jack out"
+  (testing "Pass ice still happens on jack out"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Ice Wall" 2)]}
@@ -534,7 +534,7 @@
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
         (core/continue state :runner {:jack-out true})
-        (is (second-last-log-contains? state "Runner approaches") "Approach triggers still happened")
+        (is (second-last-log-contains? state "Runner passes") "Pass trigger still happened")
         (is (last-log-contains? state "Runner jacks out") "Runner got jacked out")))))
 
 (deftest continue-no-action
@@ -570,7 +570,7 @@
         (take-credits state :corp)
         (run-on state :rd)
         (core/access-bonus state :runner :rd 4)
-        (run-continue state :access-server)
+        (run-continue state :success)
         (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
         (click-prompt state :runner "No action")
         (is (= "You accessed Brain Rewiring." (-> (get-runner) :prompt first :msg)) "Accessed B")
@@ -603,7 +603,7 @@
         (take-credits state :corp)
         (run-on state :rd)
         (core/access-bonus state :runner :rd 4)
-        (run-continue state :access-server)
+        (run-continue state :success)
         (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
         (click-prompt state :runner "No action")
         (is (= "You accessed Brainstorm." (-> (get-runner) :prompt first :msg)) "Accessed B")
@@ -638,7 +638,7 @@
         (take-credits state :corp)
         (run-on state :rd)
         (core/access-bonus state :runner :rd 4)
-        (run-continue state :access-server)
+        (run-continue state :success)
         (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
         (click-prompt state :runner "No action")
         (is (= "You accessed Bacterial Programming." (-> (get-runner) :prompt first :msg)) "Accessed B")
@@ -679,7 +679,7 @@
           (take-credits state :corp)
           (run-on state :rd)
           (core/access-bonus state :runner :rd 3)
-          (run-continue state :access-server)
+          (run-continue state :success)
           (is (= "You accessed Advanced Assembly Lines." (-> (get-runner) :prompt first :msg)) "Accessed A")
           (click-prompt state :runner "No action")
           (is (= "You accessed Brainstorm." (-> (get-runner) :prompt first :msg)) "Accessed B")
@@ -722,9 +722,9 @@
           (take-credits state :corp)
           (run-on state :rd)
           (core/access-bonus state :runner :rd 3)
-          (run-continue state :approach-server)
+          (run-continue state :movement)
           (rez state :corp an)
-          (run-continue state :access-server)
+          (run-continue state :success)
           (click-prompt state :runner "Marcus Batty")
           (click-prompt state :runner "No action")
           (is (= "You accessed Advanced Assembly Lines." (:msg (prompt-map :runner))) "Accessed A")
@@ -1128,5 +1128,5 @@
           (is (= "Bullfrog" (:title (get-ice state :archives 1))) "Bullfrog moved to Archives")
           (is (-> (get-ice state :archives 1) :subroutines first :fired) "Bullfrog subroutine has fired")
           (is (= :hq (-> @state :run :server first)) "Run is still on HQ")
-          (is (= :access-server (:phase (:run @state))) "Run still in Access phase")
+          (is (= :success (:phase (:run @state))) "Run still in Success phase")
           (is (not (-> @state :run :prevent-access)) "Access should not be prevented"))))))

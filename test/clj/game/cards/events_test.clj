@@ -1631,7 +1631,7 @@
       (let [scored-nisei (get-scored state :corp 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Divide and Conquer")
-        (run-phase-43 state)
+        (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
         (card-ability state :corp (refresh scored-nisei) 0)
         (is (empty? (:prompt (get-runner))) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
@@ -2948,7 +2948,7 @@
       (is (:run @state) "A run has been initiated")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall")))
+      (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
   (testing "Only bypasses one ice"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

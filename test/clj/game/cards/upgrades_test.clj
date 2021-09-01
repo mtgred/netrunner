@@ -83,9 +83,9 @@
      (new-game {:corp {:hand ["Anoetic Void" "Ice Wall" "Fire Wall"]}})
      (play-from-hand state :corp "Anoetic Void" "New remote")
      (let [av (get-content state :remote1 0)]
-     (rez state :corp av)
-     (take-credits state :corp)
-     (run-on state "Server 1")
+       (rez state :corp av)
+       (take-credits state :corp)
+       (run-empty-server state "Server 1")
        (click-prompt state :corp "Yes")
        (click-card state :corp "Ice Wall")
        (click-card state :corp "Fire Wall")
@@ -665,7 +665,7 @@
         (let [cg (get-content state :hq 0)]
           (rez state :corp cg)
           (take-credits state :corp)
-          (run-on state :hq)
+          (run-empty-server state :hq)
           (let [credits (:credit (get-runner))]
             (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 0 [Credits]")
@@ -682,6 +682,7 @@
           (rez state :corp cg)
           (take-credits state :corp)
           (run-on state :hq)
+          (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
             (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
@@ -701,6 +702,7 @@
           (advance state (refresh iw) 1)
           (take-credits state :corp)
           (run-on state :hq)
+          (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
             (is (= "Pay 2 [Credits] or end the run?" (:msg (prompt-map :runner))))
@@ -724,6 +726,7 @@
           (advance state (refresh iw2) 1)
           (take-credits state :corp)
           (run-on state :hq)
+          (run-continue state)
           (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
@@ -751,6 +754,7 @@
           (advance state (refresh iw3) 1)
           (take-credits state :corp)
           (run-on state :hq)
+          (run-continue state)
           (run-continue state)
           (run-continue state)
           (run-continue state)
@@ -1062,12 +1066,13 @@
       (play-from-hand state :corp "Snare!" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
-      (run-on state :remote1)
+      (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Snare!")
       (is (find-card "Daruma" (:discard (get-corp))))
-      (run-continue state)
+      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+      (click-prompt state :runner "No")
       (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
   (testing "swapping with a card in HQ"
     (do-game
@@ -1078,12 +1083,32 @@
       (play-from-hand state :corp "Hostile Takeover" "Server 1")
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
-      (run-on state :remote1)
+      (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Snare!")
-      (run-continue state)
-      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp)))))))
+      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+      (click-prompt state :runner "No")
+      (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
+  (testing "Runner jacks out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Daruma" "Hostile Takeover" "Snare!"]
+                       :credits 10}})
+     (play-from-hand state :corp "Daruma" "New remote")
+     (play-from-hand state :corp "Hostile Takeover" "Server 1")
+     (play-from-hand state :corp "Snare!" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (take-credits state :corp)
+     (run-empty-server state :remote1)
+     (click-prompt state :corp "Yes")
+     (click-card state :corp "Hostile Takeover")
+     (click-card state :corp "Snare!")
+     (is (find-card "Daruma" (:discard (get-corp))))
+     (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+     (click-prompt state :runner "Yes")
+     (is (not= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))
+     (is (not (:run @state))))))
 
 (deftest dedicated-technician-team
   ;; Dedicated Technician Team
@@ -1876,6 +1901,7 @@
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
       (core/continue state :corp nil)
       (run-continue state)
+      (run-continue state)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (is (zero? (:position (:run @state))) "Runner should be approaching the server")
@@ -1912,7 +1938,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-on state "Server 1")
+        (run-empty-server state "Server 1")
         (changes-val-macro
           -2 (:click (get-runner))
           "Spend 2 clicks"
@@ -1925,7 +1951,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-on state "Server 1")
+        (run-empty-server state "Server 1")
         (changes-val-macro
           -5 (:credit (get-runner))
           "Pay 5 credits"
@@ -1938,7 +1964,7 @@
       (let [encryption (get-content state :remote1 0)]
         (rez state :corp encryption)
         (take-credits state :corp)
-        (run-on state "Server 1")
+        (run-empty-server state "Server 1")
         (click-prompt state :runner "End the run")
         (is (not (:run @state)) "Run ended by Manegarm Skunkworks"))))
   (testing "No prompt for runs on other servers"

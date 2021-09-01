@@ -22,7 +22,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Enigma")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Enigma")
     (is (find-card "Abagnale" (:discard (get-runner))) "Abagnale is trashed")))
 
 (deftest adept
@@ -76,7 +76,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")))
+      (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")))
   (testing "Can only be used once per turn. #5032"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -91,7 +91,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+      (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
@@ -1323,7 +1323,7 @@
             knobkierie (get-hardware state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
-        (run-continue state :access-server)
+        (run-continue state :success)
         (click-prompt state :runner "Knobkierie")
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
@@ -1341,7 +1341,7 @@
             knobkierie (get-hardware state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
-        (run-continue state :access-server)
+        (run-continue state :success)
         (click-prompt state :runner "Conduit")
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
@@ -1926,7 +1926,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
     (is (find-card "Demara" (:discard (get-runner))) "Demara is trashed")))
 
 (deftest deus-x
@@ -2517,7 +2517,7 @@
         (run-continue state)
         (is (= "Pay 1 [Credits] to bypass Ice Wall?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
-        (is (= :approach-server (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
+        (is (= :movement (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
   (testing "Bypass leaves if uninstalled"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3530,7 +3530,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
     (is (find-card "Lustig" (:discard (get-runner))) "Lustig is trashed")))
 
 (deftest magnum-opus
@@ -3696,7 +3696,7 @@
           (click-prompt state :runner "End the run"))))
     (testing "discount after successful run"
       (do-game state
-        (run-continue state :approach-server)
+        (run-continue state :movement)
         (run-continue state nil)
         (run-on state :hq)
         (run-continue state :encounter-ice)
@@ -5375,7 +5375,7 @@
     (do-game
       (new-game {:runner {:hand ["Sneakdoor Beta"]}
                  :corp {:hand ["Rototurret" "Hedge Fund"]
-                        :discard ["Hedge Fund"]}})
+                        :discard ["Send a Message"]}})
       (play-from-hand state :corp "Rototurret" "Archives")
       (let [roto (get-ice state :archives 0)]
         (rez state :corp roto)
@@ -5385,13 +5385,13 @@
           (card-ability state :runner sb 0)
           (run-continue state)
           (fire-subs state (refresh roto))
-          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose a program to trash")
           (click-card state :corp "Sneakdoor Beta")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
           (run-on state "Archives")
           (run-continue state)
-          (run-continue state)
-          (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+          (run-continue state :movement)
+          (run-continue state :success)
           (is (= :archives (get-in @state [:run :server 0])) "Run continues on Archives"))))))
 
 (deftest snitch

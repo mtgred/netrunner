@@ -2314,7 +2314,7 @@
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
                           :effect (req (let [can-redirect? (and (:run @state)
                                                                 (= 1 (count (:encounters @state)))
-                                                                (not= :access-server (:phase (:run @state))))]
+                                                                (not= :success (:phase (:run @state))))]
                                          (when can-redirect?
                                            (redirect-run state side target :approach-ice))
                                          (register-floating-effect
@@ -2341,7 +2341,7 @@
              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
              :effect (req (when (and (:run @state)
                                      (= 1 (count (:encounters @state)))
-                                     (not= :access-server (:phase (:run @state))))
+                                     (not= :success (:phase (:run @state))))
                             (redirect-run state side "Archives" :approach-ice))
                           (derez state side card))}]
    :subroutines [{:async true
@@ -3076,7 +3076,7 @@
                                         :unregister-once-resolved true
                                         :effect (req (swap! state update :run dissoc :cannot-jack-out))}])
                                      (if (and (= 1 (count (:encounters @state)))
-                                              (not= :access-server (:phase (:run @state))))
+                                              (not= :success (:phase (:run @state))))
                                        (do (redirect-run state side "Archives" :approach-ice)
                                            (encounter-ends state side eid))
                                        (effect-completed state side eid)))

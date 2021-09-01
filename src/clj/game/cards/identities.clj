@@ -128,7 +128,7 @@
                 :msg (msg "trash the approached piece of ice. The Runner is now running on " target)
                 :effect (req (let [dest (server->zone state target)
                                    ice (count (get-in corp (conj dest :ices)))
-                                   phase (if (pos? ice) :encounter-ice :approach-server)]
+                                   phase (if (pos? ice) :encounter-ice :movement)]
                                (when (zero? ice)
                                  (swap! state assoc-in [:run :jack-out] true))
                                (redirect-run state side target phase)

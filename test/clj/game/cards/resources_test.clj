@@ -390,7 +390,7 @@
       (click-prompt state :runner "HQ")
       (click-prompt state :runner "Yes")
       (run-continue state)
-      (is (last-n-log-contains? state 2 "Runner bypasses Ice Wall."))))
+      (is (second-last-log-contains? state "Runner bypasses Ice Wall."))))
   (testing "Only works on first rezzed ice"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2663,7 +2663,7 @@
       (end-phase-12 state :runner)
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
-      (run-continue state :access-server)
+      (run-continue state :success)
       (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (not (get-run)) "Run has ended"))))
@@ -4398,7 +4398,7 @@
       (run-next-phase state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= :approach-server (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
+      (is (= :movement (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
 
 (deftest smartware-distributor
   ;; Smartware Distributor

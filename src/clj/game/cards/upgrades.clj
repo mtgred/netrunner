@@ -374,7 +374,15 @@
                 :effect (effect (purge))}]})
 
 (defcard "Daruma"
-  (let [choose-swap
+  (let [jack-out
+        {:optional
+         {:player :runner
+          :prompt "Do you want to jack out?"
+          :waiting-prompt "Runner to make a decision"
+          :yes-ability {:async true
+                        :effect (effect (jack-out eid))}
+          :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+        choose-swap
         (fn [to-swap]
           {:prompt (str "Choose a card to swap with " (:title to-swap))
            :choices {:not-self true
@@ -401,7 +409,8 @@
           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}]
     {:events [{:event :approach-server
                :async true
-               :effect (effect (continue-ability :corp ability card nil))}]}))
+               :effect (req (wait-for (resolve-ability state :corp (make-eid state eid) ability card nil)
+                                      (resolve-ability state :runner eid jack-out card nil)))}]}))
 
 (defcard "Dedicated Technician Team"
   {:recurring 2

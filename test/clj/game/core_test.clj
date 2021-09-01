@@ -390,13 +390,13 @@
        (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
        (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
        (is' (not (:no-action run)) "No player has pressed continue yet")
-       (is' (not= :access-server (:phase run))
+       (is' (not= :success (:phase run))
             "The run has not reached the server yet")
        (when (and (some? run)
                   (empty? (get-in @state [:runner :prompt]))
                   (empty? (get-in @state [:corp :prompt]))
                   (not (:no-action run))
-                  (not= :access-server (:phase run)))
+                  (not= :success (:phase run)))
          (core/process-action "continue" state :corp nil)
          (core/process-action "continue" state :runner nil)
          (when-not (= :any phase)
@@ -406,26 +406,6 @@
   "No action from corp and continue for runner to proceed in current run."
   ([state] `(error-wrapper (run-continue-impl ~state :any)))
   ([state phase] `(error-wrapper (run-continue-impl ~state ~phase))))
-
-(defn run-phase-43-impl
-  [state]
-  (let [run (:run @state)]
-    (is' (some? run) "There is a run happening")
-    (is' (zero? (:position run)) "Runner has passed all ice")
-    (is' (not (:no-action run)) "No player has pressed continue yet")
-    (is' (= :approach-server (:phase run)) "Runner is approaching the server")
-    (when (and (some? run)
-               (zero? (:position run))
-               (not (:no-action run))
-               (= :approach-server (:phase run)))
-      (core/process-action "corp-phase-43" state :corp nil)
-      (core/process-action "continue" state :runner nil)
-      true)))
-
-(defmacro run-phase-43
-  "Ask for triggered abilities phase 4.3"
-  [state]
-  `(error-wrapper (run-phase-43-impl ~state)))
 
 (defn run-jack-out-impl
   [state]
