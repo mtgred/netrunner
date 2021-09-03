@@ -2422,12 +2422,8 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
-             :optional
-             {:prompt "Jack out?"
-              :req (req (first-run-event? state side :encounter-ice))
-              :yes-ability {:async true
-                            :msg "jack out"
-                            :effect (effect (jack-out eid))}}}]})
+             :optional (:optional (offer-jack-out 
+                                   {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
 (defcard "Rejig"
   (let [valid-target? (fn [card] (and (runner? card)

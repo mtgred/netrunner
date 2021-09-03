@@ -4322,7 +4322,7 @@
       (run-continue state)
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :rd 0))
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
   (testing "There isn't an ice at the correct position"
@@ -4362,8 +4362,26 @@
           "Slipstream prompt still up as you can't choose ice at the wrong position")
       (click-card state :runner (get-ice state :hq 0))
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
+  (testing "Jack out after move"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand [(qty "Ice Wall" 2)]}
+                :runner {:hand ["Slipstream"]}})
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Slipstream")
+     (run-on state "HQ")
+     (rez state :corp (get-ice state :hq 0))
+     (run-continue state)
+     (run-continue state)
+     (click-prompt state :runner "Yes")
+     (click-card state :runner (get-ice state :rd 0))
+     (click-prompt state :runner "Yes")
+     (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
+     (is (empty? (get-run)) "Run has ended")))
   (testing "Interaction with Kakugo"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -4381,7 +4399,7 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :hq 0))
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
       (is (find-card "Sure Gamble" (:hand (get-runner))) "Kakugo doesn't deal any net damage")))
   (testing "Interaction with Spear Phishing"
@@ -4400,7 +4418,8 @@
       (run-continue state)
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :hq 0))
-      (run-next-phase state)
+      (click-prompt state :runner "No")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach ice phase")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (= :movement (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))

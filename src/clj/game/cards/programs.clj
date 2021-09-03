@@ -2301,17 +2301,10 @@
               :prompt "Use Snitch to expose approached ice?"
               :yes-ability
               {:async true
+               :msg "expose the approached ice"
                :effect (req (wait-for
                               (expose state side (:ice context))
-                              (continue-ability
-                                state side
-                                {:optional
-                                 {:prompt "Jack out?"
-                                  :yes-ability {:msg "jack out"
-                                                :async true
-                                                :effect (effect (jack-out eid))}
-                                  :no-ability {:msg "continue the run"}}}
-                                card nil)))}}}]})
+                              (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"

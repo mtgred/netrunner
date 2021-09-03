@@ -2713,7 +2713,8 @@
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
         (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Agenda")
         (click-card state :corp "Eli 2.0")
-        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0"))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0")
+        (click-prompt state :runner "No"))))
   (testing "Swap cards in server with cards in HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
@@ -2744,16 +2745,19 @@
         (click-card state :corp "Jackson Howard")
         (is (= (:title (get-content state :remote2 0)) "Jackson Howard")
             "Swapped Agenda for Asset")
+        (click-prompt state :runner "No")
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-content state :remote2 0))
         (click-card state :corp "Prisec")
         (is (= (:title (get-content state :remote2 0)) "Prisec")
             "Swapped Asset for Upgrade")
+        (click-prompt state :runner "No")
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-content state :remote2 0))
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
         (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
-            "Swapped Upgrade for Agenda"))))
+            "Swapped Upgrade for Agenda")
+        (click-prompt state :runner "No"))))
   (testing "Cancel swapping at different stages"
     (do-game
       (new-game {:corp {:deck ["Project Yagi-Uda"
@@ -2778,6 +2782,31 @@
         (click-card state :corp eli1)
         (click-prompt state :corp "Done")
         (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter"))))
+  (testing "jack out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                              "Eli 1.0"
+                              "Eli 2.0"
+                              "Jackson Howard"
+                              "Prisec"
+                              "Hedge Fund"]}})
+     (core/gain state :corp :click 10 :credit 10)
+     (click-draw state :corp)
+     (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+     (play-from-hand state :corp "Eli 1.0" "New remote")
+     (let [pyu (get-content state :remote1 0)]
+       (advance state pyu 4)
+       (score state :corp (refresh pyu)))
+     (take-credits state :corp)
+     (let [pyu-scored (get-scored state :corp 0)
+           eli1 (get-ice state :remote2 0)]
+       (run-on state :remote2)
+       (card-ability state :corp pyu-scored 0)
+       (click-card state :corp eli1)
+       (click-card state :corp "Eli 2.0")
+       (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0")
+       (click-prompt state :runner "Yes")
+       (is (empty? (:run @state))))))
   (testing "Swap inner ice with HQ. Issue #4831"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2796,7 +2825,8 @@
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-ice state :hq 0))
         (click-card state :corp "Eli 1.0")
-        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")))))
+        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")
+        (click-prompt state :runner "No")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.

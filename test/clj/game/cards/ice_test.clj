@@ -787,6 +787,7 @@
         (is (= 1 (get-in @state [:run :position])))
         (card-subroutine state :corp cp 0)
         (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+        (click-prompt state :runner "No")
         (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
   (testing "Run on servers"
     (do-game
@@ -803,7 +804,26 @@
         (is (= 1 (get-in @state [:run :position])))
         (card-subroutine state :corp cp 0)
         (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")))))
+        (click-prompt state :runner "No")
+        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
+  (testing "Jack out"
+    (do-game
+     (new-game {:corp {:deck ["Cell Portal" (qty "Paper Wall" 2)]}})
+     (core/gain state :corp :credit 5)
+     (play-from-hand state :corp "Cell Portal" "HQ")
+     (play-from-hand state :corp "Paper Wall" "HQ")
+     (play-from-hand state :corp "Paper Wall" "HQ")
+     (take-credits state :corp)
+     (let [cp (get-ice state :hq 0)]
+       (rez state :corp cp)
+       (run-on state :hq)
+       (run-continue-until state :encounter-ice cp)
+       (is (= 1 (get-in @state [:run :position])))
+       (card-subroutine state :corp cp 0)
+       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+       (click-prompt state :runner "Yes")
+       (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")
+       (is (empty? (:run @state)) "Run has ended")))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -2607,7 +2627,8 @@
     (do-game
       (new-game {:corp {:id "Mti Mwekundu: Life Improved"
                         :deck ["Jua" "Kakugo"]}
-                 :runner {:discard ["Paperclip"]}})
+                 :runner {:hand ["Sure Gamble"]
+                          :discard ["Paperclip"]}})
       (play-from-hand state :corp "Jua" "HQ")
       (let [jua (get-ice state :hq 0)]
         (take-credits state :corp)
@@ -2620,13 +2641,15 @@
         (run-continue state)
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Kakugo" (:hand (get-corp))))
+        (click-prompt state :runner "No")
         (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
         (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
         (rez state :corp (get-ice state :hq 0))
+        (run-continue state :encounter-ice)
         (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
-        (run-continue state)
-        (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
+        (run-continue state :movement)
+        (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
 (deftest kakugo
   ;; Kakugo
@@ -3586,10 +3609,33 @@
        (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
        (run-continue state)
        (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+       (click-prompt state :runner "No")
        (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")
        (run-continue state)
        (is (= :encounter-ice (:phase (:run @state))))
        (is (= (refresh iw) (core/get-current-ice state))))))
+  (testing "Runner can jack out after redirect"
+    (do-game
+     (new-game {:corp {:hand ["Mirāju" "Ice Wall"]}
+                :runner {:hand ["Force of Nature"]
+                         :credits 10}})
+     (play-from-hand state :corp "Mirāju" "HQ")
+     (play-from-hand state :corp "Ice Wall" "Archives")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Force of Nature")
+     (run-on state "HQ")
+     (let [miraju (get-ice state :hq 0)
+           iw (get-ice state :archives 0)]
+       (rez state :corp miraju)
+       (rez state :corp iw)
+       (run-continue state)
+       (card-ability state :runner (get-program state 0) 0)
+       (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+       (run-continue state)
+       (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+       (click-prompt state :runner "Yes")
+       (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")
+       (is (empty? (:run @state)) "Runner has jacked out"))))
   (testing "Breaking sub in forced encounter does not redirect run"
     (do-game
       (new-game {:corp {:hand ["Mirāju" "Konjin"]}
@@ -3611,6 +3657,7 @@
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
         (run-continue state)
+        (click-prompt state :runner "No") ;; Runner still prompted to jack out
         (is (= (refresh konjin) (core/get-current-ice state)))
         (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
         (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")))))

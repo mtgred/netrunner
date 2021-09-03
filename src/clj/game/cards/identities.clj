@@ -129,9 +129,9 @@
                 :effect (req (let [dest (server->zone state target)
                                    ice (count (get-in corp (conj dest :ices)))
                                    phase (if (pos? ice) :encounter-ice :movement)]
-                               (redirect-run state side target phase)
-                               (start-next-phase state side nil)
-                               (trash state side eid current-ice {:unpreventable true})))}]})
+                               (wait-for (trash state side (make-eid state eid) current-ice {:unpreventable true})
+                                         (redirect-run state side target phase)
+                                         (start-next-phase state side eid))))}]})
 
 (defcard "Akiko Nisei: Head Case"
   {:events [{:event :pre-access
@@ -1047,6 +1047,7 @@
 
 (defcard "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
+             :interactive (req true)
              :optional
              {:req (req (some ice? (:hand corp)))
               :prompt "Install a piece of ice?"
@@ -1064,8 +1065,9 @@
                                       (set-next-phase state :approach-ice)
                                       (update-all-ice state side)
                                       (update-all-icebreakers state side)
-                                      (effect-completed state side eid)
-                                      (start-next-phase state side nil)))}}}]})
+                                      (continue-ability state side
+                                                        (offer-jack-out {:req (req (:approached-ice? (:run @state)))})
+                                                        card nil)))}}}]})
 
 (defcard "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice
@@ -1157,13 +1159,8 @@
 
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
-             :optional
-             {:req (req (has-subtype? (:ice context) "Sentry"))
-              :prompt "Do you want to jack out?"
-              :once :per-turn
-              :yes-ability {:async true
-                            :msg "jack out"
-                            :effect (effect (jack-out eid))}}}]})
+             :optional (:optional (offer-jack-out {:req (req (has-subtype? (:ice context) "Sentry"))
+                                                   :once :per-turn}))}]})
 
 (defcard "New Angeles Sol: Your News"
   (let [nasol {:optional

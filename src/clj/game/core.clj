@@ -698,6 +698,7 @@
    make-run
    pass-ice
    prevent-access
+   offer-jack-out
    redirect-run
    set-next-phase
    set-phase

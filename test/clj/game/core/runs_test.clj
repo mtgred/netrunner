@@ -1069,6 +1069,7 @@
           (click-card state :corp cp)
           (is (= :hq (-> @state :run :server first)) "Run is on HQ")
           (fire-subs state (refresh cp))
+          (click-prompt state :runner "No")
           (is (= :hq (-> @state :run :server first)) "Run is still on HQ")
           (is (= :approach-ice (:phase (:run @state))) "Timing changed to the Approach Ice phase")
           (is (empty? (:encounters @state)) "Encounters have ended")

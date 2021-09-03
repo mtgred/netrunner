@@ -1792,6 +1792,31 @@
       (run-jack-out state)
       (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
+(deftest gpi-net-tap
+  (do-game
+   (new-game {:runner {:hand ["GPI Net Tap"]}
+              :corp {:hand ["Ice Wall"]}})
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "GPI Net Tap")
+   (let [gpi (get-hardware state 0)
+         iw (get-ice state :hq 0)]
+     ;; expose and jack out
+     (run-on state :hq)
+     (card-ability state :runner gpi 0)
+     (is (last-log-contains? state "exposes Ice Wall") "Expose approached ice")
+     (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
+     (click-prompt state :runner "Yes")
+     (is (nil? (get-run)) "Run has ended")
+     ;; expose and continue
+     (run-on state :hq)
+     (card-ability state :runner gpi 0)
+     (click-prompt state :runner "No")
+     (rez state :corp iw)
+     (card-ability state :runner gpi 0)
+     (is (not (last-log-contains? state "exposes Ice Wall")) "Cannot use ability since ice is rezzed")
+     (is (nil? (prompt-map :runner))))))
+
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game

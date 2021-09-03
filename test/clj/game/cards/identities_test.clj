@@ -2683,6 +2683,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (not= "Jack out?" (:msg (prompt-map :runner))) "First approach of ice so no jack out prompt")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")
       (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
   (testing "Multiple ice"
@@ -2698,7 +2699,27 @@
       (run-continue state)
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
+      (click-prompt state :runner "No")
       (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
+      (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
+  (testing "Jack out"
+    (do-game
+      (new-game {:corp {:id "Mti Mwekundu: Life Improved"
+                        :deck ["Enigma" "Ice Wall" "Bloom"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Bloom" "R&D")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue-until state :movement (get-ice state :rd 0))
+      (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
+      (click-prompt state :runner "Yes")
+      (is (empty? (:run @state)) "Run has ended")
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
       (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
   (testing "with Kakugo, passing shouldn't fire net damage twice. #3588"
@@ -2715,8 +2736,7 @@
       (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
       (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :movement)
       (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo"))))
 
 (deftest nasir-meidan-cyber-explorer
@@ -2939,7 +2959,7 @@
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Nero ability")
-      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))))
+      (is (= "Jack out?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (run-on state "HQ")
       (run-continue state)
@@ -2956,13 +2976,13 @@
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Nero ability")
-      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))))
+      (is (= "Jack out?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "No")
       (fire-subs state (get-ice state :hq 0))
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Nero ability")
-      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))))
+      (is (= "Jack out?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes"))))
 
 (deftest new-angeles-sol-your-news

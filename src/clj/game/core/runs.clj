@@ -25,6 +25,24 @@
 
 (declare handle-end-run jack-out forced-encounter-cleanup run-cleanup gain-run-credits pass-ice successful-run)
 
+(defn offer-jack-out
+  "Returns an ability that prompts the Runner to jack out"
+  ([] (offer-jack-out nil))
+  ([{jack-out-req :req
+    once :once}]
+  {:optional
+   {:player :runner
+    :req (req (if jack-out-req
+                (jack-out-req state side eid card targets)
+                true))
+    :once once
+    :prompt "Jack out?"
+    :waiting-prompt "Runner to make a decison"
+    :yes-ability {:async true
+                  :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
+                                  (jack-out eid))}
+    :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
+
 (defn total-run-cost
   ([state side card] (total-run-cost state side card nil))
   ([state side card {:keys [click-run ignore-costs] :as args}]
@@ -173,7 +191,8 @@
                        (zero? (:position (:run @state)))))
              (<= (count (:encounters @state)) 1)
              (get-in @state [:run :corp-auto-no-action])
-             (rezzed? (get-current-ice state)))
+             (or (rezzed? (get-current-ice state))
+                 (= :movement (:phase (:run @state)))))
     (continue state :corp nil)))
 
 (defn check-for-empty-server
@@ -189,6 +208,7 @@
   [state side eid]
   (let [encounter (get-current-encounter state)
         ice (get-current-ice state)]
+    (update-current-encounter state :ending true)
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
@@ -215,7 +235,7 @@
                       (clear-encounter state)
                       (effect-completed state side eid))
                   ;; change phase
-                  (get-in @state [:run :next-phase])
+                  (:next-phase (:run @state))
                   (do (clear-encounter state)
                       (start-next-phase state side eid))
                   ;; pass ice
@@ -234,6 +254,7 @@
   (set-phase state :approach-ice)
   (set-current-ice state)
   (reset-all-ice state side)
+  (swap! state assoc-in [:run :approached-ice?] true)
   (check-auto-no-action state)
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
@@ -374,19 +395,27 @@
                           ;; Immediately end pass ice step if:
                           ;; * run ends
                           ;; * run is moved to another server
+                          ;; * phase changed
                           ;; * ice moves
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (not= current-server (:server (:run @state)))
+                                            (:next-phase (:run @state))
                                             (and pass-ice?
                                                  (not (same-card? ice (nth (get-run-ices state) (dec pos) nil))))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
-              (if (or (check-for-empty-server state)
-                      (:ended (:end-run @state)))
+              (cond 
+                ;; run ended
+                (or (check-for-empty-server state)
+                    (:ended (:end-run @state)))
                 (handle-end-run state side eid)
-                (effect-completed state side eid)))))
+                ;; phase changed
+                (:next-phase (:run @state))
+                (start-next-phase state side eid)
+                ;; stop in Movement phase
+                :else (effect-completed state side eid)))))
 
 (defn approach-server
   [state side eid]
@@ -397,19 +426,21 @@
                         (make-eid state eid)
                           ;; Immediately end approach if:
                           ;; * run ends
-                          ;; * position is no longer 0
+                          ;; * phase changes
                           ;; * server becomes empty
                         {:cancel-fn (fn [state]
-                                      (or (:ended (:end-run @state))
-                                          (pos? (:position (:run @state)))
-                                          (check-for-empty-server state)))})
+                                      (or (check-for-empty-server state)
+                                          (:ended (:end-run @state))
+                                          (get-in @state [:run :next-phase])))})
             (cond
+              ;; end run
               (or (check-for-empty-server state)
                   (:ended (:end-run @state)))
               (handle-end-run state side eid)
-              (or (get-in @state [:run :next-phase])
-                  (pos? (:position (:run @state))))
-              (effect-completed state side eid)
+              ;; phase changed
+              (get-in @state [:run :next-phase])
+              (start-next-phase state side eid)
+              ;; go to Success phase
               :else (do (set-next-phase state :success)
                         (start-next-phase state side eid)))))
 
@@ -763,7 +794,8 @@
         (do (swap! state assoc-in [:end-run :ended] true)
             (when (:run @state)
               (prevent-access state side))
-            (if (get-current-encounter state)
+            (if (and (get-current-encounter state)
+                     (not (:ending (get-current-encounter state))))
               (encounter-ends state side eid)
               (effect-completed state side eid)))
         :else (effect-completed state side eid)))

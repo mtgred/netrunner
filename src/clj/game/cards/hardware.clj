@@ -877,11 +877,14 @@
                       (update-breaker-strength state side host)))})
 
 (defcard "GPI Net Tap"
-  {:implementation "Trash and jack out effect is manual"
-   :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+  {:abilities [{:req (req (and (= :approach-ice (:phase run))
+                               (ice? current-ice) 
+                               (not (rezzed? current-ice))))
                 :label "expose approached ice"
+                :msg "expose the approached ice"
                 :async true
-                :effect (effect (expose eid current-ice))}]})
+                :effect (req (wait-for (expose state side (make-eid state eid) current-ice)
+                                       (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
   {:constant-effects [(mu+ 2)]

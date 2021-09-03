@@ -474,10 +474,10 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
+        (click-prompt state :runner "No")
         (changes-val-macro 9 (:credit (get-runner))
                            "Gained 6+3 credits from Bravado"
-                           (run-continue-until state :success))
-        )))
+                           (run-continue-until state :success)))))
   (testing "Reinstalled ice during a run is counted twice"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 10)]
@@ -509,6 +509,7 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
+        (click-prompt state :runner "No")
         ;; Enigma
         (run-continue-until state :movement)
         ;; Ice Wall
@@ -4627,16 +4628,20 @@
   (testing "Runner doesn't jack out"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall"]}
+                        :hand ["Enigma" "Ice Wall"]}
                  :runner {:hand ["Recon"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Recon")
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "No")
-      (is (:run @state) "Run continues"))))
+      (is (:run @state) "Run continues")
+      (run-continue-until state :encounter-ice)
+      (is (not= "Jack out?" (:msg (prompt-map :runner))) "No prompt to Jack out on second encounter"))))
 
 (deftest rejig
   ;; Rejig

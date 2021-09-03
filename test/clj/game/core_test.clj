@@ -441,7 +441,11 @@
                   (and ice
                        (not (utils/same-card? ice (core/get-current-ice state)))))
               (not (and (= :movement (:phase (:run @state)))
-                        (zero? (:position (:run @state))))))
+                        (zero? (:position (:run @state)))))
+              (empty? (get-in @state [:runner :prompt]))
+              (empty? (get-in @state [:corp :prompt]))
+              (not (:no-action (:run @state)))
+              (not= :success (:phase (:run @state))))
     (run-continue-impl state))
   (when (and (= :success phase)
              (and (= :movement (:phase (:run @state)))

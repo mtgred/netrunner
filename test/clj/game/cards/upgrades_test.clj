@@ -817,35 +817,71 @@
 
 (deftest code-replicator
   ;; Code Replicator - trash to make runner approach passed (rezzed) ice again
-  (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 3) "Code Replicator"]}
-               :runner {:hand ["Corroder"]}})
-    (core/gain state :corp :click 1)
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Code Replicator" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (run-on state "HQ")
-    (is (= 3 (:position (get-in @state [:run]))) "Initial position outermost Ice Wall")
-    (let [cr (get-content state :hq 0)
-          i1 (get-ice state :hq 0)
-          i2 (get-ice state :hq 1)
-          i3 (get-ice state :hq 2)
-          corr (get-program state 0)]
-      (rez state :corp cr)
-      (is (= 5 (:credit (get-corp))))
-      (rez state :corp i3)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card corr})
-      (core/continue state :corp nil)
-      (is (= 2 (:position (get-in @state [:run]))) "Passed Ice Wall")
-      (card-ability state :corp cr 0)
-      (is (= 3 (:position (get-in @state [:run]))) "Runner approaching previous Ice Wall")
-      (is (empty? (get-content state :hq))
-          "Code Replicatior trashed from root of HQ"))))
+  (testing "basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Ice Wall" 3) "Code Replicator"]}
+                :runner {:hand ["Corroder"]}})
+     (core/gain state :corp :click 1)
+     (core/gain state :corp :credit 5)
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Code Replicator" "HQ")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (run-on state "HQ")
+     (is (= 3 (:position (get-in @state [:run]))) "Initial position outermost Ice Wall")
+     (let [cr (get-content state :hq 0)
+           i1 (get-ice state :hq 0)
+           i2 (get-ice state :hq 1)
+           i3 (get-ice state :hq 2)
+           corr (get-program state 0)]
+       (rez state :corp cr)
+       (is (= 5 (:credit (get-corp))))
+       (rez state :corp i3)
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card corr})
+       (core/continue state :corp nil)
+       (is (= 2 (:position (get-in @state [:run]))) "Passed Ice Wall")
+       (card-ability state :corp cr 0)
+       (is (= 3 (:position (get-in @state [:run]))) "Runner approaching previous Ice Wall")
+       (is (empty? (get-content state :hq))
+           "Code Replicatior trashed from root of HQ")
+       (click-prompt state :runner "No")
+       (is (last-log-contains? state "Runner approaches Ice Wall protecting HQ at position 2") "Approach ice phase begins"))))
+  (testing "jack out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Ice Wall" 3) "Code Replicator"]}
+                :runner {:hand ["Corroder"]}})
+     (core/gain state :corp :click 1)
+     (core/gain state :corp :credit 5)
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Code Replicator" "HQ")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (run-on state "HQ")
+     (is (= 3 (:position (get-in @state [:run]))) "Initial position outermost Ice Wall")
+     (let [cr (get-content state :hq 0)
+           i1 (get-ice state :hq 0)
+           i2 (get-ice state :hq 1)
+           i3 (get-ice state :hq 2)
+           corr (get-program state 0)]
+       (rez state :corp cr)
+       (is (= 5 (:credit (get-corp))))
+       (rez state :corp i3)
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card corr})
+       (core/continue state :corp nil)
+       (is (= 2 (:position (get-in @state [:run]))) "Passed Ice Wall")
+       (card-ability state :corp cr 0)
+       (is (= 3 (:position (get-in @state [:run]))) "Runner approaching previous Ice Wall")
+       (is (empty? (get-content state :hq))
+           "Code Replicatior trashed from root of HQ")
+       (click-prompt state :runner "Yes")
+       (is (empty? (:run @state)) "Run has ended")
+       (is (not (last-log-contains? state "Runner approaches Ice Wall protecting HQ at position 2")) "Run has ended so no approach")))))
 
 (deftest cold-site-server
   ;; Cold Site Server - Increase run cost by 1 cred, 1 click per power counters
@@ -1066,7 +1102,7 @@
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Snare!")
       (is (find-card "Daruma" (:discard (get-corp))))
-      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
       (click-prompt state :runner "No")
       (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
   (testing "swapping with a card in HQ"
@@ -1082,7 +1118,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Snare!")
-      (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
       (click-prompt state :runner "No")
       (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
   (testing "Runner jacks out"
@@ -1100,7 +1136,7 @@
      (click-card state :corp "Hostile Takeover")
      (click-card state :corp "Snare!")
      (is (find-card "Daruma" (:discard (get-corp))))
-     (is (= "Do you want to jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+     (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
      (click-prompt state :runner "Yes")
      (is (not= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))
      (is (not (:run @state))))))
@@ -1877,32 +1913,65 @@
 
 (deftest letheia-nisei
   ;; Letheia Nisei
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                      :hand ["Letheia Nisei" "Ice Wall" "Vanilla"]
-                      :credits 10}
-               :runner {:hand ["Corroder"]}})
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (play-from-hand state :corp "Vanilla" "R&D")
-    (play-from-hand state :corp "Letheia Nisei" "R&D")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (let [letheia (get-content state :rd 0)
-          cor (get-program state 0)]
-      (rez state :corp letheia)
-      (run-on state "R&D")
-      (rez state :corp (get-ice state :rd 1))
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
-      (core/continue state :corp nil)
-      (run-continue-until state :success)
-      (click-prompt state :corp "0 [Credits]")
-      (click-prompt state :runner "1 [Credits]")
-      (is (zero? (:position (:run @state))) "Runner should be approaching the server")
-      (click-prompt state :corp "Yes")
-      (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
-      (is (nil? (refresh letheia)) "Letheia is trashed")
-      (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives"))))
+  (testing "basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                       :hand ["Letheia Nisei" "Ice Wall" "Vanilla"]
+                       :credits 10}
+                :runner {:hand ["Corroder"]}})
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (play-from-hand state :corp "Vanilla" "R&D")
+     (play-from-hand state :corp "Letheia Nisei" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (let [letheia (get-content state :rd 0)
+           cor (get-program state 0)]
+       (rez state :corp letheia)
+       (run-on state "R&D")
+       (rez state :corp (get-ice state :rd 1))
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
+       (core/continue state :corp nil)
+       (run-continue-until state :success)
+       (click-prompt state :corp "0 [Credits]")
+       (click-prompt state :runner "1 [Credits]")
+       (is (zero? (:position (:run @state))) "Runner should be approaching the server")
+       (click-prompt state :corp "Yes")
+       (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
+       (is (nil? (refresh letheia)) "Letheia is trashed")
+       (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives")
+       (click-prompt state :runner "No")
+       (is (last-log-contains? state "Runner approaches Vanilla protecting R&D at position 1") "Approach ice phase begins"))))
+  (testing "jack out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                       :hand ["Letheia Nisei" "Ice Wall" "Vanilla"]
+                       :credits 10}
+                :runner {:hand ["Corroder"]}})
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (play-from-hand state :corp "Vanilla" "R&D")
+     (play-from-hand state :corp "Letheia Nisei" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Corroder")
+     (let [letheia (get-content state :rd 0)
+           cor (get-program state 0)]
+       (rez state :corp letheia)
+       (run-on state "R&D")
+       (rez state :corp (get-ice state :rd 1))
+       (run-continue state)
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
+       (core/continue state :corp nil)
+       (run-continue-until state :success)
+       (click-prompt state :corp "0 [Credits]")
+       (click-prompt state :runner "1 [Credits]")
+       (is (zero? (:position (:run @state))) "Runner should be approaching the server")
+       (click-prompt state :corp "Yes")
+       (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
+       (is (nil? (refresh letheia)) "Letheia is trashed")
+       (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives")
+       (click-prompt state :runner "Yes")
+       (is (empty? (:run @state)))
+       (is (not (last-log-contains? state "Runner approaches Vanilla protecting R&D at position 1")) "Run has ended")))))
 
 (deftest malapert-data-vault
   ;; Malapert Data Vault
@@ -2051,22 +2120,48 @@
 
 (deftest midori
   ;; Midori
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Midori" "Ice Wall" "Anansi"]}})
-    (play-from-hand state :corp "Midori" "HQ")
-    (rez state :corp (get-content state :hq 0))
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (rez state :corp (get-ice state :hq 0))
-    (take-credits state :corp)
-    (run-on state "HQ")
-    (click-prompt state :corp "Yes")
-    (click-card state :corp "Anansi")
-    (let [current-ice (core/get-current-ice state)]
-      (is (= "Anansi" (:title current-ice)))
-      (is (not (rezzed? current-ice))))
-    (is (= ["Ice Wall"] (map :title (:hand (get-corp))))
-        "Ice Wall has been added to hand")))
+  (testing "basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Midori" "Ice Wall" "Anansi"]}})
+     (play-from-hand state :corp "Midori" "HQ")
+     (rez state :corp (get-content state :hq 0))
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (rez state :corp (get-ice state :hq 0))
+     (take-credits state :corp)
+     (run-on state "HQ")
+     (click-prompt state :corp "Yes")
+     (click-card state :corp "Anansi")
+     (let [current-ice (core/get-current-ice state)]
+       (is (= "Anansi" (:title current-ice)))
+       (is (not (rezzed? current-ice))))
+     (is (= ["Ice Wall"] (map :title (:hand (get-corp))))
+         "Ice Wall has been added to hand")
+     (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+     (click-prompt state :runner "No")))
+  (testing "jack out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Midori" "Ice Wall" "Anansi"]}})
+     (play-from-hand state :corp "Midori" "HQ")
+     (rez state :corp (get-content state :hq 0))
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (rez state :corp (get-ice state :hq 0))
+     (take-credits state :corp)
+     (run-on state "HQ")
+     (click-prompt state :corp "Yes")
+     (click-card state :corp "Anansi")
+     (let [current-ice (core/get-current-ice state)]
+       (is (= "Anansi" (:title current-ice)))
+       (is (not (rezzed? current-ice))))
+     (is (= ["Ice Wall"] (map :title (:hand (get-corp))))
+         "Ice Wall has been added to hand")
+     (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
+     (is (= :waiting (:prompt-type (prompt-map :corp))) "Corp waiting for Runner to jack out")
+     (click-prompt state :runner "Yes")
+     (is (empty? (:run @state)))
+     (is (empty? (prompt-map :runner)) "No open runner prompts")
+     (is (empty? (prompt-map :corp)) "No open corp prompts"))))
 
 (deftest midway-station-grid
   ;; Midway Station Grid
