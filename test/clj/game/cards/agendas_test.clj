@@ -258,7 +258,7 @@
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (click-card state :runner "Sure Gamble")
       (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")))
@@ -1697,6 +1697,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)))
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
@@ -1706,6 +1707,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 2 (count-tags state)))
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
       (run-continue state)
@@ -2676,7 +2678,7 @@
       (is (last-log-contains? state "End the run"))
       (is (= 2 (get-counters (refresh wot-scored) :agenda)) "Wotan should only have 2 agenda counters")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli gains a sub from Project Wotan")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
@@ -3562,8 +3564,8 @@
           (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
           (is (= corp-credits (:credit (get-corp))) "Install was free")
           (is (= 2 (get-in @state [:run :position])) "Now approaching new ice")
-          (run-continue state)
-          (run-continue state)
+          (run-continue state :encounter-ice)
+          (run-continue-until state :approach-ice)
           (is (= "Enigma" (:title (core/get-current-ice state))) "Now approaching Enigma"))))
     (testing "behind the current ice"
       (do-game
@@ -3587,8 +3589,8 @@
           (is (= corp-credits (:credit (get-corp))) "Install was free")
           (is (= 2 (get-in @state [:run :position])))
           (is (= "Ice Wall" (:title (core/get-current-ice state))) "Still approaching Ice Wall")
-          (run-continue state)
-          (run-continue state)
+          (run-continue state :encounter-ice)
+          (run-continue-until state :approach-ice)
           (is (= "Vanilla" (:title (core/get-current-ice state))) "Now approaching Vanilla"))))))
 
 (deftest tomorrows-headline

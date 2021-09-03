@@ -2,7 +2,7 @@
   (:require
     [game.core.access :refer [do-access]]
     [game.core.board :refer [server->zone]]
-    [game.core.card :refer [get-card installed? rezzed?]]
+    [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
@@ -126,8 +126,6 @@
                                     :server s
                                     :position n
                                     :corp-auto-no-action false
-                                    :jack-out false
-                                    :jack-out-after-pass false
                                     :phase :initiation
                                     :next-phase :initiation
                                     :eid eid
@@ -156,7 +154,6 @@
                              (do (set-next-phase state :approach-ice)
                                  (start-next-phase state side nil))
                              (do (set-next-phase state :movement)
-                                 (swap! state assoc-in [:run :jack-out] true)
                                  (start-next-phase state side nil))))))))))))))))
 
 (defn toggle-auto-no-action
@@ -172,6 +169,8 @@
   [state]
   (when (and (:run @state)
              (not (= :success (:phase (:run @state))))
+             (not (and (= :movement (:phase (:run @state)))
+                       (zero? (:position (:run @state)))))
              (<= (count (:encounters @state)) 1)
              (get-in @state [:run :corp-auto-no-action])
              (rezzed? (get-current-ice state)))
@@ -263,7 +262,6 @@
         (when (= :corp side)
           (system-msg state side "has no further action")))
     (let [eid (make-phase-eid state nil)]
-      (swap! state assoc-in [:run :jack-out] true)
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
                 (cond
                   (or (check-for-empty-server state)
@@ -336,10 +334,7 @@
               (effect-completed state side eid))))
 
 (defmethod continue :encounter-ice
-  [state side {:keys [jack-out]}]
-  (when (some? jack-out)
-    ; TODO: Do not transmit this to the Corp (same with :no-action)
-    (swap! state assoc-in [:run :jack-out-after-pass] jack-out))
+  [state side _]
   (let [encounter (get-current-encounter state)
         no-action (:no-action encounter)]
     (if (or (and no-action
@@ -355,14 +350,15 @@
   (let [eid (make-phase-eid state eid)
         previous-phase (:phase (:run @state))
         pos (get-in @state [:run :position])
+        current-server (:server (:run @state))
         ice (get-current-ice state)
         ;; pass ice if coming from the Approach Ice or Encounter Ice phase and the Ice has not moved from the position
         pass-ice? (and (or (= :approach-ice previous-phase)
                            (= :encounter-ice previous-phase))
-                       (get-card state ice))
+                       (get-card state ice)
+                       (= (second (get-zone ice)) (first current-server)))
         passed-all-ice (or (zero? (dec pos))
-                           (= :initiation previous-phase))
-        current-server (:server (:run @state))]
+                           (= :initiation previous-phase))]
     (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
@@ -372,6 +368,7 @@
       (swap! state update-in [:run :position] (fnil dec 1)))
     (when passed-all-ice
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))
+    (check-auto-no-action state)
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           ;; Immediately end pass ice step if:
@@ -386,29 +383,10 @@
                                                  (not (same-card? ice (nth (get-run-ices state) (dec pos) nil))))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
-              (cond
-                ;; end run
-                (or (check-for-empty-server state)
-                    (:ended (:end-run @state)))
+              (if (or (check-for-empty-server state)
+                      (:ended (:end-run @state)))
                 (handle-end-run state side eid)
-                ;; run timing changed
-                (get-in @state [:run :next-phase])
-                (effect-completed state side eid)
-                ;; player wants to act
-                (get-in @state [:run :act-during-movement])
-                (effect-completed state side eid)
-                ;; jack out after pass
-                (get-in @state [:run :jack-out-after-pass])
-                (wait-for (jack-out state :runner (make-eid state eid))
-                          (if (or (check-for-empty-server state)
-                                  (:ended (:end-run @state)))
-                            (handle-end-run state side eid)
-                            (effect-completed state side eid)))
-                ;; approach ice
-                (pos? (get-in @state [:run :position]))
-                (do (set-next-phase state :approach-ice)
-                    (start-next-phase state side eid))
-                :else (effect-completed state side eid)))))
+                (effect-completed state side eid)))))
 
 (defn approach-server
   [state side eid]
@@ -436,12 +414,12 @@
                         (start-next-phase state side eid)))))
 
 (defmethod continue :movement
-  [state side eid]
+  [state side _]
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
-        (when (= :corp side)
-          (system-msg state side "has no further action")))
-    (let [eid (make-phase-eid state eid)]
+        (when (= :runner side)
+          (system-msg state side "will continue the run")))
+    (let [eid (make-phase-eid state nil)]
       (cond (or (check-for-empty-server state)
                 (:ended (:end-run @state)))
             (handle-end-run state side eid)

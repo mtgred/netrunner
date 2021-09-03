@@ -2804,11 +2804,8 @@
                                              (system-msg state :corp "trashes a card from HQ")
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
-                           (when current-ice
-                             (continue state :corp nil)
-                             (continue state :runner nil))
-                           (system-msg state :corp "trashes Sadaka")
-                           (trash state :corp eid card nil)))}]}))
+                           (wait-for (trash state :corp (make-eid state eid) card nil)
+                                     (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
   (constellation-ice trash-program-sub))

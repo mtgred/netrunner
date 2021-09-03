@@ -602,8 +602,8 @@
       ;; Check Caprice triggers properly on multiple ice
       (run-on state "Server 1")
       (is (empty? (:prompt (get-corp))) "Caprice not trigger on first ice")
-      (run-continue state)
-      (run-continue state) ; Caprice should trigger here
+      (run-continue-until state :movement) ; pass first Quandary
+      (run-continue-until state :movement) ; Caprice should trigger here
       (is (prompt-is-card? state :corp caprice)
           "Corp has Caprice prompt (triggered automatically as runner passed last ice)")
       (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
@@ -726,9 +726,7 @@
           (advance state (refresh iw2) 1)
           (take-credits state :corp)
           (run-on state :hq)
-          (run-continue state)
-          (run-continue state)
-          (run-continue state)
+          (run-continue-until state :success)
           (let [credits (:credit (get-runner))]
             (is (= "Pay 4 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 4 [Credits]")
@@ -754,10 +752,7 @@
           (advance state (refresh iw3) 1)
           (take-credits state :corp)
           (run-on state :hq)
-          (run-continue state)
-          (run-continue state)
-          (run-continue state)
-          (run-continue state)
+          (run-continue-until state :success)
           (let [credits (:credit (get-runner))]
             (is (= "Pay 6 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (is (= ["End the run"] (prompt-buttons :runner)))
@@ -1522,7 +1517,7 @@
       (is (= 2 (count (:discard (get-corp)))))
       (is (= 10 (get-strength (refresh gutenberg))))
       (is (= 4 (get-strength (refresh vanilla))))
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (is (not (:run @state)))
       (is (= 6 (get-strength (refresh gutenberg))))
@@ -1900,8 +1895,7 @@
       (run-continue state)
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card cor})
       (core/continue state :corp nil)
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (is (zero? (:position (:run @state))) "Runner should be approaching the server")
@@ -2102,6 +2096,7 @@
         (card-ability state :runner corroder 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done"))
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "Server 1")
       (rez state :corp (get-ice state :remote1 0))
@@ -2357,6 +2352,7 @@
         ;; Access 3 more cards from HQ
         (dotimes [c 3]
           (click-prompt state :runner "No action"))
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state "R&D")
         (rez state :corp k-rd)
@@ -2369,6 +2365,7 @@
         ;; Access 3 more cards from HQ
         (dotimes [c 3]
           (click-prompt state :runner "No action"))
+        (run-continue state :movement)
         (run-jack-out state)
         (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines")))))
 
@@ -3401,6 +3398,7 @@
         (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :runner "Done") ; decline to prevent
         (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state "HQ")
         (run-continue state)
@@ -3457,6 +3455,7 @@
         (click-prompt state :corp "Yes") ; pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
         (is (= 1 (:brain-damage (get-runner))))
+        (run-continue state :movement)
         (run-jack-out state)
         (take-credits state :runner)
         (play-from-hand state :corp "Neural EMP")

@@ -411,8 +411,8 @@
   [state]
   (let [run (:run @state)]
     (is' (some? run) "There is a run happening")
-    (is' (:jack-out run) "Runner is allowed to jack out")
-    (when (and (some? run) (:jack-out run))
+    (is' (= :movement (:phase run)) "Runner is allowed to jack out")
+    (when (and (some? run) (= :movement (:phase run)))
       (core/process-action "jack-out" state :runner nil)
       true)))
 
@@ -430,6 +430,30 @@
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
   `(error-wrapper (run-empty-server-impl ~state ~server)))
+
+(defn run-continue-until-impl
+  [state phase ice]
+  (is' (some? (:run @state)) "There is a run happening")
+  (is' (some #(= phase %) [:approach-ice :encounter-ice :movement :success]) "Valid phase")
+  (run-continue-impl state)
+  (while (and (:run @state)
+              (or (not= phase (:phase (:run @state)))
+                  (and ice
+                       (not (utils/same-card? ice (core/get-current-ice state)))))
+              (not (and (= :movement (:phase (:run @state)))
+                        (zero? (:position (:run @state))))))
+    (run-continue-impl state))
+  (when (and (= :success phase)
+             (and (= :movement (:phase (:run @state)))
+                  (zero? (:position (:run @state)))))
+    (run-continue-impl state))
+  (when ice
+    (is' (utils/same-card? ice (core/get-current-ice state))) "Current ice reached"))
+
+(defmacro run-continue-until
+  ([state phase] `(error-wrapper (run-continue-until-impl ~state ~phase nil)))
+  ([state phase ice]
+   `(error-wrapper (run-continue-until-impl ~state ~phase ~ice))))
 
 (defn fire-subs-impl
   [state card]

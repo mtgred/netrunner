@@ -4198,6 +4198,7 @@
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Yes")
         (is (empty? (get-ice state :hq)) "Ice Wall is gone"))
+      (run-continue state :movement)
       (run-jack-out state)
       (take-credits state :runner)
       (play-from-hand state :corp "Threat Assessment")

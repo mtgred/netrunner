@@ -223,6 +223,7 @@
       (run-on state :archives)
       (run-continue state)
       (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (not (is-tagged? state)) "Runner no longer tagged after jacking out")))
   (testing "No tag gained when rezzing something other than ice"
@@ -421,7 +422,9 @@
       (is (= (get-ice state :rd 0) (core/get-current-ice state)))
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "HQ")
-      (is (= (get-ice state :hq 0) (core/get-current-ice state)))
+      (is (= (get-ice state :hq 1) (core/get-current-ice state)) "At the outermost ice of HQ")
+      (is (= :movement (:phase (:run @state))) "Encounter has ended and are in the movement phase")
+      (run-continue state :approach-ice)
       (run-continue state)
       (is (last-log-contains? state "Runner encounters Kakugo protecting HQ at position 0."))))
   (testing "moving runner to un-iced server lets them jack out"
@@ -435,7 +438,7 @@
       (is (= (get-ice state :rd 0) (core/get-current-ice state)))
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "HQ")
-      (is (:jack-out (get-run))))))
+      (run-jack-out state))))
 
 (deftest akiko-nisei-head-case
   ;; Akiko Nisei
@@ -1535,8 +1538,7 @@
     (take-credits state :corp)
     (run-on state "Archives")
     (rez state :corp (get-ice state :archives 1))
-    (run-continue state)
-    (run-continue state)
+    (run-continue-until state :approach-ice)
     (rez state :corp (get-ice state :archives 0))
     (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rezzing Eli 1.0")
     (run-continue state)
@@ -1562,6 +1564,7 @@
       (run-continue state)
       (click-prompt state :runner "Devil Charm")
       (click-prompt state :runner "Yes")
+      (run-continue state :approach-ice)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-continue state)
@@ -1867,6 +1870,7 @@
        (is (changes-credits (get-corp) 1
                             (click-prompt state :corp "Done")))
        (is (changes-credits (get-corp) 0
+                            (run-continue state :movement)
                             (run-jack-out state))) ; triggers reflection, but trigger already done this turn
        (take-credits state :runner)
        (take-credits state :corp)
@@ -1874,6 +1878,7 @@
        (rez state :corp sm)
        (is (changes-credits (get-corp) 1
                             (run-continue state))) ;trigger slot machine
+       (run-continue state :movement)
        (run-jack-out state)
        (take-credits state :runner)
        (take-credits state :corp)
@@ -1930,7 +1935,7 @@
         (take-credits state :corp)
         (run-empty-server state "Server 1")
         (is (= 8 (core/trash-cost state :runner (refresh pad))))
-        (run-jack-out state)
+        (click-prompt state :runner "No action")
         (take-credits state :runner)
         (play-from-hand state :corp "Product Recall")
         (let [credits (:credit (get-corp))]
@@ -2030,13 +2035,12 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (is (zero? (count-tags state)) "Jesminder avoided first tag during the run")
-        (run-continue state)
+        (run-continue-until state :approach-ice dr1)
         (rez state :corp dr1)
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (is (= 1 (count-tags state)) "Jesminder did not avoid the second tag during the run")
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :success)
         (run-empty-server state "R&D") ; clear per-run buffer
         (take-credits state :runner)
         (play-from-hand state :corp "SEA Source")
@@ -2689,8 +2693,7 @@
       (play-from-hand state :corp "Bloom" "R&D")
       (take-credits state :corp)
       (run-on state "R&D")
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :movement (get-ice state :rd 0))
       (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
       (run-continue state)
       (click-prompt state :corp "Yes")
@@ -2893,12 +2896,12 @@
          2 (:credit (get-corp))
          "Gain 2 credit from NBN: Reality Plus"
          (click-prompt state :corp "Gain 2 [Credits]"))
-       (run-continue state)
+       (run-continue-until state :approach-ice)
        (rez state :corp (refresh dr))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
        (is (empty? (:prompt (get-corp))) "No prompt for the Corp for second tag"))))
-  (testing "Basic test - gain credits"
+  (testing "Basic test - draw cards"
     (do-game
      (new-game {:corp {:id "NBN: Reality Plus"
                        :credits 40
@@ -2917,7 +2920,7 @@
          2 (count (:hand (get-corp)))
          "Draw 2 cards from NBN: Reality Plus"
          (click-prompt state :corp "Draw 2 cards"))
-       (run-continue state)
+       (run-continue-until state :approach-ice)
        (rez state :corp (refresh dr))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
@@ -3014,7 +3017,7 @@
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "0 [Credits]")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game")
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (rez state :corp s1)
       (run-continue state)
       (is (= 4 (:credit (get-corp))))
@@ -3093,10 +3096,11 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 5 (get-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp wrap1)
         (run-continue state)
         (is (empty? (:prompt (get-runner))) "Ability already used this turn")
+        (run-continue state :movement)
         (run-jack-out state)
         (is (= 7 (get-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
   (testing "does not affect next ice when current is trashed. Issue #1788."
@@ -3259,12 +3263,14 @@
       (card-ability state :runner q 0)
       (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
+      (run-continue state :movement)
       (run-jack-out state)
       (click-credit state :runner)
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (refresh q) 0)
       (is (not (last-log-contains? state qmsg)) "Quetzal ability did not trigger")
+      (run-continue state :movement)
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)

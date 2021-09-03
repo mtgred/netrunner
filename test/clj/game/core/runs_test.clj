@@ -390,6 +390,8 @@
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
         (core/continue state :runner nil)
+        (is (= :movement (:phase (:run @state))) "Movement")
+        (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
@@ -422,6 +424,8 @@
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (= :movement (:phase (:run @state))) "Movement phase")
+        (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
@@ -513,29 +517,6 @@
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
         (core/continue state :corp nil)
         (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter")))))
-
-(deftest continue-and-jack-out
-  (testing "Pass ice still happens on jack out"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Ice Wall" 2)]}
-                 :runner {:hand ["Corroder"]}})
-      (play-from-hand state :corp "Ice Wall" "New remote")
-      (play-from-hand state :corp "Ice Wall" "Server 1")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Corroder")
-      (let [iw0 (get-ice state :remote1 0)
-            iw1 (get-ice state :remote1 1)
-            cor (get-program state 0)]
-        (run-on state :remote1)
-        (rez state :corp iw1)
-        (run-continue state)
-        (core/continue state :corp nil)
-        (card-ability state :runner cor 0)
-        (click-prompt state :runner "End the run")
-        (core/continue state :runner {:jack-out true})
-        (is (second-last-log-contains? state "Runner passes") "Pass trigger still happened")
-        (is (last-log-contains? state "Runner jacks out") "Runner got jacked out")))))
 
 (deftest continue-no-action
   (do-game
@@ -1032,7 +1013,7 @@
           (run-continue state)
           (is (= (refresh konjin) (core/get-current-ice state)) "The Runner returns to encountering Konjin since the timing of the run hasn't changed")
           (run-continue state)
-          (is (second-last-log-contains? state "Runner passes Bullfrog") "Should pass Bullfrog as it is the ice at current position")
+          (is (last-log-contains? state "Runner passes Bullfrog") "Should pass Bullfrog as it is the ice at current position")
           (run-continue state)
           (is (= (refresh iw) (core/get-current-ice state)) "The runner encounters Ice Wall"))))
     (testing "Forced encounter into redirection outside of access changes position"
@@ -1066,7 +1047,7 @@
           (run-continue state)
           (is (= (refresh konjin) (core/get-current-ice state)) "The Runner returns to encountering Konjin since the timing of the run hasn't changed")
           (run-continue state)
-          (is (second-last-log-contains? state "Runner passes Bullfrog") "Should pass Bullfrog as it is the ice at current position")
+          (is (last-log-contains? state "Runner passes Bullfrog") "Should pass Bullfrog as it is the ice at current position")
           (run-continue state)
           (is (= (refresh iw) (core/get-current-ice state)) "The runner encounters Ice Wall"))))
     (testing "Forced encounter into redirection that changes phase ends encounter"

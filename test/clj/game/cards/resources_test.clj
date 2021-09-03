@@ -142,9 +142,7 @@
             van0 (get-ice state :hq 0)
             van1 (get-ice state :hq 1)]
         (run-on state "HQ")
-        (run-continue state) ; No rez
-        (run-continue state) ; No rez
-        (run-continue state)
+        (run-continue-until state :success)
         (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
         (run-on state "HQ")
         (rez state :corp van1)
@@ -154,7 +152,8 @@
         (run-jack-out state)
         (run-on state "HQ")
         (rez state :corp van0)
-        (run-continue state)
+        (run-continue-until state :encounter-ice van1)
+        (run-continue-until state :encounter-ice van0)
         (run-continue state)
         (run-jack-out state)
         (is (= 2 (get-counters (refresh bak) :power)) "Works on every run, but not every encounter"))))
@@ -1200,6 +1199,7 @@
         (is (= 1 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not add a second power counter")
         (card-ability state :runner (refresh d99) 1) ; manually add counter
         (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added")
+        (run-continue state :movement)
         (run-jack-out state)
         (play-from-hand state :runner "Spy Camera")
         (take-credits state :runner)
@@ -1236,18 +1236,19 @@
             ap (get-resource state 1)
             harb (get-program state 0)
             grim (get-ice state :hq 0)]
-          (run-on state :hq)
-          (rez state :corp grim)
-          (run-continue state)
-          (card-subroutine state :corp (refresh grim) 0)
-          (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
-          (click-card state :corp harb)
-          (is (= 1 (get-counters (refresh d99) :power)) "1 power counter after Harbinger trashed")
-          (run-jack-out state)
-          (take-credits state :corp)
-          (card-ability state :runner ap 0)
-          (click-card state :runner (get-runner-facedown state 0))
-          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
+        (run-on state :hq)
+        (rez state :corp grim)
+        (run-continue state)
+        (card-subroutine state :corp (refresh grim) 0)
+        (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
+        (click-card state :corp harb)
+        (is (= 1 (get-counters (refresh d99) :power)) "1 power counter after Harbinger trashed")
+        (run-continue state :movement)
+        (run-jack-out state)
+        (take-credits state :corp)
+        (card-ability state :runner ap 0)
+        (click-card state :runner (get-runner-facedown state 0))
+        (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
   (testing "interaction with MaxX #5293"
     (do-game
       (new-game {:runner {:id "MaxX: Maximum Punk Rock"
@@ -2415,8 +2416,7 @@
       (let [credits (:credit (get-runner))]
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :encounter-ice)
         (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
   (testing "Only prevents the on-encounter effects once per turn. Issue #4807"
     (do-game
@@ -2432,6 +2432,7 @@
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2451,6 +2452,7 @@
         (run-continue state)
         (click-prompt state :runner "Yes")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2471,6 +2473,7 @@
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2522,6 +2525,7 @@
       (rez state :corp iwall)
       (run-continue state)
       (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
@@ -3417,6 +3421,7 @@
       (rez state :corp sm)
       (run-continue state)
       (card-subroutine state :corp sm 1)
+      (run-continue state :movement)
       (run-jack-out state))
     (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
     (card-ability state :runner (get-resource state 0) 0)
@@ -4724,7 +4729,7 @@
         (run-continue state)
         (card-subroutine state :corp first-dm 0)
         (is (= 4 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp second-dm)
         (run-continue state)
         (card-subroutine state :corp second-dm 0)
@@ -4747,7 +4752,7 @@
         (run-continue state)
         (card-subroutine state :corp first-dm 0)
         (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp second-dm)
         (run-continue state)
         (card-subroutine state :corp second-dm 0)
