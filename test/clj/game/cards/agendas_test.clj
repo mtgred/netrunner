@@ -745,8 +745,7 @@
   ;; Dedicated Neural Net
   (testing "Corp chooses card to access. Issue #4874"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
+      (new-game {:corp {:hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (run-empty-server state "HQ")
@@ -759,36 +758,38 @@
   (testing "Allows for accessing upgrades. Issue #2376"
     (do-game
       (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
-                               "Hedge Fund" "Caprice Nisei"]}
-                 :runner {:deck ["HQ Interface"]}})
+                               "Hedge Fund" "Caprice Nisei"]}})
       (play-from-hand state :corp "Caprice Nisei" "HQ")
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (click-card state :corp "Hedge Fund")
       (click-prompt state :runner "Card from hand")
+      (click-card state :corp "Hedge Fund")
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
+      (is (= "You accessed Caprice Nisei." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run completed")))
   (testing "Multiaccess works properly"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
-                 :runner {:deck ["HQ Interface"]}})
+      (new-game {:corp {:hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
+                 :runner {:hand ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (play-from-hand state :runner "HQ Interface")
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (click-card state :corp "Government Takeover")
+      (click-prompt state :runner "Steal")))
   (testing "Multiaccess respects cards in hand"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Dedicated Neural Net" "Mwanza City Grid" (qty "Domestic Sleepers" 3)]}
-                 :runner {:deck ["HQ Interface"]}})
+      (new-game {:corp {:hand ["Dedicated Neural Net" "Mwanza City Grid" "Domestic Sleepers" "Hedge Fund" "Ice Wall"]}
+                 :runner {:hand ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (rez state :corp (get-content state :hq 0))
@@ -797,7 +798,35 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (is (= 3 (-> (get-corp) :selected first :max)) "Corp chooses 3 cards for Runner to access because there are only 3 cards in hand"))))
+      (click-prompt state :runner "Mwanza City Grid")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Hedge Fund")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (is (nil? (prompt-map :runner)) "No further prompts for Runner")
+      (is (nil? (prompt-map :corp)) "No further prompts for Corp")
+      (is (nil? (:run @state)) "Run has ended")))
+  (testing "Can access upgrades between cards in hand"
+    (do-game
+      (new-game {:corp {:hand ["Dedicated Neural Net" "Hedge Fund" "Ice Wall" "Caprice Nisei"]}
+                 :runner {:hand ["HQ Interface"]}})
+      (play-from-hand state :corp "Caprice Nisei" "HQ")
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (play-from-hand state :runner "HQ Interface")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "Card from hand")
+      (click-card state :corp "Hedge Fund")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :runner "No action"))))
 
 (deftest degree-mill
   ;; Degree Mill

@@ -721,6 +721,7 @@
         (click-prompt state :runner "HQ")
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "2")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
@@ -745,6 +746,7 @@
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
+        (click-prompt state :runner "2")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
         (click-prompt state :runner "No action")
@@ -768,6 +770,7 @@
         (click-prompt state :runner "HQ")
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "2")
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
@@ -1653,7 +1656,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach R&D")
       (click-prompt state :runner "No action")
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
@@ -1668,7 +1671,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Enhanced Vision")
       (run-empty-server state "Archives")
-      (is (last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
+      (is (second-last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
           "Card name is logged")))
   (testing "Triggers reveal abilities"
     (do-game
@@ -4599,17 +4602,6 @@
         (click-prompt state :runner (find-card "Street Peddler" (:hosted sp))) ; choose to another Peddler
         (is (empty? (:prompt (get-corp))) "Corp not prompted to rez Jackson")
         (is (= 4 (core/available-mu state)) "Runner has 4 MU"))))
-  (testing "Trashing hardware should not reduce :in-play values"
-    (do-game
-      (new-game {:runner {:deck ["Street Peddler" (qty "HQ Interface" 3)]}})
-      (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler"])
-      (play-from-hand state :runner "Street Peddler")
-      (let [sp (get-resource state 0)]
-        (card-ability state :runner sp 0)
-        (click-prompt state :runner (first (:hosted sp))) ; choose to install HQ Interface
-        (is (= 2 (:total (core/num-cards-to-access state :runner :hq nil)))
-            "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
   (testing "Installing Parasite with only 1cr. Issue #491."
     (do-game
       (new-game {:corp {:deck [(qty "Pop-up Window" 3)]}

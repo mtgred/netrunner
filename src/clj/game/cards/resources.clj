@@ -18,7 +18,7 @@
   "Function for constructing a Shard card"
   [title target-server message effect-fn]
   {:events [(assoc
-              (successful-run-replace-access
+              (successful-run-replace-breach
                 {:target-server target-server
                  :ability
                  {:async true
@@ -255,7 +255,7 @@
 (defcard "Bank Job"
   {:data {:counter {:credit 8}}
    :events [(trash-on-empty :credit)
-            (successful-run-replace-access
+            (successful-run-replace-breach
               {:target-server :remote
                :ability
                {:async true
@@ -534,7 +534,7 @@
              :cancel-effect (effect (system-msg (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
                                     (register-events
                                       :runner card
-                                      [{:event :pre-access
+                                      [{:event :breach-server
                                         :duration :until-runner-turn-ends
                                         :req (req (#{:hq :rd} target))
                                         :once :per-turn
@@ -618,9 +618,8 @@
                  card targets))}]})
 
 (defcard "Counter Surveillance"
-  (let [ability (successful-run-replace-access
-                  {:can-access true
-                   :mandatory true
+  (let [ability (successful-run-replace-breach
+                  {:mandatory true
                    :ability
                    {:async true
                     :effect (req (let [tags (count-tags state)]
@@ -628,14 +627,20 @@
                                      ;; Can pay, do access
                                      (continue-ability
                                        state :runner
-                                       {:cost [:credit tags]
-                                        :msg (str "access up to " (quantify tags "card"))
-                                        :effect (effect (access-bonus (target-server run) (dec tags)))}
+                                       {:async true
+                                        :cost [:credit tags]
+                                        :msg (msg "access up to " (quantify tags "card") " from " (zone->name (:server run)))
+                                        :effect (req (continue-ability
+                                                      state :runner
+                                                      {:async true
+                                                       :prompt "Choose how many cards to access"
+                                                       :choices {:number (req tags)
+                                                                 :default (req tags)}
+                                                       :effect (effect (access-n-cards eid (:server run) target))}
+                                                      card nil))}
                                        card targets)
                                      ;; Can't pay, don't access cards
                                      (do (system-msg state :runner "could not afford to use Counter Surveillance")
-                                         ;; Cannot access any cards
-                                         (max-access state :runner 0)
                                          (effect-completed state nil eid)))))}})]
     {:abilities [{:cost [:click 1 :trash]
                   :label "run a server"
@@ -1126,8 +1131,8 @@
   {:events [{:event :agenda-scored
              :async true
              :interactive (req true)
-             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
-             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]})
+             :msg (msg "breach HQ")
+             :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]})
 
 (defcard "Gbahali"
   (bitey-boi 'last))
@@ -1203,8 +1208,8 @@
                                                card nil)))}]))}]})
 
 (defcard "Hades Shard"
-  (shard-constructor "Hades Shard" :archives "access all cards in Archives"
-                     (effect (do-access eid [:archives] {:no-root true}))))
+  (shard-constructor "Hades Shard" :archives "breach Archives"
+                     (effect (breach-server eid [:archives] {:no-root true}))))
 
 (defcard "Hard at Work"
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1730,8 +1735,11 @@
                        :value (req (when (pos? (count (:dest-zone (second targets)))) 1))}]})
 
 (defcard "Neutralize All Threats"
-  {:in-play [:hq-access 1]
-   :events [{:event :pre-access
+  {:events [{:event :breach-server
+             :req (req (= :hq target))
+             :silent (req true)
+             :effect (effect (access-bonus :runner :hq 1))}
+            {:event :breach-server
              :req (req (and (= target :archives)
                             (seq (filter :trash (:discard corp)))))
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
@@ -1935,7 +1943,7 @@
     {:abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
               (assoc
-                (successful-run-replace-access
+                (successful-run-replace-breach
                   {:mandatory true
                    :ability
                    {:msg "draw 2 cards"
@@ -2113,8 +2121,8 @@
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
              :async true
-             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
-             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]
+             :msg (msg "breach HQ")
+             :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]
    :abilities [{:msg "expose 1 card"
                 :label "Expose 1 installed card"
                 :choices {:card installed?}
@@ -2353,7 +2361,7 @@
                                 (update! state side (assoc card :server-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               (assoc
-                (successful-run-replace-access
+                (successful-run-replace-breach
                   {:mandatory true
                    :ability
                    {:msg "gain 2 [Credits]"

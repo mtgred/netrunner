@@ -76,10 +76,11 @@
    access-helper-hq
    access-helper-rd
    access-helper-remote
+   access-n-cards
    access-non-agenda
+   breach-server
    clean-access-args
    choose-access
-   do-access
    facedown-cards
    faceup-accessible
    get-all-content
@@ -704,7 +705,7 @@
    set-phase
    start-next-phase
    successful-run
-   successful-run-replace-access
+   successful-run-replace-breach
    toggle-auto-no-action
    total-cards-accessed
    total-run-cost])

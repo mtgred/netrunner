@@ -2352,7 +2352,7 @@
     (play-from-hand state :runner "Expert Schedule Analyzer")
     (card-ability state :runner (get-program state 0) 0)
     (run-continue state)
-    (is (= "Choose an access replacement ability" (:msg (prompt-map :runner)))
+    (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner)))
         "Replacement effect is optional")
     (click-prompt state :runner "Expert Schedule Analyzer")
     (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
@@ -4125,7 +4125,7 @@
     (run-on state "R&D")
     (run-continue state)
     (click-prompt state :runner "Yes")
-    (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
+    (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))))))
 
 (deftest odore
   (testing "Basic test"

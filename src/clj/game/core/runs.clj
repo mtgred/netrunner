@@ -1,6 +1,6 @@
 (ns game.core.runs
   (:require
-    [game.core.access :refer [do-access]]
+    [game.core.access :refer [breach-server]]
     [game.core.board :refer [server->zone]]
     [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
@@ -149,7 +149,6 @@
                                     :eid eid
                                     :current-ice nil
                                     :events nil
-                                    :can-access true
                                     :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
                        (when card
                          (update! state side (assoc-in card [:special :run-id] run-id))))
@@ -518,11 +517,10 @@
   [state card ability props]
   (let [ability {:card card
                  :mandatory (:mandatory props)
-                 :can-access (:can-access props)
                  :ability ability}]
     (swap! state update-in [:run :run-effects] conj ability)))
 
-(defn successful-run-replace-access
+(defn successful-run-replace-breach
   [props]
   (let [ability (:ability props)
         attacked-server (:target-server props)
@@ -541,17 +539,16 @@
 
 (defn choose-replacement-ability
   [state handlers]
-  (let [can-access (:can-access (:run @state))
-        mandatory (some :mandatory handlers)
+  (let [mandatory (some :mandatory handlers)
         titles (into [] (keep #(get-in % [:card :title]) handlers))
         eid (make-phase-eid state nil)]
     (cond
       ;; If you can't access, there's nothing to replace
-      (not can-access)
-      (run-cleanup state :runner eid)
+      (:prevent-access (:run @state))
+      (handle-end-run state :runner eid)
       ;; Otherwise, if there's no handlers, access the cards
       (zero? (count titles))
-      (wait-for (do-access state :runner (make-eid state eid) (get-in @state [:run :server]))
+      (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
                 (handle-end-run state :runner eid))
       ;; If there's only 1 handler and it's mandatory
       ;; just execute it
@@ -561,29 +558,22 @@
             card (:card chosen)]
         (system-msg state :runner (str "uses the replacement effect from " (:title card)))
         (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
-                  (when-not (:can-access chosen)
-                    (swap! state assoc-in [:run :can-access] false))
-                  (choose-replacement-ability state nil)))
-      ;; there are available handlers
-      ;; checking for :can-access happens in :choices
+                  (handle-end-run state :runner eid)))
+      ;; there are multiple handlers
       (pos? (count titles))
       (resolve-ability
         state :runner
-        {:prompt "Choose an access replacement ability"
-         :choices (if mandatory titles (conj titles "Access cards"))
+        {:prompt "Choose a breach replacement ability"
+         :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
                             ability (:ability chosen)
                             card (:card chosen)]
                         (if chosen
                           (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
                               (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
-                                        (when-not (:can-access chosen)
-                                          (swap! state assoc-in [:run :can-access] false))
-                                        (let [remaining (when (:can-access (:run @state))
-                                                          (remove-once #(= target (get-in % [:card :title])) handlers))]
-                                          (choose-replacement-ability state remaining))))
-                          (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
-                              (wait-for (do-access state :runner (make-eid state eid) (get-in @state [:run :server]))
+                                        (handle-end-run state :runner eid)))
+                          (do (system-msg state :runner (str "chooses to breach " (zone->name (:server (:run @state))) " instead of use a replacement effect"))
+                              (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
                                         (handle-end-run state :runner eid))))))}
         nil nil)
       ;; Just in case
@@ -591,12 +581,13 @@
       (run-cleanup state :runner eid))))
 
 (defn prevent-access
-  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
+  "Prevents the runner from accessing cards or breaching the server this run. 
+   This will cancel any run effects and not trigger breach/access routines."
   [state _]
   (swap! state assoc-in [:run :prevent-access] true))
 
 (defn complete-run
-  "This does all of the access related stuff"
+  "This does all of the breach related stuff"
   [state side]
   (let [eid (make-phase-eid state nil)]
     (if (:ended (:end-run @state))
@@ -605,23 +596,23 @@
             server (:server the-run)
             replacement-effects (:run-effects the-run)]
         (cond
-          ;; Prevented from accessing anything
+          ;; Prevented from breaching
           (:prevent-access the-run)
           (resolve-ability
             state :runner eid
-            {:prompt "You are prevented from accessing any cards this run."
+            {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
-             :effect (effect (system-msg :runner "is prevented from accessing any cards this run")
+             :effect (effect (system-msg :runner (str "is prevented from breaching " (zone->name server) " this run."))
                              (handle-end-run eid))}
             nil nil)
 
-          ;; Any number of replace-access effects
+          ;; Any number of replace-breach effects
           (pos? (count replacement-effects))
           (choose-replacement-ability state replacement-effects)
 
-          ;; No replace-access effects
+          ;; No replace-breach effects
           :else
-          (wait-for (do-access state side (make-eid state eid) server)
+          (wait-for (breach-server state side (make-eid state eid) server)
                     (handle-end-run state side eid)))))))
 
 (defn- register-successful-run

@@ -28,7 +28,7 @@
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       ;; play another Siphon, do not use ability
       (play-run-event state "Account Siphon" :hq)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach HQ")
       (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
@@ -885,7 +885,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Code Siphon")
     (run-continue-until state :success)
-    (is (= ["Code Siphon" "Access cards"] (prompt-buttons :runner))
+    (is (= ["Code Siphon" "Breach R&D"] (prompt-buttons :runner))
         "Replacement effect isn't mandatory")
     (click-prompt state :runner "Code Siphon")
     (let [credits (:credit (get-runner))]
@@ -1550,7 +1550,7 @@
       (take-credits state :corp)
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       (play-run-event state "Diversion of Funds" :hq)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Prompt is closed")
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
@@ -4787,6 +4787,8 @@
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
+      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
       (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
@@ -4820,6 +4822,7 @@
         (card-ability state :runner corroder 0)
         (click-prompt state :runner "End the run")
         (run-continue-until state :success)
+        (click-prompt state :runner "Yes")
         (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
@@ -4827,6 +4830,24 @@
       (is (= ["Easy Mark" "Sure Gamble"] (->> (get-runner) :hand (map :title) (into []))))
       (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
       (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (nil? (get-run)) "Run is ended")))
+  (testing "Can still access upgrades"
+    (do-game
+      (new-game {:corp   {:deck ["Vanilla"]
+                          :hand ["Hedge Fund" "Anoetic Void"]}
+                 :runner {:deck ["Rip Deal" "Easy Mark"]}})
+      (trash-from-hand state :runner "Easy Mark")
+      (play-from-hand state :corp "Anoetic Void" "HQ")
+      (take-credits state :corp)
+      (play-run-event state "Rip Deal" :hq)
+      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Easy Mark")
+      (is (= 1 (-> (get-runner) :hand count)))
+      (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
+      (is (= "You accessed Anoetic Void." (:msg (prompt-map :runner))) "Runner access Anoetic Void")
+      (click-prompt state :runner "No action")
       (is (nil? (get-run)) "Run is ended")))
   (testing "Heap Locked"
     (do-game

@@ -452,7 +452,7 @@
       (run-empty-server state :rd)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "0 [Credits]")
-      (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (take-credits state :runner)
@@ -460,7 +460,7 @@
       (run-empty-server state :rd)
       (click-prompt state :corp "1 [Credits]")
       (click-prompt state :runner "0 [Credits]")
-      (is (= 1 (:total (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))
   (testing "Shiro interaction: second sub should give Akiko 2 accesses"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
@@ -477,7 +477,7 @@
         (click-prompt state :corp "No")
         (click-prompt state :corp "0 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
+        (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))) "Should access additional card from ability")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (run-continue state)
@@ -490,7 +490,7 @@
         (click-prompt state :corp "No")
         (click-prompt state :corp "1 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (is (= 1 (:total (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))))
+        (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))) "Should only access 1 from missed psi game")))))
 
 (deftest alice-merchant-clan-agitator
   ;; Alice Merchant
@@ -2294,7 +2294,7 @@
       (run-empty-server state :rd)
       (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (= "Choose an access replacement ability" (:msg (prompt-map :runner))))
+      (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Eden Shard") ; Eden Shard's replacement ability
       (is (= "Eden Shard" (:title (get-resource state 0))) "Eden Shard installed")
       (is (= 5 (:credit (get-runner))) "Eden Shard install was free")

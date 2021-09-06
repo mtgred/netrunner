@@ -4854,7 +4854,7 @@
           (run-continue state)
           (card-subroutine state :corp shiro 1)
           (click-prompt state :corp "No")
-          (is (second-last-log-contains? state "make the Runner access the top card of R&D") "Access is logged")
+          (is (last-n-log-contains? state 2 "make the Runner breach R&D") "Access is logged")
           (is (= (:cid (first (:deck (get-corp))))
                  (:cid (:card (prompt-map :runner)))) "Access the top card of R&D")
           (click-prompt state :runner "No action")
@@ -4876,7 +4876,7 @@
           (let [credits (:credit (get-corp))]
             (click-prompt state :corp "Yes")
             (is (last-log-contains? state "pays 1 \\[Credits\\]") "Payment is logged")
-            (is (last-log-contains? state "keep the Runner from accessing the top card of R&D") "Prevention is logged")
+            (is (last-log-contains? state "keep the Runner from breaching R&D") "Prevention is logged")
             (is (= (dec credits) (:credit (get-corp))) "Corp pays 1 to prevent access"))))))
   (testing "with Mwanza City Grid, should access additional 3 cards"
     (do-game
@@ -4898,7 +4898,7 @@
         (let [credits (:credit (get-corp))]
           (card-subroutine state :corp shiro 1)
           (click-prompt state :corp "No")
-          (is (= 3 (core/access-bonus-count state :runner :rd)) "Should access an additional 3 cards")
+          (is (= 4 (core/access-bonus-count state :runner :rd)) "Should access an additional 4 cards")
           (dotimes [_ 5]
             (click-prompt state :runner "No action"))
           (run-continue state :movement)

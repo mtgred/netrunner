@@ -376,7 +376,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :ability
@@ -1071,7 +1071,7 @@
 
 (defcard "Eater"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
-                                                                           :effect (effect (max-access 0))}
+                                                                           :effect (req (max-access state 0))}
                                                       :label "break 1 subroutine and access 0 cards"})
                                 (strength-pump 1 1)]}))
 
@@ -1132,8 +1132,11 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "eXer"
-  {:in-play [:rd-access 1]
-   :events [{:event :purge
+  {:events [{:event :breach-server
+             :req (req (= :rd target))
+             :silent (req true)
+             :effect (effect (access-bonus :runner :rd 1))}
+            {:event :purge
              :async true
              :effect (effect (trash eid card {:cause :purge}))}]})
 
@@ -1143,7 +1146,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :hq card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :ability
@@ -1477,7 +1480,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :mandatory true
@@ -1683,7 +1686,7 @@
   {:events [{:event :successful-run
              :req (req (= :rd (target-server context)))
              :effect (effect (add-counter card :virus 1))}
-            {:event :pre-access
+            {:event :breach-server
              :async true
              :req (req (= target :rd))
              :effect (effect (continue-ability
@@ -1740,7 +1743,7 @@
   {:events [{:event :successful-run
              :req (req (= :hq (target-server context)))
              :effect (effect (add-counter card :virus 1))}
-            {:event :pre-access
+            {:event :breach-server
              :async true
              :req (req (= target :hq))
              :effect (effect (continue-ability
@@ -1774,7 +1777,7 @@
 
 (defcard "Nyashia"
   {:data {:counter {:power 3}}
-   :events [{:event :pre-access
+   :events [{:event :breach-server
              :optional
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
@@ -2322,7 +2325,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :mandatory true

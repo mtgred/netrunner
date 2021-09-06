@@ -976,8 +976,8 @@
                            :msg "force the Runner to access 3 additional cards"
                            :effect (req (access-bonus state :runner (-> card :zone second) 3))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
-     :events [(assoc boost-access-by-3 :event :pre-access)
-              (assoc gain-creds-and-clear :event :end-access-phase)]
+     :events [(assoc boost-access-by-3 :event :breach-server)
+              (assoc gain-creds-and-clear :event :end-breach-server)]
      ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
      ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
               :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
@@ -986,11 +986,11 @@
                :effect (effect (register-events
                                  card
                                  [(assoc boost-access-by-3
-                                         :event :pre-access
+                                         :event :breach-server
                                          :duration :end-of-run
                                          :req (req (= target (second (:previous-zone card)))))
                                   (assoc gain-creds-and-clear
-                                         :event :end-access-phase
+                                         :event :end-breach-server
                                          :duration :end-of-run
                                          :req (req (= (:from-server target) (second (:previous-zone card)))))]))}}))
 

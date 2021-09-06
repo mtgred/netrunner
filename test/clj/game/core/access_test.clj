@@ -299,7 +299,7 @@
         (rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
-        (core/access-bonus state :corp :archives -1)
+        (core/access-bonus state :corp :total -1)
         (run-continue state)
         (is (= ["Hostile Takeover" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
@@ -320,7 +320,7 @@
         (rez state :corp (get-content state :archives 0))
         (take-credits state :corp)
         (run-on state "Archives")
-        (core/access-bonus state :corp :archives -2)
+        (core/access-bonus state :corp :total -2)
         (run-continue state)
         (is (= ["Hostile Takeover" "Shock!" "Bryan Stinson" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Bryan Stinson")
@@ -414,7 +414,7 @@
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (run-on state "Server 1")
-      (core/access-bonus state :runner :remote1 -1)
+      (core/access-bonus state :runner :total -1)
       (run-continue state)
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
@@ -422,75 +422,27 @@
 
 (deftest access-count
   (testing "rd"
-    (testing "with no upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
-                          :hand [(qty "Hedge Fund" 2)]}})
-        (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :rd nil)))
-        (core/access-bonus state :runner :rd 2)
-        (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :rd nil))
-            "Limited by number of cards in R&D")
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 1} (core/num-cards-to-access state :runner :rd nil)))))
-    (testing "with some upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
-                          :hand [(qty "Midori" 2)]}})
-        (play-from-hand state :corp "Midori" "R&D")
-        (is (= {:base 1 :total 2} (core/num-cards-to-access state :runner :rd nil)))
-        (core/access-bonus state :runner :rd 2)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :rd nil))
-            "Limited by number of cards in R&D")
-        (play-from-hand state :corp "Midori" "R&D")
-        (is (= {:base 2 :total 4} (core/num-cards-to-access state :runner :rd nil)))
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :rd nil))))))
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
+                       :hand [(qty "Hedge Fund" 2)]}})
+     (is (= {:random-access-limit 1 :total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :rd nil)))
+     (core/access-bonus state :runner :rd 2)
+     (is (= {:random-access-limit 3 :total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :rd nil)))
+     (core/access-bonus state :runner :total -1)
+     (is (= {:random-access-limit 3 :total-mod -1 :chosen 0} (core/num-cards-to-access state :runner :rd nil)))))
   (testing "hq"
-    (testing "with no upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
-                          :hand [(qty "Hedge Fund" 2)]}})
-        (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)))
-        (core/access-bonus state :runner :hq 2)
-        (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil))
-            "Limited by number of cards in R&D")
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 1} (core/num-cards-to-access state :runner :hq nil)))))
-    (testing "with some upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Midori" 2)]
-                          :hand [(qty "Hedge Fund" 2) "Midori"]}})
-        (play-from-hand state :corp "Midori" "HQ")
-        (is (= {:base 1 :total 2} (core/num-cards-to-access state :runner :hq nil)))
-        (core/access-bonus state :runner :hq 2)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :hq nil))
-            "Limited by number of cards in R&D")
-        (core/move state :corp (find-card "Midori" (:deck (get-corp))) :hand)
-        (play-from-hand state :corp "Midori" "HQ")
-        (is (= {:base 2 :total 4} (core/num-cards-to-access state :runner :hq nil)))
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :hq nil))))))
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
+                       :hand [(qty "Hedge Fund" 2)]}})
+     (is (= {:random-access-limit 1 :total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :hq nil)))
+     (core/access-bonus state :runner :hq 2)
+     (is (= {:random-access-limit 3 :total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :hq nil)))
+     (core/access-bonus state :runner :total -1)
+     (is (= {:random-access-limit 3 :total-mod -1 :chosen 0} (core/num-cards-to-access state :runner :hq nil)))))
   (testing "archives"
-    (testing "with no upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
-                          :discard [(qty "Hedge Fund" 2)]}})
-        (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :archives nil))
-            "Access all cards in Archives by default")
-        (core/access-bonus state :runner :archives 2)
-        (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :archives nil)))
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 1} (core/num-cards-to-access state :runner :archives nil)))))
-    (testing "with some upgrades"
-      (do-game
-        (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
-                          :hand [(qty "Midori" 2)]
-                          :discard [(qty "Hedge Fund" 2)]}})
-        (play-from-hand state :corp "Midori" "Archives")
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :archives nil)))
-        (core/access-bonus state :runner :archives 2)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :archives nil)))
-        (play-from-hand state :corp "Midori" "Archives")
-        (is (= {:base 2 :total 4} (core/num-cards-to-access state :runner :archives nil)))
-        (core/access-bonus state :runner :total -1)
-        (is (= {:base 2 :total 3} (core/num-cards-to-access state :runner :archives nil)))))))
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
+                       :discard [(qty "Hedge Fund" 2)]}})
+     (is (= {:total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :archives nil)))
+     (core/access-bonus state :runner :total -1)
+     (is (= {:total-mod -1 :chosen 0} (core/num-cards-to-access state :runner :archives nil))))))

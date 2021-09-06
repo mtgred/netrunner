@@ -134,7 +134,7 @@
                                          (start-next-phase state side eid))))}]})
 
 (defcard "Akiko Nisei: Head Case"
-  {:events [{:event :pre-access
+  {:events [{:event :breach-server
              :interactive (req true)
              :psi {:req (req (= target :rd))
                    :player :runner

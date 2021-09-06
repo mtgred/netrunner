@@ -2636,7 +2636,7 @@
 (deftest mu-safecracker
   ;; MU Safecracker
   (testing "No available stealth credits"
-    (testing "Access HQ"
+    (testing "Breach HQ"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2646,7 +2646,7 @@
         (run-empty-server state "HQ")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended with no prompt")))
-    (testing "Access R&D"
+    (testing "Breach R&D"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2657,7 +2657,7 @@
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended with no prompt"))))
   (testing "Available stealth credits"
-    (testing "Access HQ"
+    (testing "Breach HQ"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2674,7 +2674,7 @@
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended")))
-    (testing "Access R&D"
+    (testing "Breach R&D"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -3995,7 +3995,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue-until state :success)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Only access 1 card from HQ")
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Only access 1 card from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
@@ -4015,7 +4015,7 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (run-continue-until state :success)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4043,7 +4043,7 @@
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Done")
       (run-continue-until state :success)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4065,7 +4065,7 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (run-continue-until state :success)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Access 1 cards from HQ")
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 cards from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
@@ -4087,7 +4087,7 @@
       (card-ability state :runner (get-program state 0) 2)
       (is (not (rezzed? (get-ice state :hq 0))) "Ice Wall has been derezzed")
       (run-continue-until state :success)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4110,7 +4110,7 @@
       (click-prompt state :runner "End the run")
       (is (nil? (get-ice state :hq 0)) "Ice Wall has been trashed")
       (run-continue-until state :success)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Access 1 card from HQ")
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 card from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))

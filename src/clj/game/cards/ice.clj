@@ -1735,7 +1735,7 @@
 
 (defcard "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
-             :effect (effect (max-access 1))}]
+             :effect (req (max-access state 1))}]
     {:subroutines [sub
                    sub]
      :runner-abilities [(bioroid-break 1 1)]}))
@@ -1962,10 +1962,10 @@
                     :prompt "Choose a card in HQ to force access"
                     :choices {:card (every-pred in-hand? corp?)
                               :all true}
-                    :label "Force the Runner to access a card in HQ"
-                    :msg (msg "force the Runner to access " (:title target))
-                    :effect (req (wait-for (do-access state :runner [:hq] {:no-root true
-                                                                        :access-first target})
+                    :label "Force the Runner to breach HQ and access a card"
+                    :msg (msg "force the Runner to breach HQ and access " (:title target))
+                    :effect (req (wait-for (breach-server state :runner [:hq] {:no-root true
+                                                                               :access-first target})
                                            (trash state side eid card {:cause :subroutine})))}}}]})
 
 (defcard "Komainu"
@@ -2946,12 +2946,12 @@
                                         (reorder-choice :corp :runner from '() (count from) from)))
                                     card nil))}
                  {:optional
-                  {:prompt "Pay 1 [Credits] to keep the Runner from accessing the top card of R&D?"
+                  {:prompt "Pay 1 [Credits] to keep the Runner from breaching R&D?"
                    :yes-ability {:cost [:credit 1]
-                                 :msg "keep the Runner from accessing the top card of R&D"}
+                                 :msg "keep the Runner from breaching R&D"}
                    :no-ability {:async true
-                                :msg "make the Runner access the top card of R&D"
-                                :effect (effect (do-access :runner eid [:rd] {:no-root true}))}}}]})
+                                :msg "make the Runner breach R&D"
+                                :effect (effect (breach-server :runner eid [:rd] {:no-root true}))}}}]})
 
 (defcard "Slot Machine"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))

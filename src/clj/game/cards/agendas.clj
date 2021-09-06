@@ -525,7 +525,7 @@
                    :not-equal {:effect (effect (register-floating-effect
                                                  card
                                                  {:type :corp-choose-hq-access
-                                                  :duration :end-of-access
+                                                  :duration :end-of-run
                                                   :value true})
                                                (effect-completed eid))}}}]})
 
