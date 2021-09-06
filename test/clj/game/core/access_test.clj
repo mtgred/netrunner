@@ -8,114 +8,133 @@
 (deftest rd-access
   (testing "Nothing in R&D, no upgrades"
     (do-game
-      (new-game {:corp {:deck ["Hedge Fund"]
-                        :hand [(qty "Hedge Fund" 4)]}})
-      (click-draw state :corp)
-      (take-credits state :corp)
-      (run-empty-server state "R&D")
-      (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+     (new-game {:corp {:deck ["Hedge Fund"]
+                       :hand [(qty "Hedge Fund" 4)]}})
+     (click-draw state :corp)
+     (take-credits state :corp)
+     (run-empty-server state "R&D")
+     (is (nil? (get-run)))
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (empty? (:prompt (get-corp))))))
   (testing "Something in R&D, no upgrades"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Hedge Fund"]}})
-      (take-credits state :corp)
-      (run-empty-server state "R&D")
-      (is (= ["No action"] (prompt-buttons :runner)))
-      (click-prompt state :runner "No action")
-      (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Hedge Fund"]}})
+     (take-credits state :corp)
+     (run-empty-server state "R&D")
+     (is (= ["No action"] (prompt-buttons :runner)))
+     (click-prompt state :runner "No action")
+     (is (nil? (get-run)))
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (empty? (:prompt (get-corp))))))
   (testing "Nothing in R&D, an unrezzed upgrade"
     (do-game
-      (new-game {:corp {:deck []
-                        :hand [(qty "Hedge Fund" 5) "Bryan Stinson"]}})
-      (play-from-hand state :corp "Bryan Stinson" "R&D")
-      (take-credits state :corp)
-      (run-empty-server state "R&D")
-      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
-      (click-prompt state :runner "No action")
-      (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+     (new-game {:corp {:deck []
+                       :hand [(qty "Hedge Fund" 5) "Bryan Stinson"]}})
+     (play-from-hand state :corp "Bryan Stinson" "R&D")
+     (take-credits state :corp)
+     (run-empty-server state "R&D")
+     (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+     (click-prompt state :runner "No action")
+     (is (nil? (get-run)))
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (empty? (:prompt (get-corp))))))
   (testing "Something in R&D, an upgrade"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Bryan Stinson"]}})
-      (play-from-hand state :corp "Bryan Stinson" "R&D")
-      (take-credits state :corp)
-      (run-empty-server state "R&D")
-      (is (= ["Card from deck" "Unrezzed upgrade"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Card from deck")
-      (click-prompt state :runner "No action")
-      (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
-      (click-prompt state :runner "No action")
-      (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Bryan Stinson"]}})
+     (play-from-hand state :corp "Bryan Stinson" "R&D")
+     (take-credits state :corp)
+     (run-empty-server state "R&D")
+     (is (= ["Card from deck" "Unrezzed upgrade"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Card from deck")
+     (click-prompt state :runner "No action")
+     (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
+     (click-prompt state :runner "No action")
+     (is (nil? (get-run)))
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (empty? (:prompt (get-corp))))))
   (testing "Accessing multiple cards from R&D"
     (do-game
-      (new-game {:corp {:deck []
-                        :hand [(qty "Hedge Fund" 2) (qty "Hostile Takeover" 2)]}})
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
-      (take-credits state :corp)
-      (run-on state "R&D")
-      (core/access-bonus state :runner :rd 2)
-      (run-continue state)
+     (new-game {:corp {:deck []
+                       :hand [(qty "Hedge Fund" 2) (qty "Hostile Takeover" 2)]}})
+     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
+     (take-credits state :corp)
+     (run-on state "R&D")
+     (core/access-bonus state :runner :rd 2)
+     (run-continue state)
       ;; Hedge Fund #1
-      (is (= ["No action"] (prompt-buttons :runner)))
-      (click-prompt state :runner "No action")
+     (is (= ["No action"] (prompt-buttons :runner)))
+     (click-prompt state :runner "No action")
       ;; Hostile Takeover #1
-      (is (= ["Steal"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Steal")
+     (is (= ["Steal"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Steal")
       ;; Hedge Fund #2
-      (is (= ["No action"] (prompt-buttons :runner)))
-      (click-prompt state :runner "No action")
+     (is (= ["No action"] (prompt-buttons :runner)))
+     (click-prompt state :runner "No action")
       ;; No more accesses
-      (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+     (is (nil? (get-run)))
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (empty? (:prompt (get-corp))))))
   (testing "Accessing multiple cards from R&D with multiple upgrades upgrades"
     (do-game
-      (new-game {:corp {:deck ["Keegan Lane" "Midway Station Grid"
-                               "Sweeps Week" "Manhunt"
-                               "Hedge Fund" "Big Brother"]}
-                 :runner {:deck ["Medium"]}})
-      (play-from-hand state :corp "Keegan Lane" "R&D")
-      (play-from-hand state :corp "Midway Station Grid" "R&D")
-      (rez state :corp (get-content state :rd 1))
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Sweeps Week" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Manhunt" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Big Brother" (:hand (get-corp))) :deck)
-      (take-credits state :corp)
-      (run-on state "R&D")
-      (core/access-bonus state :runner :rd 2)
-      (run-continue state)
-      (is (= ["Card from deck" "Midway Station Grid" "Unrezzed upgrade"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Card from deck")
-      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
-      (click-prompt state :runner "No action")
-      (is (= ["Card from deck" "Midway Station Grid" "Unrezzed upgrade"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Unrezzed upgrade")
-      (is (= "You accessed Keegan Lane." (:msg (prompt-map :runner))))
-      (click-prompt state :runner "No action")
-      (is (= ["Card from deck" "Midway Station Grid"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Card from deck")
-      (is (= "You accessed Sweeps Week." (:msg (prompt-map :runner))))
-      (click-prompt state :runner "No action")
-      (is (= ["Card from deck" "Midway Station Grid"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Midway Station Grid")
-      (is (= "You accessed Midway Station Grid." (:msg (prompt-map :runner))))
-      (click-prompt state :runner "No action")
-      (is (= "You accessed Manhunt." (:msg (prompt-map :runner))))
-      (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (nil? (get-run)) "Run has ended normally"))))
+     (new-game {:corp {:deck ["Keegan Lane" "Midway Station Grid"
+                              "Sweeps Week" "Manhunt"
+                              "Hedge Fund" "Big Brother"]}
+                :runner {:deck ["Medium"]}})
+     (play-from-hand state :corp "Keegan Lane" "R&D")
+     (play-from-hand state :corp "Midway Station Grid" "R&D")
+     (rez state :corp (get-content state :rd 1))
+     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Sweeps Week" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Manhunt" (:hand (get-corp))) :deck)
+     (core/move state :corp (find-card "Big Brother" (:hand (get-corp))) :deck)
+     (take-credits state :corp)
+     (run-on state "R&D")
+     (core/access-bonus state :runner :rd 2)
+     (run-continue state)
+     (is (= ["Card from deck" "Midway Station Grid" "Unrezzed upgrade"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Card from deck")
+     (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+     (click-prompt state :runner "No action")
+     (is (= ["Card from deck" "Midway Station Grid" "Unrezzed upgrade"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Unrezzed upgrade")
+     (is (= "You accessed Keegan Lane." (:msg (prompt-map :runner))))
+     (click-prompt state :runner "No action")
+     (is (= ["Card from deck" "Midway Station Grid"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Card from deck")
+     (is (= "You accessed Sweeps Week." (:msg (prompt-map :runner))))
+     (click-prompt state :runner "No action")
+     (is (= ["Card from deck" "Midway Station Grid"] (prompt-buttons :runner)))
+     (click-prompt state :runner "Midway Station Grid")
+     (is (= "You accessed Midway Station Grid." (:msg (prompt-map :runner))))
+     (click-prompt state :runner "No action")
+     (is (= "You accessed Manhunt." (:msg (prompt-map :runner))))
+     (click-prompt state :runner "No action")
+     (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+     (is (nil? (get-run)) "Run has ended normally")))
+  (testing "Looping Ganked! and Ansel"
+    (do-game
+     (new-game {:corp {:hand ["Ganked!" "Ansel 1.0"]}})
+     (play-from-hand state :corp "Ganked!" "R&D")
+     (play-from-hand state :corp "Ansel 1.0" "R&D")
+     (take-credits state :corp)
+     (let [ansel (get-ice state :rd 0)]
+       (rez state :corp ansel)
+       (run-on state "R&D")
+       (run-continue-until state :success)
+       (dotimes [_ 3]
+         (click-prompt state :corp "Yes") ;; use ganked!
+         (click-card state :corp ansel)
+         (card-subroutine state :corp (refresh ansel) 1)
+         (click-card state :corp "Ganked!")
+         (click-prompt state :corp "R&D")
+         (encounter-continue state))
+       (click-prompt state :corp "No")
+       (click-prompt state :runner "No action")))))
 
 (deftest hq-access
   (testing "Nothing in HQ, no upgrades"
@@ -191,7 +210,26 @@
       (click-prompt state :runner "Pay 5 [Credits] to trash")
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))))
-      (is (nil? (get-run))))))
+      (is (nil? (get-run)))))
+  (testing "Looping Ganked! and Ansel"
+    (do-game
+     (new-game {:corp {:hand ["Ganked!" "Ansel 1.0"]}})
+     (play-from-hand state :corp "Ganked!" "HQ")
+     (play-from-hand state :corp "Ansel 1.0" "HQ")
+     (take-credits state :corp)
+     (let [ansel (get-ice state :hq 0)]
+       (rez state :corp ansel)
+       (run-on state "HQ")
+       (run-continue-until state :success)
+       (dotimes [_ 3]
+         (click-prompt state :corp "Yes") ;; use ganked!
+         (click-card state :corp ansel)
+         (card-subroutine state :corp (refresh ansel) 1)
+         (click-card state :corp "Ganked!")
+         (click-prompt state :corp "HQ")
+         (encounter-continue state))
+       (click-prompt state :corp "No")
+       (click-prompt state :runner "No action")))))
 
 (deftest archives-access
   (testing "Nothing in archives"
@@ -229,7 +267,7 @@
       (is (= ["Hostile Takeover" "15 Minutes"] (prompt-buttons :runner)))
       (click-prompt state :runner "Hostile Takeover")
       (click-prompt state :runner "Steal")
-      (click-prompt state :runner "15 Minutes")
+      (is (= "You accessed 15 Minutes." (:msg (prompt-map :runner))))
       (click-prompt state :runner "Steal")
       (is (nil? (get-run)))
       (is (empty? (:prompt (get-runner))))
@@ -252,8 +290,7 @@
       (run-empty-server state "Archives")
       (is (= ["Cyberdex Virus Suite" "Shock!"] (prompt-buttons :runner)))
       (click-prompt state :runner "Shock!")
-      (click-prompt state :runner "Cyberdex Virus Suite")
-      (is (prompt-is-type? state :runner :waiting))
+      (is (prompt-is-type? state :runner :waiting) "Accessing CVS")
       (click-prompt state :corp "Yes")))
   (testing "contains agendas and access abilities"
     (do-game
@@ -266,8 +303,7 @@
       (click-prompt state :runner "Cyberdex Virus Suite")
       (is (prompt-is-type? state :runner :waiting))
       (click-prompt state :corp "Yes")
-      (is (= ["Hostile Takeover"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Hostile Takeover")
+      (is (= "You accessed Hostile Takeover." (:msg (prompt-map :runner))))
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))))))
   (testing "contains non-interactive cards, agendas, and access abilities"
@@ -368,9 +404,8 @@
       (click-prompt state :corp "No")
       (is (= ["Bryan Stinson" "Facedown card in Archives"] (prompt-buttons :runner)))
       (click-prompt state :runner "Facedown card in Archives")
-      (is (last-log-contains? state "Runner accesses Hedge Fund from Archives."))
-      (is (= ["Bryan Stinson"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Bryan Stinson")
+      (is (second-last-log-contains? state "Runner accesses Hedge Fund from Archives."))
+      (is (= "You accessed Bryan Stinson." (:msg (prompt-map :runner))))
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-corp))))
@@ -385,7 +420,7 @@
         (click-prompt state :runner "Steal")
         (click-prompt state :runner "Breaking News")
         (click-prompt state :runner "Steal")
-        (click-prompt state :runner "Breaking News")
+        (is (= "You accessed Breaking News." (:msg (prompt-map :runner))))
         (click-prompt state :runner "Steal")
         (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
         (is (empty (:discard (get-corp))) "0 agendas left in archives")))
@@ -397,11 +432,29 @@
       (run-empty-server state "Archives")
       (is (= ["Global Food Initiative" "Everything else"] (prompt-buttons :runner)))
       (click-prompt state :runner "Everything else")
-      (is (last-log-contains? state "Runner accesses everything else in Archives"))
-      (is (= ["Global Food Initiative"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Global Food Initiative")
+      (is (second-last-log-contains? state "Runner accesses everything else in Archives"))
+      (is (= "You accessed Global Food Initiative." (:msg (prompt-map :runner))))
       (is (= ["Steal"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Steal"))))
+      (click-prompt state :runner "Steal")))
+  (testing "Looping Ganked! and Ansel"
+    (do-game
+      (new-game {:corp {:hand ["Ganked!" "Ansel 1.0"]}})
+      (play-from-hand state :corp "Ganked!" "Archives")
+      (play-from-hand state :corp "Ansel 1.0" "Archives")
+      (take-credits state :corp)
+      (let [ansel (get-ice state :archives 0)]
+        (rez state :corp ansel)
+        (run-on state "Archives")
+        (run-continue-until state :success)
+        (dotimes [_ 3]
+          (click-prompt state :corp "Yes") ;; use ganked!
+          (click-card state :corp ansel)
+          (card-subroutine state :corp (refresh ansel) 1)
+          (click-card state :corp "Ganked!")
+          (click-prompt state :corp "Archives")
+          (encounter-continue state))
+        (click-prompt state :corp "No")
+        (click-prompt state :runner "No action")))))
 
 (deftest remote-access
   (testing "reduced by 1. #5014"
@@ -418,7 +471,26 @@
       (run-continue state)
       (is (empty? (:prompt (get-corp))))
       (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (nil? (get-run))))))
+      (is (nil? (get-run)))))
+  (testing "Looping Ganked! and Ansel"
+    (do-game
+      (new-game {:corp {:hand ["Ganked!" "Ansel 1.0"]}})
+      (play-from-hand state :corp "Ganked!" "New remote")
+      (play-from-hand state :corp "Ansel 1.0" "Server 1")
+      (take-credits state :corp)
+      (let [ansel (get-ice state :remote1 0)]
+        (rez state :corp ansel)
+        (run-on state "Server 1")
+        (run-continue-until state :success)
+        (dotimes [_ 3]
+          (click-prompt state :corp "Yes") ;; use ganked!
+          (click-card state :corp ansel)
+          (card-subroutine state :corp (refresh ansel) 1)
+          (click-card state :corp "Ganked!")
+          (click-prompt state :corp "Server 1")
+          (encounter-continue state))
+        (click-prompt state :corp "No")
+        (click-prompt state :runner "No action")))))
 
 (deftest access-count
   (testing "rd"

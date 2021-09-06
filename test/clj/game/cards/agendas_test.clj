@@ -3496,8 +3496,7 @@
       (click-card state :runner tg1)
       ;; Accesses TGTBT but can't steal
       (is (= 1 (count-tags state)) "Runner took 1 tag from accessing without stealing")
-      (click-prompt state :runner "No action")
-      (click-card state :runner ohg))
+      (click-prompt state :runner "No action"))
     (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Trashes OHG
     (run-empty-server state "Server 2")
     ;; Accesses TGTBT and can steal

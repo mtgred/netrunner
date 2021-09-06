@@ -426,6 +426,14 @@
 (defn get-all-content [content]
   (remove :condition (concat content (get-all-hosted content))))
 
+(defn- root-content
+  ([state server]
+   (->> (get-in @state [:corp :servers server :content])
+        get-all-content
+        (filter #(can-access? state :runner %))))
+  ([state server already-accessed-fn]
+   (remove already-accessed-fn (root-content state server))))
+
 ;;; Methods for allowing user-controlled multi-access in servers.
 (defmulti must-continue?
   (fn [state already-accessed-fn amount-access args]
@@ -447,28 +455,35 @@
                     (+ total-mod))))))
 
 (defn access-helper-remote
-  [state {:keys [chosen] :as access-amount} already-accessed {:keys [no-root server] :as args}]
-  (let [current-available (->> (get-in @state [:corp :servers (first server) :content])
-                               get-all-content
-                               (filter #(can-access? state :runner %))
-                               (map :cid)
-                               set)
+  [state {:keys [chosen] :as access-amount} already-accessed {:keys [server] :as args}]
+  (let [current-available (set (map :cid (root-content state (first server))))
         already-accessed (clj-set/intersection already-accessed current-available)
-        available (clj-set/difference current-available already-accessed)
-        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))]
-    (when (must-continue? state already-accessed-fn access-amount args)
-      {:prompt "Click a card to access it. You must access all cards in this server."
-       :choices {:card #(contains? available (:cid %))}
-       :async true
-       :effect (req (wait-for (access-card state side target)
-                              (continue-ability
-                                state side
-                                (access-helper-remote
+        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
+
+        available (root-content state (first server) already-accessed-fn)]
+    (when (and (seq available) (must-continue? state already-accessed-fn access-amount args))
+      (if (= 1 (count available))
+        {:async true
+         :effect (req (wait-for (access-card state side (first available))
+                                (continue-ability
+                                 state side
+                                 (access-helper-remote
                                   state {:total-mod (access-bonus-count state side :total)
                                          :chosen (inc chosen)}
-                                  (conj already-accessed (:cid target))
+                                  (conj already-accessed (:cid (first available)))
                                   args)
-                                card nil)))})))
+                                 nil nil)))}
+        {:prompt "Click a card to access it. You must access all cards in this server."
+         :choices {:card (fn [card] (some #(same-card? card %) available))}
+         :async true
+         :effect (req (wait-for (access-card state side target)
+                                (continue-ability
+                                 state side
+                                 (access-helper-remote
+                                   state {:total-mod (access-bonus-count state side :total)
+                                          :chosen (inc chosen)}
+                                   (conj already-accessed (:cid target)) args)
+                                 card nil)))}))))
 
 (defmulti choose-access
   ;; choose-access implements game prompts allowing the runner to choose the order of access
@@ -494,8 +509,8 @@
                     ;; Only 1 card to access
                     (and pos-max?
                          pos-total-cards?
-                         (= 1 total-cards-count))
-                    (access-card state side eid (first total-cards))
+                         only-card)
+                    (access-card state side eid only-card)
 
                     ;; Normal access
                     (and pos-max?
@@ -512,10 +527,6 @@
   [state]
   (let [f (get-in @state [:runner :rd-access-fn])]
     (f (get-in @state [:corp :deck]))))
-
-(defn root-content
-  [state server already-accessed-fn]
-  (remove already-accessed-fn (get-in @state [:corp :servers server :content])))
 
 (defmethod must-continue? :rd
   [state already-accessed-fn access-amount {:keys [no-root] :as args}]
@@ -535,9 +546,8 @@
 
 (defn access-helper-rd
   [state {:keys [chosen random-access-limit] :as access-amount} already-accessed {:keys [no-root] :as args}]
-  (let [
-        current-available (set (concat (map :cid (get-in @state [:corp :deck]))
-                                       (map :cid (get-in @state [:corp :servers :rd :content]))))
+  (let [current-available (set (concat (map :cid (get-in @state [:corp :deck]))
+                                       (map :cid (root-content state :rd))))
         already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
@@ -623,6 +633,20 @@
         {:async true
          :effect unrezzed-cards-fn}
 
+        (and (= choices upgrade-buttons)
+             (= 1 (count upgrade-buttons)))
+        {:async true
+         :effect (req (let [upgrade (first (filter rezzed? root))]
+                        (wait-for (access-card state side upgrade)
+                                  (continue-ability
+                                   state side
+                                   (access-helper-rd
+                                    state {:random-access-limit random-access-limit
+                                           :total-mod (access-bonus-count state side :total)
+                                           :chosen (inc chosen)}
+                                    (conj already-accessed (:cid upgrade)) args)
+                                   nil nil))))}
+
         :else
         {:async true
          :prompt "Choose a card to access"
@@ -695,7 +719,7 @@
          (pos? (->> (concat (when (not (:prevent-hand-access (:run @state)))
                               (get-in @state [:corp :hand]))
                             (when-not no-root
-                              (get-in @state [:corp :servers :hq :content])))
+                              (root-content state :hq)))
                     (remove already-accessed-fn)
                     count
                     (+ total-mod))))))
@@ -708,11 +732,10 @@
 (defn access-helper-hq
   [state {:keys [chosen random-access-limit] :as access-amount}
    already-accessed {:keys [no-root access-first] :as args}]
-  (let [
-        hand (when (not (:prevent-hand-access (:run @state)))
+  (let [hand (when (not (:prevent-hand-access (:run @state)))
                (get-in @state [:corp :hand]))
         current-available (set (concat (map :cid hand)
-                                       (map :cid (get-in @state [:corp :servers :hq :content]))))
+                                       (map :cid (root-content state :hq))))
         already-accessed (clj-set/intersection already-accessed current-available)
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
@@ -827,6 +850,20 @@
         {:async true
          :effect unrezzed-cards-fn}
 
+        (and (= choices upgrade-buttons)
+             (= 1 (count upgrade-buttons)))
+        {:async true
+         :effect (req (let [upgrade (first (filter rezzed? root))]
+                        (wait-for (access-card state side upgrade)
+                                  (continue-ability
+                                    state side
+                                    (access-helper-hq
+                                      state {:random-access-limit random-access-limit
+                                             :total-mod (access-bonus-count state side :total)
+                                             :chosen (inc chosen)}
+                                      (conj already-accessed (:cid upgrade)) args)
+                                   nil nil))))}
+
         :else
         {:async true
          :prompt "Choose a card to access"
@@ -865,7 +902,7 @@
                                                  (when (not (:prevent-hand-access (:run @state)))
                                                    (get-in @state [:corp :hand]))
                                                  (when-not no-root
-                                                   (get-in @state [:corp :servers :hq :content]))))
+                                                   (root-content state :hq))))
                                 total-cards-count (count total-cards)
                                 pos-max? (if max-access
                                            (pos? (+ max-access total-mod))
@@ -876,7 +913,7 @@
                               ;; Only 1 card to access
                               (and pos-max?
                                    pos-total-cards?
-                                   (= 1 total-cards-count))
+                                   only-card)
                               (access-card state side eid (first total-cards))
 
                               ;; Normal access
@@ -942,7 +979,7 @@
          (not limit-reached?)
          (pos? (->> (concat (get-in @state [:corp :discard])
                             (when-not no-root
-                              (get-in @state [:corp :servers :archives :content])))
+                              (root-content state :archives)))
                     (remove already-accessed-fn)
                     count
                     (+ total-mod))))))
@@ -951,7 +988,7 @@
   [state {:keys [chosen] :as access-amount} already-accessed {:keys [no-root] :as args}]
   (let [
         current-available (set (concat (map :cid (get-in @state [:corp :discard]))
-                                       (map :cid (get-in @state [:corp :servers :archives :content]))))
+                                       (map :cid (root-content state :archives))))
         already-accessed (clj-set/intersection already-accessed current-available)
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
@@ -1037,6 +1074,32 @@
         {:async true
          :effect unrezzed-cards-fn}
 
+        (and (= choices upgrade-buttons)
+             (= 1 (count upgrade-buttons)))
+        {:async true
+         :effect (req (let [upgrade (first (filter rezzed? root))]
+                        (wait-for (access-card state side upgrade)
+                                  (continue-ability
+                                   state side
+                                   (access-helper-archives
+                                    state {:total-mod (access-bonus-count state side :total)
+                                           :chosen (inc chosen)}
+                                    (conj already-accessed (:cid upgrade)) args)
+                                   nil nil))))}
+
+        (and (= choices faceup-cards-buttons)
+             (= 1 (count faceup-cards-buttons)))
+        {:async true
+         :effect (req (let [card (first (faceup-accessible state already-accessed-fn))]
+                        (wait-for (access-card state side card)
+                                  (continue-ability
+                                   state side
+                                   (access-helper-archives
+                                    state {:total-mod (access-bonus-count state side :total)
+                                           :chosen (inc chosen)}
+                                    (conj already-accessed (:cid card)) args)
+                                   nil nil))))}
+
         (= choices facedown-cards-button)
         {:async true
          :effect facedown-cards-fn}
@@ -1070,14 +1133,13 @@
                                              (concat (faceup-accessible state already-accessed-fn)
                                                      (root-content state :archives already-accessed-fn)))
                               already-accessed (conj already-accessed (:cid accessed))
-                              ;; Base access count is only decremented when accessing a card in archives
                               access-amount {:total-mod (access-bonus-count state side :total)
                                              :chosen (inc chosen)}]
                           (wait-for (access-card state side accessed)
                                     (continue-ability
-                                      state side
-                                      (access-helper-archives state access-amount already-accessed args)
-                                      nil nil)))))}))))
+                                     state side
+                                     (access-helper-archives state access-amount already-accessed args)
+                                     nil nil)))))}))))
 
 (defmethod choose-access :archives
   [{:keys [total-mod] :as access-amount} _ {:keys [no-root] :as args}]
@@ -1087,7 +1149,7 @@
                       total-cards (or (when only-card [only-card])
                                       (concat (get-in @state [:corp :discard])
                                               (when-not no-root
-                                                (get-in @state [:corp :servers :archives :content]))))
+                                                (root-content state :archives))))
                       total-cards-count (count total-cards)
                       pos-max? (if max-access
                                  (pos? (+ max-access total-mod))
@@ -1097,7 +1159,7 @@
                     ;; Only 1 card to access
                     (and pos-max?
                          pos-total-cards?
-                         (= 1 total-cards-count))
+                         only-card)
                     (access-card state side eid (first total-cards))
 
                     ;; At least 1 access
