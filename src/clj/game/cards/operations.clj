@@ -2306,7 +2306,9 @@
               :prompt "Add Subliminal Messaging to HQ?"
               :yes-ability
               {:msg "add Subliminal Messaging to HQ"
-               :effect (effect (move card :hand))}}}]})
+               :effect (effect (reveal eid card)
+                               (move card :hand))}}}]})
+
 
 (defcard "Success"
   (letfn [(advance-n-times [state side eid card target n]
