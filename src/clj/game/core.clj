@@ -76,7 +76,6 @@
    access-helper-hq
    access-helper-rd
    access-helper-remote
-   access-n-cards
    access-non-agenda
    breach-server
    clean-access-args
@@ -697,9 +696,9 @@
    jack-out
    jack-out-prevent
    make-run
+   offer-jack-out
    pass-ice
    prevent-access
-   offer-jack-out
    redirect-run
    set-next-phase
    set-phase

@@ -4,6 +4,7 @@
     [clojure.string :as string]
     [medley.core :refer [find-first]]
     [game.core :refer :all]
+    [game.core.access :refer [access-n-cards]]
     [game.utils :refer :all]
     [jinteki.utils :refer :all]))
 
