@@ -6,13 +6,15 @@
 
 (defn- build-deck-status-label [deck-status violation-details?]
   [:div.status-tooltip.blue-shade
-   (doall (for [[status-key {:keys [legal reason description]}] deck-status
-                :when description]
-            ^{:key status-key}
-            [:div {:class (if legal "legal" "invalid")
-                   :title (when violation-details? (or reason "Unknown"))}
-             [:span.tick (if legal "✔" "✘")]
-             description]))])
+   (doall (for [format (keys slug->format)]
+            (let [{{:keys [legal reason description]} (keyword format)} deck-status]
+              ^{:key format}
+              [:div {:class (if legal "legal" "invalid")
+                     :title (when (and violation-details?
+                                       (not legal))
+                              (or reason "Unknown"))}
+               [:span.tick (if legal "✔" "✘")]
+               description])))])
 
 (defn- deck-status-details
   [deck use-trusted-info]

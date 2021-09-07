@@ -13,6 +13,7 @@
 (def restricted-dot (str "🦄" zws)) ; on the restricted list
 (def alliance-dot (str "○" zws))    ; alliance free-inf dot
 (def rotated-dot (str "↻" zws))     ; on the rotation list
+(def deck-points-dot (str "❖" zws)) ; costs deck points
 
 (def banned-span
   [:span.invalid {:title "Removed"} " " banned-dot])
@@ -22,6 +23,11 @@
 
 (def rotated-span
   [:span.casual {:title "Rotated"} " " rotated-dot])
+
+(defn deck-points-card-span [points]
+  [:span.legal {:title (when points
+                         (str "Deck points: " points))}
+   " " deck-points-dot])
 
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"

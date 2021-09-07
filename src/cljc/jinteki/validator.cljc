@@ -176,11 +176,15 @@
                                          ", Between: " min-agenda-points " and " (inc min-agenda-points)))
      :description "Basic deckbuilding rules"}))
 
+(defn combine-id-and-cards
+  [deck]
+  (conj (:cards deck) {:qty 1 :card (:identity deck)}))
+
 (defn legal?
   ([status card]
    (legal? :standard status card))
   ([fmt status card]
-   (= status (get-in card [:format fmt]))))
+   (contains? (get-in card [:format fmt]) status)))
 
 (defn legal-line?
   ([status line]
@@ -188,30 +192,55 @@
   ([fmt status line]
    (legal? fmt status (:card line))))
 
+(defn filter-cards-by-legal-status
+  ([deck status]
+   (let [combined-cards (combine-id-and-cards deck)
+         fmt (keyword (:format deck))]
+     (filter-cards-by-legal-status fmt status combined-cards)))
+  ([fmt status cards]
+   (filter #(legal-line? fmt status %) cards)))
+
+(defn format-point-limit
+  [fmt]
+  (get-in @cards/mwl [(keyword fmt) :point-limit]))
+
+(defn deck-point-count
+  ([deck]
+   (let [combined-cards (combine-id-and-cards deck)
+         fmt (keyword (:format deck))
+         pointed-cards (filter-cards-by-legal-status fmt :points combined-cards)]
+    (deck-point-count fmt pointed-cards)))
+  ([fmt cards]
+  (reduce (fn [sum line]
+            (+ sum (get-in line [:card :format fmt :points])))
+          0 cards)))
+
 (defn mwl-legal?
   "Returns true if the deck does not contain banned cards or more than one type of restricted card"
   [fmt cards]
-  (let [allowed-cards-fn #(when-let [card (get-in % [:card :format fmt])]
-                            (case (name card)
-                              ("legal" "restricted" "banned") true
-                              false))
+  (let [allowed-cards-fn #(when-let [fmt-legality (get-in % [:card :format fmt])]
+                            (some (fn [k] (contains? fmt-legality k)) [:legal :banned]))
         allowed-cards? (every? allowed-cards-fn cards)
-        single-restricted-fn #(legal-line? fmt "restricted" %)
-        single-restricted? (>= 1 (count (filter single-restricted-fn cards)))
-        no-banned-fn #(legal-line? fmt "banned" %)
-        no-banned? (zero? (count (filter no-banned-fn cards)))]
-    {:legal (and allowed-cards? single-restricted? no-banned?)
+        single-restricted-cards (filter-cards-by-legal-status fmt :restricted cards)
+        single-restricted? (>= 1 (count single-restricted-cards))
+        banned-cards (filter-cards-by-legal-status fmt :banned cards)
+        no-banned? (zero? (count banned-cards))
+        point-limit (format-point-limit fmt)
+        point-cards (filter-cards-by-legal-status fmt :points cards)
+        point-total (when point-limit
+                      (deck-point-count fmt point-cards))
+        under-point-limit? (if point-total
+                             (>= point-limit point-total)
+                             true)]
+    {:legal (and allowed-cards? single-restricted? no-banned? under-point-limit?)
      :reason (cond
                (not allowed-cards?) (str "Illegal card: "
                                          (get-in (some #(when ((complement allowed-cards-fn) %) %) cards) [:card :title]))
                (not single-restricted?) (str "Too many restricted cards: "
-                                             (get-in (some #(when (single-restricted-fn %) %) cards) [:card :title]))
+                                             (get-in (first single-restricted-cards) [:card :title]))
                (not no-banned?) (str "Includes a banned card: "
-                                     (get-in (some #(when (no-banned-fn %) %) cards) [:card :title])))}))
-
-(defn combine-id-and-cards
-  [deck]
-  (conj (:cards deck) {:qty 1 :card (:identity deck)}))
+                                     (get-in (first banned-cards) [:card :title]))
+               (not under-point-limit?) (str "Exceeds point limit: " point-total ", Limit: " point-limit))}))
 
 (defn legal-format?
   [fmt deck]

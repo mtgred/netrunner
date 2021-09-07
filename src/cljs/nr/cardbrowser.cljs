@@ -7,7 +7,7 @@
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span set-scroll-top store-scroll-top
+            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span deck-points-card-span set-scroll-top store-scroll-top
                               influence-dots slug->format format->slug render-icons non-game-toast faction-icon
                               get-image-path image-or-face]]
             [nr.translations :refer [tr tr-type tr-side tr-faction tr-format tr-sort]]
@@ -20,6 +20,13 @@
 (declare generate-flip-cards)
 (declare insert-starter-info)
 (declare insert-starter-ids)
+
+(defn- format-card-key->string
+  [format]
+  (assoc format :cards
+                (reduce-kv
+                  (fn [m k v] (assoc m (name k) v))
+                  {} (:cards format))))
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
@@ -34,10 +41,13 @@
           cycles (:json (<! (GET "/data/cycles")))
           mwls (:json (<! (GET "/data/mwl")))
           latest-mwl (->> mwls
-                          (filter #(= "standard" (:format %)))
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
-                          (sort-by :date-start)
-                          last)
+                          (group-by #(keyword (:format %)))
+                          (mapv (fn [[k, v]] [k (->> v
+                                                     (sort-by :date-start)
+                                                     (last)
+                                                     (format-card-key->string))]))
+                          (into {}))
           alt-info (->> (<! (GET "/data/cards/altarts"))
                         (:json)
                         (map #(select-keys % [:version :name :description :artist-blurb :artist-link :artist-about])))]
@@ -59,12 +69,12 @@
   [card]
   (-> card
       (assoc :influencelimit "∞")
-      (assoc-in [:format :standard] "banned")
-      (assoc-in [:format :startup] "banned")
-      (assoc-in [:format :eternal] "banned")
-      (assoc-in [:format :snapshot] "banned")
-      (assoc-in [:format :snapshot-plus] "banned")
-      (assoc-in [:format :classic] "banned")))
+      (assoc-in [:format :standard] {:banned true})
+      (assoc-in [:format :startup] {:banned true})
+      (assoc-in [:format :eternal] {:banned true})
+      (assoc-in [:format :snapshot] {:banned true})
+      (assoc-in [:format :snapshot-plus] {:banned true})
+      (assoc-in [:format :classic] {:banned true})))
 
 (defn- insert-starter-ids
   "Add special case info for the Starter Deck IDs"
@@ -268,11 +278,9 @@
 
 (defn- text-class-for-status
   [status]
-  (case (keyword status)
-    (:legal :restricted) "legal"
-    :rotated "casual"
-    :banned "invalid"
-    "casual"))
+  (cond (:legal status) "legal"
+        (:rotated status) "casual"
+        (:banned status) "invalid"))
 
 (defn card-as-text
   "Generate text html representation a card"
@@ -315,15 +323,14 @@
         [:<>
          [:div.formats
           (doall (for [[k name] (-> slug->format butlast)]
-                   (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
+                   (let [status (get-in card [:format (keyword k)] "unknown")
                          c (text-class-for-status status)]
                      ^{:key k}
                      [:div.format-item {:class c} name
-                      (case status
-                        :banned banned-span
-                        :restricted restricted-span
-                        :rotated rotated-span
-                        nil)])))]
+                      (cond (:banned status) banned-span
+                            (:restricted status) restricted-span
+                            (:rotated status) rotated-span
+                            (:points status) (deck-points-card-span (:points status)))])))]
 
          [:div.pack
           (when-let [pack (:setname card)]
@@ -381,7 +388,7 @@
   (if (= "All" fmt)
     cards
     (let [fmt (keyword (get format->slug fmt))]
-      (filter #(= "legal" (get-in % [:format fmt])) cards))))
+      (filter #(get-in % [:format fmt :legal]) cards))))
 
 (defn filter-title [query cards]
   (if (empty? query)
