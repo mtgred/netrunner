@@ -1,5 +1,6 @@
 (ns game.core.def-helpers
   (:require
+    [game.core.access :refer [access-bonus]]
     [game.core.card :refer [corp? get-card get-counters has-subtype? in-discard? faceup?]]
     [game.core.card-defs :refer [defcard-impl]]
     [game.core.damage :refer [damage]]
@@ -98,6 +99,19 @@
 
                :else
                (continue-ability state side (reorder-choice reorder-side wait-side original '() (count original) original dest) card nil)))}))
+
+(defn breach-access-bonus
+  "Access additional cards when breaching a server"
+  ([server bonus] (breach-access-bonus server bonus nil))
+  ([server bonus {:keys [duration msg] :as args}]
+   {:event :breach-server
+    :duration duration
+    :req (if (:req args)
+           (:req args)
+           (req (= server target)))
+    :silent (req true)
+    :msg msg
+    :effect (effect (access-bonus :runner server bonus))}))
 
 (defn do-net-damage
   "Do specified amount of net-damage."

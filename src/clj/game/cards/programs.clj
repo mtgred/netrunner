@@ -689,7 +689,8 @@
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (req (access-bonus state side :rd (max 0 (get-virus-counters state card))))}]
+             :effect (effect (register-events 
+                              card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
    :abilities [{:cost [:click 1]
                 :msg "make a run on R&D"
                 :makes-run true
@@ -1132,10 +1133,7 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "eXer"
-  {:events [{:event :breach-server
-             :req (req (= :rd target))
-             :silent (req true)
-             :effect (effect (access-bonus :runner :rd 1))}
+  {:events [(breach-access-bonus :rd 1)
             {:event :purge
              :async true
              :effect (effect (trash eid card {:cause :purge}))}]})

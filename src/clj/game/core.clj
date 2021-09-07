@@ -70,7 +70,6 @@
    access-card
    access-cost
    access-cost-bonus
-   access-count
    access-end
    access-helper-archives
    access-helper-hq
@@ -271,6 +270,7 @@
 
 (import-vars
   [game.core.def-helpers
+   breach-access-bonus
    combine-abilities
    corp-rez-toast
    defcard

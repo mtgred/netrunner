@@ -27,8 +27,8 @@
   (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
 
 (defn access-bonus-count
-  [state side s]
-  (sum-effects state side nil :access-bonus [s]))
+  [state side kw]
+  (sum-effects state side nil :access-bonus [kw]))
 
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
@@ -1195,14 +1195,6 @@
             :value bonus})]
      floating-effect)))
 
-(defn access-count
-  [state side kw]
-  (let [s (case kw
-           :rd-access :rd
-           :hq-access :hq
-           kw)]
-    (access-bonus-count state side s)))
-
 (defmulti num-cards-to-access
   "Gets the list of cards to access for the server"
   (fn [state _ server _]
@@ -1212,21 +1204,21 @@
 
 (defmethod num-cards-to-access :only
   [state side _ _]
-  (let [total-mod (access-count state side :total)]
+  (let [total-mod (access-bonus-count state side :total)]
     {:total-mod total-mod
      :chosen 0}))
 
 (defmethod num-cards-to-access :remote
   [state side _ _]
-  (let [total-mod (access-count state side :total)]
+  (let [total-mod (access-bonus-count state side :total)]
     {:total-mod total-mod
      :chosen 0}))
 
 (defn num-cards-central
   [state side base access-key access-amount]
-  (let [mod (access-count state side access-key)
+  (let [mod (access-bonus-count state side access-key)
         random-access-limit (+ base mod)
-        total-mod (access-count state side :total)]
+        total-mod (access-bonus-count state side :total)]
     {:random-access-limit (or access-amount
                               random-access-limit)
      :total-mod total-mod
@@ -1234,15 +1226,15 @@
 
 (defmethod num-cards-to-access :rd
   [state side _ access-amount]
-  (num-cards-central state side 1 :rd-access access-amount))
+  (num-cards-central state side 1 :rd access-amount))
 
 (defmethod num-cards-to-access :hq
   [state side _ access-amount]
-  (num-cards-central state side 1 :hq-access access-amount))
+  (num-cards-central state side 1 :hq access-amount))
 
 (defmethod num-cards-to-access :archives
   [state side _ _]
-  (let [total-mod (access-count state side :total)]
+  (let [total-mod (access-bonus-count state side :total)]
     {:total-mod total-mod
      :chosen 0}))
 

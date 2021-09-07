@@ -489,12 +489,11 @@
                        :value 2}]})
 
 (defcard "Docklands Pass"
-  {:events [{:event :breach-server
-             :req (req (and (= :hq target)
-                            (first-event? state side :breach-server #(= :hq (first %)))))
-             :silent (req true)
-             :msg "access 1 additional cards from HQ"
-             :effect (effect (access-bonus :runner :hq 1))}]})
+  {:events [(breach-access-bonus
+             :hq 1
+             {:req (req (and (= :hq target)
+                             (first-event? state side :breach-server #(= :hq (first %)))))
+              :msg "access 1 additional cards from HQ"})]})
 
 (defcard "Doppelgänger"
   {:constant-effects [(mu+ 1)]
@@ -940,10 +939,7 @@
                                  (trash eid target nil))}}}]}))
 
 (defcard "HQ Interface"
-  {:events [{:event :breach-server
-             :req (req (= :hq target))
-             :silent (req true)
-             :effect (effect (access-bonus :runner :hq 1))}]})
+  {:events [(breach-access-bonus :hq 1)]})
 
 (defcard "Keiko"
   {:constant-effects [(mu+ 2)]
@@ -1175,7 +1171,8 @@
               {:cost [:credit 1]
                :cost-req all-stealth
                :msg "access 1 additional card from HQ"
-               :effect (effect (access-bonus :hq 1))}}}
+               :effect (effect (register-events
+                                card [(breach-access-bonus :hq 1 {:duration :end-of-run})]))}}}
             {:event :successful-run
              :optional
              {:req (req (and (= :rd (target-server context))
@@ -1186,7 +1183,8 @@
               {:cost [:credit 2]
                :cost-req all-stealth
                :msg "access 1 additional card from R&D"
-               :effect (effect (access-bonus :rd 1))}}}]})
+               :effect (effect (register-events
+                                card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}}}]})
 
 (defcard "Muresh Bodysuit"
   {:events [{:event :pre-damage
@@ -1519,10 +1517,7 @@
                              (tag-prevent :runner eid 1))}]})
 
 (defcard "R&D Interface"
-  {:events [{:event :breach-server
-             :req (req (= :rd target))
-             :silent (req true)
-             :effect (effect (access-bonus :runner :rd 1))}]})
+  {:events [(breach-access-bonus :rd 1)]})
 
 (defcard "Rabbit Hole"
   {:constant-effects [(link+ 1)]
@@ -1730,10 +1725,7 @@
                             (wait-for (trash-cards state side targets {:unpreventable true})
                                       (register-events
                                         state side card
-                                        [{:event :breach-server
-                                          :duration :end-of-run
-                                          :silent (req true)
-                                          :effect (effect (access-bonus kw bonus))}])
+                                        [(breach-access-bonus kw bonus {:duration :end-of-run})])
                                       (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"

@@ -144,10 +144,8 @@
     {:base 4
      :unsuccessful
      {:effect (effect (register-events
-                        card [{:event :breach-server
-                               :duration :end-of-turn
-                               :req (req (#{:hq :rd} target))
-                               :effect (effect (access-bonus target 2))}]))}}}})
+                        card [(breach-access-bonus :rd 2 {:duration :end-of-turn})
+                              (breach-access-bonus :hq 2 {:duration :end-of-turn})]))}}}})
 
 (defcard "Blackmail"
   {:makes-run true
@@ -645,7 +643,10 @@
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :silent (req true)
-             :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 
+                                                         (max 0 (min 4 (available-mu state))) 
+                                                         {:duration :end-of-run})]))}]})
 
 (defcard "Déjà Vu"
   {:on-play
@@ -1649,10 +1650,9 @@
              :req (req (and (or (= :hq (target-server context))
                                 (= :rd (target-server context)))
                             this-card-run))
-             :effect (req (if (= :hq (target-server context))
-                            (access-bonus state :runner :hq 1)
-                            (access-bonus state :runner :rd 1))
-                          (draw state side eid 1 nil))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
+                             (draw eid 1 nil))}]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
@@ -1823,7 +1823,8 @@
              :silent (req true)
              :req (req (and (= :hq (target-server context))
                             this-card-run))
-             :effect (effect (access-bonus :hq 2))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :hq 2 {:duration :end-of-run})]))}]})
 
 (defcard "Leverage"
   {:on-play
@@ -2921,7 +2922,8 @@
              :silent (req true)
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (effect (access-bonus :rd 2))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 2 {:duration :end-of-run})]))}]})
 
 (defcard "The Noble Path"
   {:makes-run true

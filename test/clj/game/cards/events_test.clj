@@ -1588,14 +1588,14 @@
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 1)
         (run-continue state)
-        (is (= 1 (core/access-bonus-count state :runner :rd))
-            "The Turning Wheel should provide 1 additional access on R&D")
+        ;; HQ
         (is (= 1 (core/access-bonus-count state :runner :hq))
             "The Turning Wheel should provide 1 additional access on HQ")
-        ;; HQ
         (dotimes [_ 2]
           (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
         ;; R&D
+        (is (= 1 (core/access-bonus-count state :runner :rd))
+            "The Turning Wheel should provide 1 additional access on R&D")
         (dotimes [_ 2]
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")

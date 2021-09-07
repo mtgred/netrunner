@@ -1736,10 +1736,7 @@
                        :value (req (when (pos? (count (:dest-zone (second targets)))) 1))}]})
 
 (defcard "Neutralize All Threats"
-  {:events [{:event :breach-server
-             :req (req (= :hq target))
-             :silent (req true)
-             :effect (effect (access-bonus :runner :hq 1))}
+  {:events [(breach-access-bonus :hq 1)
             {:event :breach-server
              :req (req (and (= target :archives)
                             (seq (filter :trash (:discard corp)))))
@@ -2863,7 +2860,8 @@
              :req (req run)
              :keep-menu-open :while-2-power-tokens-left
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
-             :effect (req (access-bonus state side server 1))})
+             :effect (effect (register-events
+                              card [(breach-access-bonus server 1 {:duration :end-of-run})]))})
           (ttw-bounce [name server]
             {:label (str "Shortcut: Bounce " name)
              :cost [:click 1]

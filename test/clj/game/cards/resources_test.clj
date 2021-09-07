@@ -5390,15 +5390,16 @@
                 (click-prompt state :runner "No action")
                 (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
                 (run-on state server)
-                (run-continue state)
                 (card-ability state :runner ttw idx)
                 (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
+                (run-continue state)
                 (is (= 1 (core/access-bonus-count state :runner kw)) "Runner should access 1 additional card"))))]
       (ttw-test "R&D" 0 :rd)
       (ttw-test "HQ" 1 :hq)))
   (testing "Access bonus shouldn't carry over to other runs if prematurely ended after spending TTW counters. #3598"
     (do-game
-      (new-game {:corp {:deck ["Nisei MK II"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Nisei MK II"]}
                  :runner {:deck ["The Turning Wheel"]}})
       (play-and-score state "Nisei MK II")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)))
@@ -5414,10 +5415,9 @@
         (run-on state "R&D")
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
         (card-ability state :corp nisei 0)
         (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter from corp using Nisei counter")
-        (run-on state "R&D")
+        (run-empty-server state "R&D")
         (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonus should be reset on new run"))))
   (testing "Spending counters shouldn't increase accesses when running a non-R&D/HQ server"
     (do-game
@@ -5436,12 +5436,11 @@
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "Archives")
-        (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
-        (click-prompt state :runner "Steal")
-        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
+        (run-continue state)
+        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")
+        (click-prompt state :runner "Steal"))))
   (testing "A given ability shouldn't give accesses when running the other server"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 5)]
@@ -5459,10 +5458,10 @@
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "HQ")
-        (run-continue state)
         (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 1 additional card")
+        (run-continue state)
+        (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 0 additional card")
         (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))

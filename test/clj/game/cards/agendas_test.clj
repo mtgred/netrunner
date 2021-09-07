@@ -745,7 +745,8 @@
   ;; Dedicated Neural Net
   (testing "Corp chooses card to access. Issue #4874"
     (do-game
-      (new-game {:corp {:hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (run-empty-server state "HQ")
@@ -774,7 +775,8 @@
       (is (not (:run @state)) "Run completed")))
   (testing "Multiaccess works properly"
     (do-game
-      (new-game {:corp {:hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
                  :runner {:hand ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
@@ -811,7 +813,8 @@
       (is (nil? (:run @state)) "Run has ended")))
   (testing "Can access upgrades between cards in hand"
     (do-game
-      (new-game {:corp {:hand ["Dedicated Neural Net" "Hedge Fund" "Ice Wall" "Caprice Nisei"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Ice Wall" "Enigma" "Caprice Nisei"]}
                  :runner {:hand ["HQ Interface"]}})
       (play-from-hand state :corp "Caprice Nisei" "HQ")
       (play-and-score state "Dedicated Neural Net")
@@ -821,7 +824,7 @@
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
       (click-prompt state :runner "Card from hand")
-      (click-card state :corp "Hedge Fund")
+      (click-card state :corp "Enigma")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "Unrezzed upgrade")
       (click-prompt state :runner "No action")
