@@ -2,8 +2,9 @@ version: 2
 
 jobs:
   build:
+    working_directory: ~/project
     docker:
-      - image: circleci/clojure:lein-2.7.1
+      - image: circleci/clojure:lein-2.9.6
     environment:
       LEIN_ROOT: nbd
       JVM_OPTS: -Xmx3200m
@@ -12,9 +13,9 @@ jobs:
       - restore_cache:
           key: lein-deps-{{ checksum "project.clj" }}
       - run: lein deps
+      - run: lein do fetch --no-db --no-card-images, eftest
       - save_cache:
           paths:
-            - ~/project/.m2
-            - ~/project/.lein
+            - ~/.m2
+            - ~/.lein
           key: lein-deps-{{ checksum "project.clj" }}
-      - run: lein do fetch --no-db --no-card-images, eftest
