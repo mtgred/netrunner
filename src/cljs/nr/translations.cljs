@@ -397,7 +397,7 @@
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
    :initiation "Initiation"
    :approach-ice "Approach ice"
-   :encouter-ice "Encounter ice"
+   :encounter-ice "Encounter ice"
    :pass-ice "Pass ice"
    :approach-server "Approach server"
    :corp-phase-43 "Corp phase 4.3"
@@ -409,6 +409,7 @@
    :rez "Rez"
    :action-access "Action before access"
    :no-further "No further actions"
+   :continue "Continue"
    :continue-to "Continue to"
    :stop-auto-pass "Stop auto-passing priority"
    :auto-pass "Auto-pass priority"
@@ -788,7 +789,7 @@
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
    :initiation "发起潜袭"
    :approach-ice "接驳防火墙"
-   :encouter-ice "遭遇防火墙"
+   :encounter-ice "遭遇防火墙"
    :pass-ice "通过防火墙"
    :approach-server "接驳服务器"
    :corp-phase-43 "公司阶段4.3"
@@ -1184,7 +1185,7 @@
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
    :initiation "Initiationyay"
    :approach-ice "Approachyay iceyay"
-   :encouter-ice "Encounteryay iceyay"
+   :encounter-ice "Encounteryay iceyay"
    :pass-ice "Asspay iceyay"
    :approach-server "Approachyay erversay"
    :corp-phase-43 "Orpcay asephay 4.3"
@@ -1197,6 +1198,7 @@
    :action-access "Actionyay eforebay accessyay"
    :no-further "Onay urtherfay actionsyay"
    :continue-to "Ontinuecay otay"
+   :continue "Ontinuecay"
    :stop-auto-pass "Opstay autoyay-assingpay ioritypray"
    :auto-pass "Autoyay-asspay ioritypriay"
    :jack-out "Ackjay Outyay"

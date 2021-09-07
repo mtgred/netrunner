@@ -115,7 +115,8 @@
        ice
        (let [zone1 (get-zone card)
              zone2 (get-zone ice)]
-         (and (= (second zone1) (second zone2))
+         (and (= (second (or (central->zone zone1) zone1)) 
+                 (second zone2))
               (= :ices (last zone2))))))
 
 (defn in-same-server?

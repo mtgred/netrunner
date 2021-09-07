@@ -87,7 +87,7 @@
   "Gets abilities associated with the card"
   [cdef]
   (for [ab (:runner-abilities cdef)]
-    (assoc (select-keys ab [:cost]) :label (make-label ab))))
+    (assoc (select-keys ab [:cost :break-cost]) :label (make-label ab))))
 
 (defn card-init
   "Initializes the abilities and events of the given card."

@@ -236,6 +236,7 @@
    :corp-auto-no-action
    :jack-out
    :jack-out-after-pass
+   :cannot-jack-out
    :phase
    :next-phase
    :no-action
@@ -246,11 +247,46 @@
   (when-let [run (:run @state)]
     (select-keys run (run-keys))))
 
+(defn encounter-ice-keys []
+  [:cid
+   :current-strength
+   :host
+   :hosted
+   :rezzed
+   :side
+   :strength
+   :subroutines
+   :subtypes
+   :title
+   :type
+   :zone])
+
+(defn encounter-ice-summary
+  [ice state]
+  (-> (get-card state ice)
+      (select-keys (encounter-ice-keys))
+      (prune-null-fields)))
+
+(defn encounter-keys []
+  [:ice
+   :no-action])
+
+(defn encounters-summary
+  [state]
+  (let [encounters (:encounters @state)
+        current-encounter (peek encounters)
+        encounter-count (count encounters)]
+    (when current-encounter
+      (-> (select-keys current-encounter (encounter-keys))
+          (update :ice encounter-ice-summary state)
+          (assoc :encounter-count encounter-count)))))
+
 (defn state-keys []
   [:active-player
    :angel-arena-info
    :corp
    :corp-phase-12
+   :encounters
    :end-turn
    :gameid
    :log
@@ -274,7 +310,8 @@
 (defn strip-state
   [state]
   (-> (select-keys @state (state-keys))
-      (assoc :run (run-summary state))))
+      (assoc :run (run-summary state))
+      (assoc :encounters (encounters-summary state))))
 
 (defn state-summary
   [stripped-state state side]

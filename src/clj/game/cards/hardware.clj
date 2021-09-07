@@ -687,7 +687,8 @@
                             :cost [:trash]
                             :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]
    :abilities [{:label "Jack out"
-                :req (req (and run
+                :req (req (and (or run
+                                   (get-current-encounter state))
                                (= :runner (:active-player @state))))
                 :msg "jack out"
                 :cost [:trash]
@@ -1704,7 +1705,7 @@
                                     :effect (req (wait-for (gain-tags state :runner 1)
                                                            (end-run state side eid card)))}
                        :unsuccessful {:msg (msg "bypass " (card-str state current-ice))
-                                      :effect (req (swap! state assoc-in [:run :bypass] true))}}}}}]})
+                                      :effect (req (bypass-ice state))}}}}}]})
 
 (defcard "Severnius Stim Implant"
   (letfn [(implant-fn [srv kw]

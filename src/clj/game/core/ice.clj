@@ -25,9 +25,10 @@
 
 (defn get-current-ice
   [state]
-  (when-let [run (:run @state)]
-    (let [ice (:current-ice run)]
-      (or (get-card state ice) ice))))
+  (let [ice (get-in @state [:run :current-ice])]
+    (or (get-card state (-> @state :encounters peek :ice))
+        (get-card state ice)
+        ice)))
 
 (defn set-current-ice
   ([state]
@@ -41,6 +42,16 @@
   ([state card]
    (when (:run @state)
      (swap! state assoc-in [:run :current-ice] (get-card state card)))))
+
+(defn active-ice?
+  "Ice is active when installed and rezzed or is the current encounter"
+  ([state] (active-ice? state (get-current-ice state)))
+  ([state ice]
+   (let [encounter (peek (:encounters @state))
+         encounter-ice (get-card state (:ice encounter))]
+     (if (installed? ice)
+       (rezzed? ice)
+       (same-card? ice encounter-ice)))))
 
 ;;; Ice subroutine functions
 (defn add-sub
@@ -257,11 +268,10 @@
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
   ([state side eid ice subroutines msgs]
    (if (and (seq subroutines)
-            (if (installed? ice)
-              (rezzed? ice)
-              true)
-            (:run @state)
-            (not (get-in @state [:run :ended])))
+            (or (:run @state)
+                (peek (:encounters @state)))
+            (active-ice? state ice)
+            (not (get-in @state [:end-run :ended])))
      (let [sub (first subroutines)]
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
                  (resolve-next-unbroken-sub state side eid
@@ -329,7 +339,7 @@
         old-strength (get-strength ice)
         new-strength (ice-strength state side ice)
         changed? (not= old-strength new-strength)]
-    (when (rezzed? ice)
+    (when (active-ice? state ice)
       (update! state side (assoc ice :current-strength new-strength))
       (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
       changed?)))
@@ -530,8 +540,8 @@
          subtype (or subtype "All")
          args (assoc args :subtype subtype :break n)
          break-req (req (and current-ice
-                             (rezzed? current-ice)
-                             (= :encounter-ice (:phase run))
+                             (peek (:encounters @state))
+                             (active-ice? state current-ice)
                              (if subtype
                                (or (= subtype "All")
                                    (has-subtype? current-ice subtype))
@@ -619,8 +629,7 @@
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
-              current-ice (when-not (get-in @state [:run :ended])
-                            (get-card state current-ice))
+              current-ice (get-card state current-ice)
               ;; match strength
               can-pump (fn [ability]
                          (when (:pump ability)
@@ -664,8 +673,8 @@
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
-                                   (rezzed? current-ice)
-                                   (= :encounter-ice (:phase run))
+                                   (peek (:encounters @state))
+                                   (active-ice? state current-ice)
                                    (or break-ability
                                        pump-ability))
                             (vec (concat abs

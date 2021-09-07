@@ -406,11 +406,14 @@
       (play-from-hand state :runner "Bank Job")
       (run-empty-server state "HQ")
       (click-prompt state :corp "Yes")
-      (click-prompt state :runner "Yes")
+      (is (= "Archangel" (:title (core/get-current-ice state))) "The Runner is encountering Archangel")
+      (fire-subs state (core/get-current-ice state))
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-card state :corp (get-resource state 0))
-      (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
+      (is (nil? (get-resource state 0)) "Bank Job is trashed")
+      (encounter-continue state)
+      (is (= "You accessed Archangel." (:msg (prompt-map :runner))) "Return to accessing Archangel"))))
 
 (deftest architect
   ;; Architect
@@ -658,20 +661,20 @@
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh bs)))) "1 card in hand, no existing subs")
         (core/draw state :runner 1)
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 3 (count (:subroutines (refresh bs)))) "2 cards in hand, 1 existing sub")
         (core/draw state :runner 1)
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 6 (count (:subroutines (refresh bs)))) "3 cards in hand, 3 existing subs")
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (is (= 1 (count (:hand (get-runner)))) "Runner now only has 1 card in hand")
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 7 (count (:subroutines (refresh bs)))) "1 card in hand, 6 existing subs"))))
   (testing "Subroutines not going away until end of run"
@@ -832,6 +835,32 @@
         (rez state :corp (refresh ch))
         (take-credits state :runner)
         (is (not (rezzed? (refresh ch))))))))
+
+(deftest chrysalis
+  ;; Chrysalis
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chrysalis"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Chrysalis" "HQ")
+      (let [chrysalis (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp chrysalis)
+        (run-continue state)
+        (card-subroutine state :corp chrysalis 0)
+        (is (= 2 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chrysalis"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= "Chrysalis" (:title (core/get-current-ice state))) "Encountering Chrysalis on access")
+      (fire-subs state (core/get-current-ice state))
+      (is (= 2 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
 
 (deftest chum
   ;; Chum
@@ -2183,12 +2212,31 @@
         (take-credits state :corp)
         (run-empty-server state :hq)
         (= 4 (:credit (get-corp)))
-        (click-prompt state :runner "Yes")
+        (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
+        (fire-subs state (core/get-current-ice state))
         (= 6 (:credit (get-corp)))
         (click-prompt state :corp "2")
         (click-card state :corp beale)
         (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
-        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Partial break"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Herald" "Project Beale"]}
+                 :runner {:hand ["Unity"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Unity")
+      (let [unity (get-program state 0)]
+        (run-empty-server state :hq)
+        (= 4 (:credit (get-corp)))
+        (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
+        (is (= 3 (count (:abilities (refresh unity)))) "Has auto break abilities")
+        (card-ability state :runner unity 0)
+        (click-prompt state :runner "Pay up to 2 [Credits] to place up to 2 advancement tokens")
+        (fire-subs state (core/get-current-ice state))
+        (= 6 (:credit (get-corp)))
+        (is (not= "How many advancement tokens?" (:msg (prompt-map :corp))) "Second subroutine did not fire")))))
 
 (deftest hive
   ;; Hive - 5x ETR. Lose an ETR for each agenda point in corp's score area
@@ -2738,19 +2786,19 @@
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh ko)))) "1 card in hand, no existing subs")
         (core/draw state :runner 1)
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 3 (count (:subroutines (refresh ko)))) "2 cards in hand, 1 existing sub")
         (core/draw state :runner 1)
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 6 (count (:subroutines (refresh ko)))) "3 cards in hand, 3 existing subs")
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (core/set-next-phase state :approach-ice)
-        (run-next-phase state)
+        (core/redirect-run state :corp "HQ" :approach-ice)
+        (run-continue state)
         (run-continue state)
         (is (= 7 (count (:subroutines (refresh ko)))) "1 card in hand, 6 existing subs"))))
   (testing "Subroutines not going away until end of run"
@@ -2770,6 +2818,48 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh ko)))))))))
+
+(deftest konjin
+  (testing "Return to encountering Konjin after forced encounter"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Konjin"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [konjin (get-ice state :rd 0)
+            iw (get-ice state :hq 0)]
+        (rez state :corp konjin)
+        (rez state :corp iw)
+        (run-on state :rd)
+        (run-continue state)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Konjin")
+        (is (= "Choose an amount to spend for Konjin" (:msg (prompt-map :corp))) "Psi Game")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
+        (click-card state :corp iw)
+        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+        (run-continue state :rd)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be back to encountering Konjin"))))
+  (testing "End run completely if forced encounter ends the run"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Konjin"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [konjin (get-ice state :rd 0)
+            iw (get-ice state :hq 0)]
+        (rez state :corp konjin)
+        (rez state :corp iw)
+        (run-on state :rd)
+        (run-continue state)
+        (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Konjin")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp iw)
+        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+        (fire-subs state (refresh iw))
+        (is (not (:run @state)) "The run should have ended")))))
 
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
@@ -3387,7 +3477,7 @@
         (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
         (click-prompt state :corp "Archives")
         (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
-        (is (= :approach-ice (get-in @state [:run :phase])) "Runner is in correct state")
+        (is (= :approach-ice (:phase (:run @state))) "Runner is in correct state")
         (run-jack-out state)
         (click-card state :runner "Daily Casts")
         (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck"))))
@@ -3412,7 +3502,51 @@
       (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (last-log-contains? state "Runner encounters Ice Wall")))))
+      (is (last-log-contains? state "Runner encounters Ice Wall"))))
+  (testing "Server redirection"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)]
+        (run-on state :hq)
+        (rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
+      (click-prompt state :corp "Archives")
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
+  (testing "Redirection does not occur if Mind Game would not be passed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game" "Konjin"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)
+            konjin (get-ice state :rd 0)]
+        (run-on state :rd)
+        (rez state :corp mindgame)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp mindgame)
+        (card-subroutine state :corp mindgame 0)
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (click-prompt state :corp "Archives")
+        (is (= :rd (-> @state :run :server first)) "Run not redirected")
+        (is (= (refresh mindgame) (core/get-current-ice state)) "Still encountering Mind Game")
+        (run-jack-out state)
+        (is (get-run) "Jack out cost still applied")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ice in outermost position of Minelayer's server at no cost
@@ -3431,20 +3565,53 @@
 
 (deftest miraju
   ;; Miraju
-  (do-game
-    (new-game {:corp {:hand ["Mirāju"]}
+  (testing "Breaking sub redirects run"
+   (do-game
+     (new-game {:corp {:hand ["Mirāju" "Ice Wall"]}
                :runner {:hand ["Force of Nature"]
                         :credits 10}})
-    (play-from-hand state :corp "Mirāju" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Force of Nature")
-    (run-on state "HQ")
-    (rez state :corp (get-ice state :hq 0))
-    (run-continue state)
-    (card-ability state :runner (get-program state 0) 0)
-    (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
-    (run-continue state)
-    (is (= [:archives] (:server (get-run))))))
+     (play-from-hand state :corp "Mirāju" "HQ")
+     (play-from-hand state :corp "Ice Wall" "Archives")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Force of Nature")
+     (run-on state "HQ")
+     (let [miraju (get-ice state :hq 0)
+           iw (get-ice state :archives 0)]
+       (rez state :corp miraju)
+       (rez state :corp iw)
+       (run-continue state)
+       (card-ability state :runner (get-program state 0) 0)
+       (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+       (run-continue state)
+       (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+       (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")
+       (run-continue state)
+       (is (= :encounter-ice (:phase (:run @state))))
+       (is (= (refresh iw) (core/get-current-ice state))))))
+  (testing "Breaking sub in forced encounter does not redirect run"
+    (do-game
+      (new-game {:corp {:hand ["Mirāju" "Konjin"]}
+                 :runner {:hand ["Force of Nature"]
+                          :credits 10}})
+      (play-from-hand state :corp "Mirāju" "HQ")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Force of Nature")
+      (let [miraju (get-ice state :hq 0)
+            konjin (get-ice state :rd 0)]
+        (run-on state "R&D")
+        (rez state :corp miraju)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp miraju)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+        (run-continue state)
+        (is (= (refresh konjin) (core/get-current-ice state)))
+        (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
+        (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed")))))
 
 (deftest mlinzi
   ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
@@ -4387,7 +4554,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (run-empty-server state :hq)
-      (click-prompt state :runner "Yes")
+      (is (= "Sapper" (:title (core/get-current-ice state))) "Encountering Sapper on access")
+      (fire-subs state (core/get-current-ice state))
       (click-card state :corp "Corroder")
       (is (nil? (get-program state 0)) "Corroder is trashed"))))
 
@@ -4899,11 +5067,37 @@
         (run-continue state)
         (fire-subs state susanoo)
         (is (= [:archives] (get-in @state [:run :server])) "Deflected to archives")
-        (run-next-phase state)
         (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
         (rez state :corp cl)
         (run-continue state)
         (fire-subs state cl)
+        (run-continue state)
+        (run-continue state)
+        (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again"))))
+  (testing "Redirection does not occur during a forced encounter"
+    (do-game
+      (new-game {:corp {:deck ["Susanoo-no-Mikoto" "Konjin" "Cortex Lock"]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Cortex Lock" "R&D")
+      (play-from-hand state :corp "Konjin" "R&D")
+      (play-from-hand state :corp "Susanoo-no-Mikoto" "HQ")
+      (take-credits state :corp)
+      (let [susanoo (get-ice state :hq 0)
+            konjin (get-ice state :rd 1)
+            cl (get-ice state :rd 0)]
+        (run-on state "R&D")
+        (rez state :corp susanoo)
+        (rez state :corp konjin)
+        (run-continue state)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-card state :corp susanoo)
+        (fire-subs state susanoo)
+        (is (= [:rd] (get-in @state [:run :server])) "Run still on R&D")
+        (run-continue state)
+        (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+        (rez state :corp cl)
         (run-continue state)
         (run-continue state)
         (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again")))))

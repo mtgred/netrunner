@@ -4,6 +4,7 @@
             [clojure.test :refer :all]
             [game.core :as core]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
+            [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt error-wrapper is']]
@@ -200,12 +201,11 @@
 
 (defn card-subroutine-impl
   [state _ card ability]
-  (let [ice (get-card state card)
-        run (:run @state)]
-    (is' (rezzed? ice) (str (:title ice) " is active"))
-    (is' (some? run) "There is a run happening")
-    (is' (= :encounter-ice (:phase run)) "Subroutines can be resolved")
-    (when (and (rezzed? ice) (some? run) (= :encounter-ice (:phase run)))
+  (let [ice (get-card state card)]
+    (is' (active-ice? state ice) (str (:title ice) " is active"))
+    (is' (core/get-current-encounter state) "Subroutines can be resolved")
+    (when (and (active-ice? state ice)
+               (core/get-current-encounter state))
       (core/process-action "subroutine" state :corp {:card ice :subroutine ability})
       true)))
 
@@ -354,25 +354,53 @@
   [state]
   `(error-wrapper (run-next-phase-impl ~state)))
 
-(defn run-continue-impl
-  ([state] (run-continue-impl state :any))
+(defn encounter-continue-impl
+  ([state] (encounter-continue-impl state :any))
   ([state phase]
-   (let [run (:run @state)]
-     (is' (some? run) "There is a run happening")
-     (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
-     (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
-     (is' (not (:no-action run)) "No player has pressed continue yet")
-     (is' (not= :access-server (:phase run))
-          "The run has not reached the server yet")
-     (when (and (some? run)
-                (empty? (get-in @state [:runner :prompt]))
-                (empty? (get-in @state [:corp :prompt]))
-                (not (:no-action run))
-                (not= :access-server (:phase run)))
+   (let [encounter (core/get-current-encounter state)]
+     (is' (some? encounter) "There is an encounter happening")
+     (is' (or (empty? (get-in @state [:runner :prompt]))
+              (= :encounter (-> @state :runner :prompt first :prompt-type))) "No open prompts for the runner")
+     (is' (or (empty? (get-in @state [:corp :prompt]))
+              (= :encounter (-> @state :corp :prompt first :prompt-type))) "No open prompts for the corp")
+     (is' (not (:no-action encounter)) "No player has pressed continue yet")
+     (when (and (some? encounter)
+                (or (empty? (get-in @state [:runner :prompt]))
+                    (= :encounter (-> @state :runner :prompt first :prompt-type)))
+                (or (empty? (get-in @state [:corp :prompt]))
+                    (= :encounter (-> @state :corp :prompt first :prompt-type)))
+                (not (:no-action encounter)))
        (core/process-action "continue" state :corp nil)
        (core/process-action "continue" state :runner nil)
        (when-not (= :any phase)
-         (is (= phase (get-in @state [:run :phase])) "Run is in the correct phase"))))))
+         (is (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
+
+(defmacro encounter-continue
+  "No action from corp and continue for runner to proceed in current encounter."
+  ([state] `(error-wrapper (encounter-continue-impl ~state :any)))
+  ([state phase] `(error-wrapper (encounter-continue-impl ~state ~phase))))
+
+(defn run-continue-impl
+  ([state] (run-continue-impl state :any))
+  ([state phase]
+   (if (core/get-current-encounter state)
+     (encounter-continue-impl state)
+     (let [run (:run @state)]
+       (is' (some? run) "There is a run happening")
+       (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
+       (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
+       (is' (not (:no-action run)) "No player has pressed continue yet")
+       (is' (not= :access-server (:phase run))
+            "The run has not reached the server yet")
+       (when (and (some? run)
+                  (empty? (get-in @state [:runner :prompt]))
+                  (empty? (get-in @state [:corp :prompt]))
+                  (not (:no-action run))
+                  (not= :access-server (:phase run)))
+         (core/process-action "continue" state :corp nil)
+         (core/process-action "continue" state :runner nil)
+         (when-not (= :any phase)
+           (is (= phase (:phase (:run @state))) "Run is in the correct phase")))))))
 
 (defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."
@@ -425,12 +453,11 @@
 
 (defn fire-subs-impl
   [state card]
-  (let [ice (get-card state card)
-        run (:run @state)]
-    (is' (rezzed? ice) (str (:title ice) " is active"))
-    (is' (some? run) "There is a run happening")
-    (is' (= :encounter-ice (:phase run)) "Subroutines can be resolved")
-    (when (and (rezzed? ice) (some? run)) (= :encounter-ice (:phase run))
+  (let [ice (get-card state card)]
+    (is' (active-ice? state ice) (str (:title ice) " is active"))
+    (is' (core/get-current-encounter state) "Subroutines can be resolved")
+    (when (and (active-ice? state ice)
+               (core/get-current-encounter state))
       (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
 
 (defmacro fire-subs

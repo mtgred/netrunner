@@ -1,7 +1,7 @@
 (ns game.core.update
-  (:require [game.core.card :refer [get-card]]
+  (:require [game.core.card :refer [get-card ice?]]
             [game.core.finding :refer [get-scoring-owner]]
-            [game.utils :refer [to-keyword]]))
+            [game.utils :refer [to-keyword same-card?]]))
 
 (declare update-hosted!)
 

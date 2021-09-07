@@ -333,8 +333,6 @@
         (is (= :remote2 (first (get-in @state [:run :server]))))
         (is (= 1 (count (get-in @state [:corp :servers :remote2 :content]))) "1 card in server 3 before successful run")
         (run-continue state)
-        (run-next-phase state)
-        (run-continue state)
         (click-prompt state :runner "Because I Can")
         (is (= (inc n) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
         (is (zero? (count (get-in @state [:corp :servers :remote2 :content]))) "No cards left in server 3")))))
@@ -477,7 +475,6 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
-        (run-next-phase state)
         (dotimes [_ 3]
           (run-continue state))
         (changes-val-macro 9 (:credit (get-runner))
@@ -514,7 +511,6 @@
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
-        (run-next-phase state)
         ;; Enigma
         (run-continue state)
         ;; Ice Wall

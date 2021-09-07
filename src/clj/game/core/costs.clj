@@ -47,12 +47,15 @@
                                                     :value (value cost)}))))
 
 ;; Lose Click
-(defmethod cost-name :lose-click [_] :lose-click)
-(defmethod value :lose-click [[_ cost-value]] cost-value)
-(defmethod label :lose-click [cost]
+(defn lose-click-label
+  [cost]
   (->> (repeat "[Click]")
        (take (value cost))
        (apply str)))
+(defmethod cost-name :lose-click [_] :lose-click)
+(defmethod value :lose-click [[_ cost-value]] cost-value)
+(defmethod label :lose-click [cost]
+  (str "Lose " (lose-click-label cost)))
 (defmethod payable? :lose-click
   [cost state side _ _]
   (<= 0 (- (get-in @state [side :click]) (value cost))))
@@ -64,7 +67,7 @@
                                 (if (= side :corp) :corp-spent-click :runner-spent-click)
                                 nil (value cost))
             (swap! state assoc-in [side :register :spent-click] true)
-            (complete-with-result state side eid {:msg (str "loses " (label cost))
+            (complete-with-result state side eid {:msg (str "loses " (lose-click-label cost))
                                                   :type :lose-click
                                                   :value (value cost)})))
 

@@ -1,6 +1,7 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
             [game.core.cost-fns :refer [all-stealth min-stealth]]
+            [game.core.runs :refer [active-encounter?]]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
             [clojure.string :as string]))
@@ -85,12 +86,12 @@
 (def heap-breaker-auto-pump-and-break
   "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
   abilities with a pseudo-ability to trigger the auto-pump routine in core,
-  IF we are encountering a rezzed ice with a subtype we can break."
+  IF we are encountering an ice with a subtype we can break."
   {:effect
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
-              current-ice (when-not (get-in @state [:run :ended])
+              current-ice (when-not (get-in @state [:end-run :ended])
                             (get-card state current-ice))
               ;; match strength
               can-pump (fn [ability]
@@ -140,8 +141,7 @@
           (update! state side
                    (assoc card :abilities
                           (if (and (seq total-cost)
-                                   (rezzed? current-ice)
-                                   (= :encounter-ice (:phase run))
+                                   (active-encounter? state)
                                    pump-ability
                                    break-ability)
                             (vec (concat abs
@@ -169,7 +169,7 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
-   :req (req (and (rezzed? current-ice)
+   :req (req (and (active-encounter? state)
                   (or (and (has-subtype? current-ice first-type)
                            (<= first-qty (count (remove :broken (:subroutines current-ice)))))
                       (and (has-subtype? current-ice second-type)
@@ -265,8 +265,7 @@
                    pump
                    {:label (str "Bypass " ice-type " being encountered")
                     :cost [:trash]
-                    :req (req (and (= :encounter-ice (:phase run))
-                                   (rezzed? current-ice)
+                    :req (req (and (active-encounter? state)
                                    (has-subtype? current-ice ice-type)))
                     :msg (msg "bypass " (:title current-ice))
                     :effect (req (bypass-ice state)
@@ -903,7 +902,7 @@
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
+                               (get-current-encounter state)))
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
@@ -1304,8 +1303,7 @@
                      (doseq [sub subroutines]
                        (break-subroutine! state (get-card state ice) sub)))]
     {:abilities [{:label "break all but 1 subroutine"
-                  :req (req (and current-ice
-                                 (rezzed? current-ice)
+                  :req (req (and (active-encounter? state)
                                  (< 1 (count (remove :broken (:subroutines current-ice))))))
                   :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
                   :breaks "All"
@@ -1554,8 +1552,7 @@
    :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current piece of ice"
-                :req (req (and (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
+                :req (req (active-encounter? state))
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}
                (set-autoresolve :auto-fire "Leech")]})
@@ -1872,9 +1869,7 @@
                     :cost [:x-credits]
                     :heap-breaker-pump :x ; strength gained
                     :heap-breaker-break :x ; number of subs broken
-                    :break-req (req (and current-ice
-                                         (rezzed? current-ice)
-                                         (= :encounter-ice (:phase run))
+                    :break-req (req (and (active-encounter? state)
                                          (has-subtype? current-ice "Barrier")))
                     :effect (effect (pump card (cost-value eid :x-credits))
                                     (continue-ability
@@ -1966,9 +1961,7 @@
 (defcard "Pelangi"
   {:data {:counter {:virus 2}}
    :abilities [{:once :per-turn
-                :req (req (and current-ice
-                               (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
+                :req (req (active-encounter? state))
                 :cost [:virus 1]
                 :label "Make ice gain a subtype"
                 :prompt "Choose an ice subtype"
@@ -2421,9 +2414,7 @@
                         :yes-ability
                         {:msg "add 1 power counter to Takobi"
                          :effect (effect (add-counter card :power 1))}}}]
-   :abilities [{:req (req (and run
-                               (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))))
+   :abilities [{:req (req (get-current-encounter state))
                 :cost [:power 2]
                 :label "Give non-AI icebreaker +3 strength"
                 :prompt "Choose an installed non-AI icebreaker"
@@ -2622,7 +2613,8 @@
                                                       :req (req (not (pos? (get-strength current-ice))))})
                                 {:cost [:credit 1]
                                  :label "Give -1 strength to current piece of ice"
-                                 :req (req (rezzed? current-ice))
+                                 :req (req (and (active-encounter? state)
+                                                (<= (get-strength current-ice) (get-strength card))))
                                  :msg (msg "give -1 strength to " (:title current-ice))
                                  :effect (effect (pump-ice current-ice -1))}
                                 (strength-pump 1 1)]}))

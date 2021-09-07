@@ -654,7 +654,27 @@
         (let [bo (get-program state 0)]
           (run-on state :hq)
           (run-continue state)
-          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar")))))
+          (is (empty? (filter #(:dynamic %) (:abilities (refresh bo)))) "No auto-pumping option for Afshar"))))
+    (testing "Install and Auto-pump-and-break for forced encounters"
+      (do-game
+        (new-game {:corp {:deck [(qty "Archangel" 5)]
+                          :hand ["Archangel"]
+                          :credits 10}
+                   :runner {:hand ["Black Orchestra"]
+                            :credits 100}})
+        (take-credits state :corp)
+        (trash-from-hand state :runner "Black Orchestra")
+        (run-empty-server state :hq)
+        (click-prompt state :corp "Yes")
+        (is (= "Install Black Orchestra?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
+        (click-prompt state :runner "Yes")
+        (let [bo (get-program state 0)]
+          (is (installed? bo) "Black Orchestra is installed")
+          (changes-val-macro -6 (:credit (get-runner))
+                             "Paid 6 to fully break Macrophage with Black Orchestra"
+                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+          (is (= 6 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
+          (is (= 0 (count (remove :broken (:subroutines (core/get-current-ice state))))) "Broken all subroutines")))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp {:deck ["Enigma" "Blacklist"]}
@@ -3434,7 +3454,27 @@
         (card-ability state :runner (refresh leech) 0)
         (card-ability state :runner (refresh leech) 0)
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Leech")
-        (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Leech")))))
+        (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Leech"))))
+  (testing "Works during access encounter"
+    (do-game
+      (new-game {:corp {:hand ["Chrysalis"]}
+                 :runner {:hand ["Leech" "Bukhgalter"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Leech")
+      (play-from-hand state :runner "Bukhgalter")
+      (run-empty-server state "HQ")
+      (let [leech (get-program state 0)
+            bukh (get-program state 1)
+            chry (core/get-current-ice state)]
+        (is chry "Encountering Chrysalis")
+        (is (= 2 (get-strength (refresh chry))) "Chrysalis at base 2 strength")
+        (card-ability state :runner (refresh leech) 0)
+        (is (= 1 (get-strength (refresh chry))) "Chrysalis reduced to 1 strength")
+        (card-ability state :runner (refresh bukh) 0)
+        (click-prompt state :runner "Do 2 net damage")
+        (encounter-continue state)
+        (is (= 2 (get-strength (refresh chry))) "Chrysalis's strength reset after encounter")
+        (click-prompt state :runner "No action")))))
 
 (deftest leprechaun
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
@@ -4136,27 +4176,56 @@
 
 (deftest paintbrush
   ;; Paintbrush - Give rezzed piece of ice a chosen subtype until the end of the next run
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Paintbrush"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Paintbrush")
-    (is (= 2 (core/available-mu state)))
-    (let [iwall (get-ice state :hq 0)
-          pb (get-program state 0)]
-      (card-ability state :runner pb 0)
-      (click-card state :runner iwall)
-      (is (= 3 (:click (get-runner))) "Ice Wall not rezzed, so no click charged")
-      (click-prompt state :runner "Done") ; cancel out
-      (rez state :corp iwall)
-      (card-ability state :runner pb 0)
-      (click-card state :runner iwall)
-      (click-prompt state :runner "Code Gate")
-      (is (= 2 (:click (get-runner))) "Click charged")
-      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
-      (run-empty-server state "Archives")
-      (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Paintbrush"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paintbrush")
+      (is (= 2 (core/available-mu state)))
+      (let [iwall (get-ice state :hq 0)
+            pb (get-program state 0)]
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (is (= 3 (:click (get-runner))) "Ice Wall not rezzed, so no click charged")
+        (click-prompt state :runner "Done") ; cancel out
+        (rez state :corp iwall)
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (click-prompt state :runner "Code Gate")
+        (is (= 2 (:click (get-runner))) "Click charged")
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
+        (run-empty-server state "Archives")
+        (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+  (testing "Encounters outside of a run do not end Paintbrush's effect"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Ganked!"]}
+                 :runner {:deck ["Paintbrush" "Quest Completed"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Ganked!" "Server 1")
+      (take-credits state :corp)
+      (core/gain-clicks state :runner 3)
+      (play-from-hand state :runner "Paintbrush")
+      (let [iwall (get-ice state :remote1 0)
+            pb (get-program state 0)]
+        (run-empty-server state "Archives")
+        (run-empty-server state "R&D")
+        (run-empty-server state "HQ")
+        (rez state :corp iwall)
+        (card-ability state :runner pb 0)
+        (click-card state :runner iwall)
+        (click-prompt state :runner "Code Gate")
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
+        (play-from-hand state :runner "Quest Completed")
+        (click-card state :runner (get-content state :remote1 0))
+        (click-prompt state :corp "Yes")
+        (click-card state :corp iwall)
+        (is (= (refresh iwall) (core/get-current-ice state)) "Runner is encountering Ice Wall")
+        (fire-subs state (refresh iwall))
+        (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall still has the Code Gate subtype")
+        (run-empty-server state "Archives")
+        (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run")))))
 
 (deftest panchatantra
   ;; Panchatantra
