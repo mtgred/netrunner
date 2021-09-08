@@ -278,10 +278,12 @@
     (render-specials (render-icons (render-cards input)))
     input))
 
-(defn cond-button [text cond f]
+(defn cond-button
+  ([text cond f] (cond-button text cond f nil))
+  ([text cond f id]
   (if cond
-    [:button {:on-click f :key text} text]
-    [:button.disabled {:key text} text]))
+    [:button {:id id :on-click f :key text} text]
+    [:button.disabled {:id id :key text} text])))
 
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond

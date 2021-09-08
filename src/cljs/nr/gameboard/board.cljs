@@ -1633,19 +1633,21 @@
                  (render-message (or (not-empty (:title value)) value))]))))])
 
 (defn basic-actions []
-  (let [s (r/atom {})]
+  (let [s (r/atom {})
+        id (r/atom 0)]
     (fn [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
+      (reset! id 0)
       [:div.panel.blue-shade
        (if (= (keyword @active-player) side)
          (when (and (not (or @runner-phase-12 @corp-phase-12))
                     (zero? (:click @me))
                     (not @end-turn))
-           [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
+           [:button {:id (str (swap! id inc)) :on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
          (when @end-turn
-           [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
+           [:button {:id (str (swap! id inc)) :on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
        (when (and (= (keyword @active-player) side)
                   (or @runner-phase-12 @corp-phase-12))
-         [:button {:on-click #(send-command "end-phase-12")}
+         [:button {:id (str (swap! id inc)) :on-click #(send-command "end-phase-12")}
           (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
        (when (= side :runner)
          [:div
@@ -1653,13 +1655,15 @@
            (and (not (or @runner-phase-12 @corp-phase-12))
                 (playable? (get-in @me [:basic-action-card :abilities 5]))
                 (pos? (get-in @me [:tag :base])))
-           #(send-command "remove-tag")]
+           #(send-command "remove-tag")
+           (str (swap! id inc))]
           [:div.run-button
            [cond-button (tr [:game.run "Run"])
             (and (not (or @runner-phase-12 @corp-phase-12))
                  (pos? (:click @me)))
             #(do (send-command "generate-runnable-zones")
-                 (swap! s update :servers not))]
+                 (swap! s update :servers not))
+            (str (swap! id inc))]
            [:div.panel.blue-shade.servers-menu {:style (when (:servers @s) {:display "inline"})}
             (let [servers (get-in @game-state [:runner :runnable-list])]
               (map-indexed (fn [i label]
@@ -1672,22 +1676,26 @@
          [cond-button (tr [:game.purge "Purge"])
           (and (not (or @runner-phase-12 @corp-phase-12))
                (playable? (get-in @me [:basic-action-card :abilities 6])))
-          #(send-command "purge")])
+          #(send-command "purge")
+          (str (swap! id inc))])
        (when (= side :corp)
          [cond-button (tr [:game.trash-resource "Trash Resource"])
           (and (not (or @runner-phase-12 @corp-phase-12))
                (playable? (get-in @me [:basic-action-card :abilities 5]))
                (is-tagged? game-state))
-          #(send-command "trash-resource")])
+          #(send-command "trash-resource")
+          (str (swap! id inc))])
        [cond-button (tr [:game.draw "Draw"])
         (and (not (or @runner-phase-12 @corp-phase-12))
              (playable? (get-in @me [:basic-action-card :abilities 1]))
              (pos? (:deck-count @me)))
-        #(send-command "draw")]
+        #(send-command "draw")
+        (str (swap! id inc))]
        [cond-button (tr [:game.gain-credit "Gain Credit"])
         (and (not (or @runner-phase-12 @corp-phase-12))
              (playable? (get-in @me [:basic-action-card :abilities 0])))
-        #(send-command "credit")]])))
+        #(send-command "credit")
+        (str (swap! id inc))]])))
 
 (defn button-pane [{:keys [side prompt-state]}]
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
@@ -1777,6 +1785,64 @@
             (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
             (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
 
+(defn handleNumKey
+  [id]
+  (when-let [button (-> js/document (.getElementById id))]
+    (.focus button)
+    (.click button)))
+
+(defn handle-keyup [{:keys [side active-player
+                              corp-phase-12 runner-phase-12
+                              end-turn run
+                              encounters active-page]}
+                      e]
+  (when (and (= "/play" (first @active-page))
+             (not= "text" (.-type (.-activeElement js/document))))
+    (let [clicks (:click (@side @game-state))
+          active-player-kw (keyword @active-player)
+          prompt-state (:prompt-state (@side @game-state))
+          prompt-type (keyword (:prompt-type prompt-state))
+          no-action (keyword (or (:no-action @run)
+                                 (:no-action @encounters)))]
+
+      (case (.-key e)
+        " " (do (cond (or @run
+                          @encounters)
+                      (when (and (or (not prompt-state)
+                                     (= :encounter prompt-type))
+                                 (not= @side no-action))
+                        (send-command "continue"))
+
+                      prompt-state
+                      nil
+
+                      (pos? clicks)
+                      (send-command "credit")
+
+                      (and (= active-player-kw @side)
+                           (not (or @runner-phase-12 @corp-phase-12))
+                           (zero? clicks)
+                           (not @end-turn))
+                      (send-command "end-turn")
+
+                      (and (= active-player-kw @side)
+                           (or @runner-phase-12 @corp-phase-12))
+                      (send-command "end-phase-12")
+
+                      (and (not= active-player-kw @side)
+                           @end-turn)
+                      (send-command "start-turn"))
+                (.preventDefault e)
+                (.stopPropagation e))
+        "Escape" (do (-> js/document .-activeElement .blur)
+                     (.preventDefault e)
+                     (.stopPropagation e))
+        ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
+        (do (handleNumKey (.-key e))
+            (.preventDefault e)
+            (.stopPropagation e))
+        nil))))
+
 (defn gameboard []
   (let [active (r/cursor app-state [:active-page])
         start-date (r/cursor game-state [:start-date])
@@ -1811,6 +1877,23 @@
     (r/create-class
       {:display-name "gameboard"
 
+       :component-did-mount
+       (fn [this]
+         (-> js/document (.addEventListener
+                          "keyup"
+                          #(handle-keyup {:side side :active-player active-player
+                                            :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
+                                            :end-turn end-turn :run run :active-page active
+                                            :encounters encounters} %))))
+
+       :component-will-unmount
+       (fn [this]
+         (-> js/document (.removeEventListener
+                          "keyup"
+                          #(handle-keyup {:side side :active-player active-player
+                                            :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
+                                            :end-turn end-turn :run run
+                                            :encounters encounters} %))))
        :reagent-render
        (fn []
          (when (= "/play" (first @active))
@@ -1855,7 +1938,6 @@
                    sfx (r/cursor game-state [:sfx])]
                [:div.gameview
                 [:div.gameboard
-
                  (let [me-keep (r/cursor game-state [me-side :keep])
                        op-keep (r/cursor game-state [op-side :keep])
                        me-quote (r/cursor game-state [me-side :quote])
