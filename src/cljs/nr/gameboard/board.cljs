@@ -1807,11 +1807,26 @@
             (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
             (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
 
-(defn handle-num-keys
+(defn handle-num-key-down
   [id]
   (when-let [button (-> js/document (.getElementById id))]
-    (.focus button)
-    (.click button)))
+    (.focus button)))
+
+(defn handle-num-key-up
+  [id]
+  (when-let [button (-> js/document (.getElementById id))]
+    (when (= button (.-activeElement js/document))
+      (.click button)
+      (.blur button))))
+
+(defn handle-key-down [{:keys [active-page]} e]
+  (when (and (= "/play" (first @active-page))
+             (not= "text" (.-type (.-activeElement js/document))))
+    (case (.-key e)
+      ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
+      (do (handle-num-key-down (.-key e))
+          (.stopPropagation e))
+      nil)))
 
 (defn handle-key-up [{:keys [side active-player
                             corp-phase-12 runner-phase-12
@@ -1866,7 +1881,7 @@
         "Escape" (do (-> js/document .-activeElement .blur)
                      (.stopPropagation e))
         ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
-        (do (handle-num-keys (.-key e))
+        (do (handle-num-key-up (.-key e))
             (.stopPropagation e))
         nil))))
 
@@ -1907,6 +1922,9 @@
        :component-did-mount
        (fn [this]
          (-> js/document (.addEventListener
+                          "keydown"
+                          #(handle-key-down {:active-page active} %)))
+         (-> js/document (.addEventListener
                           "keyup"
                           #(handle-key-up {:side side :active-player active-player
                                            :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
@@ -1915,6 +1933,9 @@
 
        :component-will-unmount
        (fn [this]
+         (-> js/document (.addEventListener
+                          "keydown"
+                          #(handle-key-down {:active-page active} %)))
          (-> js/document (.removeEventListener
                           "keyup"
                           #(handle-key-up {:side side :active-player active-player
