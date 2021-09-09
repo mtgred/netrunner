@@ -285,10 +285,10 @@
     [:button {:id id :on-click f :key text} text]
     [:button.disabled {:id id :key text} text])))
 
-(defn checkbox-button [on-text off-text on-cond f]
+(defn checkbox-button [on-text off-text on-cond f id]
   (if on-cond
-    [:button.on {:on-click f :key on-text} on-text]
-    [:button.off {:on-click f :key off-text} off-text]))
+    [:button.on {:id id :on-click f :key on-text} on-text]
+    [:button.off {:id id :on-click f :key off-text} off-text]))
 
 (defn tristate-button [on-text off-text on-cond disable-cond f]
   (let [text (if on-cond on-text off-text)]
