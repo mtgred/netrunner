@@ -1818,34 +1818,49 @@
             (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
             (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
 
-(defn handle-click [{:keys [active-page render-board?]} e]
+(defn- handle-click [{:keys [active-page render-board?]} e]
   (when (and (= "/play" (first @active-page))
              @@render-board?)
     (when (-> e .-target (.closest ".menu-container") nil?)
       (close-card-menu))))
 
-(defn handle-num-key-down
+(defn- handle-num-key-down
   [id]
   (when-let [button (-> js/document (.getElementById id))]
     (.focus button)))
 
-(defn handle-num-key-up
+(defn- handle-num-key-up
   [id]
   (when-let [button (-> js/document (.getElementById id))]
     (when (= button (.-activeElement js/document))
       (.click button)
       (.blur button))))
 
-(defn handle-key-down [{:keys [active-page render-board?]} e]
-  (when (and (= "/play" (first @active-page))
-             @@render-board?
-             (not= "text" (.-type (.-activeElement js/document))))
-    (case (.-key e)
-      ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
-      (handle-num-key-down (.-key e))
-      nil)))
+(defn- focus-log-input [clear-input?]
+  (when-let [log-input (-> js/document (.getElementById "log-input"))]
+    (.focus log-input)
+    (when clear-input?
+      (set! (.-value log-input) ""))))
 
-(defn handle-key-up [{:keys [side active-player render-board?
+(defn- handle-key-down [{:keys [active-page render-board?]} e]
+  (when (and (= "/play" (first @active-page))
+             @@render-board?)
+    (let [not-text-input? (not= "text" (.-type (.-activeElement js/document)))]
+      (case (.-key e)
+        "Escape" (do (-> js/document .-activeElement .blur)
+                     (close-card-menu))
+        "Enter" (when not-text-input?
+                  (focus-log-input false)
+                  (.preventDefault e))
+        "/" (when not-text-input?
+              (focus-log-input true))
+        ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
+        (when not-text-input?
+          (handle-num-key-down (.-key e)))
+        ;; else
+        nil))))
+
+(defn- handle-key-up [{:keys [side active-player render-board?
                              corp-phase-12 runner-phase-12
                              end-turn run
                              encounters active-page]} e]
@@ -1858,7 +1873,6 @@
           prompt-type (keyword (:prompt-type prompt-state))
           no-action (keyword (or (:no-action @run)
                                  (:no-action @encounters)))]
-
       (case (.-key e)
         " " (cond
               ;; keep default space behavior for focusable items
@@ -1896,10 +1910,10 @@
                    @end-turn)
               (do (send-command "start-turn")
                   (.stopPropagation e)))
-        "Escape" (do (-> js/document .-activeElement .blur)
-                     (close-card-menu))
+        "Alt" (.preventDefault e)
         ("1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
         (handle-num-key-up (.-key e))
+        ;; else
         nil))))
 
 (defn gameboard []
