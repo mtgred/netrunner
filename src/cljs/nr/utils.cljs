@@ -279,11 +279,10 @@
     input))
 
 (defn cond-button
-  ([text cond f] (cond-button text cond f nil))
-  ([text cond f id]
+  [text cond f id]
   (if cond
     [:button {:id id :on-click f :key text} text]
-    [:button.disabled {:id id :key text} text])))
+    [:button.disabled {:id id :key text} text]))
 
 (defn checkbox-button [on-text off-text on-cond f id]
   (if on-cond

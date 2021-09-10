@@ -127,11 +127,10 @@
 
 (defn log-input-change-handler
   [s e]
-  (do (println "Fire?")
-      (reset-command-menu s)
-      (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-      (swap! s assoc :msg (-> e .-target .-value))
-      (send-typing s)))
+  (reset-command-menu s)
+  (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
+  (swap! s assoc :msg (-> e .-target .-value))
+  (send-typing s))
 
 (defn log-input []
   (let [gameid (r/cursor game-state [:gameid])
