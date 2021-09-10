@@ -11,6 +11,7 @@
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
+    [game.core.runs :refer [jack-out]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
     [game.core.to-string :refer [card-str]]
@@ -169,6 +170,24 @@
           (async-rfg state side eid card))
       (do (system-say state side (str title " is trashed."))
           (trash state side eid card {:unpreventable true :game-trash true})))))
+
+(defn offer-jack-out
+  "Returns an ability that prompts the Runner to jack out"
+  ([] (offer-jack-out nil))
+  ([{jack-out-req :req
+     once :once}]
+   {:optional
+    {:player :runner
+     :req (req (if jack-out-req
+                 (jack-out-req state side eid card targets)
+                 true))
+     :once once
+     :prompt "Jack out?"
+     :waiting-prompt "Runner to make a decison"
+     :yes-ability {:async true
+                   :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
+                                   (jack-out eid))}
+     :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
 
 (defn make-current-event-handler
   [title ability]

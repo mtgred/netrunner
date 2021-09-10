@@ -25,24 +25,6 @@
 
 (declare handle-end-run jack-out forced-encounter-cleanup run-cleanup gain-run-credits pass-ice successful-run)
 
-(defn offer-jack-out
-  "Returns an ability that prompts the Runner to jack out"
-  ([] (offer-jack-out nil))
-  ([{jack-out-req :req
-    once :once}]
-  {:optional
-   {:player :runner
-    :req (req (if jack-out-req
-                (jack-out-req state side eid card targets)
-                true))
-    :once once
-    :prompt "Jack out?"
-    :waiting-prompt "Runner to make a decison"
-    :yes-ability {:async true
-                  :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
-                                  (jack-out eid))}
-    :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
-
 (defn total-run-cost
   ([state side card] (total-run-cost state side card nil))
   ([state side card {:keys [click-run ignore-costs] :as args}]
@@ -581,7 +563,7 @@
       (run-cleanup state :runner eid))))
 
 (defn prevent-access
-  "Prevents the runner from accessing cards or breaching the server this run. 
+  "Prevents the runner from accessing cards or breaching the server this run.
    This will cancel any run effects and not trigger breach/access routines."
   [state _]
   (swap! state assoc-in [:run :prevent-access] true))

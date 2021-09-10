@@ -278,6 +278,7 @@
    do-meat-damage
    do-net-damage
    make-recurring-ability
+   offer-jack-out
    reorder-choice
    trash-on-empty
    corp-recur])
@@ -696,7 +697,6 @@
    jack-out
    jack-out-prevent
    make-run
-   offer-jack-out
    pass-ice
    prevent-access
    redirect-run

@@ -803,7 +803,7 @@
                   :msg "make the Runner approach the outermost piece of ice"
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
-                                 (wait-for (resolve-ability state :runner 
+                                 (wait-for (resolve-ability state :runner
                                                             (make-eid state eid)
                                                             (offer-jack-out) card nil)
                                            (derez state side card)
@@ -2318,9 +2318,11 @@
                                            {:type :jack-out-additional-cost
                                             :duration :end-of-run
                                             :value [:add-installed-to-bottom-of-deck 1]})
-                                         (if can-redirect?
-                                           (encounter-ends state side eid)
-                                           (effect-completed state side eid))))})]})
+                                         (wait-for (resolve-ability state side (offer-jack-out) card nil)
+                                                   (if (and can-redirect?
+                                                            (not (:ended (:end-run @state))))
+                                                     (encounter-ends state side eid)
+                                                     (effect-completed state side eid)))))})]})
 
 (defcard "Minelayer"
   {:subroutines [{:msg "install a piece of ice from HQ"
