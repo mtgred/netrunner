@@ -224,23 +224,27 @@
         width: 200px
         font-size: .75rem
         line-height: 1rem
-
+        
+        ul
+            list-style: none
+            
         > span
             margin: 2px
             &:last-child
                 margin-bottom: 0
 
-        > div
+        > div, li
             border: 1px solid white-solid
             padding: 3px 6px
             border-radius: 4px
             margin-bottom: 4px
             cursor: pointer
-
+            outline: 0
+            
             &:last-child
                 margin-bottom: 0
 
-            &:hover
+            &:hover, &:focus
                 border-color: gold-base
 
     .popup
