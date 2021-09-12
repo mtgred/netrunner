@@ -150,6 +150,20 @@
     :usage "/unique"
     :help "Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"}])
 
+(def keyboard-control-info
+  [{:name "Space"
+    :usage "Space"
+    :help "Performs a default action if there are no controls focused. Otherwise, activates the focused control. Default actions: Clicking for credits, Starting/Ending turns, and continuing a run"}
+   {:name "Enter"
+    :usage "Enter"
+    :help "Focuses the chat if there are no controls focused. Otherwise, activates the focused control"}
+   {:name "/"
+    :usage "/ (forward slash)"
+    :help "Focuses the chat and brings up the command menu"}
+   {:name "numbers"
+    :usage "Number keys"
+    :help "Activates options in the button panel or card menu. Numbers are mapped to options from top to bottom"}])
+
 (def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."
   (list
@@ -194,8 +208,14 @@
             {:id "closemenu"
              :title "How do I close a card's menu?"
              :content [:ul
-                       [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
+                       [:p "Click outside the menu or press Escape. If it isn't a menu, but a bugged prompt that shouldn't be there, "
                         "try using " [:code "/close-prompt"] "."]]}
+            {:id "keyboard"
+             :title "Are there any keyboard controls?"
+             :content [:ul
+                       [:div "The keyboard can control some basic functionality. "
+                        "List of available keyboard controls:"
+                        [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) keyboard-control-info))]]]}
             {:id "commands"
              :title "How do I use commands during a game?"
              :content [:ul
