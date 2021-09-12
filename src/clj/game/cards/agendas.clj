@@ -5,6 +5,13 @@
             [clojure.string :as string]
             [clojure.set :as clj-set]))
 
+(defn- add-agenda-point-counters
+  "Adds a number of agenda counters to an agenda that checks for a win"
+  [state side card counters]
+  (add-counter state side card :agenda counters)
+  (update-all-agenda-points state side)
+  (check-win-by-agenda state side))
+
 (defn ice-boost-agenda [subtype]
   (letfn [(count-ice [corp]
             (reduce (fn [c server]
@@ -590,9 +597,7 @@
   {:agendapoints-corp (req (if (pos? (get-counters card :agenda)) 1 0))
    :abilities [{:cost [:click 3]
                 :msg "place 1 agenda counter on Domestic Sleepers"
-                :effect (effect (add-counter card :agenda 1)
-                                (update-all-agenda-points)
-                                (check-win-by-agenda))}]})
+                :effect (effect (add-agenda-point-counters card 1))}]})
 
 (defcard "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
@@ -1008,9 +1013,7 @@
 (defcard "Market Research"
   {:on-score {:interactive (req true)
               :req (req tagged)
-              :effect (effect (add-counter card :agenda 1)
-                              (update-all-agenda-points)
-                              (check-win-by-agenda))}
+              :effect (effect (add-agenda-point-counters card 1))}
    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 2 3))})
 
 (defcard "Medical Breakthrough"
@@ -1023,7 +1026,7 @@
   {:on-score {:silent (req true)
               :req (req (< 1 (count (filter #(= (:title %) "Megaprix Qualifier")
                                             (concat (:scored corp) (:scored runner))))))
-              :effect (effect (add-counter card :agenda 1))}
+              :effect (effect (add-agenda-point-counters card 1))}
    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 1 2))})
 
 (defcard "Merger"
@@ -1243,9 +1246,7 @@
   {:agendapoints-runner (req 2)
    :agendapoints-corp (req (+ 2 (get-counters card :agenda)))
    :on-score {:interactive (req true)
-              :effect (effect (add-counter card :agenda (quot (- (get-counters (:card context) :advancement) 3) 2))
-                              (update-all-agenda-points)
-                              (check-win-by-agenda))}})
+              :effect (effect (add-agenda-point-counters card (quot (- (get-counters (:card context) :advancement) 3) 2)))}})
 
 (defcard "Project Kusanagi"
   {:on-score {:silent (req true)
