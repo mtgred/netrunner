@@ -375,7 +375,6 @@
   [:ul
    (map-indexed
     (fn [i ab]
-      ^{:key i}
       (let [command (case ab-type
                       :runner "runner-ability"
                       :corp "corp-ability"
@@ -384,6 +383,7 @@
                         (if (:dynamic ab)
                           (select-keys ab [:dynamic :source :index])
                           {:ability i}))]
+        ^{:key i}
         [card-menu-item (render-icons (add-cost-to-label ab))
          #(do (send-command command args)
               (if (:keep-menu-open ab)
@@ -588,8 +588,7 @@
        (when (seq actions)
          [:ul
           (map-indexed
-           (fn [i action]
-             ^{:key i}
+           (fn [_ action]
              (let [keep-menu-open (case action
                                     "derez" false
                                     "rez" :if-abilities-available
@@ -597,6 +596,7 @@
                                     "advance" :for-agendas
                                     "score" false
                                     false)]
+               ^{:key action}
                [card-menu-item (capitalize action)
                 #(do (send-command action {:card card})
                      (if keep-menu-open
@@ -659,9 +659,14 @@
     :as card} flipped disable-click]
   [:div.card-frame.menu-container
    [:div.blue-shade.card {:class (str (when selected "selected")
-                                      (when new " new")
+                                      (when (or new
+                                                (playable? card)) " new")
                                       (when (same-card? card (-> @game-state :encounters :ice)) " encountered")
                                       (when (same-card? card (:button @app-state)) " hovered"))
+                          :tab-index (when (and (not disable-click)
+                                                (or (active? card)
+                                                    (playable? card)))
+                                       0)
                           :draggable (when (not-spectator?) true)
                           :on-touch-start #(handle-touchstart % card)
                           :on-touch-end   #(handle-touchend %)
@@ -674,6 +679,12 @@
                                              (put! zoom-channel card))
                           :on-mouse-leave #(put! zoom-channel false)
                           :on-click #(when (not disable-click)
+                                       (handle-card-click card))
+                          :on-key-down #(when (and (= "Enter" (.-key %))
+                                                   (not disable-click))
+                                       (handle-card-click card))
+                          :on-key-up #(when (and (= " " (.-key %))
+                                                 (not disable-click))
                                        (handle-card-click card))}
     (if (or (not code) flipped facedown)
       (let [facedown-but-known (or (not (or (not code) flipped facedown))
@@ -1865,11 +1876,13 @@
   (when (and (= "/play" (first @active-page))
              @@render-board?)
     (let [active-element-type (.-type (.-activeElement js/document))
-          not-text-input? (not= "text" active-element-type)]
+          not-text-input? (not= "text" active-element-type)
+          can-focus? (-> js/document .-activeElement js/$ (.attr "tabindex"))]
       (case (.-key e)
         "Escape" (do (-> js/document .-activeElement .blur)
                      (close-card-menu))
-        "Enter" (when-not active-element-type
+        "Enter" (when-not (or active-element-type
+                              can-focus?)
                   (focus-log-input false)
                   (.preventDefault e))
         "/" (when not-text-input?
@@ -1896,7 +1909,8 @@
       (case (.-key e)
         " " (cond
               ;; keep default space behavior for focusable items
-              (.-type (.-activeElement js/document))
+              (or (.-type (.-activeElement js/document))
+                  (-> js/document .-activeElement js/$ (.attr "tabindex")))
               nil
               ;; continue run
               (or @run

@@ -57,6 +57,7 @@
         height: 84px
         width: 60px
         border-radius: 4px
+        outline: none
         display-flex()
 
         .cardname
@@ -105,7 +106,12 @@
     .card.hovered
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
         border-color: blue-light
-
+    
+    .card
+        &:focus
+            animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
+            border-color: blue-light
+            
     .counters
         position: absolute
         top: 0
@@ -297,10 +303,6 @@
 
     .playable
         cursor: pointer
-        border-radius: 4px
-
-        .card
-            box-shadow(0 0 1px 2px gold-base)
 
     .bg
         position: absolute
@@ -312,7 +314,7 @@
         height: 84px
         width: 60px
         border-radius: 4px
-
+    
     .server-card
         position: relative
         min-height: 84px
@@ -652,6 +654,12 @@
                     .encounter-info
                         width: 100%
                         margin: 6px 0px
+        
+        .me
+            .card
+                &:hover, &:focus
+                    scale: 1.1
+                    z-index: 1
 
     .centralpane
         flex(1)
