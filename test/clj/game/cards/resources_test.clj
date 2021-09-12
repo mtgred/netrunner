@@ -3984,7 +3984,9 @@
       (click-card state :runner (find-card "Clone Chip" (:hand (get-runner))))
       (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
       (is (= 1 (count (get-program state))) "1 Program installed")
-      (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
+      (is (= 2 (:credit (get-runner))) "Runner paid install cost")
+      (is (last-n-log-contains? state 2 "Clone Chip"))
+      (is (second-last-log-contains? state "uses Reclaim to install Mimic"))))
   (testing "No cards in hand"
     (do-game
       (new-game {:runner {:deck ["Reclaim"]}})
@@ -4011,8 +4013,10 @@
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
       (click-card state :runner (find-card "Alpha" (:hand (get-runner))))
+      (click-prompt state :runner "No install")
       (is (empty? (get-program state)) "Did not install program")
-      (is (= 5 (:credit (get-runner))) "Runner did not spend credits")))
+      (is (= 5 (:credit (get-runner))) "Runner did not spend credits")
+      (is (last-log-contains? state "uses Reclaim to search the heap, but does not find anything to install"))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp {:deck ["Blacklist"]}
