@@ -1,6 +1,6 @@
 (ns game.core.drawing
   (:require
-    [game.core.eid :refer [effect-completed make-eid make-result]]
+    [game.core.eid :refer [effect-completed make-result]]
     [game.core.engine :refer [trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [prevent-draw]]
     [game.core.moving :refer [move]]
@@ -29,9 +29,7 @@
 
 (defn draw
   "Draw n cards from :deck to :hand."
-  ([state side] (draw state side (make-eid state) 1 nil))
-  ([state side n] (draw state side (make-eid state) n nil))
-  ([state side n args] (draw state side (make-eid state) n args))
+  ([state side eid n] (draw state side eid n nil))
   ([state side eid n {:keys [suppress-event]}]
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
    (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil n)

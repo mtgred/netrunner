@@ -2420,7 +2420,7 @@
     (do-game
       (new-game {:corp {:deck ["Mwanza City Grid" "Breached Dome"
                                (qty "Kitsune" 2) (qty "Hedge Fund" 3)]}})
-      (core/draw state :corp 1) ; Draw last card of deck
+      (draw state :corp 1) ; Draw last card of deck
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (play-from-hand state :corp "Kitsune" "HQ")
       (play-from-hand state :corp "Kitsune" "R&D")

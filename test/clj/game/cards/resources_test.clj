@@ -5782,7 +5782,7 @@
     (take-credits state :corp)
     (core/gain state :runner :click 2)
     (core/gain state :runner :credit 4)
-    (core/draw state :runner)
+    (draw state :runner)
     (play-from-hand state :runner "Faust")
     (play-from-hand state :runner "Wasteland")
     (is (= 4 (:credit (get-runner))) "Runner has 4 credits")

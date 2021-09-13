@@ -639,5 +639,11 @@
 
 (defn move
   [state side card location]
-  (do (core/move state side card location)
-      (core/fake-checkpoint state)))
+  (core/move state side card location)
+  (core/fake-checkpoint state))
+
+(defn draw
+  ([state side] (draw state side 1 nil))
+  ([state side n] (draw state side n nil))
+  ([state side n args]
+   (core/draw state side (core/make-eid state) n args)))

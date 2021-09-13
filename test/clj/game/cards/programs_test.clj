@@ -1549,7 +1549,7 @@
           strength (get-strength (refresh cradle))]
       (dotimes [n 5]
         (when (pos? n)
-          (core/draw state :runner n))
+          (draw state :runner n))
         (core/fake-checkpoint state)
         (is (= (- strength n) (get-strength (refresh cradle))) (str "Cradle should lose " n " strength"))
         (starting-hand state :runner [])

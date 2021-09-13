@@ -24,7 +24,7 @@
                                        (trigger-event state side :corp-click-draw (->> @state side :deck (take 1)))
                                        (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                                        (play-sfx state side "click-card")
-                                       (draw state side eid 1 nil)))}
+                                       (draw state side eid 1 )))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
                 :req (req (and (not-empty (:hand corp))
@@ -105,7 +105,7 @@
                                        (trigger-event state side :runner-click-draw (->> @state side :deck (take 1)))
                                        (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                                        (play-sfx state side "click-card")
-                                       (draw state side eid 1 nil)))}
+                                       (draw state side eid 1 )))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
                 :req (req (and (not-empty (:hand runner))

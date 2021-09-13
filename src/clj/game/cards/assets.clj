@@ -320,7 +320,7 @@
                 :msg "draw 2 cards"
                 :once :per-turn
                 :async true
-                :effect (effect (draw eid 2 nil))}]
+                :effect (effect (draw eid 2 ))}]
    :on-trash {:interactive (req true)
               :optional
               {:req (req (= :runner side))
@@ -328,7 +328,7 @@
                :prompt "Draw 2 cards?"
                :player :corp
                :yes-ability {:msg "draw 2 cards"
-                             :effect (effect (draw eid 2 nil))}}}})
+                             :effect (effect (draw eid 2 ))}}}})
 
 (defcard "Capital Investors"
   {:abilities [{:cost [:click 1]
@@ -537,7 +537,7 @@
                                     {:prompt "Use CSR Campaign to draw 1 card?"
                                      :yes-ability {:async true
                                                    :msg "draw 1 card"
-                                                   :effect (effect (draw eid 1 nil))}}}
+                                                   :effect (effect (draw eid 1 ))}}}
                                    card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -725,7 +725,7 @@
                                    credits (* 2 counters)]
                                (system-msg state side (str "uses Estelle Moon to draw " counters
                                                            " cards and gain " credits " [Credits]"))
-                               (wait-for (draw state side counters nil)
+                               (wait-for (draw state side counters)
                                          (gain-credits state side eid credits))))}]})
 
 (defcard "Eve Campaign"
@@ -937,7 +937,7 @@
                  :async true
                  :req (req (:corp-phase-12 @state))
                  :effect (req (wait-for (gain-credits state side 1)
-                                        (draw state side eid 1 nil)))}]
+                                        (draw state side eid 1 )))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]
@@ -990,7 +990,8 @@
   {:abilities [{:cost [:click 1]
                 :keep-open :while-clicks-left
                 :msg "draw 2 cards"
-                :effect (effect (draw 2))}
+                :async true
+                :effect (effect (draw eid 2 ))}
                {:label "Shuffle up to 3 cards from Archives into R&D"
                 :cost [:remove-from-game]
                 :async true
@@ -1113,7 +1114,7 @@
 
 (defcard "Lily Lockwell"
   {:on-rez {:async true
-            :effect (effect (draw eid 3 nil))
+            :effect (effect (draw eid 3 ))
             :msg (msg "draw 3 cards")}
    :abilities [{:label "Search R&D for an operation"
                 :prompt "Choose an operation to put on top of R&D"
@@ -1387,7 +1388,7 @@
                   :prompt "Draw from Net Analytics?"
                   :yes-ability
                   {:msg "draw a card"
-                   :effect (effect (draw :corp eid 1 nil))}}}]
+                   :effect (effect (draw :corp eid 1 ))}}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
                   (assoc-in [:optional :req] (req (= side :runner))))
@@ -1468,7 +1469,7 @@
                               (system-msg state :corp (str "trashes Nico Campaign"
                                                            (when (not (empty? (:deck corp)))
                                                              " and draws 1 card")))
-                              (draw state :corp eid 1 nil))))))}]
+                              (draw state :corp eid 1 ))))))}]
     {:data {:counter {:credit 9}}
      :derezzed-events [corp-rez-toast]
      :abilities [ability]
@@ -1486,7 +1487,7 @@
              :effect (req (wait-for
                             (reveal state side (-> corp :deck first))
                             (wait-for
-                              (draw state side 1 nil)
+                              (draw state side 1 )
                               (continue-ability
                                 state side
                                 {:prompt "Choose a card in HQ to put on top of R&D"
@@ -1533,8 +1534,8 @@
                  :label "Make each player draw 1 card (start of turn)"
                  :once :per-turn
                  :async true
-                 :effect (req (wait-for (draw state :corp 1 nil)
-                                        (draw state :runner eid 1 nil)))}]
+                 :effect (req (wait-for (draw state :corp 1 )
+                                        (draw state :runner eid 1 )))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1544,7 +1545,7 @@
   {:events [{:event :corp-turn-begins
              :interactive (req true)
              :async true
-             :effect (req (wait-for (draw state :runner 1 nil)
+             :effect (req (wait-for (draw state :runner 1 )
                                     (let [cnt (count (get-in @state [:runner :hand]))
                                           credits (quot cnt 2)]
                                       (system-msg state :corp
@@ -1749,7 +1750,7 @@
                                        (trash state side card nil)
                                        (wait-for
                                          (gain-credits state side 3)
-                                         (draw state side eid 3 nil))))}}}
+                                         (draw state side eid 3 ))))}}}
                      card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -1924,7 +1925,7 @@
                 :once :per-turn
                 :msg "draw 3 cards"
                 :async true
-                :effect (req (wait-for (draw state side 3 nil)
+                :effect (req (wait-for (draw state side 3 )
                                        (continue-ability
                                          state side
                                          {:prompt "Choose a card in HQ to add to the bottom of R&D"
@@ -2061,7 +2062,7 @@
 (defcard "Spin Doctor"
   {:on-rez {:async true
             :msg "draw 2 cards"
-            :effect (effect (draw eid 2 nil))}
+            :effect (effect (draw eid 2 ))}
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [:remove-from-game]
                 :async true
@@ -2319,7 +2320,7 @@
               :effect (effect (gain-credits eid 1))}
              {:msg "draw 1 card"
               :async true
-              :effect (effect (draw eid 1 nil))}
+              :effect (effect (draw eid 1 ))}
              {:label "place 1 advancement token on a piece of ice"
               :msg (msg "place 1 advancement token on " (card-str state target))
               :prompt "Choose a piece of ice on which to place an advancement"

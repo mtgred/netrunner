@@ -1233,7 +1233,7 @@
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
                                "DNA Tracker" "Excalibur" "Fire Wall" "Flower Sermon"]}})
-      (core/draw state :corp)
+      (draw state :corp)
       (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
