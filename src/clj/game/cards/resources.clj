@@ -2126,14 +2126,14 @@
   {:abilities
    [{:async true
      :label "Install a program, piece of hardware, or virtual resource from your Heap"
-     :req (req (and (can-pay? state side eid card nil [:click 1 :trash :trash-from-hand 1])
-                    (not (zone-locked? state :runner :discard))))
+     :req (req (not (zone-locked? state :runner :discard)))
      :cost [:click 1 :trash :trash-from-hand 1]
      :msg "install a program, piece of hardware, or virtual resource from the Heap"
      :effect
      (effect
        (continue-ability
-         {:prompt "Choose a card to install"
+         {:async true
+          :prompt "Choose a card to install"
           :choices (req (let [choices (vec (sort-by
                                             :title
                                             (filter #(and (or (program? %)
