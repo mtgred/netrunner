@@ -2049,7 +2049,18 @@
         (is (zero? (get-counters first-qualifier :agenda)) "First has 0 counters")
         (is (= 1 (get-counters second-qualifier :agenda)) "Second has 1 counter"))
       (is (= 1 (:agenda-point (get-runner))) "Is worth 1 agenda point to the runner")
-      (is (= 2 (:agenda-point (get-corp))) "Is worth 2 agenda points to the corp"))))
+      (is (= 2 (:agenda-point (get-corp))) "Is worth 2 agenda points to the corp")))
+  (testing "Getting to 7 points through a Megaprix counter wins the game immediately #5968"
+    (do-game
+      (new-game {:corp {:hand [(qty "Megaprix Qualifier" 5)]
+                        :deck [(qty "Hedge Fund" 5)]}})
+      (core/gain-clicks state :corp 1)
+      (play-and-score state "Megaprix Qualifier") ;; 1 point
+      (play-and-score state "Megaprix Qualifier") ;; 3 points
+      (play-and-score state "Megaprix Qualifier") ;; 5 points
+      (play-and-score state "Megaprix Qualifier") ;; 7 points
+      (is (= 7 (:agenda-point (get-corp))) "Corp at 7 points")
+      (is (= :corp (:winner @state)) "Corp has won"))))
 
 (deftest merger
   ;; Merger
