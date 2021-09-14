@@ -13,7 +13,7 @@
   ([state side card prop-type n] (add-prop state side (make-eid state) card prop-type n nil))
   ([state side card prop-type n args] (add-prop state side (make-eid state) card prop-type n args))
   ([state side eid card prop-type n {:keys [placed]}]
-   (let [updated-card (update! state side (update card prop-type #(+ (or % 0) n)))
+   (let [updated-card (update! state side (update (get-card state card) prop-type #(+ (or % 0) n)))
          args {:counter-type prop-type :amount n :placed placed}]
      (if (= prop-type :advance-counter)
        (do (when (and (ice? updated-card)
@@ -32,7 +32,7 @@
    (if (= prop-type :advancement)
      ;; if advancement counter use existing system
      (add-prop state side eid card :advance-counter n args)
-     (let [updated-card (update! state side (update-in card [:counter prop-type] #(+ (or % 0) n)))]
+     (let [updated-card (update! state side (update-in (get-card state card) [:counter prop-type] #(+ (or % 0) n)))]
        (trigger-event-sync state side eid :counter-added updated-card {:counter-type prop-type :amount n :placed placed})))))
 
 (defn set-prop
