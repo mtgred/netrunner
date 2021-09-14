@@ -43,7 +43,8 @@
          (ctrl :memory [:div label (when (neg? unused) [:div.warning "!"])]))))))
 
 (defn- display-special-memory
-  [memory]
+  ([memory] (display-special-memory memory false))
+  ([memory icon?]
   (when-let [only-for (->> (:only-for memory)
                            (filter #(pos? (:available (second %))))
                            (into {})
@@ -51,10 +52,12 @@
     [:div
      (str "("
           (join "), (" (for [[mu-type {:keys [available used]}] only-for
-                             :let [unused (max 0 (- available used))]]
-                         (str unused " of " available
-                              " " (capitalize (name mu-type))
-                              " [mu] unused")))
+                             :let [
+                               unused (max 0 (- available used))
+                               mu-type-name (capitalize (name mu-type))
+                              ]]
+                         (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
+                             (tr [:game.special-mu-count] unused available mu-type-name))))
           ")")]))
 
 (defmulti stats-area
@@ -76,7 +79,7 @@
              (ctrl :credit [:div base-credit plus-run-credit " " [:span.anr-icon.credit]])
              [display-memory memory true]
              (ctrl :link [:div link " " [:span.anr-icon.link]])]
-            [display-special-memory memory]]
+            [display-special-memory memory true]]
            [:<>
             (ctrl :click [:div (tr [:game.click-count] click)])
             (ctrl :credit [:div (tr [:game.credit-count] credit run-credit)])
