@@ -142,9 +142,7 @@
             van0 (get-ice state :hq 0)
             van1 (get-ice state :hq 1)]
         (run-on state "HQ")
-        (run-continue state) ; No rez
-        (run-continue state) ; No rez
-        (run-continue state)
+        (run-continue-until state :success)
         (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
         (run-on state "HQ")
         (rez state :corp van1)
@@ -154,7 +152,8 @@
         (run-jack-out state)
         (run-on state "HQ")
         (rez state :corp van0)
-        (run-continue state)
+        (run-continue-until state :encounter-ice van1)
+        (run-continue-until state :encounter-ice van0)
         (run-continue state)
         (run-jack-out state)
         (is (= 2 (get-counters (refresh bak) :power)) "Works on every run, but not every encounter"))))
@@ -390,7 +389,7 @@
       (click-prompt state :runner "HQ")
       (click-prompt state :runner "Yes")
       (run-continue state)
-      (is (last-n-log-contains? state 2 "Runner bypasses Ice Wall."))))
+      (is (second-last-log-contains? state "Runner bypasses Ice Wall."))))
   (testing "Only works on first rezzed ice"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -722,6 +721,7 @@
         (click-prompt state :runner "HQ")
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "2")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
@@ -746,6 +746,7 @@
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
+        (click-prompt state :runner "2")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
         (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
         (click-prompt state :runner "No action")
@@ -769,6 +770,7 @@
         (click-prompt state :runner "HQ")
         (run-continue state)
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "2")
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
         (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
@@ -1200,6 +1202,7 @@
         (is (= 1 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not add a second power counter")
         (card-ability state :runner (refresh d99) 1) ; manually add counter
         (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added")
+        (run-continue state :movement)
         (run-jack-out state)
         (play-from-hand state :runner "Spy Camera")
         (take-credits state :runner)
@@ -1236,18 +1239,19 @@
             ap (get-resource state 1)
             harb (get-program state 0)
             grim (get-ice state :hq 0)]
-          (run-on state :hq)
-          (rez state :corp grim)
-          (run-continue state)
-          (card-subroutine state :corp (refresh grim) 0)
-          (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
-          (click-card state :corp harb)
-          (is (= 1 (get-counters (refresh d99) :power)) "1 power counter after Harbinger trashed")
-          (run-jack-out state)
-          (take-credits state :corp)
-          (card-ability state :runner ap 0)
-          (click-card state :runner (get-runner-facedown state 0))
-          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
+        (run-on state :hq)
+        (rez state :corp grim)
+        (run-continue state)
+        (card-subroutine state :corp (refresh grim) 0)
+        (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
+        (click-card state :corp harb)
+        (is (= 1 (get-counters (refresh d99) :power)) "1 power counter after Harbinger trashed")
+        (run-continue state :movement)
+        (run-jack-out state)
+        (take-credits state :corp)
+        (card-ability state :runner ap 0)
+        (click-card state :runner (get-runner-facedown state 0))
+        (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed"))))
   (testing "interaction with MaxX #5293"
     (do-game
       (new-game {:runner {:id "MaxX: Maximum Punk Rock"
@@ -1652,7 +1656,7 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (run-empty-server state :rd)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach R&D")
       (click-prompt state :runner "No action")
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed"))))
@@ -1667,7 +1671,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Enhanced Vision")
       (run-empty-server state "Archives")
-      (is (last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
+      (is (second-last-log-contains? state "uses Enhanced Vision to force the Corp to reveal Hostile Takeover")
           "Card name is logged")))
   (testing "Triggers reveal abilities"
     (do-game
@@ -2415,8 +2419,7 @@
       (let [credits (:credit (get-runner))]
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :encounter-ice)
         (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
   (testing "Only prevents the on-encounter effects once per turn. Issue #4807"
     (do-game
@@ -2432,6 +2435,7 @@
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2451,6 +2455,7 @@
         (run-continue state)
         (click-prompt state :runner "Yes")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2471,6 +2476,7 @@
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-continue state :movement)
         (run-jack-out state))
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
@@ -2522,6 +2528,7 @@
       (rez state :corp iwall)
       (run-continue state)
       (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
@@ -2663,7 +2670,7 @@
       (end-phase-12 state :runner)
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
-      (run-continue state :access-server)
+      (run-continue state :success)
       (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (not (get-run)) "Run has ended"))))
@@ -3417,6 +3424,7 @@
       (rez state :corp sm)
       (run-continue state)
       (card-subroutine state :corp sm 1)
+      (run-continue state :movement)
       (run-jack-out state))
     (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
     (card-ability state :runner (get-resource state 0) 0)
@@ -4317,7 +4325,7 @@
       (run-continue state)
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :rd 0))
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
   (testing "There isn't an ice at the correct position"
@@ -4357,8 +4365,26 @@
           "Slipstream prompt still up as you can't choose ice at the wrong position")
       (click-card state :runner (get-ice state :hq 0))
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
+  (testing "Jack out after move"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand [(qty "Ice Wall" 2)]}
+                :runner {:hand ["Slipstream"]}})
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Slipstream")
+     (run-on state "HQ")
+     (rez state :corp (get-ice state :hq 0))
+     (run-continue state)
+     (run-continue state)
+     (click-prompt state :runner "Yes")
+     (click-card state :runner (get-ice state :rd 0))
+     (click-prompt state :runner "Yes")
+     (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
+     (is (empty? (get-run)) "Run has ended")))
   (testing "Interaction with Kakugo"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -4376,7 +4402,7 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :hq 0))
       (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
-      (run-next-phase state)
+      (click-prompt state :runner "No")
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
       (is (find-card "Sure Gamble" (:hand (get-runner))) "Kakugo doesn't deal any net damage")))
   (testing "Interaction with Spear Phishing"
@@ -4395,10 +4421,11 @@
       (run-continue state)
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-ice state :hq 0))
-      (run-next-phase state)
+      (click-prompt state :runner "No")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach ice phase")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= :approach-server (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
+      (is (= :movement (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
 
 (deftest smartware-distributor
   ;; Smartware Distributor
@@ -4575,17 +4602,6 @@
         (click-prompt state :runner (find-card "Street Peddler" (:hosted sp))) ; choose to another Peddler
         (is (empty? (:prompt (get-corp))) "Corp not prompted to rez Jackson")
         (is (= 4 (core/available-mu state)) "Runner has 4 MU"))))
-  (testing "Trashing hardware should not reduce :in-play values"
-    (do-game
-      (new-game {:runner {:deck ["Street Peddler" (qty "HQ Interface" 3)]}})
-      (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler"])
-      (play-from-hand state :runner "Street Peddler")
-      (let [sp (get-resource state 0)]
-        (card-ability state :runner sp 0)
-        (click-prompt state :runner (first (:hosted sp))) ; choose to install HQ Interface
-        (is (= 2 (:total (core/num-cards-to-access state :runner :hq nil)))
-            "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
   (testing "Installing Parasite with only 1cr. Issue #491."
     (do-game
       (new-game {:corp {:deck [(qty "Pop-up Window" 3)]}
@@ -4724,7 +4740,7 @@
         (run-continue state)
         (card-subroutine state :corp first-dm 0)
         (is (= 4 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp second-dm)
         (run-continue state)
         (card-subroutine state :corp second-dm 0)
@@ -4747,7 +4763,7 @@
         (run-continue state)
         (card-subroutine state :corp first-dm 0)
         (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp second-dm)
         (run-continue state)
         (card-subroutine state :corp second-dm 0)
@@ -5374,15 +5390,16 @@
                 (click-prompt state :runner "No action")
                 (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
                 (run-on state server)
-                (run-continue state)
                 (card-ability state :runner ttw idx)
                 (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
+                (run-continue state)
                 (is (= 1 (core/access-bonus-count state :runner kw)) "Runner should access 1 additional card"))))]
       (ttw-test "R&D" 0 :rd)
       (ttw-test "HQ" 1 :hq)))
   (testing "Access bonus shouldn't carry over to other runs if prematurely ended after spending TTW counters. #3598"
     (do-game
-      (new-game {:corp {:deck ["Nisei MK II"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Nisei MK II"]}
                  :runner {:deck ["The Turning Wheel"]}})
       (play-and-score state "Nisei MK II")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)))
@@ -5398,10 +5415,9 @@
         (run-on state "R&D")
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
         (card-ability state :corp nisei 0)
         (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter from corp using Nisei counter")
-        (run-on state "R&D")
+        (run-empty-server state "R&D")
         (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonus should be reset on new run"))))
   (testing "Spending counters shouldn't increase accesses when running a non-R&D/HQ server"
     (do-game
@@ -5420,12 +5436,11 @@
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "Archives")
-        (run-continue state)
         (card-ability state :runner ttw 0)
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card")
-        (click-prompt state :runner "Steal")
-        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
+        (run-continue state)
+        (is (zero? (core/access-bonus-count state :runner :rd)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")
+        (click-prompt state :runner "Steal"))))
   (testing "A given ability shouldn't give accesses when running the other server"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 5)]
@@ -5443,10 +5458,10 @@
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "HQ")
-        (run-continue state)
         (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
-        (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 1 additional card")
+        (run-continue state)
+        (is (zero? (core/access-bonus-count state :runner :hq)) "Runner should access 0 additional card")
         (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))))
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))

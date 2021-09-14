@@ -9,7 +9,7 @@
     [game.core.eid :refer [make-eid]]
     [game.core.moving :refer [trash]]
     [game.core.rezzing :refer [derez rez]]
-    [game.core.runs :refer [check-for-empty-server continue corp-phase-43 handle-end-run jack-out start-next-phase toggle-auto-no-action]]
+    [game.core.runs :refer [check-for-empty-server continue handle-end-run jack-out start-next-phase toggle-auto-no-action]]
     [game.core.say :refer [indicate-action say system-msg]]
     [game.core.set-up :refer [keep-hand mulligan]]
     [game.core.shuffling :refer [shuffle-deck]]
@@ -47,7 +47,6 @@
    "concede" concede
    "continue" continue
    "corp-ability" play-corp-ability
-   "corp-phase-43" corp-phase-43
    "credit" click-credit
    "derez" #(derez %1 %2 (:card %3))
    "draw" click-draw

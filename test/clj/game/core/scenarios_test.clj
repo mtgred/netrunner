@@ -33,7 +33,6 @@
       (click-prompt state :runner "Pay to steal")
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (get-hardware state 1))
-      (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua has 0 virus counter after purge and steal")
       (is (not (:run @state)) "Run has ended"))))

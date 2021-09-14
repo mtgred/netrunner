@@ -320,7 +320,7 @@
                                (rezzed? (get-in (:ices (card->server state card)) [(:position run)]))))
                 :async true
                 :effect (req (wait-for
-                               (trash state :corp card nil)
+                               (trash state :corp (make-eid state eid) card nil)
                                (swap! state update-in [:run :position] inc)
                                (set-next-phase state :approach-ice)
                                (update-all-ice state side)
@@ -328,8 +328,10 @@
                                (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
                                                             (:title (get-in (:ices (card->server state card)) [(:position run)]))
                                                             " again"))
-                               (effect-completed state side eid)
-                               (start-next-phase state side nil)))}]})
+                               (wait-for (resolve-ability state :runner (make-eid state eid) (offer-jack-out) card nil)
+                                         (if (not (:ended (:end-run @state)))
+                                           (start-next-phase state side eid)
+                                           (effect-completed state side eid)))))}]})
 
 (defcard "Cold Site Server"
   {:constant-effects [{:type :run-additional-cost
@@ -400,8 +402,10 @@
            :effect (effect (continue-ability (choose-swap target) card nil))}
           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}]
     {:events [{:event :approach-server
+               :interactive (req true)
                :async true
-               :effect (effect (continue-ability :corp ability card nil))}]}))
+               :effect (req (wait-for (resolve-ability state :corp (make-eid state eid) ability card nil)
+                                      (continue-ability state :runner (offer-jack-out) card nil)))}]}))
 
 (defcard "Dedicated Technician Team"
   {:recurring 2
@@ -812,6 +816,7 @@
 
 (defcard "Letheia Nisei"
   {:events [{:event :approach-server
+             :interactive (req true)
              :psi {:req (req this-server)
                    :once :per-run
                    :not-equal
@@ -822,10 +827,9 @@
                      :yes-ability
                      {:async true
                       :msg "force the Runner to approach outermost piece of ice"
-                      :effect (req (wait-for (trash state side card {:unpreventable true})
+                      :effect (req (wait-for (trash state side (make-eid state eid) card {:unpreventable true})
                                              (redirect-run state side (zone->name (second (get-zone card))) :approach-ice)
-                                             (effect-completed state side eid)
-                                             (start-next-phase state side nil)))}}}}}]
+                                             (continue-ability state :runner (offer-jack-out) card nil)))}}}}}]
    :abilities [(set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
 
 (defcard "Malapert Data Vault"
@@ -917,12 +921,14 @@
               :once :per-run
               :prompt "Swap the piece of ice being approached with a piece of ice from HQ?"
               :yes-ability
-              {:prompt "Choose a piece of ice"
+              {:async true
+               :prompt "Choose a piece of ice"
                :choices {:card #(and (ice? %)
                                      (in-hand? %))}
                :msg (msg "swap " (card-str state current-ice)
                          " with a piece of ice from HQ")
-               :effect (effect (swap-cards :corp current-ice target))}}}]})
+               :effect (req (swap-cards state :corp current-ice target)
+                            (continue-ability state :runner (offer-jack-out) card nil))}}}]})
 
 (defcard "Midway Station Grid"
   {:constant-effects [{:type :break-sub-additional-cost
@@ -970,8 +976,8 @@
                            :msg "force the Runner to access 3 additional cards"
                            :effect (req (access-bonus state :runner (-> card :zone second) 3))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
-     :events [(assoc boost-access-by-3 :event :pre-access)
-              (assoc gain-creds-and-clear :event :end-access-phase)]
+     :events [(assoc boost-access-by-3 :event :breach-server)
+              (assoc gain-creds-and-clear :event :end-breach-server)]
      ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
      ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
               :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
@@ -980,11 +986,11 @@
                :effect (effect (register-events
                                  card
                                  [(assoc boost-access-by-3
-                                         :event :pre-access
+                                         :event :breach-server
                                          :duration :end-of-run
                                          :req (req (= target (second (:previous-zone card)))))
                                   (assoc gain-creds-and-clear
-                                         :event :end-access-phase
+                                         :event :end-breach-server
                                          :duration :end-of-run
                                          :req (req (= (:from-server target) (second (:previous-zone card)))))]))}}))
 

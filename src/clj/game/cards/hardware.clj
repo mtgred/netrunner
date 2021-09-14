@@ -58,7 +58,7 @@
 
 (defcard "Archives Interface"
   {:events
-   [{:event :pre-access
+   [{:event :breach-server
      :async true
      :interactive (req true)
      :req (req (and (= target :archives)
@@ -489,12 +489,11 @@
                        :value 2}]})
 
 (defcard "Docklands Pass"
-  {:events [{:event :pre-access
-             :req (req (and (= :hq target)
-                            (first-event? state side :pre-access #(= :hq (first %)))))
-             :silent (req true)
-             :msg "access 1 additional cards from HQ"
-             :effect (effect (access-bonus :runner :hq 1))}]})
+  {:events [(breach-access-bonus
+             :hq 1
+             {:req (req (and (= :hq target)
+                             (first-event? state side :breach-server #(= :hq (first %)))))
+              :msg "access 1 additional cards from HQ"})]})
 
 (defcard "Doppelgänger"
   {:constant-effects [(mu+ 1)]
@@ -877,11 +876,14 @@
                       (update-breaker-strength state side host)))})
 
 (defcard "GPI Net Tap"
-  {:implementation "Trash and jack out effect is manual"
-   :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+  {:abilities [{:req (req (and (= :approach-ice (:phase run))
+                               (ice? current-ice) 
+                               (not (rezzed? current-ice))))
                 :label "expose approached ice"
+                :msg "expose the approached ice"
                 :async true
-                :effect (effect (expose eid current-ice))}]})
+                :effect (req (wait-for (expose state side (make-eid state eid) current-ice)
+                                       (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
   {:constant-effects [(mu+ 2)]
@@ -937,7 +939,7 @@
                                  (trash eid target nil))}}}]}))
 
 (defcard "HQ Interface"
-  {:in-play [:hq-access 1]})
+  {:events [(breach-access-bonus :hq 1)]})
 
 (defcard "Keiko"
   {:constant-effects [(mu+ 2)]
@@ -1121,8 +1123,8 @@
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:async true
                 :cost [:click 1 :power 3]
-                :msg "access the top card of R&D"
-                :effect (req (do-access state side eid [:rd] {:no-root true}))}]})
+                :msg "breach R&D"
+                :effect (req (breach-server state side eid [:rd] {:no-root true}))}]})
 
 (defcard "Mirror"
   {:constant-effects [(mu+ 2)]
@@ -1169,7 +1171,8 @@
               {:cost [:credit 1]
                :cost-req all-stealth
                :msg "access 1 additional card from HQ"
-               :effect (effect (access-bonus :hq 1))}}}
+               :effect (effect (register-events
+                                card [(breach-access-bonus :hq 1 {:duration :end-of-run})]))}}}
             {:event :successful-run
              :optional
              {:req (req (and (= :rd (target-server context))
@@ -1180,7 +1183,8 @@
               {:cost [:credit 2]
                :cost-req all-stealth
                :msg "access 1 additional card from R&D"
-               :effect (effect (access-bonus :rd 1))}}}]})
+               :effect (effect (register-events
+                                card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}}}]})
 
 (defcard "Muresh Bodysuit"
   {:events [{:event :pre-damage
@@ -1513,7 +1517,7 @@
                              (tag-prevent :runner eid 1))}]})
 
 (defcard "R&D Interface"
-  {:in-play [:rd-access 1]})
+  {:events [(breach-access-bonus :rd 1)]})
 
 (defcard "Rabbit Hole"
   {:constant-effects [(link+ 1)]
@@ -1565,7 +1569,7 @@
                   :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"
-  {:events [(successful-run-replace-access
+  {:events [(successful-run-replace-breach
               {:target-server :archives
                :ability
                {:prompt "Choose one faceup card to add to the top of R&D"
@@ -1721,10 +1725,7 @@
                             (wait-for (trash-cards state side targets {:unpreventable true})
                                       (register-events
                                         state side card
-                                        [{:event :pre-access
-                                          :duration :end-of-run
-                                          :silent (req true)
-                                          :effect (effect (access-bonus kw bonus))}])
+                                        [(breach-access-bonus kw bonus {:duration :end-of-run})])
                                       (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"
@@ -1898,7 +1899,7 @@
 
 (defcard "The Gauntlet"
   {:constant-effects [(mu+ 2)]
-   :events [{:event :pre-access
+   :events [{:event :breach-server
              :req (req (= :hq target))
              :effect (req (let [broken-ice
                                 (->> (run-events state side :subroutines-broken)
@@ -1960,7 +1961,7 @@
                               card nil)))}]})
 
 (defcard "Top Hat"
-  {:events [(successful-run-replace-access
+  {:events [(successful-run-replace-breach
               {:target-server :rd
                :ability {:req (req (and (not= (:max-access run) 0)
                                         (pos? (count (:deck corp)))))

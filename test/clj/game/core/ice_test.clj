@@ -127,7 +127,7 @@
           -2 (:credit (get-runner))
           "Break costs 2"
           (card-ability state :runner (refresh marjanah) 2))
-        (run-continue state :approach-server)
+        (run-continue state :movement)
         (run-continue state nil)
         (run-on state :hq)
         (run-continue state :encounter-ice)

@@ -629,8 +629,8 @@
         (run-continue state)
         (card-ability state :runner brang 0)
         (click-prompt state :runner "End the run")
-        (run-continue state :approach-server)
-        (run-continue state :access-server)
+        (run-continue state :movement)
+        (run-continue state :success)
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Boomerang prompt did not come up")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
@@ -1212,6 +1212,7 @@
         (click-prompt state :runner "Yes")
         (is (= -4 (get-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
         (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
+        (run-continue state :movement)
         (run-jack-out state)
         (is (= 2 (get-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
@@ -1791,6 +1792,31 @@
       (run-jack-out state)
       (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
+(deftest gpi-net-tap
+  (do-game
+   (new-game {:runner {:hand ["GPI Net Tap"]}
+              :corp {:hand ["Ice Wall"]}})
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "GPI Net Tap")
+   (let [gpi (get-hardware state 0)
+         iw (get-ice state :hq 0)]
+     ;; expose and jack out
+     (run-on state :hq)
+     (card-ability state :runner gpi 0)
+     (is (last-log-contains? state "exposes Ice Wall") "Expose approached ice")
+     (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
+     (click-prompt state :runner "Yes")
+     (is (nil? (get-run)) "Run has ended")
+     ;; expose and continue
+     (run-on state :hq)
+     (card-ability state :runner gpi 0)
+     (click-prompt state :runner "No")
+     (rez state :corp iw)
+     (card-ability state :runner gpi 0)
+     (is (not (last-log-contains? state "exposes Ice Wall")) "Cannot use ability since ice is rezzed")
+     (is (nil? (prompt-map :runner))))))
+
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game
@@ -1974,7 +2000,7 @@
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "No")
       (is (get-ice state :hq 1) "Ice Wall is not removed")
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
@@ -2139,7 +2165,7 @@
       (play-from-hand state :runner "Knobkierie")
       (play-from-hand state :runner "Cordyceps")
       (run-empty-server state "HQ")
-      (run-continue state :access-server)
+      (run-continue state :success)
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))) "Runner has simult prompt")
       (click-prompt state :runner "Knobkierie")
       (click-prompt state :runner "Yes")
@@ -2210,9 +2236,7 @@
        (is (not (:run @state)) "Run is ended")
        (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner on a successful run on " serv)))
      (run-on state "Server 1")
-     (run-continue state :approach-ice)
-     (run-continue state :approach-server)
-     (run-continue state :access-server)
+     (run-continue-until state :success)
      (click-prompt state :runner "No action") ;access batty
      (is (not (:run @state)) "Run is ended")
      (is (empty? (:prompt (get-runner))) "No prompt messing with runner on a successful run on remote")
@@ -2612,7 +2636,7 @@
 (deftest mu-safecracker
   ;; MU Safecracker
   (testing "No available stealth credits"
-    (testing "Access HQ"
+    (testing "Breach HQ"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2622,7 +2646,7 @@
         (run-empty-server state "HQ")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended with no prompt")))
-    (testing "Access R&D"
+    (testing "Breach R&D"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2633,7 +2657,7 @@
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended with no prompt"))))
   (testing "Available stealth credits"
-    (testing "Access HQ"
+    (testing "Breach HQ"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -2650,7 +2674,7 @@
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has ended")))
-    (testing "Access R&D"
+    (testing "Breach R&D"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand [(qty "Hedge Fund" 2)]}
@@ -3555,7 +3579,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
-      (is (= :approach-server (:phase (:run @state))) "Security Nexus should bypass Ice Wall")
+      (is (= :movement (:phase (:run @state))) "Security Nexus should bypass Ice Wall")
       (is (:run @state) "Run should still be going on from winning Security Nexus trace")
       (is (= 1 (count-tags state)) "Runner should still only have 1 tag"))))
 
@@ -3605,8 +3629,7 @@
       (is (= "Use Şifr?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (zero? (get-strength (refresh ip))))
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :encounter-ice)
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
       (card-subroutine state :corp arch 0) ; fire archangel
@@ -3616,6 +3639,7 @@
       (click-prompt state :runner "0")
       (click-card state :corp sifr)
       (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
@@ -3787,10 +3811,10 @@
       (click-card state :runner "Ice Wall")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (run-on state "HQ")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (play-from-hand state :runner "Simulchip")
       (card-ability state :runner (get-hardware state 0) 0)
@@ -3970,10 +3994,8 @@
       (play-from-hand state :runner "The Gauntlet")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Only access 1 card from HQ")
+      (run-continue-until state :success)
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Only access 1 card from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
@@ -3992,9 +4014,8 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (run-continue-until state :success)
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4015,15 +4036,14 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Done")
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (run-continue-until state :success)
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4044,9 +4064,8 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Access 1 cards from HQ")
+      (run-continue-until state :success)
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 cards from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
@@ -4067,9 +4086,8 @@
       (click-prompt state :runner "End the run")
       (card-ability state :runner (get-program state 0) 2)
       (is (not (rezzed? (get-ice state :hq 0))) "Ice Wall has been derezzed")
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 2 :total 2} (core/num-cards-to-access state :runner :hq nil)) "Access 2 cards from HQ")
+      (run-continue-until state :success)
+      (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
@@ -4091,9 +4109,8 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (is (nil? (get-ice state :hq 0)) "Ice Wall has been trashed")
-      (run-continue state)
-      (run-continue state)
-      (is (= {:base 1 :total 1} (core/num-cards-to-access state :runner :hq nil)) "Access 1 card from HQ")
+      (run-continue-until state :success)
+      (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 card from HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
@@ -4177,6 +4194,7 @@
       (click-prompt state :runner "Suffer 1 net damage")
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner)))) ; Ribs takes precedence over CP on Runner turn
       (is (= 3 (count (:discard (get-runner)))) "Chose card lost from 1 net damage")
+      (run-continue state :movement)
       (run-jack-out state)
       (take-credits state :runner)
       (core/move state :runner (find-card "Sure Gamble" (:discard (get-runner))) :hand)

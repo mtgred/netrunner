@@ -803,8 +803,11 @@
                   :msg "make the Runner approach the outermost piece of ice"
                   :effect (req (let [server (zone->name (target-server run))]
                                  (redirect-run state side server :approach-ice)
-                                 (derez state side card)
-                                 (encounter-ends state side eid)))}]})
+                                 (wait-for (resolve-ability state :runner
+                                                            (make-eid state eid)
+                                                            (offer-jack-out) card nil)
+                                           (derez state side card)
+                                           (encounter-ends state side eid))))}]})
 
 (defcard "Changeling"
   (morph-ice "Barrier" "Sentry" end-the-run))
@@ -1391,8 +1394,7 @@
                               (set-current-ice state)
                               (update-all-ice state side)
                               (update-all-icebreakers state side)
-                              (effect-completed state side eid)
-                              (start-next-phase state side nil)))}}}]
+                              (effect-completed state side eid)))}}}]
    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
                   :player :runner
                   :async true
@@ -1733,7 +1735,7 @@
 
 (defcard "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
-             :effect (effect (max-access 1))}]
+             :effect (req (max-access state 1))}]
     {:subroutines [sub
                    sub]
      :runner-abilities [(bioroid-break 1 1)]}))
@@ -1943,19 +1945,13 @@
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (defcard "Karunā"
-  (let [offer-jack-out
-        {:optional
-         {:waiting-prompt "Runner to choose an option"
-          :player :runner
-          :prompt "Jack out?"
-          :yes-ability {:async true
-                        :effect (effect (jack-out eid))}
-          :no-ability {:effect (effect (system-msg :runner "chooses to continue"))}}}]
-    {:subroutines [{:label "Do 2 net damage. The Runner may jack out."
-                    :async true
-                    :effect (req (wait-for (resolve-ability state side (do-net-damage 2) card nil)
-                                           (continue-ability state side offer-jack-out card nil)))}
-                   (do-net-damage 2)]}))
+  {:subroutines [{:label "Do 2 net damage. The Runner may jack out."
+                  :async true
+                  :effect (req (wait-for (resolve-ability state side
+                                                          (do-net-damage 2)
+                                                          card nil)
+                                         (continue-ability state side (offer-jack-out) card nil)))}
+                 (do-net-damage 2)]})
 
 (defcard "Kitsune"
   {:subroutines [{:optional
@@ -1966,10 +1962,10 @@
                     :prompt "Choose a card in HQ to force access"
                     :choices {:card (every-pred in-hand? corp?)
                               :all true}
-                    :label "Force the Runner to access a card in HQ"
-                    :msg (msg "force the Runner to access " (:title target))
-                    :effect (req (wait-for (do-access state :runner [:hq] {:no-root true
-                                                                        :access-first target})
+                    :label "Force the Runner to breach HQ and access a card"
+                    :msg (msg "force the Runner to breach HQ and access " (:title target))
+                    :effect (req (wait-for (breach-server state :runner [:hq] {:no-root true
+                                                                               :access-first target})
                                            (trash state side eid card {:cause :subroutine})))}}}]})
 
 (defcard "Komainu"
@@ -2314,7 +2310,7 @@
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
                           :effect (req (let [can-redirect? (and (:run @state)
                                                                 (= 1 (count (:encounters @state)))
-                                                                (not= :access-server (:phase (:run @state))))]
+                                                                (not= :success (:phase (:run @state))))]
                                          (when can-redirect?
                                            (redirect-run state side target :approach-ice))
                                          (register-floating-effect
@@ -2322,9 +2318,11 @@
                                            {:type :jack-out-additional-cost
                                             :duration :end-of-run
                                             :value [:add-installed-to-bottom-of-deck 1]})
-                                         (if can-redirect?
-                                           (encounter-ends state side eid)
-                                           (effect-completed state side eid))))})]})
+                                         (wait-for (resolve-ability state side (offer-jack-out) card nil)
+                                                   (if (and can-redirect?
+                                                            (not (:ended (:end-run @state))))
+                                                     (encounter-ends state side eid)
+                                                     (effect-completed state side eid)))))})]})
 
 (defcard "Minelayer"
   {:subroutines [{:msg "install a piece of ice from HQ"
@@ -2336,14 +2334,20 @@
 
 (defcard "Mirāju"
   {:events [{:event :end-of-encounter
+             :async true
              :req (req (and (same-card? card (:ice context))
                             (:broken (first (filter :printed (:subroutines (:ice context)))))))
              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
              :effect (req (when (and (:run @state)
                                      (= 1 (count (:encounters @state)))
-                                     (not= :access-server (:phase (:run @state))))
+                                     (not= :success (:phase (:run @state))))
                             (redirect-run state side "Archives" :approach-ice))
-                          (derez state side card))}]
+                          (wait-for (resolve-ability state :runner
+                                                     (make-eid state eid)
+                                                     (offer-jack-out)
+                                                     card nil)
+                                    (derez state side card)
+                                    (effect-completed state side eid)))}]
    :subroutines [{:async true
                   :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                   :effect (req (wait-for (resolve-ability
@@ -2804,11 +2808,8 @@
                                              (system-msg state :corp "trashes a card from HQ")
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
-                           (when current-ice
-                             (continue state :corp nil)
-                             (continue state :runner nil))
-                           (system-msg state :corp "trashes Sadaka")
-                           (trash state :corp eid card nil)))}]}))
+                           (wait-for (trash state :corp (make-eid state eid) card nil)
+                                     (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
   (constellation-ice trash-program-sub))
@@ -2947,12 +2948,12 @@
                                         (reorder-choice :corp :runner from '() (count from) from)))
                                     card nil))}
                  {:optional
-                  {:prompt "Pay 1 [Credits] to keep the Runner from accessing the top card of R&D?"
+                  {:prompt "Pay 1 [Credits] to keep the Runner from breaching R&D?"
                    :yes-ability {:cost [:credit 1]
-                                 :msg "keep the Runner from accessing the top card of R&D"}
+                                 :msg "keep the Runner from breaching R&D"}
                    :no-ability {:async true
-                                :msg "make the Runner access the top card of R&D"
-                                :effect (effect (do-access :runner eid [:rd] {:no-root true}))}}}]})
+                                :msg "make the Runner breach R&D"
+                                :effect (effect (breach-server :runner eid [:rd] {:no-root true}))}}}]})
 
 (defcard "Slot Machine"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
@@ -3067,7 +3068,7 @@
   {:subroutines [{:async true
                   :req (req (not= (:server run) [:discard]))
                   :msg "make the Runner continue the run on Archives"
-                  :effect (req (if (:run @state)
+                  :effect (req (if run
                                  (do (prevent-jack-out state side)
                                      (register-events
                                       state side card
@@ -3076,7 +3077,7 @@
                                         :unregister-once-resolved true
                                         :effect (req (swap! state update :run dissoc :cannot-jack-out))}])
                                      (if (and (= 1 (count (:encounters @state)))
-                                              (not= :access-server (:phase (:run @state))))
+                                              (not= :success (:phase run)))
                                        (do (redirect-run state side "Archives" :approach-ice)
                                            (encounter-ends state side eid))
                                        (effect-completed state side eid)))

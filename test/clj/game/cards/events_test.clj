@@ -28,7 +28,7 @@
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       ;; play another Siphon, do not use ability
       (play-run-event state "Account Siphon" :hq)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach HQ")
       (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
@@ -412,7 +412,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Blackmail")
         (click-prompt state :runner "HQ")
-        (run-continue state)
+        (run-continue-until state :movement)
         (run-jack-out state)
         (run-on state "Archives")))))
 
@@ -470,16 +470,14 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Bravado")
         (click-prompt state :runner "HQ")
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :approach-ice cp)
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
-        (dotimes [_ 3]
-          (run-continue state))
+        (click-prompt state :runner "No")
         (changes-val-macro 9 (:credit (get-runner))
                            "Gained 6+3 credits from Bravado"
-                           (run-continue state)))))
+                           (run-continue-until state :success)))))
   (testing "Reinstalled ice during a run is counted twice"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 10)]
@@ -495,7 +493,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Bravado")
         (click-prompt state :runner "HQ")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         ; Overinstall Enigma
         (rez state :corp arch)
         (run-continue state)
@@ -507,19 +505,19 @@
         (card-subroutine state :corp (refresh arch) 1)
         (click-card state :corp (find-card "Enigma" (:discard (get-corp))))
         (click-prompt state :corp "HQ")
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp cp)
         (run-continue state)
         (card-subroutine state :corp (refresh cp) 0)
+        (click-prompt state :runner "No")
         ;; Enigma
-        (run-continue state)
+        (run-continue-until state :movement)
         ;; Ice Wall
-        (run-continue state)
+        (run-continue-until state :movement)
         ;; Architect
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :movement)
         ;; Cell Portal
-        (run-continue state)
+        (run-continue-until state :movement)
         ;; Approach Server
         (changes-val-macro 11 (:credit (get-runner))
                            "Gained 6+5 credits from Bravado"
@@ -582,7 +580,7 @@
       (play-from-hand state :runner "Bravado")
       (is (= ["HQ"] (prompt-buttons :runner)) "Only the iced central server is available")
       (click-prompt state :runner "HQ")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (play-from-hand state :runner "Bravado")
       (is (= ["HQ" "Server 1"] (prompt-buttons :runner)) "Now Server 1 is available"))))
@@ -886,10 +884,8 @@
     (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Code Siphon")
-    (run-continue state)
-    (run-continue state)
-    (run-continue state)
-    (is (= ["Code Siphon" "Access cards"] (prompt-buttons :runner))
+    (run-continue-until state :success)
+    (is (= ["Code Siphon" "Breach R&D"] (prompt-buttons :runner))
         "Replacement effect isn't mandatory")
     (click-prompt state :runner "Code Siphon")
     (let [credits (:credit (get-runner))]
@@ -954,6 +950,7 @@
       (click-prompt state :runner "Gordian Blade")
       (is (:installed (get-program state 0)) "Gordian Blade should be installed")
       (let [deck (count (:deck (get-runner)))]
+        (run-continue state :movement)
         (run-jack-out state)
         (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
         (is (nil? (get-program state 0))))))
@@ -974,6 +971,7 @@
       (click-prompt state :runner "Gordian Blade")
       (is (:installed (get-program state 0)) "Gordian Blade should be installed")
       (let [deck (count (:deck (get-runner)))]
+        (run-continue state :movement)
         (run-jack-out state)
         (is (find-card "Gordian Blade" (:deck (get-runner))) "Gordian Blade should be back in stack")
         (is (nil? (get-program state 0))))))
@@ -1001,6 +999,7 @@
         (card-ability state :runner clone-chip 0)
         (click-card state :runner (find-card "Self-modifying Code" (:discard (get-runner)))))
       (let [deck (count (:deck (get-runner)))]
+        (run-continue state :movement)
         (run-jack-out state)
         (is (= deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
   (testing "vs ending the run via corp action. #3639"
@@ -1551,7 +1550,7 @@
       (take-credits state :corp)
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       (play-run-event state "Diversion of Funds" :hq)
-      (click-prompt state :runner "Access cards")
+      (click-prompt state :runner "Breach HQ")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Prompt is closed")
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
@@ -1589,14 +1588,14 @@
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 1)
         (run-continue state)
-        (is (= 1 (core/access-bonus-count state :runner :rd))
-            "The Turning Wheel should provide 1 additional access on R&D")
+        ;; HQ
         (is (= 1 (core/access-bonus-count state :runner :hq))
             "The Turning Wheel should provide 1 additional access on HQ")
-        ;; HQ
         (dotimes [_ 2]
           (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
         ;; R&D
+        (is (= 1 (core/access-bonus-count state :runner :rd))
+            "The Turning Wheel should provide 1 additional access on R&D")
         (dotimes [_ 2]
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
@@ -1631,7 +1630,7 @@
       (let [scored-nisei (get-scored state :corp 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Divide and Conquer")
-        (run-phase-43 state)
+        (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
         (card-ability state :corp (refresh scored-nisei) 0)
         (is (empty? (:prompt (get-runner))) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
@@ -2224,13 +2223,12 @@
     (rez state :corp (get-ice state :hq 1))
     (take-credits state :corp)
     (play-from-hand state :runner "Feint")
-    (run-continue state)
-    ;; Bypass Ice Wall
-    (run-continue state)
+    (run-continue state :movement) ;; Bypass Ice Wall
+    (run-continue state :approach-ice)
     (let [credits (:credit (get-runner))]
-      ;; Bypass Tollbooth
-      (run-continue state)
+      (run-continue state :movement) ;; Bypass Tollbooth
       (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits from Tollbooth"))
+    (run-continue state :success)
     (click-prompt state :runner "OK")
     (is (not (:run @state)) "Run is over")))
 
@@ -2948,7 +2946,7 @@
       (is (:run @state) "A run has been initiated")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall")))
+      (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
   (testing "Only bypasses one ice"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2962,7 +2960,8 @@
       (is (:run @state) "A run has been initiated")
       (rez state :corp (get-ice state :hq 1))
       (run-continue state)
-      (is (= :approach-ice (:phase (get-run))) "Run has bypassed Ice Wall")
+      (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (= :encounter-ice (:phase (get-run))) "Run not has bypassed Ice Wall"))))
@@ -3244,7 +3243,6 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (run-continue state)
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")))
   (testing "Can only trash a single ice per run. Issue #4791"
     (do-game
@@ -3261,13 +3259,12 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (is (find-card "Ice Wall" (:discard (get-corp))) "Ice Wall is trashed")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (run-continue state)
       (run-continue state)
       (is (get-ice state :hq 0) "Second Ice Wall is not trashed"))))
 
@@ -3396,13 +3393,7 @@
       (play-from-hand state :runner "Leave No Trace")
       (click-prompt state :runner "HQ")
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
-      (run-continue state)
-      ;; ice wall 2
-      (run-continue state)
-      (run-continue state)
-      ;; approach server
-      (run-continue state)
+      (run-continue-until state :success)
       (is (not (rezzed? (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
       (is (rezzed? (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))
   (testing "should not derez ice that has changed during a run"
@@ -3432,13 +3423,7 @@
       (let [credits (:credit (get-runner))]
         (click-prompt state :runner "HQ")
         (rez state :corp (get-ice state :hq 0))
-        (run-continue state)
-        (run-continue state)
-        ;; ice wall 2
-        (run-continue state)
-        (run-continue state)
-        ;; approach server
-        (run-continue state)
+        (run-continue-until state :success)
         (is (= (+ credits 2) (:credit (get-runner))) "Keros should trigger off derez")
         (is (not (rezzed? (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
         (is (rezzed? (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
@@ -3621,7 +3606,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Marathon")
       (click-prompt state :runner "Server 1")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (is (find-card "Marathon" (:discard (get-runner))) "Marathon should be trashed")
       (is (not (find-card "Marathon" (:hand (get-runner)))) "Marathon should not be in hand")))
@@ -4643,16 +4628,20 @@
   (testing "Runner doesn't jack out"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall"]}
+                        :hand ["Enigma" "Ice Wall"]}
                  :runner {:hand ["Recon"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Recon")
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "No")
-      (is (:run @state) "Run continues"))))
+      (is (:run @state) "Run continues")
+      (run-continue-until state :encounter-ice)
+      (is (not= "Jack out?" (:msg (prompt-map :runner))) "No prompt to Jack out on second encounter"))))
 
 (deftest rejig
   ;; Rejig
@@ -4798,6 +4787,8 @@
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
+      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
       (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
@@ -4820,17 +4811,18 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Gauntlet")
       (play-from-hand state :runner "Corroder")
-      (let [corroder (get-program state 0)]
+      (let [corroder (get-program state 0)
+            iw0 (get-ice state :hq 0)
+            iw1 (get-ice state :hq 1)]
         (play-from-hand state :runner "Rip Deal")
-        (run-continue state)
+        (run-continue-until state :encounter-ice iw1)
         (card-ability state :runner corroder 0)
         (click-prompt state :runner "End the run")
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :encounter-ice iw0)
         (card-ability state :runner corroder 0)
         (click-prompt state :runner "End the run")
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :success)
+        (click-prompt state :runner "Yes")
         (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
@@ -4838,6 +4830,24 @@
       (is (= ["Easy Mark" "Sure Gamble"] (->> (get-runner) :hand (map :title) (into []))))
       (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
       (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (nil? (get-run)) "Run is ended")))
+  (testing "Can still access upgrades"
+    (do-game
+      (new-game {:corp   {:deck ["Vanilla"]
+                          :hand ["Hedge Fund" "Anoetic Void"]}
+                 :runner {:deck ["Rip Deal" "Easy Mark"]}})
+      (trash-from-hand state :runner "Easy Mark")
+      (play-from-hand state :corp "Anoetic Void" "HQ")
+      (take-credits state :corp)
+      (play-run-event state "Rip Deal" :hq)
+      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Yes")
+      (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Easy Mark")
+      (is (= 1 (-> (get-runner) :hand count)))
+      (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
+      (is (= "You accessed Anoetic Void." (:msg (prompt-map :runner))) "Runner access Anoetic Void")
+      (click-prompt state :runner "No action")
       (is (nil? (get-run)) "Run is ended")))
   (testing "Heap Locked"
     (do-game
@@ -4972,7 +4982,7 @@
       (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
       (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
       (is (rezzed? (refresh archer)) "Archer is rezzed"))
-    (run-continue state)
+    (run-continue-until state :movement)
     (run-jack-out state)
     (let [iw (get-ice state :hq 1)
           credits (:credit (get-corp))]
@@ -5056,11 +5066,13 @@
       (run-on state "HQ")
       (run-continue state)
       (is (= 2 (get-strength (refresh turing))) "Scrubbed not active when on Peddler")
+      (run-continue state :movement)
       (run-jack-out state)
       (play-from-hand state :runner "Scrubbed")
       (run-on state "HQ")
       (run-continue state)
       (is (zero? (get-strength (refresh turing))) "Scrubbed reduces strength by 2")
+      (run-continue state :movement)
       (run-jack-out state))))
 
 (deftest showing-off

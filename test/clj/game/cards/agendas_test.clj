@@ -258,7 +258,7 @@
       (run-on state "HQ")
       (card-ability state :corp (get-scored state :corp 0) 0)
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (click-card state :runner "Sure Gamble")
       (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")))
@@ -759,36 +759,39 @@
   (testing "Allows for accessing upgrades. Issue #2376"
     (do-game
       (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
-                               "Hedge Fund" "Caprice Nisei"]}
-                 :runner {:deck ["HQ Interface"]}})
+                               "Hedge Fund" "Caprice Nisei"]}})
       (play-from-hand state :corp "Caprice Nisei" "HQ")
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (click-card state :corp "Hedge Fund")
       (click-prompt state :runner "Card from hand")
+      (click-card state :corp "Hedge Fund")
+      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
+      (is (= "You accessed Caprice Nisei." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run completed")))
   (testing "Multiaccess works properly"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
-                 :runner {:deck ["HQ Interface"]}})
+                 :runner {:hand ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (take-credits state :corp)
       (play-from-hand state :runner "HQ Interface")
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (click-card state :corp "Government Takeover")
+      (click-prompt state :runner "Steal")))
   (testing "Multiaccess respects cards in hand"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Dedicated Neural Net" "Mwanza City Grid" (qty "Domestic Sleepers" 3)]}
-                 :runner {:deck ["HQ Interface"]}})
+      (new-game {:corp {:hand ["Dedicated Neural Net" "Mwanza City Grid" "Domestic Sleepers" "Hedge Fund" "Ice Wall"]}
+                 :runner {:hand ["HQ Interface"]}})
       (play-and-score state "Dedicated Neural Net")
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (rez state :corp (get-content state :hq 0))
@@ -797,7 +800,36 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (is (= 3 (-> (get-corp) :selected first :max)) "Corp chooses 3 cards for Runner to access because there are only 3 cards in hand"))))
+      (click-prompt state :runner "Mwanza City Grid")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Hedge Fund")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (is (nil? (prompt-map :runner)) "No further prompts for Runner")
+      (is (nil? (prompt-map :corp)) "No further prompts for Corp")
+      (is (nil? (:run @state)) "Run has ended")))
+  (testing "Can access upgrades between cards in hand"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Ice Wall" "Enigma" "Caprice Nisei"]}
+                 :runner {:hand ["HQ Interface"]}})
+      (play-from-hand state :corp "Caprice Nisei" "HQ")
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (play-from-hand state :runner "HQ Interface")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "Card from hand")
+      (click-card state :corp "Enigma")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade")
+      (click-prompt state :runner "No action")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :runner "No action"))))
 
 (deftest degree-mill
   ;; Degree Mill
@@ -1564,12 +1596,12 @@
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (take-credits state :corp)
       (run-on state "R&D")
-      (run-phase-43 state)
+      (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
       (card-ability state :corp hok-scored 0)
       (is (= 1 (count (:discard (get-runner)))) "Runner should pay 1 net damage")
       (run-continue state)
       (run-on state "R&D")
-      (run-phase-43 state)
+      (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
       (card-ability state :corp hok-scored 0)
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
@@ -1697,6 +1729,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)))
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
@@ -1706,6 +1739,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 2 (count-tags state)))
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
       (run-continue state)
@@ -2193,7 +2227,7 @@
       (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-phase-43 state)
+      (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
       (card-ability state :corp (refresh scored-nisei) 0)
       (is (not (:run @state)) "Run ended by using Nisei counter")
       (is (zero? (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
@@ -2676,7 +2710,7 @@
       (is (last-log-contains? state "End the run"))
       (is (= 2 (get-counters (refresh wot-scored) :agenda)) "Wotan should only have 2 agenda counters")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli gains a sub from Project Wotan")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
@@ -2711,7 +2745,8 @@
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
         (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ice for Agenda")
         (click-card state :corp "Eli 2.0")
-        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0"))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0")
+        (click-prompt state :runner "No"))))
   (testing "Swap cards in server with cards in HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
@@ -2742,16 +2777,19 @@
         (click-card state :corp "Jackson Howard")
         (is (= (:title (get-content state :remote2 0)) "Jackson Howard")
             "Swapped Agenda for Asset")
+        (click-prompt state :runner "No")
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-content state :remote2 0))
         (click-card state :corp "Prisec")
         (is (= (:title (get-content state :remote2 0)) "Prisec")
             "Swapped Asset for Upgrade")
+        (click-prompt state :runner "No")
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-content state :remote2 0))
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
         (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
-            "Swapped Upgrade for Agenda"))))
+            "Swapped Upgrade for Agenda")
+        (click-prompt state :runner "No"))))
   (testing "Cancel swapping at different stages"
     (do-game
       (new-game {:corp {:deck ["Project Yagi-Uda"
@@ -2776,6 +2814,31 @@
         (click-card state :corp eli1)
         (click-prompt state :corp "Done")
         (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter"))))
+  (testing "jack out"
+    (do-game
+     (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                              "Eli 1.0"
+                              "Eli 2.0"
+                              "Jackson Howard"
+                              "Prisec"
+                              "Hedge Fund"]}})
+     (core/gain state :corp :click 10 :credit 10)
+     (click-draw state :corp)
+     (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+     (play-from-hand state :corp "Eli 1.0" "New remote")
+     (let [pyu (get-content state :remote1 0)]
+       (advance state pyu 4)
+       (score state :corp (refresh pyu)))
+     (take-credits state :corp)
+     (let [pyu-scored (get-scored state :corp 0)
+           eli1 (get-ice state :remote2 0)]
+       (run-on state :remote2)
+       (card-ability state :corp pyu-scored 0)
+       (click-card state :corp eli1)
+       (click-card state :corp "Eli 2.0")
+       (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0")
+       (click-prompt state :runner "Yes")
+       (is (empty? (:run @state))))))
   (testing "Swap inner ice with HQ. Issue #4831"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2794,7 +2857,8 @@
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp (get-ice state :hq 0))
         (click-card state :corp "Eli 1.0")
-        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")))))
+        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")
+        (click-prompt state :runner "No")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
@@ -3435,8 +3499,7 @@
       (click-card state :runner tg1)
       ;; Accesses TGTBT but can't steal
       (is (= 1 (count-tags state)) "Runner took 1 tag from accessing without stealing")
-      (click-prompt state :runner "No action")
-      (click-card state :runner ohg))
+      (click-prompt state :runner "No action"))
     (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Trashes OHG
     (run-empty-server state "Server 2")
     ;; Accesses TGTBT and can steal
@@ -3562,8 +3625,8 @@
           (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
           (is (= corp-credits (:credit (get-corp))) "Install was free")
           (is (= 2 (get-in @state [:run :position])) "Now approaching new ice")
-          (run-continue state)
-          (run-continue state)
+          (run-continue state :encounter-ice)
+          (run-continue-until state :approach-ice)
           (is (= "Enigma" (:title (core/get-current-ice state))) "Now approaching Enigma"))))
     (testing "behind the current ice"
       (do-game
@@ -3587,8 +3650,8 @@
           (is (= corp-credits (:credit (get-corp))) "Install was free")
           (is (= 2 (get-in @state [:run :position])))
           (is (= "Ice Wall" (:title (core/get-current-ice state))) "Still approaching Ice Wall")
-          (run-continue state)
-          (run-continue state)
+          (run-continue state :encounter-ice)
+          (run-continue-until state :approach-ice)
           (is (= "Vanilla" (:title (core/get-current-ice state))) "Now approaching Vanilla"))))))
 
 (deftest tomorrows-headline

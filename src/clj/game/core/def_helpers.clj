@@ -1,5 +1,6 @@
 (ns game.core.def-helpers
   (:require
+    [game.core.access :refer [access-bonus]]
     [game.core.card :refer [corp? get-card get-counters has-subtype? in-discard? faceup?]]
     [game.core.card-defs :refer [defcard-impl]]
     [game.core.damage :refer [damage]]
@@ -10,6 +11,7 @@
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
+    [game.core.runs :refer [jack-out]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.toasts :refer [toast]]
     [game.core.to-string :refer [card-str]]
@@ -99,6 +101,19 @@
                :else
                (continue-ability state side (reorder-choice reorder-side wait-side original '() (count original) original dest) card nil)))}))
 
+(defn breach-access-bonus
+  "Access additional cards when breaching a server"
+  ([server bonus] (breach-access-bonus server bonus nil))
+  ([server bonus {:keys [duration msg] :as args}]
+   {:event :breach-server
+    :duration duration
+    :req (if (:req args)
+           (:req args)
+           (req (= server target)))
+    :silent (req true)
+    :msg msg
+    :effect (effect (access-bonus :runner server bonus))}))
+
 (defn do-net-damage
   "Do specified amount of net-damage."
   [dmg]
@@ -155,6 +170,24 @@
           (async-rfg state side eid card))
       (do (system-say state side (str title " is trashed."))
           (trash state side eid card {:unpreventable true :game-trash true})))))
+
+(defn offer-jack-out
+  "Returns an ability that prompts the Runner to jack out"
+  ([] (offer-jack-out nil))
+  ([{jack-out-req :req
+     once :once}]
+   {:optional
+    {:player :runner
+     :req (req (if jack-out-req
+                 (jack-out-req state side eid card targets)
+                 true))
+     :once once
+     :prompt "Jack out?"
+     :waiting-prompt "Runner to make a decison"
+     :yes-ability {:async true
+                   :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
+                                   (jack-out eid))}
+     :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
 
 (defn make-current-event-handler
   [title ability]

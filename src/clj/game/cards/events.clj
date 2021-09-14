@@ -28,7 +28,7 @@
    :on-play {:req (req hq-runnable)
              :async true
              :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :ability
@@ -129,7 +129,7 @@
              :prompt "Choose a server"
              :choices (req (filter #(can-run-server? state %) remotes))
              :effect (effect (make-run eid target card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :remote
                :this-card-run true
                :ability
@@ -144,10 +144,8 @@
     {:base 4
      :unsuccessful
      {:effect (effect (register-events
-                        card [{:event :pre-access
-                               :duration :end-of-turn
-                               :req (req (#{:hq :rd} target))
-                               :effect (effect (access-bonus target 2))}]))}}}})
+                        card [(breach-access-bonus :rd 2 {:duration :end-of-turn})
+                              (breach-access-bonus :hq 2 {:duration :end-of-turn})]))}}}})
 
 (defcard "Blackmail"
   {:makes-run true
@@ -377,7 +375,7 @@
      :on-play {:req (req hq-runnable)
                :async true
                :effect (effect (make-run eid :hq card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :hq
                  :mandatory true
                  :this-card-run true
@@ -400,7 +398,7 @@
      :on-play {:req (req rd-runnable)
                :async true
                :effect (effect (make-run eid :rd card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :rd
                  :this-card-run true
                  :ability
@@ -645,7 +643,10 @@
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :silent (req true)
-             :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 
+                                                         (max 0 (min 4 (available-mu state))) 
+                                                         {:duration :end-of-run})]))}]})
 
 (defcard "Déjà Vu"
   {:on-play
@@ -800,7 +801,7 @@
      :on-play {:req (req hq-runnable)
                :async true
                :effect (effect (make-run eid :hq card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :hq
                  :this-card-run true
                  :ability
@@ -816,12 +817,12 @@
    :on-play {:req (req archives-runnable)
              :async true
              :effect (effect (make-run eid :archives card))}
-   :events [{:event :end-access-phase
+   :events [{:event :end-breach-server
              :async true
              :req (req (and (= :archives (:from-server target))
                             (:successful run)))
-             :effect (req (wait-for (do-access state side [:hq] {:no-root true})
-                                    (do-access state side eid [:rd] {:no-root true})))}]})
+             :effect (req (wait-for (breach-server state side [:hq] {:no-root true})
+                                    (breach-server state side eid [:rd] {:no-root true})))}]})
 
 (defcard "Drive By"
   {:on-play
@@ -860,7 +861,7 @@
    :on-play {:async true
              :req (req hq-runnable)
              :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :mandatory true
@@ -977,7 +978,7 @@
      :on-play {:req (req hq-runnable)
                :async true
                :effect (effect (make-run eid :hq card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :hq
                  :this-card-run true
                  :mandatory true
@@ -1047,7 +1048,7 @@
              :choices (req runnable-servers)
              :async true
              :effect (effect (make-run eid target card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:mandatory true
                :this-card-run true
                :ability
@@ -1107,7 +1108,7 @@
    :on-play {:req (req hq-runnable)
              :async true
              :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :mandatory true
@@ -1257,7 +1258,7 @@
    :on-play {:req (req archives-runnable)
              :async true
              :effect (effect (make-run eid :archives card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :archives
                :this-card-run true
                :mandatory true
@@ -1412,7 +1413,7 @@
    :on-play {:req (req archives-runnable)
              :async true
              :effect (effect (make-run eid :archives card))}
-   :events [{:event :pre-access
+   :events [{:event :breach-server
              :async true
              :req (req (and (= target :archives)
                             ;; don't prompt unless there's at least 1 rezzed piece of ice matching one in Archives
@@ -1466,7 +1467,7 @@
    :on-play {:req (req rd-runnable)
              :async true
              :effect (effect (make-run eid :rd card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :ability
@@ -1540,7 +1541,7 @@
        :on-play {:req (req hq-runnable)
                  :async true
                  :effect (effect (make-run eid :hq card))}
-       :events [(successful-run-replace-access
+       :events [(successful-run-replace-breach
                   {:target-server :hq
                    :this-card-run true
                    :mandatory true
@@ -1649,10 +1650,9 @@
              :req (req (and (or (= :hq (target-server context))
                                 (= :rd (target-server context)))
                             this-card-run))
-             :effect (req (if (= :hq (target-server context))
-                            (access-bonus state :runner :hq 1)
-                            (access-bonus state :runner :rd 1))
-                          (draw state side eid 1 nil))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
+                             (draw eid 1 nil))}]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
@@ -1709,7 +1709,7 @@
      :on-play {:req (req rd-runnable)
                :async true
                :effect (effect (make-run eid :rd card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :rd
                  :this-card-run true
                  :mandatory true
@@ -1823,7 +1823,8 @@
              :silent (req true)
              :req (req (and (= :hq (target-server context))
                             this-card-run))
-             :effect (effect (access-bonus :hq 2))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :hq 2 {:duration :end-of-run})]))}]})
 
 (defcard "Leverage"
   {:on-play
@@ -2195,7 +2196,7 @@
              :effect (req (wait-for (trash state side card {:cause :purge})
                                     (update-all-agenda-points state side)
                                     (effect-completed state side eid)))}
-            (successful-run-replace-access
+            (successful-run-replace-breach
               {:target-server :archives
                :this-card-run true
                :mandatory true
@@ -2401,7 +2402,7 @@
                :req (req archives-runnable)
                :async true
                :effect (effect (make-run eid :archives card))}
-     :events [(successful-run-replace-access
+     :events [(successful-run-replace-breach
                 {:target-server :archives
                  :this-card-run true
                  :mandatory true
@@ -2422,12 +2423,8 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
-             :optional
-             {:prompt "Jack out?"
-              :req (req (first-run-event? state side :encounter-ice))
-              :yes-ability {:async true
-                            :msg "jack out"
-                            :effect (effect (jack-out eid))}}}]})
+             :optional (:optional (offer-jack-out 
+                                   {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
 (defcard "Rejig"
   (let [valid-target? (fn [card] (and (runner? card)
@@ -2473,7 +2470,7 @@
    :on-play {:req (req archives-runnable)
              :async true
              :effect (effect (make-run eid :archives card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :archives
                :this-card-run true
                :ability
@@ -2532,44 +2529,52 @@
                      (continue-ability state side (runner-choice choices) card nil)))}}))
 
 (defcard "Rip Deal"
-  {:makes-run true
-   :on-play {:rfg-instead-of-trashing true
-             :req (req hq-runnable)
-             :async true
-             :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
-              {:target-server :hq
-               :this-card-run true
-               :mandatory true
-               :ability
-               {:async true
-                :req (req (not (zone-locked? state :runner :discard)))
-                :effect
-                (req (wait-for
-                       ;; todo: remove this when replacement effects are fixed
-                       (trigger-event-sync state side :pre-access :hq)
-                       (continue-ability
-                         state side
-                         (let [n (min (-> corp :hand count) (:base (num-cards-to-access state side :hq nil)))
-                               heap (count (:discard runner))]
-                           (if (pos? heap)
-                             {:show-discard true
-                              :prompt (str "Choose " (quantify (min n heap) "card")
-                                           " to move from the Heap to your Grip")
-                              :async true
-                              :msg (msg "take " (string/join ", " (map :title targets))
-                                        " from their Heap to their Grip")
-                              :choices {:max (min n heap)
-                                        :all true
-                                        :card #(and (runner? %)
-                                                    (in-discard? %))}
-                              :effect (req (doseq [c targets]
-                                             (move state side c :hand))
-                                           (effect-completed state side eid))}
-                             {:async true
-                              :msg (msg "take no cards from their Heap to their Grip")
-                              :effect (req (effect-completed state side eid))}))
-                         card nil)))}})]})
+  (let [add-cards-from-heap
+        {:optional
+         {:prompt "Add cards from Heap to Grip?"
+          :waiting-prompt "Waiting for Runner to make a decision"
+          :req (req (and run
+                         (pos? (count (:hand corp)))
+                         (pos? (count (:discard runner)))
+                         (not (zone-locked? state :runner :discard))))
+          :yes-ability
+          {:async true
+           :effect (req (let [random-access-limit (:random-access-limit (num-cards-to-access state side :hq nil))
+                              cards-to-move (min (count (:hand corp))
+                                                 random-access-limit
+                                                 (count (:discard runner)))]
+                          (continue-ability
+                           state side
+                           {:async true
+                            :show-discard true
+                            :prompt (str "Choose " (quantify cards-to-move "card")
+                                         " to move from the Heap to your Grip")
+                            :msg (msg "take " (string/join ", " (map :title targets))
+                                      " from their Heap to their Grip")
+                            :choices {:max cards-to-move
+                                      :all true
+                                      :card #(and (runner? %)
+                                                  (in-discard? %))}
+                            :effect (req (doseq [c targets]
+                                           (move state side c :hand))
+                                         (swap! state assoc-in [:run :prevent-hand-access] true)
+                                         (effect-completed state side eid))}
+                           card nil)))}}}]
+    {:makes-run true
+     :on-play {:rfg-instead-of-trashing true
+               :req (req hq-runnable)
+               :async true
+               :effect (effect (make-run eid :hq card))}
+     :events [{:event :successful-run
+               :silent (req true)
+               :req (req (and (= :hq (target-server context))
+                              this-card-run))
+               :effect (effect (register-events card
+                                [{:event :candidates-determined
+                                  :duration :end-of-run
+                                  :async true
+                                  :req (req (= :hq context))
+                                  :effect (effect (continue-ability add-cards-from-heap card nil))}]))}]}))
 
 (defcard "Rumor Mill"
   (letfn [(eligible? [card] (and (:uniqueness card)
@@ -2697,16 +2702,11 @@
    :on-play {:req (req rd-runnable)
              :async true
              :effect (effect (make-run eid :rd card))}
-   :events [(successful-run-replace-access
-              {:target-server :rd
-               :this-card-run true
-               :can-access true
-               :mandatory true
-               :ability {:msg "access cards from the bottom of R&D"
-                         :async true
-                         :effect (effect (do-access eid (:server run)))}})
-            {:event :pre-access
+   :events [{:event :successful-run
+             :req (req (and (= :rd (target-server context))
+                            this-card-run))
              :silent (req true)
+             :msg "access cards from the bottom of R&D"
              :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
             {:event :run-ends
              :effect (req (swap! state assoc-in [:runner :rd-access-fn] seq))}]})
@@ -2717,7 +2717,7 @@
              :choices (req (filter #(can-run-server? state %) remotes))
              :async true
              :effect (effect (make-run eid target card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :remote
                :this-card-run true
                :mandatory true
@@ -2922,7 +2922,8 @@
              :silent (req true)
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (effect (access-bonus :rd 2))}]})
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 2 {:duration :end-of-run})]))}]})
 
 (defcard "The Noble Path"
   {:makes-run true
@@ -3055,7 +3056,7 @@
    :on-play {:req (req hq-runnable)
              :async true
              :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :ability
@@ -3081,7 +3082,7 @@
    :on-play {:req (req hq-runnable)
              :async true
              :effect (effect (make-run eid :hq card))}
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :ability

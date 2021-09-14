@@ -3994,8 +3994,7 @@
       (play-from-hand state :corp "Data Raven" "Server 1")
       (take-credits state :corp)
       (let [dr (get-ice state :remote1 0)
-            bn (get-content state :remote1 0)
-            fc (get-content state :remote1 1)]
+            bn (get-content state :remote1 0)]
         (run-on state :remote1)
         (rez state :corp (refresh dr))
         (run-continue state)
@@ -4009,7 +4008,6 @@
         (run-continue state)
         (click-card state :runner bn)
         (click-prompt state :runner "Steal")
-        (click-card state :runner fc)
         (is (prompt-is-type? state :runner :waiting) "After steal, Surveillance Sweep leaves play and Runner waits on Corp"))))
   (testing "Interaction with Citadel Sanctuary and Sol"
     (do-game
@@ -4198,6 +4196,7 @@
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Yes")
         (is (empty? (get-ice state :hq)) "Ice Wall is gone"))
+      (run-continue state :movement)
       (run-jack-out state)
       (take-credits state :runner)
       (play-from-hand state :corp "Threat Assessment")

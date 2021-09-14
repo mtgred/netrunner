@@ -376,7 +376,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :ability
@@ -689,7 +689,8 @@
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (req (access-bonus state side :rd (max 0 (get-virus-counters state card))))}]
+             :effect (effect (register-events 
+                              card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
    :abilities [{:cost [:click 1]
                 :msg "make a run on R&D"
                 :makes-run true
@@ -1071,7 +1072,7 @@
 
 (defcard "Eater"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
-                                                                           :effect (effect (max-access 0))}
+                                                                           :effect (req (max-access state 0))}
                                                       :label "break 1 subroutine and access 0 cards"})
                                 (strength-pump 1 1)]}))
 
@@ -1132,8 +1133,8 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "eXer"
-  {:in-play [:rd-access 1]
-   :events [{:event :purge
+  {:events [(breach-access-bonus :rd 1)
+            {:event :purge
              :async true
              :effect (effect (trash eid card {:cause :purge}))}]})
 
@@ -1143,7 +1144,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :hq card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
                :ability
@@ -1477,7 +1478,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :mandatory true
@@ -1683,7 +1684,7 @@
   {:events [{:event :successful-run
              :req (req (= :rd (target-server context)))
              :effect (effect (add-counter card :virus 1))}
-            {:event :pre-access
+            {:event :breach-server
              :async true
              :req (req (= target :rd))
              :effect (effect (continue-ability
@@ -1740,7 +1741,7 @@
   {:events [{:event :successful-run
              :req (req (= :hq (target-server context)))
              :effect (effect (add-counter card :virus 1))}
-            {:event :pre-access
+            {:event :breach-server
              :async true
              :req (req (= target :hq))
              :effect (effect (continue-ability
@@ -1774,7 +1775,7 @@
 
 (defcard "Nyashia"
   {:data {:counter {:power 3}}
-   :events [{:event :pre-access
+   :events [{:event :breach-server
              :optional
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
@@ -2301,17 +2302,10 @@
               :prompt "Use Snitch to expose approached ice?"
               :yes-ability
               {:async true
+               :msg "expose the approached ice"
                :effect (req (wait-for
                               (expose state side (:ice context))
-                              (continue-ability
-                                state side
-                                {:optional
-                                 {:prompt "Jack out?"
-                                  :yes-ability {:msg "jack out"
-                                                :async true
-                                                :effect (effect (jack-out eid))}
-                                  :no-ability {:msg "continue the run"}}}
-                                card nil)))}}}]})
+                              (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
@@ -2329,7 +2323,7 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-access
+   :events [(successful-run-replace-breach
               {:target-server :rd
                :this-card-run true
                :mandatory true

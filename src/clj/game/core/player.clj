@@ -120,8 +120,6 @@
               :only-for {}}
      :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
-     :rd-access 0
-     :hq-access 0
      :rd-access-fn seq
      :hq-access-fn shuffle
      :brain-damage 0

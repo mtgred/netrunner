@@ -1,8 +1,8 @@
 (ns game.core.runs
   (:require
-    [game.core.access :refer [do-access]]
+    [game.core.access :refer [breach-server]]
     [game.core.board :refer [server->zone]]
-    [game.core.card :refer [get-card installed? rezzed?]]
+    [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
@@ -126,14 +126,11 @@
                                     :server s
                                     :position n
                                     :corp-auto-no-action false
-                                    :jack-out false
-                                    :jack-out-after-pass false
                                     :phase :initiation
                                     :next-phase :initiation
                                     :eid eid
                                     :current-ice nil
                                     :events nil
-                                    :can-access true
                                     :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
                        (when card
                          (update! state side (assoc-in card [:special :run-id] run-id))))
@@ -155,8 +152,7 @@
                            (if (pos? (get-in @state [:run :position] 0))
                              (do (set-next-phase state :approach-ice)
                                  (start-next-phase state side nil))
-                             (do (set-next-phase state :approach-server)
-                                 (swap! state assoc-in [:run :jack-out] true)
+                             (do (set-next-phase state :movement)
                                  (start-next-phase state side nil))))))))))))))))
 
 (defn toggle-auto-no-action
@@ -171,10 +167,13 @@
   "If corp-auto-no-action is enabled, presses continue for the corp as long as the only rezzed ice is approached or encountered."
   [state]
   (when (and (:run @state)
-             (not (= :access-server (:phase (:run @state))))
+             (not (= :success (:phase (:run @state))))
+             (not (and (= :movement (:phase (:run @state)))
+                       (zero? (:position (:run @state)))))
              (<= (count (:encounters @state)) 1)
              (get-in @state [:run :corp-auto-no-action])
-             (rezzed? (get-current-ice state)))
+             (or (rezzed? (get-current-ice state))
+                 (= :movement (:phase (:run @state)))))
     (continue state :corp nil)))
 
 (defn check-for-empty-server
@@ -190,6 +189,7 @@
   [state side eid]
   (let [encounter (get-current-encounter state)
         ice (get-current-ice state)]
+    (update-current-encounter state :ending true)
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
@@ -216,13 +216,14 @@
                       (clear-encounter state)
                       (effect-completed state side eid))
                   ;; change phase
-                  (get-in @state [:run :next-phase])
+                  (:next-phase (:run @state))
                   (do (clear-encounter state)
                       (start-next-phase state side eid))
                   ;; pass ice
                   (= :encounter-ice phase)
                   (do (clear-encounter state)
-                      (pass-ice state side eid))
+                      (set-next-phase state :movement)
+                      (start-next-phase state side eid))
                   ;; unknown
                   :else (do (reset-all-subs! state (get-card state ice))
                             (update-ice-strength state :corp (get-card state ice))
@@ -234,6 +235,7 @@
   (set-phase state :approach-ice)
   (set-current-ice state)
   (reset-all-ice state side)
+  (swap! state assoc-in [:run :approached-ice?] true)
   (check-auto-no-action state)
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
@@ -250,16 +252,10 @@
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (check-for-empty-server state)))})
-              (if (get-in @state [:run :jack-out-after-pass])
-                (wait-for (jack-out state :runner (make-eid state eid))
-                          (if (or (check-for-empty-server state)
-                                  (:ended (:end-run @state)))
-                            (handle-end-run state side eid)
-                            (effect-completed state side eid)))
-                (if (or (check-for-empty-server state)
-                        (:ended (:end-run @state)))
-                  (handle-end-run state side eid)
-                  (effect-completed state side eid))))))
+              (if (or (check-for-empty-server state)
+                      (:ended (:end-run @state)))
+                (handle-end-run state side eid)
+                (effect-completed state side eid)))))
 
 (defmethod continue :approach-ice
   [state side _]
@@ -268,7 +264,6 @@
         (when (= :corp side)
           (system-msg state side "has no further action")))
     (let [eid (make-phase-eid state nil)]
-      (swap! state assoc-in [:run :jack-out] true)
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
                 (cond
                   (or (check-for-empty-server state)
@@ -278,7 +273,8 @@
                   (do (set-next-phase state :encounter-ice)
                       (start-next-phase state :runner nil))
                   :else
-                  (pass-ice state side eid))))))
+                  (do (set-next-phase state :movement)
+                      (start-next-phase state :runner nil)))))))
 
 (defn bypass-ice
   [state]
@@ -340,10 +336,7 @@
               (effect-completed state side eid))))
 
 (defmethod continue :encounter-ice
-  [state side {:keys [jack-out]}]
-  (when (some? jack-out)
-    ; TODO: Do not transmit this to the Corp (same with :no-action)
-    (swap! state assoc-in [:run :jack-out-after-pass] jack-out))
+  [state side _]
   (let [encounter (get-current-encounter state)
         no-action (:no-action encounter)]
     (if (or (and no-action
@@ -354,117 +347,109 @@
           (when (= :runner side)
             (system-msg state side "has no further action"))))))
 
-(defn pass-ice
+(defmethod start-next-phase :movement
   [state side eid]
-  (let [pos (get-in @state [:run :position])
+  (let [eid (make-phase-eid state eid)
+        previous-phase (:phase (:run @state))
+        pos (get-in @state [:run :position])
+        current-server (:server (:run @state))
         ice (get-current-ice state)
-        moved? (nil? (get-card state ice))
-        passed-all-ice (zero? (dec pos))
-        current-server (:server (:run @state))]
-    (set-phase state :pass-ice)
+        ;; pass ice if coming from the Approach Ice or Encounter Ice phase and the Ice has not moved from the position
+        pass-ice? (and (or (= :approach-ice previous-phase)
+                           (= :encounter-ice previous-phase))
+                       (get-card state ice)
+                       (= (second (get-zone ice)) (first current-server)))
+        passed-all-ice (or (zero? (dec pos))
+                           (= :initiation previous-phase))]
+    (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
-    (when (not moved?)
+    (when pass-ice?
       (system-msg state :runner (str "passes " (card-str state ice)))
       (queue-event state :pass-ice {:ice (get-card state ice)}))
-    (swap! state update-in [:run :position] (fnil dec 1))
+    (when (pos? pos)
+      (swap! state update-in [:run :position] (fnil dec 1)))
     (when passed-all-ice
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))
+    (check-auto-no-action state)
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           ;; Immediately end pass ice step if:
                           ;; * run ends
                           ;; * run is moved to another server
+                          ;; * phase changed
                           ;; * ice moves
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (not= current-server (:server (:run @state)))
-                                            (and (not moved?)
+                                            (:next-phase (:run @state))
+                                            (and pass-ice?
                                                  (not (same-card? ice (nth (get-run-ices state) (dec pos) nil))))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
-              (cond
+              (cond 
+                ;; run ended
                 (or (check-for-empty-server state)
                     (:ended (:end-run @state)))
                 (handle-end-run state side eid)
-                (not (get-in @state [:run :next-phase]))
-                (if (pos? (get-in @state [:run :position]))
-                  (do (set-next-phase state :approach-ice)
-                      (start-next-phase state side eid))
-                  (do (set-next-phase state :approach-server)
-                      (start-next-phase state side eid)))))))
+                ;; phase changed
+                (:next-phase (:run @state))
+                (start-next-phase state side eid)
+                ;; stop in Movement phase
+                :else (effect-completed state side eid)))))
 
-(defmethod start-next-phase :pass-ice
+(defn approach-server
   [state side eid]
-  (pass-ice state side eid))
-
-(defmethod start-next-phase :approach-server
-  [state side eid]
-  (let [eid (make-phase-eid state eid)
-        no-ice? (zero? (count (get-run-ices state)))
-        initiation-phase? (= :initiation (:phase (:run @state)))]
-    (set-current-ice state nil)
-    (set-phase state :approach-server)
-    (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
-    (queue-event state :approach-server)
-    (when (and no-ice? initiation-phase?)
-      (queue-event state :pass-all-ice))
-    (wait-for (checkpoint state side
-                          (make-eid state eid)
-                          ;; Immediately end pass ice step if:
+  (set-current-ice state nil)
+  (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+  (queue-event state :approach-server)
+  (wait-for (checkpoint state side
+                        (make-eid state eid)
+                          ;; Immediately end approach if:
                           ;; * run ends
-                          ;; * position is no longer 0
+                          ;; * phase changes
                           ;; * server becomes empty
-                          {:cancel-fn (fn [state]
-                                        (or (:ended (:end-run @state))
-                                            (pos? (:position (:run @state)))
-                                            (check-for-empty-server state)))})
-              (cond
-                (or (check-for-empty-server state)
-                    (:ended (:end-run @state)))
-                (handle-end-run state side eid)
-                (and (not (get-in @state [:run :next-phase]))
-                     (get-in @state [:run :jack-out-after-pass]))
-                (wait-for (jack-out state :runner (make-eid state))
-                          (if (or (check-for-empty-server state)
-                                  (:ended (:end-run @state)))
-                            (handle-end-run state side eid)
-                            (effect-completed state side eid)))))))
+                        {:cancel-fn (fn [state]
+                                      (or (check-for-empty-server state)
+                                          (:ended (:end-run @state))
+                                          (get-in @state [:run :next-phase])))})
+            (cond
+              ;; end run
+              (or (check-for-empty-server state)
+                  (:ended (:end-run @state)))
+              (handle-end-run state side eid)
+              ;; phase changed
+              (get-in @state [:run :next-phase])
+              (start-next-phase state side eid)
+              ;; go to Success phase
+              :else (do (set-next-phase state :success)
+                        (start-next-phase state side eid)))))
 
-(defmethod continue :approach-server
+(defmethod continue :movement
   [state side _]
   (if-not (get-in @state [:run :no-action])
-    (do (when (= :corp side) (system-msg state side "has no further action"))
-        (swap! state assoc-in [:run :no-action] side))
-    (do (if (get-in @state [:run :corp-phase-43])
-          (set-next-phase state :corp-phase-43)
-          (set-next-phase state :access-server))
-        (start-next-phase state side nil))))
+    (do (swap! state assoc-in [:run :no-action] side)
+        (when (= :runner side)
+          (system-msg state side "will continue the run")))
+    (let [eid (make-phase-eid state nil)]
+      (cond (or (check-for-empty-server state)
+                (:ended (:end-run @state)))
+            (handle-end-run state side eid)
+            (pos? (get-in @state [:run :position]))
+            (do (set-next-phase state :approach-ice)
+                (start-next-phase state side eid))
+            :else (approach-server state side eid)))))
 
-(defmethod start-next-phase :corp-phase-43
-  [state _ _]
-  (set-phase state :corp-phase-43)
-  (system-msg state :corp "wants to act before the run is successful"))
-
-(defmethod continue :corp-phase-43
+(defmethod start-next-phase :success
   [state side _]
-  (if-not (get-in @state [:run :no-action])
-    (swap! state assoc-in [:run :no-action] side)
-    (if-not (:ended (:end-run @state))
-      (do (set-next-phase state :access-server)
-          (start-next-phase state side nil))
-      (handle-end-run state side (make-phase-eid state nil)))))
-
-(defmethod start-next-phase :access-server
-  [state side _]
-  (set-phase state :access-server)
+  (set-phase state :success)
   (if (check-for-empty-server state)
     (handle-end-run state side (make-phase-eid state nil))
     (successful-run state :runner)))
 
 (defmethod start-next-phase :default
   [state _ _]
-  (when-not (= :access-server (:phase (:run @state)))
+  (when-not (= :success (:phase (:run @state)))
     (.println *err* (with-out-str
                       (print-stack-trace
                         (Exception. "no phase found and not accessing cards")
@@ -481,13 +466,13 @@
   ([state side server] (redirect-run state side server nil))
   ([state side server phase]
    (when (and (:run @state)
-              (not= :access-server (:phase (:run @state))))
+              (not= :success (:phase (:run @state))))
      (let [dest (server->zone state server)
            num-ice (count (get-in (:corp @state) (conj dest :ices)))
            phase (if (= phase :approach-ice)
                    (if (pos? num-ice)
                      :approach-ice
-                     :approach-server)
+                     :movement)
                    phase)]
        (swap! state update :run
               assoc
@@ -514,11 +499,10 @@
   [state card ability props]
   (let [ability {:card card
                  :mandatory (:mandatory props)
-                 :can-access (:can-access props)
                  :ability ability}]
     (swap! state update-in [:run :run-effects] conj ability)))
 
-(defn successful-run-replace-access
+(defn successful-run-replace-breach
   [props]
   (let [ability (:ability props)
         attacked-server (:target-server props)
@@ -537,17 +521,16 @@
 
 (defn choose-replacement-ability
   [state handlers]
-  (let [can-access (:can-access (:run @state))
-        mandatory (some :mandatory handlers)
+  (let [mandatory (some :mandatory handlers)
         titles (into [] (keep #(get-in % [:card :title]) handlers))
         eid (make-phase-eid state nil)]
     (cond
       ;; If you can't access, there's nothing to replace
-      (not can-access)
-      (run-cleanup state :runner eid)
+      (:prevent-access (:run @state))
+      (handle-end-run state :runner eid)
       ;; Otherwise, if there's no handlers, access the cards
       (zero? (count titles))
-      (wait-for (do-access state :runner (make-eid state eid) (get-in @state [:run :server]))
+      (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
                 (handle-end-run state :runner eid))
       ;; If there's only 1 handler and it's mandatory
       ;; just execute it
@@ -557,29 +540,22 @@
             card (:card chosen)]
         (system-msg state :runner (str "uses the replacement effect from " (:title card)))
         (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
-                  (when-not (:can-access chosen)
-                    (swap! state assoc-in [:run :can-access] false))
-                  (choose-replacement-ability state nil)))
-      ;; there are available handlers
-      ;; checking for :can-access happens in :choices
+                  (handle-end-run state :runner eid)))
+      ;; there are multiple handlers
       (pos? (count titles))
       (resolve-ability
         state :runner
-        {:prompt "Choose an access replacement ability"
-         :choices (if mandatory titles (conj titles "Access cards"))
+        {:prompt "Choose a breach replacement ability"
+         :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
                             ability (:ability chosen)
                             card (:card chosen)]
                         (if chosen
                           (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
                               (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
-                                        (when-not (:can-access chosen)
-                                          (swap! state assoc-in [:run :can-access] false))
-                                        (let [remaining (when (:can-access (:run @state))
-                                                          (remove-once #(= target (get-in % [:card :title])) handlers))]
-                                          (choose-replacement-ability state remaining))))
-                          (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
-                              (wait-for (do-access state :runner (make-eid state eid) (get-in @state [:run :server]))
+                                        (handle-end-run state :runner eid)))
+                          (do (system-msg state :runner (str "chooses to breach " (zone->name (:server (:run @state))) " instead of use a replacement effect"))
+                              (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
                                         (handle-end-run state :runner eid))))))}
         nil nil)
       ;; Just in case
@@ -587,12 +563,13 @@
       (run-cleanup state :runner eid))))
 
 (defn prevent-access
-  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
+  "Prevents the runner from accessing cards or breaching the server this run.
+   This will cancel any run effects and not trigger breach/access routines."
   [state _]
   (swap! state assoc-in [:run :prevent-access] true))
 
 (defn complete-run
-  "This does all of the access related stuff"
+  "This does all of the breach related stuff"
   [state side]
   (let [eid (make-phase-eid state nil)]
     (if (:ended (:end-run @state))
@@ -601,23 +578,23 @@
             server (:server the-run)
             replacement-effects (:run-effects the-run)]
         (cond
-          ;; Prevented from accessing anything
+          ;; Prevented from breaching
           (:prevent-access the-run)
           (resolve-ability
             state :runner eid
-            {:prompt "You are prevented from accessing any cards this run."
+            {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
-             :effect (effect (system-msg :runner "is prevented from accessing any cards this run")
+             :effect (effect (system-msg :runner (str "is prevented from breaching " (zone->name server) " this run."))
                              (handle-end-run eid))}
             nil nil)
 
-          ;; Any number of replace-access effects
+          ;; Any number of replace-breach effects
           (pos? (count replacement-effects))
           (choose-replacement-ability state replacement-effects)
 
-          ;; No replace-access effects
+          ;; No replace-breach effects
           :else
-          (wait-for (do-access state side (make-eid state eid) server)
+          (wait-for (breach-server state side (make-eid state eid) server)
                     (handle-end-run state side eid)))))))
 
 (defn- register-successful-run
@@ -640,13 +617,6 @@
     (complete-run state side)
     (wait-for (register-successful-run state side (make-phase-eid state nil) (get-in @state [:run :server]))
               (complete-run state side))))
-
-(defn corp-phase-43
-  "The corp indicates they want to take action after runner hits Successful Run, before access."
-  [state side _]
-  (swap! state update-in [:run :corp-phase-43] not)
-  (when-not (= :corp (get-in @state [:run :no-action]))
-    (continue state side nil)))
 
 (defn end-run-prevent
   [state _]
@@ -797,7 +767,8 @@
         (do (swap! state assoc-in [:end-run :ended] true)
             (when (:run @state)
               (prevent-access state side))
-            (if (get-current-encounter state)
+            (if (and (get-current-encounter state)
+                     (not (:ending (get-current-encounter state))))
               (encounter-ends state side eid)
               (effect-completed state side eid)))
         :else (effect-completed state side eid)))

@@ -463,7 +463,7 @@
       (is (= 3 (:click (get-runner))))
       (rez state :corp ichi)
       (is (= 2 (:credit (get-corp))) "Paid only 2c to rez Ichi; reduction of 3c")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)
       (run-on state :hq)
       (is (= 2 (:click (get-runner))))
@@ -1393,12 +1393,7 @@
     (play-from-hand state :corp "Ice Wall" "Server 1")
     (take-credits state :corp)
     (run-on state "Server 1")
-    ;; ice wall 1
-    (run-continue state)
-    ;; ice wall 2
-    (run-continue state)
-    ;; server
-    (run-continue state)
+    (run-continue-until state :success)
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
@@ -4385,7 +4380,6 @@
       (run-empty-server state :archives)
       (click-prompt state :runner "News Team")
       (click-prompt state :runner "Take 2 tags")
-      (click-prompt state :runner "Space Camp")
       (click-prompt state :corp "Yes")
       (click-card state :corp (get-content state :remote1 0))
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Agenda advanced once from Space Camp")

@@ -234,8 +234,6 @@
   [:server
    :position
    :corp-auto-no-action
-   :jack-out
-   :jack-out-after-pass
    :cannot-jack-out
    :phase
    :next-phase

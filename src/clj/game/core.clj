@@ -70,16 +70,15 @@
    access-card
    access-cost
    access-cost-bonus
-   access-count
    access-end
    access-helper-archives
    access-helper-hq
    access-helper-rd
    access-helper-remote
    access-non-agenda
+   breach-server
    clean-access-args
    choose-access
-   do-access
    facedown-cards
    faceup-accessible
    get-all-content
@@ -271,6 +270,7 @@
 
 (import-vars
   [game.core.def-helpers
+   breach-access-bonus
    combine-abilities
    corp-rez-toast
    defcard
@@ -278,6 +278,7 @@
    do-meat-damage
    do-net-damage
    make-recurring-ability
+   offer-jack-out
    reorder-choice
    trash-on-empty
    corp-recur])
@@ -685,7 +686,6 @@
    check-for-empty-server
    complete-run
    continue
-   corp-phase-43
    encounter-ends
    end-run
    end-run-prevent
@@ -704,7 +704,7 @@
    set-phase
    start-next-phase
    successful-run
-   successful-run-replace-access
+   successful-run-replace-breach
    toggle-auto-no-action
    total-cards-accessed
    total-run-cost])

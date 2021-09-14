@@ -525,7 +525,7 @@
                    :not-equal {:effect (effect (register-floating-effect
                                                  card
                                                  {:type :corp-choose-hq-access
-                                                  :duration :end-of-access
+                                                  :duration :end-of-run
                                                   :value true})
                                                (effect-completed eid))}}}]})
 
@@ -1336,7 +1336,8 @@
   (letfn [(put-back-counter [state side card]
             (update! state side (assoc-in card [:counter :agenda] (+ 1 (get-counters card :agenda)))))
           (choose-swap [to-swap]
-            {:prompt (str "Choose a card in HQ to swap with " (:title to-swap))
+            {:async true
+             :prompt (str "Choose a card in HQ to swap with " (:title to-swap))
              :choices {:not-self true
                        :card #(and (corp? %)
                                    (in-hand? %)
@@ -1346,17 +1347,22 @@
                                          (asset? %)
                                          (upgrade? %))))}
              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
-             :effect (effect (swap-cards to-swap target))
-             :cancel-effect (effect (put-back-counter card))})
+             :effect (effect (swap-cards to-swap target)
+                             (continue-ability :runner (offer-jack-out) card nil))
+             :cancel-effect (effect (put-back-counter card)
+                                    (effect-completed eid))})
           (choose-card [run-server]
-            {:waiting-prompt "Corp to make a decision"
+            {:async true
              :prompt "Choose a card in or protecting the attacked server."
              :choices {:card #(= (first run-server) (second (get-zone %)))}
              :effect (effect (continue-ability (choose-swap target) card nil))
-             :cancel-effect (effect (put-back-counter card))})]
+             :cancel-effect (effect (put-back-counter card)
+                                    (effect-completed eid))})]
     {:on-score {:silent (req true)
                 :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 3)))}
-     :abilities [{:cost [:agenda 1]
+     :abilities [{:async true
+                  :waiting-prompt "Corp to make a decision"
+                  :cost [:agenda 1]
                   :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                   :label "swap card in HQ with installed card"
                   :req (req run)

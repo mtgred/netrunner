@@ -22,7 +22,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Enigma")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Enigma")
     (is (find-card "Abagnale" (:discard (get-runner))) "Abagnale is trashed")))
 
 (deftest adept
@@ -51,6 +51,7 @@
       (card-ability state :runner (refresh adept) 0)
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh iw)))) "Broke a barrier subroutine")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state :rd)
       (rez state :corp cobra)
@@ -76,7 +77,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")))
+      (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")))
   (testing "Can only be used once per turn. #5032"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -91,7 +92,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+      (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
@@ -137,6 +138,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
       (rez state :corp (get-ice state :rd 0))
@@ -226,6 +228,7 @@
       (click-prompt state :runner "Do 1 brain damage")
       (click-prompt state :runner "Done")
       (is (= 1 (count (filter :broken (:subroutines (refresh zed1))))) "The subroutine is broken")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 1 (get-strength (refresh alias))) "Drops back down to base strength on run end")
       (run-on state :remote1)
@@ -289,6 +292,7 @@
         (card-ability state :runner (refresh amina) 0)
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -548,11 +552,13 @@
       (run-on state :archives)
       (run-continue state)
       (is (= 3 (get-strength (refresh berserker))) "Berserker gains 1 strength from Ice Wall")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 2 (get-strength (refresh berserker))) "Berserker strength resets at end of run")
       (run-on state :rd)
       (run-continue state)
       (is (= 7 (get-strength (refresh berserker))) "Berserker gains 5 strength from Hive")
+      (run-continue state :movement)
       (run-jack-out state)
       (is (= 2 (get-strength (refresh berserker))) "Berserker strength resets at end of run")
       (run-on state :hq)
@@ -821,6 +827,7 @@
           -1 (:credit (get-runner))
           "No credit gain from Bukhgalter for breaking with only Mimic"
           (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -832,6 +839,7 @@
           -1 (:credit (get-runner))
           "No credit gain from Bukhgalter"
           (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -860,6 +868,7 @@
           (+ 2 -1) (:credit (get-runner))
           "2 credits gained from Bukhgalter"
           (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -887,6 +896,7 @@
         (card-ability state :runner (refresh bukhgalter) 0)
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -896,6 +906,7 @@
           -1 (:credit (get-runner))
           "No credit gain from Bukhgalter"
           (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-continue state :movement)
         (run-jack-out state)))))
 
 (deftest buzzsaw
@@ -1112,16 +1123,19 @@
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run")
         (is (empty? (:prompt (get-runner))) "Broke all subroutines on Ice Wall")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Enigma")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Rototurret")
+        (run-continue state :movement)
         (run-jack-out state))
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1132,6 +1146,7 @@
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Ice Wall")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
@@ -1139,11 +1154,13 @@
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
         (is (empty? (:prompt (get-runner))) "Broke all subroutines on Engima")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Rototurret")
+        (run-continue state :movement)
         (run-jack-out state))
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1154,11 +1171,13 @@
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Ice Wall")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Enigma")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
         (run-continue state)
@@ -1185,6 +1204,7 @@
         (run-continue state)
         (is (= 1 (get-counters (refresh chisel) :virus)))
         (is (refresh iw) "Ice Wall still around, just at 0 strength")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state "HQ")
         (run-continue state)
@@ -1323,7 +1343,7 @@
             knobkierie (get-hardware state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
-        (run-continue state :access-server)
+        (run-continue state :success)
         (click-prompt state :runner "Knobkierie")
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
@@ -1341,7 +1361,7 @@
             knobkierie (get-hardware state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
-        (run-continue state :access-server)
+        (run-continue state :success)
         (click-prompt state :runner "Conduit")
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
@@ -1423,9 +1443,7 @@
             enig (get-ice state :hq 1)
             cor (get-program state 0)]
         (is (= 2 (get-counters (refresh cor) :virus)) "Cordyceps was installed with 2 virus tokens")
-        (run-continue state)
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :success)
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh enig))
         (click-card state :runner (refresh iw))
@@ -1451,8 +1469,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Cordyceps")
       (run-on state "HQ")
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
@@ -1467,9 +1484,7 @@
       (core/add-counter state :runner (get-program state 0) :virus -2)
       (is (= 0 (get-counters (get-program state 0) :virus)) "Has no virus tokens")
       (run-on state "HQ")
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :success)
       (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "No prompt with no virus counters")))
@@ -1486,9 +1501,7 @@
       (core/add-counter state :runner (get-program state 0) :virus -2)
       (play-from-hand state :runner "Hivemind")
       (run-on state "HQ")
-      (run-continue state)
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :success)
       (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= "Choose ice protecting this server" (:msg (prompt-map :runner))))
@@ -1657,6 +1670,7 @@
       (click-prompt state :runner "Trace 3 - Trash a virus")
       (click-prompt state :runner "Done")
       (is (= 2 (count (filter :broken (:subroutines (get-ice state :hq 0))))) "Can break subs on the right server")
+      (run-continue state :movement)
       (run-jack-out state))
     (let [cc (get-program state 0)]
       (run-on state :rd)
@@ -1876,7 +1890,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "DaVinci")
       (run-on state "HQ")
-      (run-continue state)
       (changes-val-macro
         0 (get-counters (get-program state 0) :power)
         "DaVinci does not gain counter on unsuccessful run"
@@ -1926,7 +1939,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Ice Wall")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
     (is (find-card "Demara" (:discard (get-runner))) "Demara is trashed")))
 
 (deftest deus-x
@@ -2255,6 +2268,7 @@
           (click-card state :runner "Trickster Taka")
           (click-card state :runner "Trickster Taka"))
         (is (zero? (get-counters (get-resource state 0) :credit)) "Taka has been used")
+        (run-continue state :movement)
         (run-jack-out state)
         (is (nil? (get-run)))
         (is (empty? (:prompt (get-corp))))
@@ -2338,7 +2352,7 @@
     (play-from-hand state :runner "Expert Schedule Analyzer")
     (card-ability state :runner (get-program state 0) 0)
     (run-continue state)
-    (is (= "Choose an access replacement ability" (:msg (prompt-map :runner)))
+    (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner)))
         "Replacement effect is optional")
     (click-prompt state :runner "Expert Schedule Analyzer")
     (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
@@ -2517,7 +2531,7 @@
         (run-continue state)
         (is (= "Pay 1 [Credits] to bypass Ice Wall?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
-        (is (= :approach-server (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
+        (is (= :movement (:phase (get-run))) "Femme Fatale has bypassed Ice Wall"))))
   (testing "Bypass leaves if uninstalled"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2663,6 +2677,7 @@
         (card-ability state :runner gh1 0)
         (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall has no unbroken subroutines")
         (is (refresh gh1) "Grappling Hook isn't trashed")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :remote1)
         (rez state :corp le)
@@ -2672,6 +2687,7 @@
         (click-prompt state :runner "End the run")
         (is (= 2 (count (filter :broken (:subroutines (refresh le))))) "Little Engine has 2 of 3 subroutines broken")
         (is (nil? (refresh gh1)) "Grappling Hook is now trashed")
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state :remote1)
         (run-continue state)
@@ -3200,7 +3216,7 @@
             hg (get-resource state 0)
             sg (get-program state 1)]
         (card-ability state :runner sg 0)
-        (run-continue state)
+        (run-continue-until state :approach-ice)
         (rez state :corp (get-ice state :rd 0))
         (card-ability state :runner hg 0)
         (run-continue state)
@@ -3375,6 +3391,7 @@
         (click-prompt state :runner "End the run")
         (is (nil? (get-ice state :hq 0)) "Enigma has been returned to HQ")
         (is (find-card "Enigma" (:hand (get-corp))) "Enigma has been returned to HQ")
+        (core/continue state :corp nil)
         (run-jack-out state)
         (take-credits state :runner)
         (play-from-hand state :corp "Enigma" "HQ")
@@ -3530,7 +3547,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 2)
-    (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
     (is (find-card "Lustig" (:discard (get-runner))) "Lustig is trashed")))
 
 (deftest magnum-opus
@@ -3696,7 +3713,7 @@
           (click-prompt state :runner "End the run"))))
     (testing "discount after successful run"
       (do-game state
-        (run-continue state :approach-server)
+        (run-continue state :movement)
         (run-continue state nil)
         (run-on state :hq)
         (run-continue state :encounter-ice)
@@ -3729,7 +3746,7 @@
         (card-ability state :runner mass-driver 0)
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
-        (run-continue state)
+        (run-continue-until state :approach-ice eula)
         (rez state :corp eula)
         (run-continue state)
         (fire-subs state (refresh eula))
@@ -3759,7 +3776,7 @@
         (card-ability state :runner mass-driver 0)
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
-        (run-continue state)
+        (run-continue-until state :approach-ice eula)
         (is (= 1 (count (:discard (get-corp)))) "Enigma is trashed")
         (rez state :corp eula)
         (run-continue state)
@@ -3790,6 +3807,7 @@
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh maven)})
         (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
+        (core/continue state :corp nil)
         (run-jack-out state)
         (run-on state "HQ")
         (run-continue state)
@@ -3817,6 +3835,7 @@
           "Paid 7 to fully break Anansi with Mayfly"
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)}))
         (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")
+        (core/continue state :corp nil)
         (run-jack-out state)
         (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends")))))
 
@@ -3837,6 +3856,7 @@
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
         (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Mimic to break all 2 subroutines on Pup") "Correct log with autopump ability")
+        (core/continue state :corp nil)
         (run-jack-out state)
         (is (zero? (:credit (get-runner))) "Runner spent 2 credits to break Pup")
         (is (= 4 (count (:hand (get-runner)))) "Runner still has 4 cards in hand"))))
@@ -3874,6 +3894,7 @@
         (is (= 2 (count (:abilities (refresh mimic)))) "Auto pump and break ability on Mimic is available")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
         (is (second-last-log-contains? state "Runner pays 3 \\[Credits\\] to use Mimic to break all 3 subroutines on Zed 2.0") "Correct log with autopump ability")
+        (core/continue state :corp nil)
         (run-jack-out state)
         (is (= 1 (:credit (get-runner))) "Runner spent 3 credits to break Zed 2.0")))))
 
@@ -4046,6 +4067,7 @@
         (click-card state :corp (find-card "Eli 1.0" (:hand (get-corp))))
         (click-prompt state :corp "HQ")
         (is (= 3 (get-strength (refresh nanotk))) "2 ice on HQ")
+        (run-continue-until state :movement)
         (run-jack-out state)
         (is (= 1 (get-strength (refresh nanotk))) "Back to default strength"))))
   (testing "Strength adjusts accordingly when run redirected to another server"
@@ -4067,6 +4089,7 @@
         (is (= 3 (get-strength (refresh nanotk))) "2 ice on HQ")
         (card-subroutine state :corp (refresh susanoo) 0)
         (is (= 2 (get-strength (refresh nanotk))) "1 ice on Archives")
+        (run-continue-until state :movement)
         (run-jack-out state)
         (is (= 1 (get-strength (refresh nanotk))) "Back to default strength")))))
 
@@ -4102,7 +4125,7 @@
     (run-on state "R&D")
     (run-continue state)
     (click-prompt state :runner "Yes")
-    (is (= 2 (:total (core/num-cards-to-access state :runner :rd nil))))))
+    (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))))))
 
 (deftest odore
   (testing "Basic test"
@@ -4261,7 +4284,8 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Vanilla"]}
-                 :runner {:deck [(qty "Paperclip" 2)]}})
+                 :runner {:deck [(qty "Paperclip" 2)]
+                          :credits 10}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
       (trash-from-hand state :runner "Paperclip")
@@ -4269,11 +4293,11 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (click-prompt state :runner "Yes") ; install paperclip
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :success)
       (is (not (:run @state)) "Run ended")
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
+      (run-continue state)
       (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
   (testing "firing on facedown ice shouldn't crash"
     (do-game
@@ -4301,12 +4325,13 @@
       (run-continue state)
       (click-prompt state :runner "No")
       (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       ;; we should get the prompt on a second ice even after denying the first
       (click-prompt state :runner "No")
       (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
+      (run-continue state :movement)
       (run-jack-out state)
       ;; Run again, make sure we get the prompt to install again
       (run-on state "Archives")
@@ -4722,6 +4747,7 @@
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
                            (click-card state :runner cl))
         (core/continue state :corp nil)
+        (run-continue state :approach-ice)
         (rez state :corp enig)
         (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
@@ -4732,6 +4758,7 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :hq)
+        (run-continue state :encounter-ice)
         (is (= 3 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose is not active")
         (card-ability state :runner (refresh penr) 0)
         (is (empty? (:prompt (get-runner))) "No cloak prompt because the ability to break barriers is not active anymore")))))
@@ -4757,12 +4784,11 @@
       (changes-val-macro 0 (:credit (get-runner))
                          "Can't use Peregrine on a barrier"
                          (card-ability state :runner per 2))
-      (run-continue state)
-      (run-continue state)
+      (run-continue-until state :approach-ice)
       (changes-val-macro 0 (:credit (get-runner))
                          "Can't use Peregrine on an unrezzed code gate"
                          (card-ability state :runner per 2))
-      (run-continue state)
+      (run-continue-until state :encounter-ice bw1)
       (changes-val-macro -3 (:credit (get-runner))
                          "Paid 3 to pump strength"
                          (card-ability state :runner per 1))
@@ -5093,6 +5119,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
       (rez state :corp (get-ice state :rd 0))
@@ -5129,6 +5156,7 @@
       (card-ability state :runner (refresh sage) 0)
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh iw)))) "Broke a barrier subroutine")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state :rd)
       (rez state :corp engima)
@@ -5179,6 +5207,7 @@
       (click-prompt state :runner "Trash a program")
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (refresh cobra)))) "Broke a sentry subroutine")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state :rd)
       (rez state :corp enigma)
@@ -5375,7 +5404,7 @@
     (do-game
       (new-game {:runner {:hand ["Sneakdoor Beta"]}
                  :corp {:hand ["Rototurret" "Hedge Fund"]
-                        :discard ["Hedge Fund"]}})
+                        :discard ["Send a Message"]}})
       (play-from-hand state :corp "Rototurret" "Archives")
       (let [roto (get-ice state :archives 0)]
         (rez state :corp roto)
@@ -5385,13 +5414,13 @@
           (card-ability state :runner sb 0)
           (run-continue state)
           (fire-subs state (refresh roto))
-          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
+          (is (= :select (prompt-type :corp)) "Corp has a prompt to choose a program to trash")
           (click-card state :corp "Sneakdoor Beta")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
           (run-on state "Archives")
           (run-continue state)
-          (run-continue state)
-          (is (= :approach-server (:phase (get-run))) "Run has bypassed Rototurret")
+          (run-continue state :movement)
+          (run-continue state :success)
           (is (= :archives (get-in @state [:run :server 0])) "Run continues on Archives"))))))
 
 (deftest snitch
@@ -5422,7 +5451,7 @@
       (play-from-hand state :runner "Snitch")
       (run-on state "HQ")
       (is (empty? (:prompt (get-runner))) "No option to jack out")
-      (run-continue state)
+      (run-continue-until state :movement)
       (run-jack-out state)))
   (testing "Doesn't work if there is no ice"
     (do-game
@@ -5461,7 +5490,7 @@
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "End the run")
         (is (= 5 (get-strength (refresh snow))) "Broke 3 subs, gained 3 more strength")
-        (run-continue state)
+        (run-continue-until state :approach-ice fw)
         (rez state :corp fw)
         (run-continue state)
         (is (= 4 (get-strength (refresh snow))) "Has +3 strength until end of run; lost 1 per-encounter boost")
@@ -5659,6 +5688,7 @@
       (let [surf (get-program state 0)]
         (card-ability state :runner surf 0)
         (click-card state :runner (get-ice state :hq 0))
+        (run-continue state :movement)
         (run-jack-out state)
         (run-on state "HQ")
         (rez state :corp (get-ice state :hq 1))
@@ -5696,7 +5726,7 @@
         (click-prompt state :runner "Done")
         (is (empty? (:prompt (get-runner))) "No prompt because not all subs were broken")
         (is (= 0 (get-counters (refresh tako) :power)) "No counter gained because not all subs were broken")
-        (run-continue state)
+        (run-continue-until state :approach-ice icew)
         (rez state :corp icew)
         (run-continue state)
         (card-ability state :runner corr 0)
@@ -5732,8 +5762,7 @@
         (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
         (card-ability state :runner tako 0)
         (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :success)
         (is (= 2 (get-strength (refresh corr))) "Corroder returned to normal strength")))))
 
 (deftest tranquilizer
@@ -6051,6 +6080,7 @@
         (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
         (card-ability state :runner utae 1)
         (is (= credits (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources"))
+      (run-continue state :movement)
       (run-jack-out state)
       (core/gain state :runner :click 2)
       (dotimes [_ 3]
@@ -6105,6 +6135,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (is (empty? (:prompt (get-runner))) "No break prompt")
+      (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
       (rez state :corp (get-ice state :rd 0))

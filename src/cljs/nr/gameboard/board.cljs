@@ -971,6 +971,8 @@
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
+                                  (= "movement" (:phase run))
+                                  "movement"
                                   (= "approach-ice" (:phase run))
                                   "approach"
                                   (= "encounter-ice" (:phase run))
@@ -1343,10 +1345,8 @@
   {"initiation" (tr [:game.initiation "Initiation"])
    "approach-ice" (tr [:game.approach-ice "Approach ice"])
    "encounter-ice" (tr [:game.encounter-ice "Encounter ice"])
-   "pass-ice" (tr [:game.pass-ice "Pass ice"])
-   "approach-server" (tr [:game.approach-server "Approach server"])
-   "corp-phase-43" (tr [:game.corp-phase-43 "Corp phase 4.3"])
-   "access-server" (tr [:game.access-server "Access server"])})
+   "movement" (tr [:game.movement "Movement"])
+   "success" (tr [:game.success "Success"])})
 
 (defn phase->next-phase-title
   ([run] (phase->next-phase-title (:phase @run) (:position @run)))
@@ -1355,16 +1355,12 @@
      "initiation" (tr [:game.approach-ice "Approach ice"])
      "approach-ice" (if (rezzed? (get-current-ice))
                       (tr [:game.encounter-ice "Encounter ice"])
-                      (if (> position 1)
-                        (tr [:game.approach-ice "Approach ice"])
-                        (tr [:game.approach-server "Approach server"])))
-     "encounter-ice" (tr [:game.pass-ice "Pass ice"])
-     "pass-ice" (if (zero? position)
-                  (tr [:game.approach-server "Approach server"])
+                      (tr [:game.movement "Movement"]))
+     "encounter-ice" (tr [:game.movement "Movement"])
+     "movement" (if (zero? position)
+                  (tr [:game.success "Success"])
                   (tr [:game.approach-ice "Approach ice"]))
-     "approach-server" (tr [:game.access-server "Access server"])
-     "corp-phase-43" (tr [:game.access-server "Access server"])
-     "access-server" (tr [:game.end-of-run "End of run"])
+     "success" (tr [:game.run-ends "Run ends"])
      ;; Error
      (tr [:game.no-current-run "No current run"]))))
 
@@ -1400,24 +1396,15 @@
                          (not (:fired %))
                          (:resolve % true))
                    (:subroutines ice)))
-        #(send-command "unbroken-subroutines" {:card ice})]
-
-       (= "approach-server" (:phase @run))
-       [checkbox-button
-        (tr [:game.action-access "Action before access"])
-        (tr [:game.action-access "Action before access"])
-        (:corp-phase-43 @run)
-        #(send-command "corp-phase-43")])
+        #(send-command "unbroken-subroutines" {:card ice})])
 
      (if @encounters
        ;;Encounter continue button
        (let [pass-ice? (and (= "encounter-ice" (:phase @run))
-                            (= 1 (:encounter-count @encounters)))
-             same-server? (= (-> ice :zone second) (-> @run :server first))
-             phase (if same-server? (:phase @run) "pass-ice")]
+                            (= 1 (:encounter-count @encounters)))]
          [cond-button
           (if pass-ice?
-            (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title phase (:position @run)))
+            (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))
             (tr [:game.continue "Continue"]))
           (not= "corp" (:no-action @encounters))
           #(send-command "continue")])
@@ -1428,16 +1415,13 @@
           (tr [:game.no-further "No further actions"])
           (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run)))
         (and (not= "initiation" (:phase @run))
-             (not= "pass-ice" (:phase @run))
-             (not= "access-server" (:phase @run))
+             (not= "success" (:phase @run))
              (not= "corp" (:no-action @run)))
         #(send-command "continue")])
 
      (when (and @run
                 (<= (:encounter-count @encounters) 1)
-                (not= "approach-server" (:phase @run))
-                (not= "corp-phase-43" (:phase @run))
-                (not= "access-server" (:phase @run)))
+                (not= "success" (:phase @run)))
        [checkbox-button
         (tr [:game.stop-auto-pass "Stop auto-passing priority"])
         (tr [:game.auto-pass "Auto-pass priority"])
@@ -1449,9 +1433,8 @@
   (let [phase (:phase @run)
         next-phase (:next-phase @run)
         ice (get-current-ice)
-        pass-ice? (and (= "encounter-ice" (:phase @run))
-                       (= 1 (:encounter-count @encounters)))
-        same-server? (= (-> ice :zone second) (-> @run :server first))]
+        pass-ice? (and (= "encounter-ice" phase)
+                       (= 1 (:encounter-count @encounters)))]
     [:div.panel.blue-shade
      (when @encounters
        [:<>
@@ -1473,7 +1456,7 @@
              (not (:no-action @run)))
         #(send-command "start-next-phase")]
 
-       (and (not (:next-phase @run))
+       (and (not next-phase)
             (not (zero? (:position @run)))
             (not @encounters))
        [cond-button
@@ -1482,8 +1465,9 @@
         #(send-command "continue")]
 
        (and (zero? (:position @run))
-            (not @encounters))
-       [cond-button (tr [:game.access-server "Access server"])
+            (not @encounters)
+            (= "movement" phase))
+       [cond-button (tr [:game.breach-server "Breach server"])
         (not= "runner" (:no-action @run))
         #(send-command "continue")])
 
@@ -1498,32 +1482,22 @@
         #(send-command "system-msg"
                        {:msg (str "indicates to fire all unbroken subroutines on " (:title ice))})])
 
-     (when (and (not @encounters)
-                (or (= "approach-server" (:phase @run))
-                    (= "approach-ice" (:phase @run))))
-       [cond-button
-        (if (:jack-out @run) (tr [:game.jack-out "Jack Out"]) (tr [:game.undo-click "Undo click"]))
-        (not (:cannot-jack-out @run))
-        (if (:jack-out @run)
-          #(send-command "jack-out")
-          #(send-msg (r/atom {:msg "/undo-click"})))])
-
      (when @encounters
        [cond-button
-        (cond (and pass-ice? same-server?) (tr [:game.pass-continue "Pass ice and continue"])
-              pass-ice? (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title "pass-ice" (:position @run)))
-              :else (tr [:game.continue "Continue"]))
-        (or (not= "runner" (:no-action @encounters))
-            (:jack-out-after-pass @run))
-        #(send-command "continue" (when pass-ice? {:jack-out false}))])
-
-     (when (and @encounters pass-ice? same-server?)
+        (if pass-ice? 
+          (str (tr [:game.continue-to "Continue to"]) " " (phase->next-phase-title run))
+          (tr [:game.continue "Continue"]))
+        (not= "runner" (:no-action @encounters))
+        #(send-command "continue")])
+     
+     (when (and @run
+                (not= "success" phase))
        [cond-button
-        (tr [:game.pass-jack "Pass ice and jack out"])
-        (and (not (:cannot-jack-out @run))
-             (or (not= "runner" (:no-action @encounters))
-                 (not (:jack-out-after-pass @run))))
-        #(send-command "continue" {:jack-out true})])]))
+        (tr [:game.jack-out "Jack Out"])
+        (and (= "movement" phase)
+             (not (:cannot-jack-out @run))
+             (not= "runner" (:no-action @run)))
+        #(send-command "jack-out")])]))
 
 (defn run-div
   [side run encounters]
