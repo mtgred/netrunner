@@ -3994,29 +3994,21 @@
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
       (is (empty? (:prompt (get-runner))) "No Reclaim prompt")))
-  (testing "Can install trashed card"
+  (testing "Cannot use if no valid targets in Heap already"
     (do-game
       (new-game {:runner {:deck ["Reclaim" "Mimic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Reclaim")
-      (is (empty? (get-program state)) "No programs installed")
-      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
       (card-ability state :runner (get-resource state 0) 0)
-      (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
-      (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
-      (is (= 1 (count (get-program state))) "1 Program installed")
-      (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
+      (is (empty? (:prompt (get-runner))) "No Reclaim prompt")))
   (testing "Can't afford to install card"
     (do-game
-      (new-game {:runner {:deck ["Reclaim" "Alpha"]}})
+      (new-game {:runner {:deck ["Reclaim" "Alpha" "Sure Gamble"]}})
       (take-credits state :corp)
+      (core/move state :runner (find-card "Alpha" (:hand (get-runner))) :discard)
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
-      (click-card state :runner (find-card "Alpha" (:hand (get-runner))))
-      (click-prompt state :runner "No install")
-      (is (empty? (get-program state)) "Did not install program")
-      (is (= 5 (:credit (get-runner))) "Runner did not spend credits")
-      (is (last-log-contains? state "uses Reclaim to search the heap, but does not find anything to install"))))
+      (is (empty? (:prompt (get-runner))) "No Reclaim prompt")))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp {:deck ["Blacklist"]}

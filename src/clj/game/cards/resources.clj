@@ -2126,7 +2126,15 @@
   {:abilities
    [{:async true
      :label "Install a program, piece of hardware, or virtual resource from your Heap"
-     :req (req (not (zone-locked? state :runner :discard)))
+     :req (req (and (not (zone-locked? state :runner :discard))
+                    (not (install-locked? state :runner))
+                    (not-empty (filter #(and (or (program? %)
+                                                 (hardware? %)
+                                                 (and (resource? %)
+                                                      (has-subtype? % "Virtual")))
+                                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
+                                                       [:credit (install-cost state side %)]))
+                                       (:discard runner)))))
      :cost [:click 1 :trash :trash-from-hand 1]
      :msg "install a program, piece of hardware, or virtual resource from the Heap"
      :effect
@@ -2134,24 +2142,17 @@
        (continue-ability
          {:async true
           :prompt "Choose a card to install"
-          :choices (req (let [choices (vec (sort-by
-                                            :title
-                                            (filter #(and (or (program? %)
-                                                              (hardware? %)
-                                                              (and (resource? %)
-                                                                   (has-subtype? % "Virtual")))
-                                                          (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
-                                                                    [:credit (install-cost state side %)]))
-                                                    (:discard runner))))]
-                          (if (empty? choices)
-                            ["No install"]
-                            choices)))
-          :msg (msg (if (= target "No install")
-                      (str "search the heap, but does not find anything to install")
-                      (str "install " (:title target) " from the heap")))
-          :effect (req (if (not= target "No install")
-                         (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)
-                         (effect-completed state side eid)))}
+          :choices (req (vec (sort-by
+                              :title
+                              (filter #(and (or (program? %)
+                                                (hardware? %)
+                                                (and (resource? %)
+                                                     (has-subtype? % "Virtual")))
+                                            (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
+                                                      [:credit (install-cost state side %)]))
+                                      (:discard runner)))))
+          :msg (msg "install " (:title target) " from the heap")
+          :effect (req (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil))}
          card nil))}]})
 
 (defcard "Red Team"
