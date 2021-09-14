@@ -146,7 +146,7 @@
                                :effect (effect (move target :hand)
                                                (continue-ability
                                                  (let [from (take 2 (get-in @state [:corp :deck]))]
-                                                   (if (pos? (count from))
+                                                   (when (pos? (count from))
                                                      (reorder-choice :corp :runner from '() (count from) from)))
                                                  card nil))}
                               card nil)))}]})

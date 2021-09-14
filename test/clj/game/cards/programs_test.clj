@@ -909,6 +909,24 @@
         (run-continue state :movement)
         (run-jack-out state)))))
 
+(deftest bug
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Anonymous Tip" 4)]}
+               :runner {:hand ["Bug"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Bug")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Anonymous Tip")
+    (changes-val-macro
+      -6 (:credit (get-runner))
+      "Runner uses Bug"
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "3"))
+    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to reveal Hedge Fund, Hedge Fund, Hedge Fund."))))
+
 (deftest buzzsaw
   ;; Buzzsaw
   (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

@@ -560,14 +560,30 @@
                 (strength-pump 2 4)))
 
 (defcard "Bug"
-  {:implementation "Can only pay to see last card drawn after multiple draws"
-   :req (req (some #{:hq} (:successful-run runner-reg)))
+  {:req (req (some #{:hq} (:successful-run runner-reg)))
    :events [{:event :corp-draw
              :optional
-             {:prompt "Pay 2 [Credits] to reveal card just drawn?"
-              :player :runner
-              :yes-ability {:cost [:credit 2]
-                            :msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))}}}]})
+             {:prompt "Use Bug?"
+              :req (req (< 1 (total-available-credits state :runner eid card)))
+              :yes-ability
+              {:prompt "How many cards do you want to reveal for 2 [Credits] each?"
+               :waiting-promt "Runner to use Bug"
+               :choices {:number (req (min (:count context)
+                                           (quot (total-available-credits state :runner eid card) 2)))}
+               :async true
+               :effect (req (let [cards (->> (:most-recent-drawn corp-reg)
+                                             (shuffle)
+                                             (keep #(find-cid (:cid %) (:hand corp)))
+                                             (take target))]
+                              (wait-for
+                                (pay state side (make-eid state eid) card [:credit (* 2 target)])
+                                (let [payment-str (:msg async-result)]
+                                  (wait-for
+                                    (reveal state side (make-eid state eid) cards)
+                                    (system-msg state side (str payment-str
+                                                                " to use Bug to reveal "
+                                                                (string/join ", " (map :title cards))))
+                                    (effect-completed state side eid))))))}}}]})
 
 (defcard "Bukhgalter"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
