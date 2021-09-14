@@ -2737,7 +2737,15 @@
       (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue-until state :movement)
-      (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo"))))
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))
+  (testing "Bogus prompt when no ice in hand"
+    (do-game
+     (new-game {:corp {:id "Mti Mwekundu: Life Improved"
+                       :deck [(qty "Hedge Fund" 5)]}})
+     (take-credits state :corp)
+     (run-empty-server state "HQ")
+     (is (= :waiting (:prompt-type (prompt-map :runner))) "Runner waiting on Mti ability")
+     (click-prompt state :corp "Carry on!"))))
 
 (deftest nasir-meidan-cyber-explorer
   ;; Nasir
