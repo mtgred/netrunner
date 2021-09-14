@@ -713,6 +713,7 @@
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                 (wait-for (corp-install state side ice server {:cost-bonus -4})
+                                          (remove-from-most-recent-drawn state ice)
                                           (continue-ability
                                             state side
                                             (when-not (= 1 (count ices))

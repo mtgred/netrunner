@@ -3779,7 +3779,7 @@
       (rez state :corp raman)
       (take-credits state :corp)
       (take-credits state :runner)
-      (card-ability state :corp raman 0)
+      (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
       (click-card state :corp (find-card "Fire Wall" (:discard (get-corp))))
       (is (= "Fire Wall" (-> (get-corp) :hand first :title)))

@@ -2,8 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [card-index corp? facedown? fake-identity? get-card get-zone
-                            has-subtype? ice? in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [card-index corp? facedown? fake-identity? get-card get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
@@ -14,19 +13,18 @@
     [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.say :refer [enforce-msg system-msg system-say]]
+    [game.core.say :refer [enforce-msg system-msg]]
     [game.core.servers :refer [is-remote? type->rig-zone]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
-    [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 
 ;; Helpers for move
 (defn- remove-old-card
   "Removes the old pre-move card from the game state, for use in move"
-  [state side {:keys [zone host title] :as card}]
+  [state side {:keys [zone host] :as card}]
   (doseq [s [:runner :corp]]
     (if host
       (remove-from-host state side card)
@@ -155,7 +153,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host cid] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -221,17 +219,12 @@
       (move state side card to))))
 
 ;;; Trashing
-(defn trash-resource-bonus
-  "Applies a cost increase of n to trashing a resource with the click action. (SYNC.)"
-  [state _ n]
-  (swap! state update-in [:corp :trash-cost-bonus] (fnil #(+ % n) 0)))
-
 (defn trash-prevent
   [state _ type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- prevent-trash-impl
-  [state side eid {:keys [zone type] :as card} oid {:keys [unpreventable cause game-trash] :as args}]
+  [state side eid {:keys [zone type] :as card} {:keys [unpreventable cause game-trash] :as args}]
   (if (and card (not-any? #{:discard} zone))
     (cond
       (and (not game-trash)
@@ -292,7 +285,7 @@
   ([state side eid cs args] (prevent-trash state side eid cs args []))
   ([state side eid cs args acc]
    (if (seq cs)
-     (wait-for (prevent-trash-impl state side (make-eid state eid) (get-card? state (first cs)) eid args)
+     (wait-for (prevent-trash-impl state side (make-eid state eid) (get-card? state (first cs)) args)
                (if-let [card async-result]
                  (prevent-trash state side eid (rest cs) args (conj acc card))
                  (prevent-trash state side eid (rest cs) args acc)))
@@ -368,7 +361,6 @@
                                    game-trash :game-trash
                                    (= side :corp) :corp-trash
                                    (= side :runner) :runner-trash)
-                     targets (concat trashlist (list {:cause cause}))
                      eid (make-result eid (mapv first moved-cards))]
                  (doseq [[card trash-effect] moved-cards
                          :when trash-effect]
@@ -431,6 +423,15 @@
       (swap-installed state side a b)
       (set-current-ice state))))
 
+(defn remove-from-most-recent-drawn
+  [state card]
+  (swap! state update-in [:corp :register :most-recent-drawn]
+         (fn [mrd] (remove-once #(= (:cid %) (:cid card)) mrd))))
+
+(defn add-to-most-recent-drawn
+  [state card]
+  (swap! state update-in [:corp :register :most-recent-drawn] conj card))
+
 (defn swap-cards
   "Swaps two cards when one or both aren't installed"
   [state side a b]
@@ -448,6 +449,10 @@
                  (or (ice? a)
                      (ice? b)))
         (set-current-ice state))
+      (when (in-hand? a) (remove-from-most-recent-drawn state a))
+      (when (in-hand? b) (remove-from-most-recent-drawn state b))
+      (when (in-hand? moved-a) (add-to-most-recent-drawn state moved-a))
+      (when (in-hand? moved-b) (add-to-most-recent-drawn state moved-b))
       [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas

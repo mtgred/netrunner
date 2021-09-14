@@ -561,6 +561,7 @@
 
 (import-vars
   [game.core.moving
+   add-to-most-recent-drawn
    as-agenda
    discard-from-hand
    flip-facedown
@@ -569,6 +570,7 @@
    mill
    move
    move-zone
+   remove-from-most-recent-drawn
    swap-agendas
    swap-cards
    swap-ice
@@ -576,10 +578,7 @@
    trash
    trash-cards
    trash-prevent
-   trash-resource-bonus
-   uninstall
-   update-current-ice-to-trash
-   update-installed-card-indices])
+   uninstall])
 
 (import-vars
   [game.core.optional

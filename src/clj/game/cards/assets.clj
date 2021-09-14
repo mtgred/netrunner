@@ -560,8 +560,8 @@
                                                          (rezzed? %))
                                                    (all-installed state :corp)))]
                             (draw-bonus state side dbs)))}
-            {:event :post-corp-draw
-             :req (req (first-event? state :corp :post-corp-draw))
+            {:event :corp-draw
+             :req (req (first-event? state :corp :corp-draw))
              :once :per-turn
              :once-key :daily-business-show-put-bottom
              :async true
@@ -577,10 +577,12 @@
                                          :card #(some (fn [c] (same-card? c %)) drawn)
                                          :all true}
                                :effect (req (doseq [c (reverse targets)]
-                                              (system-msg state side (str "uses Daily Business Show to add the "
-                                                                          (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
-                                                                          " card drawn to the bottom of R&D"))
-                                              (move state side c :deck)))}
+                                              (system-msg state side
+                                                          (str "uses Daily Business Show to add the "
+                                                               (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
+                                                               " card drawn to the bottom of R&D"))
+                                              (move state side c :deck)
+                                              (remove-from-most-recent-drawn state c)))}
                               card nil)))}]})
 
 (defcard "Daily Quest"
@@ -1700,38 +1702,42 @@
                   :effect (req (continue-ability state side (rez-ice 1) card nil))}]}))
 
 (defcard "Raman Rai"
-  {:abilities [{:once :per-turn
-                :label "Swap drawn card with card in Archives"
-                :req (req (and (pos? (:click corp))
-                               (not-empty (turn-events state side :corp-draw))))
-                :async true
-                :effect (effect
-                          (lose-clicks :corp 1)
-                          (continue-ability
-                            (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
-                              {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                               :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
-                               :async true
-                               :effect
-                               (effect
-                                 (continue-ability
-                                   (let [hq-card target
-                                         t (:type hq-card)]
-                                     {:show-discard true
-                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
-                                      :choices {:card #(and (corp? %)
-                                                            (= (:type %) t)
-                                                            (in-discard? %))}
-                                      :msg (msg "lose [Click], reveal " (:title hq-card)
-                                                " from HQ, and swap it for " (:title target)
-                                                " from Archives")
-                                      :async true
-                                      :effect (req (wait-for
-                                                     (reveal state side target)
-                                                     (swap-cards state side hq-card target)
-                                                     (effect-completed state side eid)))})
-                                   card nil))})
-                            card nil))}]})
+  {:events [{:event :corp-draw
+             :optional
+             {:prompt "Swap two cards?"
+              :req (req (and (pos? (:click corp))
+                             (not-empty (turn-events state side :corp-draw))))
+              :yes-ability
+              {:once :per-turn
+               :async true
+               :effect
+               (effect
+                 (lose-clicks :corp 1)
+                 (continue-ability
+                   (let [drawn (-> @state :corp :register :most-recent-drawn)]
+                     {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                      :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
+                      :async true
+                      :effect
+                      (effect
+                        (continue-ability
+                          (let [hq-card target
+                                t (:type hq-card)]
+                            {:show-discard true
+                             :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                             :choices {:card #(and (corp? %)
+                                                   (= (:type %) t)
+                                                   (in-discard? %))}
+                             :msg (msg "lose [Click], reveal " (:title hq-card)
+                                       " from HQ, and swap it for " (:title target)
+                                       " from Archives")
+                             :async true
+                             :effect (req (wait-for
+                                            (reveal state side hq-card target)
+                                            (swap-cards state side hq-card target)
+                                            (effect-completed state side eid)))})
+                          card nil))})
+                   card nil))}}}]})
 
 (defcard "Rashida Jaheem"
   (let [ability {:once :per-turn
