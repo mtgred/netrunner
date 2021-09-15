@@ -350,7 +350,9 @@
 
 (defcard "Chief Slee"
   {:events [{:event :end-of-encounter
-             :msg "add 1 power counter to Chief Slee"
+             :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
+             :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
+                        (str "add " (quantify unbroken-count "power counter") " to Chief Slee")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
                 :keep-open :while-5-power-tokens-left

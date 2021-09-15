@@ -641,25 +641,51 @@
 
 (deftest chief-slee
   ;; Chief Slee
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Chief Slee" "Hive"]
-                      :credits 10}
-               :runner {:deck [(qty "Sure Gamble" 5)]}})
-    (play-from-hand state :corp "Hive" "HQ")
-    (play-from-hand state :corp "Chief Slee" "New remote")
-    (take-credits state :corp)
-    (run-on state "HQ")
-    (let [slee (get-content state :remote1 0)
-          hive (get-ice state :hq 0)]
-      (rez state :corp slee)
-      (rez state :corp hive)
-      (run-continue state)
-      (fire-subs state hive)
-      (is (not (:run @state)) "Run has been ended")
-      (take-credits state :runner)
-      (card-ability state :corp slee 0)
-      (is (= 5 (count (:discard (get-runner)))) "Chief Slee should do 5 meat damage"))))
+  (testing "basic test"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Chief Slee" "Hive"]
+                       :credits 10}
+                :runner {:deck [(qty "Sure Gamble" 5)]}})
+     (play-from-hand state :corp "Hive" "HQ")
+     (play-from-hand state :corp "Chief Slee" "New remote")
+     (take-credits state :corp)
+     (run-on state "HQ")
+     (let [slee (get-content state :remote1 0)
+           hive (get-ice state :hq 0)]
+       (rez state :corp slee)
+       (rez state :corp hive)
+       (run-continue state)
+       (fire-subs state hive)
+       (is (not (:run @state)) "Run has been ended")
+       (take-credits state :runner)
+       (card-ability state :corp slee 0)
+       (is (= 5 (count (:discard (get-runner)))) "Chief Slee should do 5 meat damage"))))
+  (testing "Doesn't break when redirected by Mirāju #6043"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Chief Slee" "Mirāju" "Ice Wall"]
+                       :credits 10}
+                :runner {:hand ["Unity"]}})
+     (play-from-hand state :corp "Chief Slee" "New remote")
+     (play-from-hand state :corp "Mirāju" "HQ")
+     (play-from-hand state :corp "Ice Wall" "Archives")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Unity")
+     (let [unity (get-program state 0)
+           miraju (get-ice state :hq 0)
+           slee (get-content state :remote1 0)]
+       (run-on state "HQ")
+       (rez state :corp slee)
+       (rez state :corp miraju)
+       (run-continue state :encounter-ice)
+       (card-ability state :runner unity 0)
+       (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+       (run-continue state)
+       (click-prompt state :runner "No")
+       (is (nil? (:power (:counter (refresh slee)))) "Slee did not gain any Power Counters since Mirāju was broken")
+       (run-continue-until state :success)
+       (is (nil? (:power (:counter (refresh slee)))) "Slee did not gain any Power Counters for the rest of the run")))))
 
 (deftest city-surveillance
   ;; City Surveillance - Runner chooses to pay 1 credit or take 1 tag at start of their turn
