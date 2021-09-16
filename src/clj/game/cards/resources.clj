@@ -65,9 +65,8 @@
   [f]
   (let [selector (resolve f)
         descriptor (str f)]
-    {:abilities [{:req (req (and current-ice
+    {:abilities [{:req (req (and (get-current-encounter state)
                                  (rezzed? current-ice)
-                                 (= :encounter-ice (:phase run))
                                  (not (:broken (selector (:subroutines current-ice))))))
                   :break 1
                   :breaks "All"
@@ -244,9 +243,8 @@
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Derez a piece of ice currently being encountered"
                 :msg "derez a piece of ice currently being encountered and take 1 tag"
-                :req (req (and current-ice
+                :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))
                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
                 :cost [:trash]
                 :async true
@@ -1303,7 +1301,7 @@
 
 (defcard "Ice Carver"
   {:constant-effects [{:type :ice-strength
-                       :req (req (and (= :encounter-ice (:phase run))
+                       :req (req (and (get-current-encounter state)
                                       (same-card? current-ice target)))
                        :value -1}]})
 
@@ -1560,7 +1558,7 @@
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
-                :req (req (and (= :encounter-ice (:phase run))
+                :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)))
                 :msg (msg "bypass "
                           (:title current-ice)

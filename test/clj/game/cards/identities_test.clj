@@ -307,7 +307,31 @@
       (take-credits state :runner)
       (trash-resource state)
       (click-card state :corp (get-resource state 0))
-      (is (= "Xanadu" (:title (get-discarded state :runner 0)))))))
+      (is (= "Xanadu" (:title (get-discarded state :runner 0))))))
+  (testing "Tagged when encountering outermost ice on a different server than the attacked server"
+    (do-game
+     (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                       :deck [(qty "Hedge Fund" 5)]
+                       :hand ["Konjin" "Ice Wall" "Enigma"]
+                       :credits 10}})
+     (play-from-hand state :corp "Konjin" "HQ")
+     (play-from-hand state :corp "Enigma" "HQ")
+     (play-from-hand state :corp "Ice Wall" "R&D")
+     (take-credits state :corp)
+     (let [konjin (get-ice state :hq 0)
+           iw (get-ice state :rd 0)]
+       (rez state :corp konjin)
+       (rez state :corp iw)
+       (run-on state "HQ")
+       (run-continue-until state :encounter-ice konjin)
+       (is (not (is-tagged? state)) "Runner is not tagged while encountering Konjin")
+       (click-prompt state :corp "0 [Credits]")
+       (click-prompt state :runner "1 [Credits]")
+       (click-card state :corp iw)
+       (is (is-tagged? state) "Runner should be tagged while encountering Ice Wall")
+       (encounter-continue state)
+       (is (= :encounter-ice (:phase (get-run))) "Still encountering Konjin")
+       (is (not (is-tagged? state)) "Runner is no longer tagged")))))
 
 (deftest adam-compulsive-hacker
   ;; Adam

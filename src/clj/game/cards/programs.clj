@@ -248,7 +248,7 @@
                    pump
                    {:label (str "Derez " ice-type " being encountered")
                     :cost [:credit 2 :return-to-hand]
-                    :req (req (and (= :encounter-ice (:phase run))
+                    :req (req (and (get-current-encounter state)
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
@@ -354,8 +354,11 @@
                 (strength-pump 2 3)))
 
 (defcard "Alpha"
-  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (= (:position run) (count run-ices)))})
-                                (strength-pump 1 1 :end-of-encounter {:req (req (= (:position run) (count run-ices)))})]}))
+  (auto-icebreaker {:abilities [(break-sub
+                                 1 1 "All"
+                                 {:req (req (let [server-ice (:ices (card->server state current-ice))]
+                                              (same-card? current-ice (last server-ice))))})
+                                (strength-pump 1 1)]}))
 
 (defcard "Amina"
   (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
@@ -795,8 +798,8 @@
                                   (strength-pump 1 1)]})))
 
 (defcard "Crescentus"
-  {:abilities [{:req (req (and run
-                               (= :encounter-ice (:phase run))
+  {:abilities [{:req (req (and (get-current-encounter state)
+                               (rezzed? current-ice)
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
                 :cost [:trash]
@@ -1243,7 +1246,7 @@
 (defcard "Flashbang"
   (auto-icebreaker {:abilities [{:label "Derez a Sentry being encountered"
                                  :cost [:credit 6]
-                                 :req (req (and (= :encounter-ice (:phase run))
+                                 :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
                                  :msg (msg "derez " (:title current-ice))
                                  :effect (effect (derez current-ice))}
@@ -1798,8 +1801,11 @@
                                 (strength-pump 3 3)]}))
 
 (defcard "Omega"
-  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (= 1 (:position run)))})
-                                (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]}))
+  (auto-icebreaker {:abilities [(break-sub
+                                 1 1 "All"
+                                 {:req (req (let [server-ice (:ices (card->server state current-ice))]
+                                                                  (same-card? current-ice (first server-ice))))})
+                                (strength-pump 1 1)]}))
 
 (defcard "Origami"
   {:constant-effects [{:type :hand-size
@@ -2379,12 +2385,11 @@
              :msg (msg "swap " (card-str state cice)
                        " and " (card-str state target))
              :effect (req (let [tgtndx (card-index state target)]
-                            (swap! state assoc-in [:run :position] (inc tgtndx))
+                            (when run (swap! state assoc-in [:run :position] (inc tgtndx)))
                             (swap-ice state side cice target)))})]
     {:abilities [{:cost [:credit 2]
                   :msg "swap a piece of Barrier ice"
-                  :req (req (and run
-                                 (= :encounter-ice (:phase run))
+                  :req (req (and (get-current-encounter state)
                                  (rezzed? current-ice)
                                  (has-subtype? current-ice "Barrier")))
                   :label "Swap the piece of Barrier ice currently being encountered with a piece of ice directly before or after it"

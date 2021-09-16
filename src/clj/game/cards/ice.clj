@@ -1383,7 +1383,7 @@
      :optional
      {:prompt "Rez Formicary?"
       :yes-ability
-      {:msg "rez and move Formicary. The Runner is now approaching Formicary"
+      {:msg "rez and move Formicary. The Runner is now encountering Formicary"
        :async true
        :effect (req (wait-for (rez state side card)
                               (move state side (get-card state card)
