@@ -643,7 +643,7 @@
         (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
   (testing "Grimoire and Cookbook both add counters"
     (do-game
-     (new-game {:runner {:hand ["Grimoire" "Cookbook" "Leech" "Imp"]
+     (new-game {:runner {:hand ["Grimoire" "Cookbook" "Leech" "Fermenter"]
                          :credits 10}})
      (take-credits state :corp)
      (play-from-hand state :runner "Grimoire")
@@ -653,8 +653,8 @@
      (is (= 2 (get-counters (get-program state 0) :virus)) "Leech has 2 counters from Grimoire and Cookbook")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Always")
-     (play-from-hand state :runner "Imp")
-     (is (= 4 (get-counters (get-program state 1) :virus)) "Imp has 2 additional counters from Grimoire and Cookbook"))))
+     (play-from-hand state :runner "Fermenter")
+     (is (= 3 (get-counters (get-program state 1) :virus)) "Fermenter has 2 additional counters from Grimoire and Cookbook"))))
 
 (deftest councilman
   ;; Councilman

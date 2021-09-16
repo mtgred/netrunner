@@ -689,7 +689,7 @@
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (effect (register-events 
+             :effect (effect (register-events
                               card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
    :abilities [{:cost [:click 1]
                 :msg "make a run on R&D"
@@ -2456,8 +2456,8 @@
 
 (defcard "Tranquilizer"
   (let [action (req (add-counter state side card :virus 1)
-                    (if (and (rezzed? (get-card state (:host card)))
-                             (<= 3 (get-virus-counters state (get-card state card))))
+                    (when (and (rezzed? (get-card state (:host card)))
+                               (<= 3 (get-virus-counters state (get-card state card))))
                       (derez state side (get-card state (:host card)))))]
     {:hosting {:card #(and (ice? %)
                            (can-host? %))}

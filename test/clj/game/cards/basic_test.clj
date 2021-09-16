@@ -71,12 +71,27 @@
         (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed"))))
   (testing "Purge"
     (do-game
-      (new-game {:runner {:deck ["Clot"]}
-                 :options {:start-as :runner}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Clot" "Imp" "Botulus"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
       (play-from-hand state :runner "Clot")
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Botulus")
+      (click-card state :runner (get-ice state :hq 0))
       (take-credits state :runner)
-      (core/do-purge state :corp nil)
-      (is (= 1 (count (:discard (get-runner)))) "Clot got trashed"))))
+      (let [imp (get-program state 1)
+            bot (first (:hosted (get-ice state :hq 0)))]
+        (is (= 2 (get-counters (refresh imp) :virus)) "Imp starts with 2 virus counters")
+        (is (= 1 (get-counters (refresh bot) :virus)) "Botulus starts with 1 virus counter")
+        (core/do-purge state :corp nil)
+        (is (= 1 (count (:discard (get-runner)))) "Clot got trashed")
+        (is (= 0 (get-counters (refresh imp) :virus)) "Imp has zero counters after purge")
+        (is (= 0 (get-counters (refresh bot) :virus)) "Botulus has zero counters after purge")
+        (take-credits state :corp)
+        (is (= 1 (get-counters (refresh bot) :virus)) "Botulus gains 1 counter at start of turn")))))
 
 (deftest runner-basic-actions
   (testing "Gain 1 credit"
