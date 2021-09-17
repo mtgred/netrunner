@@ -965,8 +965,7 @@
                         (shuffle-into-rd-effect state side eid card 3)
                         (effect-completed state side eid))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
-                           (shuffle-into-rd-effect state side eid card 3)
-                           (effect-completed state side eid)))}})
+                           (shuffle-into-rd-effect state side eid card 3)))}})
 
 (defcard "Luminal Transubstantiation"
   {:on-score
