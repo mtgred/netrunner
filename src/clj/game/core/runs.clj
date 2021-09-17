@@ -387,7 +387,7 @@
                                                  (not (same-card? ice (nth (get-run-ices state) (dec pos) nil))))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
-              (cond 
+              (cond
                 ;; run ended
                 (or (check-for-empty-server state)
                     (:ended (:end-run @state)))
@@ -506,8 +506,10 @@
   [props]
   (let [ability (:ability props)
         attacked-server (:target-server props)
-        use-this-card-run (:this-card-run props)]
+        use-this-card-run (:this-card-run props)
+        duration (:duration props)]
     {:event :successful-run
+     :duration duration
      :req (req (and (if use-this-card-run this-card-run true)
                     (case attacked-server
                       (:archives :rd :hq)

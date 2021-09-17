@@ -373,6 +373,7 @@
 (defcard "Analog Dreamers"
   (let [ability (successful-run-replace-breach
                  {:target-server :rd
+                  :duration :end-of-run
                   :ability
                   {:prompt "Choose a card to shuffle into R&D"
                    :choices {:card #(and (not (ice? %))
@@ -385,7 +386,7 @@
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
-                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                  :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
 (defcard "Ankusa"
@@ -1141,6 +1142,7 @@
 (defcard "Expert Schedule Analyzer"
   (let [ability (successful-run-replace-breach
                  {:target-server :hq
+                  :duration :end-of-run
                   :ability
                   {:msg (msg "reveal all of the cards cards in HQ: "
                              (string/join ", " (map :title (:hand corp))))
@@ -1150,7 +1152,7 @@
                   :msg "make a run on HQ"
                   :makes-run true
                   :async true
-                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                  :effect (effect (register-events card [ability])
                                   (make-run eid :hq card))}]}))
 
 (defcard "Faerie"
@@ -1476,6 +1478,7 @@
   (let [ability (successful-run-replace-breach
                  {:target-server :rd
                   :mandatory true
+                  :duration :end-of-run
                   :ability
                   {:prompt "Choose a card to trash"
                    :not-distinct true
@@ -1488,7 +1491,7 @@
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
-                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                  :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
 (defcard "Knight"
@@ -2320,6 +2323,7 @@
   (let [ability (successful-run-replace-breach
                  {:target-server :rd
                   :mandatory true
+                  :duration :end-of-run
                   :ability
                   {:async true
                    :msg (msg "reveal " (->> (:deck corp)
@@ -2351,7 +2355,7 @@
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
-                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                  :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
 (defcard "Study Guide"
