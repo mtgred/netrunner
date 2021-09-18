@@ -198,7 +198,9 @@
    (let [lang (get-in @app-state [:options :language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
          alt-versions (remove #{:prev} (map keyword (map :version (:alt-info @app-state))))
-         images (select-keys (get-in (:images card) [(keyword lang) (keyword res)]) alt-versions)
+         images (select-keys (merge (get-in (:images card) [(keyword lang) :default])
+                                    (get-in (:images card) [(keyword lang) (keyword res)]))
+                             alt-versions)
          alt-only (alt-version-from-string only-version)
          filtered-images (cond
                            (= :prev alt-only) nil

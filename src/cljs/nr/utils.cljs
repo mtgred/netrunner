@@ -328,14 +328,17 @@
     (reset! scroll-top-atom h)))
 
 (defn get-image-path
+  "Image search priority: Language > Art > Resolution"
   [images lang res art]
-  (let [path (get-in images [lang res art])]
-    (cond
-      path path
-      (not= art :stock) (get-image-path images lang res :stock)
-      (not= res :default) (get-image-path images lang :default art)
-      (not= lang :en) (get-image-path images :en res art)
-      :else "/img/missing.png")))
+  (or (get-in images [lang res art])
+      (and (not= res :default)
+           (get-in images [lang :default art])) ;; check for default res version of art
+      (and (not= art :stock)
+           (or (get-in images [lang res :stock]) ;; check for high res version of stock image
+               (get-in images [lang :default :stock]))) ;; check for default res version of stock image
+      (and (not= lang :en)
+           (get-image-path images :en res art)) ;; repeat search for eng version of the art and resolution
+      "/img/missing.png"))
 
 (defn image-or-face [card]
   (cond
