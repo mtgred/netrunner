@@ -50,7 +50,7 @@
                            (into {})
                            not-empty)]
     [:div
-     (str "("
+     [:<> "("
           (join "), (" (for [[mu-type {:keys [available used]}] only-for
                              :let [
                                unused (max 0 (- available used))
@@ -58,7 +58,7 @@
                               ]]
                          (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
                              (tr [:game.special-mu-count] unused available mu-type-name))))
-          ")")])))
+          ")"]])))
 
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
