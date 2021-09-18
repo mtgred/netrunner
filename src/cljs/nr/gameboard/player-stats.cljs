@@ -45,20 +45,18 @@
 (defn- display-special-memory
   ([memory] (display-special-memory memory false))
   ([memory icon?]
-  (when-let [only-for (->> (:only-for memory)
-                           (filter #(pos? (:available (second %))))
-                           (into {})
-                           not-empty)]
-    [:div
-     [:<> "("
-          (join "), (" (for [[mu-type {:keys [available used]}] only-for
-                             :let [
-                               unused (max 0 (- available used))
-                               mu-type-name (capitalize (name mu-type))
-                              ]]
-                         (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
-                             (tr [:game.special-mu-count] unused available mu-type-name))))
-          ")"]])))
+   (when-let [only-for (->> (:only-for memory)
+                            (filter #(pos? (:available (second %))))
+                            (into {})
+                            not-empty)]
+     [:<>
+      (doall
+       (for [[mu-type {:keys [available used]}] only-for
+             :let [unused (max 0 (- available used))
+                   mu-type-name (capitalize (name mu-type))]]
+         ^{:key mu-type-name}
+         [:div (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
+                   (tr [:game.special-mu-count] unused available mu-type-name))]))])))
 
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
