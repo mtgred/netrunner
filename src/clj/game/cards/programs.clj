@@ -689,7 +689,7 @@
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :effect (effect (register-events 
+             :effect (effect (register-events
                               card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
    :abilities [{:cost [:click 1]
                 :msg "make a run on R&D"
@@ -1030,9 +1030,7 @@
                 :effect (effect (update! (assoc card :server-target target)))}
    :constant-effects [{:type :install-cost
                        :req (req (let [serv (:server (second targets))]
-                                   (and (= serv (:server-target card))
-                                        (not (and (is-central? serv)
-                                                  (upgrade? target))))))
+                                   (= serv (:server-target card))))
                        :value 1}]
    :events [{:event :purge
              :async true

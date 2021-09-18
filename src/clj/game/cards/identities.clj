@@ -121,8 +121,7 @@
                 :async true
                 :req (req (and run
                                (= :approach-ice (:phase run))
-                               (not (rezzed? current-ice))
-                               (can-rez? state side current-ice {:ignore-unique true})))
+                               (not (rezzed? current-ice))))
                 :prompt "Choose another server and redirect the run to its outermost position"
                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached piece of ice. The Runner is now running on " target)
@@ -222,9 +221,7 @@
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %)
                                                      (corp-installable-type? %)
-                                                     (not (agenda? %))
-                                                     (or (is-remote? z)
-                                                         (ice? %)))}
+                                                     (not (agenda? %)))}
                                :async true
                                :effect (effect (corp-install eid target (zone->name z) nil))}
                               card nil)))}]})

@@ -115,7 +115,7 @@
        ice
        (let [zone1 (get-zone card)
              zone2 (get-zone ice)]
-         (and (= (second (or (central->zone zone1) zone1)) 
+         (and (= (second (or (central->zone zone1) zone1))
                  (second zone2))
               (= :ices (last zone2))))))
 
@@ -127,7 +127,6 @@
     (and card1
          card2
          (= zone1 zone2)
-         (is-remote? (second zone1)) ; cards in centrals are in the server's root, not in the server.
          (= :content (last zone1)))))
 
 (defn from-same-server?
