@@ -58,7 +58,7 @@
                               ]]
                          (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
                              (tr [:game.special-mu-count] unused available mu-type-name))))
-          ")")]))
+          ")")])))
 
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
