@@ -4665,7 +4665,7 @@
             "Runner gets The Class Act's power on Corp's turn")
         (click-card state :runner (find-card "Diesel" (:hand (get-runner))))
         (play-from-hand state :runner "Diesel")
-        (is (= "The Class Act" (-> (prompt-map :runner))) "Runner gets The Class Act's power on Runner's turn"))))
+        (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "Runner gets The Class Act's power on Runner's turn"))))
   (testing "Trashed hosted cards are logged. #5024"
     (do-game
       (new-game {:runner {:deck ["Gordian Blade" "Torch" "Sure Gamble"]
