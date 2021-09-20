@@ -581,7 +581,7 @@
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
-             :msg (msg "reveal " (-> target first :title))
+             :msg (msg "reveal " (:title target))
              :async true
              :effect (effect (reveal eid target))}]})
 
@@ -1467,7 +1467,7 @@
   (bitey-boi 'first))
 
 (defcard "Laguna Velasco District"
-  {:events [{:event :pre-runner-click-draw
+  {:events [{:event :runner-click-draw
              :msg "draw 1 additional card"
              :effect (effect (draw-bonus 1))}]})
 
