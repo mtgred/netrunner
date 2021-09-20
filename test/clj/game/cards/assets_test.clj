@@ -3337,31 +3337,25 @@
   (testing "When paired with The Class Act"
     (do-game
      (new-game {:corp {:deck ["Personalized Portal"]}
-                :runner {:deck [(qty "Daily Casts" 5) "The Class Act" "Motivation"]}})
-     (starting-hand state :runner ["The Class Act" "Motivation"])
+                :runner {:deck [(qty "Daily Casts" 5)]
+                         :hand ["The Class Act" "Motivation"]}})
      (play-from-hand state :corp "Personalized Portal" "New remote")
      (rez state :corp (get-content state :remote1 0))
      (take-credits state :corp)
      (play-from-hand state :runner "The Class Act")
-     (core/move state :runner (find-card "Motivation" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
+     (core/move state :runner (find-card "Motivation" (:hand (get-runner))) :deck {:front true})
      (is (= "Motivation" (-> (get-runner) :deck first :title)) "Motivation is on top of deck")
      (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
      (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
      (core/lose state :runner :click 3)
      (is (empty? (:hand (get-runner))) "Runner's grip is still empty")
      (core/end-turn state :runner nil)
-     (is (= 5 (count (prompt-buttons :runner))) "Runner has 5 card choices")
-     (is (= 6 (count (:deck (get-runner)))) "No cards have been drawn yet")
-     (is (not (empty? (:prompt (get-runner)))) "Runner prompted to be classy")
-     (is (not (empty? (:prompt (get-corp)))) "Corp waiting for Runner to be classy")
-     (click-prompt state :runner "Motivation")
+     (click-card state :runner "Motivation")
      (is (empty? (:prompt (get-runner))) "Runner done being classy")
      (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy")
      (core/start-turn state :corp nil) ;; this causes portals to trigger
-     (is (= 2 (count (prompt-buttons :runner))) "Runner has 2 card choices")
-     (is (= 2 (count (:deck (get-runner)))) "2 cards in deck before drawing")
      (is (= 4 (:credit (get-corp))) "Corp has not gained credits yet")
-     (click-prompt state :runner "Motivation")
+     (click-card state :runner "Motivation")
      (is (= 5 (count (:hand (get-runner)))) "Runner is sitting on 5 cards after bottoming a card")
      (is (= 6 (:credit (get-corp))) "Corp only gained 5/2 = 2 credits, not 3")
      (is (empty? (:prompt (get-runner))) "Runner not prompted")
@@ -3409,40 +3403,7 @@
       (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
           "Oaktown Renovation installed by Political Dealings")
       (is (rezzed? (get-content state :remote3 0))
-          "Oaktown Renovation installed face up")))
-  (testing "Daily Business Show interaction - Draw 2 agendas, install both of them but return 1 to bottom of R&D"
-    (do-game
-      (new-game {:corp {:deck ["Political Dealings" "Daily Business Show" "Turtlebacks"
-                               "Breaking News" "Project Beale"]}})
-      (starting-hand state :corp ["Political Dealings" "Daily Business Show" "Turtlebacks"])
-      (core/gain state :corp :credit 3)
-      (play-from-hand state :corp "Political Dealings" "New remote")
-      (play-from-hand state :corp "Daily Business Show" "New remote")
-      (play-from-hand state :corp "Turtlebacks" "New remote")
-      (rez state :corp (get-content state :remote1 0))
-      (rez state :corp (get-content state :remote2 0))
-      (rez state :corp (get-content state :remote3 0))
-      (take-credits state :corp)
-      (is (zero? (count (:hand (get-corp)))))
-      (let [agenda1 (first (:deck (get-corp)))
-            agenda2 (second (:deck (get-corp)))]
-        (take-credits state :runner)
-        ;; Install first agenda
-        (is (= 2 (count (:hand (get-corp)))))
-        (is (zero? (:credit (get-corp))))
-        (click-prompt state :corp "Yes")
-        (click-prompt state :corp "New remote")
-        (is (= (:title agenda1) (:title (get-content state :remote4 0))))
-        (is (= 1 (:credit (get-corp))) "Turtlebacks triggered")
-        ;; Install second agenda
-        (click-prompt state :corp "Yes")
-        (click-prompt state :corp "New remote")
-        (is (= (:title agenda2) (:title (get-content state :remote5 0))))
-        (is (= 2 (:credit (get-corp))) "Turtlebacks triggered")
-        ;; DBS - put first agenda at bottom of R&D
-        (click-card state :corp (get-content state :remote4 0))
-        (is (zero? (count (:hand (get-corp)))))
-        (is (= (:title agenda1) (:title (last (:deck (get-corp))))))))))
+          "Oaktown Renovation installed face up"))))
 
 (deftest prana-condenser
   ;; Prāna Condenser

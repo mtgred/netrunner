@@ -589,7 +589,7 @@
       (changes-val-macro
         2 (:click (get-runner))
         "After resolving the cost, runner gains 2 clicks"
-        (click-prompt state :runner "Magnum Opus"))
+        (click-card state :runner "Magnum Opus"))
       (is (second-last-log-contains? state "Runner uses The Class Act"))
       (is (last-log-contains? state "trashes All-nighter to use All-nighter")
           "All-nighter is now logged correctly, having paid all costs"))))

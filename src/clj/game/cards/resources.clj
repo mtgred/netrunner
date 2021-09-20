@@ -2702,23 +2702,29 @@
                :msg "draw 1 additional card"
                ;; The req catches draw events that happened before The Class Act was installed
                :req (req (first-event? state :runner :pre-runner-draw))
-               :async true
-               :interactive (req true)
                :once :per-turn
+               :once-key :the-class-act-draw-bonus
+               :effect (req (draw-bonus state :runner 1))}
+              {:event :runner-draw
+               :req (req (first-event? state :runner :runner-draw))
+               :once :per-turn
+               :once-key :the-class-act-put-bottom
+               :async true
                :effect
                (effect (continue-ability
-                         (when (pos? (count (get-in @state [:runner :deck])))
-                           (let [n (+ target (get-in @state [:bonus :draw] 0))
-                                 to-draw (take (inc n) (:deck (:runner @state)))]
-                             {:player :runner
-                              :waiting-prompt "Runner to choose an option"
-                              :prompt "Choose 1 card to add to the bottom of the stack"
-                              :choices to-draw
-                              :effect (effect (move target :deck)
-                                              (system-msg
-                                                (str "uses The Class Act to add the "
-                                                     (pprint/cl-format nil "~:R"(inc (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
-                                                     " card drawn to the bottom of the Stack")))}))
+                         (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
+                           {:waiting-prompt "Runner to make a decision"
+                            :prompt "Choose 1 card to add to the bottom of the stack"
+                            :choices {:card #(some (fn [c] (same-card? c %)) drawn)
+                                      :all true}
+                            :effect (req (system-msg
+                                           state side
+                                           (str "uses The Class Act to add the "
+                                                (pprint/cl-format nil "~:R"
+                                                                  (inc (first (keep-indexed #(when (same-card? target %2) %1) drawn))))
+                                                " card drawn to the bottom of the stack"))
+                                         (move state :runner target :deck)
+                                         (remove-from-most-recent-drawn state target))})
                          card nil))}]}))
 
 (defcard "The Helpful AI"
