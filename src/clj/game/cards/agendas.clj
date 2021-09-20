@@ -120,7 +120,7 @@
                         (gain-credits state :corp eid 1))
                     "Draw 1 card"
                     (do (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card"))
-                        (draw state :corp eid 1 ))
+                        (draw state :corp eid 1))
                     "No action"
                     (do (system-msg state :corp (str "doesn't use Advanced Concept Hopper"))
                         (effect-completed state side eid))))}]})
@@ -332,7 +332,7 @@
                                                      " cards from the Runner's Grip"
                                                      " to the bottom of their Stack."
                                                      " The Runner draws 1 card"))
-                         (draw state :runner eid 1 )))
+                         (draw state :runner eid 1)))
                      (effect-completed state side eid)))}}}})
 
 (defcard "Braintrust"
@@ -655,7 +655,7 @@
                 :msg "draw 5 cards"
                 :keep-open :while-agenda-tokens-left
                 :async true
-                :effect (effect (draw eid 5 ))}]})
+                :effect (effect (draw eid 5))}]})
 
 (defcard "Explode-a-palooza"
   {:flags {:rd-reveal (req true)}
@@ -706,7 +706,7 @@
                 :effect (req (wait-for
                                (reveal state side (first (:deck corp)))
                                (wait-for
-                                 (draw state side 2 )
+                                 (draw state side 2)
                                  (continue-ability
                                    state side
                                    {:req (req (pos? (count (:hand corp))))
@@ -1597,7 +1597,7 @@
              :choices {:card #(and (installed? %)
                                    (same-side? side (:side %)))}
              :cancel-effect (req (if (= side :runner)
-                                   (wait-for (draw state :corp 1 )
+                                   (wait-for (draw state :corp 1)
                                              (clear-wait-prompt state :corp)
                                              (system-msg state :runner "declines to trash a card due to Standoff")
                                              (system-msg state :corp "draws a card and gains 5 [Credits] from Standoff")
@@ -1650,7 +1650,7 @@
     {:prompt "Draw 2 cards?"
      :yes-ability {:msg "draw 2 cards"
                    :async true
-                   :effect (effect (draw :corp eid 2 ))}}}})
+                   :effect (effect (draw :corp eid 2))}}}})
 
 (defcard "Superior Cyberwalls"
   (ice-boost-agenda "Barrier"))

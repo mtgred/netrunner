@@ -457,7 +457,7 @@
                 :yes-ability
                 {:async true
                  :prompt "Install from where?"
-                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
+                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"]))
                  :msg (msg "install a program from their " target)
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
@@ -1857,7 +1857,7 @@
     :rfg-instead-of-trashing true
     :async true
     :effect (effect (shuffle-into-deck :hand :discard)
-                    (draw eid 5 ))}})
+                    (draw eid 5))}})
 
 (defcard "Lucky Find"
   {:on-play
@@ -2013,7 +2013,7 @@
    {:additional-cost [:trash-from-hand 3]
     :msg "draw 3 cards and gain 3 [Credits]"
     :async true
-    :effect (req (wait-for (draw state side 3 )
+    :effect (req (wait-for (draw state side 3)
                            (gain-credits state side eid 3)))}})
 
 (defcard "Mutual Favor"
@@ -2083,7 +2083,7 @@
     :async true
     :effect (req (if (= target "Gain 4 [Credits]")
                    (gain-credits state :runner eid 4)
-                   (draw state :runner eid 4 )))}})
+                   (draw state :runner eid 4)))}})
 
 (defcard "On the Lam"
   {:on-play {:req (req (some resource? (all-active-installed state :runner)))
@@ -2269,7 +2269,7 @@
    {:msg "gain 2 [Credits] and draw 1 card"
     :async true
     :effect (req (wait-for (gain-credits state side 2)
-                           (draw state side eid 1 )))}})
+                           (draw state side eid 1)))}})
 
 (defcard "Push Your Luck"
   (letfn [(corp-choice [spent]
@@ -2322,7 +2322,7 @@
   {:on-play
    {:msg "draw 5 cards"
     :async true
-    :effect (effect (draw eid 5 ))}})
+    :effect (effect (draw eid 5))}})
 
 (defcard "Queen's Gambit"
   {:on-play
@@ -2761,7 +2761,7 @@
     :msg "gain 4 [Credits] and draw 2 cards"
     :async true
     :effect (req (wait-for (gain-credits state side 4)
-                           (draw state side eid 2 )))}})
+                           (draw state side eid 2)))}})
 
 (defcard "Special Order"
   {:on-play
@@ -2835,7 +2835,7 @@
                    "Draw 4"])
     :async true
     :effect (req (if (= target "Draw 4")
-                   (wait-for (draw state :corp 4 )
+                   (wait-for (draw state :corp 4)
                              (system-msg state :corp
                                          (str "uses SYN Attack to draw "
                                               (quantify (count async-result) "card")))
@@ -2883,7 +2883,7 @@
   {:on-play
    {:prompt (req (if (not (zone-locked? state :runner :discard))
                    "Install a program from your Stack or Heap?"
-                   "Install a program from your Stack?" ))
+                   "Install a program from your Stack?"))
     :choices (req (if (not (zone-locked? state :runner :discard))
                     ["Stack" "Heap"]
                     ["Stack"]))
@@ -3065,7 +3065,7 @@
                 :choices :credit
                 :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
-                                       (gain-tags state side eid 1)))}} )]})
+                                       (gain-tags state side eid 1)))}})]})
 
 (defcard "VRcation"
   {:on-play
@@ -3075,7 +3075,7 @@
     :async true
     :effect (req (when (pos? (:click runner))
                    (lose-clicks state :runner 1))
-                 (draw state :runner eid 4 ))}})
+                 (draw state :runner eid 4))}})
 
 (defcard "Wanton Destruction"
   {:makes-run true
@@ -3156,7 +3156,7 @@
                    (do (system-msg state :corp "chooses 6 [Credits] for the Runner")
                        (gain-credits state :runner eid 6))
                    (do (system-msg state :corp "chooses 4 cards for the Runner")
-                       (draw state :runner eid 4 ))))}})
+                       (draw state :runner eid 4))))}})
 
 (defcard "Windfall"
   {:on-play

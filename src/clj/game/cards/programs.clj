@@ -688,7 +688,7 @@
              :req (req (ice? (:card target)))
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :runner eid 1 ))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Conduit"
   {:events [{:event :run-ends
@@ -1125,7 +1125,7 @@
                        :yes-ability
                        {:async true
                         :effect (req (system-msg state :corp (str "is forced to draw " title))
-                                     (draw state :corp eid 1 ))}}})
+                                     (draw state :corp eid 1))}}})
         reveal {:optional
                 {:prompt "Reveal the top card of R&D?"
                  :yes-ability
@@ -2109,7 +2109,7 @@
              :req (req (and (some #(installed? (:card %)) targets)
                             (first-installed-trash? state side)))
              :msg "draw 1 card"
-             :effect (effect (draw :runner eid 1 ))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Refractor"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
@@ -2141,7 +2141,7 @@
                                                "draw 2 cards"
                                                "gain 3 [Credits]"))
                                    :effect (req (if (= target "Draw 2 cards")
-                                                  (draw state :runner eid 2 )
+                                                  (draw state :runner eid 2)
                                                   (gain-credits state :runner eid 3)))}))
                               card nil)))}
             {:event :post-access-card

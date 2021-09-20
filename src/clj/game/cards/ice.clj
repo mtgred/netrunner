@@ -445,7 +445,7 @@
   {:subroutines [(do-psi {:label "Runner draws 2 cards"
                           :msg "make the Runner draw 2 cards"
                           :async true
-                          :effect (effect (draw :runner eid 2 ))})
+                          :effect (effect (draw :runner eid 2))})
                  (do-net-damage 1)
                  (do-net-damage 1)]})
 
@@ -482,7 +482,7 @@
                     :prompt "Draw 1 card?"
                     :yes-ability {:async true
                                   :msg "draw 1 card"
-                                  :effect (effect (draw eid 1 ))}}}
+                                  :effect (effect (draw eid 1))}}}
         runner-draw {:player :runner
                      :optional
                      {:waiting-prompt "Runner to choose an option"
@@ -492,7 +492,7 @@
                        :effect (req (wait-for (pay state :runner (make-eid state eid) card [:credit 2])
                                               (if (:cost-paid async-result)
                                                 (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
-                                                    (draw state :runner eid 1 ))
+                                                    (draw state :runner eid 1))
                                                 (do (system-msg state :runner "does not draw 1 card")
                                                     (effect-completed state side eid)))))}
                       :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
@@ -1140,7 +1140,7 @@
 (defcard "Eli 2.0"
   {:subroutines [{:async true
                   :msg "draw 1 card"
-                  :effect (effect (draw eid 1 ))}
+                  :effect (effect (draw eid 1))}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 2 2)]})
@@ -1248,7 +1248,7 @@
                          "draw 1 card"))
              :effect (req (if (= target "Gain 1 [Credits]")
                             (gain-credits state :corp eid 1)
-                            (draw state :corp eid 1 )))}]
+                            (draw state :corp eid 1)))}]
     {:subroutines [sub
                    sub
                    sub]}))
@@ -1568,7 +1568,7 @@
   (let [sub {:label "Runner draws 3 cards and discards down to maximum hand size"
              :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
              :async true
-             :effect (req (wait-for (draw state :runner 3 )
+             :effect (req (wait-for (draw state :runner 3)
                                     (continue-ability
                                       state :runner
                                       (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
@@ -2356,7 +2356,7 @@
                                             {:prompt "Draw 1 card?"
                                              :yes-ability {:async true
                                                            :msg "draw 1 card"
-                                                           :effect (effect (draw eid 1 ))}}}
+                                                           :effect (effect (draw eid 1))}}}
                                            card nil)
                                          (continue-ability
                                            state side
@@ -2440,7 +2440,7 @@
                                        {:prompt "Draw 1 card?"
                                         :yes-ability {:async true
                                                       :msg "draw 1 card"
-                                                      :effect (effect (draw eid 1 ))}}}
+                                                      :effect (effect (draw eid 1))}}}
                                       card nil)))}]
     {:subroutines [sub
                    sub]
@@ -2765,7 +2765,7 @@
           :prompt "Draw 1 card?"
           :yes-ability
           {:async true
-           :effect (effect (draw eid 1 ))
+           :effect (effect (draw eid 1))
            :msg "draw 1 card"}}}]
     {:subroutines [{:label "Look at the top 3 cards of R&D"
                     :req (req (not-empty (:deck corp)))
@@ -3129,7 +3129,7 @@
   {:subroutines [runner-loses-click
                  {:async true
                   :msg "draw 1 card"
-                  :effect (effect (draw eid 1 ))}
+                  :effect (effect (draw eid 1))}
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
                   :choices {:card #(and (in-hand? %)
