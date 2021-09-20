@@ -1638,13 +1638,12 @@
                 :effect (req (wait-for (draw state side 2)
                                        (continue-ability
                                          state side
-                                         (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
+                                         (when-let [drawn (seq (get-in @state [:runner :register :most-recent-drawn]))]
                                            {:prompt "Choose 1 card to add to the bottom of the Stack"
                                             :choices {:card #(and (in-hand? %)
                                                                   (some (fn [c] (same-card? c %)) drawn))}
-                                            :msg (msg "add 1 card to the bottom of the Stack")
-                                            :effect (req (move state side target :deck))}
-                                           nil)
+                                            :msg "add 1 card to the bottom of the Stack"
+                                            :effect (effect (move target :deck))})
                                          card nil)))}]})
 
 (defcard "Muertos Gang Member"
