@@ -2698,13 +2698,7 @@
                       :effect (effect (draw :runner eid 4))}]
     {:events [(assoc draw-ability :event :corp-turn-ends)
               (assoc draw-ability :event :runner-turn-ends)
-              {:event :pre-runner-draw
-               :msg "draw 1 additional card"
-               ;; The req catches draw events that happened before The Class Act was installed
-               :req (req (first-event? state :runner :pre-runner-draw))
-               :once :per-turn
-               :once-key :the-class-act-draw-bonus
-               :effect (req (draw-bonus state :runner 1))}
+              (first-time-draw-bonus :runner 1)
               {:event :runner-draw
                :req (req (first-event? state :runner :runner-draw))
                :once :per-turn

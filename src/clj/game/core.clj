@@ -292,6 +292,7 @@
   [game.core.drawing
    draw
    draw-bonus
+   first-time-draw-bonus
    max-draw
    remaining-draws])
 

@@ -549,17 +549,7 @@
 
 (defcard "Daily Business Show"
   {:derezzed-events [corp-rez-toast]
-   :events [{:event :pre-corp-draw
-             :msg "draw additional cards"
-             ;; The req catches draw events that happened before DBS was rezzed.
-             :req (req (first-event? state :corp :pre-corp-draw))
-             ;; The once and once-key force a single DBS to act on behalf of all rezzed DBS's.
-             :once :per-turn
-             :once-key :daily-business-show-draw-bonus
-             :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
-                                                         (rezzed? %))
-                                                   (all-installed state :corp)))]
-                            (draw-bonus state side dbs)))}
+   :events [(first-time-draw-bonus :corp 1)
             {:event :corp-draw
              :req (req (first-event? state :corp :corp-draw))
              :once :per-turn
