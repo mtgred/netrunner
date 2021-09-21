@@ -1635,16 +1635,17 @@
                 :keep-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
-                :effect (req (wait-for (draw state side 2)
-                                       (continue-ability
-                                         state side
-                                         (when-let [drawn (seq async-result)]
-                                           {:prompt "Choose 1 card to add to the bottom of the Stack"
-                                            :choices {:card #(and (in-hand? %)
-                                                                  (some (fn [c] (same-card? c %)) drawn))}
-                                            :msg "add 1 card to the bottom of the Stack"
-                                            :effect (effect (move target :deck))})
-                                         card nil)))}]})
+                :effect (effect (register-events
+                                  card
+                                  [{:event :runner-draw
+                                    :unregister-once-resolved true
+                                    :waiting-prompt "Runner to make a decision"
+                                    :prompt "Choose 1 card to add to the bottom of the Stack"
+                                    :choices {:req (req (and (in-hand? target)
+                                                             (some #(same-card? target %) (:currently-drawing runner-reg))))}
+                                    :msg "add 1 card to the bottom of the Stack"
+                                    :effect (effect (move target :deck))}])
+                                (draw eid 2))}]})
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
