@@ -451,10 +451,11 @@
                  (or (ice? a)
                      (ice? b)))
         (set-current-ice state))
-      (when (in-hand? a) (remove-from-currently-drawing state a-side a))
-      (when (in-hand? b) (remove-from-currently-drawing state b-side b))
-      (when (in-hand? moved-a) (add-to-currently-drawing state a-side moved-a))
-      (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b))
+      (when (-> @state side :register :currently-drawing)
+        (when (in-hand? a) (remove-from-currently-drawing state a-side a))
+        (when (in-hand? b) (remove-from-currently-drawing state b-side b))
+        (when (in-hand? moved-a) (add-to-currently-drawing state a-side moved-a))
+        (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b)))
       [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas
