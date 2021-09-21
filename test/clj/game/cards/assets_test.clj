@@ -1108,7 +1108,42 @@
       (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
       (end-phase-12 state :corp)
-      (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw"))))
+      (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw")))
+  (testing "Interaction with NEH and Political Dealings and nested draws. Issue #5974"
+    (testing "DBS first"
+      (do-game
+        (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
+                          :deck [(qty "Hedge Fund" 10)]
+                          :hand ["Daily Business Show" "Political Dealings" "Merger"]
+                          :credits 20}})
+        (core/move state :corp (find-card "Merger" (:hand (get-corp))) :deck {:front true})
+        (play-from-hand state :corp "Daily Business Show" "New remote")
+        (rez state :corp (get-content state :remote1 0))
+        (play-from-hand state :corp "Political Dealings" "New remote")
+        (rez state :corp (get-content state :remote2 0))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (click-prompt state :corp "Daily Business Show")
+        (click-card state :corp "Merger")
+        (is (empty? (:prompt (get-corp))))))
+    (testing "Political Dealings first"
+      (do-game
+        (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
+                          :deck [(qty "Hedge Fund" 10)]
+                          :hand ["Daily Business Show" "Political Dealings" "Merger"]
+                          :credits 20}})
+        (core/move state :corp (find-card "Merger" (:hand (get-corp))) :deck {:front true})
+        (play-from-hand state :corp "Daily Business Show" "New remote")
+        (rez state :corp (get-content state :remote1 0))
+        (play-from-hand state :corp "Political Dealings" "New remote")
+        (rez state :corp (get-content state :remote2 0))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (click-prompt state :corp "Political Dealings")
+        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "New remote")
+        (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+        (is (empty? (:prompt (get-corp))))))))
 
 (deftest daily-quest
   ;; Daily Quest

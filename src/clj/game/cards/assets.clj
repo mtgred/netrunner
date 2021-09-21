@@ -554,6 +554,11 @@
              :req (req (first-event? state :corp :corp-draw))
              :once :per-turn
              :once-key :daily-business-show-put-bottom
+             :interactive (req true)
+             :silent (req (let [dbs (filter #(and (= "Daily Business Show" (:title %))
+                                                  (rezzed? %))
+                                            (all-installed state :corp))]
+                            (not= card (first dbs))))
              :async true
              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                          (rezzed? %))
@@ -561,18 +566,19 @@
                                 drawn (get-in @state [:corp :register :most-recent-drawn])]
                             (continue-ability
                               state side
-                              {:waiting-prompt "Corp to make a decision"
-                               :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
-                               :choices {:max dbs
-                                         :card #(some (fn [c] (same-card? c %)) drawn)
-                                         :all true}
-                               :effect (req (doseq [c (reverse targets)]
-                                              (system-msg state side
-                                                          (str "uses Daily Business Show to add the "
-                                                               (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
-                                                               " card drawn to the bottom of R&D"))
-                                              (move state side c :deck)
-                                              (remove-from-most-recent-drawn state c)))}
+                              (when (seq drawn)
+                                {:waiting-prompt "Corp to make a decision"
+                                 :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
+                                 :choices {:max dbs
+                                           :card #(some (fn [c] (same-card? c %)) drawn)
+                                           :all true}
+                                 :effect (req (doseq [c (reverse targets)]
+                                                (system-msg state side
+                                                            (str "uses Daily Business Show to add the "
+                                                                 (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
+                                                                 " card drawn to the bottom of R&D"))
+                                                (move state side c :deck)
+                                                (remove-from-most-recent-drawn state c)))})
                               card nil)))}]})
 
 (defcard "Daily Quest"
@@ -1561,8 +1567,8 @@
     "Score an Agenda from HQ?"))
 
 (defcard "Political Dealings"
-  (letfn [(pdhelper [agendas n]
-            (let [agenda (nth agendas n)]
+  (letfn [(pdhelper [agendas]
+            (when-let [agenda (first agendas)]
               {:optional
                {:prompt (msg "Reveal and install " (:title agenda) "?")
                 :yes-ability {:async true
@@ -1577,21 +1583,16 @@
                                                     (card-def agenda)
                                                     :unrezzed)})
                                                (remove-from-most-recent-drawn state agenda)
-                                               (if (< (inc n) (count agendas))
-                                                 (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                                 (effect-completed state side eid)))))}
+                                               (continue-ability state side (pdhelper (next agendas)) card nil))))}
                 :no-ability {:async true
-                             :effect (req (if (< (inc n) (count agendas))
-                                            (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                            (effect-completed state side eid)))}}}))]
+                             :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
-                               agendas (filter agenda? drawn)]
-                           (seq agendas)))
+               :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
+                           (seq (filter agenda? drawn))))
                :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
                                   agendas (filter agenda? drawn)]
-                              (continue-ability state side (pdhelper agendas 0) card nil)))}]}))
+                              (continue-ability state side (pdhelper agendas) card nil)))}]}))
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}

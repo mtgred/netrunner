@@ -883,7 +883,7 @@
                                 (and card
                                      (not (:disabled card))
                                      (not (apply trigger-suppress state (to-keyword (:side card))
-                                                 (get-in % [:handler :event]) card (:context %)))))
+                                                 (:event (:handler %)) card (:context %)))))
                              handlers))
           non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
                                 (not (and silent-fn
