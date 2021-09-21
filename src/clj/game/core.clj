@@ -562,7 +562,7 @@
 
 (import-vars
   [game.core.moving
-   add-to-most-recent-drawn
+   add-to-currently-drawing
    as-agenda
    discard-from-hand
    flip-facedown
@@ -571,7 +571,7 @@
    mill
    move
    move-zone
-   remove-from-most-recent-drawn
+   remove-from-currently-drawing
    swap-agendas
    swap-cards
    swap-ice

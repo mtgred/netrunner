@@ -563,7 +563,7 @@
              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                          (rezzed? %))
                                                    (all-installed state :corp)))
-                                drawn (get-in @state [:corp :register :most-recent-drawn])]
+                                drawn (:currently-drawing corp-reg)]
                             (continue-ability
                               state side
                               (when (seq drawn)
@@ -578,7 +578,7 @@
                                                                  (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
                                                                  " card drawn to the bottom of R&D"))
                                                 (move state side c :deck)
-                                                (remove-from-most-recent-drawn state c)))})
+                                                (remove-from-currently-drawing state side c)))})
                               card nil)))}]})
 
 (defcard "Daily Quest"
@@ -1582,15 +1582,14 @@
                                                   (:install-state
                                                     (card-def agenda)
                                                     :unrezzed)})
-                                               (remove-from-most-recent-drawn state agenda)
+                                               (remove-from-currently-drawing state side agenda)
                                                (continue-ability state side (pdhelper (next agendas)) card nil))))}
                 :no-ability {:async true
                              :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
-                           (seq (filter agenda? drawn))))
-               :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
+               :req (req (seq (filter agenda? (:currently-drawing corp-reg))))
+               :effect (req (let [drawn (:currently-drawing corp-reg)
                                   agendas (filter agenda? drawn)]
                               (continue-ability state side (pdhelper agendas) card nil)))}]}))
 
@@ -1707,7 +1706,7 @@
                (effect
                  (lose-clicks :corp 1)
                  (continue-ability
-                   (let [drawn (-> @state :corp :register :most-recent-drawn)]
+                   (let [drawn (:currently-drawing corp-reg)]
                      {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
                       :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
                       :async true

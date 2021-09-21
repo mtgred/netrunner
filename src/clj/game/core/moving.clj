@@ -423,24 +423,26 @@
       (swap-installed state side a b)
       (set-current-ice state))))
 
-(defn remove-from-most-recent-drawn
-  [state card]
-  (swap! state update-in [:corp :register :most-recent-drawn]
+(defn remove-from-currently-drawing
+  [state side card]
+  (swap! state update-in [side :register :currently-drawing]
          (fn [mrd] (remove-once #(= (:cid %) (:cid card)) mrd))))
 
-(defn add-to-most-recent-drawn
-  [state card]
-  (swap! state update-in [:corp :register :most-recent-drawn] conj card))
+(defn add-to-currently-drawing
+  [state side card]
+  (swap! state update-in [side :register :currently-drawing] conj card))
 
 (defn swap-cards
   "Swaps two cards when one or both aren't installed"
   [state side a b]
   (when (same-side? (:side a) (:side b))
-    (let [moved-a (move state side a (get-zone b)
+    (let [a-side (to-keyword (:side a))
+          b-side (to-keyword (:side b))
+          moved-a (move state a-side a (get-zone b)
                         {:keep-server-alive true
                          :index (card-index state b)
                          :suppress-event true})
-          moved-b (move state side b (get-zone a)
+          moved-b (move state b-side b (get-zone a)
                         {:keep-server-alive true
                          :index (card-index state a)
                          :suppress-event true})]
@@ -449,10 +451,10 @@
                  (or (ice? a)
                      (ice? b)))
         (set-current-ice state))
-      (when (in-hand? a) (remove-from-most-recent-drawn state a))
-      (when (in-hand? b) (remove-from-most-recent-drawn state b))
-      (when (in-hand? moved-a) (add-to-most-recent-drawn state moved-a))
-      (when (in-hand? moved-b) (add-to-most-recent-drawn state moved-b))
+      (when (in-hand? a) (remove-from-currently-drawing state a-side a))
+      (when (in-hand? b) (remove-from-currently-drawing state b-side b))
+      (when (in-hand? moved-a) (add-to-currently-drawing state a-side moved-a))
+      (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b))
       [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas

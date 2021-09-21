@@ -1106,9 +1106,9 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (string/join ", " (map :title (:most-recent-drawn runner-reg))))
+                       (string/join ", " (map :title (:currently-drawing runner-reg))))
              :async true
-             :effect (effect (reveal eid (:most-recent-drawn runner-reg)))}
+             :effect (effect (reveal eid (:currently-drawing runner-reg)))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1638,7 +1638,7 @@
                 :effect (req (wait-for (draw state side 2)
                                        (continue-ability
                                          state side
-                                         (when-let [drawn (seq (get-in @state [:runner :register :most-recent-drawn]))]
+                                         (when-let [drawn (seq async-result)]
                                            {:prompt "Choose 1 card to add to the bottom of the Stack"
                                             :choices {:card #(and (in-hand? %)
                                                                   (some (fn [c] (same-card? c %)) drawn))}
@@ -2705,7 +2705,7 @@
                :async true
                :effect
                (effect (continue-ability
-                         (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
+                         (let [drawn (:currently-drawing runner-reg)]
                            {:waiting-prompt "Runner to make a decision"
                             :prompt "Choose 1 card to add to the bottom of the stack"
                             :choices {:card #(some (fn [c] (same-card? c %)) drawn)
@@ -2717,7 +2717,7 @@
                                                                   (inc (first (keep-indexed #(when (same-card? target %2) %1) drawn))))
                                                 " card drawn to the bottom of the stack"))
                                          (move state :runner target :deck)
-                                         (remove-from-most-recent-drawn state target))})
+                                         (remove-from-currently-drawing state side target))})
                          card nil))}]}))
 
 (defcard "The Helpful AI"

@@ -1,6 +1,6 @@
 (ns game.core.drawing
   (:require
-    [game.core.eid :refer [effect-completed make-result]]
+    [game.core.eid :refer [effect-completed make-eid make-result]]
     [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-sync]]
     [game.core.events :refer [first-event?]]
     [game.core.flags :refer [prevent-draw]]
@@ -42,7 +42,7 @@
   "Draw n cards from :deck to :hand."
   ([state side eid n] (draw state side eid n nil))
   ([state side eid n {:keys [suppress-event]}]
-   (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
+   (swap! state update-in [side :register] dissoc :currently-drawing)
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [n (+ n (get-in @state [:bonus :draw] 0))
          draws-wanted n
@@ -65,18 +65,19 @@
        (let [to-draw (take draws-after-prevent (get-in @state [side :deck]))
              drawn (mapv #(move state side % :hand) to-draw)
              drawn-count (count drawn)]
-         (swap! state assoc-in [side :register :most-recent-drawn] drawn)
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
          (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
          (swap! state update :bonus dissoc :draw)
          (if suppress-event
            (effect-completed state side eid)
            (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
+             (swap! state assoc-in [side :register :currently-drawing] drawn)
              (queue-event state draw-event {:cards drawn
                                             :count drawn-count})
              (wait-for
-               (checkpoint state nil nil)
-               (let [eid (make-result eid drawn)]
-                 (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) drawn-count)))))
+               (checkpoint state nil (make-eid state eid) nil)
+               (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) drawn-count)
+                         (let [eid (make-result eid (-> @state side :register :currently-drawing))]
+                           (effect-completed state side eid))))))
          (when (safe-zero? (remaining-draws state side))
            (prevent-draw state side)))))))

@@ -713,7 +713,7 @@
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                 (wait-for (corp-install state side ice server {:cost-bonus -4})
-                                          (remove-from-most-recent-drawn state ice)
+                                          (remove-from-currently-drawing state side ice)
                                           (continue-ability
                                             state side
                                             (when-not (= 1 (count ices))
@@ -745,10 +745,10 @@
                :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                :effect (req (cond
                               ;; if ice were drawn, do the full routine
-                              (some ice? (:most-recent-drawn corp-reg))
+                              (some ice? (:currently-drawing corp-reg))
                               (let [ices (filter #(and (ice? %)
                                                        (get-card state %))
-                                                 (:most-recent-drawn corp-reg))
+                                                 (:currently-drawing corp-reg))
                                     grids (filterv #(= "Jinja City Grid" (:title %))
                                                    (all-active-installed state :corp))]
                                 (continue-ability
