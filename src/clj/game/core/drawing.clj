@@ -42,7 +42,6 @@
   "Draw n cards from :deck to :hand."
   ([state side eid n] (draw state side eid n nil))
   ([state side eid n {:keys [suppress-event]}]
-   (swap! state update-in [side :register] dissoc :currently-drawing)
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [n (+ n (get-in @state [:bonus :draw] 0))
          draws-wanted n
@@ -78,6 +77,7 @@
                (checkpoint state nil (make-eid state eid) nil)
                (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) drawn-count)
                          (let [eid (make-result eid (-> @state side :register :currently-drawing))]
+                           (swap! state update-in [side :register] dissoc :currently-drawing)
                            (effect-completed state side eid))))))
          (when (safe-zero? (remaining-draws state side))
            (prevent-draw state side)))))))
