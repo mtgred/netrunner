@@ -569,7 +569,7 @@
                               (when (seq drawn)
                                 {:waiting-prompt "Corp to make a decision"
                                  :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
-                                 :choices {:max dbs
+                                 :choices {:max (min dbs (count drawn))
                                            :card #(some (fn [c] (same-card? c %)) drawn)
                                            :all true}
                                  :effect (req (doseq [c (reverse targets)]
