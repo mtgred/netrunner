@@ -610,7 +610,7 @@
                                              (derez state :runner (:card context))
                                              (register-turn-flag!
                                                state side card :can-rez
-                                               (fn [state side card]
+                                               (fn [state _ card]
                                                  (if (same-card? card (:card context))
                                                    ((constantly false)
                                                     (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
@@ -677,7 +677,7 @@
                                         (if (not (pos? (get-counters (get-card state card) :credit)))
                                           (wait-for (trash state :runner card {:unpreventable true})
                                                     (system-msg state :runner (str "trashes Crowdfunding"
-                                                                                   (when (not (empty? (:deck runner)))
+                                                                                   (when (seq (:deck runner))
                                                                                      " and draws 1 card")))
                                                     (draw state :runner eid 1))
                                           (effect-completed state side eid))))}]
@@ -803,7 +803,7 @@
                 :effect (effect
                           (register-turn-flag!
                             card :can-rez
-                            (fn [state side card]
+                            (fn [state _ card]
                               (let [idx (card-index state card)]
                                 (if (and (ice? card)
                                          idx
@@ -1106,9 +1106,9 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (string/join ", " (map :title (:currently-drawing runner-reg))))
+                       (string/join ", " (map :title runner-currently-drawing)))
              :async true
-             :effect (effect (reveal eid (:currently-drawing runner-reg)))}
+             :effect (effect (reveal eid runner-currently-drawing))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1642,7 +1642,7 @@
                                     :waiting-prompt "Runner to make a decision"
                                     :prompt "Choose 1 card to add to the bottom of the Stack"
                                     :choices {:req (req (and (in-hand? target)
-                                                             (some #(same-card? target %) (:currently-drawing runner-reg))))}
+                                                             (some #(same-card? target %) runner-currently-drawing)))}
                                     :msg "add 1 card to the bottom of the Stack"
                                     :effect (effect (move target :deck))}])
                                 (draw eid 2))}]})
@@ -1789,9 +1789,9 @@
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
                   :async true
-                  :effect (req (let [type (get-in @state [:prevent :current])]
+                  :effect (req (let [prevent-type (get-in @state [:prevent :current])]
                                  (wait-for (trash state side card {:unpreventable true})
-                                           (continue-ability state side (start-trace type)
+                                           (continue-ability state side (start-trace prevent-type)
                                                              card nil))))}]}))
 
 (defcard "Off-Campus Apartment"
@@ -2014,13 +2014,13 @@
 (defcard "Personal Workshop"
   (let [remove-counter
         {:async true
-         :req (req (not (empty? (:hosted card))))
+         :req (req (seq (:hosted card)))
          :msg (msg "remove 1 counter from " (:title target))
          :choices {:card #(:host %)}
          :effect (req (do (add-counter state side target :power -1)
-                          (if (not (pos? (get-counters (get-card state target) :power)))
-                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))
-                          (effect-completed state side eid)))}]
+                          (if (pos? (get-counters (get-card state target) :power))
+                            (effect-completed state side eid)
+                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))))}]
     {:flags {:drip-economy true}
      :abilities [{:async true
                   :label "Host a program or piece of hardware"
@@ -2043,7 +2043,7 @@
                  {:async true
                   :label "X [Credit]: Remove counters from a hosted card"
                   :choices {:card #(:host %)}
-                  :req (req (not (empty? (:hosted card))))
+                  :req (req (seq (:hosted card)))
                   :effect (effect
                             (continue-ability
                               (let [paydowntarget target
@@ -2208,7 +2208,7 @@
                 :waiting-prompt "Runner to make a decision"
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
-                                    (if (pos? (count from))
+                                    (when (pos? (count from))
                                       (reorder-choice :runner :corp from '() (count from) from)))
                                   card nil))}
    :on-trash {:async true
@@ -2483,11 +2483,7 @@
                   :async true
                   :msg (msg "Choose the order the unbroken subroutines on "
                          (:title current-ice) " resolve")
-                  :effect (effect
-                            (continue-ability
-                              (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
-                                (runner-break unbroken-subs))
-                              card nil))}]}))
+                  :effect (effect (continue-ability (runner-break (unbroken-subroutines-choice current-ice)) card nil))}]}))
 
 (defcard "Street Peddler"
   {:on-install {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
@@ -2706,7 +2702,7 @@
                :async true
                :effect
                (effect (continue-ability
-                         (let [drawn (:currently-drawing runner-reg)]
+                         (when-let [drawn runner-currently-drawing]
                            {:waiting-prompt "Runner to make a decision"
                             :prompt "Choose 1 card to add to the bottom of the stack"
                             :choices {:card #(some (fn [c] (same-card? c %)) drawn)

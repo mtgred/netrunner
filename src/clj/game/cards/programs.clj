@@ -571,7 +571,7 @@
                :choices {:number (req (min (:count context)
                                            (quot (total-available-credits state :runner eid card) 2)))}
                :async true
-               :effect (req (let [cards (->> (:currently-drawing corp-reg)
+               :effect (req (let [cards (->> corp-currently-drawing
                                              (shuffle)
                                              (keep #(find-cid (:cid %) (:hand corp)))
                                              (take target))]

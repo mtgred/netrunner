@@ -46,6 +46,8 @@
       this-server (let [s (get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))
+      corp-currently-drawing (seq (peek (get-in @state [:corp :register :currently-drawing])))
+      runner-currently-drawing (seq (peek (get-in @state [:runner :register :currently-drawing])))
       ]
     (partition 2)
     (map (juxt first identity))

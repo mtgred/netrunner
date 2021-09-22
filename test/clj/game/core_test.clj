@@ -104,7 +104,7 @@
                   (flatten hand))
           :discard (when-let [discard (:discard corp)]
                      (flatten discard))
-          :identity (when-let [id (:id corp)]
+          :identity (when-let [id (or (:id corp) (:identity corp))]
                       (server-card id))
           :credits (:credits corp)
           :bad-pub (:bad-pub corp)}
@@ -116,7 +116,7 @@
                     (flatten hand))
             :discard (when-let [discard (:discard runner)]
                        (flatten discard))
-            :identity (when-let [id (:id runner)]
+            :identity (when-let [id (or (:id runner) (:identity runner))]
                         (server-card id))
             :credits (:credits runner)
             :tags (:tags runner)}

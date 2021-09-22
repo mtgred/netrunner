@@ -1143,7 +1143,36 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
         (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-        (is (empty? (:prompt (get-corp))))))))
+        (is (empty? (:prompt (get-corp))))))
+    (testing "further interactions that could happen"
+      (do-game
+        (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
+                          :deck [(qty "Hedge Fund" 10)]
+                          :hand ["Daily Business Show" "Political Dealings" "Jinja City Grid"
+                                 "Merger" "Ice Wall" "Enigma"]
+                          :credits 20}})
+        (play-from-hand state :corp "Daily Business Show" "New remote")
+        (rez state :corp (get-content state :remote1 0))
+        (play-from-hand state :corp "Political Dealings" "New remote")
+        (rez state :corp (get-content state :remote2 0))
+        (play-from-hand state :corp "Jinja City Grid" "New remote")
+        (rez state :corp (get-content state :remote3 0))
+        (take-credits state :corp)
+        (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck {:front true})
+        (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :deck {:front true})
+        (core/move state :corp (find-card "Merger" (:hand (get-corp))) :deck {:front true})
+        (take-credits state :runner)
+        (click-prompt state :corp "Political Dealings")
+        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "New remote")
+        (is (= "Jinja City Grid" (:title (:card (prompt-map :corp)))))
+        (is (= ["Enigma" "None"] (prompt-buttons :corp)))
+        (click-prompt state :corp "Enigma")
+        (is (= ["Daily Business Show" "Jinja City Grid"] (prompt-titles :corp)))
+        (click-prompt state :corp "Jinja City Grid")
+        (is (= ["Ice Wall" "None"] (prompt-buttons :corp)))
+        (click-prompt state :corp "Ice Wall")
+        (is (empty? (:prompt (get-corp))) "No DBS prompt cuz all drawn cards have been installed")))))
 
 (deftest daily-quest
   ;; Daily Quest

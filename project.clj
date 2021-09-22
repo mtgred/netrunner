@@ -51,7 +51,8 @@
             [lein-figwheel "0.5.16"]
             [lein-ring "0.9.7"]
             [lein-eftest "0.5.8"]
-            [lein-exec "0.3.7"]]
+            [lein-exec "0.3.7"]
+            [cider/cider-nrepl "0.26.0"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
                                   [binaryage/devtools "0.9.7"]
@@ -78,8 +79,7 @@
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and (most of the) task namespaces.
-  :aot [#"web.core"
-        #"tasks.fetch"]
+  :aot [#"web.core"]
   :jar-name "netrunner.jar"
   :jar-exclusions [#"public/img/cards/*"]
   :uberjar-name "netrunner-standalone.jar"

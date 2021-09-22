@@ -426,11 +426,11 @@
 (defn remove-from-currently-drawing
   [state side card]
   (swap! state update-in [side :register :currently-drawing]
-         (fn [mrd] (remove-once #(= (:cid %) (:cid card)) mrd))))
+         (fn [mrd] (conj (pop mrd) (remove-once #(= (:cid %) (:cid card)) (peek mrd))))))
 
 (defn add-to-currently-drawing
   [state side card]
-  (swap! state update-in [side :register :currently-drawing] conj card))
+  (swap! state update-in [side :register :currently-drawing] #(conj (pop %) (conj (peek %) card))))
 
 (defn swap-cards
   "Swaps two cards when one or both aren't installed"
@@ -451,7 +451,7 @@
                  (or (ice? a)
                      (ice? b)))
         (set-current-ice state))
-      (when (-> @state side :register :currently-drawing)
+      (when (-> @state side :register :currently-drawing (peek))
         (when (in-hand? a) (remove-from-currently-drawing state a-side a))
         (when (in-hand? b) (remove-from-currently-drawing state b-side b))
         (when (in-hand? moved-a) (add-to-currently-drawing state a-side moved-a))

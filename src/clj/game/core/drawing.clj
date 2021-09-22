@@ -70,14 +70,14 @@
          (if suppress-event
            (effect-completed state side eid)
            (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
-             (swap! state assoc-in [side :register :currently-drawing] drawn)
+             (swap! state update-in [side :register :currently-drawing] conj drawn)
              (queue-event state draw-event {:cards drawn
                                             :count drawn-count})
              (wait-for
                (checkpoint state nil (make-eid state eid) nil)
                (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) drawn-count)
-                         (let [eid (make-result eid (-> @state side :register :currently-drawing))]
-                           (swap! state update-in [side :register] dissoc :currently-drawing)
+                         (let [eid (make-result eid (-> @state side :register :currently-drawing (peek)))]
+                           (swap! state update-in [side :register :currently-drawing] pop)
                            (effect-completed state side eid))))))
          (when (safe-zero? (remaining-draws state side))
            (prevent-draw state side)))))))

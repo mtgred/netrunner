@@ -563,7 +563,7 @@
              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                          (rezzed? %))
                                                    (all-installed state :corp)))
-                                drawn (:currently-drawing corp-reg)]
+                                drawn corp-currently-drawing]
                             (continue-ability
                               state side
                               (when (seq drawn)
@@ -1571,27 +1571,22 @@
             (when-let [agenda (first agendas)]
               {:optional
                {:prompt (msg "Reveal and install " (:title agenda) "?")
-                :yes-ability {:async true
-                              :msg (msg "reveal " (:title agenda))
+                :yes-ability {:msg (msg "reveal " (:title agenda))
+                              :async true
                               :effect (req (wait-for
                                              (reveal state side agenda)
                                              (wait-for
                                                (corp-install
                                                  state side agenda nil
-                                                 {:install-state
-                                                  (:install-state
-                                                    (card-def agenda)
-                                                    :unrezzed)})
+                                                 {:install-state (:install-state (card-def agenda) :unrezzed)})
                                                (remove-from-currently-drawing state side agenda)
                                                (continue-ability state side (pdhelper (next agendas)) card nil))))}
                 :no-ability {:async true
                              :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (seq (filter agenda? (:currently-drawing corp-reg))))
-               :effect (req (let [drawn (:currently-drawing corp-reg)
-                                  agendas (filter agenda? drawn)]
-                              (continue-ability state side (pdhelper agendas) card nil)))}]}))
+               :req (req (seq (filter agenda? corp-currently-drawing)))
+               :effect (effect (continue-ability (pdhelper (filter agenda? corp-currently-drawing)) card nil))}]}))
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
@@ -1706,29 +1701,28 @@
                (effect
                  (lose-clicks :corp 1)
                  (continue-ability
-                   (let [drawn (:currently-drawing corp-reg)]
-                     {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                      :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
-                      :async true
-                      :effect
-                      (effect
-                        (continue-ability
-                          (let [hq-card target
-                                t (:type hq-card)]
-                            {:show-discard true
-                             :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
-                             :choices {:card #(and (corp? %)
-                                                   (= (:type %) t)
-                                                   (in-discard? %))}
-                             :msg (msg "lose [Click], reveal " (:title hq-card)
-                                       " from HQ, and swap it for " (:title target)
-                                       " from Archives")
-                             :async true
-                             :effect (req (wait-for
-                                            (reveal state side hq-card target)
-                                            (swap-cards state side hq-card target)
-                                            (effect-completed state side eid)))})
-                          card nil))})
+                   {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                    :choices {:card #(some (fn [c] (same-card? c %)) corp-currently-drawing)}
+                    :async true
+                    :effect
+                    (effect
+                      (continue-ability
+                        (let [hq-card target
+                              t (:type hq-card)]
+                          {:show-discard true
+                           :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                           :choices {:card #(and (corp? %)
+                                                 (= (:type %) t)
+                                                 (in-discard? %))}
+                           :msg (msg "lose [Click], reveal " (:title hq-card)
+                                     " from HQ, and swap it for " (:title target)
+                                     " from Archives")
+                           :async true
+                           :effect (req (wait-for
+                                          (reveal state side hq-card target)
+                                          (swap-cards state side hq-card target)
+                                          (effect-completed state side eid)))})
+                        card nil))}
                    card nil))}}}]})
 
 (defcard "Rashida Jaheem"

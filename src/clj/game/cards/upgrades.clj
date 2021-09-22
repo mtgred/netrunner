@@ -745,10 +745,10 @@
                :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                :effect (req (cond
                               ;; if ice were drawn, do the full routine
-                              (some ice? (:currently-drawing corp-reg))
+                              (some ice? corp-currently-drawing)
                               (let [ices (filter #(and (ice? %)
                                                        (get-card state %))
-                                                 (:currently-drawing corp-reg))
+                                                 corp-currently-drawing)
                                     grids (filterv #(= "Jinja City Grid" (:title %))
                                                    (all-active-installed state :corp))]
                                 (continue-ability
