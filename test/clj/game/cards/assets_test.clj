@@ -1130,19 +1130,20 @@
       (do-game
         (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
                           :deck [(qty "Hedge Fund" 10)]
-                          :hand ["Daily Business Show" "Political Dealings" "Merger"]
+                          :hand ["Daily Business Show" "Political Dealings" "Merger" "Ice Wall"]
                           :credits 20}})
         (play-from-hand state :corp "Daily Business Show" "New remote")
         (rez state :corp (get-content state :remote1 0))
         (play-from-hand state :corp "Political Dealings" "New remote")
         (rez state :corp (get-content state :remote2 0))
         (take-credits state :corp)
+        (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :deck {:front true})
         (core/move state :corp (find-card "Merger" (:hand (get-corp))) :deck {:front true})
         (take-credits state :runner)
         (click-prompt state :corp "Political Dealings")
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+        (click-card state :corp "Ice Wall")
         (is (empty? (:prompt (get-corp))))))
     (testing "further interactions that could happen"
       (do-game
