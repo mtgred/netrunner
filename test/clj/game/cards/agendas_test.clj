@@ -1887,7 +1887,29 @@
       (click-card state :corp "Ice Wall")
       (click-card state :corp "Fire Wall")
       (click-prompt state :corp "Done")
-      (is (= 2 (count (:discard (get-corp)))) "Corp shuffles 2 cards from discard"))))
+      (is (= 2 (count (:discard (get-corp)))) "Corp shuffles 2 cards from discard")))
+  (testing "Effect fully completes before Runner abilities trigger #5992"
+    (do-game
+      (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar" "Enigma"]
+                        :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}
+                 :runner {:id "Tāo Salonga: Telepresence Magician"}})
+      (play-from-hand state :corp "Afshar" "HQ")
+      (play-from-hand state :corp "Enigma" "R&D")
+      (play-and-score state "Longevity Serum")
+      (is (= :waiting (:prompt-type (prompt-map :runner))) "Runner is waiting")
+      (is (= 4 (count (:discard (get-corp)))))
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp (find-card "IPO" (:hand (get-corp))))
+      (is (= 6 (count (:discard (get-corp)))) "Corp trashes two cards from HQ")
+      (is (= :waiting (:prompt-type (prompt-map :runner))) "Runner is still waiting")
+      (click-card state :corp "Ice Wall")
+      (click-card state :corp "Fire Wall")
+      (click-card state :corp "Prisec")
+      (is (find-card "Fire Wall" (:deck (get-corp))))
+      (is (find-card "Ice Wall" (:deck (get-corp))))
+      (is (find-card "Prisec" (:deck (get-corp))))
+      (is (= :waiting (:prompt-type (prompt-map :corp))) "Corp is now waiting")
+      (click-prompt state :runner "No"))))
 
 (deftest luminal-transubstantiation
   ;; Luminal Transubstantiation
