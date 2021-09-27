@@ -1047,27 +1047,43 @@
 
 (defcard "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
+             :async true
              :interactive (req true)
-             :optional
-             {:req (req (some ice? (:hand corp)))
-              :prompt "Install a piece of ice?"
-              :once :per-turn
-              :yes-ability
-              {:prompt "Choose a piece of ice to install from HQ"
-               :choices {:card #(and (ice? %)
-                                     (in-hand? %))}
-               :async true
-               :msg "install ice at the innermost position of this server. Runner is now approaching that piece of ice"
-               :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
-                                                    {:ignore-all-cost true
-                                                     :front true})
-                                      (swap! state assoc-in [:run :position] 1)
-                                      (set-next-phase state :approach-ice)
-                                      (update-all-ice state side)
-                                      (update-all-icebreakers state side)
-                                      (continue-ability state side
-                                                        (offer-jack-out {:req (req (:approached-ice? (:run @state)))})
-                                                        card nil)))}}}]})
+             :waiting "Corp to make a decision"
+             :req (req (and (pos? (count (:hand corp)))
+                            (not (used-this-turn? (:cid card) state))))
+             :effect (req (if (some ice? (:hand corp))
+                            (continue-ability
+                             state side
+                             {:optional
+                              {:prompt "Install a piece of ice?"
+                               :once :per-turn
+                               :yes-ability
+                               {:prompt "Choose a piece of ice to install from HQ"
+                                :choices {:card #(and (ice? %)
+                                                      (in-hand? %))}
+                                :async true
+                                :msg "install a piece of ice at the innermost position of this server. Runner is now approaching that piece of ice"
+                                :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
+                                                                     {:ignore-all-cost true
+                                                                      :front true})
+                                                       (swap! state assoc-in [:run :position] 1)
+                                                       (set-next-phase state :approach-ice)
+                                                       (update-all-ice state side)
+                                                       (update-all-icebreakers state side)
+                                                       (continue-ability state side
+                                                                         (offer-jack-out {:req (req (:approached-ice? (:run @state)))})
+                                                                         card nil)))}}}
+                             card nil)
+                            ;; bogus prompt so Runner cannot infer the Corp has no ice in hand
+                            (continue-ability
+                             state :corp
+                             {:async true
+                              :prompt "No ice to install"
+                              :choices ["Carry on!"]
+                              :prompt-type :bogus
+                              :effect (effect (effect-completed eid))}
+                             card nil)))}]})
 
 (defcard "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice
