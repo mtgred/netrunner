@@ -77,14 +77,13 @@
    :abilities [(set-autoresolve :auto-419 "419")]})
 
 (defcard "Acme Consulting: The Truth You Need"
-  (letfn [(outermost? [run-position run-ices]
-            (and run-position
-                 (pos? run-position)
-                 (= run-position (count run-ices))))]
+  (letfn [(outermost? [state ice]
+            (let [server-ice (:ices (card->server state ice))]
+              (same-card? ice (last server-ice))))]
     {:constant-effects [{:type :tags
-                         :req (req (and (rezzed? current-ice)
-                                        (= :encounter-ice (:phase run))
-                                        (outermost? run-position run-ices)))
+                         :req (req (and (get-current-encounter state)
+                                        (rezzed? current-ice)
+                                        (outermost? state current-ice)))
                          :value 1}]}))
 
 (defcard "Adam: Compulsive Hacker"

@@ -2532,9 +2532,10 @@
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
+    (new-game {:corp {:deck ["Ice Wall" "Ganked!"]}
                :runner {:deck ["Ice Carver"]}})
     (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Ganked!" "Archives")
     (take-credits state :corp 2)
     (let [iwall (get-ice state :archives 0)]
       (play-from-hand state :runner "Ice Carver")
@@ -2543,7 +2544,12 @@
       (run-continue state)
       (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-continue state :movement)
-      (run-jack-out state)
+      (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter")
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp iwall)
+      (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (run-continue state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
 (deftest inside-man
