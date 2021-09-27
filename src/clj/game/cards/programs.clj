@@ -374,22 +374,23 @@
                               :effect (effect (lose-credits :corp eid 1))}]}))
 
 (defcard "Analog Dreamers"
-  {:abilities [{:cost [:click 1]
-                :msg "make a run on R&D"
-                :makes-run true
-                :async true
-                :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-breach
-              {:target-server :rd
-               :this-card-run true
-               :ability
-               {:prompt "Choose a card to shuffle into R&D"
-                :choices {:card #(and (not (ice? %))
-                                      (not (rezzed? %))
-                                      (zero? (get-counters % :advancement)))}
-                :msg (msg "shuffle " (card-str state target) " into R&D")
-                :effect (effect (move :corp target :deck)
-                                (shuffle! :corp :deck))}})]})
+  (let [ability (successful-run-replace-breach
+                 {:target-server :rd
+                  :duration :end-of-run
+                  :ability
+                  {:prompt "Choose a card to shuffle into R&D"
+                   :choices {:card #(and (not (ice? %))
+                                         (not (rezzed? %))
+                                         (zero? (get-counters % :advancement)))}
+                   :msg (msg "shuffle " (card-str state target) " into R&D")
+                   :effect (effect (move :corp target :deck)
+                                   (shuffle! :corp :deck))}})]
+    {:abilities [{:cost [:click 1]
+                  :msg "make a run on R&D"
+                  :makes-run true
+                  :async true
+                  :effect (effect (register-events card [ability])
+                                  (make-run eid :rd card))}]}))
 
 (defcard "Ankusa"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -1142,19 +1143,20 @@
              :effect (effect (trash eid card {:cause :purge}))}]})
 
 (defcard "Expert Schedule Analyzer"
-  {:abilities [{:cost [:click 1]
-                :msg "make a run on HQ"
-                :makes-run true
-                :async true
-                :effect (effect (make-run eid :hq card))}]
-   :events [(successful-run-replace-breach
-              {:target-server :hq
-               :this-card-run true
-               :ability
-               {:msg (msg "reveal all of the cards cards in HQ: "
-                          (string/join ", " (map :title (:hand corp))))
-                :async true
-                :effect (effect (reveal eid (:hand corp)))}})]})
+  (let [ability (successful-run-replace-breach
+                 {:target-server :hq
+                  :duration :end-of-run
+                  :ability
+                  {:msg (msg "reveal all of the cards cards in HQ: "
+                             (string/join ", " (map :title (:hand corp))))
+                   :async true
+                   :effect (effect (reveal eid (:hand corp)))}})]
+    {:abilities [{:cost [:click 1]
+                  :msg "make a run on HQ"
+                  :makes-run true
+                  :async true
+                  :effect (effect (register-events card [ability])
+                                  (make-run eid :hq card))}]}))
 
 (defcard "Faerie"
   (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry")
@@ -1476,23 +1478,24 @@
              :effect (effect (trash eid card {:cause :purge}))}]})
 
 (defcard "Keyhole"
-  {:abilities [{:cost [:click 1]
-                :msg "make a run on R&D"
-                :makes-run true
-                :async true
-                :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-breach
-              {:target-server :rd
-               :this-card-run true
-               :mandatory true
-               :ability
-               {:prompt "Choose a card to trash"
-                :not-distinct true
-                :msg (msg "trash " (:title target))
-                :choices (req (take 3 (:deck corp)))
-                :async true
-                :effect (effect (shuffle! :corp :deck)
-                                (trash eid (assoc target :seen true) nil))}})]})
+  (let [ability (successful-run-replace-breach
+                 {:target-server :rd
+                  :mandatory true
+                  :duration :end-of-run
+                  :ability
+                  {:prompt "Choose a card to trash"
+                   :not-distinct true
+                   :msg (msg "trash " (:title target))
+                   :choices (req (take 3 (:deck corp)))
+                   :async true
+                   :effect (effect (shuffle! :corp :deck)
+                                   (trash eid (assoc target :seen true) nil))}})]
+    {:abilities [{:cost [:click 1]
+                  :msg "make a run on R&D"
+                  :makes-run true
+                  :async true
+                  :effect (effect (register-events card [ability])
+                                  (make-run eid :rd card))}]}))
 
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
@@ -2323,42 +2326,43 @@
   (break-and-enter "Barrier"))
 
 (defcard "Stargate"
-  {:abilities [{:cost [:click 1]
-                :once :per-turn
-                :msg "make a run on R&D"
-                :makes-run true
-                :async true
-                :effect (effect (make-run eid :rd card))}]
-   :events [(successful-run-replace-breach
-              {:target-server :rd
-               :this-card-run true
-               :mandatory true
-               :ability
-               {:async true
-                :msg (msg "reveal " (->> (:deck corp)
-                                         (take 3)
-                                         (map :title)
-                                         (string/join ", ")))
-                :effect (req (wait-for
-                               (reveal state side (take 3 (:deck corp)))
-                               (continue-ability
-                                 state side
-                                 {:async true
-                                  :prompt "Choose a card to trash"
-                                  :not-distinct true
-                                  :choices (req (take 3 (:deck corp)))
-                                  :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
-                                                  target-position (first (positions #{target} (take 3 (:deck corp))))
-                                                  position (case target-position
-                                                             0 "top "
-                                                             1 "middle "
-                                                             2 "bottom "
-                                                             "this-should-not-happen ")]
-                                              (if (= 1 (count (filter #{(:title target)} card-titles)))
-                                                (str "trash " (:title target))
-                                                (str "trash " position (:title target)))))
-                                  :effect (effect (trash :runner eid (assoc target :seen true) nil))}
-                                 card nil)))}})]})
+  (let [ability (successful-run-replace-breach
+                 {:target-server :rd
+                  :mandatory true
+                  :duration :end-of-run
+                  :ability
+                  {:async true
+                   :msg (msg "reveal " (->> (:deck corp)
+                                            (take 3)
+                                            (map :title)
+                                            (string/join ", ")))
+                   :effect (req (wait-for
+                                 (reveal state side (take 3 (:deck corp)))
+                                 (continue-ability
+                                  state side
+                                  {:async true
+                                   :prompt "Choose a card to trash"
+                                   :not-distinct true
+                                   :choices (req (take 3 (:deck corp)))
+                                   :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
+                                                   target-position (first (positions #{target} (take 3 (:deck corp))))
+                                                   position (case target-position
+                                                              0 "top "
+                                                              1 "middle "
+                                                              2 "bottom "
+                                                              "this-should-not-happen ")]
+                                               (if (= 1 (count (filter #{(:title target)} card-titles)))
+                                                 (str "trash " (:title target))
+                                                 (str "trash " position (:title target)))))
+                                   :effect (effect (trash :runner eid (assoc target :seen true) nil))}
+                                  card nil)))}})]
+    {:abilities [{:cost [:click 1]
+                  :once :per-turn
+                  :msg "make a run on R&D"
+                  :makes-run true
+                  :async true
+                  :effect (effect (register-events card [ability])
+                                  (make-run eid :rd card))}]}))
 
 (defcard "Study Guide"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")

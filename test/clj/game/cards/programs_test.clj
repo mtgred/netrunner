@@ -5524,7 +5524,7 @@
         (is (= 4 (get-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate
-  ;; Stargate - once per turn Keyhole which doesn't shuffle
+  ;; Stargate
   (testing "Basic test"
     (do-game
      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
@@ -5611,7 +5611,35 @@
       (card-ability state :runner (get-program state 0) 0)
       (run-continue state)
       (click-prompt state :runner (second (prompt-buttons :runner)))
-      (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
+      (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log")))
+  (testing "Effect persists even if Stargate is trashed"
+    (do-game
+     (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                       :hand ["Herald" "Troll" "Rototurret"]}
+                :runner {:deck ["Stargate"]}})
+     (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+     (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+     (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+     (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+     (play-from-hand state :corp "Rototurret" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Stargate")
+     (let [roto (get-ice state :rd 0)
+           stargate (get-program state 0)]
+       (card-ability state :runner stargate 0)
+       (is (:run @state) "Run initiated")
+       (rez state :corp roto)
+       (run-continue state :encounter-ice)
+       (card-subroutine state :corp roto 0)
+       (click-card state :corp stargate)
+       (is (not (installed? (refresh stargate))) "Stargate is trashed")
+       (run-continue-until state :success)
+       (click-prompt state :runner "Troll")
+       (is (empty? (:prompt (get-runner))) "Prompt closed")
+       (is (not (:run @state)) "Run ended")
+       (is (-> (get-corp) :discard first :seen) "Troll is faceup")
+       (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+       (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D")))))
 
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter

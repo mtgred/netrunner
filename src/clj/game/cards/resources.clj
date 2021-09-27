@@ -619,6 +619,7 @@
 (defcard "Counter Surveillance"
   (let [ability (successful-run-replace-breach
                   {:mandatory true
+                   :duration :end-of-run
                    :ability
                    {:async true
                     :effect (req (let [tags (count-tags state)]
@@ -648,7 +649,7 @@
                   :msg (msg "make a run on " target)
                   :choices (req runnable-servers)
                   :async true
-                  :effect (effect (register-events card [(assoc ability :duration :end-of-run)])
+                  :effect (effect (register-events card [ability])
                                   (make-run eid target card))}]}))
 
 (defcard "Crash Space"
