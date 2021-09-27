@@ -1034,9 +1034,7 @@
                 :effect (effect (update! (assoc card :server-target target)))}
    :constant-effects [{:type :install-cost
                        :req (req (let [serv (:server (second targets))]
-                                   (and (= serv (:server-target card))
-                                        (not (and (is-central? serv)
-                                                  (upgrade? target))))))
+                                   (= serv (:server-target card))))
                        :value 1}]
    :events [{:event :purge
              :async true

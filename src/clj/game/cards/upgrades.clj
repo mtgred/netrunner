@@ -381,10 +381,10 @@
           {:prompt (str "Choose a card to swap with " (:title to-swap))
            :choices {:not-self true
                      :card #(and (corp? %)
-                                 (not (operation? %))
+                                 (not (or (operation? %)
+                                          (ice? %)))
                                  (or (in-hand? %) ; agenda, asset or upgrade from HQ
-                                     (and (installed? %) ; card installed in a server
-                                          (not (in-root? %)))))} ; central upgrades are not in a server
+                                     (installed? %)))} ; card installed in a server
            :cost [:trash]
            :msg (msg "swap " (card-str state to-swap)
                      " with " (card-str state target))
@@ -534,7 +534,7 @@
    {:optional
     {:req (req (and (not (in-discard? card))
                     (some #(and (ice? %)
-                                (protecting-same-server? card %)) 
+                                (protecting-same-server? card %))
                           (all-active-installed state :corp))))
      :waiting-prompt "Corp to make a decision"
      :prompt "Trash Ganked! to force the Runner to encounter a piece of ice?"
@@ -1324,8 +1324,6 @@
              :optional
              {:req (req (let [target (:card context)]
                           (and (same-server? card target)
-                               (not (and (upgrade? target)
-                                         (is-central? (second (get-zone target)))))
                                (not (same-card? target card))
                                (some #(and (not (rezzed? %))
                                            (not (agenda? %))
@@ -1504,8 +1502,7 @@
                                         card nil))}}})]
     {:on-trash {:async true
                 :once-per-instance true
-                :req (req (and (= side :runner)
-                               (not (in-root? card))))
+                :req (req (= side :runner))
                 :effect (effect (continue-ability (ability) card nil))}
      :events [{:event :runner-trash
                :async true
@@ -1515,9 +1512,8 @@
                                       (let [target-zone (get-zone (:card target))
                                             target-zone (or (central->zone target-zone) target-zone)
                                             warroid-zone (get-zone card)]
-                                        (and (not (is-root? target-zone))
-                                             (= (second warroid-zone)
-                                                (second target-zone))))))
+                                        (= (second warroid-zone)
+                                           (second target-zone)))))
                                targets))
                :effect (effect (continue-ability (ability) card nil))}]}))
 

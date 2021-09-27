@@ -507,7 +507,7 @@
             sbox (get-content state :rd 1)]
         (rez state :corp bbg2)
         (rez state :corp sbox)
-        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
+        (is (= 4 (:credit (get-corp))) "Paid 0 credits to rez Strongbox")))))
 
 (deftest bryan-stinson
   ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
@@ -3365,7 +3365,8 @@
             enig (get-ice state :hq 0)]
         (rez state :corp scg2)
         (rez state :corp cvs2)
-        (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
+        (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "Surat City Grid triggered from upgrade in root of HQ")
+        (click-prompt state :corp "No")
         (derez state :corp (refresh wrap))
         (rez state :corp enig)
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ice protecting HQ")))))
@@ -3783,7 +3784,7 @@
       (click-card state :runner (get-program state 1))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
       (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards")))
-  (testing "Shouldn't trigger from self-trash in root of central server. Issue #4813"
+  (testing "Should trigger from self-trash in root of central server"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
                         :hand ["Warroid Tracker"]}
@@ -3798,9 +3799,9 @@
         (play-from-hand state :runner "Dyson Mem Chip")
         (run-empty-server state :hq)
         (click-prompt state :runner "Pay 4 [Credits] to trash")
-        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
-  (testing "Shouldn't trigger when trashed card is in root of central server."
+        (is (some? (:prompt (get-corp))) "Corp has prompt")
+        (is (some? (:prompt (get-runner))) "Runner has prompt"))))
+  (testing "Should trigger when trashed card is in root of central server."
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
                         :hand ["Warroid Tracker" "Crisium Grid"]
@@ -3821,9 +3822,9 @@
         (is (= ["Warroid Tracker" "Crisium Grid"] (prompt-buttons :runner)))
         (click-prompt state :runner "Crisium Grid")
         (click-prompt state :runner "Pay 5 [Credits] to trash")
-        (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "5")
+        (click-prompt state :runner "No action"))))
   (testing "Shouldn't trigger when trashed by corp (via Hellion Beta Test). Issue #4941"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
