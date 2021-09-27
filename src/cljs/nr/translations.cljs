@@ -365,6 +365,7 @@
    :click-count (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
    :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
    :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
    :indicate-action "Indicate action"
    :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
    :spec-view "Spectator View"
@@ -761,6 +762,7 @@
    :click-count (fn [[click]] (str click " 时点"))
    :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " 负面声誉"))
    :mu-count (fn [[unused available]] (str unused " / " available " 空闲内存"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused " / " available " " mu-type " 空闲内存"))
    :indicate-action "我要响应"
    :spec-count (fn [[c]] (str c " 位观众"))
    :spec-view "旁观者视图"
@@ -1158,6 +1160,7 @@
    :click-count (fn [[click]] (str click " Ickclay" (if (not= click 1) "s" "")))
    :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Adbay Ublicitypay"))
    :mu-count (fn [[unused available]] (str unused " ofyay " available " UMYAY unusedyay"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused " ofyay " available " " mu-type " UMYAY unusedyay"))
    :indicate-action "Indicateyay actionyay"
    :spec-count (fn [[c]] (str c " Ectatorspay" (when (> c 1) "s")))
    :spec-view "Ectatorspay Iewvay"
