@@ -11,9 +11,8 @@
   [state side]
   (trigger-event state side :pre-purge)
   (let [installed-cards (concat (all-installed state :runner)
-                                (all-installed state :corp))
-        hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-    (doseq [card (concat installed-cards hosted-on-ice)]
+                                (all-installed state :corp))]
+    (doseq [card installed-cards]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
         (add-counter state :runner card :virus (- (get-counters card :virus)))))
