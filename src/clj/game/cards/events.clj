@@ -176,7 +176,7 @@
                                            (when-not (string? target)
                                              " and adds one to the bottom of the stack")))
                           (system-msg state side "uses Blueberry!™ Diesel to draw 2 cards")
-                          (draw state :runner eid 2 nil))}})
+                          (draw state :runner eid 2))}})
 
 (defcard "Bravado"
   ; Bravado only counts distinct pieces of ice that were passed.
@@ -287,7 +287,7 @@
    {:msg "gain 1 [Credits] and draw 2 cards"
     :async true
     :effect (req (wait-for (gain-credits state side 1)
-                           (draw state side eid 2 nil)))}})
+                           (draw state side eid 2)))}})
 
 (defcard "By Any Means"
   {:on-play
@@ -457,7 +457,7 @@
                 :yes-ability
                 {:async true
                  :prompt "Install from where?"
-                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"] ))
+                 :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"]))
                  :msg (msg "install a program from their " target)
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
@@ -682,7 +682,7 @@
               :async true
               :msg "gain 3 [Credits]"}
              {:async true
-              :effect (effect (draw eid 2 nil))
+              :effect (effect (draw eid 2))
               :msg "draw 2 cards"}
              {:async true
               :effect (effect (lose-tags eid 1))
@@ -753,7 +753,7 @@
   {:on-play
    {:msg "draw 3 cards"
     :async true
-    :effect (effect (draw eid 3 nil))}})
+    :effect (effect (draw eid 3))}})
 
 (defcard "Direct Access"
   {:makes-run true
@@ -1020,7 +1020,7 @@
               (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))
               " [Credits]")
     :async true
-    :effect (req (wait-for (draw state side 1 nil)
+    :effect (req (wait-for (draw state side 1)
                            (gain-credits state side eid (count (filter #(= (:title %) "Exclusive Party") (:discard runner))))))}})
 
 (defcard "Executive Wiretaps"
@@ -1150,8 +1150,8 @@
   {:on-play
    {:msg "make each player draw 3 cards"
     :async true
-    :effect (req (wait-for (draw state :runner 3 nil)
-                           (draw state :corp eid 3 nil)))}})
+    :effect (req (wait-for (draw state :runner 3)
+                           (draw state :corp eid 3)))}})
 
 (defcard "Forged Activation Orders"
   {:on-play
@@ -1251,7 +1251,7 @@
   {:on-play
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
     :async true
-    :effect (effect (draw eid (- (hand-size state :runner) (count (:hand runner))) nil))}})
+    :effect (effect (draw eid (- (hand-size state :runner) (count (:hand runner)))))}})
 
 (defcard "Glut Cipher"
   {:makes-run true
@@ -1400,13 +1400,13 @@
 
 (defcard "I've Had Worse"
   {:on-play {:async true
-             :effect (effect (draw eid 3 nil))}
+             :effect (effect (draw eid 3))}
    :on-trash {:when-inactive true
               :interactive (req true)
               :async true
               :req (req (#{:meat :net} (:cause target)))
               :msg "draw 3 cards"
-              :effect (effect (draw :runner eid 3 nil))}})
+              :effect (effect (draw :runner eid 3))}})
 
 (defcard "Immolation Script"
   {:makes-run true
@@ -1444,7 +1444,7 @@
              :choices ["Draw 1 card" "Gain 1 [Credits]"]
              :msg (msg (string/lower-case target))
              :effect (req (if (= target "Draw 1 card")
-                            (draw state side eid 1 nil)
+                            (draw state side eid 1)
                             (gain-credits state side eid 1)))}]})
 
 (defcard "Independent Thinking"
@@ -1460,7 +1460,7 @@
              " and draw " (quantify (cards-to-draw targets) "card"))
       :async true
       :effect (req (wait-for (trash-cards state side targets nil)
-                             (draw state :runner eid (cards-to-draw targets) nil)))}}))
+                             (draw state :runner eid (cards-to-draw targets))))}}))
 
 (defcard "Indexing"
   {:makes-run true
@@ -1652,7 +1652,7 @@
                             this-card-run))
              :effect (effect (register-events
                               card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
-                             (draw eid 1 nil))}]})
+                             (draw eid 1))}]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
@@ -1763,12 +1763,12 @@
                                                  (system-msg state :runner (str "shuffles " (string/join ", " (map :title targets))
                                                                                 " from their Heap into their Stack, and draws 1 card"))
                                                  (shuffle! state :runner :deck)
-                                                 (draw state :runner eid 1 nil))}
+                                                 (draw state :runner eid 1))}
 
                                    {:effect (effect
                                               (do (system-msg state :runner "shuffles their Stack and draws 1 card")
                                                   (shuffle! state :runner :deck)
-                                                  (draw state :runner eid 1 nil)))})
+                                                  (draw state :runner eid 1)))})
                                  card nil)))))}})
 
 (defcard "Lawyer Up"
@@ -1776,7 +1776,7 @@
    {:msg "remove 2 tags and draw 3 cards"
     :async true
     :effect (req (wait-for (lose-tags state side 2)
-                           (draw state side eid 3 nil)))}})
+                           (draw state side eid 3)))}})
 
 (defcard "Lean and Mean"
   {:makes-run true
@@ -1857,7 +1857,7 @@
     :rfg-instead-of-trashing true
     :async true
     :effect (effect (shuffle-into-deck :hand :discard)
-                    (draw eid 5 nil))}})
+                    (draw eid 5))}})
 
 (defcard "Lucky Find"
   {:on-play
@@ -1928,7 +1928,7 @@
     {:on-play
      {:msg (msg "draw " (count-clan state) " cards and gain " (count-tags state) " [Credits]")
       :async true
-      :effect (req (wait-for (draw state side (count-clan state) nil)
+      :effect (req (wait-for (draw state side (count-clan state))
                              (gain-credits state side eid (count-tags state))))}}))
 
 (defcard "Mass Install"
@@ -2013,7 +2013,7 @@
    {:additional-cost [:trash-from-hand 3]
     :msg "draw 3 cards and gain 3 [Credits]"
     :async true
-    :effect (req (wait-for (draw state side 3 nil)
+    :effect (req (wait-for (draw state side 3)
                            (gain-credits state side eid 3)))}})
 
 (defcard "Mutual Favor"
@@ -2083,7 +2083,7 @@
     :async true
     :effect (req (if (= target "Gain 4 [Credits]")
                    (gain-credits state :runner eid 4)
-                   (draw state :runner eid 4 nil)))}})
+                   (draw state :runner eid 4)))}})
 
 (defcard "On the Lam"
   {:on-play {:req (req (some resource? (all-active-installed state :runner)))
@@ -2269,7 +2269,7 @@
    {:msg "gain 2 [Credits] and draw 1 card"
     :async true
     :effect (req (wait-for (gain-credits state side 2)
-                           (draw state side eid 1 nil)))}})
+                           (draw state side eid 1)))}})
 
 (defcard "Push Your Luck"
   (letfn [(corp-choice [spent]
@@ -2322,7 +2322,7 @@
   {:on-play
    {:msg "draw 5 cards"
     :async true
-    :effect (effect (draw eid 5 nil))}})
+    :effect (effect (draw eid 5))}})
 
 (defcard "Queen's Gambit"
   {:on-play
@@ -2761,7 +2761,7 @@
     :msg "gain 4 [Credits] and draw 2 cards"
     :async true
     :effect (req (wait-for (gain-credits state side 4)
-                           (draw state side eid 2 nil)))}})
+                           (draw state side eid 2)))}})
 
 (defcard "Special Order"
   {:on-play
@@ -2835,7 +2835,7 @@
                    "Draw 4"])
     :async true
     :effect (req (if (= target "Draw 4")
-                   (wait-for (draw state :corp 4 nil)
+                   (wait-for (draw state :corp 4)
                              (system-msg state :corp
                                          (str "uses SYN Attack to draw "
                                               (quantify (count async-result) "card")))
@@ -2883,7 +2883,7 @@
   {:on-play
    {:prompt (req (if (not (zone-locked? state :runner :discard))
                    "Install a program from your Stack or Heap?"
-                   "Install a program from your Stack?" ))
+                   "Install a program from your Stack?"))
     :choices (req (if (not (zone-locked? state :runner :discard))
                     ["Stack" "Heap"]
                     ["Stack"]))
@@ -3065,7 +3065,7 @@
                 :choices :credit
                 :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
-                                       (gain-tags state side eid 1)))}} )]})
+                                       (gain-tags state side eid 1)))}})]})
 
 (defcard "VRcation"
   {:on-play
@@ -3075,7 +3075,7 @@
     :async true
     :effect (req (when (pos? (:click runner))
                    (lose-clicks state :runner 1))
-                 (draw state :runner eid 4 nil))}})
+                 (draw state :runner eid 4))}})
 
 (defcard "Wanton Destruction"
   {:makes-run true
@@ -3156,7 +3156,7 @@
                    (do (system-msg state :corp "chooses 6 [Credits] for the Runner")
                        (gain-credits state :runner eid 6))
                    (do (system-msg state :corp "chooses 4 cards for the Runner")
-                       (draw state :runner eid 4 nil))))}})
+                       (draw state :runner eid 4))))}})
 
 (defcard "Windfall"
   {:on-play

@@ -146,7 +146,7 @@
                                :effect (effect (move target :hand)
                                                (continue-ability
                                                  (let [from (take 2 (get-in @state [:corp :deck]))]
-                                                   (if (pos? (count from))
+                                                   (when (pos? (count from))
                                                      (reorder-choice :corp :runner from '() (count from) from)))
                                                  card nil))}
                               card nil)))}]})
@@ -206,7 +206,7 @@
                               (wait-for
                                 (gain-credits state :corp 5)
                                 (wait-for
-                                  (draw state :corp 1 nil)
+                                  (draw state :corp 1)
                                   (system-msg state :corp
                                               (str "gains 5 [Credits] and draws 1 card. "
                                                    "Black Level Clearance is trashed"))
@@ -713,6 +713,7 @@
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                 (wait-for (corp-install state side ice server {:cost-bonus -4})
+                                          (remove-from-currently-drawing state side ice)
                                           (continue-ability
                                             state side
                                             (when-not (= 1 (count ices))
@@ -744,10 +745,10 @@
                :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                :effect (req (cond
                               ;; if ice were drawn, do the full routine
-                              (some ice? (:most-recent-drawn corp-reg))
+                              (some ice? corp-currently-drawing)
                               (let [ices (filter #(and (ice? %)
                                                        (get-card state %))
-                                                 (:most-recent-drawn corp-reg))
+                                                 corp-currently-drawing)
                                     grids (filterv #(= "Jinja City Grid" (:title %))
                                                    (all-active-installed state :corp))]
                                 (continue-ability
@@ -1146,7 +1147,8 @@
                 :keep-open :while-credits-left
                 :msg "draw 1 card"
                 :req (req (and run (= (target-server run) :hq)))
-                :effect (effect (draw))}]})
+                :async true
+                :effect (effect (draw eid 1))}]})
 
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
@@ -1443,7 +1445,7 @@
              :async true
              :effect (req (if (= target "Gain 2 [Credits]")
                             (gain-credits state side eid 2)
-                            (draw state side eid 1 nil)))}]})
+                            (draw state side eid 1)))}]})
 
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"

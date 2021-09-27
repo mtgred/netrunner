@@ -50,7 +50,7 @@
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?))))
                  :msg "draw 1 card"
-                 :effect (effect (draw :runner eid 1 nil))}]
+                 :effect (effect (draw :runner eid 1))}]
     {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
               (assoc ability :event :runner-trash)
@@ -79,7 +79,7 @@
    :events [{:event :server-created
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :runner eid 1 nil))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Autoscripter"
   {:events [{:event :runner-install
@@ -258,7 +258,7 @@
                                                                  (set installed-card-names))]
                                (wait-for (trash-cards state side targets {:unpreventable true})
                                          (let [trashed-cards async-result]
-                                           (wait-for (draw state side (count (filter overlap trashed-card-names)) nil)
+                                           (wait-for (draw state side (count (filter overlap trashed-card-names)))
                                                      (system-msg state side
                                                                  (str "spends [Click] to use Capstone to trash "
                                                                       (string/join ", " (map :title trashed-cards))
@@ -300,7 +300,7 @@
                                             :async true
                                             :effect (req (if (= target "Draw 1 card")
                                                            (do (system-msg state :runner (str trash-str " and draw 1 card"))
-                                                               (draw state :runner eid 1 nil))
+                                                               (draw state :runner eid 1))
                                                            (do (system-msg state :runner (str trash-str " and remove 1 tag"))
                                                                (lose-tags state :runner eid 1))))})
                                          card nil)))}]})
@@ -391,7 +391,7 @@
                             (first-event? state side :run #(<= 2 (:position (first %))))))
              :msg "draw two cards"
              :async true
-             :effect (effect (draw eid 2 nil))}]})
+             :effect (effect (draw eid 2))}]})
 
 (defcard "Dedicated Processor"
   {:implementation "Click Dedicated Processor to use ability"
@@ -1038,7 +1038,7 @@
                   :cost [:power 3]
                   :keep-open :while-3-power-tokens-left
                   :async true
-                  :effect (effect (draw :runner eid 1 nil))}]
+                  :effect (effect (draw :runner eid 1))}]
      :events [{:event :runner-trash
                :once-per-instance true
                :req (req (and (some pred targets)
@@ -1074,7 +1074,7 @@
              :interactive (req true)
              :req (req (and (hardware? (:card context))
                             (first-event? state side :runner-install #(hardware? (:card (first %))))))
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Māui"
   {:constant-effects [(mu+ 2)]
@@ -1252,7 +1252,7 @@
                                                 (#{:rd :hq} (target-server (first %)))))))
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
-             :effect (effect (draw eid (total-cards-accessed target) nil))}]})
+             :effect (effect (draw eid (total-cards-accessed target)))}]})
 
 (defcard "Omni-drive"
   {:recurring 1
@@ -1416,8 +1416,8 @@
              {:prompt "Draw 1 card to force the Corp to draw 1 card?"
               :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
                             :async true
-                            :effect (req (wait-for (draw state :runner 1 nil)
-                                                   (draw state :corp eid 1 nil)))}
+                            :effect (req (wait-for (draw state :runner 1)
+                                                   (draw state :corp eid 1)))}
               :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
@@ -1607,7 +1607,7 @@
   (let [ability {:once :per-turn
                  :msg "draw 1 card and add a power counter"
                  :async true
-                 :effect (req (wait-for (draw state :runner 1 nil)
+                 :effect (req (wait-for (draw state :runner 1)
                                         (add-counter state side (get-card state card) :power 1)
                                         (if (= 3 (get-counters (get-card state card) :power))
                                           (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
@@ -1844,7 +1844,7 @@
                 :msg "draw 3 cards"
                 :async true
                 :cost [:trash]
-                :effect (effect (draw :runner eid 3 nil))}]})
+                :effect (effect (draw :runner eid 3))}]})
 
 (defcard "Spy Camera"
   {:abilities [{:cost [:click 1]
@@ -1997,7 +1997,7 @@
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn
                  :async true
-                 :effect (effect (draw eid 1 nil))}]
+                 :effect (effect (draw eid 1))}]
     {:constant-effects [(mu+ 1)]
      :flags {:runner-turn-draw true
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
@@ -2037,7 +2037,7 @@
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn
                  :async true
-                 :effect (effect (draw eid 1 nil))}]
+                 :effect (effect (draw eid 1))}]
     {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
@@ -2062,4 +2062,4 @@
                 :msg "gain 1 [Credits] and draw 2 cards"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
-                                       (draw state side eid 2 nil)))}]})
+                                       (draw state side eid 2)))}]})

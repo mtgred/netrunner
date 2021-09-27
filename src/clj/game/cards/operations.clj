@@ -98,7 +98,7 @@
   {:on-play
    {:msg "draw 3 cards"
     :async true
-    :effect (effect (draw eid 3 nil))}})
+    :effect (effect (draw eid 3))}})
 
 (defcard "Archived Memories"
   {:on-play (corp-recur)})
@@ -131,7 +131,7 @@
    {:async true
     :effect
     (req (wait-for
-           (draw state side 2 nil)
+           (draw state side 2)
            (continue-ability
              state side
              {:prompt "Choose up to 2 agendas in HQ or Archives"
@@ -304,7 +304,7 @@
    {:msg "gain 5 [Credits] and draw 2 cards"
     :async true
     :effect (req (wait-for (gain-credits state side 5)
-                           (draw state side eid 2 nil)))}})
+                           (draw state side eid 2)))}})
 
 (defcard "BOOM!"
   {:on-play
@@ -439,7 +439,7 @@
    {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
     :async true
     :effect (effect (shuffle-into-deck :hand)
-                    (draw eid 5 nil))}})
+                    (draw eid 5))}})
 
 (defcard "Cyberdex Trial"
   {:on-play
@@ -621,7 +621,7 @@
     :msg (msg "trash all cards in HQ and draw 5 cards")
     :async true
     :effect (req (wait-for (trash-cards state side (get-in @state [:corp :hand]))
-                           (draw state side eid 5 nil)))}})
+                           (draw state side eid 5)))}})
 
 (defcard "Enforced Curfew"
   {:on-play {:msg "reduce the Runner's maximum hand size by 1"}
@@ -679,7 +679,7 @@
                                :max (req X)
                                :default (req 1)}
                      :msg (msg "draw " target " cards")
-                     :effect (effect (draw eid target nil))}
+                     :effect (effect (draw eid target))}
                install-cards (fn install-cards
                                [server n]
                                {:prompt "Choose a card to install"
@@ -832,7 +832,7 @@
                               (wait-for (gain-credits state :corp 2)
                                         (continue-ability state side (repeat-choice (inc current) total)
                                                           card nil))
-                              (wait-for (draw state :corp 2 nil) ; don't proceed with the next choice until the draw is done
+                              (wait-for (draw state :corp 2) ; don't proceed with the next choice until the draw is done
                                         (continue-ability state side (repeat-choice (inc current) total)
                                                           card nil))))}))]
     {:on-play
@@ -910,7 +910,7 @@
    {:msg "gain 3 [Credits] and draw 1 card"
     :async true
     :effect (req (wait-for (gain-credits state side 3)
-                           (draw state side eid 1 nil)))}})
+                           (draw state side eid 1)))}})
 
 (defcard "Hangeki"
   {:on-play
@@ -988,7 +988,7 @@
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
       :waiting-prompt "Corp to make a decision"
       :async true
-      :effect (req (wait-for (draw state side 3 nil)
+      :effect (req (wait-for (draw state side 3)
                              (let [from (get-in @state [:corp :hand])]
                                (continue-ability state :corp (hr-choice from '() 3 from) card nil))))}}))
 
@@ -1044,7 +1044,7 @@
 (defcard "Heritage Committee"
   {:on-play
    {:async true
-    :effect (req (wait-for (draw state side 3 nil)
+    :effect (req (wait-for (draw state side 3)
                            (continue-ability
                              state side
                              {:prompt "Choose a card in HQ to put on top of R&D"
@@ -1585,10 +1585,10 @@
                    "Gain 3 [Credits]"
                    (gain-credits state :corp eid 3)
                    "Draw 3 cards"
-                   (draw state :corp eid 3 nil)
+                   (draw state :corp eid 3)
                    "Gain 3 [Credits] and draw 3 cards"
                    (wait-for (gain-credits state :corp 3)
-                             (draw state :corp eid 3 nil))
+                             (draw state :corp eid 3))
                    ; else
                    (effect-completed state side eid)))}})
 
@@ -1763,7 +1763,7 @@
               :effect (effect (gain-credits eid 2))}
              {:msg "draw 2 cards"
               :async true
-              :effect (effect (draw eid 2 nil))}
+              :effect (effect (draw eid 2))}
              {:msg "gain [Click]"
               :effect (effect (gain-clicks 1))}
              {:prompt "Choose a non-agenda to install"
@@ -2209,13 +2209,13 @@
     :effect (req (doseq [c targets]
                    (move state side c :deck))
                  (shuffle! state side :deck)
-                 (draw state side eid (count targets) nil))}})
+                 (draw state side eid (count targets)))}})
 
 (defcard "Sprint"
   {:on-play
    {:async true
     :effect (req (wait-for
-                   (draw state side 3 nil)
+                   (draw state side 3)
                    (system-msg state side (str "uses Sprint to draw "
                                                (quantify (count async-result) "card")))
                    (continue-ability
@@ -2547,7 +2547,7 @@
     :effect (req (wait-for
                    (gain-credits state side 10)
                    (wait-for
-                     (draw state side 4 nil)
+                     (draw state side 4)
                      (continue-ability
                        state side
                        {:prompt "Choose a card in HQ to install"
@@ -2582,7 +2582,7 @@
    {:msg "gain 8 [Credits] and draw 4 cards"
     :async true
     :effect (req (wait-for (gain-credits state side 8)
-                           (draw state side eid 4 nil)))}})
+                           (draw state side eid 4)))}})
 
 (defcard "Voter Intimidation"
   {:on-play

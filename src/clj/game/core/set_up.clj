@@ -7,7 +7,6 @@
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.gaining :refer [gain]]
     [game.core.initializing :refer [card-init make-card]]
     [game.core.player :refer [new-corp new-runner]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -16,7 +15,7 @@
     [game.core.state :refer [new-state]]
     [game.macros :refer [wait-for]]
     [game.quotes :as quotes]
-    [game.utils :refer [server-card dissoc-in]]
+    [game.utils :refer [server-card]]
     [clj-time.core :as t]))
 
 (defn build-card
@@ -36,7 +35,7 @@
   "Mulligan starting hand."
   [state side _]
   (shuffle-into-deck state side :hand)
-  (draw state side 5 {:suppress-event true})
+  (draw state side (make-eid state) 5 {:suppress-event true})
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
@@ -63,8 +62,8 @@
     (clear-wait-prompt state :corp)))
 
 (defn- init-hands [state]
-  (draw state :corp 5 {:suppress-event true})
-  (draw state :runner 5 {:suppress-event true})
+  (draw state :corp (make-eid state) 5 {:suppress-event true})
+  (draw state :runner (make-eid state) 5 {:suppress-event true})
   (doseq [side [:corp :runner]]
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"

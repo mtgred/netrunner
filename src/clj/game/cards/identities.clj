@@ -159,8 +159,9 @@
 (defcard "Andromeda: Dispossessed Ristie"
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
-             :effect (effect (draw 4 {:suppress-event true}))}]
-   :mulligan (effect (draw 4 {:suppress-event true}))})
+             :async true
+             :effect (effect (draw eid 4 {:suppress-event true}))}]
+   :mulligan (effect (draw eid 4 {:suppress-event true}))})
 
 (defcard "Apex: Invasive Predator"
   (let [ability {:prompt "Choose a card to install facedown"
@@ -202,7 +203,7 @@
              :interactive (req true)
              :req (req (and (= side :runner) (= :ability-cost (:cause target))))
              :msg "draw a card"
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Asa Group: Security Through Vigilance"
   {:events [{:event :corp-install
@@ -436,7 +437,7 @@
              :req (req (and (program? (:card context))
                             (some #{:discard} (:previous-zone (:card context)))))
              :msg "draw a card"
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Freedom Khumalo: Crypto-Anarchist"
   {:interactions
@@ -666,7 +667,7 @@
               {:event :runner-turn-begins
                :req (req (:flipped card))
                :async true
-               :effect (req (wait-for (draw state :runner 1 nil)
+               :effect (req (wait-for (draw state :runner 1)
                                       (wait-for (lose-credits state :runner (make-eid state eid) 1)
                                                 (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
                                                 (effect-completed state side eid))))}]
@@ -732,7 +733,7 @@
              :msg "draw 1 card"
              :once :per-turn
              :async true
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
@@ -932,7 +933,7 @@
               :prompt "Force the Corp to draw a card?"
               :yes-ability {:msg "force the Corp to draw 1 card"
                             :async true
-                            :effect (effect (draw :corp eid 1 nil))}
+                            :effect (effect (draw :corp eid 1))}
               :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}]
    :abilities [(set-autoresolve :auto-fisk "force Corp draw")]})
 
@@ -943,7 +944,7 @@
                         :prompt "Draw 1 card?"
                         :yes-ability {:async true
                                       :msg "draw 1 card"
-                                      :effect (effect (draw :runner eid 1 nil))}
+                                      :effect (effect (draw :runner eid 1))}
                         :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}]
    :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]})
 
@@ -969,7 +970,7 @@
                                             (let [context (first targets)]
                                               (is-central? (:server context)))))))
              :effect (req (wait-for (gain-tags state :runner 1)
-                                    (draw state :runner eid 2 nil)))}]})
+                                    (draw state :runner eid 2)))}]})
 
 (defcard "Los: Data Hijacker"
   {:events [{:event :rez
@@ -988,7 +989,7 @@
                  :once :per-turn
                  :async true
                  :effect (req (wait-for (mill state :runner :runner 2)
-                                        (draw state :runner eid 1 nil)))}]
+                                        (draw state :runner eid 1)))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (and (not (:disabled card))
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
@@ -1157,7 +1158,7 @@
              :effect (req
                        (if (= target "Gain 2 [Credits]")
                             (gain-credits state :corp eid 2)
-                            (draw state :corp eid 2 nil)))}]})
+                            (draw state :corp eid 2)))}]})
 
 (defcard "NBN: The World is Yours*"
   {:constant-effects [(corp-hand-size+ 1)]})
@@ -1167,7 +1168,7 @@
              :req (req (first-event? state :corp :server-created))
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :corp eid 1 nil))}]})
+             :effect (effect (draw :corp eid 1))}]})
 
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
@@ -1209,9 +1210,11 @@
      :abilities [{:req (req (:fill-hq card))
                   :label "draw remaining cards"
                   :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
-                  :effect (req (draw state side (- 5 (count (:hand corp))))
-                               (update! state side (dissoc card :fill-hq))
-                               (swap! state assoc :turn-events nil))}]}))
+                  :async true
+                  :effect (req (wait-for (draw state side (- 5 (count (:hand corp))) {:suppress-event true})
+                                         (update! state side (dissoc card :fill-hq))
+                                         (swap! state assoc :turn-events nil)
+                                         (effect-completed state side eid)))}]}))
 
 (defcard "Nisei Division: The Next Generation"
   {:events [{:event :reveal-spent-credits
@@ -1304,7 +1307,7 @@
                                             (some #(:accessed %) targets)))))
              :async true
              :msg "gain 1 [Credits] and draw 1 card"
-             :effect (req (wait-for (draw state :runner 1 nil)
+             :effect (req (wait-for (draw state :runner 1)
                                     (gain-credits state :runner eid 1)))}]})
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
@@ -1408,7 +1411,7 @@
             :interactive (req true)
             :effect (req (if (= target "Gain 2 [Credits]")
                            (gain-credits state :corp eid 2)
-                           (draw state :corp eid 2 nil)))}]
+                           (draw state :corp eid 2)))}]
     {:events [(assoc ab :event :agenda-scored)
               (assoc ab :event :agenda-stolen)]}))
 

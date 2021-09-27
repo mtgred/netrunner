@@ -104,7 +104,7 @@
                   (flatten hand))
           :discard (when-let [discard (:discard corp)]
                      (flatten discard))
-          :identity (when-let [id (:id corp)]
+          :identity (when-let [id (or (:id corp) (:identity corp))]
                       (server-card id))
           :credits (:credits corp)
           :bad-pub (:bad-pub corp)}
@@ -116,7 +116,7 @@
                     (flatten hand))
             :discard (when-let [discard (:discard runner)]
                        (flatten discard))
-            :identity (when-let [id (:id runner)]
+            :identity (when-let [id (or (:id runner) (:identity runner))]
                         (server-card id))
             :credits (:credits runner)
             :tags (:tags runner)}
@@ -639,5 +639,11 @@
 
 (defn move
   [state side card location]
-  (do (core/move state side card location)
-      (core/fake-checkpoint state)))
+  (core/move state side card location)
+  (core/fake-checkpoint state))
+
+(defn draw
+  ([state side] (draw state side 1 nil))
+  ([state side n] (draw state side n nil))
+  ([state side n args]
+   (core/draw state side (core/make-eid state) n args)))

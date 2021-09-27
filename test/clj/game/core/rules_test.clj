@@ -34,7 +34,7 @@
                                "Off-Campus Apartment" (qty "Hivemind" 2)]}})
     (take-credits state :corp)
     (core/gain state :runner :click 1 :memory 2)
-    (core/draw state :runner 2)
+    (draw state :runner 2)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Scheherazade")
@@ -267,7 +267,7 @@
     (let [wrap (get-ice state :hq 0)]
       (rez state :corp wrap)
       (take-credits state :corp)
-      (core/draw state :runner)
+      (draw state :runner)
       (core/gain state :runner :credit 7)
       (play-from-hand state :runner "Knight")
       (play-from-hand state :runner "Personal Workshop")

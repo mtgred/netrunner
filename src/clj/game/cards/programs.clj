@@ -564,14 +564,30 @@
                 (strength-pump 2 4)))
 
 (defcard "Bug"
-  {:implementation "Can only pay to see last card drawn after multiple draws"
-   :req (req (some #{:hq} (:successful-run runner-reg)))
+  {:req (req (some #{:hq} (:successful-run runner-reg)))
    :events [{:event :corp-draw
              :optional
-             {:prompt "Pay 2 [Credits] to reveal card just drawn?"
-              :player :runner
-              :yes-ability {:cost [:credit 2]
-                            :msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))}}}]})
+             {:prompt "Use Bug?"
+              :req (req (< 1 (total-available-credits state :runner eid card)))
+              :yes-ability
+              {:prompt "How many cards do you want to reveal for 2 [Credits] each?"
+               :waiting-promt "Runner to use Bug"
+               :choices {:number (req (min (:count context)
+                                           (quot (total-available-credits state :runner eid card) 2)))}
+               :async true
+               :effect (req (let [cards (->> corp-currently-drawing
+                                             (shuffle)
+                                             (keep #(find-cid (:cid %) (:hand corp)))
+                                             (take target))]
+                              (wait-for
+                                (pay state side (make-eid state eid) card [:credit (* 2 target)])
+                                (let [payment-str (:msg async-result)]
+                                  (wait-for
+                                    (reveal state side (make-eid state eid) cards)
+                                    (system-msg state side (str payment-str
+                                                                " to use Bug to reveal "
+                                                                (string/join ", " (map :title cards))))
+                                    (effect-completed state side eid))))))}}}]})
 
 (defcard "Bukhgalter"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -676,7 +692,7 @@
              :req (req (ice? (:card target)))
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :runner eid 1 nil))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Conduit"
   {:events [{:event :run-ends
@@ -1111,7 +1127,7 @@
                        :yes-ability
                        {:async true
                         :effect (req (system-msg state :corp (str "is forced to draw " title))
-                                     (draw state :corp eid 1 nil))}}})
+                                     (draw state :corp eid 1))}}})
         reveal {:optional
                 {:prompt "Reveal the top card of R&D?"
                  :yes-ability
@@ -2100,7 +2116,7 @@
              :req (req (and (some #(installed? (:card %)) targets)
                             (first-installed-trash? state side)))
              :msg "draw 1 card"
-             :effect (effect (draw :runner eid 1 nil))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Refractor"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
@@ -2132,7 +2148,7 @@
                                                "draw 2 cards"
                                                "gain 3 [Credits]"))
                                    :effect (req (if (= target "Draw 2 cards")
-                                                  (draw state :runner eid 2 nil)
+                                                  (draw state :runner eid 2)
                                                   (gain-credits state :runner eid 3)))}))
                               card nil)))}
             {:event :post-access-card

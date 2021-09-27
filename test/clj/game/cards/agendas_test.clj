@@ -1233,7 +1233,7 @@
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
                                "DNA Tracker" "Excalibur" "Fire Wall" "Flower Sermon"]}})
-      (core/draw state :corp)
+      (draw state :corp)
       (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
@@ -3909,8 +3909,8 @@
         (is (= :this-turn (:installed (get-resource state 1))))
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :corp)
-        (is (zero? (count (:hand (get-runner)))) "Runner takes damage before resolving The Class Act")
-        (click-prompt state :runner "Sure Gamble")
+        (is (= 5 (count (:hand (get-runner)))) "Runner takes damage before resolving The Class Act")
+        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 4 (count (:hand (get-runner)))) "Runner draws from The Class Act after taking damage")))
     (testing "Scored on the runner's turn"
       (do-game
@@ -3929,9 +3929,9 @@
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :runner)
-        (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
-        (click-prompt state :runner "Sure Gamble")
-        (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn")))))
+        (is (= 5 (count (:hand (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
+        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 5 (count (:hand (get-runner)))) "Runner takes damage at end of turn")))))
 
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative

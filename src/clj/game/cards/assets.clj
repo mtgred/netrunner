@@ -320,7 +320,7 @@
                 :msg "draw 2 cards"
                 :once :per-turn
                 :async true
-                :effect (effect (draw eid 2 nil))}]
+                :effect (effect (draw eid 2))}]
    :on-trash {:interactive (req true)
               :optional
               {:req (req (= :runner side))
@@ -328,7 +328,7 @@
                :prompt "Draw 2 cards?"
                :player :corp
                :yes-ability {:msg "draw 2 cards"
-                             :effect (effect (draw eid 2 nil))}}}})
+                             :effect (effect (draw eid 2))}}}})
 
 (defcard "Capital Investors"
   {:abilities [{:cost [:click 1]
@@ -539,7 +539,7 @@
                                     {:prompt "Use CSR Campaign to draw 1 card?"
                                      :yes-ability {:async true
                                                    :msg "draw 1 card"
-                                                   :effect (effect (draw eid 1 nil))}}}
+                                                   :effect (effect (draw eid 1))}}}
                                    card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -551,38 +551,36 @@
 
 (defcard "Daily Business Show"
   {:derezzed-events [corp-rez-toast]
-   :events [{:event :pre-corp-draw
-             :msg "draw additional cards"
-             ;; The req catches draw events that happened before DBS was rezzed.
-             :req (req (first-event? state :corp :pre-corp-draw))
-             ;; The once and once-key force a single DBS to act on behalf of all rezzed DBS's.
-             :once :per-turn
-             :once-key :daily-business-show-draw-bonus
-             :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
-                                                         (rezzed? %))
-                                                   (all-installed state :corp)))]
-                            (draw-bonus state side dbs)))}
-            {:event :post-corp-draw
-             :req (req (first-event? state :corp :post-corp-draw))
+   :events [(first-time-draw-bonus :corp 1)
+            {:event :corp-draw
+             :req (req (first-event? state :corp :corp-draw))
              :once :per-turn
              :once-key :daily-business-show-put-bottom
+             :interactive (req true)
+             :silent (req (let [dbs (filter #(and (= "Daily Business Show" (:title %))
+                                                  (rezzed? %))
+                                            (all-installed state :corp))]
+                            (not= card (first dbs))))
              :async true
              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                          (rezzed? %))
                                                    (all-installed state :corp)))
-                                drawn (get-in @state [:corp :register :most-recent-drawn])]
+                                drawn corp-currently-drawing]
                             (continue-ability
                               state side
-                              {:waiting-prompt "Corp to make a decision"
-                               :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
-                               :choices {:max dbs
-                                         :card #(some (fn [c] (same-card? c %)) drawn)
-                                         :all true}
-                               :effect (req (doseq [c (reverse targets)]
-                                              (system-msg state side (str "uses Daily Business Show to add the "
-                                                                          (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
-                                                                          " card drawn to the bottom of R&D"))
-                                              (move state side c :deck)))}
+                              (when (seq drawn)
+                                {:waiting-prompt "Corp to make a decision"
+                                 :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
+                                 :choices {:max (min dbs (count drawn))
+                                           :card #(some (fn [c] (same-card? c %)) drawn)
+                                           :all true}
+                                 :effect (req (doseq [c (reverse targets)]
+                                                (system-msg state side
+                                                            (str "uses Daily Business Show to add the "
+                                                                 (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
+                                                                 " card drawn to the bottom of R&D"))
+                                                (move state side c :deck)
+                                                (remove-from-currently-drawing state side c)))})
                               card nil)))}]})
 
 (defcard "Daily Quest"
@@ -727,7 +725,7 @@
                                    credits (* 2 counters)]
                                (system-msg state side (str "uses Estelle Moon to draw " counters
                                                            " cards and gain " credits " [Credits]"))
-                               (wait-for (draw state side counters nil)
+                               (wait-for (draw state side counters)
                                          (gain-credits state side eid credits))))}]})
 
 (defcard "Eve Campaign"
@@ -939,7 +937,7 @@
                  :async true
                  :req (req (:corp-phase-12 @state))
                  :effect (req (wait-for (gain-credits state side 1)
-                                        (draw state side eid 1 nil)))}]
+                                        (draw state side eid 1)))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]
@@ -992,7 +990,8 @@
   {:abilities [{:cost [:click 1]
                 :keep-open :while-clicks-left
                 :msg "draw 2 cards"
-                :effect (effect (draw 2))}
+                :async true
+                :effect (effect (draw eid 2))}
                {:label "Shuffle up to 3 cards from Archives into R&D"
                 :cost [:remove-from-game]
                 :async true
@@ -1115,7 +1114,7 @@
 
 (defcard "Lily Lockwell"
   {:on-rez {:async true
-            :effect (effect (draw eid 3 nil))
+            :effect (effect (draw eid 3))
             :msg (msg "draw 3 cards")}
    :abilities [{:label "Search R&D for an operation"
                 :prompt "Choose an operation to put on top of R&D"
@@ -1389,7 +1388,7 @@
                   :prompt "Draw from Net Analytics?"
                   :yes-ability
                   {:msg "draw a card"
-                   :effect (effect (draw :corp eid 1 nil))}}}]
+                   :effect (effect (draw :corp eid 1))}}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
                   (assoc-in [:optional :req] (req (= side :runner))))
@@ -1470,7 +1469,7 @@
                               (system-msg state :corp (str "trashes Nico Campaign"
                                                            (when (not (empty? (:deck corp)))
                                                              " and draws 1 card")))
-                              (draw state :corp eid 1 nil))))))}]
+                              (draw state :corp eid 1))))))}]
     {:data {:counter {:credit 9}}
      :derezzed-events [corp-rez-toast]
      :abilities [ability]
@@ -1488,7 +1487,7 @@
              :effect (req (wait-for
                             (reveal state side (-> corp :deck first))
                             (wait-for
-                              (draw state side 1 nil)
+                              (draw state side 1)
                               (continue-ability
                                 state side
                                 {:prompt "Choose a card in HQ to put on top of R&D"
@@ -1535,8 +1534,8 @@
                  :label "Make each player draw 1 card (start of turn)"
                  :once :per-turn
                  :async true
-                 :effect (req (wait-for (draw state :corp 1 nil)
-                                        (draw state :runner eid 1 nil)))}]
+                 :effect (req (wait-for (draw state :corp 1)
+                                        (draw state :runner eid 1)))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1546,7 +1545,7 @@
   {:events [{:event :corp-turn-begins
              :interactive (req true)
              :async true
-             :effect (req (wait-for (draw state :runner 1 nil)
+             :effect (req (wait-for (draw state :runner 1)
                                     (let [cnt (count (get-in @state [:runner :hand]))
                                           credits (quot cnt 2)]
                                       (system-msg state :corp
@@ -1570,35 +1569,26 @@
     "Score an Agenda from HQ?"))
 
 (defcard "Political Dealings"
-  (letfn [(pdhelper [agendas n]
-            {:optional
-             {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
-              :yes-ability {:async true
-                            :msg (msg "reveal " (:title (nth agendas n)))
-                            :effect (req (wait-for
-                                           (reveal state side (nth agendas n))
-                                           (wait-for
-                                             (corp-install
-                                               state side (nth agendas n) nil
-                                               {:install-state
-                                                (:install-state
-                                                  (card-def (nth agendas n))
-                                                  :unrezzed)})
-                                             (if (< (inc n) (count agendas))
-                                               (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                               (effect-completed state side eid)))))}
-              :no-ability {:async true
-                           :effect (req (if (< (inc n) (count agendas))
-                                          (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                          (effect-completed state side eid)))}}})]
+  (letfn [(pdhelper [agendas]
+            (when-let [agenda (first agendas)]
+              {:optional
+               {:prompt (msg "Reveal and install " (:title agenda) "?")
+                :yes-ability {:msg (msg "reveal " (:title agenda))
+                              :async true
+                              :effect (req (wait-for
+                                             (reveal state side agenda)
+                                             (wait-for
+                                               (corp-install
+                                                 state side agenda nil
+                                                 {:install-state (:install-state (card-def agenda) :unrezzed)})
+                                               (remove-from-currently-drawing state side agenda)
+                                               (continue-ability state side (pdhelper (next agendas)) card nil))))}
+                :no-ability {:async true
+                             :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
-                               agendas (filter agenda? drawn)]
-                           (seq agendas)))
-               :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
-                                  agendas (filter agenda? drawn)]
-                              (continue-ability state side (pdhelper agendas 0) card nil)))}]}))
+               :req (req (seq (filter agenda? corp-currently-drawing)))
+               :effect (effect (continue-ability (pdhelper (filter agenda? corp-currently-drawing)) card nil))}]}))
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
@@ -1701,38 +1691,41 @@
                   :effect (req (continue-ability state side (rez-ice 1) card nil))}]}))
 
 (defcard "Raman Rai"
-  {:abilities [{:once :per-turn
-                :label "Swap drawn card with card in Archives"
-                :req (req (and (pos? (:click corp))
-                               (not-empty (turn-events state side :corp-draw))))
-                :async true
-                :effect (effect
-                          (lose-clicks :corp 1)
-                          (continue-ability
-                            (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
-                              {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                               :choices {:card #(some (fn [c] (same-card? c %)) drawn)}
-                               :async true
-                               :effect
-                               (effect
-                                 (continue-ability
-                                   (let [hq-card target
-                                         t (:type hq-card)]
-                                     {:show-discard true
-                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
-                                      :choices {:card #(and (corp? %)
-                                                            (= (:type %) t)
-                                                            (in-discard? %))}
-                                      :msg (msg "lose [Click], reveal " (:title hq-card)
-                                                " from HQ, and swap it for " (:title target)
-                                                " from Archives")
-                                      :async true
-                                      :effect (req (wait-for
-                                                     (reveal state side target)
-                                                     (swap-cards state side hq-card target)
-                                                     (effect-completed state side eid)))})
-                                   card nil))})
-                            card nil))}]})
+  {:events [{:event :corp-draw
+             :optional
+             {:prompt "Swap two cards?"
+              :req (req (and (pos? (:click corp))
+                             (not-empty (turn-events state side :corp-draw))))
+              :yes-ability
+              {:once :per-turn
+               :async true
+               :effect
+               (effect
+                 (lose-clicks :corp 1)
+                 (continue-ability
+                   {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                    :choices {:card #(some (fn [c] (same-card? c %)) corp-currently-drawing)}
+                    :async true
+                    :effect
+                    (effect
+                      (continue-ability
+                        (let [hq-card target
+                              t (:type hq-card)]
+                          {:show-discard true
+                           :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                           :choices {:card #(and (corp? %)
+                                                 (= (:type %) t)
+                                                 (in-discard? %))}
+                           :msg (msg "lose [Click], reveal " (:title hq-card)
+                                     " from HQ, and swap it for " (:title target)
+                                     " from Archives")
+                           :async true
+                           :effect (req (wait-for
+                                          (reveal state side hq-card target)
+                                          (swap-cards state side hq-card target)
+                                          (effect-completed state side eid)))})
+                        card nil))}
+                   card nil))}}}]})
 
 (defcard "Rashida Jaheem"
   (let [ability {:once :per-turn
@@ -1751,7 +1744,7 @@
                                        (trash state side card nil)
                                        (wait-for
                                          (gain-credits state side 3)
-                                         (draw state side eid 3 nil))))}}}
+                                         (draw state side eid 3))))}}}
                      card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -1926,7 +1919,7 @@
                 :once :per-turn
                 :msg "draw 3 cards"
                 :async true
-                :effect (req (wait-for (draw state side 3 nil)
+                :effect (req (wait-for (draw state side 3)
                                        (continue-ability
                                          state side
                                          {:prompt "Choose a card in HQ to add to the bottom of R&D"
@@ -2063,7 +2056,7 @@
 (defcard "Spin Doctor"
   {:on-rez {:async true
             :msg "draw 2 cards"
-            :effect (effect (draw eid 2 nil))}
+            :effect (effect (draw eid 2))}
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [:remove-from-game]
                 :async true
@@ -2321,7 +2314,7 @@
               :effect (effect (gain-credits eid 1))}
              {:msg "draw 1 card"
               :async true
-              :effect (effect (draw eid 1 nil))}
+              :effect (effect (draw eid 1))}
              {:label "place 1 advancement token on a piece of ice"
               :msg (msg "place 1 advancement token on " (card-str state target))
               :prompt "Choose a piece of ice on which to place an advancement"

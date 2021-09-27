@@ -1827,7 +1827,7 @@
     (is (= "Daily Casts" (-> (get-runner) :deck first :title))
         "Runner should have Daily Casts on top of Stack from losing Hellion Alpha Test trace")
     (take-credits state :corp)
-    (core/draw state :runner)
+    (draw state :runner)
     (play-from-hand state :runner "Daily Casts")
     (take-credits state :runner)
     (play-from-hand state :corp "Hellion Alpha Test")

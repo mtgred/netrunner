@@ -292,6 +292,7 @@
   [game.core.drawing
    draw
    draw-bonus
+   first-time-draw-bonus
    max-draw
    remaining-draws])
 
@@ -561,6 +562,7 @@
 
 (import-vars
   [game.core.moving
+   add-to-currently-drawing
    as-agenda
    discard-from-hand
    flip-facedown
@@ -569,6 +571,7 @@
    mill
    move
    move-zone
+   remove-from-currently-drawing
    swap-agendas
    swap-cards
    swap-ice
@@ -576,10 +579,7 @@
    trash
    trash-cards
    trash-prevent
-   trash-resource-bonus
-   uninstall
-   update-current-ice-to-trash
-   update-installed-card-indices])
+   uninstall])
 
 (import-vars
   [game.core.optional

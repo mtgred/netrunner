@@ -87,7 +87,7 @@
                   :msg "remove 1 tag and draw 1 card"
                   :async true
                   :effect (req (wait-for (lose-tags state side 1)
-                                         (draw state side eid 1 nil)))}]
+                                         (draw state side eid 1)))}]
      :events [(assoc am :event :agenda-scored)
               (assoc am :event :agenda-stolen)]}))
 
@@ -320,7 +320,7 @@
                                   ;; draw 1 card
                                   (<= 10 c 14)
                                   (do (system-msg state side (str "uses " b " to draw 1 card"))
-                                      (draw state side eid 1 nil))
+                                      (draw state side eid 1))
                                   ;; gain 1 click
                                   (<= 15 c)
                                   (do (system-msg state side (str "uses " b " to gain [Click]"))
@@ -365,7 +365,7 @@
                 :keep-open :while-2-clicks-left
                 :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                 :async true
-                :effect (req (wait-for (draw state side 3 nil)
+                :effect (req (wait-for (draw state side 3)
                                        (continue-ability
                                          state side
                                          {:prompt "Choose a card in your Grip to shuffle back into your Stack"
@@ -403,7 +403,7 @@
              :req (req (zero? (count (:hand runner))))
              :msg (msg "draw " (get-counters card :power) " cards. Bug Out Bag is trashed")
              :async true
-             :effect (req (wait-for (draw state side (get-counters card :power) nil)
+             :effect (req (wait-for (draw state side (get-counters card :power))
                                     (trash state side eid card nil)))}]})
 
 (defcard "Caldera"
@@ -579,7 +579,7 @@
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
-             :msg (msg "reveal " (-> target first :title))
+             :msg (msg "reveal " (:title target))
              :async true
              :effect (effect (reveal eid target))}]})
 
@@ -608,7 +608,7 @@
                                              (derez state :runner (:card context))
                                              (register-turn-flag!
                                                state side card :can-rez
-                                               (fn [state side card]
+                                               (fn [state _ card]
                                                  (if (same-card? card (:card context))
                                                    ((constantly false)
                                                     (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
@@ -676,9 +676,9 @@
                                         (if (not (pos? (get-counters (get-card state card) :credit)))
                                           (wait-for (trash state :runner card {:unpreventable true})
                                                     (system-msg state :runner (str "trashes Crowdfunding"
-                                                                                   (when (not (empty? (:deck runner)))
+                                                                                   (when (seq (:deck runner))
                                                                                      " and draws 1 card")))
-                                                    (draw state :runner eid 1 nil))
+                                                    (draw state :runner eid 1))
                                           (effect-completed state side eid))))}]
     {:data {:counter {:credit 3}}
      :flags {:drip-economy true
@@ -802,7 +802,7 @@
                 :effect (effect
                           (register-turn-flag!
                             card :can-rez
-                            (fn [state side card]
+                            (fn [state _ card]
                               (let [idx (card-index state card)]
                                 (if (and (ice? card)
                                          idx
@@ -934,7 +934,7 @@
                        (when (or (<= 2 (get-link state))
                                  (has-subtype? (:identity (:runner @state)) "Digital"))
                          " and gain 1 [Credit]"))
-             :effect (req (wait-for (draw state :runner 1 nil)
+             :effect (req (wait-for (draw state :runner 1)
                                     (if (or (<= 2 (get-link state))
                                             (has-subtype? (:identity (:runner @state)) "Digital"))
                                       (gain-credits state :runner eid 1)
@@ -955,7 +955,7 @@
                                  "0 cards (runner's stack is empty)"
                                  "1 card"))
              :async true
-             :effect (effect (draw :runner eid 1 nil))}
+             :effect (effect (draw :runner eid 1))}
             {:event :runner-turn-begins
              :msg (msg "lose " (if (zero? (get-in @state [:runner :credit]))
                                  "0 [Credits] (runner has no credits to lose)"
@@ -968,7 +968,7 @@
   {:abilities [{:cost [:click 4]
                 :keep-open :while-4-clicks-left
                 :async true
-                :effect (effect (draw eid 10 nil))
+                :effect (effect (draw eid 10))
                 :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
@@ -992,7 +992,7 @@
                  :req (req (:runner-phase-12 @state))
                  :async true
                  :interactive (req true)
-                 :effect (req (wait-for (draw state :runner 2 nil)
+                 :effect (req (wait-for (draw state :runner 2)
                                         (if (not (pos? (get-counters (get-card state card) :power)))
                                           (trash state :runner eid card {:unpreventable true})
                                           (effect-completed state side eid))))}]
@@ -1005,7 +1005,7 @@
      :abilities [ability]}))
 
 (defcard "Eden Shard"
-  (shard-constructor "Eden Shard" :rd "force the Corp to draw 2 cards" (effect (draw :corp eid 2 nil))))
+  (shard-constructor "Eden Shard" :rd "force the Corp to draw 2 cards" (effect (draw :corp eid 2))))
 
 (defcard "Emptied Mind"
   (let [ability {:req (req (zero? (count (:hand runner))))
@@ -1105,9 +1105,9 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (string/join ", " (map :title (:most-recent-drawn runner-reg))))
+                       (string/join ", " (map :title runner-currently-drawing)))
              :async true
-             :effect (effect (reveal eid (:most-recent-drawn runner-reg)))}
+             :effect (effect (reveal eid runner-currently-drawing))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1125,7 +1125,7 @@
                 :req (req (some corp? (map second (turn-events state :runner :damage))))
                 :msg "draw 1 card"
                 :async true
-                :effect (effect (draw eid 1 nil))}]})
+                :effect (effect (draw eid 1))}]})
 
 (defcard "Gang Sign"
   {:events [{:event :agenda-scored
@@ -1401,7 +1401,7 @@
              :interactive (req true)
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw eid 1 nil))}
+             :effect (effect (draw eid 1))}
             {:event :unsuccessful-run
              :req (req (first-event? state side :unsuccessful-run))
              :async true
@@ -1466,7 +1466,7 @@
   (bitey-boi 'first))
 
 (defcard "Laguna Velasco District"
-  {:events [{:event :pre-runner-click-draw
+  {:events [{:event :runner-click-draw
              :msg "draw 1 additional card"
              :effect (effect (draw-bonus 1))}]})
 
@@ -1634,16 +1634,17 @@
                 :keep-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
-                :effect (req (wait-for (draw state side 2 nil)
-                                       (continue-ability
-                                         state side
-                                         (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                           {:prompt "Choose 1 card to add to the bottom of the Stack"
-                                            :choices {:card #(and (in-hand? %)
-                                                                  (some (fn [c] (same-card? c %)) drawn))}
-                                            :msg (msg "add 1 card to the bottom of the Stack")
-                                            :effect (req (move state side target :deck))})
-                                         card nil)))}]})
+                :effect (effect (register-events
+                                  card
+                                  [{:event :runner-draw
+                                    :unregister-once-resolved true
+                                    :waiting-prompt "Runner to make a decision"
+                                    :prompt "Choose 1 card to add to the bottom of the Stack"
+                                    :choices {:req (req (and (in-hand? target)
+                                                             (some #(same-card? target %) runner-currently-drawing)))}
+                                    :msg "add 1 card to the bottom of the Stack"
+                                    :effect (effect (move target :deck))}])
+                                (draw eid 2))}]})
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
@@ -1668,7 +1669,7 @@
    :abilities [{:cost [:trash]
                 :msg "draw 1 card"
                 :async true
-                :effect (effect (draw eid 1 nil))}]})
+                :effect (effect (draw eid 1))}]})
 
 (defcard "Mystic Maemi"
   (companion-builder
@@ -1716,7 +1717,7 @@
              :async true
              :effect (req (if (= target "Draw 1 card")
                             (do (system-msg state :runner (str "uses Net Mercur to draw 1 card"))
-                                (draw state side eid 1 nil))
+                                (draw state side eid 1))
                             (do (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
                                 (add-counter state :runner card :credit 1)
                                 (effect-completed state side eid))))}]
@@ -1787,9 +1788,9 @@
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
                   :async true
-                  :effect (req (let [type (get-in @state [:prevent :current])]
+                  :effect (req (let [prevent-type (get-in @state [:prevent :current])]
                                  (wait-for (trash state side card {:unpreventable true})
-                                           (continue-ability state side (start-trace type)
+                                           (continue-ability state side (start-trace prevent-type)
                                                              card nil))))}]}))
 
 (defcard "Off-Campus Apartment"
@@ -1811,11 +1812,11 @@
                 :msg (msg "host " (:title target) " and draw 1 card")
                 :async true
                 :effect (effect (host card target)
-                                (draw eid 1 nil))}]
+                                (draw eid 1))}]
    :events [{:event :runner-install
              :req (req (same-card? card (:host (:card context))))
              :async true
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Officer Frank"
   {:abilities [{:cost [:credit 1 :trash]
@@ -1839,7 +1840,7 @@
                                  (if (is-type? c target)
                                    (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
                                        (wait-for (gain-credits state side 2)
-                                                 (draw state side eid 1 nil)))
+                                                 (draw state side eid 1)))
                                    (do (system-msg state side (str "trashes " (:title c)))
                                        (mill state side eid :runner 1))))))}]})
 
@@ -1945,7 +1946,7 @@
                    :ability
                    {:msg "draw 2 cards"
                     :async true
-                    :effect (effect (draw eid 2 nil))}})
+                    :effect (effect (draw eid 2))}})
                 :req (req (when-let [card (get-card state card)]
                             (and (= (zone->name (:server context)) (:server-target card))
                                  (first-event? state side :successful-run
@@ -2012,13 +2013,13 @@
 (defcard "Personal Workshop"
   (let [remove-counter
         {:async true
-         :req (req (not (empty? (:hosted card))))
+         :req (req (seq (:hosted card)))
          :msg (msg "remove 1 counter from " (:title target))
          :choices {:card #(:host %)}
          :effect (req (do (add-counter state side target :power -1)
-                          (if (not (pos? (get-counters (get-card state target) :power)))
-                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))
-                          (effect-completed state side eid)))}]
+                          (if (pos? (get-counters (get-card state target) :power))
+                            (effect-completed state side eid)
+                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))))}]
     {:flags {:drip-economy true}
      :abilities [{:async true
                   :label "Host a program or piece of hardware"
@@ -2041,7 +2042,7 @@
                  {:async true
                   :label "X [Credit]: Remove counters from a hosted card"
                   :choices {:card #(:host %)}
-                  :req (req (not (empty? (:hosted card))))
+                  :req (req (seq (:hosted card)))
                   :effect (effect
                             (continue-ability
                               (let [paydowntarget target
@@ -2098,7 +2099,7 @@
                 :msg "gain 1 [Credits] and draw 1 card"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
-                                       (draw state side eid 1 nil)))}]})
+                                       (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
   {:events [{:event :run-ends
@@ -2206,7 +2207,7 @@
                 :waiting-prompt "Runner to make a decision"
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
-                                    (if (pos? (count from))
+                                    (when (pos? (count from))
                                       (reorder-choice :runner :corp from '() (count from) from)))
                                   card nil))}
    :on-trash {:async true
@@ -2296,7 +2297,7 @@
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
                             (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
-                                (draw state :runner eid 1 nil))
+                                (draw state :runner eid 1))
                             (effect-completed state :runner eid)))}]})
 
 (defcard "Salsette Slums"
@@ -2481,11 +2482,7 @@
                   :async true
                   :msg (msg "Choose the order the unbroken subroutines on "
                          (:title current-ice) " resolve")
-                  :effect (effect
-                            (continue-ability
-                              (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
-                                (runner-break unbroken-subs))
-                              card nil))}]}))
+                  :effect (effect (continue-ability (runner-break (unbroken-subroutines-choice current-ice)) card nil))}]}))
 
 (defcard "Street Peddler"
   {:on-install {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
@@ -2523,13 +2520,13 @@
              :req (req (genetics-trigger? state side :damage))
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :runner eid 1 nil))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Tallie Perrault"
   {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                 :async true
                 :cost [:trash]
-                :effect (effect (draw eid (count-bad-pub state) nil))
+                :effect (effect (draw eid (count-bad-pub state)))
                 :msg (msg "draw " (count-bad-pub state) " cards")}]
    :events [{:event :play-operation
              :optional
@@ -2693,30 +2690,30 @@
   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                       :async true
                       :msg "draw 4 cards"
-                      :effect (effect (draw :runner eid 4 nil))}]
+                      :effect (effect (draw :runner eid 4))}]
     {:events [(assoc draw-ability :event :corp-turn-ends)
               (assoc draw-ability :event :runner-turn-ends)
-              {:event :pre-runner-draw
-               :msg "draw 1 additional card"
-               ;; The req catches draw events that happened before The Class Act was installed
-               :req (req (first-event? state :runner :pre-runner-draw))
-               :async true
-               :interactive (req true)
+              (first-time-draw-bonus :runner 1)
+              {:event :runner-draw
+               :req (req (first-event? state :runner :runner-draw))
                :once :per-turn
+               :once-key :the-class-act-put-bottom
+               :async true
                :effect
                (effect (continue-ability
-                         (when (pos? (count (get-in @state [:runner :deck])))
-                           (let [n (+ target (get-in @state [:bonus :draw] 0))
-                                 to-draw (take (inc n) (:deck (:runner @state)))]
-                             {:player :runner
-                              :waiting-prompt "Runner to choose an option"
-                              :prompt "Choose 1 card to add to the bottom of the stack"
-                              :choices to-draw
-                              :effect (effect (move target :deck)
-                                              (system-msg
-                                                (str "uses The Class Act to add the "
-                                                     (pprint/cl-format nil "~:R"(inc (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
-                                                     " card drawn to the bottom of the Stack")))}))
+                         (when-let [drawn runner-currently-drawing]
+                           {:waiting-prompt "Runner to make a decision"
+                            :prompt "Choose 1 card to add to the bottom of the stack"
+                            :choices {:card #(some (fn [c] (same-card? c %)) drawn)
+                                      :all true}
+                            :effect (req (system-msg
+                                           state side
+                                           (str "uses The Class Act to add the "
+                                                (pprint/cl-format nil "~:R"
+                                                                  (inc (first (keep-indexed #(when (same-card? target %2) %1) drawn))))
+                                                " card drawn to the bottom of the stack"))
+                                         (move state :runner target :deck)
+                                         (remove-from-currently-drawing state side target))})
                          card nil))}]}))
 
 (defcard "The Helpful AI"
@@ -2744,7 +2741,7 @@
                               :duration :end-of-run
                               :async true
                               :effect (effect (system-msg :runner "uses The Masque A to draw 1 card")
-                                              (draw :runner eid 1 nil))}])
+                                              (draw :runner eid 1))}])
                           (make-run eid target card))}]})
 
 (defcard "The Masque B"
@@ -2768,7 +2765,7 @@
                                                     (mill :corp eid :corp 1))}
                       :no-ability {:async true
                                    :effect (effect (system-msg :runner "draw 2 cards")
-                                                   (draw :runner eid 2 nil))}}}
+                                                   (draw :runner eid 2))}}}
         maybe-spend-2 {:event :runner-turn-begins
                        :interactive (req true)
                        :optional
@@ -3074,7 +3071,7 @@
                                     :yes-ability
                                     {:async true
                                      :effect (effect (system-msg (str "draws " (:title (first (:deck corp)))))
-                                                     (draw eid 1 nil))}
+                                                     (draw eid 1))}
                                     :no-ability
                                     {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}
                                   card nil)))}]
@@ -3092,11 +3089,11 @@
                           (if (get-in @state [:per-turn (:cid card)])
                             (effect-completed state side eid)
                             (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
-                                (draw state side eid 2 nil))))}]
+                                (draw state side eid 2))))}]
    :abilities [{:msg "draw 2 cards and lose [Click]"
                 :once :per-turn
                 :async true
-                :effect (effect (draw eid 2 nil))}]})
+                :effect (effect (draw eid 2))}]})
 
 (defcard "Xanadu"
   {:constant-effects [{:type :rez-cost

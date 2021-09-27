@@ -46,6 +46,8 @@
       this-server (let [s (get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))
+      corp-currently-drawing (seq (peek (get-in @state [:corp :register :currently-drawing])))
+      runner-currently-drawing (seq (peek (get-in @state [:runner :register :currently-drawing])))
       ]
     (partition 2)
     (map (juxt first identity))
@@ -93,20 +95,35 @@
 
 
 (defmacro wait-for
-  ([action & expr]
-   (let [awaited-fn `(fn [eid#]
-                       (let [~'async-result (:result eid#)]
-                         ~@expr))
-         ;; this creates a five-argument function to be resolved later,
-         ;; without overriding any local variables name state, card, etc.
-         totake (if (#{'apply 'handler 'payable?} (first action)) 4 3)
-         th (nth action totake)]
-     `(let [~'use-eid# (and (map? ~th) (:eid ~th))
-            ~'new-eid# (if ~'use-eid# ~th (game.core.eid/make-eid ~'state))]
-        (~'game.core.eid/register-effect-completed ~'state ~'new-eid# ~awaited-fn)
-        (if ~'use-eid#
-          ~(concat (take totake action) (list 'new-eid#) (drop (inc totake) action))
-          ~(concat (take totake action) (list 'new-eid#) (drop totake action)))))))
+  [& body]
+  (let [[binds action] (if (vector? (first body))
+                       (first body)
+                       [[{'async-result :result}] (first body)])
+        expr (next body)
+        abnormal? (#{'apply 'handler 'payable?} (first action))
+        to-take (if abnormal? 4 3)
+        [_ state _ eid?] (if abnormal? (next action) action)]
+    `(let [eid?# ~eid?
+           use-eid# (and (map? eid?#) (:eid eid?#))
+           new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state))]
+       (game.core.eid/register-effect-completed
+         ~state new-eid#
+         (fn ~(if (vector? binds) binds [binds])
+           ~@expr))
+       (if use-eid#
+         (~@(take to-take action) new-eid# ~@(drop (inc to-take) action))
+         (~@(take to-take action) new-eid# ~@(drop to-take action))))))
+
+(comment
+  (macroexpand
+    '(wait-for (draw state :corp (make-eid state) 1)
+               (system-msg state :corp async-result)
+               (effect-completed state :corp eid)))
+  (macroexpand
+    '(wait-for [{card :result} (draw state :corp (make-eid state) 1)]
+               (system-msg state :corp card)
+               (effect-completed state :corp eid)))
+  )
 
 (defmacro continue-ability
   [state side ability card targets]

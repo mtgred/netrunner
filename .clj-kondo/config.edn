@@ -5,19 +5,22 @@
                                current-ice corp-reg corp-reg-last runner-reg
                                runner-reg-last installed remotes servers
                                unprotected runnable-servers hq-runnable rd-runnable
-                               archives-runnable tagged this-card-run this-server])
+                               archives-runnable tagged this-card-run this-server
+                               corp-currently-drawing runner-currently-drawing])
              (game.macros/effect [state side eid card targets target context
                                   runner corp run run-server run-ices run-position
                                   current-ice corp-reg corp-reg-last runner-reg
                                   runner-reg-last installed remotes servers
                                   unprotected runnable-servers hq-runnable rd-runnable
-                                  archives-runnable tagged this-card-run this-server])
+                                  archives-runnable tagged this-card-run this-server
+                                  corp-currently-drawing runner-currently-drawing])
              (game.macros/msg [state side eid card targets target context
                                runner corp run run-server run-ices run-position
                                current-ice corp-reg corp-reg-last runner-reg
                                runner-reg-last installed remotes servers
                                unprotected runnable-servers hq-runnable rd-runnable
-                               archives-runnable tagged this-card-run this-server])
+                               archives-runnable tagged this-card-run this-server
+                               corp-currently-drawing runner-currently-drawing])
              (game.macros/wait-for [async-result])
              (game.macros-test/do-game [state get-corp get-runner get-run refresh hand-size
                                         prompt-map prompt-button prompt-type prompt-buttons
@@ -27,19 +30,22 @@
                              current-ice corp-reg corp-reg-last runner-reg
                              runner-reg-last installed remotes servers
                              unprotected runnable-servers hq-runnable rd-runnable
-                             archives-runnable tagged this-card-run this-server])
+                             archives-runnable tagged this-card-run this-server
+                             corp-currently-drawing runner-currently-drawing])
              (game.core/effect [state side eid card targets target context
                                 runner corp run run-server run-ices run-position
                                 current-ice corp-reg corp-reg-last runner-reg
                                 runner-reg-last installed remotes servers
                                 unprotected runnable-servers hq-runnable rd-runnable
-                                archives-runnable tagged this-card-run this-server])
+                                archives-runnable tagged this-card-run this-server
+                                corp-currently-drawing runner-currently-drawing])
              (game.core/msg [state side eid card targets target context
                              runner corp run run-server run-ices run-position
                              current-ice corp-reg corp-reg-last runner-reg
                              runner-reg-last installed remotes servers
                              unprotected runnable-servers hq-runnable rd-runnable
-                             archives-runnable tagged this-card-run this-server])
+                             archives-runnable tagged this-card-run this-server
+                             corp-currently-drawing runner-currently-drawing])
              (game.core/wait-for [async-result])]}
   :invalid-arity {:skip-args [game.macros/effect game.macros/wait-for
                               game.core/effect game.core/wait-for]}

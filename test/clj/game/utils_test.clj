@@ -1,8 +1,8 @@
 (ns game.utils-test
-  (:require [game.core :as core]
-            [game.utils :as utils :refer [side-str same-card?]]
-            [clojure.test :refer :all]
-            [clojure.string :refer [lower-case split]]))
+  (:require
+    [clojure.test :refer :all]
+    [game.core :as core]
+    [game.utils :as utils :refer [same-card? side-str]]))
 
 (defmacro error-wrapper [form]
   `(try ~form
@@ -87,7 +87,7 @@
             (is' (= 1 (count matching-cards))
                  (str "Expected to click card [ " card
                       " ] but found " (count matching-cards)
-                      " matching cards. Current prompt is: n" prompt)))))
+                      " matching cards. Current prompt is: " prompt)))))
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
       (is' (true? (prompt-is-type? state side :select))
