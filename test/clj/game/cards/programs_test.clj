@@ -201,7 +201,22 @@
       (run-jack-out state)
       (take-credits state :runner)
       (is (empty? (:discard (get-runner))) "No cards trashed")
-      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed"))))
+      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed")))
+  (testing "Allows payment from recurring sources"
+    (do-game
+     (new-game {:runner {:deck ["Algernon" "Multithreader"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Algernon")
+     (play-from-hand state :runner "Multithreader")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (= 4 (:credit (get-runner))) "Runner starts with 4 credit")
+     (click-prompt state :runner "Yes")
+     (is (= "Choose a credit providing card (0 of 2 [Credits])" (:msg (prompt-map :runner))) "Runner prompted to choose credit sources")
+     (click-card state :runner (get-program state 1))
+     (click-card state :runner (get-program state 1))
+     (is (= 4 (:credit (get-runner))) "Runner pays 0 credits from their pool")
+     (is (= 5 (:click (get-runner))) "Runner gains 1 click"))))
 
 (deftest ^{:card-title "alias"}
   alias-breaker
