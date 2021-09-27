@@ -57,6 +57,7 @@
         height: 84px
         width: 60px
         border-radius: 4px
+        outline: none
         display-flex()
 
         .cardname
@@ -105,7 +106,12 @@
     .card.hovered
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
         border-color: blue-light
-
+    
+    .card
+        &:focus
+            animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
+            border-color: blue-light
+            
     .counters
         position: absolute
         top: 0
@@ -224,23 +230,27 @@
         width: 200px
         font-size: .75rem
         line-height: 1rem
-
+        
+        ul
+            list-style: none
+            
         > span
             margin: 2px
             &:last-child
                 margin-bottom: 0
 
-        > div
+        > div, li
             border: 1px solid white-solid
             padding: 3px 6px
             border-radius: 4px
             margin-bottom: 4px
             cursor: pointer
-
+            outline: 0
+            
             &:last-child
                 margin-bottom: 0
 
-            &:hover
+            &:hover, &:focus
                 border-color: gold-base
 
     .popup
@@ -293,10 +303,6 @@
 
     .playable
         cursor: pointer
-        border-radius: 4px
-
-        .card
-            box-shadow(0 0 1px 2px gold-base)
 
     .bg
         position: absolute
@@ -308,7 +314,7 @@
         height: 84px
         width: 60px
         border-radius: 4px
-
+    
     .server-card
         position: relative
         min-height: 84px
@@ -648,6 +654,12 @@
                     .encounter-info
                         width: 100%
                         margin: 6px 0px
+        
+        .me
+            .card
+                &:hover, &:focus
+                    scale: 1.1
+                    z-index: 1
 
     .centralpane
         flex(1)

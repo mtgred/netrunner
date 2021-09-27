@@ -278,7 +278,8 @@
     (render-specials (render-icons (render-cards input)))
     input))
 
-(defn cond-button [text cond f]
+(defn cond-button
+  [text cond f]
   (if cond
     [:button {:on-click f :key text} text]
     [:button.disabled {:key text} text]))

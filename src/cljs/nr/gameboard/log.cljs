@@ -99,35 +99,38 @@
 (defn command-menu-key-down-handler
   [state e]
   (when (show-command-menu? @state)
-    (let [key-code (-> e .-keyCode)
+    (let [key (-> e .-key)
           matches (:command-matches @state)
           match-count (count matches)]
-      (cond
+      (case key
         ;; ArrowDown
-        (#{40} key-code) (do (.preventDefault e)
-                             (swap! state update :command-highlight #(if % (mod (inc %) match-count) 0)))
+        "ArrowDown" (do (.preventDefault e)
+                        (swap! state update :command-highlight #(if % (mod (inc %) match-count) 0)))
         ;; ArrowUp
-        (#{38} key-code) (when (:command-highlight @state)
-                           (do (.preventDefault e)
-                               (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0))))
+        "ArrowUp" (when (:command-highlight @state)
+                    (.preventDefault e)
+                    (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0)))
         ;; Return, Space, ArrowRight, Tab
-        (#{13 32 39 9} key-code) (when (or (= 1 match-count) (:command-highlight @state))
-                                   (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))
-                                         command (nth matches use-index)]
-                                     (do (.preventDefault e)
-                                         (swap! state assoc :msg (str command " "))
-                                         (reset-command-menu state)
-                                         ;; auto send when no args needed
-                                         (when (and (= key-code 13)
-                                                 (not (get-in command-info-map [command :has-args])))
-                                           (send-msg state)))))))))
+        ("Enter" "Space" "ArrowRight" "Tab")
+        (when (or (= 1 match-count) (:command-highlight @state))
+          (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))
+                command (nth matches use-index)]
+            (.preventDefault e)
+            (swap! state assoc :msg (str command " "))
+            (reset-command-menu state)
+            ;; auto send when no args needed
+            (when (and (= key "Enter")
+                       (not (get-in command-info-map [command :has-args])))
+              (send-msg state))))
+        ;; else
+        nil))))
 
 (defn log-input-change-handler
   [s e]
-  (do (reset-command-menu s)
-      (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-      (swap! s assoc :msg (-> e .-target .-value))
-      (send-typing s)))
+  (reset-command-menu s)
+  (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
+  (swap! s assoc :msg (-> e .-target .-value))
+  (send-typing s))
 
 (defn log-input []
   (let [gameid (r/cursor game-state [:gameid])
@@ -143,12 +146,13 @@
             [:form {:on-submit #(do (.preventDefault %)
                                     (reset-command-menu s)
                                     (send-msg s))}
-             [:input {:placeholder (tr [:chat.placeholder "Say something"])
-                      :type "text"
-                      :ref (partial reset! !input-ref)
-                      :value (:msg @s)
-                      :on-key-down (partial command-menu-key-down-handler s)
-                      :on-change (partial log-input-change-handler s)}]]]
+             [:input#log-input
+              {:placeholder (tr [:chat.placeholder "Say something"])
+               :type "text"
+               :ref (partial reset! !input-ref)
+               :value (:msg @s)
+               :on-key-down (partial command-menu-key-down-handler s)
+               :on-change (partial log-input-change-handler s)}]]]
            [indicate-action]
            (when (show-command-menu? @s)
              [:div.command-matches-container.panel.blue-shade
