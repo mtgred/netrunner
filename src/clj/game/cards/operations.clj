@@ -2306,8 +2306,11 @@
               :prompt "Add Subliminal Messaging to HQ?"
               :yes-ability
               {:msg "add Subliminal Messaging to HQ"
-               :effect (effect (reveal eid card)
-                               (move card :hand))}}}]})
+               :async true
+               :effect (req (wait-for (reveal state side (make-eid state eid) card))
+                            (move state side card :hand)
+                            (effect-completed state side eid))}}}]})
+
 
 
 (defcard "Success"
