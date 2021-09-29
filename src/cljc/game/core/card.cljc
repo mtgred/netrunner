@@ -1,34 +1,48 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case includes?]]
-            [medley.core :refer [find-first]]))
+  (:require
+   [clojure.string :refer [lower-case]]
+   [medley.core :refer [find-first]]))
 
 (defrecord Card
-  [advancementcost
+  [abilities
+   advancementcost
    agendapoints
    art
    baselink
    cid
    code
+   corp-abilities
    cost
    cycle_code
    deck-limit
    faction
    format
+   hosted
+   images
    implementation
+   index
+   installed
    memoryunits
    minimumdecksize
+   new
    normalizedtitle
    previous-versions
+   previous-zone
    quantity
    rotated
+   runner-abilities
    set_code
    side
+   special
    strength
+   subroutines
    subtype
+   subtypes
    title
    trash
    type
-   uniqueness])
+   uniqueness
+   zone])
 
 (defn private-card
   "Returns only the public information of a given card when it's in a private state,

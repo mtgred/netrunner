@@ -658,7 +658,7 @@
 
 (defn card-view
   [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-           subtype subtypes advanceable rezzed strength current-strength title selected hosted
+           subtypes advanceable rezzed strength current-strength title selected hosted
            side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
            corp-abilities]
     :as card} flipped disable-click]

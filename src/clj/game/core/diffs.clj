@@ -57,14 +57,45 @@
 
 (defn abilities-playable? [state side card ability-kw]
   (->> (get card ability-kw)
-       (map-indexed (partial ability-playable? state side card))
+       (map-indexed (fn [ability-idx ability]
+                      (ability-playable? state side card ability-idx ability)))
        (into [])))
 
 (defn card-abilities-playable? [card state side]
-  (-> card
-      (assoc :abilities (abilities-playable? state side card :abilities))
-      (assoc :corp-abilities (abilities-playable? state side card :corp-abilities))
-      (assoc :runner-abilities (abilities-playable? state side card :runner-abilities))))
+  (assoc card
+         :abilities (abilities-playable? state side card :abilities)
+         :corp-abilities (abilities-playable? state side card :corp-abilities)
+         :runner-abilities (abilities-playable? state side card :runner-abilities)))
+
+(def card-keys
+  [:abilities
+   :advancementcost
+   :agendapoints
+   :baselink
+   :cid
+   :code
+   :corp-abilities
+   :cost
+   :faction
+   :hosted
+   :implementation
+   :images
+   :index
+   :installed
+   :memoryunits
+   :new
+   :normalizedtitle
+   :previous-zone
+   :runner-abilities
+   :side
+   :strength
+   :subroutines
+   :subtypes
+   :title
+   :trash
+   :type
+   :uniqueness
+   :zone])
 
 (defn card-summary [card state side]
   (if (not (is-public? card side))
@@ -75,6 +106,16 @@
         (playable? state side)
         (card-abilities-playable? state side)
         (prune-null-fields))))
+
+(defn card-summary-2 [card state side]
+  (if (not (is-public? card side))
+    (prune-null-fields (private-card card))
+    (cond-> card
+      (:hosted card) (update :hosted (fn [h] (mapv #(card-summary % state side) h)))
+      true (-> (playable? state side)
+               (card-abilities-playable? state side)
+               (select-keys card-keys)
+               (prune-null-fields)))))
 
 (defn card-summary-vec [cards state side]
   (mapv #(card-summary % state side) cards))
@@ -166,6 +207,17 @@
           (:servers corp)
           (recur (update-in corp zone card-summary-vec state side)
                  (next zones)))))))
+
+(defn servers-summary-2
+  [state side]
+  (reduce-kv
+    (fn [servers current-server-kw current-server]
+      (assoc servers
+             current-server-kw
+             {:content (card-summary-vec (:content current-server) state side)
+              :ices (card-summary-vec (:ices current-server) state side)}))
+    {}
+    (:servers (:corp @state))))
 
 (defn corp-summary
   [state side]
