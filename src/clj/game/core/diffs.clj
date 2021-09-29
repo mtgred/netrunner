@@ -48,7 +48,9 @@
         eid {:source card
              :source-type :ability
              :source-info {:ability-idx ability-idx}}]
-    (if (and (can-pay? state side eid card nil cost)
+    (if (and (or (active? card)
+                 (:autoresolve ability))
+             (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)
       ability)))
@@ -59,13 +61,10 @@
        (into [])))
 
 (defn card-abilities-playable? [card state side]
-  (if (or (active? card)
-          (is-type? card "Basic Action"))
-    (-> card
-        (assoc :abilities (abilities-playable? state side card :abilities))
-        (assoc :corp-abilities (abilities-playable? state side card :corp-abilities))
-        (assoc :runner-abilities (abilities-playable? state side card :runner-abilities)))
-    card))
+  (-> card
+      (assoc :abilities (abilities-playable? state side card :abilities))
+      (assoc :corp-abilities (abilities-playable? state side card :corp-abilities))
+      (assoc :runner-abilities (abilities-playable? state side card :runner-abilities))))
 
 (defn card-summary [card state side]
   (cond+
@@ -154,24 +153,21 @@
 
 (defn servers-summary
   [state side]
-  (let [corp-player? (= side :corp)
-        corp (:corp @state)]
-    (if corp-player?
-      (:servers corp)
-      (let [server-keys (keys (:servers corp))
-            zones (reduce
-                    (fn [servers server]
-                      (into servers [[:servers server :content]
-                                     [:servers server :ices]]))
-                    []
-                    server-keys)]
-        (loop [corp corp
-               zones zones]
-          (let [zone (first zones)]
-            (if (nil? zone)
-              (:servers corp)
-              (recur (update-in corp zone card-summary-vec state :runner)
-                     (next zones)))))))))
+  (let [corp (:corp @state)
+        server-keys (keys (:servers corp))
+        zones (reduce
+               (fn [servers server]
+                 (into servers [[:servers server :content]
+                                [:servers server :ices]]))
+               []
+               server-keys)]
+    (loop [corp corp
+           zones zones]
+      (let [zone (first zones)]
+        (if (nil? zone)
+          (:servers corp)
+          (recur (update-in corp zone card-summary-vec state side)
+                 (next zones)))))))
 
 (defn corp-summary
   [state side]

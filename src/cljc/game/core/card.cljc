@@ -257,7 +257,8 @@
 (defn active?
   "Checks if the card is active and should receive game events/triggers."
   [card]
-  (or (identity? card)
+  (or (is-type? card "Basic Action")
+      (identity? card)
       (in-play-area? card)
       (in-current? card)
       (in-scored? card)

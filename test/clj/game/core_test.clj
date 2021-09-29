@@ -181,14 +181,14 @@
         ability (cond
                   (number? ability) ability
                   (string? ability) (some #(when (= (:label (second %)) ability) (first %)) (map-indexed vector (:abilities card)))
-                  :else -1)]
-    (is' (active? card) (str (:title card) " is active"))
-    (is' (and (number? ability)
-              (nth (:abilities card) ability nil))
-         (str (:title card) " has ability #" ability))
-    (when (and (active? card)
-               (number? ability)
-               (nth (:abilities card) ability nil))
+                  :else -1)
+        hasAbility? (and (number? ability)
+                         (nth (:abilities card) ability nil))
+        playable? (or (active? card)
+                      (:autoresolve (nth (:abilities card) ability nil)))]
+    (is' hasAbility? (str (:title card) " has ability #" ability))
+    (is' playable? (str (:title card) " is active or ability #" ability " is an auto resolve toggle"))
+    (when (and hasAbility? playable?)
       (core/process-action "ability" state side {:card card
                                                  :ability ability
                                                  :targets (first targets)}))))
