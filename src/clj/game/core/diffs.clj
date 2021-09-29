@@ -137,7 +137,7 @@
 (defn player-summary
   [player state side same-side?]
   (-> (select-keys player (player-keys))
-      (update :identity prune-null-fields)
+      (update :identity card-summary state side)
       (update :basic-action-card card-abilities-playable? state side)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
