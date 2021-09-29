@@ -3738,7 +3738,8 @@
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Subliminal Messaging" 3)]}
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :deck [(qty "Subliminal Messaging" 3)]}
                  :runner {:id "Noise: Hacker Extraordinaire"
                           :deck [(qty "Cache" 3) "Utopia Shard"]}})
       (play-from-hand state :corp "Subliminal Messaging")
@@ -3756,6 +3757,7 @@
       (click-prompt state :corp "Yes")
       (is (= 3 (count (:hand (get-corp)))) "All 3 Subliminals returned to HQ")
       (core/move state :corp (find-card "Subliminal Messaging" (:hand (get-corp))) :deck)
+      (is (= 10 (:credit (get-corp))) "Only first subliminal should give Hyoubu reveal credit")
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Utopia Shard")
