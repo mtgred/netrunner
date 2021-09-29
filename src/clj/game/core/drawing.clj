@@ -50,7 +50,7 @@
                                (min n (remaining-draws state side))
                                n)
          deck-count (count (get-in @state [side :deck]))]
-     (when (and (= side :corp) (<= deck-count draws-after-prevent))
+     (when (and (= side :corp) (< deck-count draws-after-prevent))
        (win-decked state))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]
