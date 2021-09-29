@@ -246,12 +246,18 @@
             margin-bottom: 4px
             cursor: pointer
             outline: 0
-            
+
             &:last-child
                 margin-bottom: 0
 
             &:hover, &:focus
                 border-color: gold-base
+
+        .disabled
+            cursor: default
+
+            &:hover, &:focus
+                border-color: white-solid
 
     .popup
         display: none
@@ -654,12 +660,6 @@
                     .encounter-info
                         width: 100%
                         margin: 6px 0px
-        
-        .me
-            .card
-                &:hover, &:focus
-                    scale: 1.1
-                    z-index: 1
 
     .centralpane
         flex(1)

@@ -344,14 +344,17 @@
 (defn- card-menu-item
   "Creates a li item for a card menu using the given id and key.
    Performs the function provided on click or pressing the Enter or Space keys"
-  [label func]
-  [:li {:tab-index 0
-        :on-click func
-        :on-key-down #(when (= "Enter" (.-key %))
-                        (func))
-        :on-key-up #(when (= " " (.-key %))
-                      (func))}
-   label])
+  ([label func] (card-menu-item label func true))
+  ([label func enabled]
+   (if enabled
+     [:li {:tab-index 0
+           :on-click func
+           :on-key-down #(when (= "Enter" (.-key %))
+                           (func))
+           :on-key-up #(when (= " " (.-key %))
+                         (func))}
+      label]
+     [:li.disabled label])))
 
 (defn server-menu
   "The pop-up on a card in hand when clicked"
@@ -372,24 +375,24 @@
 
 (defn list-abilities
   [ab-type card abilities]
-  [:ul
-   (map-indexed
-    (fn [i ab]
-      (let [command (case ab-type
-                      :runner "runner-ability"
-                      :corp "corp-ability"
-                      :ability (if (:dynamic ab) "dynamic-ability" "ability"))
-            args (merge {:card card}
-                        (if (:dynamic ab)
-                          (select-keys ab [:dynamic :source :index])
-                          {:ability i}))]
-        ^{:key i}
-        [card-menu-item (render-icons (add-cost-to-label ab))
-         #(do (send-command command args)
-              (if (:keep-menu-open ab)
-                (swap! card-menu assoc :keep-menu-open (keyword (:keep-menu-open ab)))
-                (close-card-menu)))]))
-    abilities)])
+  (map-indexed
+   (fn [i ab]
+     (let [command (case ab-type
+                     :runner "runner-ability"
+                     :corp "corp-ability"
+                     :ability (if (:dynamic ab) "dynamic-ability" "ability"))
+           args (merge {:card card}
+                       (if (:dynamic ab)
+                         (select-keys ab [:dynamic :source :index])
+                         {:ability i}))]
+       ^{:key i}
+       [card-menu-item (render-icons (add-cost-to-label ab))
+        #(do (send-command command args)
+             (if (:keep-menu-open ab)
+               (swap! card-menu assoc :keep-menu-open (keyword (:keep-menu-open ab)))
+               (close-card-menu)))
+        (:playable ab)]))
+   abilities))
 
 (defn check-keep-menu-open
   [card]
@@ -461,12 +464,13 @@
      (when (or (seq runner-abilities)
                (seq subroutines))
        [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
-     (list-abilities :runner card runner-abilities)
-     (when (seq subroutines)
-       [:div {:on-click #(do (send-command "system-msg"
-                                           {:msg (str "indicates to fire all unbroken subroutines on " title)})
-                             (close-card-menu))}
-        (tr [:game.let-subs-fire "Let unbroken subroutines fire"])])
+     [:ul
+      (list-abilities :runner card runner-abilities)
+      (when (seq subroutines)
+        [card-menu-item (tr [:game.let-subs-fire "Let unbroken subroutines fire"])
+         #(do (send-command "system-msg"
+                            {:msg (str "indicates to fire all unbroken subroutines on " title)})
+              (close-card-menu))])]
      (when (seq subroutines)
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
      (map-indexed
@@ -491,7 +495,7 @@
      [:button.win-right {:on-click #(close-card-menu) :type "button"} "✘"]
      (when (seq corp-abilities)
        [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
-     (list-abilities :corp card corp-abilities)]))
+     [:ul (list-abilities :corp card corp-abilities)]]))
 
 (defn encounter-info-div
   "Displays encounter information including current ice strength and subroutines"
@@ -603,17 +607,18 @@
                        (swap! card-menu assoc :keep-menu-open keep-menu-open)
                        (close-card-menu)))]))
            actions)])
-       (when (and (active? card)
-                  (seq abilities))
+       (when (or (seq abilities)
+                 (and (active? card)
+                      (seq (remove #(or (:fired %) (:broken %)) subroutines))))
          [:span.float-center (tr [:game.abilities "Abilities"]) ":"])
-       (when (and (active? card)
-                  (seq abilities))
-         (list-abilities :ability card abilities))
-       (when (and (active? card)
-                  (seq (remove :fired subroutines)))
-         [:div {:on-click #(do (send-command "unbroken-subroutines" {:card card})
-                               (close-card-menu))}
-          (tr [:game.fire-unbroken "Fire unbroken subroutines"])])
+       [:ul
+        (when (seq abilities)
+          (list-abilities :ability card abilities))
+        (when (and (active? card)
+                   (seq (remove #(or (:fired %) (:broken %)) subroutines)))
+          [card-menu-item (tr [:game.fire-unbroken "Fire unbroken subroutines"])
+           #(do (send-command "unbroken-subroutines" {:card card})
+                (close-card-menu))])]
        (when (seq subroutines)
          [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
        (when (seq subroutines)

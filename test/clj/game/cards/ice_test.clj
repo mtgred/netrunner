@@ -1665,7 +1665,47 @@
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
         (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
-        (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap")))))
+        (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap"))))
+  (testing "No prompt if unable to rez"
+    (do-game
+      (new-game {:corp {:deck ["Formicary"]}})
+      (play-from-hand state :corp "Formicary" "HQ")
+      (take-credits state :corp)
+      (core/lose-credits state :corp nil 7)
+      (run-on state "R&D")
+      (run-continue state)
+      (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is on HQ")
+      (is (zero? (:credit (get-corp))) "Corp does not have enough credits to rez Formicary")
+      (is (not (get-run)) "The run has ended without prompting for Formicary")))
+  (testing "Autoresolve test"
+    (do-game
+      (new-game {:corp {:deck ["Formicary"]}})
+      (play-from-hand state :corp "Formicary" "HQ")
+      (take-credits state :corp)
+      (let [form (get-ice state :hq 0)]
+        ;; Never resolve
+        (card-ability state :corp form 0)
+        (click-prompt state :corp "Never")
+        (run-on state "R&D")
+        (run-continue state)
+        (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is on HQ")
+        (is (not (get-run)) "The run has ended without prompting for Formicary")
+        ;; Always - not enough credits to rez
+        (card-ability state :corp form 0)
+        (click-prompt state :corp "Always")
+        (core/lose-credits state :corp nil 7)
+        (is (zero? (:credit (get-corp))) "Corp does not have enough credits to rez Formicary")
+        (run-on state "R&D")
+        (run-continue state)
+        (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is on HQ")
+        (is (not (get-run)) "The run has ended without prompting for Formicary")
+        ;; Always - enough credits to rez
+        (core/gain-credits state :corp nil 2)
+        (run-on state "R&D")
+        (run-continue state)
+        (is (= "Formicary" (:title (get-ice state :rd 0))) "Formicary is on R&D")
+        (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
+        (is (get-run) "The run is still in progress")))))
 
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c

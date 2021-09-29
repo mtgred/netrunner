@@ -1382,18 +1382,22 @@
      :interactive (req true)
      :optional
      {:prompt "Rez Formicary?"
+      :autoresolve (get-autoresolve :auto-formicary)
+      :req (req (and (can-rez? state side card)
+                     (can-pay? state side eid card nil (get-rez-cost state side card nil))))
       :yes-ability
       {:msg "rez and move Formicary. The Runner is now encountering Formicary"
        :async true
        :effect (req (wait-for (rez state side card)
-                              (move state side (get-card state card)
-                                    [:servers (target-server run) :ices]
-                                    {:front true})
-                              (swap! state assoc-in [:run :position] 1)
-                              (set-next-phase state :encounter-ice)
-                              (set-current-ice state)
-                              (update-all-ice state side)
-                              (update-all-icebreakers state side)
+                              (when (rezzed? (:card async-result))
+                                (move state side (get-card state card)
+                                      [:servers (target-server run) :ices]
+                                      {:front true})
+                                (swap! state assoc-in [:run :position] 1)
+                                (set-next-phase state :encounter-ice)
+                                (set-current-ice state)
+                                (update-all-ice state side)
+                                (update-all-icebreakers state side))
                               (effect-completed state side eid)))}}}]
    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
                   :player :runner
@@ -1403,7 +1407,8 @@
                   :effect (req (if (= target "End the run")
                                  (do (system-msg state :runner "chooses to end the run")
                                      (end-run state :corp eid card))
-                                 (damage state :runner eid :net 2 {:card card :unpreventable true})))}]})
+                                 (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
+   :abilities [(set-autoresolve :auto-formicary "Formicary")]})
 
 (defcard "Free Lunch"
   {:abilities [{:cost [:power 1]
