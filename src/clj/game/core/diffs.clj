@@ -314,11 +314,11 @@
       (assoc :runner (runner-summary state side))))
 
 (defn strip-for-spectators
-  [stripped-state corp-player runner-player]
+  [state stripped-state corp-player runner-player]
   (let [spectator? (get-in stripped-state [:options :spectatorhands])
         hidden-discard (-> corp-player
                            (get-in [:corp :discard])
-                           (card-summary-vec stripped-state :spectator))]
+                           (card-summary-vec state :spectator))]
     (-> stripped-state
         (assoc :corp (:corp corp-player)
                :runner (:runner runner-player))
@@ -348,7 +348,7 @@
     ;; corp, runner, spectator, history
     [corp-player
      runner-player
-     (strip-for-spectators stripped-state corp-player runner-player)
+     (strip-for-spectators state stripped-state corp-player runner-player)
      (strip-for-replay stripped-state corp-player runner-player)]))
 
 (defn public-states [state]
