@@ -1278,7 +1278,7 @@
 (defcard "Pālanā Foods: Sustainable Growth"
   {:events [{:event :runner-draw
              :req (req (and (first-event? state :corp :runner-draw)
-                            (pos? target)))
+                            (pos? (:count target))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

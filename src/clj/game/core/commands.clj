@@ -325,7 +325,7 @@
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
         "/discard"    #(toast %1 %2 "/discard number takes the format #n")
         "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
-        "/draw"       #(draw %1 %2 (constrain-value value 0 1000))
+        "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))
         "/end-run"    (fn [state side]
                         (when (and (= side :corp)
                                     (:run @state))
