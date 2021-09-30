@@ -120,10 +120,10 @@
   (if (not (is-public? card side))
     (select-non-nil-keys (private-card card) card-keys)
     (-> (if (:hosted card)
-          (update card :hosted card-summary-vec state side)
+          (update card :hosted cards-summary state side)
           card)
         (playable? state side)
-        (card-abilities-playable? state side)
+        (card-abilities-summary state side)
         (select-non-nil-keys card-keys))))
 
 (defn cards-summary [cards state side]
@@ -144,13 +144,11 @@
    :corp-credits
    :runner-credits])
 
-(defn build-prompt-state
-  [prompt]
-  (not-empty (select-non-nil-keys prompt prompt-keys)))
-
 (defn prompt-summary
-  [player same-side?]
-  (update player :prompt-state #(if same-side? (build-prompt-state %) nil)))
+  [prompt same-side?]
+  (if same-side?
+    (not-empty (select-non-nil-keys prompt prompt-keys))
+    nil))
 
 (def player-keys
   [:aid
@@ -184,7 +182,7 @@
       (update :play-area cards-summary state side)
       (update :rfg cards-summary state side)
       (update :scored cards-summary state side)
-      (prompt-summary same-side?)
+      (update :prompt-state prompt-summary same-side?)
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys
@@ -202,16 +200,30 @@
     {}
     (:servers (:corp @state))))
 
-(defn prune-card-vec [cards]
+(defn prune-cards [cards]
   (map #(select-non-nil-keys % card-keys) cards))
+
+(defn deck-summary
+  "Is the player's deck publicly visible?"
+  [deck same-side? player]
+  (if (and same-side? (:view-deck player))
+    (prune-cards deck)
+    []))
+
+(defn hand-summary
+  "Is the Corp's hand publicly visible?"
+  [hand state same-side? side player]
+  (if (or same-side? (:openhand player))
+    (cards-summary hand state side)
+    []))
 
 (defn corp-summary
   [corp state side]
   (let [corp-player? (= side :corp)
         install-list (:install-list corp)]
     (-> (player-summary corp state side corp-player? corp-keys)
-        (update :deck #(if (and corp-player? (:view-deck corp)) (prune-card-vec %) []))
-        (update :hand #(if (or corp-player? (:openhand corp)) (cards-summary % state :corp) []))
+        (update :deck deck-summary corp-player? corp)
+        (update :hand hand-summary state corp-player? side corp)
         (update :discard cards-summary state :corp)
         (assoc
           :deck-count (count (:deck corp))
@@ -240,9 +252,9 @@
   (let [runner-player? (= side :runner)
         runnable-list (:runnable-list runner)]
     (-> (player-summary runner state side runner-player? runner-keys)
-        (update :deck #(if (and runner-player? (:view-deck runner)) (prune-card-vec %) []))
-        (update :hand #(if (or runner-player? (:openhand runner)) (cards-summary % state :runner) []))
-        (update :discard prune-card-vec)
+        (update :deck deck-summary runner-player? runner)
+        (update :hand hand-summary state runner-player? side runner)
+        (update :discard prune-cards)
         (assoc
           :deck-count (count (:deck runner))
           :hand-count (count (:hand runner))
