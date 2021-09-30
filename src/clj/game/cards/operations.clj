@@ -1305,7 +1305,6 @@
    :leave-play (req (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
                        :cost [:click 1 :credit 2]
-                       :req (req (= :runner side))
                        :async true
                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash "
                                                                 (card-str state (:host card))))

@@ -80,14 +80,16 @@
 (defn- corp-ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (for [ab (:corp-abilities cdef)]
-    (assoc (select-keys ab [:cost]) :label (make-label ab))))
+  (into [] (for [ab (:corp-abilities cdef)
+                 :let [ab (assoc (select-keys ab [:cost]) :label (make-label ab))]]
+             (add-cost-label-to-ability ab))))
 
 (defn- runner-ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (for [ab (:runner-abilities cdef)]
-    (assoc (select-keys ab [:cost :break-cost]) :label (make-label ab))))
+  (into [] (for [ab (:runner-abilities cdef)
+                 :let [ab (assoc (select-keys ab [:cost :break-cost]) :label (make-label ab))]]
+             (add-cost-label-to-ability ab (or (:break-cost ab) (:cost ab))))))
 
 (defn card-init
   "Initializes the abilities and events of the given card."

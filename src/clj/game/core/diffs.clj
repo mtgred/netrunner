@@ -49,6 +49,7 @@
              :source-type :ability
              :source-info {:ability-idx ability-idx}}]
     (if (and (or (active? card)
+                 (condition-counter? card)
                  (:autoresolve ability))
              (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
@@ -71,7 +72,10 @@
     [(not (is-public? card side))
      (prune-null-fields (private-card card))]
     [(:hosted card)
-     (update card :hosted (partial mapv #(card-summary % state side)))]
+     (-> card
+         (card-abilities-playable? state side)
+         (prune-null-fields)
+         (update :hosted (partial mapv #(card-summary % state side))))]
     [:else
      (-> card
          (playable? state side)
@@ -199,11 +203,11 @@
    :brain-damage])
 
 (defn rig-summary
-  [state]
+  [state side]
   (let [runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
-               [row (card-summary-vec cards state :runner)]))))
+               [row (card-summary-vec cards state side)]))))
 
 (defn runner-summary
   [state side]
@@ -223,7 +227,7 @@
           :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
           :hand-count (count hand)
           :discard (prune-vec discard)
-          :rig (rig-summary state))
+          :rig (rig-summary state side))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
 (defn run-keys []
