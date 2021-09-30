@@ -83,6 +83,17 @@
     (seq (:corp-abilities card)) (update :corp-abilities abilities-summary card state side)
     (seq (:runner-abilities card)) (update :runner-abilities abilities-summary card state side)))
 
+(def subroutine-keys
+  [:broken
+   :fired
+   :label
+   :msg
+   :resolve])
+
+(defn subroutines-summary [subroutines]
+  (when (seq subroutines)
+    (mapv #(select-non-nil-keys % subroutine-keys) subroutines)))
+
 (def card-keys
   [:abilities
    :advance-counter
@@ -126,10 +137,12 @@
           card)
         (playable? state side)
         (card-abilities-summary state side)
+        (subroutines-summary)
         (select-non-nil-keys card-keys))))
 
 (defn cards-summary [cards state side]
-  (mapv #(card-summary % state side) cards))
+  (when (seq cards)
+    (mapv #(card-summary % state side) cards)))
 
 (def prompt-keys
   [:msg
