@@ -49,7 +49,6 @@
              :source-type :ability
              :source-info {:ability-idx ability-idx}}]
     (if (and (or (active? card)
-                 (condition-counter? card)
                  (:autoresolve ability))
              (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
@@ -68,19 +67,14 @@
       (assoc :runner-abilities (abilities-playable? state side card :runner-abilities))))
 
 (defn card-summary [card state side]
-  (cond+
-    [(not (is-public? card side))
-     (prune-null-fields (private-card card))]
-    [(:hosted card)
-     (-> card
-         (card-abilities-playable? state side)
-         (prune-null-fields)
-         (update :hosted (partial mapv #(card-summary % state side))))]
-    [:else
-     (-> card
-         (playable? state side)
-         (card-abilities-playable? state side)
-         (prune-null-fields))]))
+  (if (not (is-public? card side))
+    (prune-null-fields (private-card card))
+    (-> (if (:hosted card)
+          (update card :hosted (partial mapv #(card-summary % state side)))
+          card)
+        (playable? state side)
+        (card-abilities-playable? state side)
+        (prune-null-fields))))
 
 (defn card-summary-vec [cards state side]
   (mapv #(card-summary % state side) cards))
