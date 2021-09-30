@@ -106,6 +106,8 @@
    :counter
    :current-advancement-requirement
    :current-strength
+   :face
+   :faces
    :facedown
    :hosted
    :icon
@@ -137,7 +139,7 @@
           card)
         (playable? state side)
         (card-abilities-summary state side)
-        (subroutines-summary)
+        (update-existing :subroutines subroutines-summary)
         (select-non-nil-keys card-keys))))
 
 (defn cards-summary [cards state side]
@@ -279,6 +281,8 @@
 (def options-keys
   [:alt-arts
    :background
+   :card-resolution
+   :language
    :pronouns
    :show-alt-art])
 
@@ -289,7 +293,8 @@
 (def user-keys
   [:username
    :emailhash
-   :options])
+   :options
+   :special])
 
 (defn user-summary [user]
   (-> user
@@ -363,9 +368,8 @@
   (-> @state
       (update-in [:corp :user] user-summary)
       (update-in [:runner :user] user-summary)
-      (cond->
-        (:run @state) (assoc :run (run-summary state))
-        (seq (:encounters @state)) (assoc :encounters (encounters-summary state)))
+      (assoc :run (run-summary state))
+      (assoc :encounters (encounters-summary state))
       (select-non-nil-keys state-keys)))
 
 (defn state-summary
@@ -374,26 +378,24 @@
       (update :corp corp-summary state side)
       (update :runner runner-summary state side)))
 
+(defn strip-for-replay
+  [stripped-state corp-player runner-player]
+  (assoc stripped-state
+         :corp (:corp corp-player)
+         :runner (:runner runner-player)))
+
 (defn spectator-discard [discard state spectator-hands?]
   (if spectator-hands?
     discard
     (cards-summary discard state :spectator)))
 
 (defn strip-for-spectators
-  [state stripped-state corp-player runner-player]
+  [state stripped-state]
   (let [spectator-hands? (-> stripped-state :options :spectatorhands)]
     (-> stripped-state
-        (assoc :corp (:corp corp-player)
-               :runner (:runner runner-player))
         (update-in [:corp :discard] spectator-discard state spectator-hands?)
         (update-in [:corp :hand] #(if spectator-hands? % []))
         (update-in [:runner :hand] #(if spectator-hands? % [])))))
-
-(defn strip-for-replay
-  [stripped-state corp-player runner-player]
-  (assoc stripped-state
-         :corp (:corp corp-player)
-         :runner (:runner runner-player)))
 
 (defn private-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
@@ -401,12 +403,13 @@
   [state]
   (let [stripped-state (strip-state state)
         corp-player (state-summary stripped-state state :corp)
-        runner-player (state-summary stripped-state state :runner)]
+        runner-player (state-summary stripped-state state :runner)
+        replay (strip-for-replay stripped-state corp-player runner-player)]
     ;; corp, runner, spectator, history
     [corp-player
      runner-player
-     (strip-for-spectators state stripped-state corp-player runner-player)
-     (strip-for-replay stripped-state corp-player runner-player)]))
+     (strip-for-spectators state replay)
+     replay]))
 
 (defn public-states [state]
   (let [[corp-state runner-state spectator-state history-state] (private-states state)]

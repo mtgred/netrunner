@@ -199,10 +199,6 @@
                     idx))
                 coll))
 
-(defn prune-null-fields
-  [m]
-  (into {} (remove #(nil? (val %)) m)))
-
 (defn select-non-nil-keys
   "Returns a map containing only those entries in map whose key is in keys and whose value is non-nil"
   [map keyseq]
