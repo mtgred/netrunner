@@ -67,16 +67,14 @@
       (assoc :runner-abilities (abilities-playable? state side card :runner-abilities))))
 
 (defn card-summary [card state side]
-  (cond+
-    [(not (is-public? card side))
-     (prune-null-fields (private-card card))]
-    [(:hosted card)
-     (update card :hosted (partial mapv #(card-summary % state side)))]
-    [:else
-     (-> card
-         (playable? state side)
-         (card-abilities-playable? state side)
-         (prune-null-fields))]))
+  (if (not (is-public? card side))
+    (prune-null-fields (private-card card))
+    (-> (if (:hosted card)
+          (update card :hosted (partial mapv #(card-summary % state side)))
+          card)
+        (playable? state side)
+        (card-abilities-playable? state side)
+        (prune-null-fields))))
 
 (defn card-summary-vec [cards state side]
   (mapv #(card-summary % state side) cards))
@@ -137,7 +135,7 @@
 (defn player-summary
   [player state side same-side?]
   (-> (select-keys player (player-keys))
-      (update :identity prune-null-fields)
+      (update :identity card-summary state side)
       (update :basic-action-card card-abilities-playable? state side)
       (update :current card-summary-vec state side)
       (update :play-area card-summary-vec state side)
@@ -199,11 +197,11 @@
    :brain-damage])
 
 (defn rig-summary
-  [state]
+  [state side]
   (let [runner (:runner @state)]
     (into {} (for [row [:hardware :facedown :program :resource]
                    :let [cards (get-in runner [:rig row])]]
-               [row (card-summary-vec cards state :runner)]))))
+               [row (card-summary-vec cards state side)]))))
 
 (defn runner-summary
   [state side]
@@ -223,7 +221,7 @@
           :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
           :hand-count (count hand)
           :discard (prune-vec discard)
-          :rig (rig-summary state))
+          :rig (rig-summary state side))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
 (defn run-keys []

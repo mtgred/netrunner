@@ -262,6 +262,7 @@
       (in-play-area? card)
       (in-current? card)
       (in-scored? card)
+      (condition-counter? card)
       (and (corp? card)
            (installed? card)
            (rezzed? card))
