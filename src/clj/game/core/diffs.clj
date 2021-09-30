@@ -73,7 +73,9 @@
       (select-non-nil-keys ability-keys)))
 
 (defn abilities-summary [abilities card state side]
-  (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)) abilities))
+  (->> abilities
+       (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
+       (into [])))
 
 (defn card-abilities-summary [card state side]
   (cond-> card
@@ -127,7 +129,7 @@
         (select-non-nil-keys card-keys))))
 
 (defn cards-summary [cards state side]
-  (map #(card-summary % state side) cards))
+  (mapv #(card-summary % state side) cards))
 
 (def prompt-keys
   [:msg
@@ -201,7 +203,7 @@
     (:servers (:corp @state))))
 
 (defn prune-cards [cards]
-  (map #(select-non-nil-keys % card-keys) cards))
+  (mapv #(select-non-nil-keys % card-keys) cards))
 
 (defn deck-summary
   "Is the player's deck publicly visible?"
