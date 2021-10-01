@@ -116,6 +116,7 @@
    :installed
    :new
    :normalizedtitle
+   :playable
    :rec-counter
    :rezzed
    :runner-abilities
@@ -398,30 +399,25 @@
         (update-in [:corp :hand] #(if spectator-hands? % []))
         (update-in [:runner :hand] #(if spectator-hands? % [])))))
 
-(defn private-states
+(defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
   (let [stripped-state (strip-state state)
-        corp-player (state-summary stripped-state state :corp)
-        runner-player (state-summary stripped-state state :runner)
-        replay (strip-for-replay stripped-state corp-player runner-player)]
+        corp-state (state-summary stripped-state state :corp)
+        runner-state (state-summary stripped-state state :runner)
+        replay-state (strip-for-replay stripped-state corp-state runner-state)]
     ;; corp, runner, spectator, history
-    [corp-player
-     runner-player
-     (strip-for-spectators state replay)
-     replay]))
-
-(defn public-states [state]
-  (let [[corp-state runner-state spectator-state history-state] (private-states state)]
     {:corp-state corp-state
      :runner-state runner-state
-     :spect-state spectator-state
-     :hist-state history-state}))
+     :spect-state (strip-for-spectators state replay-state)
+     :hist-state replay-state}))
 
 (defn public-diffs [old-state new-state]
-  (let [[old-corp old-runner old-spect old-hist] (when old-state (private-states (atom old-state)))
-        [new-corp new-runner new-spect new-hist] (private-states new-state)]
+  (let [{old-corp :corp-state old-runner :runner-state
+         old-spect :spect-state old-hist :hist-state} (when old-state (public-states (atom old-state)))
+        {new-corp :corp-state new-runner :runner-state
+         new-spect :spect-state new-hist :hist-state} (public-states new-state)]
     {:runner-diff (differ/diff old-runner new-runner)
      :corp-diff (differ/diff old-corp new-corp)
      :spect-diff (differ/diff old-spect new-spect)

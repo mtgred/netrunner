@@ -526,7 +526,7 @@
       (click-card state :corp "PAD Campaign")
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Ice Wall")
-      (is (= (+ credits 10 (:credit (get-corp)))) "Corp should gain 10 credits from 5 cards"))))
+      (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from 5 cards"))))
 
 (deftest cerebral-cast
   ;; Cerebral Cast
@@ -4108,21 +4108,20 @@
                  :runner {:deck [(qty "Fall Guy" 2) "Off-Campus Apartment"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Off-Campus Apartment")
-      (let [oca (get-resource state 0)
-            fg1 (get-in (get-runner) [:hand 0])
-            fg2 (get-in (get-runner) [:hand 1])]
+      (let [oca (get-resource state 0)]
         (card-ability state :runner oca 0)
-        (click-card state :runner fg1)
+        (click-card state :runner (first (:hand (get-runner))))
         (card-ability state :runner oca 0)
-        (click-card state :runner fg2))
+        (click-card state :runner (first (:hand (get-runner)))))
       (gain-tags state :runner 1)
       (take-credits state :runner)
       (play-from-hand state :corp "The All-Seeing I")
-      (click-prompt state :runner "Done")
-      (click-prompt state :runner "Done")
+      (is (= "Prevent the trashing of Off-Campus Apartment?" (:msg (prompt-map :runner))))
       (let  [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
         (card-ability state :runner fall-guy 0))
-      (click-prompt state :runner "Done") ;; This assumes hosted cards get put in trash-list before host
+      (click-prompt state :runner "Done")
+      (is (= "Prevent the trashing of Fall Guy?" (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Done")
       (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
       (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
   (testing "should not trash Jarogniew Mercs if there are other installed resources"

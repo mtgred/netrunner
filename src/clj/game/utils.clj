@@ -201,13 +201,15 @@
 
 (defn select-non-nil-keys
   "Returns a map containing only those entries in map whose key is in keys and whose value is non-nil"
-  [map keyseq]
-  (loop [ret {} keys (seq keyseq)]
-    (if keys
-      (let [entry (. clojure.lang.RT (find map (first keys)))]
+  [m keyseq]
+  (loop [ret (transient {})
+         keyseq (seq keyseq)]
+    (if keyseq
+      (let [entry (clojure.lang.RT/find m (first keyseq))]
         (recur
-          (if (some? entry)
-            (conj ret entry)
+          (if (and (some? entry)
+                   (some? (val entry)))
+            (conj! ret entry)
             ret)
-          (next keys)))
-      (with-meta ret (meta map)))))
+          (next keyseq)))
+      (with-meta (persistent! ret) (meta m)))))

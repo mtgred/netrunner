@@ -62,7 +62,9 @@
                    :plugins [[lein-figwheel "0.5.16"]
                              [integrant/repl "0.3.2"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj"]
-                   :jvm-opts ["-Djdk.attach.allowAttachSelf"]}}
+                   :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                              "-XX:+UnlockDiagnosticVMOptions"
+                              "-XX:+DebugNonSafepoints"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
