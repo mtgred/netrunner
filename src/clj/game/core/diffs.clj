@@ -291,7 +291,8 @@
     (select-non-nil-keys options options-keys)))
 
 (def user-keys
-  [:username
+  [:_id
+   :username
    :emailhash
    :options
    :special])
