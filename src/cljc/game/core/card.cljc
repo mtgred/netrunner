@@ -15,6 +15,7 @@
    cost
    cycle_code
    deck-limit
+   disabled
    faction
    format
    hosted

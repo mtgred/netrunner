@@ -106,6 +106,7 @@
    :counter
    :current-advancement-requirement
    :current-strength
+   :disabled
    :face
    :faces
    :facedown

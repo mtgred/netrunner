@@ -83,33 +83,48 @@
 (defn get-all-installed
   "Returns a list of all installed cards"
   [state]
-  (concat (all-installed-corp state) (all-installed-runner state)))
+  (let [installed-runner-cards (runner-rig-cards state)
+        installed-corp-cards (corp-servers-cards state)
+        hosted-cards (into (mapcat :hosted installed-runner-cards)
+                           (mapcat :hosted installed-corp-cards))]
+    (loop [installed (transient [])
+           unchecked (concat installed-runner-cards
+                             installed-corp-cards
+                             hosted-cards)]
+      (if (empty? unchecked)
+        (reverse (persistent! installed))
+        (let [[card & remaining] unchecked]
+          (recur
+            (if (installed? card)
+              (conj! installed card)
+              installed)
+            (into remaining (:hosted card))))))))
 
 (defn all-installed-runner-type
   "Returns a list of all installed, non-facedown runner cards of the requested type."
   [state card-type]
-  (filter (every-pred #(is-type? % card-type) (complement facedown?)) (all-installed state :runner)))
+  (filter #(and (is-type? % card-type) (not (facedown? %))) (all-installed state :runner)))
 
 (defn all-active-installed
   "Returns a vector of active AND installed cards for the given side. This is all face-up installed cards."
   [state side]
   (let [installed (all-installed state side)]
-   (if (= side :runner)
-     (remove facedown? installed)
-     (filter rezzed? installed))))
+    (if (= side :runner)
+      (remove facedown? installed)
+      (filter rezzed? installed))))
 
 (defn all-active
-  "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
+  "Returns a sequence of all active cards for the given side. Active cards are either installed, the identity,
   currents, or the corp's scored area."
   [state side]
-  (remove
-    :disabled
-    (concat [(get-in @state [side :identity])]
-      (all-active-installed state side)
-      (get-in @state [side :current])
-      (filter #(or (event? %) (operation? %)) (get-in @state [side :play-area]))
-      (when (= side :corp)
-        (get-in @state [:corp :scored])))))
+  (->> (concat [(-> @state side :identity)]
+               (all-active-installed state side)
+               (-> @state side :current)
+               (filter (if (= :corp side) operation? event?) (-> @state side :play-area))
+               (when (= side :corp)
+                 (-> @state :corp :scored)))
+       (filter identity)
+       (remove :disabled)))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
