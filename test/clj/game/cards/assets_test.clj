@@ -1045,8 +1045,6 @@
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
       (click-card state :corp (find-card "Product Placement" (:hand (get-corp))))
       (click-card state :corp (find-card "Breaking News" (:hand (get-corp))))
-      (println (prompt-fmt :corp))
-      (println (prompt-fmt :runner))
       (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
