@@ -475,7 +475,7 @@
                                          {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
                                           :yes-ability {:effect (effect (add-counter card :power 1))
                                                         :cost [:credit 1]
-                                                        :msg "pay 1 [Credit] to place a power counter on Embolus"}}}
+                                                        :msg "place a power counter on Embolus"}}}
                                         card nil))}
         etr {:req (req this-server)
              :cost [:power 1]
