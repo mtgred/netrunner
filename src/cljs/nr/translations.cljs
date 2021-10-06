@@ -1312,7 +1312,7 @@
     :admin "운영자"
     :users "사용자"
     :features "기능"
-    :game-count "게임-카운트"}
+    :game-count (fn [[cnt]] (str cnt " 게임"))}
    :menu
    {:settings "설정"
     :logout "잭 아웃"
@@ -1356,7 +1356,7 @@
    :import "가져오기"
    :cancel "취소"
    :import-placeholder "NetrunnerDB ID"
-   :deck-count "덱-카운트"
+   :deck-count (fn [[cnt]] (str cnt " 덱"))
    :filtered "(필터됨)"
    :save "저장"
    :confirm-delete "삭제 확인"
@@ -1386,8 +1386,8 @@
    :illegal "사용 불가"
    :games "게임"
    :completed "완료됨"
-   :won "승리함"
-   :lost "패배함"}
+   :won "승리"
+   :lost "패배"}
   :lobby
   {:no-games "게임 없음"
    :tournament "토너먼트"
@@ -1408,7 +1408,7 @@
    :options "옵션"
    :spectators "관전 허용"
    :hidden "관전자가 플레이어의 숨겨진 정보를 볼 수 있게 하기"
-   :password-protected "암호로 보호됨"
+   :password-protected "암호로 보호"
    :password "암호"
    :start "시작"
    :leave "떠나기"
@@ -1419,7 +1419,7 @@
    :select-deck "덱 선택"
    :chat "채팅"
    :select-title "덱을 선택하십시오"
-   :spectator-count "관전자-카운트"
+   :spectator-count (fn [[cnt]] (str cnt " 관전자"))
    :closed-msg "활동이 없어 게임 로비가 닫혔습니다."
    :title-error "게임 제목을 입력해주십시오."
    :password-error "암호를 입력해주십시오."
@@ -1434,6 +1434,7 @@
    :password-for "암호 입력"
    :invalid-password "유효하지 않은 암호"
    :not-allowed "허용되지 않음"
+   :game-count (fn [[cnt]] (str cnt " 게임"))
    :aborted "연결에 실패함"}
   :settings
   {:invalid-password "유효하지 않은 로그인 또는 암호"
@@ -1499,9 +1500,9 @@
    :ended "종료됨"
    :completed "완료됨"
    :not-completed "완료되지 않음"
-   :won "승리함"
-   :lost "패배함"
-   :turn-count "차례 카운트"
+   :won "승리"
+   :lost "패배"
+   :turn-count (fn [[cnt]] (str cnt " 차례"))
    :lobby "로비"
    :format "포맷"
    :win-method "승리 방법"
@@ -1511,7 +1512,7 @@
    :download "리플레이 다운로드"
    :unavailable "리플레이를 사용할 수 없음"
    :filtered "(필터됨)"
-   :log-count "로그-카운트"
+   :log-count (fn [[cnt]] (str cnt " 로그"))
    :clicks-gained "얻은 클릭"
    :credits-gained "얻은 크레딧"
    :credits-spent "사용한 크레딧"
@@ -1565,15 +1566,15 @@
     :archives "기록보관소"
     :max-hand "최대 핸드 크기"
     :brain-damage "두뇌 피해"
-    :tag-count "태그-카운트"
-    :agenda-count "아젠다-카운트"
+    :tag-count (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " 태그"))
+    :agenda-count (fn [[agenda-point]] (str agenda-point " 아젠다 점수"))
     :link-strength "링크 강도"
-    :credit-count "크레딧-카운트"
-    :click-count "클릭-카운트"
-    :bad-pub-count "악평-카운트"
-    :mu-count "메모리 유닛-카운트"
+    :credit-count (fn [[credit run-credit]] (str credit " 크레딧" (when (pos? run-credit) (str " (런 동안 " run-credit ")"))))
+    :click-count (fn [[click]] (str click " 클릭"))
+    :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " 악평"))
+    :mu-count (fn [[unused available]] (str available " 메모리 유닛 중 " unused " 미사용"))
     :indicate-action "행동 선언"
-    :spec-count "관전-카운트"
+    :spec-count (fn [[cnt]] (str cnt " 관전자"))
     :spec-view "관전자 보기"
     :runner-view "러너 보기"
     :corp-view "기업 보기"
@@ -1600,9 +1601,9 @@
     :show "보기"
     :close-shuffle "닫고 섞는다"
     :heap "힙"
-    :card-count "카드-카운트"
-    :face-down-count "뒷면-카운트"
-    :up-down-count "앞면-카운트"
+    :card-count (fn [[size]] (str size " 카드"))
+    :face-down-count (fn [[total face-up]] (str total " cards, " (- total face-up) " face-down."))
+    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
     :initiation "시도"
     :approach-ice "아이스 접근"
     :encouter-ice "아이스 대면"

@@ -52,11 +52,13 @@
             [lein-ring "0.9.7"]
             [lein-eftest "0.5.8"]
             [lein-exec "0.3.7"]
-            [cider/cider-nrepl "0.26.0"]]
+            ;; [cider/cider-nrepl "0.26.0"]]
+            ]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
                                   [binaryage/devtools "0.9.7"]
-                                  [cider/piggieback "0.5.2"]]
+                                  ;; [cider/piggieback "0.5.2"]]
+                                  ]
                    :plugins [[lein-figwheel "0.5.16"]
                              [integrant/repl "0.3.2"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc"]}}
