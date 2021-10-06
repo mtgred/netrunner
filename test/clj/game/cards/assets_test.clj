@@ -1027,10 +1027,9 @@
   ;; Daily Business Show
   (testing "Full test"
     (do-game
-      (new-game {:corp {:deck [(qty "Daily Business Show" 3) "Hedge Fund" "Jackson Howard"
-                               "Resistor" "Product Placement" "Breaking News"]}})
-      (starting-hand state :corp ["Daily Business Show" "Daily Business Show" "Daily Business Show" "Hedge Fund"])
-      (core/gain state :corp :credit 1)
+      (new-game {:corp {:deck ["Jackson Howard" "Resistor" "Product Placement" "Breaking News"]
+                        :hand [(qty "Daily Business Show" 3) "Hedge Fund"]
+                        :credits 10}})
       (play-from-hand state :corp "Daily Business Show" "New remote")
       (play-from-hand state :corp "Daily Business Show" "New remote")
       (play-from-hand state :corp "Daily Business Show" "New remote")

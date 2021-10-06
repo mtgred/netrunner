@@ -199,6 +199,17 @@
                     idx))
                 coll))
 
-(defn prune-null-fields
-  [m]
-  (apply dissoc m (for [[k v] m :when (nil? v)] k)))
+(defn select-non-nil-keys
+  "Returns a map containing only those entries in map whose key is in keys and whose value is non-nil"
+  [m keyseq]
+  (loop [ret (transient {})
+         keyseq (seq keyseq)]
+    (if keyseq
+      (let [entry (clojure.lang.RT/find m (first keyseq))]
+        (recur
+          (if (and (some? entry)
+                   (some? (val entry)))
+            (conj! ret entry)
+            ret)
+          (next keyseq)))
+      (with-meta (persistent! ret) (meta m)))))

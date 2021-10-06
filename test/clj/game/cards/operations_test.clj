@@ -526,7 +526,7 @@
       (click-card state :corp "PAD Campaign")
       (click-card state :corp "Hostile Takeover")
       (click-card state :corp "Ice Wall")
-      (is (= (+ credits 10 (:credit (get-corp)))) "Corp should gain 10 credits from 5 cards"))))
+      (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from 5 cards"))))
 
 (deftest cerebral-cast
   ;; Cerebral Cast

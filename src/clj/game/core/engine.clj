@@ -899,7 +899,7 @@
                                                       (make-eid state eid)
                                                       (card-for-ability state (:handler %))
                                                       (:context %))))
-                              handlers)]
+                              non-silent)]
       (if (or (= 1 (count handlers))
               (empty? interactive)
               (= 1 (count non-silent)))

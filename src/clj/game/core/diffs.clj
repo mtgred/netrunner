@@ -1,15 +1,17 @@
 (ns game.core.diffs
   (:require
-    [differ.core :as differ]
-    [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [installable-servers]]
-    [game.core.card :refer :all]
-    [game.core.cost-fns :refer [card-ability-cost]]
-    [game.core.engine :refer [can-trigger?]]
-    [game.core.installing :refer [corp-can-pay-and-install? runner-can-pay-and-install?]]
-    [game.core.payment :refer [can-pay?]]
-    [game.core.play-instants :refer [can-play-instant?]]
-    [game.utils :refer [dissoc-in prune-null-fields]]))
+   [cond-plus.core :refer [cond+]]
+   [differ.core :as differ]
+   [game.core.board :refer [installable-servers]]
+   [game.core.card :refer :all]
+   [game.core.cost-fns :refer [card-ability-cost]]
+   [game.core.engine :refer [can-trigger?]]
+   [game.core.installing :refer [corp-can-pay-and-install?
+                                 runner-can-pay-and-install?]]
+   [game.core.payment :refer [can-pay?]]
+   [game.core.play-instants :refer [can-play-instant?]]
+   [game.utils :refer [select-non-nil-keys]]
+   [medley.core :refer [update-existing]]))
 
 (defn playable? [card state side]
   (if (and ((if (= :corp side) corp? runner?) card)
@@ -43,7 +45,7 @@
     (assoc card :playable true)
     card))
 
-(defn ability-playable? [state side card ability-idx ability]
+(defn ability-playable? [ability ability-idx state side card]
   (let [cost (card-ability-cost state side ability card)
         eid {:source card
              :source-type :ability
@@ -55,32 +57,96 @@
       (assoc ability :playable true)
       ability)))
 
-(defn abilities-playable? [state side card ability-kw]
-  (->> (get card ability-kw)
-       (map-indexed (partial ability-playable? state side card))
+(def ability-keys
+  [:cost-label
+   :dynamic
+   :index
+   :keep-menu-open
+   :label
+   :msg
+   :playable
+   :source])
+
+(defn ability-summary [state side card ab-idx ability]
+  (-> ability
+      (ability-playable? ab-idx state side card)
+      (select-non-nil-keys ability-keys)))
+
+(defn abilities-summary [abilities card state side]
+  (->> abilities
+       (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
        (into [])))
 
-(defn card-abilities-playable? [card state side]
-  (-> card
-      (assoc :abilities (abilities-playable? state side card :abilities))
-      (assoc :corp-abilities (abilities-playable? state side card :corp-abilities))
-      (assoc :runner-abilities (abilities-playable? state side card :runner-abilities))))
+(defn card-abilities-summary [card state side]
+  (cond-> card
+    (seq (:abilities card)) (update :abilities abilities-summary card state side)
+    (seq (:corp-abilities card)) (update :corp-abilities abilities-summary card state side)
+    (seq (:runner-abilities card)) (update :runner-abilities abilities-summary card state side)))
+
+(def subroutine-keys
+  [:broken
+   :fired
+   :label
+   :msg
+   :resolve])
+
+(defn subroutines-summary [subroutines]
+  (when (seq subroutines)
+    (mapv #(select-non-nil-keys % subroutine-keys) subroutines)))
+
+(def card-keys
+  [:abilities
+   :advance-counter
+   :advanceable
+   :advancementcost
+   :cid
+   :code
+   :corp-abilities
+   :cost
+   :counter
+   :current-advancement-requirement
+   :current-strength
+   :disabled
+   :face
+   :faces
+   :facedown
+   :hosted
+   :icon
+   :images
+   :implementation
+   :installed
+   :new
+   :normalizedtitle
+   :playable
+   :rec-counter
+   :rezzed
+   :runner-abilities
+   :selected
+   :server-target
+   :side
+   :strength
+   :subroutines
+   :subtypes
+   :title
+   :type
+   :zone])
+
+(declare cards-summary)
 
 (defn card-summary [card state side]
   (if (not (is-public? card side))
-    (prune-null-fields (private-card card))
+    (select-non-nil-keys (private-card card) card-keys)
     (-> (if (:hosted card)
-          (update card :hosted (partial mapv #(card-summary % state side)))
+          (update card :hosted cards-summary state side)
           card)
         (playable? state side)
-        (card-abilities-playable? state side)
-        (prune-null-fields))))
+        (card-abilities-summary state side)
+        (update-existing :subroutines subroutines-summary)
+        (select-non-nil-keys card-keys))))
 
-(defn card-summary-vec [cards state side]
-  (mapv #(card-summary % state side) cards))
-
-(defn prune-vec [cards]
-  (mapv prune-null-fields cards))
+(defn cards-summary [cards state side]
+  (when (seq cards)
+    (mapv #(card-summary % state side) cards)))
 
 (def prompt-keys
   [:msg
@@ -97,18 +163,13 @@
    :corp-credits
    :runner-credits])
 
-(defn build-prompt-state
-  [prompt]
-  (-> prompt
-      (select-keys prompt-keys)
-      (prune-null-fields)
-      (not-empty)))
-
 (defn prompt-summary
-  [player same-side?]
-  (update player :prompt-state #(if same-side? (build-prompt-state %) nil)))
+  [prompt same-side?]
+  (if same-side?
+    (not-empty (select-non-nil-keys prompt prompt-keys))
+    nil))
 
-(defn player-keys []
+(def player-keys
   [:aid
    :user
    :identity
@@ -127,68 +188,69 @@
    :hand-size
    :keep
    :quote
-   :register
    :prompt-state
    :agenda-point
    :agenda-point-req])
 
 (defn player-summary
-  [player state side same-side?]
-  (-> (select-keys player (player-keys))
+  [player state side same-side? additional-keys]
+  (-> player
       (update :identity card-summary state side)
-      (update :basic-action-card card-abilities-playable? state side)
-      (update :current card-summary-vec state side)
-      (update :play-area card-summary-vec state side)
-      (update :rfg card-summary-vec state side)
-      (update :scored card-summary-vec state side)
-      (update :register select-keys [:spent-click])
-      (prompt-summary same-side?)
-      (prune-null-fields)))
+      (update :basic-action-card card-abilities-summary state side)
+      (update :current cards-summary state side)
+      (update :play-area cards-summary state side)
+      (update :rfg cards-summary state side)
+      (update :scored cards-summary state side)
+      (update :prompt-state prompt-summary same-side?)
+      (select-non-nil-keys (into player-keys additional-keys))))
 
-(defn corp-keys []
+(def corp-keys
   [:servers
    :bad-publicity])
 
 (defn servers-summary
   [state side]
-  (let [corp (:corp @state)
-        server-keys (keys (:servers corp))
-        zones (reduce
-               (fn [servers server]
-                 (into servers [[:servers server :content]
-                                [:servers server :ices]]))
-               []
-               server-keys)]
-    (loop [corp corp
-           zones zones]
-      (let [zone (first zones)]
-        (if (nil? zone)
-          (:servers corp)
-          (recur (update-in corp zone card-summary-vec state side)
-                 (next zones)))))))
+  (reduce-kv
+    (fn [servers current-server-kw current-server]
+      (assoc servers
+             current-server-kw
+             {:content (cards-summary (:content current-server) state side)
+              :ices (cards-summary (:ices current-server) state side)}))
+    {}
+    (:servers (:corp @state))))
+
+(defn prune-cards [cards]
+  (mapv #(select-non-nil-keys % card-keys) cards))
+
+(defn deck-summary
+  "Is the player's deck publicly visible?"
+  [deck same-side? player]
+  (if (and same-side? (:view-deck player))
+    (prune-cards deck)
+    []))
+
+(defn hand-summary
+  "Is the Corp's hand publicly visible?"
+  [hand state same-side? side player]
+  (if (or same-side? (:openhand player))
+    (cards-summary hand state side)
+    []))
 
 (defn corp-summary
-  [state side]
+  [corp state side]
   (let [corp-player? (= side :corp)
-        corp (:corp @state)
-        view-deck (:view-deck corp)
-        deck (:deck corp)
-        hand (:hand corp)
-        open-hands? (:openhand corp)
-        discard (:discard corp)
         install-list (:install-list corp)]
-    (-> (player-summary corp state side corp-player?)
-        (merge (select-keys corp (corp-keys)))
+    (-> (player-summary corp state side corp-player? corp-keys)
+        (update :deck deck-summary corp-player? corp)
+        (update :hand hand-summary state corp-player? side corp)
+        (update :discard cards-summary state :corp)
         (assoc
-          :deck (if (and corp-player? view-deck) (prune-vec deck) [])
-          :deck-count (count deck)
-          :hand (if (or corp-player? open-hands?) (card-summary-vec hand state :corp) [])
-          :hand-count (count hand)
-          :discard (card-summary-vec discard state :corp)
+          :deck-count (count (:deck corp))
+          :hand-count (count (:hand corp))
           :servers (servers-summary state side))
         (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
 
-(defn runner-keys []
+(def runner-keys
   [:rig
    :run-credit
    :link
@@ -198,33 +260,51 @@
 
 (defn rig-summary
   [state side]
-  (let [runner (:runner @state)]
-    (into {} (for [row [:hardware :facedown :program :resource]
-                   :let [cards (get-in runner [:rig row])]]
-               [row (card-summary-vec cards state side)]))))
+  (-> (:rig (:runner @state))
+      (update :hardware cards-summary state side)
+      (update :facedown cards-summary state side)
+      (update :program cards-summary state side)
+      (update :resource cards-summary state side)))
 
 (defn runner-summary
-  [state side]
+  [runner state side]
   (let [runner-player? (= side :runner)
-        runner (:runner @state)
-        view-deck (:view-deck runner)
-        deck (:deck runner)
-        hand (:hand runner)
-        open-hands? (:openhand runner)
-        discard (:discard runner)
         runnable-list (:runnable-list runner)]
-    (-> (player-summary runner state side runner-player?)
-        (merge (select-keys runner (runner-keys)))
+    (-> (player-summary runner state side runner-player? runner-keys)
+        (update :deck deck-summary runner-player? runner)
+        (update :hand hand-summary state runner-player? side runner)
+        (update :discard prune-cards)
         (assoc
-          :deck (if (and runner-player? view-deck) (prune-vec deck) [])
-          :deck-count (count deck)
-          :hand (if (or runner-player? open-hands?) (card-summary-vec hand state :runner) [])
-          :hand-count (count hand)
-          :discard (prune-vec discard)
+          :deck-count (count (:deck runner))
+          :hand-count (count (:hand runner))
           :rig (rig-summary state side))
         (cond-> (and runner-player? runnable-list) (assoc :runnable-list runnable-list)))))
 
-(defn run-keys []
+(def options-keys
+  [:alt-arts
+   :background
+   :card-resolution
+   :language
+   :pronouns
+   :show-alt-art])
+
+(defn options-summary [options]
+  (when (seq options)
+    (select-non-nil-keys options options-keys)))
+
+(def user-keys
+  [:_id
+   :username
+   :emailhash
+   :options
+   :special])
+
+(defn user-summary [user]
+  (-> user
+      (update-existing :options options-summary)
+      (select-non-nil-keys user-keys)))
+
+(def run-keys
   [:server
    :position
    :corp-auto-no-action
@@ -237,30 +317,16 @@
 (defn run-summary
   [state]
   (when-let [run (:run @state)]
-    (select-keys run (run-keys))))
-
-(defn encounter-ice-keys []
-  [:cid
-   :current-strength
-   :host
-   :hosted
-   :rezzed
-   :side
-   :strength
-   :subroutines
-   :subtypes
-   :title
-   :type
-   :zone])
+    (select-non-nil-keys run run-keys)))
 
 (defn encounter-ice-summary
   [ice state]
-  (-> (get-card state ice)
-      (select-keys (encounter-ice-keys))
-      (prune-null-fields)))
+  (when-let [ice (get-card state ice)]
+    (card-summary ice state :corp)))
 
-(defn encounter-keys []
-  [:ice
+(def encounter-keys
+  [:encounter-count
+   :ice
    :no-action])
 
 (defn encounters-summary
@@ -269,11 +335,12 @@
         current-encounter (peek encounters)
         encounter-count (count encounters)]
     (when current-encounter
-      (-> (select-keys current-encounter (encounter-keys))
+      (-> current-encounter
           (update :ice encounter-ice-summary state)
-          (assoc :encounter-count encounter-count)))))
+          (assoc :encounter-count encounter-count)
+          (select-non-nil-keys encounter-keys)))))
 
-(defn state-keys []
+(def state-keys
   [:active-player
    :angel-arena-info
    :corp
@@ -301,64 +368,57 @@
 
 (defn strip-state
   [state]
-  (-> (select-keys @state (state-keys))
+  (-> @state
+      (update-in [:corp :user] user-summary)
+      (update-in [:runner :user] user-summary)
       (assoc :run (run-summary state))
-      (assoc :encounters (encounters-summary state))))
+      (assoc :encounters (encounters-summary state))
+      (select-non-nil-keys state-keys)))
 
 (defn state-summary
   [stripped-state state side]
   (-> stripped-state
-      (assoc :corp (corp-summary state side))
-      (assoc :runner (runner-summary state side))))
-
-(defn strip-for-spectators
-  [state stripped-state corp-player runner-player]
-  (let [spectator? (get-in stripped-state [:options :spectatorhands])
-        hidden-discard (-> corp-player
-                           (get-in [:corp :discard])
-                           (card-summary-vec state :spectator))]
-    (-> stripped-state
-        (assoc :corp (:corp corp-player)
-               :runner (:runner runner-player))
-        (update-in [:corp :discard] #(if spectator? % hidden-discard))
-        (update-in [:corp :hand] #(if spectator? % []))
-        (update-in [:runner :hand] #(if spectator? % [])))))
+      (update :corp corp-summary state side)
+      (update :runner runner-summary state side)))
 
 (defn strip-for-replay
   [stripped-state corp-player runner-player]
-  (-> stripped-state
-      (assoc :corp (:corp corp-player)
-             :runner (:runner runner-player))
-      (dissoc-in [:runner :user :isadmin])
-      (dissoc-in [:runner :user :options :blocked-users])
-      (dissoc-in [:runner :user :stats])
-      (dissoc-in [:corp :user :isadmin])
-      (dissoc-in [:corp :user :options :blocked-users])
-      (dissoc-in [:corp :user :stats])))
+  (assoc stripped-state
+         :corp (:corp corp-player)
+         :runner (:runner runner-player)))
 
-(defn private-states
+(defn spectator-discard [discard state spectator-hands?]
+  (if spectator-hands?
+    discard
+    (cards-summary discard state :spectator)))
+
+(defn strip-for-spectators
+  [state stripped-state]
+  (let [spectator-hands? (-> stripped-state :options :spectatorhands)]
+    (-> stripped-state
+        (update-in [:corp :discard] spectator-discard state spectator-hands?)
+        (update-in [:corp :hand] #(if spectator-hands? % []))
+        (update-in [:runner :hand] #(if spectator-hands? % [])))))
+
+(defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
   [state]
   (let [stripped-state (strip-state state)
-        corp-player (state-summary stripped-state state :corp)
-        runner-player (state-summary stripped-state state :runner)]
+        corp-state (state-summary stripped-state state :corp)
+        runner-state (state-summary stripped-state state :runner)
+        replay-state (strip-for-replay stripped-state corp-state runner-state)]
     ;; corp, runner, spectator, history
-    [corp-player
-     runner-player
-     (strip-for-spectators state stripped-state corp-player runner-player)
-     (strip-for-replay stripped-state corp-player runner-player)]))
-
-(defn public-states [state]
-  (let [[corp-state runner-state spectator-state history-state] (private-states state)]
     {:corp-state corp-state
      :runner-state runner-state
-     :spect-state spectator-state
-     :hist-state history-state}))
+     :spect-state (strip-for-spectators state replay-state)
+     :hist-state replay-state}))
 
 (defn public-diffs [old-state new-state]
-  (let [[old-corp old-runner old-spect old-hist] (when old-state (private-states (atom old-state)))
-        [new-corp new-runner new-spect new-hist] (private-states new-state)]
+  (let [{old-corp :corp-state old-runner :runner-state
+         old-spect :spect-state old-hist :hist-state} (when old-state (public-states (atom old-state)))
+        {new-corp :corp-state new-runner :runner-state
+         new-spect :spect-state new-hist :hist-state} (public-states new-state)]
     {:runner-diff (differ/diff old-runner new-runner)
      :corp-diff (differ/diff old-corp new-corp)
      :spect-diff (differ/diff old-spect new-spect)
