@@ -5,6 +5,8 @@
 
 (defrecord Card
   [abilities
+   advance-counter
+   advanceable
    advancementcost
    agendapoints
    art
@@ -13,12 +15,19 @@
    code
    corp-abilities
    cost
+   counter
+   current-advancement-requirement
+   current-strength
    cycle_code
    deck-limit
    disabled
+   face
+   facedown
+   faces
    faction
    format
    hosted
+   icon
    images
    implementation
    index
@@ -27,11 +36,17 @@
    minimumdecksize
    new
    normalizedtitle
+   playable
    previous-versions
    previous-zone
    quantity
+   rec-counter
+   rezzed
    rotated
    runner-abilities
+   seen
+   selected
+   server-target
    set_code
    side
    special

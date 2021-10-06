@@ -121,6 +121,7 @@
    :rec-counter
    :rezzed
    :runner-abilities
+   :seen
    :selected
    :server-target
    :side
@@ -230,11 +231,17 @@
     []))
 
 (defn hand-summary
-  "Is the Corp's hand publicly visible?"
+  "Is the player's hand publicly visible?"
   [hand state same-side? side player]
   (if (or same-side? (:openhand player))
     (cards-summary hand state side)
     []))
+
+(defn discard-summary
+  [discard state same-side? side player]
+  (if (or same-side? (:openhand player))
+    (cards-summary discard state :corp)
+    (cards-summary discard state side)))
 
 (defn corp-summary
   [corp state side]
@@ -243,7 +250,7 @@
     (-> (player-summary corp state side corp-player? corp-keys)
         (update :deck deck-summary corp-player? corp)
         (update :hand hand-summary state corp-player? side corp)
-        (update :discard cards-summary state :corp)
+        (update :discard discard-summary state corp-player? side corp)
         (assoc
           :deck-count (count (:deck corp))
           :hand-count (count (:hand corp))
