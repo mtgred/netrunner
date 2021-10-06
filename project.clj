@@ -64,6 +64,7 @@
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
                               "-XX:+UnlockDiagnosticVMOptions"
+                              "-XX:-OmitStackTraceInFastThrow"
                               "-XX:+DebugNonSafepoints"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]

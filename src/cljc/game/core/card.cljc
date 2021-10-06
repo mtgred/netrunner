@@ -5,6 +5,8 @@
 
 (defrecord Card
   [abilities
+   advance-counter
+   advanceable
    advancementcost
    agendapoints
    art
@@ -13,12 +15,20 @@
    code
    corp-abilities
    cost
+   counter
+   current-advancement-requirement
+   current-strength
    cycle_code
    deck-limit
    disabled
+   extra-advance-counter
+   face
+   facedown
+   faces
    faction
    format
    hosted
+   icon
    images
    implementation
    index
@@ -27,11 +37,17 @@
    minimumdecksize
    new
    normalizedtitle
+   playable
    previous-versions
    previous-zone
    quantity
+   rec-counter
+   rezzed
    rotated
    runner-abilities
+   seen
+   selected
+   server-target
    set_code
    side
    special
@@ -302,8 +318,8 @@
   "Get number of counters of specified type."
   [card counter]
   (if (= counter :advancement)
-    (+ (:advance-counter card 0) (:extra-advance-counter card 0))
-    (get-in card [:counter counter] 0)))
+    ((fnil + 0 0) (:advance-counter card) (:extra-advance-counter card))
+    (or (get-in card [:counter counter]) 0)))
 
 (defn assoc-host-zones
   "Associates a new zone onto a card and its host(s)."
