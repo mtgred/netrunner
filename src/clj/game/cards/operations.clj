@@ -2,7 +2,8 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.set :as set]))
 
 ;; Card definitions
 
@@ -877,10 +878,12 @@
                                                               (string/join ", " (map :title (sort-by :title targets)))))
                                                        (effect-completed state side (make-result eid targets))))}
                                card nil)
-                             (let [prevented async-result]
+                             (let [prevented async-result
+                                   cids-to-trash (set/difference (set (map :cid trashtargets)) (set (map :cid prevented)))
+                                   cards-to-trash (filter #(cids-to-trash (:cid %)) trashtargets)]
                                (when (not async-result)
                                  (system-msg state :runner (str "chooses to not prevent Corp trashing all " typemsg)))
-                               (wait-for (trash-cards state side (clojure.set/difference (set trashtargets) (set prevented)))
+                               (wait-for (trash-cards state side cards-to-trash)
                                          (system-msg state :corp
                                                      (str "trashes all "
                                                           (when (seq prevented) "other ")

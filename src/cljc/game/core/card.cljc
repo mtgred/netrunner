@@ -21,6 +21,7 @@
    cycle_code
    deck-limit
    disabled
+   extra-advance-counter
    face
    facedown
    faces
@@ -317,8 +318,8 @@
   "Get number of counters of specified type."
   [card counter]
   (if (= counter :advancement)
-    (+ (:advance-counter card 0) (:extra-advance-counter card 0))
-    (get-in card [:counter counter] 0)))
+    ((fnil + 0 0) (:advance-counter card) (:extra-advance-counter card))
+    (or (get-in card [:counter counter]) 0)))
 
 (defn assoc-host-zones
   "Associates a new zone onto a card and its host(s)."
