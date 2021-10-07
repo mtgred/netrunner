@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [card-index corp? facedown? fake-identity? get-card get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [active? card-index corp? facedown? fake-identity? get-card get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
@@ -65,10 +65,11 @@
                                        (assoc-in [:zone] '(:onhost))
                                        (assoc-in [:host :zone] newz))]
                           (update! state side newh)
-                          (unregister-events state side h)
-                          (register-events state side newh)
-                          (unregister-constant-effects state side h)
-                          (register-constant-effects state side newh)
+                          (when (active? newh)
+                            (unregister-events state side h)
+                            (register-events state side newh)
+                            (unregister-constant-effects state side h)
+                            (register-constant-effects state side newh))
                           newh))
         hosted (seq (flatten (map (if same-zone? update-hosted trash-hosted) (:hosted card))))
         ;; Set :seen correctly

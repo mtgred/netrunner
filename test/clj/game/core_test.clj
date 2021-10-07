@@ -123,15 +123,17 @@
    :mulligan (:mulligan options)
    :start-as (:start-as options)
    :dont-start-turn (:dont-start-turn options)
-   :dont-start-game (:dont-start-game options)})
+   :dont-start-game (:dont-start-game options)
+   :format (or (:format options) :casual)})
 
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([] (new-game nil))
   ([players]
-   (let [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game]} (make-decks players)
+   (let [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game format]} (make-decks players)
          state (core/init-game
                  {:gameid 1
+                  :format format
                   :players [{:side "Corp"
                              :user {:username "Corp"}
                              :deck {:identity (:identity corp)

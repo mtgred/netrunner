@@ -5,7 +5,8 @@
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+            [clojure.test :refer :all]
+            [jinteki.validator :refer [legal?]]))
 
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none
@@ -1468,7 +1469,41 @@
         (click-prompt state :runner "2")
         (click-prompt state :runner chaos)
         (is (empty? (:prompt (get-corp))))
-        (is (empty? (:prompt (get-runner))))))))
+        (is (empty? (:prompt (get-runner))))))
+    (testing "IDs disabled if DJ Fenris is facedown #6058"
+      (do-game
+       (new-game {:runner {:id sunny
+                           :deck [(qty "Sure Gamble" 5)]
+                           :hand ["DJ Fenris" "Apocalypse"]
+                           :credits 10}
+                  :corp {:deck [(qty "Hedge Fund" 5)]}})
+       (take-credits state :corp)
+       (play-from-hand state :runner "DJ Fenris")
+       (click-prompt state :runner chaos)
+       (is (= 5 (core/available-mu state)) "Gained 1 MU from CT")
+       (core/gain-clicks state :runner 1)
+       (run-empty-server state "Archives")
+       (run-empty-server state "R&D")
+       (run-empty-server state "HQ")
+       (click-prompt state :runner "No action")
+       (play-from-hand state :runner "Apocalypse")
+       (let [dj-fenris (get-runner-facedown state 0)
+             hosted-ct #(first (:hosted (refresh dj-fenris)))]
+         (is (core/facedown? dj-fenris) "DJ Fenris is facedown")
+         (is (core/facedown? (hosted-ct)) "CT is facedown")
+         (println "Disabled?: " (:disabled (hosted-ct)))
+         (is (= 4 (core/available-mu state)) "CT not active since DJ Fenris is facedown, reducing MU back to 4"))))
+    (testing "Only legal IDs appear in the drop down"
+      (do-game
+       (new-game {:runner {:id sunny
+                           :deck [(qty "Sure Gamble" 5)]
+                           :hand ["DJ Fenris"]
+                           :credits 10}
+                  :corp {:deck [(qty "Hedge Fund" 5)]}
+                  :options {:format :standard}})
+       (take-credits state :corp)
+       (play-from-hand state :runner "DJ Fenris")
+       (is (every? #(legal? :standard :legal %) (prompt-buttons :runner)) "Only legal IDs are available")))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
