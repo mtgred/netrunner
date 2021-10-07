@@ -78,7 +78,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid timer spectatorhands api-access save-replay room]}]
+  [{:keys [players gameid timer spectatorhands api-access save-replay room format]}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -97,6 +97,7 @@
       (new-state
         gameid
         room
+        format
         (t/now)
         {:timer timer
          :spectatorhands spectatorhands

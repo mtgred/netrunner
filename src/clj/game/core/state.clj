@@ -15,6 +15,7 @@
    end-time
    end-turn
    events
+   format
    gameid
    history
    log
@@ -55,12 +56,13 @@
     current-rid))
 
 (defn new-state
-  [gameid room now options corp runner]
+  [gameid room format now options corp runner]
   (map->State
     {:gameid gameid
      :log []
      :active-player :runner
      :end-turn true
+     :format (keyword format)
      :history []
      :room room
      :rid 1 :turn 0 :eid 0

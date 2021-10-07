@@ -6,7 +6,8 @@
     [game.core :refer :all]
     [game.core.access :refer [access-n-cards]]
     [game.utils :refer :all]
-    [jinteki.utils :refer :all]))
+    [jinteki.utils :refer :all]
+    [jinteki.validator :refer [legal?]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -869,17 +870,19 @@
 
 (defcard "DJ Fenris"
   (let [is-draft-id? #(string/starts-with? (:code %) "00")
-        sorted-id-list (fn [runner] (->> (server-cards)
-                                         (filter #(and (identity? %)
-                                                       (has-subtype? % "G-mod")
-                                                       (not= (-> runner :identity :faction)
-                                                             (:faction %))
-                                                       (not (is-draft-id? %))))
-                                         (sort-by :title)))
+        sorted-id-list (fn [runner format] (->> (server-cards)
+                                                (filter #(and (identity? %)
+                                                              (has-subtype? % "G-mod")
+                                                              (not= (-> runner :identity :faction)
+                                                                    (:faction %))
+                                                              (not (is-draft-id? %))
+                                                              (or (= :casual format)
+                                                                  (legal? format :legal %))))
+                                                (sort-by :title)))
         fenris-effect {:async true
                        :waiting-prompt "Runner to choose an option"
                        :prompt "Choose a g-mod identity to host on DJ Fenris"
-                       :choices (req (sorted-id-list runner))
+                       :choices (req (sorted-id-list runner (:format @state)))
                        :msg (msg "host " (:title target))
                        :effect (req (let [card (assoc-host-zones card)
                                           ;; Work around for get-card and update!

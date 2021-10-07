@@ -289,7 +289,8 @@
   "Checks if the card is active and should receive game events/triggers."
   [card]
   (or (is-type? card "Basic Action")
-      (identity? card)
+      (and (identity? card)
+           (not (facedown? card)))
       (in-play-area? card)
       (in-current? card)
       (in-scored? card)
