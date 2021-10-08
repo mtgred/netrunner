@@ -6,7 +6,7 @@
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?
                                     get-counters]]
-            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
+            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label select-non-nil-keys] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
@@ -64,7 +64,7 @@
   (swap! card-menu dissoc :source :keep-menu-open))
 
 (defn action-list
-  [{:keys [type zone rezzed advanceable advance-counter
+  [{:keys [type zone rezzed advanceable
            advancementcost current-advancement-requirement] :as card}]
   (cond->> []
     ;; advance
@@ -77,7 +77,9 @@
              (= advanceable "while-unrezzed")))
     (cons "advance")
     ;; score
-    (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
+    (and (= type "Agenda")
+         (>= (get-counters card :advancement)
+             (or current-advancement-requirement advancementcost)))
     (cons "score")
     ;; trash
     (#{"ICE" "Program"} type)
@@ -91,11 +93,19 @@
          rezzed)
     (cons "derez")))
 
+(def click-card-keys
+  [:cid :side :host :type :zone])
+
+(defn card-for-click [card]
+  (select-non-nil-keys
+    (if (:host card) (update card :host card-for-click) card)
+    click-card-keys))
+
 (defn handle-abilities
-  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card}]
+  [side {:keys [abilities corp-abilities runner-abilities subroutines facedown] :as card}]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))
-        card-side (keyword (.toLowerCase (:side card)))]
+        card-side (keyword (lower-case (:side card)))]
     (swap! card-menu dissoc :keep-menu-open)
     (when-not (and (= card-side :runner) facedown)
       (cond
@@ -103,10 +113,9 @@
         ;; Toggle abilities panel
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
-                     (count runner-abilities)))
+                     (count runner-abilities)
+                     (count subroutines)))
             (some #{"rez" "derez" "advance" "trash"} actions)
-            (and (= type "ICE")
-                 (not (:run @game-state)))
             (and (corp? card)
                  (not (faceup? card))))
         (do (when (= side card-side)
@@ -115,13 +124,13 @@
                 (open-card-menu (:cid card))))
             (when (and (= :runner card-side)
                        (= :corp side)
-                       (:corp-abilities card))
+                       corp-abilities)
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
                 (open-card-menu (:cid card))))
             (when (and (= :corp card-side)
                        (= :runner side)
-                       (:runner-abilities card))
+                       (or subroutines runner-abilities))
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
                 (open-card-menu (:cid card)))))
@@ -130,8 +139,8 @@
         (and (= c 1)
              (= side card-side))
         (if (= (count abilities) 1)
-          (send-command "ability" {:card card :ability 0})
-          (send-command (first actions) {:card card}))))))
+          (send-command "ability" {:card (card-for-click card) :ability 0})
+          (send-command (first actions) {:card (card-for-click card)}))))))
 
 (defn playable?
   "Checks whether a card or ability is playable"
@@ -144,11 +153,11 @@
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card card})
+        (send-command "select" {:card (card-for-click card)})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
-             (= side (keyword (.toLowerCase (:side card)))))
+             (= side (keyword (lower-case (:side card)))))
         (handle-abilities side card)
 
         ;; Runner clicking on a runner card
@@ -156,7 +165,7 @@
              (= "Runner" (:side card))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card card})
+        (send-command "play" {:card (card-for-click card)})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -164,11 +173,11 @@
              (= "hand" (first zone))
              (playable? card))
         (if (= "Operation" type)
-          (send-command "play" {:card card})
+          (send-command "play" {:card (card-for-click card)})
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card card})
+            (do (send-command "generate-install-list" {:card (card-for-click card)})
                 (open-card-menu (:cid card)))))
 
         :else
@@ -657,9 +666,9 @@
     facedown))
 
 (defn card-view
-  [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-           subtypes advanceable rezzed strength current-strength title selected hosted
-           side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
+  [{:keys [zone code type abilities counter
+           subtypes strength current-strength title selected hosted
+           side facedown server-target icon new runner-abilities subroutines
            corp-abilities]
     :as card} flipped disable-click]
   [:div.card-frame.menu-container
@@ -703,13 +712,13 @@
     [:span.cardname title]
     [:div.counters
      (when counter
-       (map-indexed (fn [i [type num-counters]]
-                      (when (pos? num-counters)
-                        (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                          [(keyword selector) {:key type} num-counters])))
-                    counter))
-     (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
-     (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
+       (mapv (fn [[type num-counters]]
+               (when (pos? num-counters)
+                 (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                   [(keyword selector) {:key type} num-counters])))
+             (sort-by key counter)))
+     (when (pos? (get-counters card :advancement))
+       [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
     (when (and (or current-strength strength)
                (or (ice? card)
                    (has-subtype? card "Icebreaker"))

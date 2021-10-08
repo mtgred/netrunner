@@ -27,6 +27,7 @@
    faces
    faction
    format
+   host
    hosted
    icon
    images
@@ -41,7 +42,6 @@
    previous-versions
    previous-zone
    quantity
-   rec-counter
    rezzed
    rotated
    runner-abilities
@@ -60,12 +60,6 @@
    type
    uniqueness
    zone])
-
-(defn private-card
-  "Returns only the public information of a given card when it's in a private state,
-  for example, when it's facedown or in the hand"
-  [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
 
 (defn get-cid
   "Gets the cid of a given card when wrapped in an effect-handler map"

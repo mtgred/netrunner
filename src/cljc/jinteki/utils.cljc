@@ -100,3 +100,19 @@
       (str cost-label ": " label)
       :else
       label)))
+
+(defn select-non-nil-keys
+  "Returns a map containing only those entries in map whose key is in keys and whose value is non-nil"
+  [m keyseq]
+  (loop [ret (transient {})
+         keyseq (seq keyseq)]
+    (if keyseq
+      (let [k (first keyseq)
+            entry (get m k ::not-found)]
+        (recur
+          (if (and (not= entry ::not-found)
+                   (some? entry))
+            (assoc! ret k entry)
+            ret)
+          (next keyseq)))
+      (with-meta (persistent! ret) (meta m)))))

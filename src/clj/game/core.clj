@@ -202,7 +202,6 @@
    is-type?
    map->Card
    operation?
-   private-card
    program?
    protecting-archives?
    protecting-hq?

@@ -10,7 +10,8 @@
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay?]]
    [game.core.play-instants :refer [can-play-instant?]]
-   [game.utils :refer [select-non-nil-keys]]
+   [game.utils :refer [dissoc-in]]
+   [jinteki.utils :refer [select-non-nil-keys]]
    [medley.core :refer [update-existing]]))
 
 (defn playable? [card state side]
@@ -73,15 +74,9 @@
       (select-non-nil-keys ability-keys)))
 
 (defn abilities-summary [abilities card state side]
-  (->> abilities
-       (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
-       (into [])))
-
-(defn card-abilities-summary [card state side]
-  (cond-> card
-    (seq (:abilities card)) (update :abilities abilities-summary card state side)
-    (seq (:corp-abilities card)) (update :corp-abilities abilities-summary card state side)
-    (seq (:runner-abilities card)) (update :runner-abilities abilities-summary card state side)))
+  (some->> (seq abilities)
+           (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
+           (into [])))
 
 (def subroutine-keys
   [:broken
@@ -93,6 +88,13 @@
 (defn subroutines-summary [subroutines]
   (when (seq subroutines)
     (mapv #(select-non-nil-keys % subroutine-keys) subroutines)))
+
+(defn card-abilities-summary [card state side]
+  (cond-> card
+    (:abilities card) (update :abilities abilities-summary card state side)
+    (:corp-abilities card) (update :corp-abilities abilities-summary card state side)
+    (:runner-abilities card) (update :runner-abilities abilities-summary card state side)
+    (:subroutines card) (update :subroutines subroutines-summary)))
 
 (def card-keys
   [:abilities
@@ -107,9 +109,11 @@
    :current-advancement-requirement
    :current-strength
    :disabled
+   :extra-advance-counter
    :face
    :faces
    :facedown
+   :host
    :hosted
    :icon
    :images
@@ -118,7 +122,6 @@
    :new
    :normalizedtitle
    :playable
-   :rec-counter
    :rezzed
    :runner-abilities
    :seen
@@ -132,17 +135,35 @@
    :type
    :zone])
 
+(def private-card-keys
+  [:advance-counter
+   :cid
+   :counter
+   :extra-advance-counter
+   :host
+   :hosted
+   :icon
+   :new
+   :side
+   :zone])
+
+(defn private-card
+  "Returns only the public information of a given card when it's in a private state,
+  for example, when it's facedown or in the hand"
+  [card]
+  (select-non-nil-keys card private-card-keys))
+
 (declare cards-summary)
 
 (defn card-summary [card state side]
   (if (not (is-public? card side))
-    (select-non-nil-keys (private-card card) card-keys)
-    (-> (if (:hosted card)
-          (update card :hosted cards-summary state side)
-          card)
+    (private-card card)
+    (-> (cond-> card
+          (:host card) (-> (dissoc-in [:host :hosted])
+                           (update :host card-summary state side))
+          (:hosted card) (update :hosted cards-summary state side))
         (playable? state side)
         (card-abilities-summary state side)
-        (update-existing :subroutines subroutines-summary)
         (select-non-nil-keys card-keys))))
 
 (defn cards-summary [cards state side]
