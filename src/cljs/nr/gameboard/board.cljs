@@ -712,11 +712,12 @@
     [:span.cardname title]
     [:div.counters
      (when counter
-       (mapv (fn [[type num-counters]]
-               (when (pos? num-counters)
-                 (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                   [(keyword selector) {:key type} num-counters])))
-             (sort-by key counter)))
+       (doall
+         (map (fn [[type num-counters]]
+                (when (pos? num-counters)
+                  (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                    [(keyword selector) {:key type} num-counters])))
+              (sort-by key counter))))
      (when (pos? (get-counters card :advancement))
        [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
     (when (and (or current-strength strength)
