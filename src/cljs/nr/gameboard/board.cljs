@@ -64,8 +64,8 @@
   (swap! card-menu dissoc :source :keep-menu-open))
 
 (defn action-list
-  [{:keys [type zone rezzed advanceable advance-counter
-           advancementcost current-advancement-requirement]}]
+  [{:keys [type zone rezzed advanceable
+           advancementcost current-advancement-requirement] :as card}]
   (cond->> []
     ;; advance
     (or (and (= type "Agenda")
@@ -77,7 +77,9 @@
              (= advanceable "while-unrezzed")))
     (cons "advance")
     ;; score
-    (and (= type "Agenda") (>= advance-counter (or current-advancement-requirement advancementcost)))
+    (and (= type "Agenda")
+         (>= (get-counters card :advancement)
+             (or current-advancement-requirement advancementcost)))
     (cons "score")
     ;; trash
     (#{"ICE" "Program"} type)
@@ -664,9 +666,9 @@
     facedown))
 
 (defn card-view
-  [{:keys [zone code type abilities counter advance-counter advancementcost current-advancement-requirement
-           subtypes advanceable rezzed strength current-strength title selected hosted
-           side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
+  [{:keys [zone code type abilities counter
+           subtypes strength current-strength title selected hosted
+           side facedown server-target icon new runner-abilities subroutines
            corp-abilities]
     :as card} flipped disable-click]
   [:div.card-frame.menu-container
@@ -710,13 +712,13 @@
     [:span.cardname title]
     [:div.counters
      (when counter
-       (map-indexed (fn [i [type num-counters]]
-                      (when (pos? num-counters)
-                        (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                          [(keyword selector) {:key type} num-counters])))
-                    counter))
-     (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
-     (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
+       (mapv (fn [[type num-counters]]
+               (when (pos? num-counters)
+                 (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                   [(keyword selector) {:key type} num-counters])))
+             (sort-by key counter)))
+     (when (pos? (get-counters card :advancement))
+       [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
     (when (and (or current-strength strength)
                (or (ice? card)
                    (has-subtype? card "Icebreaker"))

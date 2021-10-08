@@ -109,6 +109,7 @@
    :current-advancement-requirement
    :current-strength
    :disabled
+   :extra-advance-counter
    :face
    :faces
    :facedown
@@ -121,7 +122,6 @@
    :new
    :normalizedtitle
    :playable
-   :rec-counter
    :rezzed
    :runner-abilities
    :seen
@@ -139,11 +139,11 @@
   [:advance-counter
    :cid
    :counter
+   :extra-advance-counter
    :host
    :hosted
    :icon
    :new
-   :rec-counter
    :side
    :zone])
 

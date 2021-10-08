@@ -42,7 +42,6 @@
    previous-versions
    previous-zone
    quantity
-   rec-counter
    rezzed
    rotated
    runner-abilities
