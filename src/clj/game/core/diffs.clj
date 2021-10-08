@@ -218,7 +218,7 @@
   [player state side same-side? additional-keys]
   (-> player
       (update :identity card-summary state side)
-      (update :basic-action-card card-abilities-summary state side)
+      (update :basic-action-card card-summary state side)
       (update :current cards-summary state side)
       (update :play-area cards-summary state side)
       (update :rfg cards-summary state side)

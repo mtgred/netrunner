@@ -240,6 +240,10 @@
        (or (is-type? card "Event")
            (is-type? card "Operation"))))
 
+(defn basic-action?
+  [card]
+  (is-type? card "Basic Action"))
+
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
   [card subtype]
@@ -282,7 +286,7 @@
 (defn active?
   "Checks if the card is active and should receive game events/triggers."
   [card]
-  (or (is-type? card "Basic Action")
+  (or (basic-action? card)
       (and (identity? card)
            (not (facedown? card)))
       (in-play-area? card)
@@ -379,9 +383,11 @@
   ([card] (is-public? (to-keyword (:side card))))
   ([card side]
    ;; public cards for both sides:
+   ;; * basic action
    ;; * identity
    ;; * in a public zone: score area, current, play area, remove from game
-   (or (identity? card)
+   (or (basic-action? card)
+       (identity? card)
        (in-scored? card)
        (in-current? card)
        (in-play-area? card)
