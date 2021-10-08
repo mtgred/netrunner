@@ -6,7 +6,7 @@
             [game.core.card :refer [has-subtype? asset? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?
                                     get-counters]]
-            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label] :as utils]
+            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label select-non-nil-keys] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.ajax :refer [GET PUT DELETE]]
             [nr.appstate :refer [app-state]]
@@ -65,7 +65,7 @@
 
 (defn action-list
   [{:keys [type zone rezzed advanceable advance-counter
-           advancementcost current-advancement-requirement] :as card}]
+           advancementcost current-advancement-requirement]}]
   (cond->> []
     ;; advance
     (or (and (= type "Agenda")
@@ -91,11 +91,19 @@
          rezzed)
     (cons "derez")))
 
+(def click-card-keys
+  [:cid :side :host :type :zone])
+
+(defn card-for-click [card]
+  (select-non-nil-keys
+    (if (:host card) (update card :host card-for-click) card)
+    click-card-keys))
+
 (defn handle-abilities
-  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card}]
+  [side {:keys [abilities corp-abilities runner-abilities subroutines facedown] :as card}]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))
-        card-side (keyword (.toLowerCase (:side card)))]
+        card-side (keyword (lower-case (:side card)))]
     (swap! card-menu dissoc :keep-menu-open)
     (when-not (and (= card-side :runner) facedown)
       (cond
@@ -103,10 +111,9 @@
         ;; Toggle abilities panel
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
-                     (count runner-abilities)))
+                     (count runner-abilities)
+                     (count subroutines)))
             (some #{"rez" "derez" "advance" "trash"} actions)
-            (and (= type "ICE")
-                 (not (:run @game-state)))
             (and (corp? card)
                  (not (faceup? card))))
         (do (when (= side card-side)
@@ -115,13 +122,13 @@
                 (open-card-menu (:cid card))))
             (when (and (= :runner card-side)
                        (= :corp side)
-                       (:corp-abilities card))
+                       corp-abilities)
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
                 (open-card-menu (:cid card))))
             (when (and (= :corp card-side)
                        (= :runner side)
-                       (:runner-abilities card))
+                       (or subroutines runner-abilities))
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
                 (open-card-menu (:cid card)))))
@@ -130,8 +137,8 @@
         (and (= c 1)
              (= side card-side))
         (if (= (count abilities) 1)
-          (send-command "ability" {:card card :ability 0})
-          (send-command (first actions) {:card card}))))))
+          (send-command "ability" {:card (card-for-click card) :ability 0})
+          (send-command (first actions) {:card (card-for-click card)}))))))
 
 (defn playable?
   "Checks whether a card or ability is playable"
@@ -144,11 +151,11 @@
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card card})
+        (send-command "select" {:card (card-for-click card)})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
-             (= side (keyword (.toLowerCase (:side card)))))
+             (= side (keyword (lower-case (:side card)))))
         (handle-abilities side card)
 
         ;; Runner clicking on a runner card
@@ -156,7 +163,7 @@
              (= "Runner" (:side card))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card card})
+        (send-command "play" {:card (card-for-click card)})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -164,11 +171,11 @@
              (= "hand" (first zone))
              (playable? card))
         (if (= "Operation" type)
-          (send-command "play" {:card card})
+          (send-command "play" {:card (card-for-click card)})
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card card})
+            (do (send-command "generate-install-list" {:card (card-for-click card)})
                 (open-card-menu (:cid card)))))
 
         :else
