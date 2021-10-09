@@ -1,15 +1,18 @@
 (ns game.core.actions
   (:require
-    [game.core.agendas :refer [get-agenda-points update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
+    [clj-uuid :as uuid]
+    [clojure.stacktrace :refer [print-stack-trace]]
+    [clojure.string :as string]
+    [game.core.agendas :refer [update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [get-zones installable-servers]]
-    [game.core.card :refer [facedown? get-card rezzed? runner?]]
+    [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [card-ability-cost break-sub-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler card-as-handler checkpoint make-pending-event pay queue-event resolve-ability trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler checkpoint make-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
-    [game.core.ice :refer [break-subroutine! get-current-ice get-run-ices get-strength get-pump-strength pump resolve-subroutine! resolve-unbroken-subs!]]
+    [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
@@ -22,13 +25,8 @@
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
-    [jinteki.utils :refer [other-side]]
-    [clj-uuid :as uuid]
-    [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as string]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
 
 ;;; Neutral actions
 (defn- do-play-ability [state side card ability ability-idx targets]

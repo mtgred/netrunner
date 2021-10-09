@@ -1,15 +1,15 @@
 (ns game.core.flags
-  (:require [clojure.string :as string]
-            [game.core.agendas :refer [get-advancement-requirement]]
-            [game.core.board :refer [all-active all-installed]]
-            [game.core.card :refer [agenda? condition-counter? corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.eid :refer [make-eid]]
-            [game.core.effects :refer [any-effects]]
-            [game.core.servers :refer [zone->name]]
-            [game.core.to-string :refer [card-str]]
-            [game.core.toasts :refer [toast]]
-            [game.utils :refer [same-side? same-card?]]))
+  (:require
+    [clojure.string :as string]
+    [game.core.board :refer [all-active all-installed]]
+    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? rezzed?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [any-effects]]
+    [game.core.eid :refer [make-eid]]
+    [game.core.servers :refer [zone->name]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [toast]]
+    [game.utils :refer [same-card? same-side?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"

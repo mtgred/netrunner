@@ -1,17 +1,11 @@
 (ns game.core.agendas
   (:require
-    [game.core.board :refer [all-installed get-all-cards]]
+    [game.core.board :refer [get-all-cards]]
     [game.core.card :refer [agenda?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [sum-effects]]
     [game.core.eid :refer [make-eid]]
     [game.core.update :refer [update!]]))
-
-(defn get-advancement-requirement
-  [card]
-  (when (agenda? card)
-    (or (:current-advancement-requirement card)
-        (:advancementcost card))))
 
 (defn- advancement-requirement
   [state {:keys [advancementcost] :as card}]
@@ -43,12 +37,6 @@
            changed?))
      false
      (filter agenda? (get-all-cards state)))))
-
-(defn get-agenda-points
-  [card]
-  (or (:agendapoints card)
-      (:current-points card)
-      0))
 
 (defn agenda-points
   "Apply agenda-point modifications to calculate the number of points this card is worth

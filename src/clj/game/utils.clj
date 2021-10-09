@@ -17,7 +17,7 @@
 
 (defn server-cards
   []
-  (vals @jinteki.cards/all-cards))
+  (vals @all-cards))
 
 (defn abs [n] (max n (- n)))
 

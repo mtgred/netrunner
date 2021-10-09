@@ -101,12 +101,14 @@
    :advance-counter
    :advanceable
    :advancementcost
+   :agendapoints
    :cid
    :code
    :corp-abilities
    :cost
    :counter
    :current-advancement-requirement
+   :current-points
    :current-strength
    :disabled
    :extra-advance-counter
@@ -122,6 +124,7 @@
    :new
    :normalizedtitle
    :playable
+   :printed-title
    :rezzed
    :runner-abilities
    :seen

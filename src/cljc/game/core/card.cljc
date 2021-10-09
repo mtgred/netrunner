@@ -17,6 +17,7 @@
    cost
    counter
    current-advancement-requirement
+   current-points
    current-strength
    cycle_code
    deck-limit
@@ -41,6 +42,7 @@
    playable
    previous-versions
    previous-zone
+   printed-title
    quantity
    rezzed
    rotated
@@ -299,6 +301,18 @@
       (and (runner? card)
            (installed? card)
            (not (facedown? card)))))
+
+(defn get-advancement-requirement
+  [card]
+  (when (agenda? card)
+    (or (:current-advancement-requirement card)
+        (:advancementcost card))))
+
+(defn get-agenda-points
+  [card]
+  (or (:current-points card)
+      (:agendapoints card)
+      0))
 
 (defn can-be-advanced?
   "Returns true if the card can be advanced"

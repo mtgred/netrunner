@@ -495,7 +495,6 @@
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
-  ([state side card n] (as-agenda state side (make-eid state) card n nil))
   ([state side eid card n] (as-agenda state side eid card n nil))
   ([state side eid card n {:keys [register-events force]}]
    (let [card (deactivate state side card)

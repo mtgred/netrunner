@@ -1431,17 +1431,19 @@
      :abilities [ability]}))
 
 (defcard "Kasi String"
-  {:events [{:event :run-ends
+  {:implementation "Adds counters automatically"
+   :events [{:event :run-ends
              :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
                             (not (:did-steal target))
                             (:did-access target)
                             (is-remote? (:server target))))
-             :effect (effect (add-counter card :power 1))
-             :msg "add a power counter to itself"}
-            {:event :counter-added
-             :req (req (>= (get-counters (get-card state card) :power) 4))
-             :effect (effect (as-agenda :runner card 1))
-             :msg "add it to their score area as an agenda worth 1 agenda point"}]})
+             :msg (msg (if (<= 3 (get-counters card :power))
+                         "add it to their score area as an agenda worth 1 agenda point"
+                         "add a power counter to itself"))
+             :async true
+             :effect (req (if (<= 3 (get-counters card :power))
+                            (as-agenda state :runner eid card 1)
+                            (add-counter state side eid card :power 1 {:placed true})))}]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]

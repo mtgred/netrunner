@@ -1,9 +1,9 @@
 (ns game.core.initializing
   (:require
     [game.core.board :refer [all-active all-active-installed]]
-    [game.core.card :refer [get-card get-counters has-subtype? program? runner? map->Card]]
+    [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [card-ability-cost break-sub-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
@@ -14,7 +14,7 @@
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [effect req]]
+    [game.macros :refer [req]]
     [game.utils :refer [make-cid server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
@@ -41,10 +41,10 @@
         c (dissoc card
                   :current-strength :current-advancement-requirement :current-points
                   :runner-abilities :corp-abilities :rezzed :new
-                  :subtype-target :server-target :extra-advance-counter)
-        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef) :special nil)
+                  :subtype-target :server-target :extra-advance-counter :special)
+        c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
         c (if keep-counter c (dissoc c :counter :advance-counter))]
-    c))
+    (map->Card c)))
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
@@ -192,7 +192,8 @@
        (assoc :cid cid
               :implementation (card-implemented card)
               :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
-              :abilities (ability-init (card-def card)))
+              :abilities (ability-init (card-def card))
+              :printed-title (:title card))
        (dissoc :setname :text :_id :influence :number :influencelimit
                :image_url :factioncost :format :quantity)
        (map->Card))))

@@ -1,8 +1,8 @@
 (ns game.core.access
   (:require
-    [game.core.agendas :refer [get-agenda-points update-all-advancement-requirements update-all-agenda-points]]
+    [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
-    [game.core.card :refer [agenda? corp? get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
+    [game.core.card :refer [agenda? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]

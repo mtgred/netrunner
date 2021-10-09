@@ -130,8 +130,6 @@
 
 (import-vars
   [game.core.agendas
-   get-advancement-requirement
-   get-agenda-points
    update-advancement-requirement
    update-all-advancement-requirements
    update-all-agenda-points])
@@ -169,7 +167,6 @@
    assoc-host-zones
    can-be-advanced?
    card-index
-   is-public?
    condition-counter?
    corp-installable-type?
    corp?
@@ -177,6 +174,8 @@
    facedown?
    faceup?
    fake-identity?
+   get-advancement-requirement
+   get-agenda-points
    get-card
    get-card-hosted
    get-cid
@@ -199,14 +198,15 @@
    in-scored?
    in-server?
    installed?
+   is-public?
    is-type?
    map->Card
    operation?
    program?
+   protecting-a-central?
    protecting-archives?
    protecting-hq?
    protecting-rd?
-   protecting-a-central?
    resource?
    rezzed?
    runner?

@@ -24,7 +24,7 @@
                     (= count max-count)
                     (dissoc acc :max-faction)
                     ;; Count is not more, do not change the accumulator map
-                    :default
+                    :else
                     acc))
         best-faction (:max-faction (reduce-kv reducer {:max-count 0 :max-faction nil} faction-freq))]
     (= fc best-faction)))
