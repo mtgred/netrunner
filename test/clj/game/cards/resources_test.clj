@@ -1491,7 +1491,6 @@
              hosted-ct #(first (:hosted (refresh dj-fenris)))]
          (is (core/facedown? dj-fenris) "DJ Fenris is facedown")
          (is (core/facedown? (hosted-ct)) "CT is facedown")
-         (println "Disabled?: " (:disabled (hosted-ct)))
          (is (= 4 (core/available-mu state)) "CT not active since DJ Fenris is facedown, reducing MU back to 4"))))
     (testing "Only legal IDs appear in the drop down"
       (do-game

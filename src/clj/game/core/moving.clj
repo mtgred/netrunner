@@ -1,5 +1,6 @@
 (ns game.core.moving
   (:require
+    [clojure.string :as string]
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [active? card-index corp? facedown? fake-identity? get-card get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
@@ -19,7 +20,7 @@
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
-    [clojure.string :as string]))
+    [medley.core :refer [insert-nth]]))
 
 ;; Helpers for move
 (defn- remove-old-card
@@ -54,7 +55,7 @@
         trash-hosted (fn [h]
                        (trash state side
                               (make-eid state)
-                              (update-in h [:zone] #(map to-keyword %))
+                              (update h :zone #(map to-keyword %))
                               {:unpreventable true
                                :host-trashed true
                                :game-trash true})
@@ -62,7 +63,7 @@
         update-hosted (fn [h]
                         (let [newz (flatten (list dest))
                               newh (-> h
-                                       (assoc-in [:zone] '(:onhost))
+                                       (assoc :zone [:onhost])
                                        (assoc-in [:host :zone] newz))]
                           (update! state side newh)
                           (when (active? newh)
@@ -70,8 +71,8 @@
                             (register-events state side newh)
                             (unregister-constant-effects state side h)
                             (register-constant-effects state side newh))
-                          newh))
-        hosted (seq (flatten (map (if same-zone? update-hosted trash-hosted) (:hosted card))))
+                          [newh]))
+        hosted (seq (mapcat (if same-zone? update-hosted trash-hosted) (:hosted card)))
         ;; Set :seen correctly
         c (if (= :corp side)
             (cond
@@ -177,7 +178,7 @@
            (let [pos-to-move-to (cond index index
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
-             (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
+             (swap! state update-in (cons side dest) #(into [] (insert-nth pos-to-move-to moved-card %))))
            (when (seq zone)
              (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
@@ -437,7 +438,9 @@
   "Swaps two cards when one or both aren't installed"
   [state side a b]
   (when (same-side? (:side a) (:side b))
-    (let [a-side (to-keyword (:side a))
+    (let [a (get-card state a)
+          b (get-card state b)
+          a-side (to-keyword (:side a))
           b-side (to-keyword (:side b))
           moved-a (move state a-side a (get-zone b)
                         {:keep-server-alive true
