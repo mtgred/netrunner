@@ -1188,9 +1188,11 @@
   {:on-play
    {:prompt "Choose an agenda to forfeit"
     :choices (req (:scored runner))
-    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")
-    :effect (effect (forfeit target)
-                    (gain-bad-publicity :corp 1))}})
+    :msg (msg "forfeit " (get-title card) " and give the Corp 1 bad publicity")
+    :async true
+    :effect (req (wait-for (forfeit state side (make-eid state eid) target {:msg false})
+                           (gain-bad-publicity state :corp 1)
+                           (effect-completed state side eid)))}})
 
 (defcard "Frantic Coding"
   {:on-play
@@ -1233,8 +1235,7 @@
 (defcard "\"Freedom Through Equality\""
   {:events [{:event :agenda-stolen
              :msg "add it to their score area as an agenda worth 1 agenda point"
-             :async true
-             :effect (req (as-agenda state :runner eid card 1))}]})
+             :effect (req (as-agenda state :runner card 1))}]})
 
 (defcard "Freelance Coding Contract"
   {:on-play
@@ -1877,7 +1878,8 @@
              :effect (req (if (:did-steal target)
                             (do (system-msg state :runner
                                             (str "adds Mad Dash to their score area as an agenda worth 1 agenda point"))
-                                (as-agenda state :runner eid (get-card state card) 1))
+                                (as-agenda state :runner (get-card state card) 1)
+                                (effect-completed state side eid))
                             (do (system-msg state :runner
                                             (str "suffers 1 meat damage from Mad Dash"))
                                 (damage state side eid :meat 1 {:card card}))))}]})
@@ -2069,8 +2071,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :msg "add it to their score area as an agenda worth 1 agenda point"
-    :async true
-    :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))}})
+    :effect (req (as-agenda state :runner card 1))}})
 
 (defcard "Office Supplies"
   {:on-play

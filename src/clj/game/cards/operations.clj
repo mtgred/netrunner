@@ -89,10 +89,9 @@
                                 :effect (effect (clear-wait-prompt :corp)
                                                 (make-run eid serv card)
                                                 (prevent-jack-out))}
-                  :no-ability {:async true
-                               :msg "add it to their score area as an agenda worth 1 agenda point"
+                  :no-ability {:msg "add it to their score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
-                                               (as-agenda :corp eid card 1))}}})
+                                               (as-agenda :corp card 1))}}})
               card nil))}})
 
 (defcard "Anonymous Tip"
@@ -378,8 +377,7 @@
 (defcard "\"Clones are not People\""
   {:events [{:event :agenda-scored
              :msg "add it to their score area as an agenda worth 1 agenda point"
-             :async true
-             :effect (req (as-agenda state :corp eid card 1))}]})
+             :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Closed Accounts"
   {:on-play
@@ -935,9 +933,8 @@
                                         (update! state side (assoc card :rfg-instead-of-trashing true))
                                         (effect-completed state side eid)))}
                 :no-ability
-                {:async true
-                 :msg "add it to the Runner's score area as an agenda worth -1 agenda point"
-                 :effect (effect (as-agenda :runner eid card -1))}}}
+                {:msg "add it to the Runner's score area as an agenda worth -1 agenda point"
+                 :effect (effect (as-agenda :runner card -1))}}}
               card targets))}})
 
 (defcard "Hansei Review"

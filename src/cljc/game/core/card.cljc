@@ -68,6 +68,11 @@
   [card]
   (get-in card [:card :cid]))
 
+(defn get-title
+  "Title or printed title if the card is a counter or fake agenda"
+  [card]
+  (or (:title card) (:printed-title card)))
+
 (defn get-nested-host
   "Recursively searches upward to find the 'root' card of a hosting chain."
   [card]

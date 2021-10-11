@@ -571,12 +571,10 @@
                     (effect-completed state side eid)
                     (let [card (find-latest state card)
                           stolen-agenda (find-latest state (:card context))
-                          title (:title stolen-agenda)
+                          title (get-title stolen-agenda)
                           prompt (str "Forfeit Divested Trust to add " title
                                       " to HQ and gain 5 [Credits]?")
                           message (str "add " title " to HQ and gain 5 [Credits]")
-                          agenda-side (if (in-runner-scored? state side stolen-agenda)
-                                        :runner :corp)
                           card-side (if (in-runner-scored? state side card)
                                       :runner :corp)]
                       (continue-ability
@@ -587,7 +585,7 @@
                           :yes-ability
                           {:msg message
                            :async true
-                           :effect (req (wait-for (forfeit state card-side card)
+                           :effect (req (wait-for (forfeit state card-side (make-eid state eid) card)
                                                   (move state side stolen-agenda :hand)
                                                   (update-all-agenda-points state side)
                                                   (gain-credits state side eid 5)))}}}
@@ -1177,9 +1175,11 @@
                :yes-ability
                {:msg "give the Runner 1 tag and take 1 bad publicity"
                 :async true
-                :effect (effect (gain-bad-publicity :corp eid 1)
-                                (gain-tags :corp eid 1)
-                                (forfeit card))}}}})
+                :effect (req (wait-for
+                               (forfeit state side (make-eid state eid) card)
+                               (wait-for
+                                 (gain-bad-publicity state :corp (make-eid state eid) 1)
+                                 (gain-tags state :corp eid 1))))}}}})
 
 (defcard "Priority Requisition"
   {:on-score {:interactive (req true)

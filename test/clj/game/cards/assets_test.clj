@@ -3783,7 +3783,7 @@
       ;; Corp turn 4, check the delicious agenda points
       (let [scored-pub (get-scored state :corp 0)]
         (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda point")
-        (is (= "Public Support" (:printed-title scored-pub)))
+        (is (= "Public Support" (get-title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
 
 (deftest quarantine-system

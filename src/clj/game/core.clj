@@ -181,6 +181,7 @@
    get-cid
    get-counters
    get-nested-host
+   get-title
    get-zone
    hardware?
    has-subtype?
