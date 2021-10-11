@@ -424,6 +424,6 @@
          {:choices hosting
           :prompt (str "Choose a card to host " (:title card) " on")
           :async true
-          :effect (effect (runner-install eid card (assoc args :host-card target)))}
+          :effect (effect (runner-install-pay eid card (assoc args :host-card target)))}
          card nil)
        (runner-install-pay state side eid card args)))))

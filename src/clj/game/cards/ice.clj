@@ -1646,7 +1646,7 @@
               (assoc ability :event :agenda-scored)
               (assoc ability
                      :event :as-agenda
-                     :req (req (= "Corp" (:as-agenda-side target))))]
+                     :req (req (= "Corp" (:scored-side target))))]
      :abilities [{:label "Lose subroutines"
                   :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
                   :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]

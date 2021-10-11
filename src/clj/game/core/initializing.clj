@@ -188,21 +188,23 @@
   "Makes or remakes (with current cid) a proper card from a server card"
   ([card] (make-card card (make-cid)))
   ([card cid]
-   (-> card
-       (assoc :cid cid
-              :implementation (card-implemented card)
-              :subroutines (subroutines-init (assoc card :cid cid) (card-def card))
-              :abilities (ability-init (card-def card))
-              :printed-title (:title card))
-       (dissoc :setname :text :_id :influence :number :influencelimit
-               :image_url :factioncost :format :quantity)
-       (map->Card))))
+   (let [cdef (card-def card)]
+     (-> card
+         (assoc :cid cid
+                :implementation (card-implemented card)
+                :subroutines (subroutines-init (assoc card :cid cid) cdef)
+                :abilities (ability-init cdef)
+                :printed-title (:title card))
+         (dissoc :setname :text :_id :influence :number :influencelimit
+                 :image_url :factioncost :format :quantity)
+         (map->Card)))))
 
 (defn reset-card
   "Resets a card back to its original state - retaining any data in the :persistent key"
-  ([state side {:keys [cid persistent previous-zone seen title zone]}]
-   (swap! state update-in [:per-turn] dissoc cid)
-   (let [new-card (make-card (server-card title) cid)]
+  ([state side {:keys [cid persistent previous-zone printed-title seen title zone]}]
+   (swap! state update :per-turn dissoc cid)
+   (let [s-card (server-card (or printed-title title))
+         new-card (make-card s-card cid)]
      (update! state side (assoc new-card
                                 :persistent persistent
                                 :previous-zone previous-zone

@@ -1100,10 +1100,14 @@
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
                                    (quantify (get-agenda-points c) "agenda point"))))
-                  :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points c)
-                                     args {:register-events (card-flag? c :has-events-when-stolen true)}]
-                                 (as-agenda state :runner eid c points args)))}]}))
+                  :effect (req (let [c (move state :runner (get-agenda card) :scored)]
+                                 (when (card-flag? c :has-events-when-stolen true)
+                                   (card-init state :corp c {:resolve-effect false
+                                                             :init-data true}))
+                                 (update-all-advancement-requirements state)
+                                 (update-all-agenda-points state)
+                                 (check-win-by-agenda state side)
+                                 (effect-completed state side eid)))}]}))
 
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
@@ -1340,23 +1344,24 @@
                                    (effect-completed state side eid)))))}]})
 
 (defcard "Jackpot!"
-  (let [jackpot {:interactive (req true)
-                 :optional
-                 {:waiting-prompt "Runner to choose an option"
-                  :prompt "Trash Jackpot!?"
-                  :yes-ability
-                  {:prompt "Choose how many [Credit] to take"
-                   :choices {:number (req (get-counters card :credit))}
-                   :async true
-                   :effect (req (wait-for (gain-credits state :runner target)
-                                          (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
-                                          (trash state :runner eid card nil)))}}}]
-    {:events [{:event :runner-turn-begins
-               :effect (effect (add-counter :runner card :credit 1))}
-              (assoc jackpot :event :agenda-stolen)
-              (-> jackpot
-                  (assoc :event :as-agenda)
-                  (assoc-in [:optional :req] (req (= :runner (:as-agenda-side target)))))]}))
+  {:events [{:event :runner-turn-begins
+             :effect (effect (add-counter :runner card :credit 1))}
+            ;; TODO (NoahTheDuke, Oct 2020):
+            ;; This is an async ability and it's getting called in `move`, which is sync.
+            ;; This won't work long-term, but it's the best solution at the moment.
+            {:event :card-moved
+             :interactive (req true)
+             :optional
+             {:req (req (= :runner (:scored-side (second targets))))
+              :waiting-prompt "Runner to choose an option"
+              :prompt "Trash Jackpot!?"
+              :yes-ability
+              {:prompt "Choose how many [Credit] to take"
+               :choices {:number (req (get-counters card :credit))}
+               :async true
+               :effect (req (wait-for (gain-credits state :runner target)
+                                      (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
+                                      (trash state :runner eid card nil)))}}}]})
 
 (defcard "Jak Sinclair"
   (let [ability {:label "Make a run (start of turn)"

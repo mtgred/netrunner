@@ -6,22 +6,24 @@
             [game.utils :refer [server-card to-keyword]]))
 
 (defn subtypes-for-card
+  "Creates a sorted list of subtypes for the card. Returns nil if given a counter or fake agenda."
   [state card]
-  (let [printed-subtypes (:subtypes (server-card (:title card)))
-        gained-subtypes (flatten (get-effects state nil card :gain-subtype))
-        lost-subtypes (flatten (get-effects state nil card :lose-subtype))
-        total-gained (frequencies (concat printed-subtypes gained-subtypes))
-        total-lost (frequencies lost-subtypes)
-        total (reduce
-                (fn [acc [k v]]
-                  (let [cur (get acc k 0)
-                        total (- cur v)]
-                    (if (pos? total)
-                      (assoc acc k total)
-                      (dissoc acc k))))
-                total-gained
-                total-lost)]
-    (into [] (sort (keys total)))))
+  (when (:title card)
+    (let [printed-subtypes (:subtypes (server-card (:title card)))
+          gained-subtypes (flatten (get-effects state nil card :gain-subtype))
+          lost-subtypes (flatten (get-effects state nil card :lose-subtype))
+          total-gained (frequencies (concat printed-subtypes gained-subtypes))
+          total-lost (frequencies lost-subtypes)
+          total (reduce
+                  (fn [acc [k v]]
+                    (let [cur (get acc k 0)
+                          total (- cur v)]
+                      (if (pos? total)
+                        (assoc acc k total)
+                        (dissoc acc k))))
+                  total-gained
+                  total-lost)]
+      (into [] (sort (keys total))))))
 
 (defn update-subtypes-for-card
   [state _ card]

@@ -17,16 +17,13 @@
       (is (= 0 (agenda-points state nil (dissoc test-card :agendapoints))))
       (is (= 1 (agenda-points state nil test-card)))
       (is (= 5 (agenda-points state nil (assoc test-card :agendapoints 5)))))
-    (testing "as-agenda-points"
-      (is (= 2 (agenda-points state nil (assoc test-card :as-agenda-points 1))))
-      (is (= 0 (agenda-points state nil (assoc test-card :as-agenda-points -1)))))
     (testing "agenda-value"
       (core/register-floating-effect state nil test-card {:type :agenda-value :value 1})
       (is (= 2 (agenda-points state nil test-card))))
     (testing "all together"
-      (let [test-card (assoc test-card :agendapoints 5 :as-agenda-points 3)]
+      (let [test-card (assoc test-card :agendapoints 5)]
         (core/register-floating-effect state nil test-card {:type :agenda-value :value 1})
-        (is (= 9 (agenda-points state nil test-card))) "5 + 3 + 1"))
+        (is (= 6 (agenda-points state nil test-card))) "5 + 1"))
     (testing "points-fn"
       (defmethod core/defcard-impl "Test Card" [_]
         {:agendapoints-corp (req 5)

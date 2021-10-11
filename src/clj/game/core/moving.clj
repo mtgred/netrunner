@@ -1,14 +1,14 @@
 (ns game.core.moving
   (:require
     [clojure.string :as string]
-    [game.core.agendas :refer [update-all-agenda-points]]
+    [game.core.agendas :refer [convert-to-agenda update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [active? card-index corp? facedown? fake-identity? get-card get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint dissoc-req make-pending-event queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-sync unregister-events]]
-    [game.core.finding :refer [find-cid get-scoring-owner]]
+    [game.core.engine :refer [checkpoint dissoc-req make-pending-event queue-event register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
+    [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
     [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
@@ -191,27 +191,29 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (when-not suppress-event
-             (trigger-event state side :card-moved card (assoc moved-card :move-to-side side)))
-           ; This is for removing `:location :X` events that are non-default locations,
-           ; such as Subliminal Messaging only registering in :discard. We first unregister
-           ; any non-default events from the previous zone and the register the non-default
-           ; events for the current zone.
-           ; NOTE: I (NoahTheDuke) experimented with using this as the basis for all event
-           ; registration and handling, but there are too many edge-cases in the engine
-           ; right now. Maybe at some later date it'll work, but currently (Oct '19),
-           ; there are more important things to focus on.
-           (let [zone #{(first (:previous-zone moved-card))}
-                 old-events (filter #(zone (:location %)) (:events (card-def moved-card)))]
-             (when (seq old-events)
-               (unregister-events state side moved-card {:events (into [] old-events)})))
-           (let [zone #{(first (:zone moved-card))}
-                 events (filter #(zone (:location %)) (:events (card-def moved-card)))]
-             (when (seq events)
-               (register-events state side moved-card events)))
-           ;; Default a card when moved to inactive zones (except :persistent key)
-           (when (some #{:discard :hand :deck :rfg} dest)
-             (reset-card state side moved-card))
-           (get-card state moved-card)))))))
+             (trigger-event state side :card-moved card (assoc (get-card state moved-card) :move-to-side side)))
+           ;; move-zone-fn and the event can both modify the card, so re-bind here
+           (let [moved-card (get-card state moved-card)]
+             ; This is for removing `:location :X` events that are non-default locations,
+             ; such as Subliminal Messaging only registering in :discard. We first unregister
+             ; any non-default events from the previous zone and the register the non-default
+             ; events for the current zone.
+             ; NOTE: I (NoahTheDuke) experimented with using this as the basis for all event
+             ; registration and handling, but there are too many edge-cases in the engine
+             ; right now. Maybe at some later date it'll work, but currently (Oct '19),
+             ; there are more important things to focus on.
+             (let [zone #{(first (:previous-zone moved-card))}
+                   old-events (filter #(zone (:location %)) (:events (card-def moved-card)))]
+               (when (seq old-events)
+                 (unregister-events state side moved-card {:events (into [] old-events)})))
+             (let [zone #{(first (:zone moved-card))}
+                   events (filter #(zone (:location %)) (:events (card-def moved-card)))]
+               (when (seq events)
+                 (register-events state side moved-card events)))
+             ;; Default a card when moved to inactive zones (except :persistent key)
+             (when (some #{:discard :hand :deck :rfg} dest)
+               (reset-card state side moved-card))
+             (get-card state moved-card))))))))
 
 (defn move-zone
   "Moves all cards from one zone to another, as in Chronos Project."
@@ -463,56 +465,33 @@
       [(get-card state moved-a) (get-card state moved-b)])))
 
 (defn swap-agendas
-  "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
+  "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side).
+  Returns the first agenda now in runner score area and second agenda now in corp score area."
   [state side scored stolen]
-  ;; Update location information
-  (let [scored (assoc scored :scored-side :runner)
-        stolen (assoc stolen :scored-side :corp)]
-    ;; Move agendas
-    (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(same-card? % scored) coll) stolen)))
-    (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(same-card? % stolen) coll)
-                            (if-not (card-flag? scored :has-abilities-when-stolen true)
-                              (dissoc scored :abilities :events) scored))))
-    ;; Set up abilities and events for new scored agenda
-    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))
-          abilities (:abilities (card-def new-scored))
-          new-scored (merge new-scored {:abilities abilities})]
-      (update! state :corp new-scored)
-      (unregister-events state side new-scored)
-      (register-events state side new-scored)
-      (unregister-constant-effects state side new-scored)
-      (register-constant-effects state side new-scored)
-      (resolve-ability state side (:swapped (card-def new-scored)) new-scored new-scored))
-    ;; Overload :scored for interrupts like Project Vacheron I guess
-    (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
-      (resolve-ability state side (:stolen (card-def new-stolen)) new-stolen [new-stolen]))
-    ;; Set up abilities and events for new stolen agenda
+  (let [new-stolen (move state :runner scored :scored)
+        new-scored (move state :corp stolen :scored)]
+    (unregister-events state side stolen)
+    (unregister-constant-effects state side stolen)
+    (register-events state side new-scored)
+    (register-constant-effects state side new-scored)
     (when-not (card-flag? scored :has-events-when-stolen true)
-      (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
-        (deactivate state :corp new-stolen)))
-    ;; Update agenda points
+      (deactivate state :corp new-stolen))
+    (trigger-event state side :swap new-stolen new-scored)
     (update-all-agenda-points state side)
-    (check-win-by-agenda state side)))
+    (check-win-by-agenda state side)
+    [(get-card state new-stolen) (get-card state new-scored)]))
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
   ([state side eid card n] (as-agenda state side eid card n nil))
-  ([state side eid card n {:keys [register-events force]}]
+  ([state side eid card n {:keys [force]}]
    (let [card (deactivate state side card)
-         card (move state side (assoc card :agendapoints n) :scored {:force force})]
-     (if register-events
-       (wait-for (card-init state side card {:resolve-effect false})
-                 (wait-for (resolve-ability state side (make-eid state eid) (:swapped (card-def card)) card nil)
-                           (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                                     (update-all-agenda-points state side)
-                                     (check-win-by-agenda state side)
-                                     (effect-completed state side eid))))
-       (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                 (update-all-agenda-points state side)
-                 (check-win-by-agenda state side)
-                 (effect-completed state side eid))))))
+         card (convert-to-agenda card n)
+         card (move state side card :scored {:force force})]
+     (wait-for (trigger-event-sync state side :as-agenda card)
+               (update-all-agenda-points state side)
+               (check-win-by-agenda state side)
+               (effect-completed state side eid)))))
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."

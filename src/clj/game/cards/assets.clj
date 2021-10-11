@@ -1062,8 +1062,12 @@
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
                                          (in-hand? target)))}
                 :msg (msg "add " (:title target) " to score area")
-                :async true
-                :effect (effect (as-agenda eid target (:agendapoints target) {:register-events true}))}]
+                :effect (req (let [c (move state :corp target :scored)]
+                               (card-init state :corp c {:resolve-effect false
+                                                         :init-data true}))
+                             (update-all-advancement-requirements state)
+                             (update-all-agenda-points state)
+                             (check-win-by-agenda state side))}]
    :events [{:event :corp-turn-begins
              :effect (effect (add-counter card :power 1))}]})
 
@@ -1671,7 +1675,7 @@
                        (not (pos? (get-counters card :power))))
              :async true
              :effect (effect (system-msg "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
-                             (as-agenda eid (dissoc card :counter) 1))}]})
+                             (as-agenda eid card 1))}]})
 
 (defcard "Quarantine System"
   (letfn [(rez-ice [cnt] {:prompt "Choose a piece of ice to rez"

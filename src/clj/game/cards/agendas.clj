@@ -909,15 +909,16 @@
      :stolen ability}))
 
 (defcard "Improved Tracers"
-  {:on-score {:silent (req true)
-              :effect (req (update-all-ice state side))}
-   :swapped {:effect (req (update-all-ice state side))}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Improved Tracers to increase the strength of Tracer ice by 1")
+                     (system-msg state side "uses Improved Tracers to increase the base strength of all trace subroutines by 1")
+                     (update-all-ice state side)))
    :constant-effects [{:type :ice-strength
                        :req (req (has-subtype? target "Tracer"))
                        :value 1}]
    :events [{:event :pre-init-trace
-             :req (req (and (has-subtype? target "Tracer")
-                            (= :subroutine (:source-type (second targets)))))
+             :req (req (= :subroutine (:source-type (second targets))))
              :effect (effect (init-trace-bonus 1))}]})
 
 (defcard "Jumon"
@@ -992,20 +993,19 @@
                                                        " and "
                                                        (card-str state (second targets))))
                                       (continue-ability state side (msr) card nil))
-                                  (do (system-msg state :corp (str "has finished rearranging ice"))
+                                  (do (system-msg state :corp "has finished rearranging ice")
                                       (effect-completed state side eid))))})]
     {:on-score {:async true
                 :msg "rearrange any number of ice"
                 :effect (effect (continue-ability (msr) card nil))}}))
 
 (defcard "Mandatory Upgrades"
-  {:on-score {:msg "gain an additional [Click] per turn"
-              :silent (req true)
-              :effect (req (gain state :corp :click-per-turn 1))}
-   :swapped {:msg "gain an additional [Click] per turn"
-             :effect (req (when (= (:active-player @state) :corp)
-                            (gain-clicks state :corp 1))
-                          (gain state :corp :click-per-turn 1))}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Mandatory Upgrades to gain an addition [Click] per turn")
+                     (when (= :corp (:active-player @state))
+                       (gain-clicks state :corp 1))
+                     (gain state :corp :click-per-turn 1)))
    :leave-play (req (lose state :corp
                           :click 1
                           :click-per-turn 1))})
@@ -1272,31 +1272,27 @@
                                  (update! (update-in card [:special :kusanagi] #(conj % target))))}]})
 
 (defcard "Project Vacheron"
-  (let [vacheron-ability
-        {:req (req (and (in-scored? card)
-                        (not= (first (:previous-zone card)) :discard)
-                        (same-card? card (or (:card context) target))))
-         :msg (msg "add 4 agenda counters on " (:title card))
-         :effect (effect (add-counter (get-card state card) :agenda 4)
-                         (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
-    {:agendapoints-runner (req (if (or (= (first (:previous-zone card)) :discard)
-                                       (and (get-in card [:special :vacheron])
-                                            (zero? (get-counters card :agenda)))) 3 0))
-     :stolen vacheron-ability
-     :events [(assoc vacheron-ability :event :as-agenda)
-              {:event :runner-turn-begins
-               :req (req (pos? (get-counters card :agenda)))
-               :msg (msg "remove 1 agenda token from " (:title card))
-               :effect (req (when (pos? (get-counters card :agenda))
-                              (add-counter state side card :agenda -1))
-                            (update-all-agenda-points state side)
-                            (when (zero? (get-counters (get-card state card) :agenda))
-                              (let [points (get-agenda-points (get-card state card))]
+  {:flags {:has-events-when-stolen true}
+   :agendapoints-runner (req (if (or (= (first (:previous-zone card)) :discard)
+                                     (zero? (get-counters card :agenda))) 3 0))
+   :move-zone (req (when (and (in-scored? card)
+                              (= :runner (:scored-side card))
+                              (not= (first (:previous-zone card)) :discard))
+                     (system-msg state side "uses Project Vacheron to host 4 agenda counters on Project Vacheron")
+                     (add-counter state side (get-card state card) :agenda 4)))
+   :events [{:event :runner-turn-begins
+             :req (req (pos? (get-counters card :agenda)))
+             :msg (msg "remove 1 agenda token from " (:title card))
+             :effect (req (when (pos? (get-counters card :agenda))
+                            (add-counter state side card :agenda -1))
+                          (update-all-agenda-points state side)
+                          (let [card (get-card state card)]
+                            (when (zero? (get-counters card :agenda))
+                              (let [points (get-agenda-points card)]
                                 (system-msg state :runner
                                             (str "gains " (quantify points "agenda point")
-                                                 " from " (:title card)))))
-                            (check-win-by-agenda state side))}]
-     :flags {:has-events-when-stolen true}}))
+                                                 " from " (:title card))))))
+                          (check-win-by-agenda state side))}]})
 
 (defcard "Project Vitruvius"
   {:on-score {:silent (req true)
@@ -1383,16 +1379,19 @@
   {:flags {:rd-reveal (req true)}
    :access {:req (req tagged)
             :player :runner
-            :async true
             :interactive (req true)
             :prompt "Quantum Predictive Model was added to the corp's score area"
             :choices ["OK"]
             :msg "add it to their score area and gain 1 agenda point"
-            :effect (effect (as-agenda :corp eid card 1))}})
+            :effect (effect (move :corp card :scored {:force true})
+                            (update-all-agenda-points)
+                            (check-win-by-agenda))}})
 
 (defcard "Rebranding Team"
-  {:on-score {:msg "make all assets gain Advertisement"}
-   :swapped {:msg "make all assets gain Advertisement"}
+  {:flags {:has-events-when-stolen true}
+   :move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
    :constant-effects [{:type :gain-subtype
                        :req (req (asset? target))
                        :value "Advertisement"}]})

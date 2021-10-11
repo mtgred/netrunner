@@ -73,10 +73,9 @@
                                   (effect-completed state side eid)))))))))
 
 (defn play-instant-costs
-  [state side eid card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]
+  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]
   (or cached-costs
-      (let [on-play (or (:on-play (card-def card)) {})
-            cost (play-cost state side card)
+      (let [cost (play-cost state side card)
             additional-costs (play-additional-cost-bonus state side card)
             costs (merge-costs
                     [(when-not ignore-cost
@@ -96,7 +95,7 @@
   ([state side eid card] (can-play-instant? state side eid card nil))
   ([state side eid card {:keys [targets silent] :as args}]
    (let [on-play (or (:on-play (card-def card)) {})
-         costs (play-instant-costs state side eid card args)]
+         costs (play-instant-costs state side card args)]
      (and ;; req is satisfied
           (should-trigger? state side eid card targets on-play)
           ;; can pay all costs
@@ -121,7 +120,7 @@
   ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card {:keys [ignore-cost] :as args}]
    (let [eid (eid-set-defaults eid :source :action :source-type :play)
-         costs (play-instant-costs state side eid card (dissoc args :cached-costs))]
+         costs (play-instant-costs state side card (dissoc args :cached-costs))]
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
@@ -134,7 +133,7 @@
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
                      (if payment-str
-                       (complete-play-instant state side (assoc eid :cost-paid (:cost-paid async-result)) moved-card payment-str ignore-cost)
+                       (complete-play-instant state side (assoc eid :cost-paid cost-paid) moved-card payment-str ignore-cost)
                        ;; could not pay the card's price; put it back and mark the effect as being over.
                        (let [returned-card (move state side moved-card original-zone)]
                          (update! state :runner (-> returned-card
