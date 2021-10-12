@@ -86,8 +86,7 @@
       (play-from-hand state :corp "MCA Informant")
       (click-card state :corp "Film Critic")
       ;; Hosted on runner cards
-      (is (not (find-card "MCA Informant" (core/all-installed state :corp))))
-      ))
+      (is (find-card "MCA Informant" (core/all-installed state :corp)))))
   (testing "runner cards"
     (do-game
       (new-game {:corp {:hand ["Ice Wall"]}
@@ -97,5 +96,4 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Parasite")
       (click-card state :runner "Ice Wall")
-      (is (find-card "Parasite" (core/all-installed state :runner)))
-      )))
+      (is (find-card "Parasite" (core/all-installed state :runner))))))

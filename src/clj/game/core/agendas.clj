@@ -92,23 +92,3 @@
    (let [corp-changed? (update-side-agenda-points state :corp)
          runner-changed? (update-side-agenda-points state :runner)]
      (or corp-changed? runner-changed?))))
-
-;; CR 1.5
-;; 10.1.3. Some abilities add a card to a player’s score area “as an agenda”. When this
-;;    happens, the card loses all its previous properties and gains only those
-;;    properties specified in the effect converting it. This conversion lasts until the
-;;    card moves to a zone that is not a score area, at which point it returns to being
-;;    its original printed card. If this happens in any way other than by agenda
-;;    forfeit, the card is immediately trashed. See rule 8.2.5.
-
-(defn convert-to-agenda
-  [{:keys [cid host hosted side title zone]} n]
-  (map->Card
-    {:agendapoints n
-     :cid cid
-     :host host
-     :hosted hosted
-     :printed-title title
-     :side side
-     :type "Agenda"
-     :zone zone}))

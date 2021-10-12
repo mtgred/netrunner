@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
-    [game.core.card :refer [agenda? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
+    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
@@ -422,7 +422,7 @@
       (concat hosted-cards (get-all-hosted hosted-cards)))))
 
 (defn get-all-content [content]
-  (remove :condition (concat content (get-all-hosted content))))
+  (remove condition-counter? (concat content (get-all-hosted content))))
 
 (defn- root-content
   ([state server]
@@ -742,7 +742,6 @@
         card-from-button (when (and (pos? random-access-limit)
                                     (seq (remove already-accessed-fn hand)))
                            [card-from])
-        
         root (root-content state :hq already-accessed-fn)
         upgrade-buttons (when-not no-root
                           (->> root

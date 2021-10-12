@@ -281,8 +281,7 @@
              :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
              :async true
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
-                                    (host state side (:card async-result) (assoc card :seen true :condition true))
-                                    (effect-completed state side eid)))}
+                                    (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :end-of-encounter
              :condition :hosted
              :async true
@@ -334,12 +333,8 @@
              :effect (req (wait-for
                             (corp-install state side target nil {:install-state :face-up})
                             (let [agenda async-result]
-                              (host state side agenda (assoc card
-                                                             :seen true
-                                                             :condition true
-                                                             :installed true))
                               (system-msg state side (str "hosts Casting Call on " (:title agenda)))
-                              (effect-completed state side eid))))}
+                              (install-as-condition-counter state side eid card agenda))))}
    :events [{:event :access
              :condition :hosted
              :async true
@@ -594,7 +589,8 @@
   {:on-play {:choices {:card #(and (ice? %)
                                    (installed? %))}
              :msg (msg "give " (card-str state target {:visible false}) " additional text")
-             :effect (effect (host target (assoc card :seen true :condition true)))}
+             :async true
+             :effect (effect (install-as-condition-counter eid card target))}
    :events [{:event :encounter-ice
              :condition :hosted
              :trace {:base 3
@@ -1299,7 +1295,7 @@
                                    (has-subtype? % "Connection")
                                    (installed? %))}
              :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
-             :effect (req (host state side (get-card state target) (assoc card :seen true :condition true)))}
+             :effect (effect (install-as-condition-counter eid card target))}
    :constant-effects [{:type :tags
                        :value 1}]
    :leave-play (req (system-msg state :corp "trashes MCA Informant"))
@@ -1475,8 +1471,7 @@
              :msg (msg "rez " (card-str state target) " at no cost")
              :async true
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs :no-msg true})
-                                    (host state side (:card async-result) (assoc card :seen true :condition true))
-                                    (effect-completed state side eid)))}
+                                    (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :subroutines-broken
              :condition :hosted
              :async true
@@ -1489,8 +1484,8 @@
   {:on-play {:choices {:card #(and (ice? %)
                                    (rezzed? %))}
              :msg (msg "give +2 strength to " (card-str state target))
-             :effect (req (let [card (host state side target (assoc card :seen true :condition true))]
-                            (update-ice-strength state side (get-card state target))))}
+             :async true
+             :effect (effect (install-as-condition-counter eid card target))}
    :constant-effects [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
                        :value 2}]})
@@ -1968,8 +1963,8 @@
   {:on-play {:choices {:card #(and (ice? %)
                                    (rezzed? %))}
              :msg (msg "host it as a condition counter on " (card-str state target))
-             :effect (effect (host target (assoc card :installed true :seen true :condition true))
-                             (update-ice-strength (get-card state target)))}
+             :async true
+             :effect (effect (install-as-condition-counter eid card target))}
    :constant-effects [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
                        :value (req (get-counters card :power))}]
@@ -2259,14 +2254,16 @@
      :on-play {:choices {:card #(and (ice? %)
                                      (rezzed? %))}
                :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
+               :async true
                :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
-                            (host state side (get-card state target) (assoc card :seen true :condition true)))}
+                            (install-as-condition-counter state side eid card (get-card state target)))}
      :constant-effects [{:type :gain-subtype
                          :req (req (and (same-card? target (:host card))
                                         (rezzed? target)))
                          :value "Barrier"}]
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez
+               :condition :hosted
                :req (req (same-card? (:card context) (:host card)))
                :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
 
@@ -2484,16 +2481,17 @@
                                    (not (faceup? %)))}
              :effect (req (let [target (update! state side (assoc target
                                                                   :seen true
-                                                                  :rezzed true))
-                                card (host state side target (assoc card :seen true :condition true))]
-                            (register-events
-                              state side card
-                              [{:event :advance
-                                :location :hosted
-                                :req (req (same-card? (:host card) target))
-                                :async true
-                                :msg "gain 1 [Credit]"
-                                :effect (effect (gain-credits eid 1))}])))}})
+                                                                  :rezzed true))]
+                            (wait-for (install-as-condition-counter state side card target)
+                                      (let [card async-result]
+                                        (register-events
+                                          state side card
+                                          [{:event :advance
+                                            :location :hosted
+                                            :req (req (same-card? (:host card) target))
+                                            :async true
+                                            :msg "gain 1 [Credit]"
+                                            :effect (effect (gain-credits eid 1))}])))))}})
 
 (defcard "Trick of Light"
   {:on-play
@@ -2633,8 +2631,9 @@
                                      (has-subtype? % "Bioroid")
                                      (rezzed? %))}
                :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+               :async true
                :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
-                            (host state side (get-card state target) (assoc card :seen true :condition true)))}
+                            (install-as-condition-counter state side eid card (get-card state target)))}
      :sub-effect (do-brain-damage 1)
      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
      :events [{:event :rez

@@ -101,12 +101,12 @@
                                        allcorp (concat onhost unhosted)]
                                    (trash-cards state :runner eid allcorp)))}
         runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
-                                            ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                                            ishosted (fn [c] (= '(:onhost) (get c :zone)))
                                             hostedcards (filter ishosted installedcards)
                                             nonhostedcards (remove ishosted installedcards)]
                                         (doseq [oc hostedcards
                                                 :let [c (get-card state oc)]
-                                                :when (not (:condition c))]
+                                                :when (not (condition-counter? c))]
                                           (flip-facedown state side c))
                                         (doseq [oc nonhostedcards
                                                 :let [c (get-card state oc)]]
@@ -644,8 +644,8 @@
                             this-card-run))
              :silent (req true)
              :effect (effect (register-events
-                              card [(breach-access-bonus :rd 
-                                                         (max 0 (min 4 (available-mu state))) 
+                              card [(breach-access-bonus :rd
+                                                         (max 0 (min 4 (available-mu state)))
                                                          {:duration :end-of-run})]))}]})
 
 (defcard "Déjà Vu"
@@ -2091,9 +2091,9 @@
              :prompt "Choose a resource to host On the Lam"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
-             :effect (effect (host target (assoc card :installed true :condition true))
-                             (card-init (find-latest state card) {:resolve-effect false})
-                             (system-msg (str "hosts On the Lam on " (:title target))))}
+             :async true
+             :effect (req (system-msg state side (str "hosts On the Lam on " (:title target)))
+                          (install-as-condition-counter state side eid card target))}
    :interactions {:prevent [{:type #{:net :brain :meat :tag}
                              :req (req true)}]}
    :abilities [{:label "Avoid 3 tags"
@@ -2193,6 +2193,7 @@
                        :req (req (same-card? (:host card) target))
                        :value -1}]
    :events [{:event :purge
+             :location :hosted
              :async true
              :effect (req (wait-for (trash state side card {:cause :purge})
                                     (update-all-agenda-points state side)
@@ -2205,8 +2206,10 @@
                {:prompt "Choose an agenda to host Political Graffiti on"
                 :choices {:req (req (in-corp-scored? state side target))}
                 :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
-                                (update-all-agenda-points))}})]})
+                :async true
+                :effect (req (wait-for (install-as-condition-counter state side (make-eid state eid) card target)
+                                       (update-all-agenda-points state side)
+                                       (effect-completed state side eid)))}})]})
 
 (defcard "Populist Rally"
   {:on-play {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
@@ -2424,7 +2427,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
-             :optional (:optional (offer-jack-out 
+             :optional (:optional (offer-jack-out
                                    {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
 (defcard "Rejig"

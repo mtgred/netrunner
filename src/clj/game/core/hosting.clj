@@ -45,12 +45,10 @@
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update card :hosted conj c))
-       ;; events should be registered for condition counters
-       (when (or (condition-counter? c)
-                 (and installed
-                      (or (runner? c)
-                          (and (corp? c)
-                               (rezzed? c)))))
+       (when (and installed
+                  (or (runner? c)
+                      (and (corp? c)
+                           (rezzed? c))))
          (if (or (:recurring tdef)
                  (:prevent tdef)
                  (:corp-abilities tdef)

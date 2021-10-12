@@ -326,7 +326,6 @@
    card-as-handler
    checkpoint
    dissoc-req
-   effect-as-handler
    gather-events
    is-ability?
    make-pending-event
@@ -349,7 +348,6 @@
    unregister-event-by-uuid
    unregister-events
    unregister-floating-events
-   unregister-floating-events-for-card
    unregister-suppress
    unregister-suppress-by-uuid])
 
@@ -541,6 +539,7 @@
    corp-install-cost
    corp-install-list
    corp-install-msg
+   install-as-condition-counter
    install-locked?
    runner-can-install?
    runner-can-pay-and-install?

@@ -8,7 +8,7 @@
   [{:keys [printed-title title] :as card}]
   (cond
     title (or (defcard-impl title) {})
-    printed-title {}
+    printed-title (or (defcard-impl printed-title) {})
     :else (throw (ex-info "Tried to select card def for non-existent card"
                           {:msg "Tried to select card-def for non existent card"
                            :card card}))))

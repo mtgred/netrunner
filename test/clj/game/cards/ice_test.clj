@@ -5458,7 +5458,7 @@
         (play-from-hand state :corp "Oversight AI")
         (click-card state :corp ti)
         (is (rezzed? (refresh ti)))
-        (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
+        (is (= "Oversight AI" (get-title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition"))))
   (testing "Hosted Pawn is trashed"
     (do-game
