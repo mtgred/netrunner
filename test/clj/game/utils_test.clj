@@ -65,6 +65,12 @@
          (get-in prompt [:card :cid])
          (= (:cid card) (get-in prompt [:card :cid])))))
 
+(defn no-prompt?
+  [state side]
+  (let [prompt (get-prompt state side)]
+    (or (empty? prompt)
+        (= :run (:prompt-type prompt)))))
+
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice

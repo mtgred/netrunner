@@ -235,7 +235,7 @@
       (click-prompt state :runner "0")
       (click-card state :corp "Gang Sign")
       (click-prompt state :runner "Done") ; Leela trigger, no Gang Sign prompt
-      (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt")))
+      (is (no-prompt? state :runner) "Runner doesn't get an access prompt")))
   (testing "with SanSan City Grid #5344"
     (do-game
       (new-game {:corp {:deck ["Amani Senai" "Merger" "SanSan City Grid"]
@@ -418,7 +418,7 @@
       (click-prompt state :runner "End the run")
       (run-continue state)
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Boomerang shuffle prompt did not come up")
+      (is (no-prompt? state :runner) "Boomerang shuffle prompt did not come up")
       (is (find-card "Boomerang" (:discard (get-runner))))
       (is (not (find-card "Boomerang" (:deck (get-runner)))))))
   (testing "Blocks installing cards from heap"
@@ -432,7 +432,7 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Paperclip prompt did not come up")))
+      (is (no-prompt? state :runner) "Paperclip prompt did not come up")))
   (testing "Need to allow steal. #2426"
     (do-game
       (new-game {:corp {:deck [(qty "Fetal AI" 3) "Blacklist"]}})
@@ -698,7 +698,7 @@
       (click-prompt state :runner "Pay 1 [Credits]")
       (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
       (is (zero? (count-tags state)) "Runner didn't take a tag")
-      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")
+      (is (no-prompt? state :runner) "City Surveillance only fired once")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner))) ;; Set Runner's credits to 0 so they can't choose to pay
       (take-credits state :corp)
@@ -706,7 +706,7 @@
       (click-prompt state :runner "Take 1 tag")
       (is (zero? (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (count-tags state)) "Runner took 1 tag"))
-      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
+      (is (no-prompt? state :runner) "City Surveillance only fired once")))
 
 (deftest clearinghouse
   ;; Clearinghouse
@@ -837,7 +837,7 @@
         (card-ability state :corp clyde 0)
         (is (zero? (:credit (get-runner))))
         (is (zero? (count (:deck (get-runner)))))
-        (is (empty? (:prompt (get-corp))))))))
+        (is (no-prompt? state :corp))))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
@@ -883,7 +883,7 @@
         (is (zero? (get-counters (refresh iw) :advancement)))
         (is (= 2 (get-counters (refresh fw) :advancement)))
         (end-phase-12 state :corp)
-        (is (empty? (:prompt (get-runner)))))))
+        (is (no-prompt? state :runner)))))
   (testing "Variable number of advanceable cards"
     (do-game
       (new-game {:corp {:deck ["Constellation Protocol" "Ice Wall" "Hive"]}})
@@ -1044,7 +1044,7 @@
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
       (click-card state :corp (find-card "Product Placement" (:hand (get-corp))))
       (click-card state :corp (find-card "Breaking News" (:hand (get-corp))))
-      (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
+      (is (no-prompt? state :runner) "Runner prompt cleared")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
       (is (= "Jackson Howard" (:title (second (:hand (get-corp))))))
@@ -1081,7 +1081,7 @@
             "Resistor second last card in deck")
         ;; Try to use first Sensie again
         (card-ability state :corp sensie1 0)
-        (is (empty? (:prompt (get-runner))) "Sensie didn't activate")
+        (is (no-prompt? state :runner) "Sensie didn't activate")
         (is (= 3 (count (:hand (get-corp)))))
         ;; Use second Sensie
         (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
@@ -1099,7 +1099,7 @@
       (rez state :corp (get-content state :remote1 0))
       (draw state :corp)
       (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
-      (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS")))
+      (is (no-prompt? state :corp) "Corp is not being asked to bury a card with DBS")))
   (testing "Fire on Runner turn"
     (do-game
       (new-game {:corp {:deck ["Daily Business Show" "Hedge Fund"
@@ -1114,7 +1114,7 @@
       (is (= 4 (count (:hand (get-corp)))) "Drew an additional card from FIS")
       (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
-      (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
+      (is (no-prompt? state :runner) "Runner prompt cleared")
       (is (= 3 (count (:hand (get-corp)))))))
   (testing "Interaction with Rashida and Start of Turn effects. Issue #4582"
     (do-game
@@ -1132,7 +1132,7 @@
       (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
       (end-phase-12 state :corp)
-      (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw")))
+      (is (no-prompt? state :corp) "DBS doesn't trigger on mandatory draw")))
   (testing "Interaction with NEH and Political Dealings and nested draws. Issue #5974"
     (testing "DBS first"
       (do-game
@@ -1149,7 +1149,7 @@
         (take-credits state :runner)
         (click-prompt state :corp "Daily Business Show")
         (click-card state :corp "Merger")
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "Political Dealings first"
       (do-game
         (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
@@ -1168,7 +1168,7 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
         (click-card state :corp "Ice Wall")
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "further interactions that could happen"
       (do-game
         (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
@@ -1197,7 +1197,7 @@
         (click-prompt state :corp "Jinja City Grid")
         (is (= ["Ice Wall" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Ice Wall")
-        (is (empty? (:prompt (get-corp))) "No DBS prompt cuz all drawn cards have been installed")))))
+        (is (no-prompt? state :corp) "No DBS prompt cuz all drawn cards have been installed")))))
 
 (deftest daily-quest
   ;; Daily Quest
@@ -2031,7 +2031,7 @@
         ; use Mr. Li with 0 draws allowed
         (card-ability state :runner mrli 0)
         (is (= 1 (count (:hand (get-runner)))))
-        (is (empty? (:prompt (get-runner))) "No runner prompt open")
+        (is (no-prompt? state :runner) "No runner prompt open")
         (take-credits state :runner)
         (take-credits state :corp)
         (draw state :runner)
@@ -2564,7 +2564,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (card-ability state :corp (refresh ll) 0)
-        (is (empty? (:prompt (get-corp))) "No prompt if no matching agenda")
+        (is (no-prompt? state :corp) "No prompt if no matching agenda")
         (take-credits state :corp)
         (take-credits state :runner)
         (card-ability state :corp (refresh ll) 0)
@@ -2771,7 +2771,7 @@
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (empty? (:prompt (get-runner))) "Choose credit source prompt did not come up")
+        (is (no-prompt? state :runner) "Choose credit source prompt did not come up")
         (is (nil? (refresh malia1)) "Malia has been trashed")))))
 
 (deftest marilyn-campaign
@@ -2820,13 +2820,13 @@
         (rez state :corp pad)
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (is (no-prompt? state :corp) "No interactive prompt")
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (is (no-prompt? state :corp) "No interactive prompt")
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (:prompt (get-corp))) "No interactive prompt")
+        (is (no-prompt? state :corp) "No interactive prompt")
         (take-credits state :corp)
         (take-credits state :runner)
         (is (not-empty (:prompt (get-corp))) "Interactive prompt")))))
@@ -3005,7 +3005,7 @@
                            "Used 1 credit from Mumba"
                            (rez state :corp iw)
                            (click-card state :corp mumba))
-        (is (empty? (:prompt (get-corp))) "Rezzing done")
+        (is (no-prompt? state :corp) "Rezzing done")
         (changes-val-macro -1 (:credit (get-corp)) ; 1 credit left on Mumba
                            "Used 1 credit from Mumba"
                            (rez state :corp pad)
@@ -3153,7 +3153,7 @@
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (click-prompt state :runner "Done")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
+      (is (no-prompt? state :runner) "Runner waiting prompt is cleared")
       (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
@@ -3440,15 +3440,15 @@
      (is (empty? (:hand (get-runner))) "Runner's grip is still empty")
      (core/end-turn state :runner nil)
      (click-card state :runner "Motivation")
-     (is (empty? (:prompt (get-runner))) "Runner done being classy")
-     (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy")
+     (is (no-prompt? state :runner) "Runner done being classy")
+     (is (no-prompt? state :corp) "Corp not waiting for Runner to be classy")
      (core/start-turn state :corp nil) ;; this causes portals to trigger
      (is (= 4 (:credit (get-corp))) "Corp has not gained credits yet")
      (click-card state :runner "Motivation")
      (is (= 5 (count (:hand (get-runner)))) "Runner is sitting on 5 cards after bottoming a card")
      (is (= 6 (:credit (get-corp))) "Corp only gained 5/2 = 2 credits, not 3")
-     (is (empty? (:prompt (get-runner))) "Runner not prompted")
-     (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy"))))
+     (is (no-prompt? state :runner) "Runner not prompted")
+     (is (no-prompt? state :corp) "Corp not waiting for Runner to be classy"))))
 
 (deftest plan-b
   ;; Plan B - score agenda with adv cost <= # of adv counters
@@ -3552,7 +3552,7 @@
         (run-empty-server state :hq)
         (card-ability state :runner (get-resource state 0) 0)
         (is (= 4 (count (:hand (get-runner)))) "Runner took no damage")
-        (is (empty? (:prompt (get-corp))) "No Prana prompt for Corp"))))
+        (is (no-prompt? state :corp) "No Prana prompt for Corp"))))
   (testing "Corp gets Prana prompt first"
     (do-game
       (new-game {:corp {:hand ["Prāna Condenser" "Neural EMP"]}
@@ -3579,9 +3579,9 @@
           (take-credits state :corp)
           (play-from-hand state :runner "Zer0")
           (card-ability state :runner (get-hardware state 0) 0)
-          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on 'unpreventable' net damage")
+          (is (no-prompt? state :corp) "Prana condenser doesn't proc on 'unpreventable' net damage")
           (damage state :runner :net 1)
-          (is (empty? (:prompt (get-corp))) "Prana condenser doesn't proc on net damage of the runner"))))
+          (is (no-prompt? state :corp) "Prana condenser doesn't proc on net damage of the runner"))))
     (testing "PAD Tap gains credits from Prana trigger. Issue #5250"
       (do-game
         (new-game {:corp {:hand ["Prāna Condenser" "Bio-Ethics Association"]}
@@ -3805,7 +3805,7 @@
           beale (get-content state :remote2 0)]
       (rez state :corp qs)
       (card-ability state :corp qs 0)
-      (is (empty? (:prompt (get-corp))) "No prompt to rez ice")
+      (is (no-prompt? state :corp) "No prompt to rez ice")
       (score-agenda state :corp beale)
       ; 1 on rez
       (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
@@ -3816,7 +3816,7 @@
       (click-card state :corp ch3)
       ; pay 8 per Chiyashi - 24 total
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
-      (is (empty? (:prompt (get-corp))) "No prompt to rez ice"))))
+      (is (no-prompt? state :corp) "No prompt to rez ice"))))
 
 (deftest raman-rai
   ;; Raman Rai
@@ -4013,7 +4013,7 @@
         (take-credits state :corp)
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (empty? (:prompt (get-corp))) "No prompt to trigger Rex Campaign when trashed by the Runner")))))
+        (is (no-prompt? state :corp) "No prompt to trigger Rex Campaign when trashed by the Runner")))))
 
 (deftest ronald-five
   ;; Ronald Five - Runner loses a click every time they trash a Corp card
@@ -4074,7 +4074,7 @@
       (is (zero? (count-bad-pub state)) "Start with no bad pub")
       (card-ability state :corp rrs 0)
       (is (= (:credit (get-corp)) (+ 6 start-credits)) "Gained 6 credits")
-      (is (empty? (:prompt (get-corp))) "No prompt if no bad pub")
+      (is (no-prompt? state :corp) "No prompt if no bad pub")
       (core/gain state :corp :bad-publicity 1)
       (is (= 1 (count-bad-pub state)) "Start with 1 bad pub")
       (card-ability state :corp rrs 0)
@@ -4276,7 +4276,7 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't get Shattered Remains ability prompt when no counters")
+      (is (no-prompt? state :corp) "Corp shouldn't get Shattered Remains ability prompt when no counters")
       (click-prompt state :runner "No action")
       (run-empty-server state :remote2)
       (let [credits (:credit (get-corp))]
@@ -4398,7 +4398,7 @@
       (click-prompt state :corp "Yes")
       (is (zero? (count-tags state)) "Runner has 0 tags")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
+      (is (no-prompt? state :runner) "Runner waiting prompt is cleared")
       (is (zero? (count (:discard (get-runner)))) "Runner took no damage")))
   (testing "with Dedicated Response Team"
     (do-game
@@ -4848,7 +4848,7 @@
     (card-ability state :corp (get-content state :remote1 0) 0)
     (click-card state :corp (get-ice state :rd 0))
     (click-card state :corp (get-ice state :hq 1))
-    (is (empty? (:prompt (get-corp))))
+    (is (no-prompt? state :corp))
     (is (zero? (:click (get-corp))) "Spent 1 click")
     (is (= "Aimor" (:title (get-ice state :rd 0))) "Aimor swapped to R&D")
     (is (= "Lockdown" (:title (get-ice state :hq 1))) "Lockdown swapped to HQ outer position")))
@@ -5331,7 +5331,7 @@
         (changes-val-macro 2 (count (:hand (get-corp)))
                            "Added this asset to HQ (and took mandatory draw)"
                            (click-prompt state :corp "Add this asset to HQ"))
-        (is (empty? (:prompt (get-corp))) "No further options because PAD Campaign is rezzed")))))
+        (is (no-prompt? state :corp) "No further options because PAD Campaign is rezzed")))))
 
 (deftest warden-fatuma
   ;; Warden Fatuma - rezzed bioroid ice gains an additional sub

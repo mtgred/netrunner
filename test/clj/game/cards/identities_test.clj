@@ -21,12 +21,12 @@
       (click-prompt state :corp "Yes")
       (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
       (play-from-hand state :corp "Pup" "HQ")
-      (is (empty? (:prompt (get-runner))) "No option on second install")
+      (is (no-prompt? state :runner) "No option on second install")
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Pup" "Archives")
       (click-prompt state :runner "No")
-      (is (empty? (:prompt (get-corp))) "No prompt if Runner chooses No")
+      (is (no-prompt? state :corp) "No prompt if Runner chooses No")
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "The Cleaners" "New remote")
@@ -36,14 +36,14 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Oaktown Renovation" "New remote")
-      (is (empty? (:prompt (get-corp))) "Cannot expose faceup agendas")
+      (is (no-prompt? state :corp) "Cannot expose faceup agendas")
       (take-credits state :corp)
       (take-credits state :runner)
       (core/lose state :corp :credit (:credit (get-corp)))
       (is (zero? (:credit (get-corp))) "Corp has no credits")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (click-prompt state :runner "Yes")
-      (is (empty? (:prompt (get-corp))) "No prompt if Corp has no credits")
+      (is (no-prompt? state :corp) "No prompt if Corp has no credits")
       (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
   (testing "Verify expose can be blocked"
     (do-game
@@ -115,7 +115,7 @@
       (play-from-hand state :corp "Building Blocks")
       (click-card state :corp "Ice Wall")
       (click-prompt state :corp "HQ")
-      (is (empty? (:prompt (get-runner))) "419 doesn't trigger on installed and rezzed cards")))
+      (is (no-prompt? state :runner) "419 doesn't trigger on installed and rezzed cards")))
   (testing "419 vs Sportsmetal Jinja Grid. Issue #3806"
     (do-game
       (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
@@ -408,8 +408,8 @@
       (run-continue state)
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))))
   (testing "Works with passing effects"
     (do-game
       (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
@@ -660,7 +660,7 @@
         (click-prompt state :corp "New remote")
         (click-card state :corp pup)
         (click-prompt state :corp "New remote")
-        (is (empty? (:prompt (get-corp))) "No more prompts")
+        (is (no-prompt? state :corp) "No more prompts")
         (is (= 6 (count (:servers (get-corp)))) "There are six servers, including centrals")))))
 
 (deftest ayla-bios-rahim-simulant-specialist
@@ -784,7 +784,7 @@
         (click-prompt state :corp imp)
         (is (= 1 (count (:discard (get-runner)))))
         (damage state :corp :net 1)
-        (is (empty? (:prompt (get-corp))) "No choice on second net damage")
+        (is (no-prompt? state :corp) "No choice on second net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-empty-server state "Archives")
         (take-credits state :runner)
@@ -793,7 +793,7 @@
         (click-prompt state :corp "No")
         (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
         (play-from-hand state :corp "Neural EMP")
-        (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
+        (is (no-prompt? state :corp) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner))))))))
   (testing "with Obokata: Pay 4 net damage to steal. Only 3 damage left after Chronos. No trigger of damage prevent."
     (do-game
@@ -808,7 +808,7 @@
       (click-prompt state :runner "Pay to steal")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "Feedback Filter net damage prevention opportunity not given")
+      (is (no-prompt? state :runner) "Feedback Filter net damage prevention opportunity not given")
       (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
   (testing "vs Employee Strike. Issue #1958"
     (do-game
@@ -819,7 +819,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Employee Strike")
       (damage state :corp :net 1)
-      (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
+      (is (no-prompt? state :corp) "No choice because of Employee Strike")
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Scrubbed")
@@ -835,7 +835,7 @@
       (run-empty-server state "Archives")
       (take-credits state :runner)
       (play-from-hand state :corp "Neural EMP")
-      (is (empty? (:prompt (get-corp))) "No choice because grip is empty")
+      (is (no-prompt? state :corp) "No choice because grip is empty")
       (is (= :corp (:winner @state))))))
 
 (deftest earth-station-sea-headquarters
@@ -996,8 +996,8 @@
       (run-empty-server state "Archives")
       (run-empty-server state "HQ")
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)))))
   (testing "Interaction with Eater"
     (do-game
@@ -1055,8 +1055,8 @@
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)) "No run has been created")))
   (testing "Interaction with Aumakua and accessing an operation in archives #5054"
     (do-game
@@ -1384,7 +1384,7 @@
     (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
     (run-empty-server state :remote1)
     (click-prompt state :runner "OK") ; Could not afford message dismissed
-    (is (empty? (:prompt (get-runner))) "Runner cannot access so no trash prompt")
+    (is (no-prompt? state :runner) "Runner cannot access so no trash prompt")
     (is (not (last-log-contains? state "PAD Campaign")) "No card name was logged")
     (run-empty-server state :hq)
     (click-prompt state :runner "No action") ; Dismiss trash prompt
@@ -1592,7 +1592,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-continue state)
-      (is (not (empty? (:prompt (get-runner)))) "Architects of Tomorrow is still available"))))
+      (is (not (no-prompt? state :runner)) "Architects of Tomorrow is still available"))))
 
 (deftest haas-bioroid-engineering-the-future
   ;; Engineering the Future
@@ -1650,7 +1650,7 @@
       (click-card state :runner (find-card "Cache" (:hand (get-runner))))
       (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
       (play-from-hand state :runner "Fan Site")
-      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn.")))
+      (is (no-prompt? state :runner) "No Hayley prompt if not first install this turn.")))
   (testing "Pay-credits prompt"
     (do-game
       (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
@@ -1676,8 +1676,8 @@
       (click-prompt state :runner "Carry on!")
       (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
       (play-from-hand state :runner "Fan Site")
-      (is (empty? (:prompt (get-corp))) "No Hayley wait prompt if not first install this turn.")
-      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn.")))
+      (is (no-prompt? state :corp) "No Hayley wait prompt if not first install this turn.")
+      (is (no-prompt? state :runner) "No Hayley prompt if not first install this turn.")))
   (testing "Facedown installs do not prompt for Hayley install"
     (do-game
       (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
@@ -1689,7 +1689,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner (get-resource state 0) 1)
-      (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
+      (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs."))))
 
 (deftest hoshiko-shiro-untold-protagonist
   ;; Hoshiko Shiro
@@ -1985,7 +1985,7 @@
         (let [dd (get-resource state 0)]
           (card-ability state :runner dd 0)
           (click-card state :runner (get-in (get-runner) [:scored 0]))
-          (is (empty? (:prompt (get-corp))) "No Jemison prompt for Runner forfeit")
+          (is (no-prompt? state :corp) "No Jemison prompt for Runner forfeit")
           (take-credits state :runner)
           (play-from-hand state :corp "Global Food Initiative" "New remote")
           (score-agenda state :corp (get-content state :remote2 0))
@@ -2295,7 +2295,7 @@
       (take-credits state :corp)
       (run-on state "Archives")
       (run-continue state)
-      (is (and (= 1 (count (:prompt (get-runner))))
+      (is (and (= 2 (count (:prompt (get-runner))))
                (= "Khan: Savvy Skiptracer" (-> (prompt-map :runner) :card :title)))
           "Only Khan prompt showing")
       (click-card state :runner "Corroder")
@@ -2359,7 +2359,7 @@
                  :options {:start-as :runner}})
       (core/lose state :runner :click 4)
       (core/end-turn state :runner nil)
-      (is (empty? (:prompt (get-runner))) "No prompt"))))
+      (is (no-prompt? state :runner) "No prompt"))))
 
 (deftest leela-patel-trained-pragmatist
   ;; Leela Patel
@@ -2524,7 +2524,7 @@
       (play-from-hand state :runner "Dummy Box")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (empty? (:prompt (get-runner))) "Dummy Box not fired from mill")))
+      (is (no-prompt? state :runner) "Dummy Box not fired from mill")))
   (testing "with Wyldside - using Wyldside during Step 1.2 should lose 1 click"
     (do-game
       (new-game {:runner {:id "MaxX: Maximum Punk Rock"
@@ -2678,13 +2678,13 @@
               mm (get-in @state [:corp :identity])]
           (rez state :corp ci)
           (dotimes [_ 2] (card-ability state :corp (refresh ci) 0))
-          (is (empty? (:prompt (get-corp))) "No MM trigger"))))
+          (is (no-prompt? state :corp) "No MM trigger"))))
     (testing "Using different operations"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
         (dotimes [_ 3] (play-from-hand state :corp "Hedge Fund"))
-        (is (empty? (:prompt (get-corp))) "No MM trigger")))
+        (is (no-prompt? state :corp) "No MM trigger")))
     (testing "Installing different cards"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
@@ -2692,7 +2692,7 @@
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (play-from-hand state :corp "NASX" "New remote")
         (play-from-hand state :corp "Wall to Wall" "New remote")
-        (is (empty? (:prompt (get-corp))) "No MM trigger")))))
+        (is (no-prompt? state :corp) "No MM trigger")))))
 
 (deftest mti-mwekundu-life-improved
   ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
@@ -2835,12 +2835,12 @@
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
+      (is (no-prompt? state :runner) "Forger can't avoid the tag")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
       (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
+      (is (no-prompt? state :corp) "No trace chance on 2nd trashed card of turn")))
   (testing "Interaction with Dedicated Response Team"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
@@ -2872,8 +2872,8 @@
       (click-prompt state :runner "Yes")
       (run-empty-server state "Server 2")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))) "CtM shouldn't fire")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't have prompt")
+      (is (no-prompt? state :corp) "CtM shouldn't fire")
+      (is (no-prompt? state :runner) "Runner shouldn't have prompt")
       (is (zero? (count-tags state)) "Runner took 1 unpreventable tag")))
  (testing "Trace should fire on first trash of a Corp card after a Runner card is trashed"
     (do-game
@@ -2952,7 +2952,7 @@
        (rez state :corp (refresh dr))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (is (empty? (:prompt (get-corp))) "No prompt for the Corp for second tag"))))
+       (is (no-prompt? state :corp) "No prompt for the Corp for second tag"))))
   (testing "Basic test - draw cards"
     (do-game
      (new-game {:corp {:id "NBN: Reality Plus"
@@ -2976,7 +2976,7 @@
        (rez state :corp (refresh dr))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (is (empty? (:prompt (get-corp))) "No prompt for the Corp for second tag")))))
+       (is (no-prompt? state :corp) "No prompt for the Corp for second tag")))))
 
 (deftest nero-severn-information-broker
   ;; Nero Severn: Information Broker
@@ -3142,7 +3142,7 @@
       (run-on state "HQ")
       (let [wrap1 (get-ice state :hq 0)
             wrap2 (get-ice state :hq 1)]
-        (is (empty? (:prompt (get-runner))) "Ability won't work on unrezzed ice")
+        (is (no-prompt? state :runner) "Ability won't work on unrezzed ice")
         (rez state :corp wrap2)
         (run-continue state)
         (click-prompt state :runner "Yes")
@@ -3151,7 +3151,7 @@
         (run-continue-until state :approach-ice)
         (rez state :corp wrap1)
         (run-continue state)
-        (is (empty? (:prompt (get-runner))) "Ability already used this turn")
+        (is (no-prompt? state :runner) "Ability already used this turn")
         (run-continue state :movement)
         (run-jack-out state)
         (is (= 7 (get-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
@@ -3295,8 +3295,8 @@
         (click-prompt state :corp "R&D")
         (is (= [:rd] (:server (get-run))))
         (run-continue state)
-        (is (empty? (prompt-map :corp)))
-        (is (empty? (prompt-map :runner)))))))
+        (is (no-prompt? state :corp))
+        (is (no-prompt? state :runner))))))
 
 (deftest quetzal-free-spirit
   ;; Quetzal
@@ -3347,7 +3347,7 @@
         (run-continue state)
         (card-ability state :runner q 0)
         (click-prompt state :runner "End the run")
-        (is (empty? (:prompt (get-runner))) "No prompt for further breaking")))))
+        (is (no-prompt? state :runner) "No prompt for further breaking")))))
 
 (deftest reina-roja-freedom-fighter
   ;; Reina Roja - Increase cost of first rezzed piece of ice
@@ -3463,7 +3463,7 @@
       (new-game {:corp {:id "Seidr Laboratories: Destiny Defined"
                         :discard ["Hedge Fund"]}})
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (is (empty? (prompt-map :corp)))
+      (is (no-prompt? state :corp))
       (take-credits state :corp)
       (run-on state :hq)
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -3475,7 +3475,7 @@
       (take-credits state :corp)
       (run-on state :hq)
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (is (empty? (prompt-map :corp))))))
+      (is (no-prompt? state :corp)))))
 
 (deftest silhouette-stealth-operative
   ;; Silhouette
@@ -3564,7 +3564,7 @@
     (click-prompt state :corp (find-card "The Maker's Eye" (:discard (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
-    (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
+    (is (no-prompt? state :corp) "Cannot use Skorpios twice")))
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements
@@ -3641,11 +3641,11 @@
                       :deck [(qty "Hortum" 2) (qty "Oaktown Renovation" 2) "Braintrust"]}})
     (play-from-hand state :corp "Braintrust" "New remote")
     (take-credits state :corp)
-    (is (empty? (:prompt (get-corp))) "Not prompted when no faceup agenda available")
+    (is (no-prompt? state :corp) "Not prompted when no faceup agenda available")
     (take-credits state :runner)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (take-credits state :corp)
-    (is (empty? (:prompt (get-corp))) "Not prompted when no ice available")
+    (is (no-prompt? state :corp) "Not prompted when no ice available")
     (take-credits state :runner)
     (play-from-hand state :corp "Hortum" "HQ")
     (play-from-hand state :corp "Hortum" "R&D")
@@ -3667,7 +3667,7 @@
       (is (= 4 (get-counters (refresh h1) :advancement)) "Gains 4 tokens")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (empty? (:prompt (get-corp))) "Not prompted when all ice advanced"))))
+      (is (no-prompt? state :corp) "Not prompted when all ice advanced"))))
 
 (deftest steve-cambridge-master-grifter
   ;; Steve
@@ -3858,7 +3858,7 @@
           (is (zero? (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
           (card-ability state :corp my 1)
-          (is (empty? (:prompt (get-corp))) "No prompt for the Corp as no counters exist to spend")
+          (is (no-prompt? state :corp) "No prompt for the Corp as no counters exist to spend")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
 (deftest weyland-consortium-because-we-built-it
@@ -3896,7 +3896,7 @@
       (run-continue state)
       (run-continue state)
       (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
-      (is (zero? (count (:prompt (get-corp)))))))
+      (is (= 1 (count (:prompt (get-corp)))) "Only run prompt is active")))
   (testing "2 meat damage from ID ability when The Cleaners is scored"
     (do-game
       (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
@@ -3954,7 +3954,7 @@
       (run-continue state)
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))) "Runner takes no damage at the second encounter")
-      (is (empty? (:prompt (get-corp)))))))
+      (is (no-prompt? state :corp)))))
 
 (deftest weyland-consortium-built-to-last
   ;; Weyland Consortium: Built to Last

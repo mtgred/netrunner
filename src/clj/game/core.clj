@@ -646,10 +646,10 @@
   [game.core.prompts
    cancellable
    choice-parser
-   clear-encounter-prompts
+   clear-run-prompts
    clear-wait-prompt
    resolve-select
-   show-encounter-prompts
+   show-run-prompts
    show-prompt
    show-prompt-with-dice
    show-select

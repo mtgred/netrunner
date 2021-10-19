@@ -65,8 +65,8 @@
     (is (= ["Enigma" "Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
     (click-prompt state :corp "Enigma")
     (click-prompt state :corp "HQ")
-    (is (empty? (:prompt (get-corp))))
-    (is (empty? (:prompt (get-runner))))
+    (is (no-prompt? state :corp))
+    (is (no-prompt? state :runner))
     (is (some? (get-ice state :hq 0)))
     (is (= 2 (count (:discard (get-corp)))))
     (move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
@@ -417,7 +417,7 @@
       (click-prompt state :corp "Yes")
       (is (= 1 (count-tags state)) "Runner takes 1 tag for playing a Run event")
       (play-from-hand state :runner "Wyrm")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (no-prompt? state :corp) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (= 1 (count-tags state)) "Runner doesn't gain a tag from installing an icebreaker after playing a Run event")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -425,7 +425,7 @@
       (click-prompt state :corp "Yes")
       (is (= 2 (count-tags state)) "Runner gains 1 tag for installing an Icebreaker")
       (play-from-hand state :runner "The Maker's Eye")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (no-prompt? state :corp) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (= 2 (count-tags state)) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")))
   (testing "Should only trigger on Run events. #3619"
     (do-game
@@ -436,7 +436,7 @@
       (run-empty-server state "HQ")
       (play-from-hand state :runner "Mining Accident")
       (click-prompt state :corp "Pay 5 [Credits]")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (no-prompt? state :corp) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event")))
   (testing "Shouldn't trigger Apex #5175"
     (do-game
@@ -447,7 +447,7 @@
       (take-credits state :corp)
       (end-phase-12 state :runner)
       (click-card state :runner "Wyrm")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program"))))
+      (is (no-prompt? state :corp) "Corp shouldn't get a prompt to use Better Citizen Program"))))
 
 (deftest bifrost-array
   ;; Bifrost Array
@@ -470,11 +470,11 @@
     (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
     (play-and-score state "Brain Rewiring")
     (click-prompt state :corp "Yes")
-    (is (not (empty? (:prompt (get-runner)))) "Runner waiting for Corp resolve Brain Rewiring")
+    (is (not (no-prompt? state :runner)) "Runner waiting for Corp resolve Brain Rewiring")
     (click-prompt state :corp "2")
     (is (= 1 (count (:hand (get-runner)))))
-    (is (empty? (:prompt (get-runner))) "Runner not waiting for Corp resolve Brain Rewiring")
-    (is (empty? (:prompt (get-corp))) "Corp done resolving Brain Rewiring")))
+    (is (no-prompt? state :runner) "Runner not waiting for Corp resolve Brain Rewiring")
+    (is (no-prompt? state :corp) "Corp done resolving Brain Rewiring")))
 
 (deftest braintrust
   ;; Braintrust
@@ -614,7 +614,7 @@
     (play-and-score state "Character Assassination")
     (let [kati (get-resource state 0)]
       (click-card state :corp kati)
-      (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
+      (is (no-prompt? state :runner) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
 
 (deftest chronos-project
@@ -808,8 +808,8 @@
       (click-prompt state :runner "No action")
       (click-card state :corp "Domestic Sleepers")
       (click-prompt state :runner "Steal")
-      (is (nil? (prompt-map :runner)) "No further prompts for Runner")
-      (is (nil? (prompt-map :corp)) "No further prompts for Corp")
+      (is (no-prompt? state :runner) "No further prompts for Runner")
+      (is (no-prompt? state :corp) "No further prompts for Corp")
       (is (nil? (:run @state)) "Run has ended")))
   (testing "Can access upgrades between cards in hand"
     (do-game
@@ -949,7 +949,7 @@
       (click-prompt state :corp "No")
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
-      (is (empty? (:prompt (get-corp))) "Corp doesn't get opportunity to use Divested Trust")
+      (is (no-prompt? state :corp) "Corp doesn't get opportunity to use Divested Trust")
       (is (= :runner (:winner @state)) "Runner should win")
       (is (= "Agenda" (:reason @state)) "Win condition reports points")))
   (testing "Interaction with Turntable. Issue #4789"
@@ -1257,7 +1257,7 @@
         (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top")
         (is (= 4 (get-counters (refresh fs) :agenda)) "Spent agenda token on Flower Sermon")
         (card-ability state :corp fs 0)
-        (is (empty? (:prompt (get-corp))) "Can only use once per turn"))))
+        (is (no-prompt? state :corp) "Can only use once per turn"))))
   (testing "Hyoubu interaction"
     (do-game
       (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
@@ -1392,12 +1392,12 @@
         (card-ability state :corp gs-scored 0)
         (click-card state :corp "Ice Wall")
         (card-ability state :corp gs-scored 0)
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "Requires at least 1 card in hand to host"
       (do-game state
         (starting-hand state :corp [])
         (card-ability state :corp gs-scored 0)
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "Can take a hosted card"
       (do-game state
         (card-ability state :corp gs-scored 0)
@@ -1409,7 +1409,7 @@
     (testing "Can't take a hosted card if none exist"
       (do-game state
         (card-ability state :corp gs-scored 1)
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "Can host a single corp card even if a runner card is hosted"
       (do-game state
         (take-credits state :corp)
@@ -1430,7 +1430,7 @@
         (click-card state :runner "Glenn Station")
         (take-credits state :runner)
         (card-ability state :corp (refresh gs-scored) 1)
-        (is (empty? (:prompt (get-corp))))))
+        (is (no-prompt? state :corp))))
     (testing "Can take a hosted card even if a runner card is hosted"
       (do-game state
         (take-credits state :corp)
@@ -2490,7 +2490,7 @@
     (play-from-hand state :runner "Clone Chip")
     (take-credits state :runner)
     (play-and-score state "Project Ares")
-    (is (empty? (:prompt (get-runner))) "No prompt for Runner if scored with 4 advancement tokens")
+    (is (no-prompt? state :runner) "No prompt for Runner if scored with 4 advancement tokens")
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
     (let [ares (get-content state :remote2 0)]
@@ -2500,7 +2500,7 @@
       (is (= "Choose 2 installed cards installed cards to trash" (:msg (prompt-map :runner)))
           "Runner has Ares prompt to trash installed cards"))
     (click-card state :runner "Clone Chip")
-    (is (empty? (:prompt (get-runner))) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
+    (is (no-prompt? state :runner) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 1 (count-bad-pub state)))))
 
@@ -2913,7 +2913,7 @@
     (take-credits state :corp)
     (run-empty-server state :archives)
     (click-prompt state :corp "Done")
-    (is (empty? (:prompt (get-runner))) "Runner's waiting prompt resolved")))
+    (is (no-prompt? state :runner) "Runner's waiting prompt resolved")))
 
 (deftest quantum-predictive-model
   ;; Quantum Predictive Model
@@ -3166,7 +3166,7 @@
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}})
       (play-and-score state "SDS Drone Deployment")
-      (is (empty? (:prompt (get-corp))) "Corp doesn't get any choices when runner has no installed programs")))
+      (is (no-prompt? state :corp) "Corp doesn't get any choices when runner has no installed programs")))
   (testing "Runner steal, a program is installed"
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}
@@ -3216,8 +3216,8 @@
       (click-card state :corp "Corroder")
       (click-card state :corp "NGO Front")
       (click-prompt state :corp "New remote")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner)))))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner)))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -3237,7 +3237,7 @@
        (play-and-score state "Send a Message")
        (click-card state :corp archer)
        (is (rezzed? (refresh archer)))
-       (is (empty? (:prompt (get-runner))) "Ability finished resolving"))))
+       (is (no-prompt? state :runner) "Ability finished resolving"))))
   (testing "Basic test - steal"
     (do-game
      (new-game {:corp {:deck ["Send a Message" "Archer"]}})
@@ -3249,8 +3249,8 @@
        (click-prompt state :runner "Steal")
        (click-card state :corp archer)
        (is (rezzed? (refresh archer)))
-       (is (empty? (:prompt (get-runner))) "Ability finished resolving")
-       (is (empty? (:prompt (get-corp))) "Ability finished resolving")))))
+       (is (no-prompt? state :runner) "Ability finished resolving")
+       (is (no-prompt? state :corp) "Ability finished resolving")))))
 
 (deftest sensor-net-activation
   ;; Sensor Net Activation
@@ -3340,7 +3340,7 @@
       (click-prompt state :corp "Yes")
       (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
       (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+      (is (no-prompt? state :corp) "Not prompted when out of money")))
   (testing "gain credits when in runner score area before turn begins"
     (do-game
       (new-game {:corp {:deck ["SSL Endorsement"]}})
@@ -3366,7 +3366,7 @@
       (click-prompt state :corp "Yes")
       (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
       (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+      (is (no-prompt? state :corp) "Not prompted when out of money")))
   (testing "register event when agenda swapped with Turntable"
     ;; Regression test for #3114
     (do-game
@@ -3406,7 +3406,7 @@
       (take-credits state :runner)
       (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
       (click-prompt state :corp "No")
-      (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
+      (is (no-prompt? state :corp) "Not double prompted for credits")
       (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
       (take-credits state :runner)
       (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
@@ -3417,7 +3417,7 @@
       (click-prompt state :corp "Yes")
       (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
       (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money"))))
+      (is (no-prompt? state :corp) "Not prompted when out of money"))))
 
 (deftest standoff
   ;; Standoff
@@ -3588,7 +3588,7 @@
       (is (= 1 (count (:hand (get-corp)))))
       (is (zero? (count (:deck (get-corp)))))
       (play-and-score state "The Future is Now")
-      (is (empty? (:prompt (get-corp))) "Ability shouldn't fire if deck is empty")
+      (is (no-prompt? state :corp) "Ability shouldn't fire if deck is empty")
       (is (zero? (count (:hand (get-corp)))))
       (is (zero? (count (:deck (get-corp))))))))
 
@@ -3754,7 +3754,7 @@
         (card-ability state :corp (refresh tm) 0)
         (run-continue state)
         (is (empty? (-> (get-runner) :register :successful-run)))
-        (is (empty? (:prompt (get-runner))) "No omar prompt"))))
+        (is (no-prompt? state :runner) "No omar prompt"))))
   (testing "Stargate interaction. Issue #4713"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

@@ -38,9 +38,9 @@
         (is (empty? (filter #(:dynamic %) (:abilities (refresh gord)))) "No auto break dynamic ability")
         (card-ability state :runner gord 0)
         (click-prompt state :runner "End the run")
-        (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
+        (is (no-prompt? state :runner) "No prompt for further breaking")
         (card-ability state :runner gord 0)
-        (is (empty? (:prompt (get-runner))) "Can't use break ability"))))
+        (is (no-prompt? state :runner) "Can't use break ability"))))
   (testing "No breaking restriction on other servers"
     (do-game
       (new-game {:corp {:hand ["Afshar"]}
@@ -82,9 +82,9 @@
         (run-continue state)
         (card-ability state :runner gord 0)
         (click-prompt state :runner "Make the Runner lose 2 [Credits]")
-        (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
+        (is (no-prompt? state :runner) "No prompt for further breaking")
         (card-ability state :runner gord 0)
-        (is (empty? (:prompt (get-runner))) "Can't use break ability")))))
+        (is (no-prompt? state :runner) "Can't use break ability")))))
 
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
@@ -154,7 +154,7 @@
           (click-prompt state :runner "End the run")
           (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
           (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token.")
-          (is (empty? (:prompt (get-runner))) "Prompt now closed")
+          (is (no-prompt? state :runner) "Prompt now closed")
           (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
           (run-continue state :movement)
           (run-jack-out state)
@@ -169,7 +169,7 @@
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
           (card-ability state :runner (refresh cor) 0)
           (click-prompt state :runner "End the run")
-          (is (empty? (:prompt (get-runner))) "No option to break second sub"))))))
+          (is (no-prompt? state :runner) "No option to break second sub"))))))
 
 (deftest anansi
   ;; Anansi
@@ -250,7 +250,7 @@
        (changes-val-macro 0 (count (:hand (get-runner)))
                           "No new card from Anansi"
                           (click-prompt state :runner "Yes"))
-       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
   (testing "2nd sub test - runner clicks YES"
     (do-game
      (new-game {:corp {:hand ["Anansi"]
@@ -268,7 +268,7 @@
        (changes-val-macro 1 (count (:hand (get-runner)))
                           "New card from Anansi"
                           (click-prompt state :runner "Yes"))
-       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi"))))
+       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
   (testing "2nd sub test - runner clicks NO"
     (do-game
      (new-game {:corp {:hand ["Anansi"]
@@ -286,7 +286,7 @@
        (changes-val-macro 0 (count (:hand (get-runner)))
                           "No new card from Anansi"
                           (click-prompt state :runner "No"))
-       (is (empty? (:prompt (get-corp))) "corp has no prompts from Anansi")))))
+       (is (no-prompt? state :corp) "corp has no prompts from Anansi")))))
 
 (deftest ansel-1-0
   ;; Ansel 1.0
@@ -1128,7 +1128,7 @@
                (:msg (prompt-map :runner)))
             "Runner is prompted")
         (click-card state :runner "Sure Gamble")
-        (is (empty? (:prompt (get-runner))) "Runner only selects 1 card")
+        (is (no-prompt? state :runner) "Runner only selects 1 card")
         (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))))
     (testing "Empty hand"
       (do-game
@@ -1144,7 +1144,7 @@
         (run-on state "HQ")
         (rez state :corp (get-ice state :hq 0))
         (run-continue state)
-        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt")))))
+        (is (no-prompt? state :runner) "Runner doesn't have a prompt")))))
 
 (deftest data-mine
   ;; Data Mine - do one net and trash
@@ -1174,7 +1174,7 @@
         (changes-val-macro -3 (:credit (get-runner))
               "Runner pays 3 credits on Data Ward encounter"
               (click-prompt state :runner "Pay 3 [Credits]"))
-        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt"))))
+        (is (no-prompt? state :runner) "Runner doesn't have a prompt"))))
   (testing "Runner takes 1 tag on encounter"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1188,7 +1188,7 @@
         (changes-val-macro 1 (count-tags state)
               "Runner takes 1 tag on Data Ward encounter"
               (click-prompt state :runner "Take 1 tag"))
-        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt"))))
+        (is (no-prompt? state :runner) "Runner doesn't have a prompt"))))
   (testing "Data Ward ends run only if runner is tagged"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1398,7 +1398,7 @@
         (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
         (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
         (card-subroutine state :corp ef 0)
-        (is (empty? (:prompt (get-corp))) "No prompt because no more fitting cards in grip")))))
+        (is (no-prompt? state :corp) "No prompt because no more fitting cards in grip")))))
 
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
@@ -1487,7 +1487,7 @@
                            "Bounce Scrubber to hand"
                            (click-card state :corp "Scrubber"))
         (card-subroutine state :corp (refresh f2p) 0)
-        (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
+        (is (no-prompt? state :corp) "F2P doesn't fire if no installed cards")))))
 
 (deftest fairchild-1-0
   ;; Fairchild 1.0
@@ -1605,7 +1605,7 @@
       (click-prompt state :runner "0")
       (click-card state :corp cc)
       (is (= 1 (count (get-hardware state))) "Clone Chip trashed")
-      (is (empty? (:prompt (get-runner))) "Plascrete didn't try preventing meat damage")
+      (is (no-prompt? state :runner) "Plascrete didn't try preventing meat damage")
       (is (= 1 (count (:hand (get-runner)))))
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
@@ -2201,7 +2201,7 @@
         (run-on state "HQ")
         (run-continue state)
         (card-subroutine state :corp hs 0)
-        (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+        (is (no-prompt? state :corp) "RFG prompt did not come up")
         (card-subroutine state :corp hs 1)
         (is (nil? (:run @state)))
         (is (= ["Sure Gamble"] (->> (get-runner) :discard (map :title))) "Sure Gamble should be in heap")))))
@@ -2222,15 +2222,15 @@
       (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
       (card-subroutine state :corp harv 0)
       (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "The Class Act prompt showing")
-      (is (= 1 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
+      (is (= 2 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
       (click-card state :runner (last (:hand (get-runner))))
       (is (= 7 (count (:hand (get-runner)))) "Runner bottomed Class Act draw")
       (is (= "Harvester" (-> (prompt-map :runner) :card :title)) "Harvester prompt showing")
       (click-card state :runner (last (:hand (get-runner))))
       (click-card state :runner (first (:hand (get-runner))))
       (is (= 5 (count (:hand (get-runner)))) "Harvester discarded some cards")
-      (is (empty? (:prompt (get-runner))) "No more prompts for the Runner")
-      (is (empty? (:prompt (get-corp))) "No more prompts for the Corp"))))
+      (is (no-prompt? state :runner) "No more prompts for the Runner")
+      (is (no-prompt? state :corp) "No more prompts for the Corp"))))
 
 (deftest herald
   ;; Herald
@@ -2480,7 +2480,7 @@
        (run-continue state)
        ;; Inazuma subs prevented break on next piece of ice
        (card-ability state :runner bukhgalter "Break 1 Sentry subroutine")
-       (is (empty? (:prompt (get-runner))) "Bukhgalter can't break so no prompt")
+       (is (no-prompt? state :runner) "Bukhgalter can't break so no prompt")
        (changes-val-macro -2 (count (:hand (get-runner)))
                           "2 net damage from Cortex Lock"
                           (fire-subs state (refresh cortex-lock)))
@@ -2648,7 +2648,7 @@
         (rez state :corp jua)
         (run-continue state)
         (card-subroutine state :corp (refresh jua) 0)
-        (is (empty? (:prompt (get-corp))) "Can't fire for 1 installed card")
+        (is (no-prompt? state :corp) "Can't fire for 1 installed card")
         (run-continue state :movement)
         (run-jack-out state)
         (take-credits state :runner)
@@ -2686,7 +2686,7 @@
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
         (rez state :corp (get-ice state :hq 0))
         (run-continue state :encounter-ice)
-        (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
+        (is (no-prompt? state :runner) "Runner can't install Paperclip because of Jua encounter ability")
         (run-continue state :movement)
         (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
@@ -3160,7 +3160,7 @@
         (is (= 2 (:base (prompt-map :corp))) "Trace is base 2")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+        (is (no-prompt? state :corp) "RFG prompt did not come up")
         (is (= ["Cache"] (->> (get-runner) :discard (map :title))) "Cache in heap after RFG sub")
         (is (not (= ["Cache"] (->> (get-runner) :rfg (map :title)))) "Cache should not be rfg'd")
         (card-subroutine state :corp mp 3)
@@ -3219,7 +3219,7 @@
         (run-jack-out state)
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (empty? (:prompt (get-runner))) "No Trypano prompt")
+        (is (no-prompt? state :runner) "No Trypano prompt")
         (is (zero? (core/get-virus-counters state (first (:hosted (refresh m)))))
           "Trypano does not gain a virus counter"))))
   (testing "Derezzed ice"
@@ -4538,7 +4538,7 @@
         (changes-val-macro 0 (count (:hand (get-runner)))
           "Prevent third sub damage"
           (card-ability state :runner cal 0))
-        (is (empty? (:prompt (get-runner))) "No more damage prevention triggers")))))
+        (is (no-prompt? state :runner) "No more damage prevention triggers")))))
 
 (deftest salvage
   ;; Salvage
@@ -4605,7 +4605,7 @@
       (click-card state :corp "Scrubber")
       (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
       (card-subroutine state :corp (refresh sand) 0)
-      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+      (is (no-prompt? state :corp) "Sandman doesn't fire if no installed cards"))))
 
 (deftest sandstone
   ;; Sandstone - gain virus counter on run reducing strength by 1
@@ -5061,7 +5061,7 @@
             (rez state :corp sm)
             (run-continue state)
             (card-subroutine state :corp sm 2)
-            (is (empty? (:prompt (get-corp))) "No target prompt as effect didn't happen"))))
+            (is (no-prompt? state :corp) "No target prompt as effect didn't happen"))))
       (testing "Enough cards in deck"
         (do-game
           (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
@@ -5257,7 +5257,7 @@
         (run-continue state)
         (card-ability state :runner alpha "Add 1 strength")
         (card-ability state :runner alpha "Break 1 subroutine")
-        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (is (no-prompt? state :runner) "Alpha can't break so no prompt")
         (card-ability state :runner faerie "Break 1 Sentry subroutine")
         (is (= "Break a subroutine" (:msg (prompt-map :runner)))
             "Runner has Faerie break prompt"))))
@@ -5664,7 +5664,7 @@
       (run-continue state)
       (card-subroutine state :corp tsurugi 0)
       (is (seq (:prompt (get-corp))) "Corp is prompted to pay")
-      (is (empty? (:prompt (get-runner))) "Runner is not prompted to pay"))))
+      (is (no-prompt? state :runner) "Runner is not prompted to pay"))))
 
 (deftest turing
   ;; Turing
@@ -5701,7 +5701,7 @@
         (run-continue state)
         (card-ability state :runner alpha "Add 1 strength")
         (card-ability state :runner alpha "Break 1 subroutine")
-        (is (empty? (:prompt (get-runner))) "Alpha can't break so no prompt")
+        (is (no-prompt? state :runner) "Alpha can't break so no prompt")
         (card-ability state :runner abagnale "Break 1 Code Gate subroutine")
         (is (= "Break a subroutine" (:msg (prompt-map :runner)))
             "Runner has Abagnale break prompt")))))
@@ -5998,7 +5998,7 @@
       (card-subroutine state :corp wormhole 0)
       (is (:fired (first (:subroutines (refresh wormhole))))
           "Subroutine fires even when there are no viable ice.")
-      (is (empty? (:prompt (get-corp))) "No choice prompt for the Corp")
+      (is (no-prompt? state :corp) "No choice prompt for the Corp")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state :hq)

@@ -96,7 +96,7 @@
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "No bypass prompt"))))
+      (is (no-prompt? state :runner) "No bypass prompt"))))
 
 (deftest aghora
   ;; Aghora
@@ -108,7 +108,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Aghora")
         (card-ability state :runner (get-program state 0) 2)
-        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+        (is (no-prompt? state :runner) "No select prompt as there's no Deva in hand")))
     (testing "Works with another deva in hand"
       (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
         (do-game
@@ -137,7 +137,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (is (no-prompt? state :runner) "No break prompt")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
@@ -250,7 +250,7 @@
       (rez state :corp (refresh zed2))
       (run-continue state)
       (card-ability state :runner (refresh alias) 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt because we're running a remote"))))
+      (is (no-prompt? state :runner) "No break prompt because we're running a remote"))))
 
 (deftest amina
   ;; Amina ability
@@ -597,7 +597,7 @@
         (run-continue state)
         (card-ability state :runner bo 0)
         (card-ability state :runner bo 0)
-        (is (empty? (:prompt (get-runner))) "Has no break prompt as strength isn't high enough")
+        (is (no-prompt? state :runner) "Has no break prompt as strength isn't high enough")
         (card-ability state :runner bo 0)
         (is (= 8 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 8")
         (click-prompt state :runner "Trace 4 - Purge virus counters")
@@ -708,7 +708,7 @@
       (run-on state "Archives")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Black Orchestra prompt did not come up"))))
+      (is (no-prompt? state :runner) "Black Orchestra prompt did not come up"))))
 
 (deftest botulus
   ;; Botulus
@@ -1029,7 +1029,7 @@
           (card-ability state :runner carmen 0)
           (click-prompt state :runner "Trash an AI program"))
         (click-prompt state :runner "Do 1 net damage")
-        (is (empty? (:prompt (get-runner))) "Only breaks 1 sub at a time"))))))
+        (is (no-prompt? state :runner) "Only breaks 1 sub at a time"))))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
@@ -1155,19 +1155,19 @@
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run")
-        (is (empty? (:prompt (get-runner))) "Broke all subroutines on Ice Wall")
+        (is (no-prompt? state :runner) "Broke all subroutines on Ice Wall")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Enigma")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Enigma")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Rototurret")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Rototurret")
         (run-continue state :movement)
         (run-jack-out state))
       (take-credits state :runner)
@@ -1178,7 +1178,7 @@
         (run-on state :archives)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Ice Wall")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Ice Wall")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
@@ -1186,13 +1186,13 @@
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
-        (is (empty? (:prompt (get-runner))) "Broke all subroutines on Engima")
+        (is (no-prompt? state :runner) "Broke all subroutines on Engima")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Rototurret")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Rototurret")
         (run-continue state :movement)
         (run-jack-out state))
       (take-credits state :runner)
@@ -1203,13 +1203,13 @@
         (run-on state :archives)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Ice Wall")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Ice Wall")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Can't use Chameleon on Enigma")
+        (is (no-prompt? state :runner) "Can't use Chameleon on Enigma")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :rd)
@@ -1217,7 +1217,7 @@
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "Trash a program")
         (click-prompt state :runner "End the run")
-        (is (empty? (:prompt (get-runner))) "Broke all subroutines on Rototurret")))))
+        (is (no-prompt? state :runner) "Broke all subroutines on Rototurret")))))
 
 (deftest chisel
   ;; Chisel
@@ -1351,7 +1351,7 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
-        (is (empty? (:prompt (get-runner))) "Prompt closed")
+        (is (no-prompt? state :runner) "Prompt closed")
         (is (= 1 (get-counters (refresh conduit) :virus)))
         (is (not (:run @state)) "Run ended")
         (card-ability state :runner conduit 0)
@@ -1492,7 +1492,7 @@
       (run-on state "R&D")
       (run-continue state)
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
+      (is (no-prompt? state :runner) "No prompt on uniced server")))
   (testing "No prompt with less than 2 ice installed"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1504,7 +1504,7 @@
       (run-on state "HQ")
       (run-continue-until state :success)
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
+      (is (no-prompt? state :runner) "No prompt with only 1 installed ice")))
   (testing "No prompt when empty"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1520,7 +1520,7 @@
       (run-continue-until state :success)
       (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt with no virus counters")))
+      (is (no-prompt? state :runner) "No prompt with no virus counters")))
   (testing "Works with Hivemind installed"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1546,7 +1546,7 @@
       (is (= "Enigma" (:title (get-ice state :hq 0))))
       (is (= "Ice Wall" (:title (get-ice state :hq 1))))
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
+      (is (no-prompt? state :runner) "No prompt with only 1 installed ice"))))
 
 (deftest corroder
   ;; Corroder
@@ -1713,7 +1713,7 @@
       (core/update! state :runner (assoc (refresh cc) :current-strength 7))
       (is (= 7 (get-strength (refresh cc))) "Manually set equal strength")
       (card-ability state :runner cc 0)
-      (is (empty? (:prompt (get-runner))) "Can't break subs on a different server")
+      (is (no-prompt? state :runner) "Can't break subs on a different server")
       (is (zero? (count (filter :broken (:subroutines (get-ice state :rd 0))))) "No subs are broken"))))
 
 (deftest d4v1d
@@ -1742,7 +1742,7 @@
         (rez state :corp iw)
         (run-continue state)
         (card-ability state :runner d4 0)
-        (is (empty? (:prompt (get-runner))) "No prompt for breaking 1 strength Ice Wall")))))
+        (is (no-prompt? state :runner) "No prompt for breaking 1 strength Ice Wall")))))
 
 (deftest dai-v
   ;; Dai V
@@ -1791,7 +1791,7 @@
         (card-ability state :runner daiv 1)
         (click-prompt state :runner "Done")
         (card-ability state :runner daiv 0)
-        (is (nil? (prompt-map :runner)) "We are incapable of paying"))))
+        (is (no-prompt? state :runner)) "We are incapable of paying")))
   (testing "Can't pay from credit pool"
     (do-game
       (new-game {:corp {:deck ["Enigma"]}
@@ -1836,7 +1836,7 @@
                            (card-ability state :runner daiv 0)
                            (click-prompt state :runner "Force the Runner to lose 1 [Click]")
                            (click-prompt state :runner "End the run")
-                           (is (nil? (prompt-map :runner)) "We are incapable of paying")
+                           (is (no-prompt? state :runner) "We are incapable of paying")
                            (is (= 0 (count (filter :broken (:subroutines (refresh enig))))) "No subroutines were broken"))))))
 
 (deftest darwin
@@ -2160,7 +2160,7 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (run-continue state)
-        (is (empty? (:prompt (get-runner))) "No prompt for accessing cards"))))
+        (is (no-prompt? state :runner) "No prompt for accessing cards"))))
   (testing "Eater interaction with remote server. Issue #4536"
     (do-game
       (new-game {:corp {:deck [(qty "Rototurret" 2) "NGO Front"]}
@@ -2184,7 +2184,7 @@
         (run-continue state)
         (run-continue state)
         (is (find-card "Eater" (:discard (get-runner))) "Eater is trashed")
-        (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
+        (is (no-prompt? state :runner) "No prompt for accessing cards")))))
 
 (deftest echelon
   ;; Echelon
@@ -2223,7 +2223,7 @@
             "Break costs 1"
             (card-ability state :runner echelon 0)
             (click-prompt state :runner "Add installed program to the top of the Runner's Stack"))
-          (is (empty? (:prompt (get-runner))) "Only breaks 1 sub at a time"))))
+          (is (no-prompt? state :runner) "Only breaks 1 sub at a time"))))
     (testing "Gains str per icebreaker"
       (do-game state
         (take-credits state :corp)
@@ -2304,8 +2304,8 @@
         (run-continue state :movement)
         (run-jack-out state)
         (is (nil? (get-run)))
-        (is (empty? (:prompt (get-corp))))
-        (is (empty? (:prompt (get-runner))))))))
+        (is (no-prompt? state :corp))
+        (is (no-prompt? state :runner))))))
 
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
@@ -2499,13 +2499,13 @@
       (let [faust (get-program state 0)]
         (card-ability state :runner faust 1)
         (click-card state :runner "Astrolabe")
-        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for hardware")
+        (is (no-prompt? state :runner) "No trash-prevention prompt for hardware")
         (card-ability state :runner faust 1)
         (click-card state :runner "Gordian Blade")
-        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for program")
+        (is (no-prompt? state :runner) "No trash-prevention prompt for program")
         (card-ability state :runner faust 1)
         (click-card state :runner "Armitage Codebusting")
-        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource")))))
+        (is (no-prompt? state :runner) "No trash-prevention prompt for resource")))))
 
 (deftest fawkes
   ;; Fawkes
@@ -2518,7 +2518,7 @@
           0 (get-strength (refresh fawkes))
           "Strength was not increased"
           (card-ability state :runner fawkes 1)
-          (is (empty? (:prompt (get-runner))) "Not asked how many credits to pay")))))
+          (is (no-prompt? state :runner) "Not asked how many credits to pay")))))
   (testing "Charges the correct amount"
     (do-game (new-game {:runner {:hand ["Fawkes" "Cloak"] :credits 20}})
       (take-credits state :corp)
@@ -2580,7 +2580,7 @@
         (run-on state "HQ")
         (rez state :corp iw)
         (run-continue state)
-        (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
+        (is (no-prompt? state :runner)) "Femme ability doesn't fire after uninstall")))
   (testing "Bypass doesn't persist if ice is uninstalled and reinstalled"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2598,7 +2598,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
+      (is (no-prompt? state :runner)) "Femme ability doesn't fire after uninstall")))
 
 (deftest fermenter
   ;; Fermenter - click, trash to get 2c per counter.
@@ -2703,12 +2703,12 @@
         (rez state :corp iw)
         (run-continue state)
         (card-ability state :runner gh1 0)
-        (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall only has 1 subroutine")
+        (is (no-prompt? state :runner) "No break prompt as Ice Wall only has 1 subroutine")
         (is (refresh gh1) "Grappling Hook isn't trashed")
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
         (card-ability state :runner gh1 0)
-        (is (empty? (:prompt (get-runner))) "No break prompt as Ice Wall has no unbroken subroutines")
+        (is (no-prompt? state :runner) "No break prompt as Ice Wall has no unbroken subroutines")
         (is (refresh gh1) "Grappling Hook isn't trashed")
         (run-continue state :movement)
         (run-jack-out state)
@@ -2730,7 +2730,7 @@
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done")
         (card-ability state :runner gh2 0)
-        (is (empty? (:prompt (get-runner))) "No break prompt as Little Engine has more than 1 broken sub")
+        (is (no-prompt? state :runner) "No break prompt as Little Engine has more than 1 broken sub")
         (is (refresh gh2) "Grappling Hook isn't trashed"))))
   (testing "Interaction with Fairchild 3.0"
     (do-game
@@ -2770,8 +2770,8 @@
       (click-prompt state :corp "1")
       (is (zero? (count-tags state)) "Runner gained no tags")
       (is (get-run) "Run hasn't ended")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt")))
+      (is (no-prompt? state :corp) "Corp shouldn't have a prompt")
+      (is (no-prompt? state :runner) "Runner shouldn't have a prompt")))
   (testing "Selecting a sub when multiple of the same title exist #5291"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3148,8 +3148,8 @@
         (click-prompt state :runner "End the run")
         (run-continue state)
         (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
-        (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+        (is (no-prompt? state :corp) "Corp shouldn't have a prompt")
+        (is (no-prompt? state :runner) "Runner shouldn't have a prompt"))))
   (testing "Inversificator shouldn't fire when ice is unrezzed. Issue #4859"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3174,8 +3174,8 @@
         (run-continue state)
         (run-continue state)
         (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
-        (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
-        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+        (is (no-prompt? state :corp) "Corp shouldn't have a prompt")
+        (is (no-prompt? state :runner) "Runner shouldn't have a prompt"))))
   (testing "shouldn't fire ice's on-pass ability #5143"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3228,8 +3228,8 @@
       (click-card state :runner "Drafter")
       (is (= ["Border Control" "Thimblerig"] (map :title (get-ice state :rd))))
       (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :hq))))
-      (is (empty? (:prompt (get-corp))) "Corp gets no Thimblerig prompt")
-      (is (empty? (:prompt (get-runner))) "No more prompts open")))
+      (is (no-prompt? state :corp) "Corp gets no Thimblerig prompt")
+      (is (no-prompt? state :runner) "No more prompts open")))
   (testing "Swap vs subtype issues #5170"
     (do-game
       (new-game {:corp {:hand ["Drafter" "Data Raven" "Vanilla"]
@@ -3309,7 +3309,7 @@
       (run-continue state)
       (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (click-prompt state :runner "Troll")
-        (is (empty? (:prompt (get-runner))) "Prompt closed")
+        (is (no-prompt? state :runner) "Prompt closed")
         (is (not (:run @state)) "Run ended")
         (is (-> (get-corp) :discard first :seen) "Troll is faceup")
         (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
@@ -3787,7 +3787,7 @@
         (click-prompt state :runner "Pay 1 [Credits]")
         (click-prompt state :runner "Pay 1 [Credits]")
         (click-prompt state :runner "Pay 1 [Credits]")
-        (is (empty? (:prompt (get-runner))) "No more prompts open"))))
+        (is (no-prompt? state :runner) "No more prompts open"))))
   (testing "Interaction with Spooned"
     (do-game
       (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
@@ -3818,7 +3818,7 @@
         (click-prompt state :runner "Pay 1 [Credits]")
         (click-prompt state :runner "Pay 1 [Credits]")
         (click-prompt state :runner "Pay 1 [Credits]")
-        (is (empty? (:prompt (get-runner))) "No more prompts open")))))
+        (is (no-prompt? state :runner) "No more prompts open")))))
 
 (deftest maven
   ;; Maven
@@ -4026,7 +4026,7 @@
       (run-on state "Archives")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "MKUltra prompt did not come up"))))
+      (is (no-prompt? state :runner) "MKUltra prompt did not come up"))))
 
 (deftest multithreader
   ;; Multithreader
@@ -4071,7 +4071,7 @@
       (click-card state :runner imp)
       (is (= 1 (get-counters (refresh imp) :virus)) "Imp lost 1 virus counter to pump")
       (is (= 2 (get-strength (refresh musaazi))) "Musaazi strength 2")
-      (is (empty? (:prompt (get-runner))) "No prompt open")
+      (is (no-prompt? state :runner) "No prompt open")
       (card-ability state :runner musaazi 0)
       (click-prompt state :runner "Trash a program")
       (click-card state :runner musaazi)
@@ -4331,7 +4331,7 @@
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
+      (is (no-prompt? state :runner) "No prompt to install second Paperclip")))
   (testing "firing on facedown ice shouldn't crash"
     (do-game
       (new-game {:corp {:deck ["Vanilla"]}
@@ -4357,20 +4357,20 @@
       (rez state :corp (get-ice state :archives 1))
       (run-continue state)
       (click-prompt state :runner "No")
-      (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
+      (is (no-prompt? state :runner) "No additional prompts to rez other copies of Paperclip")
       (run-continue-until state :approach-ice)
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       ;; we should get the prompt on a second ice even after denying the first
       (click-prompt state :runner "No")
-      (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
+      (is (no-prompt? state :runner) "No additional prompts to rez other copies of Paperclip")
       (run-continue state :movement)
       (run-jack-out state)
       ;; Run again, make sure we get the prompt to install again
       (run-on state "Archives")
       (run-continue state)
       (click-prompt state :runner "No")
-      (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")))
+      (is (no-prompt? state :runner) "No additional prompts to rez other copies of Paperclip")))
   (testing "auto-pump"
     (testing "Pumping and breaking for 1"
       (do-game
@@ -4481,7 +4481,7 @@
         (click-prompt state :runner "No")
         (click-prompt state :runner "No")
         (click-prompt state :runner "No")
-        (is (empty? (:prompt (get-runner))) "No further prompts to install heap breakers"))))
+        (is (no-prompt? state :runner) "No further prompts to install heap breakers"))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp {:deck ["Vanilla" "Blacklist"]}
@@ -4494,7 +4494,7 @@
       (run-on state "Archives")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Paperclip prompt did not come up")
+      (is (no-prompt? state :runner) "Paperclip prompt did not come up")
       (fire-subs state (get-ice state :archives 0))
       (is (not (:run @state)) "Run ended")))
   (testing "Breaking some subs"
@@ -4547,7 +4547,7 @@
       (take-credits state :corp)
       (end-phase-12 state :runner)
       (click-card state :runner (find-card "Parasite" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
+      (is (no-prompt? state :runner) "No prompt to host Parasite")
       (is (= 1 (count (get-runner-facedown state))) "Parasite installed face down")))
   (testing "Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
     (do-game
@@ -4695,7 +4695,7 @@
           paricia (get-program state 0)]
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (empty? (:prompt (get-runner))) "No pay-credit prompt as it's an upgrade")
+      (is (no-prompt? state :runner) "No pay-credit prompt as it's an upgrade")
       (is (nil? (refresh shell)) "Shell Corporation successfully trashed")
       (run-empty-server state :remote1)
       (is (= 2 (:credit (get-runner))) "Runner can't afford to trash PAD Campaign")
@@ -4729,7 +4729,7 @@
       (trash-from-hand state :runner "Knight")
       (play-from-hand state :runner "Pawn")
       (card-ability state :runner (get-program state 0) 2)
-      (is (empty? (:prompt (get-runner))) "Install prompt did not come up")
+      (is (no-prompt? state :runner) "Install prompt did not come up")
       (is (nil? (find-card "Pawn" (:discard (get-runner)))))
       (is (not (nil? (find-card "Knight" (:discard (get-runner)))))))))
 
@@ -4794,7 +4794,7 @@
         (run-continue state :encounter-ice)
         (is (= 3 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose is not active")
         (card-ability state :runner (refresh penr) 0)
-        (is (empty? (:prompt (get-runner))) "No cloak prompt because the ability to break barriers is not active anymore")))))
+        (is (no-prompt? state :runner) "No cloak prompt because the ability to break barriers is not active anymore")))))
 
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate
@@ -5122,7 +5122,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Sadyojata")
         (card-ability state :runner (get-program state 0) 2)
-        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+        (is (no-prompt? state :runner) "No select prompt as there's no Deva in hand")))
     (testing "Works with another deva in hand"
       (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
         (do-game
@@ -5151,7 +5151,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (is (no-prompt? state :runner) "No break prompt")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
@@ -5483,7 +5483,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Snitch")
       (run-on state "HQ")
-      (is (empty? (:prompt (get-runner))) "No option to jack out")
+      (is (no-prompt? state :runner) "No option to jack out")
       (run-continue-until state :movement)
       (run-jack-out state)))
   (testing "Doesn't work if there is no ice"
@@ -5494,7 +5494,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Snitch")
       (run-on state "Archives")
-      (is (empty? (:prompt (get-runner))) "No option to jack out")
+      (is (no-prompt? state :runner) "No option to jack out")
       (run-continue state))))
 
 (deftest snowball
@@ -5573,7 +5573,7 @@
      (is (:run @state) "Run initiated")
      (run-continue state)
      (click-prompt state :runner "Troll")
-     (is (empty? (:prompt (get-runner))) "Prompt closed")
+     (is (no-prompt? state :runner) "Prompt closed")
      (is (not (:run @state)) "Run ended")
      (is (-> (get-corp) :discard first :seen) "Troll is faceup")
      (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
@@ -5668,7 +5668,7 @@
        (is (not (installed? (refresh stargate))) "Stargate is trashed")
        (run-continue-until state :success)
        (click-prompt state :runner "Troll")
-       (is (empty? (:prompt (get-runner))) "Prompt closed")
+       (is (no-prompt? state :runner) "Prompt closed")
        (is (not (:run @state)) "Run ended")
        (is (-> (get-corp) :discard first :seen) "Troll is faceup")
        (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
@@ -5785,7 +5785,7 @@
         (card-ability state :runner gord 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done")
-        (is (empty? (:prompt (get-runner))) "No prompt because not all subs were broken")
+        (is (no-prompt? state :runner) "No prompt because not all subs were broken")
         (is (= 0 (get-counters (refresh tako) :power)) "No counter gained because not all subs were broken")
         (run-continue-until state :approach-ice icew)
         (rez state :corp icew)
@@ -5818,11 +5818,11 @@
         (click-card state :runner (refresh faus))
         (is (not-empty (:prompt (get-runner))) "Can't choose AI breakers")
         (click-card state :runner (refresh corr))
-        (is (empty? (:prompt (get-runner))) "Can choose non-AI breakers")
+        (is (no-prompt? state :runner) "Can choose non-AI breakers")
         (is (= 5 (get-strength (refresh corr))) "Corroder at +3 strength")
         (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
         (card-ability state :runner tako 0)
-        (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
+        (is (no-prompt? state :runner) "No prompt when too few power counters")
         (run-continue-until state :success)
         (is (= 2 (get-strength (refresh corr))) "Corroder returned to normal strength")))))
 
@@ -5893,7 +5893,7 @@
       (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
       (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (card-ability state :runner (get-program state 0) 0)
-      (is (not (empty? (:prompt (get-runner)))) "Shuffle prompt came up")
+      (is (not (no-prompt? state :runner)) "Shuffle prompt came up")
       (click-card state :runner (find-card "Easy Mark" (:discard (get-runner))))
       (click-card state :runner (find-card "Dirty Laundry" (:discard (get-runner))))
       (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
@@ -5917,7 +5917,7 @@
       (is (zero? (count (:deck (get-runner)))) "0 cards in deck")
       (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up"))))
+      (is (no-prompt? state :runner) "Shuffle prompt did not come up"))))
 
 (deftest trypano
   (testing "Hivemind and Architect interactions"
@@ -6138,7 +6138,7 @@
         (is (= (- credits 2) (:credit (get-runner))) "Spent 2 credits"))
       (let [credits (:credit (get-runner))]
         (card-ability state :runner utae 0)
-        (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
+        (is (no-prompt? state :runner) "Can only use ability once per run")
         (card-ability state :runner utae 1)
         (is (= credits (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources"))
       (run-continue state :movement)
@@ -6166,7 +6166,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Vamadeva")
         (card-ability state :runner (get-program state 0) 2)
-        (is (empty? (:prompt (get-runner))) "No select prompt as there's no Deva in hand")))
+        (is (no-prompt? state :runner) "No select prompt as there's no Deva in hand")))
     (testing "Works with another deva in hand"
       (doseq [deva ["Aghora" "Sadyojata" "Vamadeva"]]
         (do-game
@@ -6195,7 +6195,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (:prompt (get-runner))) "No break prompt")
+      (is (no-prompt? state :runner) "No break prompt")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "R&D")
@@ -6266,7 +6266,7 @@
         (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost 1 virus counter to pump")
         (is (= 5 (get-strength (refresh yusuf))) "Yusuf strength 5")
         (is (zero? (get-counters (refresh yusuf) :virus)) "Yusuf lost 1 virus counter to pump")
-        (is (empty? (:prompt (get-runner))) "No prompt open")
+        (is (no-prompt? state :runner) "No prompt open")
         (card-ability state :runner yusuf 0)
         (click-prompt state :runner "End the run")
         (click-card state :runner cache)

@@ -100,7 +100,7 @@
             diff-tg (get-content state :remote2 0)]
         (rez state :corp arella)
         (score-agenda state :corp (refresh diff-tg))
-        (is (empty? (:prompt (get-corp))) "Arella not triggered for different remote score")
+        (is (no-prompt? state :corp) "Arella not triggered for different remote score")
         (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
         (score-agenda state :corp (refresh same-tg))
         (click-card state :corp (find-card "Bryan Stinson" (:hand (get-corp))))
@@ -205,7 +205,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (empty? (:prompt (get-runner))) "Runner gets no further access prompts")))))
+        (is (no-prompt? state :runner) "Runner gets no further access prompts")))))
 
 (deftest awakening-center
   ;; Awakening Center
@@ -594,7 +594,7 @@
       (take-credits state :corp)
       ;; Check Caprice triggers properly on multiple ice
       (run-on state "Server 1")
-      (is (empty? (:prompt (get-corp))) "Caprice not trigger on first ice")
+      (is (no-prompt? state :corp) "Caprice not trigger on first ice")
       (run-continue-until state :movement) ; pass first Quandary
       (run-continue-until state :movement) ; Caprice should trigger here
       (is (prompt-is-card? state :corp caprice)
@@ -603,10 +603,10 @@
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (is (not (:run @state)) "Run ended by Caprice")
-      (is (empty? (:prompt (get-corp))) "Caprice prompted cleared")
+      (is (no-prompt? state :corp) "Caprice prompted cleared")
       ;; Check Caprice does not trigger on other servers
       (run-on state "HQ")
-      (is (empty? (:prompt (get-corp))) "Caprice does not trigger on other servers"))))
+      (is (no-prompt? state :corp) "Caprice does not trigger on other servers"))))
 
 (deftest cayambe-grid
   ;; Cayambe Grid
@@ -620,7 +620,7 @@
           (rez state :corp cg))
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (:prompt (get-corp))) "corp has no prompts when no ice is installed in this server")))
+        (is (no-prompt? state :corp) "corp has no prompts when no ice is installed in this server")))
     (testing "1 ice in same server"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -648,7 +648,7 @@
         (take-credits state :runner)
         (let [enigma (get-ice state :remote1 0)]
           (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
-          (is (empty? (:prompt (get-corp))) "corp has no prompts when no ice is installed in this server")))))
+          (is (no-prompt? state :corp) "corp has no prompts when no ice is installed in this server")))))
   (testing "Payment ability"
     (testing "No ice"
       (do-game
@@ -864,7 +864,7 @@
        (rez state :corp cr)
        (is (= 5 (:credit (get-corp))))
        (rez state :corp i3)
-       (run-continue state)
+       (run-continue state :encounter-ice)
        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card corr})
        (core/continue state :corp nil)
        (is (= 2 (:position (get-in @state [:run]))) "Passed Ice Wall")
@@ -1188,8 +1188,8 @@
       (click-card state :corp "Hedge Fund")
       (click-card state :corp "Spiderweb")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))) "Corp should be waiting on Runner")
-      (is (empty? (:prompt (get-runner))) "Runner should be able to take actions")
+      (is (no-prompt? state :corp) "Corp should be waiting on Runner")
+      (is (no-prompt? state :runner) "Runner should be able to take actions")
       (is (= ["Ice Wall" "Fire Wall" "Hedge Fund" "Spiderweb"]
              (->> (get-corp) :deck (take 4) (map :title) (into [])))
           "Deck should be ordered top to bottom")))
@@ -1203,8 +1203,8 @@
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "Done")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))) "Corp should be waiting on Runner")
-      (is (empty? (:prompt (get-runner))) "Runner should be able to take actions"))))
+      (is (no-prompt? state :corp) "Corp should be waiting on Runner")
+      (is (no-prompt? state :runner) "Runner should be able to take actions"))))
 
 (deftest drone-screen
   ;; Drone Screen
@@ -1405,8 +1405,8 @@
      (is (= "You accessed Ganked!." (:msg (prompt-map :runner))) "Runner has normal access prompt")
      (click-prompt state :runner "No action")
      (is (not (get-run)) "Run has been ended")
-     (is (empty? (:prompt (get-corp))) "No more prompts")
-     (is (empty? (:prompt (get-runner))) "No more prompts"))))
+     (is (no-prompt? state :corp) "No more prompts")
+     (is (no-prompt? state :runner) "No more prompts"))))
 
 (deftest georgia-emelyov
   ;; Georgia Emelyov
@@ -1609,7 +1609,7 @@
        (run-jack-out state)
        (run-empty-server state :hq)
        (run-on state :remote1)
-       (is (empty? (:prompt (get-runner))) "No Hired Help prompt"))))
+       (is (no-prompt? state :runner) "No Hired Help prompt"))))
   (testing "Crisium Grid, fake agenda interactions"
     (do-game
      (new-game {:corp {:deck ["Hired Help" "Crisium Grid"]}
@@ -1692,7 +1692,7 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     (run-empty-server state "Archives")
-    (is (empty? (:prompt (get-corp))) "No prompt from Archives access")
+    (is (no-prompt? state :corp) "No prompt from Archives access")
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
     (run-empty-server state "Server 1")
     (click-prompt state :corp "0") ; trace
@@ -1706,12 +1706,12 @@
     (click-prompt state :runner "0")
     (click-prompt state :corp "Done")
     (click-prompt state :runner "No action") ; trash
-    (is (empty? (:prompt (get-corp))) "Prompt closes after done")
+    (is (no-prompt? state :corp) "Prompt closes after done")
     (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
     (run-empty-server state "HQ")
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "5")
-    (is (empty? (:prompt (get-corp))) "Prompt closes after lost trace")))
+    (is (no-prompt? state :corp) "Prompt closes after lost trace")))
 
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
@@ -1820,7 +1820,7 @@
         (rez state :corp la-costa)
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (not (empty? (:prompt (get-corp)))) "The Corp is prompted to place one advancement token on a card")
+        (is (not (no-prompt? state :corp)) "The Corp is prompted to place one advancement token on a card")
         (click-card state :corp la-costa)
         (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")
         (take-credits state :corp)
@@ -1838,35 +1838,35 @@
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp remote-mvt)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a different remote does not clear the prompt")
+          (is (not (no-prompt? state :corp)) "Clicking a card in a different remote does not clear the prompt")
           (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
         (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
         (let [[central-mvt] (get-content state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp central-mvt)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a central does not clear the prompt")
+          (is (not (no-prompt? state :corp)) "Clicking a card in a central does not clear the prompt")
           (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
         (play-from-hand state :corp "Vanilla" "Server 1")
         (let [[vanilla] (get-ice state :remote1)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
         (play-from-hand state :corp "Vanilla" "Server 2")
         (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp remote-vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
         (play-from-hand state :corp "Vanilla" "HQ")
         (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp central-vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting HQ does not clear the prompt")
+          (is (not (no-prompt? state :corp)) "Clicking an ice protecting HQ does not clear the prompt")
           (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it")))))
   (testing "The Corp may advance hosted cards in La Costa Grid's server"
     (do-game
@@ -1901,8 +1901,8 @@
       (is (= "Choose 1 card to add to the bottom of R&D" (:msg (prompt-map :corp))))
       (click-card state :corp "Ice Wall")
       (last-log-contains? state "Daily Business Show to add 1 card to the bottom of R&D")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner)))))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner)))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei
@@ -2031,7 +2031,7 @@
         (rez state :corp encryption)
         (take-credits state :corp)
         (run-empty-server state "HQ")
-        (is (empty? (:prompt (get-runner))) "Manegarm Skunkworks didn't trigger")))))
+        (is (no-prompt? state :runner) "Manegarm Skunkworks didn't trigger")))))
 
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
@@ -2153,8 +2153,8 @@
      (is (= :waiting (:prompt-type (prompt-map :corp))) "Corp waiting for Runner to jack out")
      (click-prompt state :runner "Yes")
      (is (empty? (:run @state)))
-     (is (empty? (prompt-map :runner)) "No open runner prompts")
-     (is (empty? (prompt-map :corp)) "No open corp prompts"))))
+     (is (no-prompt? state :runner) "No open runner prompts")
+     (is (no-prompt? state :corp)) "No open corp prompts")))
 
 (deftest midway-station-grid
   ;; Midway Station Grid
@@ -2222,7 +2222,7 @@
       (run-on state "Server 1")
       (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
       (run-continue state)
-      (is (empty? (:prompt (get-corp))))
+      (is (no-prompt? state :corp))
       (run-jack-out state)
       (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server")))
   (testing "fire before pass"
@@ -2253,7 +2253,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (run-continue state)
-      (is (empty? (:prompt (get-corp))) "Mumbad doesn't trigger on other servers"))))
+      (is (no-prompt? state :corp) "Mumbad doesn't trigger on other servers"))))
 
 (deftest mumbad-virtual-tour
   ;; Tests that Mumbad Virtual Tour forces trash
@@ -2383,7 +2383,7 @@
         (click-prompt state :runner "No action")
         (dotimes [c 4]
           (click-prompt state :runner "No action"))
-        (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+        (is (no-prompt? state :runner) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
   (testing "effect persists through current run after trash"
     (do-game
@@ -2399,7 +2399,7 @@
         (click-prompt state :runner "Pay 5 [Credits] to trash")
         (dotimes [c 4]
           (click-prompt state :runner "No action"))
-        (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+        (is (no-prompt? state :runner) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
   (testing "works well with replacement effects"
     ;; Regression test for #3456
@@ -2482,7 +2482,7 @@
         (rez state :corp fire)
         (run-continue state)
         (card-ability state :runner d4 0)
-        (is (empty? (:prompt (get-runner))) "Could not use D4v1d")
+        (is (no-prompt? state :runner) "Could not use D4v1d")
         (card-ability state :runner ddos 0)
         (is (empty? (:discard (get-runner))) "DDoS not trashed")
         (changes-val-macro -4 (:credit (get-runner))
@@ -2838,7 +2838,7 @@
         (run-on state "Server 1")
         (run-continue state)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
-        (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
+        (is (no-prompt? state :corp) "No prompt for Overseer Matrix")
         (is (= 1 (count-tags state)) "Runner doesn't take a tag"))))
   (testing "Takes into account apocalypse-like full-server trashes"
     (do-game
@@ -2892,7 +2892,7 @@
       (play-from-hand state :corp "Overseer Matrix" "R&D")
       (rez state :corp (get-content state :rd 0))
       (take-credits state :corp)
-      (is (empty? (:prompt (get-corp)))))))
+      (is (no-prompt? state :corp)))))
 
 (deftest panic-button
   (do-game
@@ -2946,7 +2946,7 @@
       ;; Runner trashes Prisec
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (run-empty-server state "HQ")
-      (is (empty? (:prompt (get-corp))) "Prisec does not trigger from HQ")))
+      (is (no-prompt? state :corp) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
       (new-game {:corp {:deck [(qty "Prisec" 2) "Dedicated Response Team"]}
@@ -3270,7 +3270,7 @@
       (run-on state "HQ")
       (card-ability state :corp sj 0)
       (card-ability state :runner smc1 0)
-      (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
+      (is (no-prompt? state :runner) "SJ blocking SMC")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
@@ -3556,7 +3556,7 @@
       (let [thg (get-content state :remote1 0)]
         (rez state :corp thg)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
+        (is (no-prompt? state :corp) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
         (take-credits state :corp)
         (take-credits state :runner)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
@@ -3583,7 +3583,7 @@
       (play-from-hand state :corp "Restore")
       (click-card state :corp (find-card "Tranquility Home Grid" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
-      (is (empty? (:prompt (get-corp))) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
+      (is (no-prompt? state :corp) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
   (testing "THG interaction with ice install"
     (do-game
       (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
@@ -3592,11 +3592,11 @@
       (let [thg (get-content state :remote1 0)]
         (rez state :corp thg)
         (play-from-hand state :corp "PAD Campaign" "Server 1")
-        (is (empty? (:prompt (get-corp))) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
+        (is (no-prompt? state :corp) "THG didn't trigger on the PAD Campaign install, because its own install was the first install this turn")
         (take-credits state :corp)
         (take-credits state :runner)
         (play-from-hand state :corp "Ice Wall" "Server 1")
-        (is (empty? (:prompt (get-corp))) "No prompt from Ice Wall install")
+        (is (no-prompt? state :corp) "No prompt from Ice Wall install")
         (play-from-hand state :corp "PAD Campaign" "Server 1")
         (click-prompt state :corp "OK") ; Trash existing PAD Campaign
         (changes-val-macro 2 (:credit (get-corp))
@@ -3731,8 +3731,8 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 2 (count (:hand (get-runner)))) "MaxX draws 2 cards")
-        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+        (is (no-prompt? state :corp) "Corp has no prompt")
+        (is (no-prompt? state :runner) "Runner has no prompt"))))
   (testing "Interactions with IG. Issue #4329"
     (do-game
       (new-game {:corp {:id "Industrial Genomics: Growing Solutions"
@@ -3782,7 +3782,7 @@
       (click-prompt state :runner "0") ; Corp wins trace
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-program state 1))
-      (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
+      (is (no-prompt? state :corp) "Warroid Tracker can't trash anything else")
       (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards")))
   (testing "Should trigger from self-trash in root of central server"
     (do-game
@@ -3848,7 +3848,7 @@
         (click-prompt state :runner "0")
         (click-card state :corp mar1)
         (click-card state :corp war)
-        (is (empty? (:prompt (get-corp))) "Corp has no prompt")))))
+        (is (no-prompt? state :corp) "Corp has no prompt")))))
 
 (deftest will-o-the-wisp
   ;; Will-o'-the-Wisp
