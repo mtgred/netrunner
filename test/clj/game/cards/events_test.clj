@@ -4018,42 +4018,42 @@
   ;; Out of the Ashes - ensure card works when played/trashed/milled
   (testing "Happy Path"
     (do-game
-    (new-game {:corp {:deck ["Kala Ghoda Real TV" "Underway Renovation"]}
-               :runner {:deck [(qty "Out of the Ashes" 6)]}})
-    (play-from-hand state :corp "Underway Renovation" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Out of the Ashes")
-    (click-prompt state :runner "Archives")
-    (run-continue state)
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (is (zero? (count (:hand (get-runner)))))
-    (is (= 5 (count (:discard (get-runner)))))
-    (take-credits state :runner)
-    (let [underway (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh underway)}))
-    (is (= 6 (count (:discard (get-runner)))))
-    (take-credits state :corp)
-    ;; remove 5 Out of the Ashes from the game
-    (dotimes [_ 5]
+      (new-game {:corp {:deck ["Kala Ghoda Real TV" "Underway Renovation"]}
+                 :runner {:deck [(qty "Out of the Ashes" 6)]}})
+      (play-from-hand state :corp "Underway Renovation" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Out of the Ashes")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (is (zero? (count (:hand (get-runner)))))
+      (is (= 5 (count (:discard (get-runner)))))
+      (take-credits state :runner)
+      (let [underway (get-content state :remote1 0)]
+        (core/advance state :corp {:card (refresh underway)}))
+      (is (= 6 (count (:discard (get-runner)))))
+      (take-credits state :corp)
+      ;; remove 5 Out of the Ashes from the game
+      (dotimes [_ 5]
+        (is (seq (:prompt (get-runner))))
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Archives")
+        (run-continue state))
+      (click-prompt state :runner "No")
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 5 (count (:rfg (get-runner)))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;; ensure that if you decline the rfg, game will still ask the next turn
       (is (seq (:prompt (get-runner))))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Archives")
-      (run-continue state))
-    (click-prompt state :runner "No")
-    (is (= 1 (count (:discard (get-runner)))))
-    (is (= 5 (count (:rfg (get-runner)))))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    ;; ensure that if you decline the rfg, game will still ask the next turn
-    (is (seq (:prompt (get-runner))))
-    (click-prompt state :runner "Yes")
-    (click-prompt state :runner "Archives")
-    (run-continue state)
-    (is (zero? (count (:discard (get-runner)))))
-    (is (= 6 (count (:rfg (get-runner)))))))
+      (run-continue state)
+      (is (zero? (count (:discard (get-runner)))))
+      (is (= 6 (count (:rfg (get-runner)))))))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
@@ -4064,7 +4064,32 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (no-prompt? state :runner) "OOTA prompt did not come up"))))
+      (is (no-prompt? state :runner) "OOTA prompt did not come up")))
+  (testing "Interactive with other start of turn triggers"
+    (do-game
+     (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]}
+                :runner {:hand [(qty "Out of the Ashes" 3) "Rezeki" "Data Folding"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Rezeki")
+     (play-from-hand state :runner "Data Folding")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (= `("Rezeki" "Data Folding" "Out of the Ashes") (prompt-titles :runner)) "Out of the Ashes reduced to a single choice")
+     (click-prompt state :runner "Rezeki")
+     (click-prompt state :runner "Out of the Ashes")
+     (click-prompt state :runner "Yes")
+     (click-prompt state :runner "Archives")
+     (run-continue state)
+     (click-prompt state :runner "Yes")
+     (click-prompt state :runner "Archives")
+     (run-continue state)
+     (click-prompt state :runner "No")
+     (is (= 1 (count (:discard (get-runner)))))
+     (is (no-prompt? state :runner) "No further start of turn prompts")
+     (is (no-prompt? state :corp) "No waiting for start of turn triggers prompt"))))
 
 (deftest overclock
   ;; Overclock - Gain 5 temporary credits
