@@ -2428,6 +2428,7 @@
   {:events [{:event :subroutines-broken
              :optional {:req (req (all-subs-broken? target))
                         :prompt "Place 1 power counter on Takobi?"
+                        :autoresolve (get-autoresolve :auto-takobi)
                         :yes-ability
                         {:msg "add 1 power counter to Takobi"
                          :effect (effect (add-counter card :power 1))}}}]
@@ -2439,7 +2440,8 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                 :msg (msg "add +3 strength to " (:title target))
-                :effect (effect (pump target 3))}]})
+                :effect (effect (pump target 3))}
+               (set-autoresolve :auto-takobi "Takobi")]})
 
 (defcard "Tapwrm"
   (let [ability {:label "Gain [Credits] (start of turn)"
