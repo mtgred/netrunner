@@ -3,17 +3,17 @@
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
-    [game.core.card :refer [agenda? asset? get-card get-counters get-zone has-subtype? ice? program? resource? rezzed?]]
+    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? resource? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [card-as-handler checkpoint make-pending-event pay queue-event register-events trigger-event-simult]]
-    [game.core.finding :refer [find-latest]]
+    [game.core.engine :refer [checkpoint make-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.flags :refer [turn-flag?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
-    [game.core.initializing :refer [card-init]]
-    [game.core.moving :refer [move trash trash-cards]]
+    [game.core.initializing :refer [ability-init card-init subroutines-init]]
+    [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -23,7 +23,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? same-card? to-keyword]]))
+    [game.utils :refer [dissoc-in in-coll? to-keyword]]))
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -301,7 +301,7 @@
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
   ([state side card] (runner-can-install? state side card nil))
-  ([state side card {:keys [facedown no-toast] :as args}]
+  ([state side card {:keys [facedown no-toast]}]
    (let [reason (runner-can-install-reason state side card facedown)
          reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
@@ -425,6 +425,34 @@
          {:choices hosting
           :prompt (str "Choose a card to host " (:title card) " on")
           :async true
-          :effect (effect (runner-install eid card (assoc args :host-card target)))}
+          :effect (effect (runner-install-pay eid card (assoc args :host-card target)))}
          card nil)
        (runner-install-pay state side eid card args)))))
+
+(defn install-as-condition-counter
+  "Install the event or operation onto the target as a condition counter."
+  [state side eid card target]
+  (assert (or (event? card) (operation? card)) "condition counter must be event or operation")
+  (let [cdef (card-def card)
+        abilities (ability-init cdef)
+        card (convert-to-condition-counter card)
+        events (fn [card] (register-events state side card (filter #(= :hosted (:location %)) (:events cdef))))]
+    (if (corp? card)
+      (wait-for (corp-install state side (make-eid state eid)
+                              card target {:host-card target
+                                           :ignore-all-cost true})
+                (let [card (update! state side (assoc async-result :abilities abilities))]
+                  (unregister-events state side card)
+                  (unregister-constant-effects state side card)
+                  (register-events state side card (events card))
+                  (register-constant-effects state side card)
+                  (complete-with-result state side eid card)))
+      (wait-for (runner-install state side (make-eid state eid)
+                                card {:host-card target
+                                      :ignore-all-cost true})
+                (let [card (update! state side (assoc async-result :abilities abilities))]
+                  (unregister-events state side card)
+                  (unregister-constant-effects state side card)
+                  (register-events state side card (events card))
+                  (register-constant-effects state side card)
+                  (complete-with-result state side eid card))))))

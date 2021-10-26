@@ -1491,7 +1491,6 @@
              hosted-ct #(first (:hosted (refresh dj-fenris)))]
          (is (core/facedown? dj-fenris) "DJ Fenris is facedown")
          (is (core/facedown? (hosted-ct)) "CT is facedown")
-         (println "Disabled?: " (:disabled (hosted-ct)))
          (is (= 4 (core/available-mu state)) "CT not active since DJ Fenris is facedown, reducing MU back to 4"))))
     (testing "Only legal IDs appear in the drop down"
       (do-game
@@ -1750,7 +1749,7 @@
       (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
   (testing "Don't trigger after swap with Exchange of Information. Issue #1824"
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Takeover" 2) "Exchange of Information"]}
+      (new-game {:corp {:deck ["Hostile Takeover" "Merger" "Exchange of Information"]}
                  :runner {:deck ["Fan Site"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Fan Site")
@@ -1759,12 +1758,12 @@
       (score-agenda state :corp (get-content state :remote1 0))
       (gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
-      (click-card state :corp (find-card "Fan Site" (:scored (get-runner))))
-      (click-card state :corp (find-card "Hostile Takeover" (:scored (get-corp))))
+      (click-card state :corp "Fan Site")
+      (click-card state :corp "Hostile Takeover")
       (is (= 1 (:agenda-point (get-runner))))
       (is (zero? (:agenda-point (get-corp))))
       (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site swapped into Corp score area")
-      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (play-from-hand state :corp "Merger" "New remote")
       (score-agenda state :corp (get-content state :remote2 0))
       (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
   (testing "Runner can forfeit Fan Site"
@@ -2649,8 +2648,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
       (play-from-hand state :runner "Jackpot!")
-      (let [fc (get-resource state 0)
-            jak (get-resource state 1)]
+      (let [fc (get-resource state 0)]
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Yes")
         (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")

@@ -1043,9 +1043,8 @@
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
              :msg "add it to their score area as an agenda worth 0 agenda points"
-             :async true
              :req (req (installed? card))
-             :effect (req (as-agenda state :runner eid card 0))}]})
+             :effect (req (as-agenda state :runner card 0))}]})
 
 (defcard "Fencer Fueno"
   (companion-builder
@@ -1100,10 +1099,14 @@
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
                                    (quantify (get-agenda-points c) "agenda point"))))
-                  :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points c)
-                                     args {:register-events (card-flag? c :has-events-when-stolen true)}]
-                                 (as-agenda state :runner eid c points args)))}]}))
+                  :effect (req (let [c (move state :runner (get-agenda card) :scored)]
+                                 (when (card-flag? c :has-events-when-stolen true)
+                                   (card-init state :corp c {:resolve-effect false
+                                                             :init-data true}))
+                                 (update-all-advancement-requirements state)
+                                 (update-all-agenda-points state)
+                                 (check-win-by-agenda state side)
+                                 (effect-completed state side eid)))}]}))
 
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
@@ -1328,35 +1331,36 @@
                 :prompt "Choose a server"
                 :choices (req remotes)
                 :req (req (:stole-agenda runner-reg))
-                :effect (req (wait-for
-                               (as-agenda state :runner (make-eid state eid) card 0)
-                               (let [zone (server->zone state target)
-                                     path (conj (into [:corp] zone) :content)
-                                     cards (string/join ", " (map :title (get-in @state path)))]
-                                 (wait-for
-                                   (reveal state :corp (make-eid state eid) targets)
-                                   (system-msg state side
-                                               (str "uses Investigator Inez Delgado to reveal " cards " from " target))
-                                   (effect-completed state side eid)))))}]})
+                :effect (req (as-agenda state :runner card 0)
+                             (let [zone (server->zone state target)
+                                   path (conj (into [:corp] zone) :content)
+                                   cards (string/join ", " (map :title (get-in @state path)))]
+                               (wait-for
+                                 (reveal state :corp (make-eid state eid) targets)
+                                 (system-msg state side
+                                             (str "uses Investigator Inez Delgado to reveal " cards " from " target))
+                                 (effect-completed state side eid))))}]})
 
 (defcard "Jackpot!"
-  (let [jackpot {:interactive (req true)
-                 :optional
-                 {:waiting-prompt "Runner to choose an option"
-                  :prompt "Trash Jackpot!?"
-                  :yes-ability
-                  {:prompt "Choose how many [Credit] to take"
-                   :choices {:number (req (get-counters card :credit))}
-                   :async true
-                   :effect (req (wait-for (gain-credits state :runner target)
-                                          (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
-                                          (trash state :runner eid card nil)))}}}]
-    {:events [{:event :runner-turn-begins
-               :effect (effect (add-counter :runner card :credit 1))}
-              (assoc jackpot :event :agenda-stolen)
-              (-> jackpot
-                  (assoc :event :as-agenda)
-                  (assoc-in [:optional :req] (req (= :runner (:as-agenda-side target)))))]}))
+  {:implementation "Credit gain must be manually triggered"
+   :events [{:event :runner-turn-begins
+             :effect (effect (add-counter :runner card :credit 1))}
+            ;; TODO (NoahTheDuke, Oct 2020):
+            ;; This is an async ability and it's getting called in `move`, which is sync.
+            ;; This won't work long-term, but it's the best solution at the moment.
+            {:event :card-moved
+             :interactive (req true)
+             :optional
+             {:req (req (= :runner (:scored-side (second targets))))
+              :waiting-prompt "Runner to choose an option"
+              :prompt "Trash Jackpot!?"
+              :yes-ability
+              {:prompt "Choose how many [Credit] to take"
+               :choices {:number (req (get-counters card :credit))}
+               :async true
+               :effect (req (wait-for (gain-credits state :runner target)
+                                      (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
+                                      (trash state :runner eid card nil)))}}}]})
 
 (defcard "Jak Sinclair"
   (let [ability {:label "Make a run (start of turn)"
@@ -1431,17 +1435,20 @@
      :abilities [ability]}))
 
 (defcard "Kasi String"
-  {:events [{:event :run-ends
+  {:implementation "Adds counters automatically"
+   :events [{:event :run-ends
              :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
                             (not (:did-steal target))
                             (:did-access target)
                             (is-remote? (:server target))))
-             :effect (effect (add-counter card :power 1))
-             :msg "add a power counter to itself"}
-            {:event :counter-added
-             :req (req (>= (get-counters (get-card state card) :power) 4))
-             :effect (effect (as-agenda :runner card 1))
-             :msg "add it to their score area as an agenda worth 1 agenda point"}]})
+             :msg (msg (if (<= 3 (get-counters card :power))
+                         "add it to their score area as an agenda worth 1 agenda point"
+                         "add a power counter to itself"))
+             :async true
+             :effect (req (if (<= 3 (get-counters card :power))
+                            (do (as-agenda state :runner card 1)
+                                (effect-completed state side eid))
+                            (add-counter state side eid card :power 1 {:placed true})))}]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]
@@ -1549,15 +1556,15 @@
                               {:player :corp
                                :prompt "Choose an agenda to forfeit"
                                :choices {:card #(in-corp-scored? state side %)}
-                               :effect (effect (forfeit target)
-                                               (move :runner card :rfg))}
+                               :async true
+                               :effect (req (wait-for (forfeit state side (make-eid state eid) target)
+                                                      (move state :runner card :rfg)
+                                                      (effect-completed state side eid)))}
                               :no-ability
-                              {:async true
-                               :msg "add it to their score area as an agenda worth 2 points"
-                               :effect (effect (as-agenda :runner eid card 2))}}}
-                            {:async true
-                             :msg "add it to their score area as an agenda worth 2 points"
-                             :effect (effect (as-agenda :runner eid card 2))})
+                              {:msg "add it to their score area as an agenda worth 2 points"
+                               :effect (effect (as-agenda :runner card 2))}}}
+                            {:msg "add it to their score area as an agenda worth 2 points"
+                             :effect (effect (as-agenda :runner card 2))})
                           card nil))}]})
 
 (defcard "Logic Bomb"

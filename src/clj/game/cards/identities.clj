@@ -24,7 +24,7 @@
                     (= count max-count)
                     (dissoc acc :max-faction)
                     ;; Count is not more, do not change the accumulator map
-                    :default
+                    :else
                     acc))
         best-faction (:max-faction (reduce-kv reducer {:max-count 0 :max-faction nil} faction-freq))]
     (= fc best-faction)))
@@ -742,7 +742,7 @@
              :effect
              (effect
                (continue-ability
-                 (let [p (inc (get-agenda-points target))]
+                 (let [p (inc (get-agenda-points (:card context)))]
                    {:prompt (str "Choose a card to place advancement tokens on with " (:title card))
                     :choices {:card #(and (installed? %)
                                           (corp? %))}

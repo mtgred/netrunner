@@ -5,19 +5,18 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [complete-with-result make-eid]]
-    [game.core.engine :refer [resolve-ability trigger-event trigger-event-sync]]
+    [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
     [game.core.flags :refer [is-scored?]]
     [game.core.gaining :refer [deduct lose]]
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
     [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
-    [game.core.props :refer [add-counter]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.tags :refer [lose-tags]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.core.virus :refer [number-of-virus-counters]]
-    [game.macros :refer [continue-ability effect req wait-for]]
+    [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [quantify]]
     [clojure.string :as string]))
 
@@ -216,23 +215,15 @@
                                                   :value 1
                                                   :targets [card]})))
 
-(defn- forfeit-multiple
-  [state side eid agendas acc]
-  (if (empty? agendas)
-    (complete-with-result state side eid acc)
-    (let [agenda (first agendas)]
-      (wait-for (forfeit state side agenda {:msg false})
-                (forfeit-multiple state side eid (rest agendas) (conj acc agenda))))))
-
 ;; Forfeit
 (defmethod cost-name :forfeit [_] :forfeit)
 (defmethod value :forfeit [[_ cost-value]] cost-value)
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))
 (defmethod payable? :forfeit
-  [cost state side eid card]
+  [cost state side _eid _card]
   (<= 0 (- (count (get-in @state [side :scored])) (value cost))))
 (defmethod handler :forfeit
-  [cost state side eid card actions]
+  [cost state side eid card _actions]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "Agenda") " to forfeit")
@@ -240,26 +231,33 @@
      :choices {:max (value cost)
                :all true
                :card #(is-scored? state side %)}
-     :effect (req (wait-for (forfeit-multiple state side targets [])
+     :effect (req (doseq [agenda targets]
+                    ;; We don't have to await this because we're suppressing the
+                    ;; checkpoint and forfeit makes all of the trashing unpreventable,
+                    ;; meaning that there will be no potential for input. Once
+                    ;; everything is queued, then we perform the actual checkpoint.
+                    (forfeit state side (make-eid state eid) agenda {:msg false
+                                                                     :suppress-checkpoint true}))
+                  (wait-for (checkpoint state nil (make-eid state eid) nil)
                             (complete-with-result
                               state side eid
                               {:msg (str "forfeits " (quantify (value cost) "agenda")
-                                         " (" (string/join ", " (map :title async-result)) ")")
+                                         " (" (string/join ", " (map :title targets)) ")")
                                :type :forfeit
                                :value (value cost)
-                               :targets async-result})))}
+                               :targets targets})))}
     card nil))
 
 ;; ForfeitSelf
 (defmethod cost-name :forfeit-self [_] :forfeit-self)
-(defmethod value :forfeit-self [cost] 1)
-(defmethod label :forfeit-self [cost] "forfeit this Agenda")
+(defmethod value :forfeit-self [_cost] 1)
+(defmethod label :forfeit-self [_cost] "forfeit this Agenda")
 (defmethod payable? :forfeit-self
-  [cost state side eid card]
+  [_cost state side _eid card]
   (is-scored? state side (get-card state card)))
 (defmethod handler :forfeit-self
-  [cost state side eid card actions]
-  (wait-for (forfeit state side card {:msg false})
+  [_cost state side eid card _actions]
+  (wait-for (forfeit state side (make-eid state eid) card {:msg false})
             (complete-with-result
               state side eid
               {:msg (str "forfeits " (:title card))

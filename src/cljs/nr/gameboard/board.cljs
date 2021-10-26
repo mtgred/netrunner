@@ -563,9 +563,7 @@
                           (= "servers" (first (get-zone card)))))
    (rezzed? [card] (:rezzed card))
    (runner? [card] (= (:side card) "Runner"))
-   (condition-counter? [card] (and (:condition card)
-                                   (or (is-type? card "Event")
-                                       (is-type? card "Operation"))))
+   (condition-counter? [card] (is-type? card "Condition"))
    (facedown? [card] (or (when (not (condition-counter? card))
                            (= (get-zone card) ["rig" "facedown"]))
                          (:facedown card)))]

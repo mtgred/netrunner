@@ -81,7 +81,7 @@
       (if (map? card)
         (core/process-action "select" state side {:card card})
         (let [all-cards (core/get-all-cards state)
-              matching-cards (filter #(= card (:title %)) all-cards)]
+              matching-cards (filter #(= card (core/get-title %)) all-cards)]
           (if (= (count matching-cards) 1)
             (core/process-action "select" state side {:card (first matching-cards)})
             (is' (= 1 (count matching-cards))

@@ -1,7 +1,6 @@
 (ns game.cards.assets-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -3784,7 +3783,7 @@
       ;; Corp turn 4, check the delicious agenda points
       (let [scored-pub (get-scored state :corp 0)]
         (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda point")
-        (is (= "Public Support" (:title scored-pub)))
+        (is (= "Public Support" (get-title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
 
 (deftest quarantine-system

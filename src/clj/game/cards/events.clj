@@ -101,12 +101,12 @@
                                        allcorp (concat onhost unhosted)]
                                    (trash-cards state :runner eid allcorp)))}
         runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
-                                            ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                                            ishosted (fn [c] (= '(:onhost) (get c :zone)))
                                             hostedcards (filter ishosted installedcards)
                                             nonhostedcards (remove ishosted installedcards)]
                                         (doseq [oc hostedcards
                                                 :let [c (get-card state oc)]
-                                                :when (not (:condition c))]
+                                                :when (not (condition-counter? c))]
                                           (flip-facedown state side c))
                                         (doseq [oc nonhostedcards
                                                 :let [c (get-card state oc)]]
@@ -644,8 +644,8 @@
                             this-card-run))
              :silent (req true)
              :effect (effect (register-events
-                              card [(breach-access-bonus :rd 
-                                                         (max 0 (min 4 (available-mu state))) 
+                              card [(breach-access-bonus :rd
+                                                         (max 0 (min 4 (available-mu state)))
                                                          {:duration :end-of-run})]))}]})
 
 (defcard "Déjà Vu"
@@ -1188,9 +1188,11 @@
   {:on-play
    {:prompt "Choose an agenda to forfeit"
     :choices (req (:scored runner))
-    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")
-    :effect (effect (forfeit target)
-                    (gain-bad-publicity :corp 1))}})
+    :msg (msg "forfeit " (get-title card) " and give the Corp 1 bad publicity")
+    :async true
+    :effect (req (wait-for (forfeit state side (make-eid state eid) target {:msg false})
+                           (gain-bad-publicity state :corp 1)
+                           (effect-completed state side eid)))}})
 
 (defcard "Frantic Coding"
   {:on-play
@@ -1233,8 +1235,7 @@
 (defcard "\"Freedom Through Equality\""
   {:events [{:event :agenda-stolen
              :msg "add it to their score area as an agenda worth 1 agenda point"
-             :async true
-             :effect (req (as-agenda state :runner eid card 1))}]})
+             :effect (req (as-agenda state :runner card 1))}]})
 
 (defcard "Freelance Coding Contract"
   {:on-play
@@ -1877,7 +1878,8 @@
              :effect (req (if (:did-steal target)
                             (do (system-msg state :runner
                                             (str "adds Mad Dash to their score area as an agenda worth 1 agenda point"))
-                                (as-agenda state :runner eid (get-card state card) 1))
+                                (as-agenda state :runner (get-card state card) 1)
+                                (effect-completed state side eid))
                             (do (system-msg state :runner
                                             (str "suffers 1 meat damage from Mad Dash"))
                                 (damage state side eid :meat 1 {:card card}))))}]})
@@ -2069,8 +2071,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :msg "add it to their score area as an agenda worth 1 agenda point"
-    :async true
-    :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))}})
+    :effect (req (as-agenda state :runner card 1))}})
 
 (defcard "Office Supplies"
   {:on-play
@@ -2090,9 +2091,9 @@
              :prompt "Choose a resource to host On the Lam"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
-             :effect (effect (host target (assoc card :installed true :condition true))
-                             (card-init (find-latest state card) {:resolve-effect false})
-                             (system-msg (str "hosts On the Lam on " (:title target))))}
+             :async true
+             :effect (req (system-msg state side (str "hosts On the Lam on " (:title target)))
+                          (install-as-condition-counter state side eid card target))}
    :interactions {:prevent [{:type #{:net :brain :meat :tag}
                              :req (req true)}]}
    :abilities [{:label "Avoid 3 tags"
@@ -2192,6 +2193,7 @@
                        :req (req (same-card? (:host card) target))
                        :value -1}]
    :events [{:event :purge
+             :location :hosted
              :async true
              :effect (req (wait-for (trash state side card {:cause :purge})
                                     (update-all-agenda-points state side)
@@ -2204,8 +2206,10 @@
                {:prompt "Choose an agenda to host Political Graffiti on"
                 :choices {:req (req (in-corp-scored? state side target))}
                 :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                :effect (effect (host :runner (get-card state target) (assoc card :installed true :seen true :condition true))
-                                (update-all-agenda-points))}})]})
+                :async true
+                :effect (req (wait-for (install-as-condition-counter state side (make-eid state eid) card target)
+                                       (update-all-agenda-points state side)
+                                       (effect-completed state side eid)))}})]})
 
 (defcard "Populist Rally"
   {:on-play {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
@@ -2423,7 +2427,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
-             :optional (:optional (offer-jack-out 
+             :optional (:optional (offer-jack-out
                                    {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
 (defcard "Rejig"

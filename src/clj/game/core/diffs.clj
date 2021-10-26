@@ -101,12 +101,14 @@
    :advance-counter
    :advanceable
    :advancementcost
+   :agendapoints
    :cid
    :code
    :corp-abilities
    :cost
    :counter
    :current-advancement-requirement
+   :current-points
    :current-strength
    :disabled
    :extra-advance-counter
@@ -122,6 +124,7 @@
    :new
    :normalizedtitle
    :playable
+   :printed-title
    :rezzed
    :runner-abilities
    :seen
@@ -218,7 +221,7 @@
   [player state side same-side? additional-keys]
   (-> player
       (update :identity card-summary state side)
-      (update :basic-action-card card-abilities-summary state side)
+      (update :basic-action-card card-summary state side)
       (update :current cards-summary state side)
       (update :play-area cards-summary state side)
       (update :rfg cards-summary state side)

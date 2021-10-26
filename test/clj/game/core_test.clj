@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.test :refer :all]
             [game.core :as core]
-            [game.core.card :refer [get-card installed? rezzed? active? get-counters]]
+            [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
             [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
@@ -39,7 +39,10 @@
 (load-all-cards)
 
 ;; General utilities necessary for starting a new game
-(def find-card core/find-card)
+(defn find-card
+  "Copied from core so we can check printed title too"
+  [title from]
+  (some #(when (= (get-title %) title) %) from))
 
 (defn starting-hand
   "Moves all cards in the player's hand to their draw pile, then moves the specified card names

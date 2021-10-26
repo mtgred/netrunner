@@ -5,9 +5,9 @@
     [clojure.string :as string]
     [clj-uuid :as uuid]
     [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? get-card get-cid has-subtype? installed? rezzed?]]
+    [game.core.card :refer [active? facedown? get-card get-cid get-title installed? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects effect-pred get-effect-maps unregister-floating-effects]]
+    [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -302,7 +302,7 @@
     (let [desc (if (string? message) message (message state side eid card targets))
           cost-spend-msg (build-spend-msg payment-str "use")]
       (system-msg state (to-keyword (:side card))
-                  (str cost-spend-msg (:title card) (str " to " desc))))))
+                  (str cost-spend-msg (get-title card) (str " to " desc))))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
@@ -440,8 +440,8 @@
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
-                  (if-let [f (:cancel-effect args)]
-                    (assoc args :cancel-effect #(f state side (:eid ability) card [%]))
+                  (if-let [cancel-f (:cancel-effect args)]
+                    (assoc args :cancel-effect #(cancel-f state side (:eid ability) card [%]))
                     args)))))
 
 ;; EVENTS
@@ -486,6 +486,7 @@
   (case (to-keyword (:type card))
     :agenda #{:scored}
     (:asset :ice :upgrade) #{:servers}
+    :counter #{:hosted}
     (:event :operation) #{:current :play-area}
     (:hardware :program :resource) #{:rig}
     (:identity :fake-identity) #{:identity}))
@@ -550,15 +551,6 @@
                 (remove #(= duration (:duration %)))
                 (into [])))))
 
-(defn unregister-floating-events-for-card
-  "Removes all event handlers with a non-persistent duration on a single card"
-  [state _ card duration]
-  (swap! state assoc :events
-         (->> (:events @state)
-              (remove #(and (same-card? card (:card %))
-                            (= duration (:duration %))))
-              (into []))))
-
 (defn unregister-event-by-uuid
   "Removes a single event handler with matching uuid"
   [state _ uuid]
@@ -619,7 +611,7 @@
   This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
   http://nisei.net/files/Comprehensive_Rules_1.1.pdf"
   ([state side event targets] (gather-events state side event targets nil))
-  ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets nil))
+  ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets card-abilities))
   ([state side eid event targets card-abilities]
    (->> (:events @state)
         (filter #(= event (:event %)))
@@ -761,11 +753,6 @@
   (let [{:keys [effect prompt choices psi optional trace] :as cdef} (card-def card)]
     (when (or effect prompt choices psi optional trace)
       (ability-as-handler card cdef))))
-
-(defn effect-as-handler
-  "Wraps a five-argument function as an event handler."
-  [card effect]
-  (ability-as-handler card {:effect effect}))
 
 (defn- event-title
   "Gets a string describing the internal engine event keyword"

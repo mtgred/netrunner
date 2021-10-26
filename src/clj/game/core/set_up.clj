@@ -88,9 +88,13 @@
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
         corp-identity (build-card (or (get-in corp [:deck :identity])
-                                      {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
+                                      {:side "Corp"
+                                       :type "Identity"
+                                       :title "Custom Biotics: Engineered for Success"}))
         runner-identity (build-card (or (get-in runner [:deck :identity])
-                                        {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
+                                        {:side "Runner"
+                                         :type "Identity"
+                                         :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
@@ -108,8 +112,12 @@
 
 (defn- create-basic-action-cards
   [state]
-  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
-  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
+  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp"
+                                                               :type "Basic Action"
+                                                               :title "Corp Basic Action Card"}))
+  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner"
+                                                                 :type "Basic Action"
+                                                                 :title "Runner Basic Action Card"})))
 
 (defn init-game
   "Initializes a new game with the given players vector."

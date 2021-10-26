@@ -1645,8 +1645,8 @@
                      :req (req (same-card? card (:card context))))
               (assoc ability :event :agenda-scored)
               (assoc ability
-                     :event :as-agenda
-                     :req (req (= "Corp" (:as-agenda-side target))))]
+                     :event :card-moved
+                     :req (req (= :corp (:scored-side target))))]
      :abilities [{:label "Lose subroutines"
                   :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
                   :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
@@ -2246,11 +2246,11 @@
                                      (wait-for (gain-credits state :corp 4)
                                                (end-run state :runner eid card)))
                                  (do (system-msg state :runner "adds Meridian to their score area as an agenda worth -1 agenda points")
-                                     (wait-for (as-agenda state :runner card -1)
-                                               (when current-ice
-                                                 (continue state :corp nil)
-                                                 (continue state :runner nil))
-                                               (effect-completed state side eid)))))}]})
+                                     (as-agenda state :runner card -1)
+                                     (when current-ice
+                                       (continue state :corp nil)
+                                       (continue state :runner nil))
+                                     (effect-completed state side eid))))}]})
 
 (defcard "Merlin"
   (grail-ice (do-net-damage 2)))

@@ -1,8 +1,8 @@
 (ns game.core.hosting
   (:require
-    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card installed? program? rezzed? runner?]]
+    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card program? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects unregister-floating-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [register-events unregister-events]]
     [game.core.initializing :refer [card-init]]
@@ -45,12 +45,10 @@
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update card :hosted conj c))
-       ;; events should be registered for condition counters
-       (when (or (condition-counter? c)
-                 (and installed
-                      (or (runner? c)
-                          (and (corp? c)
-                               (rezzed? c)))))
+       (when (and installed
+                  (or (runner? c)
+                      (and (corp? c)
+                           (rezzed? c))))
          (if (or (:recurring tdef)
                  (:prevent tdef)
                  (:corp-abilities tdef)

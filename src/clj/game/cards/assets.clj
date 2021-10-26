@@ -51,8 +51,7 @@
    :req (req (and (= side :runner)
                   (:accessed target)))
    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-   :async true
-   :effect (req (as-agenda state :runner eid card 2))})
+   :effect (req (as-agenda state :runner card 2))})
 
 ;; Card definitions
 
@@ -675,8 +674,7 @@
   {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
                 :cost [:click 3]
                 :msg "add it to their score area as an agenda worth 1 agenda point"
-                :async true
-                :effect (req (as-agenda state :corp eid card 1))}]})
+                :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Edge of World"
   (letfn [(ice-count [state]
@@ -796,15 +794,13 @@
      :abilities [{:cost [:click 1 :advancement 7]
                   :label "Add False Flag to your score area as an agenda worth 3 agenda points"
                   :msg "add it to their score area as an agenda worth 3 agenda points"
-                  :async true
-                  :effect (req (as-agenda state :corp eid card 3))}]}))
+                  :effect (req (as-agenda state :corp card 3))}]}))
 
 (defcard "Franchise City"
   {:events [{:event :access
              :req (req (agenda? target))
              :msg "add it to their score area as an agenda worth 1 agenda point"
-             :async true
-             :effect (req (as-agenda state :corp eid card 1))}]})
+             :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Full Immersion RecStudio"
   {:can-host (req (and (or (asset? target) (agenda? target))
@@ -849,8 +845,7 @@
    :abilities [{:cost [:click 1 :advancement 3]
                 :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
                 :msg "add it to their score area as an agenda worth 1 agenda point"
-                :async true
-                :effect (req (as-agenda state :corp eid card 1))}]})
+                :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Genetics Pavilion"
   {:on-rez {:msg "prevent the Runner from drawing more than 2 cards during their turn"
@@ -1062,8 +1057,12 @@
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
                                          (in-hand? target)))}
                 :msg (msg "add " (:title target) " to score area")
-                :async true
-                :effect (effect (as-agenda eid target (:agendapoints target) {:register-events true}))}]
+                :effect (req (let [c (move state :corp target :scored)]
+                               (card-init state :corp c {:resolve-effect false
+                                                         :init-data true}))
+                             (update-all-advancement-requirements state)
+                             (update-all-agenda-points state)
+                             (check-win-by-agenda state side))}]
    :events [{:event :corp-turn-begins
              :effect (effect (add-counter card :power 1))}]})
 
@@ -1434,7 +1433,8 @@
                                               (do (system-msg state :runner (str "adds " (:title card)
                                                                                  " to their score area as an agenda worth "
                                                                                  (quantify -1 "agenda point")))
-                                                  (as-agenda state :runner eid card -1 {:force true}))
+                                                  (as-agenda state :runner card -1)
+                                                  (effect-completed state side eid))
                                               (do (system-msg state :runner (str "takes 2 tags from News Team"))
                                                   (gain-tags state :runner eid 2))))}
                               card targets))}})
@@ -1669,9 +1669,8 @@
             {:event :counter-added
              :req (req (same-card? card target)
                        (not (pos? (get-counters card :power))))
-             :async true
-             :effect (effect (system-msg "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
-                             (as-agenda eid (dissoc card :counter) 1))}]})
+             :msg "add it to their score area as an agenda worth 1 agenda point"
+             :effect (effect (as-agenda card 1))}]})
 
 (defcard "Quarantine System"
   (letfn [(rez-ice [cnt] {:prompt "Choose a piece of ice to rez"
@@ -2005,7 +2004,8 @@
                                     (do (system-msg state :runner (str "adds " (:title card)
                                                                        " to their score area as an agenda worth "
                                                                        (quantify -1 "agenda point")))
-                                        (as-agenda state :runner eid card -1 {:force true}))
+                                        (as-agenda state :runner card -1)
+                                        (effect-completed state side eid))
                                     (do (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
                                         (damage state :corp eid :net dmg {:card card}))))})
                   card targets))}}}})
