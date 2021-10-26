@@ -149,6 +149,7 @@
              [:input#log-input
               {:placeholder (tr [:chat.placeholder "Say something"])
                :type "text"
+               :autocomplete "off"
                :ref (partial reset! !input-ref)
                :value (:msg @s)
                :on-key-down (partial command-menu-key-down-handler s)
