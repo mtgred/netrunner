@@ -402,7 +402,7 @@
              :msg "do 1 net damage"
              :effect (req (wait-for (damage state side :net 1 {:card card})
                                     (let [should-continue (not (:winner @state))
-                                          cards (some #(when (same-card? (second %) card) (last %))
+                                          cards (some #(when (same-card? (:card (first %)) card) (:cards-trashed (first %)))
                                                       (turn-events state :corp :damage))
                                           dmg (some #(when (= (:title %) target) %) cards)]
                                       (continue-ability state side (when (and should-continue dmg)

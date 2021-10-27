@@ -1764,7 +1764,8 @@
 
 (defcard "Reconstruction Contract"
   {:events [{:event :damage
-             :req (req (and (pos? (nth targets 2)) (= :meat target)))
+             :req (req (and (pos? (:amount context))
+                            (= :meat (:damage-type context))))
              :effect (effect (add-counter card :advancement 1)
                              (system-msg "adds 1 advancement token to Reconstruction Contract"))}]
    :abilities [{:label "Move advancement tokens to another card"

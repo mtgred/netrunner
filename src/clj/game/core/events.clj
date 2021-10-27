@@ -69,12 +69,12 @@
 (defn get-turn-damage
   "Returns the value of damage take this turn"
   [state _]
-  (apply + (map #(nth % 2) (turn-events state :runner :damage))))
+  (apply + (keep #(:amount (first %)) (turn-events state :runner :damage))))
 
 (defn get-installed-trashed
   "Returns list of cards trashed this turn owned by side that were installed"
   [state side]
-  (->> (turn-events state side (keyword (str (name side) "-trash")))
+  (->> (turn-events state side (if (= :corp side) :corp-trash :runner-trash))
        (mapcat (fn [targets] (filter #(installed? (:card %)) targets)))))
 
 (defn first-installed-trash?

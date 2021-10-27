@@ -507,7 +507,7 @@
 
 (defcard "Clan Vengeance"
   {:events [{:event :damage
-             :req (req (pos? (nth targets 2 0)))
+             :req (req (pos? (:amount context)))
              :effect (effect (add-counter card :power 1)
                              (system-msg :runner "places 1 power counter on Clan Vengeance"))}]
    :abilities [{:label "Trash 1 random card from HQ for each power counter"
@@ -1129,7 +1129,7 @@
 
 (defcard "First Responders"
   {:abilities [{:cost [:credit 2]
-                :req (req (some corp? (map second (turn-events state :runner :damage))))
+                :req (req (some corp? (map #(:card (first %)) (turn-events state :runner :damage))))
                 :msg "draw 1 card"
                 :async true
                 :effect (effect (draw eid 1))}]})
@@ -1826,7 +1826,7 @@
 
 (defcard "Officer Frank"
   {:abilities [{:cost [:credit 1 :trash]
-                :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))
+                :req (req (find-first #(= :meat (:damage-type (first %))) (turn-events state :runner :damage)))
                 :msg "force the Corp to trash 2 random cards from HQ"
                 :async true
                 :effect (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp)))))}]})
