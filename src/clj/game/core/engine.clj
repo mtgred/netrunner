@@ -681,7 +681,7 @@
               (let [handlers (when-not (and cancel-fn (cancel-fn state))
                                (filter #(and (card-for-ability state %)
                                              (not (:disabled (card-for-ability state %))))
-                                handlers))
+                                       handlers))
                     non-silent (filter #(let [silent-fn (:silent (:ability %))
                                               card (card-for-ability state %)]
                                           (not (and silent-fn
@@ -694,7 +694,7 @@
                                                 (interactive-fn state side (make-eid state) card event-targets)))
                                         handlers)]
                 ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
-                (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
+                (if (or (= 1 (count handlers)) (empty? interactive) (>= 1 (count non-silent)))
                   (let [to-resolve (if (= 1 (count non-silent))
                                      (first non-silent)
                                      (first handlers))

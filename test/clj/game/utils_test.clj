@@ -243,3 +243,17 @@
         :expected card#
         :message ~msg})
      found#))
+
+(defmethod assert-expr 'no-prompt?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         side# ~(nth form 2)
+         prompt# (-> @state# side# :prompt)
+         prompt-type# (-> @state# side# :prompt :prompt-type)
+         found# ~form]
+     (do-report
+      {:type (if found# :pass :fail)
+       :actual (select-keys (first prompt#) [:msg :prompt-type])
+       :expected "No prompt or :prompt-type of :run"
+       :message ~msg})
+     found#))

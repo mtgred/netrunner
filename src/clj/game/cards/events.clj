@@ -2126,7 +2126,7 @@
                                         (if-let [next-out-of-ashes (some #(when (and (= "Out of the Ashes" (:title %))
                                                                                      (not (same-card? card %))) %)
                                                                          (:discard runner))]
-                                          (resolve-ability state side eid (ashes-recur) (get-card state next-out-of-ashes) nil)
+                                          (continue-ability state side (ashes-recur) (get-card state next-out-of-ashes) nil)
                                           (effect-completed state side eid))))}}})]
     {:makes-run true
      :on-play {:prompt "Choose a server"

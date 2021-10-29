@@ -4045,6 +4045,7 @@
       (click-prompt state :runner "No")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 5 (count (:rfg (get-runner)))))
+      (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished")
       (take-credits state :runner)
       (take-credits state :corp)
       ;; ensure that if you decline the rfg, game will still ask the next turn
@@ -4053,7 +4054,8 @@
       (click-prompt state :runner "Archives")
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))))
-      (is (= 6 (count (:rfg (get-runner)))))))
+      (is (= 6 (count (:rfg (get-runner)))))
+      (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished")))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
@@ -4083,13 +4085,11 @@
      (click-prompt state :runner "Yes")
      (click-prompt state :runner "Archives")
      (run-continue state)
-     (click-prompt state :runner "Yes")
-     (click-prompt state :runner "Archives")
-     (run-continue state)
      (click-prompt state :runner "No")
-     (is (= 1 (count (:discard (get-runner)))))
+     (is (= 2 (count (:discard (get-runner)))))
      (is (no-prompt? state :runner) "No further start of turn prompts")
-     (is (no-prompt? state :corp) "No waiting for start of turn triggers prompt"))))
+     (is (no-prompt? state :corp) "No waiting for start of turn triggers prompt")
+     (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished"))))
 
 (deftest overclock
   ;; Overclock - Gain 5 temporary credits
