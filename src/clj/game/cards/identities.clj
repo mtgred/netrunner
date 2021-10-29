@@ -1555,7 +1555,8 @@
         {:interactive (req true)
          :optional
          {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
-          :prompt "Swap ice with Tāo Salonga ability?"
+          :prompt "Swap ice with Tāo Salonga's ability?"
+          :waiting-prompt "the Runner to swap ice."
           :yes-ability
           {:prompt "Choose 2 ice"
            :choices {:req (req (and (installed? target)
@@ -1564,7 +1565,8 @@
                      :all true}
            :msg (msg "swap the positions of " (card-str state (first targets))
                      " and " (card-str state (second targets)))
-           :effect (req (swap-ice state side (first targets) (second targets)))}}}]
+           :effect (req (swap-ice state side (first targets) (second targets)))}
+          :no-ability {:effect (effect (system-msg "declines to use Tāo Salonga: Telepresence Magician"))}}}]
     {:events [(assoc swap-ability :event :agenda-scored)
               (assoc swap-ability :event :agenda-stolen)]}))
 
