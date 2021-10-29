@@ -566,7 +566,7 @@
                                    :effect (req (let [c (move state side card
                                                               (conj (server->zone state target) :content))]
                                                   (unregister-events state side card)
-                                                  (register-events state side c)))}
+                                                  (register-default-events state side c)))}
                                   card nil))}]})
 
 (defcard "Giordano Memorial Field"

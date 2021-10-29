@@ -6,7 +6,7 @@
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler card-as-handler make-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event trigger-event-simult unregister-events]]
+    [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
@@ -57,11 +57,9 @@
                   (effect-completed state side eid)
                   (let [_ (when (:derezzed-events cdef)
                             (unregister-events state side card))
-                        card (if-not disabled
-                               (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true})
-                               (update! state side (assoc card :rezzed :this-turn)))
-                        card-ability (when-let [ability (:on-rez cdef)]
-                                       (ability-as-handler card ability))]
+                        card (if disabled
+                               (update! state side (assoc card :rezzed :this-turn))
+                               (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true}))]
                     (doseq [h (:hosted card)]
                       (update! state side (-> h
                                               (update-in [:zone] #(map to-keyword %))
@@ -83,9 +81,9 @@
                       (play-sfx state side "rez-other"))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
-                      (make-pending-event state :rez card card-ability))
+                      (register-pending-event state :rez card card-ability))
                     (queue-event state :rez {:card (get-card state card)
-                                             :cost (:cost-paid async-result)})
+                                             :cost cost-paid})
                     (wait-for
                       (trash-hosted-cards state side (make-eid state eid) (get-card state card))
                       (wait-for

@@ -21,39 +21,34 @@
 (deftest queued-events
   (let [start (new-game)
         state (atom @start)
-        side :corp
-        corp-card {:cid 1
-                   :side "Corp"
-                   :type "Asset"
-                   :title "Test Card 1"}
-        runner-card {:cid 2
-                     :side "Runner"
-                     :type "Program"
-                     :title "Test Card 2"}
         event-1 {:event :test-event
-                 :effect (fn [state side eid card targets]
+                 :condition :test-condition
+                 :effect (fn [state _ _ _ targets]
                            (swap! state update :order conj [:test-event targets]))}
         event-2 {:event :test-event
+                 :condition :test-condition
                  :once-per-instance true
-                 :effect (fn [state side eid card targets]
+                 :effect (fn [state _ _ _ targets]
                            (swap! state update :order conj [:test-event targets]))}
 
         event-3 {:event :test-event-2
+                 :condition :test-condition
                  :once-per-instance true
-                 :effect (fn [state side eid card targets]
+                 :effect (fn [state _ _ _ targets]
                            (swap! state update :order conj [:test-event-2 targets]))}
         event-4 {:event :test-event-2
-                 :effect (fn [state side eid card targets]
+                 :condition :test-condition
+                 :effect (fn [state _ _ _ targets]
                            (swap! state update :order conj [:test-event-2 targets]))}
         ]
     (testing "it works"
       (reset! state @start)
       (do-game
         state
-        (e/make-pending-event state :test-event (first (:hand (get-corp))) event-1)
-        (e/make-pending-event state :test-event-2 (first (:hand (get-corp))) event-3)
-        (e/make-pending-event state :test-event (first (:hand (get-runner))) event-2)
-        (e/make-pending-event state :test-event-2 (first (:hand (get-runner))) event-4)
+        (e/register-pending-event state :test-event (first (:hand (get-corp))) event-1)
+        (e/register-pending-event state :test-event-2 (first (:hand (get-corp))) event-3)
+        (e/register-pending-event state :test-event (first (:hand (get-runner))) event-2)
+        (e/register-pending-event state :test-event-2 (first (:hand (get-runner))) event-4)
         (e/queue-event state :test-event {:a 1 :b 2 :c 3})
         (e/queue-event state :test-event-2 {:a 4 :b 5 :c 6})
         (e/queue-event state :test-event {:a 'a :b 'b :c 'c})
@@ -120,7 +115,7 @@
   (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
                                         :hand ["Hostile Takeover" "Cerebral Static" "Lag Time"]}
                                  :runner {:hand ["Scrubbed" "Interdiction"]}})
-                _ (do (play-from-hand state :corp "Hostile Takeover" "New remote"))]
+                _ (play-from-hand state :corp "Hostile Takeover" "New remote")]
     (testing "Corp current stays when agenda scored"
       (do-game state
         (play-from-hand state :corp "Cerebral Static")

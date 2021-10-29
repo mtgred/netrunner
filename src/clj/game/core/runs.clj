@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint make-pending-event pay queue-event resolve-ability unregister-floating-events]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability unregister-floating-events]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
@@ -18,7 +18,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
-    [game.utils :refer [dissoc-in remove-once same-card?]]
+    [game.utils :refer [dissoc-in same-card?]]
     [jinteki.utils :refer [count-bad-pub]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
@@ -243,7 +243,7 @@
         on-approach (:on-approach (card-def ice))]
     (system-msg state :runner (str "approaches " (card-str state ice)))
     (when on-approach
-      (make-pending-event state :approach-ice ice on-approach))
+      (register-pending-event state :approach-ice ice on-approach))
     (queue-event state :approach-ice {:ice ice})
     (wait-for (checkpoint state nil
                           (make-eid state eid)
@@ -310,7 +310,7 @@
   (let [on-encounter (:on-encounter (card-def ice))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (when on-encounter
-      (make-pending-event state :encounter-ice ice on-encounter))
+      (register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
     (wait-for (checkpoint state side
                           (make-eid state eid)
@@ -457,7 +457,7 @@
                         2500)))))
 
 (defmethod continue :default
-  [state _ _]
+  [_ _ _]
   (.println *err* (with-out-str
                     (print-stack-trace
                       (Exception. "Continue clicked at the wrong time")

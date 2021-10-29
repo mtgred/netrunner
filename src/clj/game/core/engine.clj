@@ -1,11 +1,11 @@
 (ns game.core.engine
   (:require
-    [clojure.set :as clj-set]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
     [clj-uuid :as uuid]
+    [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? get-card get-cid get-title installed? rezzed?]]
+    [game.core.card :refer [active? facedown? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -491,37 +491,58 @@
     (:hardware :program :resource) #{:rig}
     (:identity :fake-identity) #{:identity}))
 
-; Functions for registering and dispatching events.
+(defn build-location
+  [card {location :location}]
+  (cond
+    (or (list? location)
+        (vector? location))
+    (into #{} location)
+    (keyword? location)
+    #{location}
+    :else
+    (default-locations card)))
+
+(defn- build-condition
+  [{:keys [condition location]}]
+  (cond+
+    [condition]
+    [location :in-location]
+    [:else :active]))
+
+(defn build-event-ability
+  [ability card]
+  {:event (:event ability)
+   :location (build-location card ability)
+   :duration (or (:duration ability) :default-duration)
+   :condition (build-condition ability)
+   :unregister-once-resolved (or (:unregister-once-resolved ability) false)
+   :once-per-instance (or (:once-per-instance ability) false)
+   :ability (dissoc ability :event :duration :condition)
+   :card card
+   :uuid (uuid/v1)})
+
 (defn register-events
-  "Registers each event handler defined in the given card definition.
-  Also registers any suppression events."
-  ([state side card] (register-events state side card nil))
-  ([state side card events]
-   (let [events (or (seq events) (remove :location (:events (card-def card))))
-         abilities
-         (->> (for [ability events]
-                {:event (:event ability)
-                 :location (let [location (:location ability)]
-                             (cond
-                               (or (list? location)
-                                   (vector? location))
-                               (into #{} location)
-                               (keyword? location)
-                               #{location}
-                               :else
-                               (default-locations card)))
-                 :duration (or (:duration ability) :while-installed)
-                 :condition (or (:condition ability) :active)
-                 :unregister-once-resolved (or (:unregister-once-resolved ability) false)
-                 :once-per-instance (or (:once-per-instance ability) false)
-                 :ability (dissoc ability :event :duration :condition)
-                 :card card
-                 :uuid (uuid/v1)})
-              (into []))]
-     (when (seq abilities)
-       (swap! state update :events #(apply conj % abilities)))
-     (register-suppress state side card)
-     abilities)))
+  "Registers each event handler defined in the given card definition."
+  [state _ card events]
+  (when (seq events)
+    (let [abilities (into [] (for [ability events] (build-event-ability ability card)))]
+      (swap! state update :events #(apply conj % abilities))
+      abilities)))
+
+(defn register-default-events
+  [state side card]
+  (register-suppress state side card)
+  (let [events (remove :location (:events (card-def card)))]
+    (register-events state side card events)))
+
+(defn register-pending-event
+  [state event card ability]
+  (let [ability (assoc ability
+                       :event event
+                       :duration (or (:duration ability) :pending)
+                       :unregister-once-resolved true
+                       :once-per-instance (or (:once-per-instance ability) false))]
+    (register-events state nil card [ability])))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.
@@ -538,14 +559,14 @@
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))
                                (in-coll? abilities (:event %))
-                               (= :while-installed (:duration %))))
+                               (= :default-duration (:duration %))))
                  (into [])))
      (unregister-suppress state side card))))
 
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
   [state _ duration]
-  (when (not= :while-installed duration)
+  (when (not= :default-duration duration)
     (swap! state assoc :events
            (->> (:events @state)
                 (remove #(= duration (:duration %)))
@@ -569,32 +590,30 @@
   [state ability]
   (= (:active-player @state) (get-side ability)))
 
+(defn- valid-condition?
+  [state card {:keys [condition location]}]
+  (when (case condition
+          :accessed (same-card? card (:access @state))
+          :active (active? card)
+          :derezzed (and (installed? card)
+                         (not (rezzed? card)))
+          :facedown (and (installed? card)
+                         (facedown? card))
+          :hosted (:host card)
+          :inactive (not (active? card))
+          :in-location (or (and (contains? location :discard)
+                                (in-discard? card))
+                           (and (contains? location :hand)
+                                (in-hand? card)))
+          :test-condition true)
+    card))
+
 (defn- card-for-ability
-  [state ability]
-  (if (#{:while-installed :pending} (:duration ability))
-    (when-let [card (get-card state (:card ability))]
-      (if (and (= :while-installed (:duration ability))
-               (not-empty
-                 (clj-set/intersection (:location ability) (default-locations card))))
-        (case (:condition ability)
-          :active
-          (when (active? card)
-            card)
-          :facedown
-          (when (and (installed? card)
-                     (facedown? card))
-            card)
-          :derezzed
-          (when (and (installed? card)
-                     (not (rezzed? card)))
-            card)
-          :hosted
-          (when (:host card)
-            card)
-          ; else
-          nil)
-        card))
-    (:card ability)))
+  [state {:keys [card duration] :as ability}]
+  (if (#{:default-duration :pending} duration)
+    (when-let [card (get-card state card)]
+      (valid-condition? state card ability))
+    card))
 
 (defn trigger-suppress
   "Returns true if the given event on the given targets should be suppressed, by triggering
@@ -743,16 +762,9 @@
 (defn ability-as-handler
   "Wraps a card ability as an event handler."
   [card ability]
-  {:duration (or (:duration ability) :pending)
-   :card card
-   :ability ability})
-
-(defn card-as-handler
-  "Wraps a card's definition as an event handler."
-  [card]
-  (let [{:keys [effect prompt choices psi optional trace] :as cdef} (card-def card)]
-    (when (or effect prompt choices psi optional trace)
-      (ability-as-handler card cdef))))
+  (build-event-ability
+    (assoc ability :duration (or (:duration ability) :pending))
+    card))
 
 (defn- event-title
   "Gets a string describing the internal engine event keyword"
@@ -820,17 +832,6 @@
   ([state event context-map]
    (when (keyword? event)
      (swap! state update-in [:queued-events event] conj (assoc context-map :event event)))))
-
-(defn make-pending-event
-  [state event card ability]
-  (let [ability {:event event
-                 :duration :pending
-                 :unregister-once-resolved true
-                 :once-per-instance (or (:once-per-instance ability) false)
-                 :ability ability
-                 :card card
-                 :uuid (uuid/v1)}]
-    (swap! state update :events conj ability)))
 
 (defn- gather-queued-event-handlers
   [state event-maps]
@@ -938,7 +939,7 @@
   (filterv #(is-player player-side %) handlers))
 
 (defn- mark-pending-abilities
-  [state eid args]
+  [state eid _args]
   (let [event-maps (:queued-events @state)]
     (doseq [[event context-map] event-maps]
       (log-event state event context-map))
@@ -988,7 +989,8 @@
 (defn unregister-expired-durations
   [state _ eid duration context-maps]
   (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
-            (if duration
+            (unregister-floating-events state nil :pending)
+            (when duration
               (unregister-floating-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))

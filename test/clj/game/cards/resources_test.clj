@@ -682,6 +682,38 @@
         ;; Next turn
         (rez state :corp (refresh slee))
         (is (rezzed? (refresh slee)) "Chief Slee can be rezzed next turn"))))
+  (testing "Rez prevention happens before draw-on-rez"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Spin Doctor"]
+                        :credits 10}
+                 :runner {:deck ["Councilman"]}})
+      (play-from-hand state :corp "Spin Doctor" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
+      (let [spin (get-content state :remote1 0)
+            hand (:hand (get-corp))]
+        (rez state :corp spin)
+        (is (= (count hand) (count (:hand (get-corp)))) "Draw waits for abilities")
+        (is (= "Trash Councilman and pay 0 [Credits] to derez Spin Doctor?"
+               (:msg (prompt-map :runner))))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Runner pays 0 credits to derez Spin Doctor"
+          ;; Runner triggers Councilman
+          (click-prompt state :runner "Yes"))
+        (is (not (rezzed? (refresh spin))) "Spin Doctor no longer rezzed")
+        (is (= (count hand) (count (:hand (get-corp)))))
+        (rez state :corp (refresh spin))
+        (is (not (rezzed? (refresh spin))) "Spin Doctor cannot be rezzed")
+        (is (= (count hand) (count (:hand (get-corp)))))
+        (take-credits state :runner)
+        ;; Next turn
+        (changes-val-macro
+          2 (count (:hand (get-corp)))
+          "Corp draws 2 cards"
+          (rez state :corp (refresh spin))
+          (is (rezzed? (refresh spin)) "Spin Doctor can be rezzed next turn")))))
   (testing "Rezz no longer prevented when card changes zone (issues #1571)"
     (do-game
       (new-game {:corp {:deck ["Jackson Howard"]}

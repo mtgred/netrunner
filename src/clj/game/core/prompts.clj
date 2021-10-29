@@ -1,10 +1,11 @@
 (ns game.core.prompts
-  (:require [clj-uuid :as uuid]
-            [game.core.eid :refer [effect-completed make-eid]]
-            [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
-            [game.core.toasts :refer [toast]]
-            [game.macros :refer [when-let*]]
-            [medley.core :refer [find-first]]))
+  (:require
+    [clj-uuid :as uuid]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
+    [game.core.toasts :refer [toast]]
+    [game.macros :refer [when-let*]]
+    [medley.core :refer [find-first]]))
 
 (defn choice-parser
   [choices]

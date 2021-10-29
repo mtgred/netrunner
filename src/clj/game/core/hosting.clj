@@ -1,10 +1,10 @@
 (ns game.core.hosting
   (:require
-    [game.core.card :refer [assoc-host-zones corp? condition-counter? get-card program? rezzed? runner?]]
+    [game.core.card :refer [assoc-host-zones corp? get-card program? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [register-events unregister-events]]
+    [game.core.engine :refer [register-default-events unregister-events]]
     [game.core.initializing :refer [card-init]]
     [game.core.memory :refer [update-mu]]
     [game.core.update :refer [update! update-hosted!]]
@@ -35,48 +35,48 @@
      (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
      (let [card (get-card state card)
            card (assoc-host-zones card)
-           c (assoc target
-                    :host (dissoc card :hosted)
-                    :facedown facedown
-                    :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
-                    :previous-zone (:zone target))
+           target (assoc target
+                         :host (dissoc card :hosted)
+                         :facedown facedown
+                         :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
+                         :previous-zone (:zone target))
            ;; Update any cards hosted by the target, so their :host has the updated zone.
-           c (update c :hosted #(map (fn [h] (assoc h :host c)) %))
+           target (update target :hosted #(map (fn [h] (assoc h :host target)) %))
            cdef (card-def card)
-           tdef (card-def c)]
-       (update! state side (update card :hosted conj c))
+           tdef (card-def target)]
+       (update! state side (update card :hosted conj target))
        (when (and installed
-                  (or (runner? c)
-                      (and (corp? c)
-                           (rezzed? c))))
+                  (or (runner? target)
+                      (and (corp? target)
+                           (rezzed? target))))
          (if (or (:recurring tdef)
                  (:prevent tdef)
                  (:corp-abilities tdef)
                  (:runner-abilities tdef))
            ;; Initialize the whole card
-           (card-init state side c {:resolve-effect false
-                                    :init-data true
-                                    :no-mu no-mu})
+           (card-init state side target {:resolve-effect false
+                                         :init-data true
+                                         :no-mu no-mu})
            ;; Otherwise just register events and constant effects
-           (do (register-events state side c)
-               (register-constant-effects state side c)
-               (when (and (program? c)
+           (do (register-default-events state side target)
+               (register-constant-effects state side target)
+               (when (and (program? target)
                           (not no-mu))
                  (register-floating-effect
-                   state side c
+                   state side target
                    {:type :used-mu
                     :duration :constant
-                    :value (:memoryunits c)})
+                    :value (:memoryunits target)})
                  (update-mu state)))))
        (when-let [hosted-gained (:hosted-gained cdef)]
-         (hosted-gained state side (make-eid state) (get-card state card) [c]))
+         (hosted-gained state side (make-eid state) (get-card state card) [target]))
        ;; Update all constant and floating effects
        (let [new-effects (reduce
                            (fn [all-effects current-effect]
                              (if (= cid (:cid (:card current-effect)))
-                               (conj all-effects (assoc current-effect :card c))
+                               (conj all-effects (assoc current-effect :card target))
                                (conj all-effects current-effect)))
                            []
                            (:effects @state))]
          (swap! state assoc :effects (into [] new-effects)))
-       (get-card state c)))))
+       (get-card state target)))))

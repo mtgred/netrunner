@@ -6,7 +6,7 @@
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [is-ability? register-events resolve-ability unregister-events]]
+    [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.gaining :refer [gain lose]]
     [game.core.ice :refer [add-sub]]
@@ -63,7 +63,7 @@
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
   some events."
   ([state side card] (deactivate state side card nil))
-  ([state side {:keys [cid disabled facedown installed rezzed] :as card} keep-counter]
+  ([state side {:keys [cid disabled installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
    (unregister-constant-effects state side card)
    (trigger-leave-effect state side card)
@@ -126,7 +126,7 @@
            [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
              :req (req (not (:disabled card)))
              :effect r}])))
-     (register-events state side c)
+     (register-default-events state side c)
      (register-constant-effects state side c)
      ;; Facedown cards can't be initialized
      (when (and (program? card)

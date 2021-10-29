@@ -171,7 +171,7 @@
 
 (defcard "Audacity"
   (letfn [(audacity [n]
-            (if (< n 2)
+            (when (< n 2)
               {:prompt "Choose a card on which to place an advancement"
                :async true
                :choices {:card can-be-advanced?
@@ -465,7 +465,7 @@
     :effect (effect (add-counter target :advancement 3 {:placed true})
                     (register-turn-flag!
                       target :can-score
-                      (fn [state side card]
+                      (fn [state _ card]
                         (if (same-card? card target)
                           ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
                           true))))}})
@@ -543,9 +543,7 @@
 
 (defcard "Diversified Portfolio"
   (letfn [(number-of-non-empty-remotes [state]
-            (count (filter #(not (empty? %))
-                           (map #(:content (second %))
-                                (get-remotes state)))))]
+            (count (filter seq (map #(:content (second %)) (get-remotes state)))))]
     {:on-play
      {:msg (msg "gain " (number-of-non-empty-remotes state)
              " [Credits]")
@@ -1353,14 +1351,14 @@
                              (register-turn-flag!
                                state side
                                card :can-rez
-                               (fn [state side card]
+                               (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
                                    true)))
                              (register-turn-flag!
                                state side
                                card :can-score
-                               (fn [state side card]
+                               (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                                    true)))
@@ -2487,7 +2485,7 @@
                                         (register-events
                                           state side card
                                           [{:event :advance
-                                            :location :hosted
+                                            :condition :hosted
                                             :req (req (same-card? (:host card) target))
                                             :async true
                                             :msg "gain 1 [Credit]"

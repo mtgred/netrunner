@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint make-pending-event pay queue-event register-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint register-pending-event pay queue-event register-default-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access? can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move trash]]
@@ -174,7 +174,7 @@
   [state side eid card]
   (let [c (move state :runner (dissoc card :advance-counter :new) :scored {:force true})
         _ (when (card-flag? c :has-events-when-stolen true)
-            (register-events state side c)
+            (register-default-events state side c)
             (register-constant-effects state side c))
         _ (update-all-advancement-requirements state)
         _ (update-all-agenda-points state)
@@ -186,7 +186,7 @@
     (when (:run @state)
       (swap! state assoc-in [:run :did-steal] true))
     (when-let [on-stolen (:stolen (card-def c))]
-      (make-pending-event state :agenda-stolen c on-stolen))
+      (register-pending-event state :agenda-stolen c on-stolen))
     (queue-event state :agenda-stolen {:card c
                                        :points points})
     (wait-for (checkpoint state nil (make-eid state eid) {:duration :agenda-stolen})
@@ -312,13 +312,18 @@
         (reveal state :runner eid card))
     (effect-completed state side eid)))
 
+(defn access-ability
+  [card cdef]
+  (when-let [acc (:access cdef)]
+    (assoc (ability-as-handler card acc)
+           :condition :accessed)))
+
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
   [state side eid c title args]
   (let [cdef (card-def c)
         c (assoc c :seen true)
-        access-effect (when-let [acc (:access cdef)]
-                        (ability-as-handler c acc))]
+        access-effect (access-ability c cdef)]
     (swap! state assoc-in [:runner :register :accessed-cards] true)
     (wait-for (msg-handle-access state side c title args)
               (wait-for (trigger-event-simult

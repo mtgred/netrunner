@@ -7,12 +7,12 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [checkpoint make-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
+    [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.flags :refer [turn-flag?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
-    [game.core.initializing :refer [ability-init card-init subroutines-init]]
+    [game.core.initializing :refer [ability-init card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
@@ -362,7 +362,7 @@
                                         :facedown facedown})
     (when-let [on-install (and (not facedown)
                                (:on-install (card-def installed-card)))]
-      (make-pending-event state :runner-install installed-card on-install))
+      (register-pending-event state :runner-install installed-card on-install))
     (wait-for (checkpoint state nil (make-eid state eid) nil)
               (complete-with-result state side eid (get-card state installed-card)))))
 
@@ -436,7 +436,7 @@
   (let [cdef (card-def card)
         abilities (ability-init cdef)
         card (convert-to-condition-counter card)
-        events (fn [card] (register-events state side card (filter #(= :hosted (:location %)) (:events cdef))))]
+        events (filter #(= :hosted (:condition %)) (:events cdef))]
     (if (corp? card)
       (wait-for (corp-install state side (make-eid state eid)
                               card target {:host-card target
@@ -444,7 +444,7 @@
                 (let [card (update! state side (assoc async-result :abilities abilities))]
                   (unregister-events state side card)
                   (unregister-constant-effects state side card)
-                  (register-events state side card (events card))
+                  (register-events state side card events)
                   (register-constant-effects state side card)
                   (complete-with-result state side eid card)))
       (wait-for (runner-install state side (make-eid state eid)
@@ -453,6 +453,6 @@
                 (let [card (update! state side (assoc async-result :abilities abilities))]
                   (unregister-events state side card)
                   (unregister-constant-effects state side card)
-                  (register-events state side card (events card))
+                  (register-events state side card events)
                   (register-constant-effects state side card)
                   (complete-with-result state side eid card))))))

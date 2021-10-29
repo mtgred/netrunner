@@ -10,7 +10,7 @@
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
-    [game.core.engine :refer [ability-as-handler checkpoint make-pending-event pay queue-event resolve-ability trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
     [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
@@ -565,7 +565,7 @@
        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
        (play-sfx state side "agenda-score")
        (when-let [on-score (:on-score (card-def c))]
-         (make-pending-event state :agenda-scored c on-score))
+         (register-pending-event state :agenda-scored c on-score))
        (queue-event state :agenda-scored {:card c
                                           :points points})
        (checkpoint state nil eid {:duration :agenda-scored})))))

@@ -591,6 +591,7 @@
                             (can-pay? state :runner (assoc eid :source card :source-type :ability)
                                       card nil
                                       [:credit (rez-cost state :corp (:card context))])))
+             :async true
              :effect
              (effect
                (continue-ability
@@ -600,10 +601,10 @@
                    :prompt (msg "Trash Councilman and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
-                   {:async true
-                    :cost [:credit (rez-cost state :corp (:card context))]
+                   {:cost [:credit (rez-cost state :corp (:card context))]
                     :msg (msg "derez " (:title (:card context))
                               " and prevent it from being rezzed this turn")
+                    :async true
                     :effect (req (wait-for (trash state side card nil)
                                            (when-not (get-card state card)
                                              (derez state :runner (:card context))
