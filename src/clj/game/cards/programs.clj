@@ -882,13 +882,13 @@
     {:on-install {:prompt "Choose a server"
                   :msg (msg "target " target)
                   :choices (req servers)
-                  :effect (effect (update! (assoc card :server-target target)))}
-     :leave-play (effect (update! (dissoc card :server-target)))
-     :abilities [(break-sub 1 1 "Code Gate" {:req (req (if (:server-target card)
-                                                         (#{(last (server->zone state (:server-target card)))} (target-server run))
+                  :effect (effect (update! (assoc card :card-target target)))}
+     :leave-play (effect (update! (dissoc card :card-target)))
+     :abilities [(break-sub 1 1 "Code Gate" {:req (req (if (:card-target card)
+                                                         (#{(last (server->zone state (:card-target card)))} (target-server run))
                                                          true))})
-                 (strength-pump 1 1 :end-of-encounter {:req (req (if (:server-target card)
-                                                                   (#{(last (server->zone state (:server-target card)))} (target-server run))
+                 (strength-pump 1 1 :end-of-encounter {:req (req (if (:card-target card)
+                                                                   (#{(last (server->zone state (:card-target card)))} (target-server run))
                                                                    true))})]}))
 
 (defcard "D4v1d"
@@ -1047,10 +1047,10 @@
 (defcard "Diwan"
   {:on-install {:prompt "Choose the server that this copy of Diwan is targeting:"
                 :choices (req servers)
-                :effect (effect (update! (assoc card :server-target target)))}
+                :effect (effect (update! (assoc card :card-target target)))}
    :constant-effects [{:type :install-cost
                        :req (req (let [serv (:server (second targets))]
-                                   (= serv (:server-target card))))
+                                   (= serv (:card-target card))))
                        :value 1}]
    :events [{:event :purge
              :async true
@@ -2055,11 +2055,11 @@
   {:on-install {:prompt "Choose a server for Plague"
                 :choices (req servers)
                 :msg (msg "target " target)
-                :req (req (not (get-in card [:special :server-target])))
-                :effect (effect (update! (assoc-in card [:special :server-target] target)))}
+                :req (req (not (:card-target card)))
+                :effect (effect (update! (assoc card :card-target target)))}
    :events [{:event :successful-run
              :req (req (= (zone->name (:server context))
-                          (get-in (get-card state card) [:special :server-target])))
+                          (:card-target (get-card state card))))
              :msg "gain 2 virus counters"
              :effect (effect (add-counter :runner card :virus 2))}]})
 
@@ -2466,18 +2466,18 @@
   (let [ability {:prompt "Choose a server for Tracker"
                  :choices (req servers)
                  :msg (msg "target " target)
-                 :req (req (not (:server-target card)))
-                 :effect (effect (update! (assoc card :server-target target)))}]
+                 :req (req (not (:card-target card)))
+                 :effect (effect (update! (assoc card :card-target target)))}]
     {:implemention "Doesn't preveent subroutine from resolving"
      :abilities [{:label "Make a run on targeted server"
                   :cost [:click 1 :credit 2]
-                  :req (req (some #(= (:server-target card) %) runnable-servers))
-                  :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
+                  :req (req (some #(= (:card-target card) %) runnable-servers))
+                  :msg (msg "make a run on " (:card-target card) ". Prevent the first subroutine that would resolve from resolving")
                   :async true
-                  :effect (effect (make-run eid (:server-target card) card))}]
+                  :effect (effect (make-run eid (:card-target card) card))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
-               :effect (effect (update! (dissoc card :server-target)))}]}))
+               :effect (effect (update! (dissoc card :card-target)))}]}))
 
 (defcard "Tranquilizer"
   (let [action (req (add-counter state side card :virus 1)

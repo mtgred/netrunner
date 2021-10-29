@@ -479,7 +479,7 @@
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
-  (testing "Update server-target on ice swap"
+  (testing "Update card-target on ice swap"
     (do-game
       (new-game {:runner {:deck ["Boomerang"]}
                  :corp {:deck ["Ice Wall" "Thimblerig"]}})
@@ -496,7 +496,7 @@
           (take-credits state :runner)
           (click-prompt state :corp "Yes")
           (click-card state :corp (refresh icew))))))
-  (testing "Update server-target on ice trash"
+  (testing "Update card-target on ice trash"
     (do-game
       (new-game {:runner {:deck ["Boomerang"]}
                  :corp {:deck ["Ice Wall"]}})
@@ -508,7 +508,7 @@
         (click-card state :runner icew)
         (let [boom (get-hardware state 0)]
           (trash state :runner icew)
-          (is (nil? (:server-target (refresh boom))) "No more target message")
+          (is (nil? (:card-target (refresh boom))) "No more target message")
           (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card")))))
   (testing "Does not fire on Crisium runs. Issue #4734"
     (do-game

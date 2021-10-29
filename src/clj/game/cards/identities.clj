@@ -274,23 +274,25 @@
 
 (defcard "Azmari EdTech: Shaping the Future"
   {:events [{:event :corp-turn-ends
-             :prompt "Name a Runner card type"
-             :choices ["Event" "Resource" "Program" "Hardware"]
-             :effect (effect (update! (assoc card :az-target target))
+             :prompt "Name a card type"
+             :choices ["Event" "Resource" "Program" "Hardware" "None"]
+             :effect (effect (update! (assoc card :card-target (if (= "None" target) nil target)))
                              (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
             {:event :runner-install
-             :req (req (and (is-type? (:card context) (:az-target card))
+             :req (req (and (:card-target card)
+                            (is-type? (:card context) (:card-target card))
                             (not (:facedown context))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
              :once :per-turn
-             :msg (msg "gain 2 [Credits] from " (:az-target card))}
+             :msg (msg "gain 2 [Credits] from " (:card-target card))}
             {:event :play-event
-             :req (req (is-type? (:card context) (:az-target card)))
+             :req (req (and (:card-target card)
+                            (is-type? (:card context) (:card-target card))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
              :once :per-turn
-             :msg (msg "gain 2 [Credits] from " (:az-target card))}]})
+             :msg (msg "gain 2 [Credits] from " (:card-target card))}]})
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))

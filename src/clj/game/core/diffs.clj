@@ -102,6 +102,7 @@
    :advanceable
    :advancementcost
    :agendapoints
+   :card-target
    :cid
    :code
    :corp-abilities
@@ -129,7 +130,6 @@
    :runner-abilities
    :seen
    :selected
-   :server-target
    :side
    :strength
    :subroutines
