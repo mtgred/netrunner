@@ -2143,7 +2143,6 @@
                                                               :once-key :out-of-ashes}
                                                        card)))))
                :location :discard
-               :condition :in-discard
                :once :per-turn
                :once-key :out-of-ashes
                :effect (req (wait-for (resolve-ability state side (make-eid state eid) (ashes-recur) card nil)
@@ -2197,7 +2196,7 @@
                        :req (req (same-card? (:host card) target))
                        :value -1}]
    :events [{:event :purge
-             :location :hosted
+             :condition :hosted
              :async true
              :effect (req (wait-for (trash state side card {:cause :purge})
                                     (update-all-agenda-points state side)

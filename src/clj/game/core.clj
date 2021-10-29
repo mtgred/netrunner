@@ -323,19 +323,19 @@
   [game.core.engine
    ability-as-handler
    can-trigger?
-   card-as-handler
    checkpoint
    dissoc-req
    gather-events
    is-ability?
-   make-pending-event
    merge-costs-paid
    not-used-once?
    pay
    prompt!
    queue-event
    register-ability-type
+   register-default-events
    register-events
+   register-pending-event
    register-once
    register-suppress
    resolve-ability

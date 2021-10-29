@@ -1,12 +1,11 @@
 (ns game.core.play-instants
   (:require
-    [game.core.board :refer [all-active]]
-    [game.core.card :refer [get-card has-subtype?]]
+    [game.core.card :refer [has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
-    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid make-result]]
-    [game.core.engine :refer [dissoc-req checkpoint queue-event merge-costs-paid pay resolve-ability should-trigger? unregister-events]]
+    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
+    [game.core.engine :refer [checkpoint dissoc-req merge-costs-paid pay queue-event resolve-ability should-trigger? unregister-events]]
     [game.core.flags :refer [can-run?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
@@ -24,7 +23,7 @@
      (complete-with-result state side eid card))))
 
 (defn- current-handler
-  [state side card]
+  [state _ card]
   (if (has-subtype? card "Current")
     (move state (to-keyword (:side card)) card :current)
     card))

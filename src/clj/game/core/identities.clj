@@ -1,10 +1,10 @@
 (ns game.core.identities
   (:require
-    [game.core.card :refer [active? get-card]]
+    [game.core.card :refer [active?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [register-events resolve-ability unregister-events]]
+    [game.core.engine :refer [register-default-events resolve-ability unregister-events]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.update :refer [update!]]))
 
@@ -42,7 +42,7 @@
         {:keys [effect]} (card-def id)]
     (when effect
       (effect state side (make-eid state) id nil))
-    (register-events state side id)
+    (register-default-events state side id)
     (register-constant-effects state side id)))
 
 (defn enable-identity

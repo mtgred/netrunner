@@ -1,7 +1,6 @@
 (ns game.core.effects-test
   (:require [game.core :as core]
             [game.core.effects :as e]
-            [game.utils :refer [same-card?]]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -24,7 +23,7 @@
                 :value 1}
         type-2 {:type :test-type-2
                 :duration :constant
-                :value (fn [state side eid card targets] 2)}]
+                :value (constantly 2)}]
 
     (testing "Effect type filtering"
       (reset! state start)
@@ -63,7 +62,7 @@
             :value 1}
         f2 {:type :test-type
             :duration :constant
-            :value (fn [state side eid card targets] 2)}]
+            :value (constantly 2)}]
 
     ;; This is testing if the :req is not present, so no need to retest
     (testing ":value static values"
@@ -83,7 +82,7 @@
         (reset! state start)
         (e/register-floating-effect
           state side c1
-          (assoc f1 :req (fn [s1 s2 e c t] (swap! state update :req-called inc))))
+          (assoc f1 :req (fn [& _] (swap! state update :req-called inc))))
         (is (zero? (:req-called @state)) "The req hasn't been called")
         (e/get-effects state :corp c2 :test-type)
         (is (= 1 (:req-called @state)) "The req has been called once")
@@ -94,7 +93,7 @@
         (reset! state start)
         (e/register-floating-effect
           state side c1
-          (assoc f1 :req (fn [s1 s2 e c t] :true)))
+          (assoc f1 :req (constantly :true)))
         (let [effects (e/get-effects state :corp c2 :test-type)]
           (is (= [1] effects) "Should return the effect value")))
 
@@ -102,7 +101,7 @@
         (reset! state start)
         (e/register-floating-effect
           state side c1
-          (assoc f1 :req (fn [s1 s2 e c t] nil)))
+          (assoc f1 :req (constantly nil)))
         (let [effects (e/get-effects state :corp c2 :test-type)]
           (is (= [] effects) "Should not return the effect value"))))))
 

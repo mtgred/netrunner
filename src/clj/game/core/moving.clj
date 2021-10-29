@@ -7,7 +7,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint dissoc-req make-pending-event queue-event register-events should-trigger? trigger-event unregister-events]]
+    [game.core.engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
@@ -68,7 +68,7 @@
                           (update! state side newh)
                           (when (active? newh)
                             (unregister-events state side h)
-                            (register-events state side newh)
+                            (register-default-events state side newh)
                             (unregister-constant-effects state side h)
                             (register-constant-effects state side newh))
                           [newh]))
@@ -295,38 +295,41 @@
                  (prevent-trash state side eid (rest cs) args acc)))
      (complete-with-result state side eid acc))))
 
+(defn get-trash-effect
+  "Criteria for abilities that trigger when the card is trashed"
+  [state side eid card {:keys [accessed cause host-trashed]}]
+  (let [trash-effect (:on-trash (card-def card))]
+    (when (and card
+               (not (:disabled card))
+               (or (and (runner? card)
+                        (installed? card)
+                        (not (facedown? card)))
+                   (and (rezzed? card)
+                        (not host-trashed))
+                   (and (:when-inactive trash-effect)
+                        (not host-trashed))
+                   (in-play-area? card))
+               (should-trigger? state side eid card
+                                [{:card card
+                                  :cause cause
+                                  :accessed accessed}]
+                                trash-effect))
+      (let [once-per (:once-per-instance trash-effect)]
+        (-> trash-effect
+            (assoc :once-per-instance (if (some? once-per) once-per true)
+                   :condition :inactive)
+            (dissoc-req))))))
+
 (defn trash-cards
   "Attempts to trash each given card, and then once all given cards have been either
   added or not added to the trash list, all of those cards are trashed"
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards {:keys [accessed cause keep-server-alive host-trashed game-trash suppress-checkpoint] :as args}]
+  ([state side eid cards {:keys [accessed cause keep-server-alive game-trash suppress-checkpoint] :as args}]
    (if (empty? (filter identity cards))
      (effect-completed state side eid)
      (wait-for (prevent-trash state side (make-eid state eid) cards args)
                (let [trashlist async-result
                      _ (update-current-ice-to-trash state trashlist)
-                     ;; Criteria for abilities that trigger when the card is trashed
-                     get-trash-effect (fn [card]
-                                        (let [trash-effect (:on-trash (card-def card))]
-                                          (when (and card
-                                                     (not (:disabled card))
-                                                     (or (and (runner? card)
-                                                              (installed? card)
-                                                              (not (facedown? card)))
-                                                         (and (rezzed? card)
-                                                              (not host-trashed))
-                                                         (and (:when-inactive trash-effect)
-                                                              (not host-trashed))
-                                                         (in-play-area? card))
-                                                     (should-trigger? state side eid card
-                                                                      [{:card card
-                                                                        :cause cause
-                                                                        :accessed accessed}]
-                                                                      trash-effect))
-                                            (let [once-per (:once-per-instance trash-effect)]
-                                              (-> trash-effect
-                                                  (assoc :once-per-instance (if (some? once-per) once-per true))
-                                                  dissoc-req)))))
                      ;; No card should end up in the opponent's discard pile, so instead
                      ;; of using `side`, we use the card's `:side`.
                      move-card (fn [card]
@@ -343,7 +346,7 @@
                                    (fn [acc card]
                                      (if-let [card (get-card? state card)]
                                        (let [moved-card (move-card card)
-                                             trash-effect (get-trash-effect card)]
+                                             trash-effect (get-trash-effect state side eid card args)]
                                          (update-indicies card)
                                          (conj acc [moved-card trash-effect]))
                                        acc))
@@ -370,7 +373,7 @@
                        eid (make-result eid (mapv first moved-cards))]
                    (doseq [[card trash-effect] moved-cards
                            :when trash-effect]
-                     (make-pending-event state trash-event card trash-effect))
+                     (register-pending-event state trash-event card trash-effect))
                    (doseq [trashed-card trashlist]
                      (queue-event state trash-event {:card trashed-card
                                                      :cause cause
@@ -412,14 +415,14 @@
         (doseq [new-card [a-new b-new]]
           (unregister-events state side new-card)
           (when (rezzed? new-card)
-            (register-events state side new-card))
+            (register-default-events state side new-card))
           (doseq [h (:hosted new-card)]
             (let [newh (-> h
                            (assoc-in [:zone] '(:onhost))
                            (assoc-in [:host :zone] (:zone new-card)))]
               (update! state side newh)
               (unregister-events state side h)
-              (register-events state side newh))))
+              (register-default-events state side newh))))
         (trigger-event state side :swap a-new b-new)))))
 
 (defn swap-ice
@@ -476,7 +479,7 @@
         new-scored (move state :corp stolen :scored)]
     (unregister-events state side stolen)
     (unregister-constant-effects state side stolen)
-    (register-events state side new-scored)
+    (register-default-events state side new-scored)
     (register-constant-effects state side new-scored)
     (when-not (card-flag? scored :has-events-when-stolen true)
       (deactivate state :corp new-stolen))
