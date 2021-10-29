@@ -170,6 +170,6 @@
       (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters")
       (core/command-counter state :corp [4])
       (click-card state :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
-      (is (empty? (:prompt (get-corp))) "Counter prompt closed")
+      (is (no-prompt? state :corp) "Counter prompt closed")
       (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
       (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))

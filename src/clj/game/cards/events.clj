@@ -2113,37 +2113,41 @@
                    :choices (req runnable-servers)
                    :async true
                    :effect (effect (make-run eid target card))}
-        ashes-recur (fn ashes-recur [n]
+        ashes-recur (fn ashes-recur []
                       {:optional
                        {:req (req (not (zone-locked? state :runner :discard)))
                         :prompt "Remove Out of the Ashes from the game to make a run?"
                         :yes-ability
-                        {:msg "removes Out of the Ashes from the game to make a run"
+                        {:async true
+                         :msg "removes Out of the Ashes from the game to make a run"
                          :effect
-                         (req (let [card (some #(when (= "Out of the Ashes" (:title %)) %) (:discard runner))]
-                                (move state side card :rfg)
-                                (unregister-events state side card {:events [{:event :runner-phase-12}]})
-                                (wait-for (resolve-ability state side ashes-run card nil)
-                                          (if (< 1 n)
-                                            (continue-ability state side (ashes-recur (dec n)) card nil)
-                                            (effect-completed state side eid)))))}}})
-        ashes-flag [{:event :runner-phase-12
-                     :location :discard
-                     :condition :in-discard
-                     :once :per-turn
-                     :once-key :out-of-ashes
-                     :effect (effect (continue-ability
-                                       (ashes-recur (count (filter #(= "Out of the Ashes" (:title %))
-                                                                   (:discard runner))))
-                                       card nil))}]]
+                         (req (move state side card :rfg)
+                              (wait-for (resolve-ability state side (make-eid state eid) ashes-run card nil)
+                                        (if-let [next-out-of-ashes (some #(when (and (= "Out of the Ashes" (:title %))
+                                                                                     (not (same-card? card %))) %)
+                                                                         (:discard runner))]
+                                          (continue-ability state side (ashes-recur) (get-card state next-out-of-ashes) nil)
+                                          (effect-completed state side eid))))}}})]
     {:makes-run true
      :on-play {:prompt "Choose a server"
                :choices (req runnable-servers)
                :async true
                :effect (effect (make-run eid target card))}
-     :move-zone (req (if (in-discard? card)
-                       (register-events state side card ashes-flag)
-                       (unregister-events state side card {:events [{:event :runner-phase-12}]})))}))
+     :events [{:event :runner-turn-begins
+               :async true
+               :interactive (req true)
+               :silent (req (let [ashes (filter #(= "Out of the Ashes" (:title %))
+                                                (:discard runner))]
+                              (or (not= card (first ashes))
+                                  (not (not-used-once? state {:once :per-turn
+                                                              :once-key :out-of-ashes}
+                                                       card)))))
+               :location :discard
+               :condition :in-discard
+               :once :per-turn
+               :once-key :out-of-ashes
+               :effect (req (wait-for (resolve-ability state side (make-eid state eid) (ashes-recur) card nil)
+                                      (effect-completed state side eid)))}]}))
 
 (defcard "Overclock"
   {:makes-run true

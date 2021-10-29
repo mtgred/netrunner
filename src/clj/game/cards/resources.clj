@@ -1371,18 +1371,13 @@
                  :msg (msg "make a run on " target " during which no programs can be used")
                  :makes-run true
                  :async true
-                 ;; TODO: This is a hack to avoid failures in tests
-                 :effect (req (let [wait-prompt
-                                    (find-first #(= (:msg %) "Waiting for Runner to resolve runner-turn-begins triggers")
-                                                (get-in @state [:corp :prompt]))]
-                                (remove-from-prompt-queue state :corp wait-prompt))
-                              (wait-for (make-run state :runner (make-eid state eid) target card)
-                                        (show-wait-prompt state :corp "Runner to resolve runner-turn-begins triggers")
+                 :effect (req (wait-for (make-run state :runner (make-eid state eid) target card)
                                         (effect-completed state side eid)))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
      :install-cost-bonus (req (- (get-link state)))
      :events [{:event :runner-turn-begins
+               :interactive (req true)
                :optional
                {:once :per-turn
                 :prompt "Use Jak Sinclair to make a run?"

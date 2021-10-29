@@ -248,7 +248,7 @@
         (click-prompt state :runner "Account Siphon")
         (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
             "Replacement effect is noted")
-        (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+        (is (no-prompt? state :runner) "No access, no replacement effects")))
     (testing "and choosing to access cards"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -263,7 +263,7 @@
             "Not choosing replacement effect is noted")
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "Normal access prompt")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
+        (is (no-prompt? state :runner) "No access, no replacement effects"))))
   (testing "must replacement effects only"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -275,10 +275,10 @@
       (take-credits state :corp)
       (click-prompt state :runner "HQ")
       (run-empty-server state :hq)
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :runner))
       (is (second-last-log-contains? state "Runner uses the replacement effect from Security Testing")
           "Replacement effect is noted")
-      (is (empty? (:prompt (get-runner))) "No access, no replacement effects")))
+      (is (no-prompt? state :runner) "No access, no replacement effects")))
   (testing "'You may' and must replacement effects"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -295,7 +295,7 @@
       (click-prompt state :runner "Account Siphon")
       (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
           "Replacement effect is noted")
-      (is (empty? (:prompt (get-runner))) "No access, no replacement effects"))))
+      (is (no-prompt? state :runner) "No access, no replacement effects"))))
 
 (deftest buffered-continue
   (testing "Buffered continue on approaching ice"
@@ -565,7 +565,7 @@
         (click-prompt state :runner "No action")
         (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)) "Accessed F")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (no-prompt? state :runner) "No more accesses")
         (is (= "DNA Tracker" (-> (get-corp) :deck first :title)) "D on top")))
     (testing "Drawing cards above the currently accessed card"
       (do-game
@@ -598,7 +598,7 @@
         (is (count (filter #(= "Brainstorm" %) (:hand (get-corp)))) "Drawn C")
         (is (= "You accessed Excalibur." (-> (get-runner) :prompt first :msg)) "Accessed E")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (no-prompt? state :runner) "No more accesses")
         (is (= "Chiyashi" (-> (get-corp) :deck first :title)) "C on top"))))
   (testing "Correct handling of multi accesses with shuffle in between accesses"
     (testing "Shuffle from Bacterial Programming"
@@ -641,7 +641,7 @@
         (click-prompt state :runner "No action")
         (is (= "You accessed DNA Tracker." (-> (get-runner) :prompt first :msg)) "Accessed D")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No more accesses")
+        (is (no-prompt? state :runner) "No more accesses")
         (is (= "Advanced Assembly Lines" (-> (get-corp) :deck first :title)) "A on top")))
     (testing "Shuffle from paid ability during accesses"
       (do-game
@@ -681,7 +681,7 @@
                      (-> (get-runner) :prompt first :msg))
                   "Accessing top card of R&D")
               (click-prompt state :runner "No action")))
-          (is (empty? (:prompt (get-runner))) "No more accesses")))))
+          (is (no-prompt? state :runner) "No more accesses")))))
   (testing "Reordering cards during multi access"
     (testing "Reorder through Anansi sub"
       (do-game
@@ -728,7 +728,7 @@
           (click-prompt state :runner "No action")
           (is (= "You accessed Advanced Assembly Lines." (:msg (prompt-map :runner))) "Accessed A")
           (click-prompt state :runner "No action")
-          (is (empty? (:prompt (get-runner))) "No more accesses"))))))
+          (is (no-prompt? state :runner) "No more accesses"))))))
 
 (deftest forced-encounters
   (testing "Forced encounters - During run"
@@ -779,7 +779,7 @@
          (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
          (is (not= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Access paused while encounter is active")
          (fire-subs state (refresh iw))
-         (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+         (is (no-prompt? state :runner) "Encounter has ended and not accessing additional cards")
          (is (empty? (:run @state)) "The run has ended")
          (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
          (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
@@ -814,7 +814,7 @@
          (is (= 2 (count (:encounters @state))))
          (is (not= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Access paused while encounter is active")
          (fire-subs state (refresh iw))
-         (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+         (is (no-prompt? state :runner) "Encounter has ended and not accessing additional cards")
          (is (empty? (:run @state)) "The run has ended")
          (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
          (is (-> @state :runner :register :accessed-cards) "The runner accessed cards this run")
@@ -840,7 +840,7 @@
           (is (core/get-current-encounter state) "The runner should be encountering an ice")
           (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
           (fire-subs state (refresh iw))
-          (is (empty? (prompt-map :runner)) "Encounter has ended and not accessing additional cards")
+          (is (no-prompt? state :runner) "Encounter has ended and not accessing additional cards")
           (is (empty? (:run @state)) "The run has ended")))))
   (testing "Ice breakers and broken subroutines reset after a forced encounter ends"
     (do-game
@@ -915,7 +915,7 @@
           (is (= 2 (:current-strength (refresh cor))) "Corroder's strength reset to 2")
           (is (= 2 (:current-strength (refresh gord))) "Gordian Blade's strength reset to 2")
           (is (not (-> (refresh iw) :subroutines first :broken)) "Ice Wall's subroutine is no longer broken")
-          (is (empty? (prompt-map :runner)) "Encounter has ended"))))
+          (is (no-prompt? state :runner)) "Encounter has ended")))
     (testing "Forced encounters outside of a run end properly when an 'End the run' subroutine is fired"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -947,7 +947,7 @@
           (fire-subs state (refresh le))
           (is (= 2 (:current-strength (refresh cor))) "Corroder's strength reset to 2")
           (is (not= 8 (@state :runner :credits)) "Little Engine's third subroutine should not have fired")
-          (is (empty? (prompt-map :runner)) "Encounter has ended")
+          (is (no-prompt? state :runner) "Encounter has ended")
           (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
           (is (not (get-in @state [:runner :register :unsuccessful-run :remote1])) "Not a run"))))
     (testing "Forced encounters outside of a run end properly when a 'Jack out' event occurs"
@@ -978,7 +978,7 @@
           (is (last-log-contains? state "Runner encounters Little Engine protecting Server 1 at position 0.") "Encounter message sent")
           (card-ability state :runner fs 0)
           (is (not= 9 (@state :runner :credits)) "Little Engine's third subroutine should not have fired")
-          (is (empty? (prompt-map :runner)) "Encounter has ended")
+          (is (no-prompt? state :runner) "Encounter has ended")
           (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
           (is (not (get-in @state [:runner :register :unsuccessful-run :remote1])) "Not a run")))))
   (testing "Forced Encounters - Redirection"

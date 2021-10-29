@@ -7,7 +7,7 @@
             [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
-            [game.utils-test :refer [click-prompt error-wrapper is']]
+            [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
             [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -364,16 +364,12 @@
   ([state phase]
    (let [encounter (core/get-current-encounter state)]
      (is' (some? encounter) "There is an encounter happening")
-     (is' (or (empty? (get-in @state [:runner :prompt]))
-              (= :encounter (-> @state :runner :prompt first :prompt-type))) "No open prompts for the runner")
-     (is' (or (empty? (get-in @state [:corp :prompt]))
-              (= :encounter (-> @state :corp :prompt first :prompt-type))) "No open prompts for the corp")
+     (is' (no-prompt? state :runner) "No open prompts for the runner")
+     (is' (no-prompt? state :corp) "No open prompts for the corp")
      (is' (not (:no-action encounter)) "No player has pressed continue yet")
      (when (and (some? encounter)
-                (or (empty? (get-in @state [:runner :prompt]))
-                    (= :encounter (-> @state :runner :prompt first :prompt-type)))
-                (or (empty? (get-in @state [:corp :prompt]))
-                    (= :encounter (-> @state :corp :prompt first :prompt-type)))
+                (no-prompt? state :runner)
+                (no-prompt? state :corp)
                 (not (:no-action encounter)))
        (core/process-action "continue" state :corp nil)
        (core/process-action "continue" state :runner nil)
@@ -392,14 +388,14 @@
      (encounter-continue-impl state)
      (let [run (:run @state)]
        (is' (some? run) "There is a run happening")
-       (is' (empty? (get-in @state [:runner :prompt])) "No open prompts for the runner")
-       (is' (empty? (get-in @state [:corp :prompt])) "No open prompts for the corp")
+       (is' (no-prompt? state :runner) "No open prompts for the runner")
+       (is' (no-prompt? state :corp) "No open prompts for the corp")
        (is' (not (:no-action run)) "No player has pressed continue yet")
        (is' (not= :success (:phase run))
             "The run has not reached the server yet")
        (when (and (some? run)
-                  (empty? (get-in @state [:runner :prompt]))
-                  (empty? (get-in @state [:corp :prompt]))
+                  (no-prompt? state :runner)
+                  (no-prompt? state :corp)
                   (not (:no-action run))
                   (not= :success (:phase run)))
          (core/process-action "continue" state :corp nil)
@@ -447,8 +443,8 @@
                        (not (utils/same-card? ice (core/get-current-ice state)))))
               (not (and (= :movement (:phase (:run @state)))
                         (zero? (:position (:run @state)))))
-              (empty? (get-in @state [:runner :prompt]))
-              (empty? (get-in @state [:corp :prompt]))
+              (no-prompt? state :runner)
+              (no-prompt? state :corp)
               (not (:no-action (:run @state)))
               (not= :success (:phase (:run @state))))
     (run-continue-impl state))

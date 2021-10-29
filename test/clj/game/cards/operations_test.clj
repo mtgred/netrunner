@@ -156,7 +156,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Aggressive Negotiation" "Hostile Takeover"]}})
     (play-from-hand state :corp "Aggressive Negotiation")
-    (is (empty? (:prompt (get-corp))) "Corp should have no prompt")
+    (is (no-prompt? state :corp) "Corp should have no prompt")
     (play-and-score state "Hostile Takeover")
     (play-from-hand state :corp "Aggressive Negotiation")
     (click-prompt state :corp "Hedge Fund")
@@ -251,7 +251,7 @@
       (play-from-hand state :corp "Blacklist" "New remote")
       (rez state :corp (refresh (get-content state :remote1 0)))
       (play-from-hand state :corp "Ark Lockdown")
-      (is (empty? (:prompt (get-corp))) "RFG prompt did not come up")
+      (is (no-prompt? state :corp) "RFG prompt did not come up")
       (is (empty? (->> (get-runner) :rfg (map :title))) "No cards should be rfg'd"))))
 
 (deftest attitude-adjustment
@@ -298,13 +298,13 @@
                         :hand [(qty "Audacity" 2) "Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Audacity")
-      (is (empty? (:prompt (get-corp))) "Can't play Audacity with too few cards in HQ")))
+      (is (no-prompt? state :corp) "Can't play Audacity with too few cards in HQ")))
   (testing "when placing counters on 1 card"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Audacity" 3) "Ice Wall" "Hostile Takeover"]}})
       (play-from-hand state :corp "Audacity")
-      (is (empty? (:prompt (get-corp))) "Can't play Audacity without an advanceable card")
+      (is (no-prompt? state :corp) "Can't play Audacity without an advanceable card")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Audacity")
       (click-card state :corp "Ice Wall")
@@ -375,7 +375,7 @@
                :runner {:hand ["Dorm Computer" "Mass-Driver"]
                         :credits 10}})
     (play-from-hand state :corp "Best Defense")
-    (is (empty? (:prompt (get-corp))) "Corp can't play Best Defense without installed runner cards")
+    (is (no-prompt? state :corp) "Corp can't play Best Defense without installed runner cards")
     (take-credits state :corp)
     (play-from-hand state :runner "Dorm Computer")
     (play-from-hand state :runner "Mass-Driver")
@@ -485,7 +485,7 @@
       (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
       (core/gain state :corp :credit 1)
       (play-from-hand state :corp "Building Blocks")
-      (is (empty? (:prompt (get-corp))) "Can't play Building Blocks without a Barrier in hand"))))
+      (is (no-prompt? state :corp) "Can't play Building Blocks without a Barrier in hand"))))
 
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
@@ -639,7 +639,7 @@
       (click-prompt state :corp "Sure Gamble")
       (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
       (click-prompt state :corp "Sure Gamble")
-      (is (empty? (:prompt (get-corp))) "Runner is flatlined so no more choices")
+      (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
       (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards")))
   (testing "Incorrectly guessing"
     (do-game
@@ -654,7 +654,7 @@
       (play-from-hand state :corp "Complete Image")
       (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
       (click-prompt state :corp "Easy Mark")
-      (is (empty? (:prompt (get-corp))) "Corp guessed incorrectly so shouldn't have another choice")
+      (is (no-prompt? state :corp) "Corp guessed incorrectly so shouldn't have another choice")
       (is (= 1 (-> (get-runner) :discard count)) "Runner's heap should have 1 card")))
   (testing "Not enough agenda points"
     (do-game
@@ -667,7 +667,7 @@
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image")))
+      (is (no-prompt? state :corp) "Corp shouldn't be able to play Complete Image")))
   (testing "Didn't run last turn"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -681,7 +681,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image")))
+      (is (no-prompt? state :corp) "Corp shouldn't be able to play Complete Image")))
   (testing "Interaction with Chronos Protocol"
     (do-game
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
@@ -705,7 +705,7 @@
       (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (is (empty? (:prompt (get-corp))) "Runner is flatlined so no more choices")
+      (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
       (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards"))))
 
 (deftest consulting-visit
@@ -926,7 +926,7 @@
       (click-prompt state :runner "No action")
       (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
-      (is (empty? (:prompt (get-corp))) "No prompt displayed"))))
+      (is (no-prompt? state :corp) "No prompt displayed"))))
 
 (deftest distract-the-masses
   (do-game
@@ -1056,8 +1056,8 @@
       (run-on state :rd)
       (rez state :corp (get-ice state :rd 0))
       (run-continue state)
-      (is (nil? (seq (:prompt (get-corp)))) "Corp should have no prompts")
-      (is (nil? (seq (:prompt (get-runner)))) "Runner should have no prompts")
+      (is (no-prompt? state :corp) "Corp should have no prompts")
+      (is (no-prompt? state :runner) "Runner should have no prompts")
       (is (zero? (count-tags state)) "Runner should have no tags"))))
 
 (deftest economic-warfare
@@ -1402,7 +1402,7 @@
       (click-card state :corp (find-card "Rime" (:hand (get-corp))))
       (click-prompt state :corp "Done")
       (is (= (- credits 2) (:credit (get-corp))) "Corp should pay 2 credits to install third Ice Wall")
-      (is (empty? (:prompt (get-corp))) "Corp should be able to stop installing early"))))
+      (is (no-prompt? state :corp) "Corp should be able to stop installing early"))))
 
 (deftest fast-track
   ;; Fast Track
@@ -1494,7 +1494,7 @@
       (play-from-hand state :corp "Focus Group")
       (is (= 5 (:credit (get-corp))))
       (click-prompt state :corp "Hardware")
-      (is (empty? (:prompt (get-corp))) "No hardware in Runner's Grip so just end the interaction")
+      (is (no-prompt? state :corp) "No hardware in Runner's Grip so just end the interaction")
       (is (= 5 (:credit (get-corp))))))
   (testing "Can't afford to pay to place advancement tokens, gracefully end"
     (do-game
@@ -1508,7 +1508,7 @@
       (core/lose state :corp :credit 3)
       (is (= 2 (:credit (get-corp))))
       (click-prompt state :corp "3") ;; want to place 3 advancement tokens
-      (is (empty? (:prompt (get-corp))) "Corp can't afford to pay so just end the interaction")
+      (is (no-prompt? state :corp) "Corp can't afford to pay so just end the interaction")
       (is (= 2 (:credit (get-corp))) "Didn't pay to place advancement tokens"))))
 
 (deftest foxfire
@@ -1573,7 +1573,7 @@
       (is (= 4 (:credit (get-corp))) "Cost 1 credit to play")
       (click-prompt state :corp "Gain 2 [Credits]")
       (is (= 6 (:credit (get-corp))) "Corp gained 2 credits")
-      (is (empty? (:prompt (get-corp))) "No lingering prompt after making single choice")))
+      (is (no-prompt? state :corp) "No lingering prompt after making single choice")))
   (testing "Draw 2 cards"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) "Fully Operational"]}})
@@ -1581,7 +1581,7 @@
       (play-from-hand state :corp "Fully Operational")
       (click-prompt state :corp "Draw 2 cards")
       (is (= 2 (count (:hand (get-corp)))) "Corp drew 2 cards")
-      (is (empty? (:prompt (get-corp))) "No lingering prompt after making single choice")))
+      (is (no-prompt? state :corp) "No lingering prompt after making single choice")))
   (testing "Extra choices from remote servers"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Breaker Bay Grid" 2) "Fully Operational"]}})
@@ -1595,7 +1595,7 @@
       (dotimes [_ 3]
         (click-prompt state :corp "Gain 2 [Credits]"))
       (is (= 10 (:credit (get-corp))) "Corp gained 6 credits")
-      (is (empty? (:prompt (get-corp))) "No lingering prompt after making repeated choices"))))
+      (is (no-prompt? state :corp) "No lingering prompt after making repeated choices"))))
 
 (deftest game-changer
   (letfn [(game-changer-test [num-agenda]
@@ -1671,7 +1671,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Game Over")
       (click-prompt state :corp "Program")
-      (is (empty? (:prompt (get-runner))) "No prevention prompt for the Runner")
+      (is (no-prompt? state :runner) "No prevention prompt for the Runner")
       (is (= 2 (:credit (get-runner))))
       (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
       (is (some? (find-card "Nyashia" (:discard (get-runner)))) "Nyashia trashed")
@@ -1733,7 +1733,7 @@
           (do (click-prompt state :runner "Steal")
               (is (= 1 (:agenda-point (get-runner))) "Runner should steal Hostile Takeover")
               (is (= 1 (-> (get-corp) :rfg count)) "Hangeki should be removed from the game"))
-          (do (is (empty? (:prompt (get-runner))) "Runner should have no more prompts as access ended")
+          (do (is (no-prompt? state :runner) "Runner should have no more prompts as access ended")
               (is (= -1 (:agenda-point (get-runner))) "Runner should add Hangeki to their score area worth -1 agenda point")
               (is (zero? (-> (get-corp) :rfg count)) "Hangeki shouldn't be removed from the game")))))))
 
@@ -1929,10 +1929,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (click-card state :runner (find-card "Mr. Li" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't trigger")
+      (is (no-prompt? state :runner) "Fall Guy prevention didn't trigger")
       (is (= 1 (count (:discard (get-runner)))) "Card trashed")
       (play-from-hand state :runner "Cache")
-      (is (empty? (:prompt (get-runner))) "Housekeeping didn't trigger on 2nd install")))
+      (is (no-prompt? state :runner) "Housekeeping didn't trigger on 2nd install")))
   (testing "Interaction with Hayley (issue #1869)"
     (do-game
       (new-game {:corp {:deck ["Housekeeping"]}
@@ -1944,7 +1944,7 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (find-card "Cache" (:hand (get-runner))))
       (click-card state :runner "Fall Guy")
-      (is (empty? (:prompt (get-runner))) "No second trash prompt from Housekeeping"))))
+      (is (no-prompt? state :runner) "No second trash prompt from Housekeeping"))))
 
 (deftest hunter-seeker
   ;; Hostile Takeover
@@ -1957,7 +1957,7 @@
     (play-from-hand state :runner "Kati Jones")
     (take-credits state :runner)
     (play-from-hand state :corp "Hunter Seeker")
-    (is (empty? (:prompt (get-corp))) "Corp should have no prompt without agenda stolen")
+    (is (no-prompt? state :corp) "Corp should have no prompt without agenda stolen")
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (click-prompt state :runner "Steal")
@@ -2016,7 +2016,7 @@
     (is (= 3 (count (:hand (get-runner)))))
     (is (= ["Fall Guy" nil] (prompt-titles :corp)))
     (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
-    (is (empty? (:prompt (get-corp))) "No prompt for second card")
+    (is (no-prompt? state :corp) "No prompt for second card")
     (is (= 2 (count (:hand (get-runner)))))
     ;; failed trace - take the bad publicity
     (play-from-hand state :corp "Invasion of Privacy")
@@ -2100,7 +2100,7 @@
       (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
-      (is (empty? (:prompt (get-corp))) "No more prompts"))))
+      (is (no-prompt? state :corp) "No more prompts"))))
 
 
 (deftest kill-switch
@@ -2201,7 +2201,7 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")
     (run-empty-server state "HQ")
-    (is (empty? (:prompt (get-corp))) "No Manhunt trace on second run")
+    (is (no-prompt? state :corp) "No Manhunt trace on second run")
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
@@ -2485,9 +2485,9 @@
         (rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (card-ability state :runner d4 0)
-        (is (empty? (:prompt (get-runner))) "Can't use D4v1d")
+        (is (no-prompt? state :runner) "Can't use D4v1d")
         (card-side-ability state :runner eli 0)
-        (is (empty? (:prompt (get-runner))) "Can't use break ability on Eli")
+        (is (no-prompt? state :runner) "Can't use break ability on Eli")
         (card-ability state :runner smc 0) ; Can still use SMC
         (click-prompt state :runner "No install")
         (changes-val-macro -6 (:credit (get-runner))
@@ -2941,7 +2941,7 @@
       (is (= ["Draw 2 cards" "Gain [Click]" "Install a non-agenda from hand"]
              (prompt-buttons :corp)))
       (click-prompt state :corp "Gain [Click]")
-      (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
+      (is (no-prompt? state :runner) "Runner should have no more prompt"))))
 
 (deftest red-planet-couriers
   ;; Red Planet Couriers
@@ -3260,7 +3260,7 @@
         (new-game {:corp {:deck ["Scapenet"]}
                    :runner {:deck [title]}})
         (play-from-hand state :corp "Scapenet")
-        (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
+        (is (no-prompt? state :corp) "Couldn't play Scapenet without a successful run.")
         (take-credits state :corp)
         (play-from-hand state :runner title)
         (run-empty-server state :archives)
@@ -3271,7 +3271,7 @@
         (let [c (func state 0)]
           (click-card state :corp c))
         (if (= "Misdirection" title)
-          (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
+          (is (not (no-prompt? state :corp)) "Scapenet doesn't work on non-virtual non-chip card.")
           (do (is (= 1 (count (:rfg (get-runner)))) "Card removed from game.")
               (is (find-card "Scapenet" (:discard (get-corp))))))))))
 
@@ -3333,7 +3333,7 @@
      (new-game {:corp {:hand ["Seamless Launch" "Project Atlas"]}})
      (play-from-hand state :corp "Project Atlas" "New remote")
      (play-from-hand state :corp "Seamless Launch")
-     (is (nil? (seq (:prompt (get-corp)))) "No valid target for Seamless Launch")
+     (is (no-prompt? state :corp) "No valid target for Seamless Launch")
      (take-credits state :corp)
      (take-credits state :runner)
      (play-from-hand state :corp "Seamless Launch")
@@ -3357,7 +3357,7 @@
       (new-game {:corp {:hand ["Secure and Protect"]
                         :deck [(qty "Hedge Fund" 10)]}})
       (play-from-hand state :corp "Secure and Protect")
-      (is (nil? (seq (:prompt (get-corp)))) "Corp should have no prompts")))
+      (is (no-prompt? state :corp) "Corp should have no prompts")))
   (testing "With varying install costs"
     (letfn [(sp-test [amt]
               (do-game
@@ -3600,7 +3600,7 @@
                       :hand ["Shoot the Moon" "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Shoot the Moon")
-    (is (empty? (:prompt (get-corp))) "Shouldn't be able to play without runner being tagged")
+    (is (no-prompt? state :corp) "Shouldn't be able to play without runner being tagged")
     (gain-tags state :runner 1)
     (play-from-hand state :corp "Shoot the Moon")
     (let [credits (:credit (get-corp))]
@@ -3732,7 +3732,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 5 (count-tags state)) "Runner has 5 tags")
-      (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt"))))
+      (is (no-prompt? state :corp) "Corp does not have a second Subcontract selection prompt"))))
 
 (deftest subliminal-messaging
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
@@ -3773,7 +3773,7 @@
       (run-on state "R&D")
       (run-jack-out state)
       (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "No prompt here because runner made a run last turn")
+      (is (no-prompt? state :corp) "No prompt here because runner made a run last turn")
       (take-credits state :corp)
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
@@ -3789,13 +3789,13 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "No")
-      (is (empty? (:prompt (get-corp))) "Only 1 Subliminal prompt")
+      (is (no-prompt? state :corp) "Only 1 Subliminal prompt")
       (play-from-hand state :corp "Subliminal Messaging")
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "Yes")
-      (is (empty? (:prompt (get-corp)))
+      (is (no-prompt? state :corp)
           "Only 2 Subliminal prompts - there will be a third if flag not cleared")))
   (testing "Scenario involving Subliminal being reshuffled into R&D with Jackson"
     (do-game
@@ -3815,7 +3815,7 @@
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
       (is (= 1 (count (:hand (get-corp)))) "Subliminal returned to HQ")
-      (is (empty? (:prompt (get-corp)))
+      (is (no-prompt? state :corp)
           "Subliminal prompt cleared - there will be a second prompt if flag not cleared")))
   (testing "Runner made run, ensure game asks again next turn"
     (do-game
@@ -3826,7 +3826,7 @@
       (run-on state "R&D")
       (run-jack-out state)
       (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "No prompt here because runner made a run last turn")
+      (is (no-prompt? state :corp) "No prompt here because runner made a run last turn")
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
@@ -4180,7 +4180,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Threat Assessment")
-      (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
+      (is (no-prompt? state :corp) "Threat Assessment triggered with no trash")))
   (testing "interaction with Hippo. Issue #4049"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -4205,7 +4205,7 @@
       (click-card state :corp "Corroder")
       (click-prompt state :runner "Move Corroder")
       (is (zero? (count-tags state)) "Runner didn't take tags")
-      (is (empty? (:prompt (get-corp)))))))
+      (is (no-prompt? state :corp)))))
 
 (deftest threat-level-alpha
   ;; Threat Level Alpha - Win trace to give tags = Runner tags; or 1 tag if 0

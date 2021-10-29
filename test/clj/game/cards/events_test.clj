@@ -115,7 +115,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Feedback Filter")
     (play-from-hand state :runner "Amped Up")
-    (is (empty? (:prompt (get-runner)))
+    (is (no-prompt? state :runner)
         "Feedback Filter brain damage prevention opportunity not given")
     (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Amped Up")
     (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
@@ -292,7 +292,7 @@
         (play-from-hand state :runner "Apocalypse")
         (click-prompt state :corp "Yes")
         (is (= (+ 2 hand) (count (:hand (get-corp)))) "Calvin Baley draws 2 cards")
-        (is (empty? (:prompt (get-corp))) "No Jinja City Grid")))))
+        (is (no-prompt? state :corp) "No Jinja City Grid")))))
 
 (deftest because-i-can
   ;; Because I Can
@@ -630,7 +630,7 @@
       (core/gain state :runner :credit 7)
       (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
       (play-from-hand state :runner "Brute-Force-Hack")
-      (is (empty? (:prompt (get-runner))) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
+      (is (no-prompt? state :runner) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
 
 (deftest build-script
   ;; Build Script
@@ -692,7 +692,7 @@
       (play-from-hand state :runner "By Any Means")
       (run-empty-server state "Server 1")
       (click-prompt state :corp "No") ;; Don't trigger CTM trace
-      (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
+      (is (no-prompt? state :runner) "No prompt to steal since agenda was trashed")
       (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "alongside Film Critic: should get the option to trigger either"
@@ -720,7 +720,7 @@
              (into #{} (prompt-titles :runner)))
           "A choice of which to trigger first")
       (click-prompt state :runner "By Any Means")
-      (is (empty? (:prompt (get-runner))) "By Any Means trashes with no prompt")
+      (is (no-prompt? state :runner) "By Any Means trashes with no prompt")
       (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect persists when moved from discard"
@@ -1145,7 +1145,7 @@
     (core/gain state :runner :credit 5 :click 1)
     (play-from-hand state :runner "Raymond Flint")
     (play-from-hand state :runner "Corporate Scandal")
-    (is (empty? (:prompt (get-runner))) "No BP taken, so no HQ access from Raymond")
+    (is (no-prompt? state :runner) "No BP taken, so no HQ access from Raymond")
     (play-from-hand state :runner "Investigative Journalism")
     (is (= "Investigative Journalism" (:title (get-resource state 1))) "IJ able to be installed")
     (run-on state "HQ")
@@ -1203,7 +1203,7 @@
         (click-prompt state :corp "No")
         (is (= credits (:credit (get-corp))) "Corp doesn't pay 5 credits to save Hedge Fund")
         (is (= (inc discard) (count (:discard (get-corp)))) "Corp has 1 card trashed"))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompts"))))
+      (is (no-prompt? state :runner) "Runner has no access prompts"))))
 
 (deftest credit-kiting
   ;; Credit Kiting - After successful central run lower install cost by 8 and gain a tag
@@ -1272,11 +1272,11 @@
       (is (= [:rd] (:server (:run @state))) "Second run on R&D triggered")
       (run-continue state)
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
+      (is (no-prompt? state :runner) "No prompt to run a third time")
       (is (not (:run @state)) "Run is over")
       (play-from-hand state :runner "Data Breach")
       (run-jack-out state)
-      (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+      (is (no-prompt? state :runner) "No option to run again on unsuccessful run")))
   (testing "FAQ 4.1 - ensure runner gets choice of activation order"
     (do-game
       (new-game {:runner {:deck ["Doppelgänger" (qty "Data Breach" 3)]}})
@@ -1326,7 +1326,7 @@
     (play-run-event state "Deep Data Mining" :rd)
     (dotimes [_ 3] ; 1 normal access, 2 extra accesses from DDM because Magnum Opus takes 2 MU
       (click-prompt state :runner "No action"))
-    (is (empty? (:prompt (get-runner))) "No more accesses after 3")))
+    (is (no-prompt? state :runner) "No more accesses after 3")))
 
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards
@@ -1342,7 +1342,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Two cards in hand prior to playing Déjà Vu")
     (play-from-hand state :runner "Déjà Vu")
     (click-prompt state :runner (find-card "Dirty Laundry" (:discard (get-runner))))
-    (is (empty? (:prompt (get-runner))) "Recurring a non-virus card stops Déjà Vu prompting further")
+    (is (no-prompt? state :runner) "Recurring a non-virus card stops Déjà Vu prompting further")
     (is (= 2 (count (:hand (get-runner)))) "Two cards in after playing Déjà Vu")
     (play-from-hand state :runner "Déjà Vu")
     (click-prompt state :runner (find-card "Cache" (:discard (get-runner))))
@@ -1365,7 +1365,7 @@
       (trash-from-hand state :runner "Dirty Laundry")
       (is (= 2 (count (:hand (get-runner)))) "Two cards in hand prior to playing Déjà Vu")
       (play-from-hand state :runner "Déjà Vu")
-      (is (empty? (:prompt (get-runner))) "Prompt did not come up"))))
+      (is (no-prompt? state :runner) "Prompt did not come up"))))
 
 (deftest demolition-run
   ;; Demolition Run - Trash at no cost
@@ -1388,7 +1388,7 @@
     (click-prompt state :runner "[Demolition Run] Trash card")
     (is (zero? (:agenda-point (get-runner))) "Didn't steal False Lead")
     (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
-    (is (empty? (:prompt (get-runner))) "Run concluded")))
+    (is (no-prompt? state :runner) "Run concluded")))
 
 (deftest deuces-wild
   ;; Deuces Wild
@@ -1404,14 +1404,14 @@
     (is (= 6 (:credit (get-runner))) "Gained 1 net credit")
     (click-prompt state :runner "Draw 2 cards")
     (is (= 3 (count (:hand (get-runner)))) "Drew 2 cards")
-    (is (empty? (:prompt (get-runner))) "Deuces Wild not showing a third choice option")
+    (is (no-prompt? state :runner) "Deuces Wild not showing a third choice option")
     (play-from-hand state :runner "Deuces Wild")
     (click-prompt state :runner "Expose 1 ice and make a run")
     (click-card state :runner (get-ice state :remote1 0))
     (click-prompt state :runner "HQ")
-    (is (empty? (:prompt (get-runner))) "Deuces prompt not queued")
+    (is (no-prompt? state :runner) "Deuces prompt not queued")
     (run-continue state)
-    (is (= 2 (count (:prompt (get-runner)))) "Deuces prompt not queued")
+    (is (= 3 (count (:prompt (get-runner)))) "Deuces prompt not queued")
     (click-prompt state :corp "0 [Credits]")
     (click-prompt state :runner "0 [Credits]")
     (click-prompt state :runner "Steal")
@@ -1552,7 +1552,7 @@
       (play-run-event state "Diversion of Funds" :hq)
       (click-prompt state :runner "Breach HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Prompt is closed")
+      (is (no-prompt? state :runner) "Prompt is closed")
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
       (is (not (:run @state)) "Run finished"))))
@@ -1598,7 +1598,7 @@
             "The Turning Wheel should provide 1 additional access on R&D")
         (dotimes [_ 2]
           (click-prompt state :runner "No action"))
-        (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+        (is (no-prompt? state :runner) "No prompts after all accesses are complete")
         (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
   (testing "The Turning Wheel gains counters after using D&C. Issue #3810"
@@ -1632,7 +1632,7 @@
         (play-from-hand state :runner "Divide and Conquer")
         (is (= :movement (:phase (:run @state))) "In Movement phase before Success")
         (card-ability state :corp (refresh scored-nisei) 0)
-        (is (empty? (:prompt (get-runner))) "No access prompts for runner")
+        (is (no-prompt? state :runner) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
         (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 0 cards"))))
@@ -1653,7 +1653,7 @@
         (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
       (dotimes [_ 3]
         (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
-      (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+      (is (no-prompt? state :runner) "No prompts after all accesses are complete")
       (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed)))))
   (testing "interaction with no cards in archives. Issue #4473"
     (do-game
@@ -1676,7 +1676,7 @@
      (take-credits state :corp)
      (play-run-event state "Divide and Conquer" :archives)
      (click-prompt state :runner "No action")
-     (is (empty? (:prompt (get-runner))) "There's no prompt for accessing R&D"))))
+     (is (no-prompt? state :runner) "There's no prompt for accessing R&D"))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
@@ -1798,7 +1798,7 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (play-from-hand state :runner "Emergency Shutdown")
-      (is (empty? (:prompt (get-runner))) "Runner has no derez prompt")
+      (is (no-prompt? state :runner) "Runner has no derez prompt")
       (run-empty-server state :hq)
       (play-from-hand state :runner "Emergency Shutdown")
       (is (seq (:prompt (get-runner))) "Runner has a derez prompt")
@@ -1911,7 +1911,7 @@
       (click-card state :runner (refresh iw))
       (is (not (refresh iw)) "Ice Wall on HQ has been trashed")
       (play-from-hand state :runner "En Passant")
-      (is (empty? (:prompt (get-runner))) "Runner has no prompt as En Passant can't be played"))))
+      (is (no-prompt? state :runner) "Runner has no prompt as En Passant can't be played"))))
 
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
@@ -2037,7 +2037,7 @@
       (rez state :corp hunter)
       (take-credits state :corp)
       (play-from-hand state :runner "Exploit")
-      (is (empty? (:prompt (get-runner))) "No prompt as runner has fulfilled req yet")
+      (is (no-prompt? state :runner) "No prompt as runner has fulfilled req yet")
       (run-empty-server state :archives)
       (run-empty-server state :rd)
       (click-prompt state :runner "No action")
@@ -2425,7 +2425,7 @@
     (is (:prompt (get-corp)) "There is still a prompt")
     (click-card state :corp "Enigma")
     (click-card state :corp "Rototurret")
-    (is (empty? (:prompt (get-corp))) "Selecting 5 cards closed prompt")
+    (is (no-prompt? state :corp) "Selecting 5 cards closed prompt")
     (let [discard (:discard (get-corp))]
       (is (find-card "Beanstalk Royalties" discard) "Beanstalk Royalties is still in Archives")
       (is (= 6 (count discard)) "There are 6 cards in Archives")
@@ -2734,7 +2734,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Immolation Script")
       (run-continue state)
-      (is (empty? (prompt-map :runner)) "No prompt for runner")))
+      (is (no-prompt? state :runner)) "No prompt for runner"))
   (testing "with no ice installed"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2743,7 +2743,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Immolation Script")
       (run-continue state)
-      (is (empty? (prompt-map :runner)) "No prompt for runner"))))
+      (is (no-prompt? state :runner)) "No prompt for runner")))
 
 (deftest in-the-groove
   ;; In the Groove - whenever you install cost >0 stuff, draw or gain 1
@@ -2766,11 +2766,11 @@
      (is (changes-credits (get-runner) 1
                           (click-prompt state :runner "Gain 1 [Credits]")))
      (play-from-hand state :runner "Sacrificial Construct")
-     (is (empty? (:prompt (get-runner))) "No prompt because Sacrificial Construct is not expensive")
+     (is (no-prompt? state :runner) "No prompt because Sacrificial Construct is not expensive")
      (take-credits state :runner)
      (take-credits state :corp)
      (play-from-hand state :runner "Clone Chip")
-     (is (empty? (:prompt (get-runner))) "No prompt because In the Groove does not last between turns")))
+     (is (no-prompt? state :runner) "No prompt because In the Groove does not last between turns")))
   (testing "Cybernetics interaction"
     (do-game
      (new-game {:runner {:deck [(qty "In the Groove" 3) "Brain Cage"]}})
@@ -2894,8 +2894,8 @@
         (click-prompt state :runner "Pile 2 (3 cards)")
         (click-prompt state :runner "Card from pile 2")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt to access further cards.")
-        (is (empty? (:prompt (get-corp))) "No more Info Sifting prompts")))))
+        (is (no-prompt? state :runner) "No prompt to access further cards.")
+        (is (no-prompt? state :corp) "No more Info Sifting prompts")))))
 
 (deftest inject
   ;; Inject - Draw 4 cards from Stack and gain 1 credit per trashed program
@@ -3146,7 +3146,7 @@
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No access prompt on C or D, so no other cards were accessed")))
+      (is (no-prompt? state :runner) "No access prompt on C or D, so no other cards were accessed")))
   (testing "When played with no installed cards"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
@@ -3159,7 +3159,7 @@
       (take-credits state :corp)
       (play-run-event state "Khusyuk" :rd)
       (click-prompt state :runner "1 [Credit]: 0 cards")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't get any access prompt when nothing is installed")))
+      (is (no-prompt? state :runner) "Runner shouldn't get any access prompt when nothing is installed")))
  (testing "Interaction with The Turning Wheel"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
@@ -3196,7 +3196,7 @@
         (click-prompt state :runner "0") ; lose Ash trace
         (click-prompt state :runner "1 [Credit]: 3 cards")
         (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
-        (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
+        (is (no-prompt? state :runner) "No prompt to access cards."))))
   (testing "Eater interaction"
     (do-game
       (new-game {:corp {:hand ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Ice Wall"]}
@@ -3225,7 +3225,7 @@
       (run-continue state)
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
-      (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
+      (is (no-prompt? state :runner) "No prompt to access cards."))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
@@ -3278,7 +3278,7 @@
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Kraken")
-    (is (empty? (prompt-map :runner)) "No prompt as the runner hasn't stolen an agenda yet")
+    (is (no-prompt? state :runner) "No prompt as the runner hasn't stolen an agenda yet")
     (run-empty-server state :remote1)
     (click-prompt state :runner "Steal")
     (play-from-hand state :runner "Kraken")
@@ -3327,7 +3327,7 @@
       (is (= 7 (count (:deck (get-runner)))) "Starts with 7 cards in deck")
       (play-from-hand state :runner "Labor Rights")
       (take-credits state :runner)
-      (is (empty? (:prompt (get-runner))) "Shuffle prompt did not come up")
+      (is (no-prompt? state :runner) "Shuffle prompt did not come up")
       (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
       (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
@@ -3477,7 +3477,7 @@
                  :runner {:hand ["Leverage"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Leverage")
-      (is (empty? (prompt-map :corp)) "No prompt as runner didn't run HQ")
+      (is (no-prompt? state :corp) "No prompt as runner didn't run HQ")
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
       (is (zero? (count-bad-pub state)) "Corp has no bad pub")
@@ -3493,7 +3493,7 @@
       (is (not (:winner @state)) "No winner is declared yet")
       (take-credits state :corp)
       (play-from-hand state :runner "Leverage")
-      (is (empty? (prompt-map :corp)) "No prompt as runner didn't run HQ")
+      (is (no-prompt? state :corp) "No prompt as runner didn't run HQ")
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Leverage")
@@ -3664,7 +3664,7 @@
     (is (= "Self-modifying Code" (:title (get-program state 1))) "SMC should be installed")
     (click-card state :runner "Cloak")
     (is (= "Cloak" (:title (get-program state 2))) "Cloak should be installed")
-    (is (empty? (prompt-map :runner)) "Runner should have no more prompts")))
+    (is (no-prompt? state :runner)) "Runner should have no more prompts"))
 
 (deftest mining-accident
   ;; Mining Accident
@@ -3709,7 +3709,7 @@
       (run-continue state)
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run is over")
-      (is (empty? (:prompt (get-runner))) "No prompt to run a third time")))
+      (is (no-prompt? state :runner) "No prompt to run a third time")))
   (testing "Gain 4 credits after succesful second run"
     (do-game
       (new-game {:runner {:deck [(qty "Möbius" 3)]}})
@@ -3731,7 +3731,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Möbius")
       (run-jack-out state)
-      (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+      (is (no-prompt? state :runner) "No option to run again on unsuccessful run")))
   (testing "Normal rnd run does not gain cred"
     (do-game
       (new-game {:runner {:deck [(qty "Möbius" 3)]}})
@@ -3764,7 +3764,7 @@
       (is (= 9 (:credit (get-runner))))
       (play-from-hand state :runner "Déjà Vu")
       (click-prompt state :runner (find-card "Möbius" (:discard (get-runner))))
-      (is (empty? (:prompt (get-runner))) "Recurring a non-virus card stops Déjà Vu prompting further")
+      (is (no-prompt? state :runner) "Recurring a non-virus card stops Déjà Vu prompting further")
       (is (= 1 (count (:hand (get-runner)))))
       (play-from-hand state :runner "Möbius")
       (run-continue state)
@@ -4018,42 +4018,44 @@
   ;; Out of the Ashes - ensure card works when played/trashed/milled
   (testing "Happy Path"
     (do-game
-    (new-game {:corp {:deck ["Kala Ghoda Real TV" "Underway Renovation"]}
-               :runner {:deck [(qty "Out of the Ashes" 6)]}})
-    (play-from-hand state :corp "Underway Renovation" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Out of the Ashes")
-    (click-prompt state :runner "Archives")
-    (run-continue state)
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (trash-from-hand state :runner "Out of the Ashes")
-    (is (zero? (count (:hand (get-runner)))))
-    (is (= 5 (count (:discard (get-runner)))))
-    (take-credits state :runner)
-    (let [underway (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh underway)}))
-    (is (= 6 (count (:discard (get-runner)))))
-    (take-credits state :corp)
-    ;; remove 5 Out of the Ashes from the game
-    (dotimes [_ 5]
+      (new-game {:corp {:deck ["Kala Ghoda Real TV" "Underway Renovation"]}
+                 :runner {:deck [(qty "Out of the Ashes" 6)]}})
+      (play-from-hand state :corp "Underway Renovation" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Out of the Ashes")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (trash-from-hand state :runner "Out of the Ashes")
+      (is (zero? (count (:hand (get-runner)))))
+      (is (= 5 (count (:discard (get-runner)))))
+      (take-credits state :runner)
+      (let [underway (get-content state :remote1 0)]
+        (core/advance state :corp {:card (refresh underway)}))
+      (is (= 6 (count (:discard (get-runner)))))
+      (take-credits state :corp)
+      ;; remove 5 Out of the Ashes from the game
+      (dotimes [_ 5]
+        (is (seq (:prompt (get-runner))))
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Archives")
+        (run-continue state))
+      (click-prompt state :runner "No")
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 5 (count (:rfg (get-runner)))))
+      (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;; ensure that if you decline the rfg, game will still ask the next turn
       (is (seq (:prompt (get-runner))))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Archives")
-      (run-continue state))
-    (click-prompt state :runner "No")
-    (is (= 1 (count (:discard (get-runner)))))
-    (is (= 5 (count (:rfg (get-runner)))))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    ;; ensure that if you decline the rfg, game will still ask the next turn
-    (is (seq (:prompt (get-runner))))
-    (click-prompt state :runner "Yes")
-    (click-prompt state :runner "Archives")
-    (run-continue state)
-    (is (zero? (count (:discard (get-runner)))))
-    (is (= 6 (count (:rfg (get-runner)))))))
+      (run-continue state)
+      (is (zero? (count (:discard (get-runner)))))
+      (is (= 6 (count (:rfg (get-runner)))))
+      (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished")))
   (testing "Heap Locked"
     (do-game
       (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]
@@ -4064,7 +4066,30 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (empty? (:prompt (get-runner))) "OOTA prompt did not come up"))))
+      (is (no-prompt? state :runner) "OOTA prompt did not come up")))
+  (testing "Interactive with other start of turn triggers"
+    (do-game
+     (new-game {:corp   {:deck [(qty "Hedge Fund" 5)]}
+                :runner {:hand [(qty "Out of the Ashes" 3) "Rezeki" "Data Folding"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Rezeki")
+     (play-from-hand state :runner "Data Folding")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (trash-from-hand state :runner "Out of the Ashes")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (= `("Rezeki" "Data Folding" "Out of the Ashes") (prompt-titles :runner)) "Out of the Ashes reduced to a single choice")
+     (click-prompt state :runner "Rezeki")
+     (click-prompt state :runner "Out of the Ashes")
+     (click-prompt state :runner "Yes")
+     (click-prompt state :runner "Archives")
+     (run-continue state)
+     (click-prompt state :runner "No")
+     (is (= 2 (count (:discard (get-runner)))))
+     (is (no-prompt? state :runner) "No further start of turn prompts")
+     (is (no-prompt? state :corp) "No waiting for start of turn triggers prompt")
+     (is (not (:runner-phase-12 @state)) "Start of turn triggers have finished"))))
 
 (deftest overclock
   ;; Overclock - Gain 5 temporary credits
@@ -4607,7 +4632,7 @@
       (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
       (play-from-hand state :runner "Reboot")
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Reboot prompt did not come up"))))
+      (is (no-prompt? state :runner) "Reboot prompt did not come up"))))
 
 
 (deftest recon
@@ -4712,7 +4737,7 @@
     (click-card state :runner (get-ice state :hq 0))
     (is (:prompt (get-runner)) "Can't target rezzed Vanilla, prompt still open")
     (click-card state :runner (get-ice state :hq 1))
-    (is (empty? (:prompt (get-runner))))
+    (is (no-prompt? state :runner))
     (is (= "Vanilla" (:title (get-ice state :rd 0))) "Vanilla swapped to R&D")
     (is (= "Paper Wall" (:title (get-ice state :hq 1))) "Paper Wall swapped to HQ outer position")))
 
@@ -4742,7 +4767,7 @@
       (trash-from-hand state :runner "Morning Star")
       (play-run-event state "Retrieval Run" :archives)
       (click-prompt state :runner "Retrieval Run")
-      (is (empty? (:prompt (get-runner))) "Retrieval run didn't attempt to install from heap.")
+      (is (no-prompt? state :runner) "Retrieval run didn't attempt to install from heap.")
       (is (not (:run @state)) "Run is complete"))))
 
 (deftest rigged-results
@@ -4756,8 +4781,8 @@
       (play-from-hand state :runner "Rigged Results")
       (click-prompt state :runner "0")
       (click-prompt state :corp "0")
-      (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
-      (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")))
+      (is (no-prompt? state :runner) "Rigged Results failed for runner")
+      (is (no-prompt? state :corp) "Rigged Results failed for runner")))
   (testing "Corp guesses incorrectly"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
@@ -4793,8 +4818,8 @@
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
       (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
-      (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
-      (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (no-prompt? state :corp) "Corp should have no more prompts")
+      (is (no-prompt? state :runner) "Runner should have no more prompts")
       (is (nil? (get-run)) "Run is ended")))
   (testing "with Gauntlet #2942"
     (do-game
@@ -4828,8 +4853,8 @@
       (click-card state :runner "Sure Gamble")
       (is (= 2 (-> (get-runner) :hand count)))
       (is (= ["Easy Mark" "Sure Gamble"] (->> (get-runner) :hand (map :title) (into []))))
-      (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
-      (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (no-prompt? state :corp) "Corp should have no more prompts")
+      (is (no-prompt? state :runner) "Runner should have no more prompts")
       (is (nil? (get-run)) "Run is ended")))
   (testing "Can still access upgrades"
     (do-game
@@ -4860,7 +4885,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Rip Deal")
       (run-continue state)
-      (is (empty? (:prompt (get-runner))) "Rip Deal prompt did not come up"))))
+      (is (no-prompt? state :runner) "Rip Deal prompt did not come up"))))
 
 (deftest rumor-mill
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
@@ -4903,7 +4928,7 @@
       (rez state :corp (get-content state :remote1 0))
       (run-on state :remote1)
       (run-continue state)
-      (is (empty? (:prompt (get-corp))) "Caprice prompt is not showing")
+      (is (no-prompt? state :corp) "Caprice prompt is not showing")
       (click-prompt state :runner "No action")
       ;; Trashable execs
       (run-empty-server state :remote2)
@@ -4959,7 +4984,7 @@
     (click-card state :runner "Ice Wall")
     (is (prompt-map :runner) "Prompt should still be active as Ice Wall wasn't rezzed this run")
     (click-card state :runner "Enigma")
-    (is (empty? (prompt-map :runner)) "Enigma should be trashed")
+    (is (no-prompt? state :runner) "Enigma should be trashed")
     (is (= "Enigma" (-> (get-corp) :discard first :title)) "Enigma should be trashed")))
 
 (deftest running-interference
@@ -4979,7 +5004,7 @@
           credits (:credit (get-corp))]
       (rez state :corp archer)
       (click-card state :corp (get-scored state :corp 0))
-      (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
+      (is (no-prompt? state :corp) "Only 1 agenda required to rez")
       (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
       (is (rezzed? (refresh archer)) "Archer is rezzed"))
     (run-continue-until state :movement)
@@ -4988,7 +5013,7 @@
           credits (:credit (get-corp))]
       (run-on state "HQ")
       (rez state :corp iw)
-      (is (empty? (:prompt (get-corp))))
+      (is (no-prompt? state :corp))
       (is (= (- credits (:cost iw)) (:credit (get-corp))) "Rezzing Ice Wall costs normal"))))
 
 (deftest satellite-uplink
@@ -5254,7 +5279,7 @@
       (play-from-hand state :runner "Security Testing")
       (let [st (get-resource state 0)]
         (play-from-hand state :runner "Surge")
-        (is (empty? (:prompt (get-runner))) "Surge does not fire on Security Testing"))))
+        (is (no-prompt? state :runner) "Surge does not fire on Security Testing"))))
   (testing "Don't fire surge if target does not have virus counter flag set"
     (do-game
       (new-game {:runner {:deck ["Imp" "Surge"]}})
@@ -5265,7 +5290,7 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (play-from-hand state :runner "Surge")
-        (is (empty? (:prompt (get-runner))) "Surge does not fire on Imp turn after install"))))
+        (is (no-prompt? state :runner) "Surge does not fire on Imp turn after install"))))
   (testing "Don't allow surging Gorman Drip, since it happens on the corp turn"
     (do-game
       (new-game {:runner {:deck ["Gorman Drip v1" "Surge"]}})
@@ -5278,7 +5303,7 @@
         (is (= 3 (get-counters (refresh gd) :virus))
             "Gorman Drip gains 3 counters after Corp clicks 3 times for credits")
         (play-from-hand state :runner "Surge")
-        (is (empty? (:prompt (get-runner))) "Surge does not trigger on Gorman Drip")))))
+        (is (no-prompt? state :runner) "Surge does not trigger on Gorman Drip")))))
 
 (deftest syn-attack
   ;; SYN Attack

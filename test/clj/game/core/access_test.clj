@@ -14,8 +14,8 @@
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
+      (is (no-prompt? state :corp))))
   (testing "Something in R&D, no upgrades"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -25,8 +25,8 @@
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
+      (is (no-prompt? state :corp))))
   (testing "Nothing in R&D, an unrezzed upgrade"
     (do-game
       (new-game {:corp {:deck []
@@ -37,8 +37,8 @@
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
+      (is (no-prompt? state :corp))))
   (testing "Something in R&D, an upgrade"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -52,8 +52,8 @@
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
+      (is (no-prompt? state :corp))))
   (testing "Accessing multiple cards from R&D"
     (do-game
       (new-game {:corp {:deck []
@@ -77,8 +77,8 @@
       (click-prompt state :runner "No action")
       ;; No more accesses
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
-      (is (empty? (:prompt (get-corp))))))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
+      (is (no-prompt? state :corp))))
   (testing "Accessing multiple cards from R&D with multiple upgrades upgrades"
     (do-game
       (new-game {:corp {:deck ["Keegan Lane" "Midway Station Grid"
@@ -114,7 +114,7 @@
       (click-prompt state :runner "No action")
       (is (= "You accessed Manhunt." (:msg (prompt-map :runner))))
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (no-prompt? state :runner) "Runner has no access prompt")
       (is (nil? (get-run)) "Run has ended normally")))
   (testing "Looping Ganked! and Ansel"
     (do-game
@@ -144,7 +144,7 @@
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "Something in HQ, no upgrades"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -154,7 +154,7 @@
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "Nothing in HQ, an unrezzed upgrade"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -165,7 +165,7 @@
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "Nothing in HQ, multiple unrezzed upgrades"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -180,7 +180,7 @@
       (is (= ["Pay 3 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "Something in HQ, an upgrade"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -194,7 +194,7 @@
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "when access is limited to a single card, access only it"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -208,8 +208,8 @@
       (run-continue state)
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)))))
   (testing "Looping Ganked! and Ansel"
     (do-game
@@ -238,7 +238,7 @@
                         :hand ["Hedge Fund"]}})
       (take-credits state :corp)
       (run-empty-server state "Archives")
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "only non-interactive cards"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -246,7 +246,7 @@
                         :discard ["Hedge Fund" "Beanstalk Royalties"]}})
       (take-credits state :corp)
       (run-empty-server state "Archives")
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")))
+      (is (no-prompt? state :runner) "Runner has no access prompt")))
   (testing "contains one agenda"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -270,7 +270,7 @@
       (is (= "You accessed 15 Minutes." (:msg (prompt-map :runner))))
       (click-prompt state :runner "Steal")
       (is (nil? (get-run)))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :runner))
       (is (= 2 (:agenda-point (get-runner))))))
   (testing "contains one access ability"
     (do-game
@@ -321,8 +321,8 @@
       (click-prompt state :runner "Hostile Takeover")
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))))
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)))))
   (testing "when access count is reduced"
     (testing "by 1"
@@ -343,8 +343,8 @@
         (is (= ["Hostile Takeover" "Everything else"] (prompt-buttons :runner)))
         (click-prompt state :runner "Everything else")
         (is (zero? (:agenda-point (get-runner))) "Runner doesn't access last card in Archives")
-        (is (empty? (:prompt (get-corp))))
-        (is (empty? (:prompt (get-runner))))
+        (is (no-prompt? state :corp))
+        (is (no-prompt? state :runner))
         (is (nil? (get-run)))))
     (testing "by more than 1"
       (do-game
@@ -365,8 +365,8 @@
         (click-prompt state :runner "Everything else")
         (is (zero? (:agenda-point (get-runner))) "Runner didn't access Hostile Takeover")
         (is (zero? (count (:discard (get-runner)))) "Runner didn't access Shock!")
-        (is (empty? (:prompt (get-corp))))
-        (is (empty? (:prompt (get-runner))))
+        (is (no-prompt? state :corp))
+        (is (no-prompt? state :runner))
         (is (nil? (get-run))))))
   (testing "when access is limited to a single card, access only it #5015"
     (do-game
@@ -382,8 +382,8 @@
       (run-continue state)
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)))))
   (testing "when a card is turned facedown mid-access"
     (do-game
@@ -408,8 +408,8 @@
       (is (= "You accessed Bryan Stinson." (:msg (prompt-map :runner))))
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (nil? (get-run)))))
   (testing "stealing multiple agendas from archives"
       (do-game
@@ -469,8 +469,8 @@
       (run-on state "Server 1")
       (core/access-bonus state :runner :total -1)
       (run-continue state)
-      (is (empty? (:prompt (get-corp))))
-      (is (empty? (:prompt (get-runner))) "Runner has no access prompt")
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner) "Runner has no access prompt")
       (is (nil? (get-run)))))
   (testing "Looping Ganked! and Ansel"
     (do-game

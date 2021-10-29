@@ -65,6 +65,12 @@
          (get-in prompt [:card :cid])
          (= (:cid card) (get-in prompt [:card :cid])))))
 
+(defn no-prompt?
+  [state side]
+  (let [prompt (get-prompt state side)]
+    (or (empty? prompt)
+        (= :run (:prompt-type prompt)))))
+
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice
@@ -236,4 +242,18 @@
         :actual prompt-card#
         :expected card#
         :message ~msg})
+     found#))
+
+(defmethod assert-expr 'no-prompt?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         side# ~(nth form 2)
+         prompt# (-> @state# side# :prompt)
+         prompt-type# (-> @state# side# :prompt :prompt-type)
+         found# ~form]
+     (do-report
+      {:type (if found# :pass :fail)
+       :actual (select-keys (first prompt#) [:msg :prompt-type])
+       :expected "No prompt or :prompt-type of :run"
+       :message ~msg})
      found#))

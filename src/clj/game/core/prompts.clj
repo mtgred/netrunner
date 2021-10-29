@@ -36,7 +36,7 @@
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
-               (= prompt-type :encounter)
+               (= prompt-type :run)
                (:number choices)
                (:card-title choices)
                (#{:credit :counter} choices)
@@ -166,19 +166,19 @@
   (when-let [wait (find-first #(= :waiting (:prompt-type %)) (-> @state side :prompt))]
     (remove-from-prompt-queue state side wait)))
 
-(defn show-encounter-prompts
+(defn show-run-prompts
   "Adds a dummy prompt to both side's prompt queues.
-   The prompt cannot be closed except by a later call to clear-encounter-prompts."
-  [state card]
-  (show-prompt state :runner card (str "You are encountering " (:title card)) nil nil {:prompt-type :encounter})
-  (show-prompt state :corp card (str "The Runner is encountering " (:title card)) nil nil {:prompt-type :encounter}))
+   The prompt cannot be closed except by a later call to clear-run-prompts."
+  [state msg card]
+  (show-prompt state :runner card (str "You are " msg) nil nil {:prompt-type :run})
+  (show-prompt state :corp card (str "The Runner is " msg) nil nil {:prompt-type :run}))
 
-(defn clear-encounter-prompts
+(defn clear-run-prompts
   [state]
-  (when-let* [runner-encounter (find-first #(= :encounter (:prompt-type %)) (-> @state :runner :prompt))
-              corp-encounter (find-first #(= :encounter (:prompt-type %)) (-> @state :corp :prompt))]
-             (remove-from-prompt-queue state :runner runner-encounter)
-             (remove-from-prompt-queue state :corp corp-encounter)))
+  (when-let* [runner-prompt (find-first #(= :run (:prompt-type %)) (-> @state :runner :prompt))
+              corp-prompt (find-first #(= :run (:prompt-type %)) (-> @state :corp :prompt))]
+             (remove-from-prompt-queue state :runner runner-prompt)
+             (remove-from-prompt-queue state :corp corp-prompt)))
 
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,

@@ -1791,7 +1791,7 @@
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
             (and @prompt-state
-                 (not= "encounter" @prompt-type))
+                 (not= "run" @prompt-type))
             [prompt-div me @prompt-state]
             (or @run
                 @encounters)
@@ -1929,7 +1929,7 @@
               (or @run
                   @encounters)
               (when (and (or (not prompt-state)
-                             (= :encounter prompt-type))
+                             (= :run prompt-type))
                          (not= @side no-action))
                 (send-command "continue")
                 (.stopPropagation e))

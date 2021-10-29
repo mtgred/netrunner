@@ -96,7 +96,7 @@
         (card-ability state :runner (first (:hosted (refresh corroder))) 0)
         (click-prompt state :runner "End the run")
         (is (:broken (first (:subroutines (refresh hive)))) "The break ability worked")
-        (is (empty? (:prompt (get-runner))) "Break ability is one at a time")))))
+        (is (no-prompt? state :runner) "Break ability is one at a time")))))
 
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
@@ -442,7 +442,7 @@
         (run-continue state)
         (run-continue state)
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+        (is (no-prompt? state :runner) "No prompt for shuffling Boomerang in"))))
   (testing "Cannot use Boomerang on other ice"
     (do-game
       (new-game {:runner {:deck ["Boomerang"]}
@@ -459,7 +459,7 @@
         (rez state :corp enig)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
-        (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
+        (is (no-prompt? state :runner) "Cannot use Boomerang on other ice"))))
   (testing "Assimilator frees target restriction"
     (do-game
       (new-game {:runner {:id "Apex: Invasive Predator"
@@ -531,7 +531,7 @@
         (run-continue state)
         (run-continue state)
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+        (is (no-prompt? state :runner) "No prompt for shuffling Boomerang in"))))
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Surveyor" "Ice Wall"]}
@@ -552,7 +552,7 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "Yes")
-        (is (empty? (:prompt (get-runner))) "No second prompt for shuffling Boomerang in")))
+        (is (no-prompt? state :runner) "No second prompt for shuffling Boomerang in")))
   (testing "Multiple Boomerangs used during single run are shuffled correctly. Issue #5112"
     (do-game
       (new-game {:corp {:deck ["Spiderweb"]}
@@ -632,7 +632,7 @@
         (run-continue state :movement)
         (run-continue state :success)
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "Boomerang prompt did not come up")
+        (is (no-prompt? state :runner) "Boomerang prompt did not come up")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (is (last-log-contains? state "Runner accesses Wraparound from HQ."))))))
 
@@ -723,7 +723,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (let [bufferdrive (get-hardware state 0)]
         (card-ability state :runner bufferdrive 0)
-        (is (empty? (:prompt (get-runner))) "Buffer Drive Prompt did not come up"))))
+        (is (no-prompt? state :runner) "Buffer Drive Prompt did not come up"))))
   (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive" "Corroder" "Yog.0" "Mimic"]
@@ -742,7 +742,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (run-empty-server state "HQ")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :runner))))
   (testing "The player may not move a card trashed while installed to the bottom of the Stack"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive" "Spy Camera"]}})
@@ -751,7 +751,7 @@
       (play-from-hand state :runner "Spy Camera")
       (card-ability state :runner (get-hardware state 1) 1) ; pop spy camera
       (click-prompt state :runner "OK")
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :runner))
       (is (= 1 (count (:discard (get-runner)))))))
   (testing "Buffer Drive must not trigger a second time in one turn"
     (do-game
@@ -763,7 +763,7 @@
       (click-prompt state :runner "No action")
       (let [remaining-grip-cids (set (map :cid (:hand (get-runner))))]
         (trash-from-hand state :runner "Yog.0")
-        (is (empty? (:prompt (get-runner))))
+        (is (no-prompt? state :runner))
         (is (= 1 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner))))))))
   (testing "Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash"
@@ -773,28 +773,28 @@
       (trash-from-hand state :runner "Buffer Drive")
       (play-from-hand state :runner "Buffer Drive")
       (trash-from-hand state :runner "Buffer Drive")
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :runner))))
   (testing "The effect triggers on meat damage"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (damage state :runner :meat 1)
-      (is (not (empty? (:prompt (get-runner)))))))
+      (is (not (no-prompt? state :runner)))))
   (testing "The effect triggers on net damage"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (damage state :runner :net 1)
-      (is (not (empty? (:prompt (get-runner)))))))
+      (is (not (no-prompt? state :runner)))))
   (testing "The effect triggers on brain damage"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (damage state :runner :brain 1)
-      (is (not (empty? (:prompt (get-runner)))))))
+      (is (not (no-prompt? state :runner)))))
   (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the top of the Stack"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive"]
@@ -816,7 +816,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (card-ability state :runner (get-hardware state 0) 0) ; pop buffer drive
       (click-prompt state :runner "Done")
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :runner))
       (is (= 1 (count (:hardware (:rig (get-runner))))))
       (is (= 0 (count (:rfg (get-runner)))))
       (is (= 2 (count (:discard (get-runner)))))))
@@ -828,7 +828,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (trash state :runner (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :runner))))
   (testing "Runner trash -> install -> Corp trash should not cause Buffer Drive to trigger"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
@@ -837,7 +837,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (trash state :corp (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :runner))))
   (testing "Doesn't activate on trashed corp card. Issue #4908"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -865,7 +865,7 @@
       (click-prompt state :runner "Trash a program")
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
-      (is (empty? (:prompt (get-runner))))))
+      (is (no-prompt? state :runner))))
   (testing "Trashing a played event doesn't trigger it. Issue #4922"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -882,7 +882,7 @@
       (is (prompt-is-card? state :runner (get-hardware state 0))
           "Buffer Drive prompt is open")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner has no open prompt")
+      (is (no-prompt? state :runner) "Runner has no open prompt")
       (is (not (prompt-is-card? state :runner (get-hardware state 0)))
           "Buffer Drive doesn't open a prompt")))
   (testing "The effect triggers on nested interactions"
@@ -996,7 +996,7 @@
       (play-from-hand state :runner "Clone Chip")
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
-        (is (not (empty? (:prompt (get-runner)))) "Clone Chip Prompt came up")
+        (is (not (no-prompt? state :runner)) "Clone Chip Prompt came up")
         (click-card state :runner "Datasucker")
         (let [ds (get-program state 0)]
           (is (not (nil? ds)))
@@ -1029,7 +1029,7 @@
       (play-from-hand state :runner "Clone Chip")
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
-        (is (empty? (:prompt (get-runner))) "Clone Chip Prompt did not came up")
+        (is (no-prompt? state :runner) "Clone Chip Prompt did not came up")
         (is (= 1 (count (:discard (get-runner)))) "Datasucker in still in heap")))))
 
 
@@ -1096,7 +1096,7 @@
       (play-from-hand state :runner "Cyberfeeder")
       (play-from-hand state :runner "Equivocation")
       (is (= 1 (:credit (get-runner))) "No pay-credits prompt if non-virus program installed")
-      (is (empty? (:prompt (get-runner))) "No pay-credits prompt if non-virus program installed")
+      (is (no-prompt? state :runner) "No pay-credits prompt if non-virus program installed")
       (play-from-hand state :runner "Clot")
       (let [cyb (get-hardware state 0)]
         (changes-val-macro -1 (:credit (get-runner))
@@ -1266,11 +1266,11 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner done with run after 2 accesses")
+      (is (no-prompt? state :runner) "Runner done with run after 2 accesses")
       (is (not (:run @state)) "2 access run over")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Second run is over after 1 access")
+      (is (no-prompt? state :runner) "Second run is over after 1 access")
       (is (not (:run @state)) "1 access run over")))
   (testing "No bonus access when playing Docklands Pass after first run"
     (do-game
@@ -1280,12 +1280,12 @@
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Runner done with run after 1 accesses")
+      (is (no-prompt? state :runner) "Runner done with run after 1 accesses")
       (is (not (:run @state)) "1 access run over")
       (play-from-hand state :runner "Docklands Pass")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No bonus access on second run")
+      (is (no-prompt? state :runner) "No bonus access on second run")
       (is (not (:run @state)) "1 access run over"))))
 
 (deftest doppelganger
@@ -1648,8 +1648,8 @@
       (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
       (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
       (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
-      (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+      (is (no-prompt? state :runner) "No more prompts")
+      (is (no-prompt? state :corp) "Waiting prompt cleared")))
   (testing "Shuffling with less than 3 cards set aside"
     (do-game
       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Gachapon"]}})
@@ -1671,8 +1671,8 @@
       (is (= 1 (count (:discard (get-runner)))) "Just Gachapon in heap")
       (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
       (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
-      (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+      (is (no-prompt? state :runner) "No more prompts")
+      (is (no-prompt? state :corp) "Waiting prompt cleared")))
   (testing "No programs or virtual resources are revealed. Issue #4826"
     (do-game
       (new-game {:runner {:hand ["Acacia" "Blackmail" "Capstone" "Daredevil" "Easy Mark" "Frame Job" "Gachapon"]}})
@@ -1815,7 +1815,7 @@
      (rez state :corp iw)
      (card-ability state :runner gpi 0)
      (is (not (last-log-contains? state "exposes Ice Wall")) "Cannot use ability since ice is rezzed")
-     (is (nil? (prompt-map :runner))))))
+     (is (no-prompt? state :runner)))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
@@ -1912,7 +1912,7 @@
       (play-from-hand state :runner "Hippo")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (is (empty? (:prompt (get-runner))) "No prompt")
+      (is (no-prompt? state :runner) "No prompt")
       (is (empty? (:rfg (get-runner))) "Hippo not RFGed")
       (is (not-empty (get-hardware state)) "Hippo still installed")))
   (testing "Single ice"
@@ -1980,7 +1980,7 @@
       (click-prompt state :runner "Done")
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (is (empty? (:prompt (get-runner))) "no prompt")))
+      (is (no-prompt? state :runner) "no prompt")))
   (testing "Can't be used after first ice. Issue #4792"
     (do-game
       (new-game {:corp {:hand [(qty "Ice Wall" 2)]}
@@ -2005,7 +2005,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice")))
+      (is (no-prompt? state :runner) "No Hippo prompt on later ice")))
   (testing "Interaction with Nfr #4782"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
@@ -2049,7 +2049,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice"))))
+      (is (no-prompt? state :runner) "No Hippo prompt on later ice"))))
 
 (deftest keiko
   ;; Keiko
@@ -2138,7 +2138,7 @@
       (play-from-hand state :runner "Eater")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
+      (is (no-prompt? state :runner) "No prompt if not virus program installed")
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Hivemind")
@@ -2151,7 +2151,7 @@
         (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
         (run-empty-server state "HQ")
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "No prompt after first run")
+        (is (no-prompt? state :runner) "No prompt after first run")
         (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
   (testing "Interaction with Cordyceps. Issue #4781"
     (do-game
@@ -2175,7 +2175,7 @@
       (click-card state :runner "Ice Wall")
       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is now protecting HQ")
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma is now protecting R&D")
-      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed"))))
+      (is (no-prompt? state :runner) "No prompt if not virus program installed"))))
 
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
@@ -2222,24 +2222,24 @@
      (core/gain state :runner :click 100)
      (play-from-hand state :runner "Lucky Charm")
      (run-empty-server state "HQ")
-     (is (empty? (:prompt (get-runner))) "No prompt messing with runner when run naturally ends successfully")
+     (is (no-prompt? state :runner) "No prompt messing with runner when run naturally ends successfully")
      (doseq [serv ["Archives" "HQ" "R&D"]]
        (run-on state serv)
        (is (:run @state) "Run is ongoing")
        (run-jack-out state)
-       (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner when jacking out from run on " serv))
+       (is (no-prompt? state :runner) (str "No prompt messing with runner when jacking out from run on " serv))
        (is (not (:run @state)) "Run is finished"))
      (doseq [serv ["Archives" "HQ"]]    ; R&D, server 1 has cards
        (run-on state serv)
        (is (:run @state) "Run is ongoing")
        (run-continue state)
        (is (not (:run @state)) "Run is ended")
-       (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner on a successful run on " serv)))
+       (is (no-prompt? state :runner) (str "No prompt messing with runner on a successful run on " serv)))
      (run-on state "Server 1")
      (run-continue-until state :success)
      (click-prompt state :runner "No action") ;access batty
      (is (not (:run @state)) "Run is ended")
-     (is (empty? (:prompt (get-runner))) "No prompt messing with runner on a successful run on remote")
+     (is (no-prompt? state :runner) "No prompt messing with runner on a successful run on remote")
      (let [bc (get-ice state :remote1 0)
            iw (get-ice state :remote1 1)
            mb (get-content state :remote1 0)]
@@ -2254,7 +2254,7 @@
        (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
        (click-prompt state :runner "Done")
        (is (not (:run @state)) "Run ended yet")
-       (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
+       (is (no-prompt? state :runner) "Prevent prompt gone")
        ;; run into border control, have its subroutine ETR, do use lucky charm
        (run-on state "Server 1")
        (run-continue state)
@@ -2265,7 +2265,7 @@
        (click-prompt state :runner "Done")
        (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
-       (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
+       (is (no-prompt? state :runner) "Prevent prompt gone")
        ;; trigger border control
        (play-from-hand state :runner "Lucky Charm")
        (card-ability state :corp (refresh bc) 0)
@@ -2366,8 +2366,8 @@
         (is (= credits (:credit (get-runner))) "Runner shouldn't spend any credits until hardware is actually installed")
         (click-card state :runner "Acacia")
         (is (= (- credits 2) (:credit (get-runner))) "Runner should spend 1 for Masterwork and 1 for Acacia"))
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
-      (is (empty? (:prompt (get-runner))))
+      (is (no-prompt? state :corp) "Corp shouldn't be waiting anymore")
+      (is (no-prompt? state :runner))
       (run-continue state)
       (click-prompt state :runner "No action")
       (run-on state "HQ")
@@ -2420,7 +2420,7 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (find-card "Clone Chip" (:hand (get-runner))))
       (is (= 6 (count (:hand (get-runner)))) "Hayley install")
-      (is (empty? (:prompt (get-runner)))))))
+      (is (no-prompt? state :runner)))))
 
 (deftest maui
   ;; Maui (Māui)
@@ -2436,7 +2436,7 @@
       (let [maui (get-hardware state 0)
             inti (get-program state 0)]
         (card-ability state :runner inti 1)
-        (is (empty? (:prompt (get-runner))) "Not enough money to pay for Inti pump")
+        (is (no-prompt? state :runner) "Not enough money to pay for Inti pump")
         (run-on state "HQ")
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credits from Maui"
@@ -2521,7 +2521,7 @@
       (run-empty-server state :rd)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida")
-      (is (empty? (:prompt (get-runner))) "No more prompts for runner")))
+      (is (no-prompt? state :runner) "No more prompts for runner")))
   (testing "Maw should trigger when declining to steal. #3388"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 4)]
@@ -2575,7 +2575,7 @@
       (click-prompt state :runner "Steal")
       (is (= "Move Hostile Takeover to the bottom of R&D?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+      (is (no-prompt? state :runner) "No more prompts for runner")
       (is (not (:run @state)) "Run is ended")
       (is (= "Hostile Takeover" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (take-credits state :runner)
@@ -2587,7 +2587,7 @@
       (is (= "You accessed Snare!." (:msg (prompt-map :runner))))
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (click-prompt state :runner "Yes")
-      (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+      (is (no-prompt? state :runner) "No more prompts for runner")
       (is (not (:run @state)) "Run is ended")
       (is (= "Snare!" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))
   (testing "Does not interrupt multi-access"
@@ -2736,7 +2736,7 @@
       (play-from-hand state :runner "Net-Ready Eyes")
       (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
       (run-on state "HQ")
-      (is (empty? (:prompt (get-runner))) "No NRE prompt"))))
+      (is (no-prompt? state :runner) "No NRE prompt"))))
 
 (deftest obelus
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
@@ -2926,7 +2926,7 @@
          (is (changes-credits (get-runner) 0
                               (do (toggle-paragon set-to)
                                   (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
-                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+                                  (is (no-prompt? state :runner) "No Paragon prompt")))
              "Paragon does not fire"))
        (take-credits state :runner)
        (take-credits state :corp)
@@ -2934,7 +2934,7 @@
        (is (changes-credits (get-runner) 1
                               (do (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
                                   (click-prompt state :runner "Yes") ; prompt to add a card to bottom
-                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+                                  (is (no-prompt? state :runner) "No Paragon prompt")))
              "Paragon fires automatically")))))
 
 (deftest patchwork
@@ -3088,10 +3088,10 @@
       (click-prompt state :runner "Yes")
       (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
       (card-ability state :runner (get-hardware state 0) 1)
-      (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
+      (is (no-prompt? state :runner) "Can use ability only once per turn")
       (run-jack-out state)
       (run-on state :hq)
-      (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
+      (is (no-prompt? state :runner) "Only trigger on the first run of the turn")))
   (testing "Does not reveal if first run has been before install"
     (do-game
       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
@@ -3102,7 +3102,7 @@
       (run-empty-server state :archives)
       (play-from-hand state :runner "Prognostic Q-Loop")
       (run-on state :hq)
-      (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
+      (is (no-prompt? state :runner) "Does not trigger on second run even if installed later")))
   (testing "Auto-resolve"
     (do-game
       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
@@ -3114,24 +3114,24 @@
       (letfn [(toggle-q-loop [setting]
                 (card-ability state :runner (get-hardware state 0) 0)
                 (click-prompt state :runner setting)
-                (is (empty? (:prompt (get-runner))) "Prompt closed"))]
+                (is (no-prompt? state :runner) "Prompt closed"))]
         (doseq [set-to ["Never" "Ask" "Always"]]
           (toggle-q-loop set-to)
           (run-on state "Archives")
           (case set-to
             "Never"
-            (is (empty? (:prompt (get-runner))) "Does not show prompt")
+            (is (no-prompt? state :runner) "Does not show prompt")
             "Always"
             (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
                 (click-prompt state :runner "OK")
-                (is (empty? (:prompt (get-runner))) "Look prompt closed"))
+                (is (no-prompt? state :runner) "Look prompt closed"))
             "Ask"
             (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
                 (click-prompt state :runner "Yes")
                 (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
                 (is (not-empty (:prompt (get-runner))) "Does show look prompt")
                 (click-prompt state :runner "OK")
-                (is (empty? (:prompt (get-runner))) "Look prompt closed")))
+                (is (no-prompt? state :runner) "Look prompt closed")))
           (run-jack-out state)
           (take-credits state :runner)
           (take-credits state :corp)))))
@@ -3724,7 +3724,7 @@
         (core/gain state :runner :click 4)
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))
+        (is (no-prompt? state :runner) "No Simulchip prompt")))
     (testing "and not enough credits"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3741,7 +3741,7 @@
         (click-card state :runner "Mass-Driver")
         (is (= 4 (:credit (get-runner))) "Need 5 credits to install Mass-Driver, only have 4")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))
+        (is (no-prompt? state :runner) "No Simulchip prompt")))
     (testing "Heap Locked Test"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3759,12 +3759,12 @@
         (click-prompt state :runner "Pay to steal")
         (click-card state :runner "Corroder")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (not (empty? (:prompt (get-runner)))) "Simulchip prompt came up")
+        (is (not (no-prompt? state :runner)) "Simulchip prompt came up")
         (click-prompt state :runner "Done")
         (rez state :corp (refresh (get-content state :remote2 0)))
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "Simulchip prompt did not come up"))))
+        (is (no-prompt? state :runner) "Simulchip prompt did not come up"))))
   (testing "with no programs in the heap"
     (testing "and a program trashed this turn"
       (do-game
@@ -3798,7 +3798,7 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt"))))
+        (is (no-prompt? state :runner) "No Simulchip prompt"))))
   (testing "No additional cost when hosted program is trashed. Issue #4897"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -3998,7 +3998,7 @@
       (run-continue-until state :success)
       (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Only access 1 card from HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Access additional cards when breaking ice protecting HQ"
     (do-game
@@ -4019,7 +4019,7 @@
       (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Only access additional cards for fully-broken ice"
     (do-game
@@ -4047,7 +4047,7 @@
       (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Only access additional cards when breaking ice protecting HQ"
     (do-game
@@ -4068,7 +4068,7 @@
       (run-continue-until state :success)
       (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 cards from HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Access additional cards when fully broken ice is derezzed"
     (do-game
@@ -4091,7 +4091,7 @@
       (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 2 cards from HQ")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Don't access additional cards when fully broken ice is trashed"
     (do-game
@@ -4113,7 +4113,7 @@
       (run-continue-until state :success)
       (is (= 1 (:random-access-limit (core/num-cards-to-access state :runner :hq nil))) "Access 1 card from HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "Access prompts are done")
+      (is (no-prompt? state :runner) "Access prompts are done")
       (is (not (:run @state)) "Run has ended")))
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"
     (do-game
@@ -4185,7 +4185,7 @@
     (play-from-hand state :runner "Titanium Ribs")
     (click-card state :runner (find-card "Titanium Ribs" (:hand (get-runner))))
     (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
-    (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")
+    (is (no-prompt? state :runner) "Fall Guy didn't try to prevent trashing of Kati")
     (is (= 2 (count (:discard (get-runner)))) "2 cards trashed for Ribs installation meat damage")
     (run-on state "HQ")
     (let [pup (get-ice state :hq 0)]
@@ -4253,7 +4253,7 @@
         (click-prompt state :runner "0") ; lose Ash trace
         (click-prompt state :runner "Top Hat") ; Top Hat activation
         (click-prompt state :runner "1") ; Top Hat
-        (is (empty? (:prompt (get-runner))) "Can't trash Ash"))))
+        (is (no-prompt? state :runner) "Can't trash Ash"))))
   (testing "Mad Dash interaction issue #4542"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
