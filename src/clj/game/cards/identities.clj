@@ -321,7 +321,7 @@
   {:constant-effects [(mu+ 1)]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
-  {:req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
+  {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
    :effect (effect (enable-corp-damage-choice))
    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))
    :events [{:event :corp-phase-12
@@ -334,7 +334,7 @@
               :req (req (and (= target :net)
                              (corp-can-choose-damage? state)
                              (pos? (last targets))
-                             (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))
+                             (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage)))
                              (pos? (count (:hand runner)))))
               :waiting-prompt "Corp to make a decision"
               :prompt "Use Chronos Protocol to choose the first card trashed?"

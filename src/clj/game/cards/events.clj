@@ -2,7 +2,8 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.set :as set]))
 
 (defn- cutlery
   [subtype]
@@ -1405,7 +1406,7 @@
    :on-trash {:when-inactive true
               :interactive (req true)
               :async true
-              :req (req (#{:meat :net} (:cause target)))
+              :req (req (#{:meat :net} (:cause context)))
               :msg "draw 3 cards"
               :effect (effect (draw :runner eid 3))}})
 
@@ -1418,7 +1419,7 @@
              :async true
              :req (req (and (= target :archives)
                             ;; don't prompt unless there's at least 1 rezzed piece of ice matching one in Archives
-                            (not-empty (clojure.set/intersection
+                            (not-empty (set/intersection
                                          (into #{} (map :title (filter ice? (:discard corp))))
                                          (into #{} (map :title (filter rezzed? (all-installed state :corp))))))))
              :prompt "Choose a piece of ice in Archives"
@@ -1535,7 +1536,7 @@
                      :max (req (dec (count (:hand corp))))}
            :effect (effect (continue-ability
                              (which-pile (shuffle targets)
-                                         (shuffle (vec (clojure.set/difference
+                                         (shuffle (vec (set/difference
                                                          (set (:hand corp)) (set targets)))))
                              card nil))}]
       {:makes-run true
@@ -1808,7 +1809,7 @@
      :events [{:event :run-ends
                :effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
                                   old (set (get-in (get-card state card) [:special :leave-no-trace]))
-                                  diff-cid (seq (clojure.set/difference new old))
+                                  diff-cid (seq (set/difference new old))
                                   diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
                               (doseq [ice diff]
                                 (derez state :runner ice))
@@ -2616,7 +2617,7 @@
                :async true
                :effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
                                   old (set (get-in (get-card state card) [:special :run-amok]))
-                                  diff-cid (seq (clojure.set/difference new old))
+                                  diff-cid (seq (set/difference new old))
                                   diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
                               (continue-ability
                                 state :runner
@@ -3133,7 +3134,7 @@
           (choose-cards [hand chosen]
             {:prompt "Choose a card in HQ to shuffle into R&D"
              :player :runner
-             :choices (conj (vec (clojure.set/difference hand chosen))
+             :choices (conj (vec (set/difference hand chosen))
                             "None")
              :async true
              :effect (req (if (and (empty? chosen)

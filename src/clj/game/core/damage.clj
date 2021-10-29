@@ -1,7 +1,9 @@
 (ns game.core.damage
   (:require
-    [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [trigger-event trigger-event-simult]]
+    [clojure.string :as string]
+    [game.core.card :refer [get-title]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.moving :refer [trash-cards]]
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
@@ -9,10 +11,8 @@
     [game.core.say :refer [system-msg]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in]]
-    [game.utils :refer [side-str]]
-    [jinteki.utils :refer [str->int]]
-    [clojure.string :as string]))
+    [game.utils :refer [dissoc-in side-str]]
+    [jinteki.utils :refer [str->int]]))
 
 (defn damage-bonus
   "Registers a bonus of n damage to the next damage application of the given type."
@@ -93,35 +93,40 @@
 (defn- resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
-  [state side eid type n {:keys [card]}]
-  (swap! state update-in [:damage :defer-damage] dissoc type)
+  [state side eid dmg-type n {:keys [card]}]
+  (swap! state update-in [:damage :defer-damage] dissoc dmg-type)
   (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
-  (wait-for (trigger-event-simult state side :pre-resolve-damage nil type side n)
+  (wait-for (trigger-event-simult state side :pre-resolve-damage nil dmg-type side n)
             (if (get-in @state [:damage :damage-replace])
               (handle-replaced-damage state side eid)
-              (if (pos? n)
+              (if (not (pos? n))
+                (effect-completed state side eid)
                 (let [hand (get-in @state [:runner :hand])
                       chosen-cards (seq (get-chosen-damage state))
                       chosen-cids (into #{} (map :cid chosen-cards))
                       leftovers (remove #(contains? chosen-cids (:cid %)) hand)
-                      cards-trashed (filter identity (flatten (conj chosen-cards (seq (take (- n (count chosen-cards)) (shuffle leftovers))))))]
-                  (when (= type :brain)
+                      cards-trashed (->> (shuffle leftovers)
+                                         (take (- n (count chosen-cards)))
+                                         (concat chosen-cards))]
+                  (when (= dmg-type :brain)
                     (swap! state update-in [:runner :brain-damage] #(+ % n)))
-                  (when-let [trashed-msg (string/join ", " (map :title cards-trashed))]
-                    (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
+                  (when-let [trashed-msg (string/join ", " (map get-title cards-trashed))]
+                    (system-msg state :runner (str "trashes " trashed-msg " due to " (name dmg-type) " damage")))
+                  (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                  (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
                   (if (< (count hand) n)
                     (do (flatline state)
-                        (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                        (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
                         (trash-cards state side eid cards-trashed {:unpreventable true}))
-                    (wait-for (trash-cards state side cards-trashed {:unpreventable true :cause type})
-                              (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                              (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
-                              (trigger-event-simult state side
-                                                    (make-result eid cards-trashed)
-                                                    :damage nil type card n cards-trashed))))
-                (effect-completed state side eid)))))
+                    (wait-for (trash-cards state side cards-trashed {:unpreventable true
+                                                                     :cause dmg-type
+                                                                     :suppress-event true})
+                              (queue-event state :damage {:amount n
+                                                          :card card
+                                                          :damage-type dmg-type
+                                                          :cards-trashed cards-trashed})
+                              (wait-for (checkpoint state nil (make-eid state eid) {:duration :damage})
+                                        (complete-with-result state side eid cards-trashed)))))))))
 
 (defn damage-count
   "Calculates the amount of damage to do, taking into account prevention and boosting effects."
@@ -133,7 +138,7 @@
 
 (defn check-damage-prevention
   "for a preventable damage instance, handles all damage prevention effects that a player can use for it"
-  ([state side eid type n args player]
+  ([state side eid type n player]
    (let [interrupts (get-prevent-list state player type)
          other-player (if (= player :corp) :runner :corp)
          already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
@@ -168,6 +173,6 @@
    (let [active-player (get-in @state [:active-player])]
      (if unpreventable
        (resolve-damage state side eid type (damage-count state side type n args) args)
-       (wait-for (check-damage-prevention state side type n args active-player)
-                 (wait-for (check-damage-prevention state side type n args (if (= active-player :corp) :runner :corp))
+       (wait-for (check-damage-prevention state side type n active-player)
+                 (wait-for (check-damage-prevention state side type n (if (= active-player :corp) :runner :corp))
                            (resolve-damage state side eid type (damage-count state side type n args) args)))))))
