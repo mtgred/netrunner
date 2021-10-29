@@ -100,23 +100,39 @@
 
 (deftest aesop-s-pawnshop
   ;; Aesop's Pawnshop
-  (do-game
-    (new-game {:runner {:deck ["Aesop's Pawnshop" "Cache"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aesop's Pawnshop")
-    (play-from-hand state :runner "Cache")
-    (let [orig-credits (:credit (get-runner))
-          ap (get-resource state 0)
-          cache (get-program state 0)]
-      (card-ability state :runner ap 0)
-      (click-card state :runner cache)
-      (card-ability state :runner ap 0)
-      (click-card state :runner ap)
-      (let [ap (get-resource state 0)
-            cache (get-in @state [:runner :discard 0])]
-        (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
-        (is (not= cache nil) "Cache should be in Heap")
-        (is (not= ap nil) "Aesops should still be installed")))))
+  (testing "Manual use"
+    (do-game
+     (new-game {:runner {:deck ["Aesop's Pawnshop" "Cache"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Aesop's Pawnshop")
+     (play-from-hand state :runner "Cache")
+     (let [orig-credits (:credit (get-runner))
+           ap (get-resource state 0)
+           cache (get-program state 0)]
+       (card-ability state :runner ap 0)
+       (click-card state :runner cache)
+       (card-ability state :runner ap 0)
+       (is (not= :select (:prompt-type (prompt-map :runner))) "Aesop's has already been used this turn")
+       (let [ap (get-resource state 0)
+             cache (get-in @state [:runner :discard 0])]
+         (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
+         (is (not= cache nil) "Cache should be in Heap")
+         (is (not= ap nil) "Aesops should still be installed")))))
+  (testing "Triggered at start of turn"
+    (do-game
+     (new-game {:runner {:deck ["Aesop's Pawnshop" "Daily Casts"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Aesop's Pawnshop")
+     (play-from-hand state :runner "Daily Casts")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (let [dc (get-resource state 1)]
+       (changes-val-macro
+        3 (:credit (get-runner))
+        "Aesop's sells Daily Casts before it triggers so only 3 credits gained"
+        (click-prompt state :runner "Aesop's Pawnshop")
+        (click-card state :runner dc))
+       (is (= (refresh dc) nil) "Daily Casts should be in Heap")))))
 
 (deftest all-nighter
   ;; All-nighter - Click/trash to gain 2 clicks

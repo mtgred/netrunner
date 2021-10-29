@@ -134,15 +134,20 @@
    :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]})
 
 (defcard "Aesop's Pawnshop"
-  {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
-   :abilities [{:async true
-                :label "trash a card to gain 3 [Credits]"
-                :choices {:req (req (and (runner? target)
-                                         (installed? target)
-                                         (not (same-card? target card))))}
-                :msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                :effect (req (wait-for (trash state side target {:unpreventable true})
-                                       (gain-credits state side eid 3)))}]})
+  (let [ability {:async true
+                 :label "trash a card to gain 3 [Credits]"
+                 :once :per-turn
+                 :req (req (>= (count (all-installed state :runner)) 2))
+                 :choices {:req (req (and (runner? target)
+                                          (installed? target)
+                                          (not (same-card? target card))))}
+                 :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :effect (req (wait-for (trash state side target {:unpreventable true})
+                                        (gain-credits state side eid 3)))}]
+    {:events [(assoc ability
+                     :event :runner-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
 
 (defcard "Akshara Sareen"
   {:in-play [:click-per-turn 1]
