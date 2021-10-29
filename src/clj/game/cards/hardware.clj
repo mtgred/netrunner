@@ -877,7 +877,7 @@
 
 (defcard "GPI Net Tap"
   {:abilities [{:req (req (and (= :approach-ice (:phase run))
-                               (ice? current-ice) 
+                               (ice? current-ice)
                                (not (rezzed? current-ice))))
                 :label "expose approached ice"
                 :msg "expose the approached ice"
@@ -1074,6 +1074,7 @@
              :interactive (req true)
              :req (req (and (hardware? (:card context))
                             (first-event? state side :runner-install #(hardware? (:card (first %))))))
+             :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
 (defcard "Māui"
