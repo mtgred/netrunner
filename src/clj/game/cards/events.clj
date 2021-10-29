@@ -758,6 +758,7 @@
 
 (defcard "Direct Access"
   {:makes-run true
+   ;;this :effect is used in card-init as a temporary solution for blanking IDs like Azmari or Ken Tenma before they can trigger
    :effect (req (doseq [s [:corp :runner]]
                   (disable-identity state s)))
    :on-play {:async true

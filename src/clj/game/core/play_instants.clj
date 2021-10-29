@@ -46,7 +46,7 @@
                           (if (:rfg-instead-of-trashing cdef)
                             (assoc card :rfg-instead-of-trashing true)
                             card)
-                          {:resolve-effect true :init-data true})
+                          {:resolve-effect true :init-data true});;:resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
           play-event (if (= side :corp) :play-operation :play-event)]
       (queue-event state play-event {:card card :event play-event})
       (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
