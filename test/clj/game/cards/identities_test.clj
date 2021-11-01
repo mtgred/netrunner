@@ -3526,13 +3526,13 @@
       (click-prompt state :runner "Temüjin Contract")
       (click-card state :runner (get-content state :remote1 0))
       (click-prompt state :runner "No action")
-      (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+      (is (= "HQ" (:card-target (get-resource state 0))) "Temujin still targeting HQ")
       (is (= 16 (get-counters (get-resource state 0) :credit)) "16 cr on Temujin")
       (is (= 8 (:credit (get-runner))) "Gained 4cr")
       ;; second run
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
-      (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+      (is (= "HQ" (:card-target (get-resource state 0))) "Temujin still targeting HQ")
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin"))))
 

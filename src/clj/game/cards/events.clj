@@ -758,16 +758,13 @@
 
 (defcard "Direct Access"
   {:makes-run true
+   ;;this :effect is used in card-init as a temporary solution for blanking IDs like Azmari or Ken Tenma before they can trigger
+   :effect (req (doseq [s [:corp :runner]]
+                  (disable-identity state s)))
    :on-play {:async true
-             :effect (req (doseq [s [:corp :runner]]
-                            (disable-identity state s))
-                          (continue-ability
-                            state side
-                            {:prompt "Choose a server"
-                             :choices (req runnable-servers)
-                             :async true
-                             :effect (effect (make-run eid target card))}
-                            card nil))}
+             :prompt "Choose a server"
+             :choices (req runnable-servers)
+             :effect (effect (make-run eid target card))}
    :events [{:event :run-ends
              :unregister-once-resolved true
              :async true

@@ -11,6 +11,7 @@
    agendapoints
    art
    baselink
+   card-target
    cid
    code
    corp-abilities
@@ -49,7 +50,6 @@
    runner-abilities
    seen
    selected
-   server-target
    set_code
    side
    special

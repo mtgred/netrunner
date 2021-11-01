@@ -1494,10 +1494,24 @@
      (take-credits state :runner)
      (take-credits state :corp)
      (changes-val-macro
-       1 (count (:discard (get-corp)))
-       "Alice not permanently blanked"
-       (run-empty-server state "Archives")
-       (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))))))
+      1 (count (:discard (get-corp)))
+      "Alice not permanently blanked"
+      (run-empty-server state "Archives")
+      (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp)))))))
+  (testing "Blanks IDs before they can trigger #6108"
+    (do-game
+     (new-game {:corp {:id "Azmari EdTech: Shaping the Future"
+                       :deck [(qty "Hedge Fund" 5)]
+                       :hand [(qty "Hedge Fund" 5)]}
+                :runner {:id "Ken \"Express\" Tenma: Disappeared Clone"
+                         :hand ["Direct Access"]}})
+     (take-credits state :corp)
+     (click-prompt state :corp "Event")
+     (let [runner-credits (- (:credit (get-runner)) 1);; subtract 1 for the cost of Direct Access
+           corp-credits (:credit (get-corp))]
+       (play-from-hand state :runner "Direct Access")
+       (is (= runner-credits (:credit (get-runner))) "Ken did not trigger")
+       (is (= corp-credits (:credit (get-corp))) "Azmari did not trigger")))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful

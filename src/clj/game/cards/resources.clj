@@ -1943,7 +1943,7 @@
                                 (not (used-this-turn? (:cid card) state))))
                  :msg (msg "target " target)
                  :effect (req (when (not= target "No server")
-                                (update! state side (assoc card :server-target target))))}]
+                                (update! state side (assoc card :card-target target))))}]
     {:abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
               (assoc
@@ -1954,14 +1954,14 @@
                     :async true
                     :effect (effect (draw eid 2))}})
                 :req (req (when-let [card (get-card state card)]
-                            (and (= (zone->name (:server context)) (:server-target card))
+                            (and (= (zone->name (:server context)) (:card-target card))
                                  (first-event? state side :successful-run
                                                (fn [targets]
                                                  (let [context (first targets)]
                                                    (= (zone->name (:server context))
-                                                      (:server-target card)))))))))
+                                                      (:card-target card)))))))))
               {:event :runner-turn-ends
-               :effect (effect (update! (dissoc (get-card state card) :server-target)))}]}))
+               :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
 (defcard "Paule's Café"
   {:abilities [{:label "Host a program or piece of hardware"
@@ -2367,7 +2367,7 @@
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
                  :effect (req (when (not= target "No server")
-                                (update! state side (assoc card :server-target target))))}]
+                                (update! state side (assoc card :card-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               (assoc
                 (successful-run-replace-breach
@@ -2377,15 +2377,15 @@
                     :async true
                     :effect (effect (gain-credits eid 2))}})
                 :req (req (when-let [card (get-card state card)]
-                            (and (= (zone->name (:server context)) (:server-target card))
+                            (and (= (zone->name (:server context)) (:card-target card))
                                  (first-event? state side :successful-run
                                                (fn [targets]
                                                  (let [context (first targets)]
                                                    (= (zone->name (:server context))
-                                                      (:server-target card)))))))))
+                                                      (:card-target card)))))))))
               {:event :runner-turn-ends
                :silent (req true)
-               :effect (effect (update! (dissoc card :server-target)))}]
+               :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
 
 (defcard "Smartware Distributor"
@@ -2596,10 +2596,10 @@
    :on-install {:prompt "Choose a server for Temüjin Contract"
                 :choices (req servers)
                 :msg (msg "target " target)
-                :effect (effect (update! (assoc card :server-target target)))}
+                :effect (effect (update! (assoc card :card-target target)))}
    :events [(trash-on-empty :credit)
             {:event :successful-run
-             :req (req (= (zone->name (:server context)) (:server-target (get-card state card))))
+             :req (req (= (zone->name (:server context)) (:card-target (get-card state card))))
              :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
              :async true
              :effect (req (let [credits (min 4 (get-counters card :credit))]

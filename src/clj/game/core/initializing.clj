@@ -41,7 +41,7 @@
         c (dissoc card
                   :current-strength :current-advancement-requirement :current-points
                   :runner-abilities :corp-abilities :rezzed :new
-                  :subtype-target :server-target :extra-advance-counter :special)
+                  :subtype-target :card-target :extra-advance-counter :special)
         c (assoc c :subroutines (subroutines-init c cdef) :abilities (ability-init cdef))
         c (if keep-counter c (dissoc c :counter :advance-counter))]
     (map->Card c)))
